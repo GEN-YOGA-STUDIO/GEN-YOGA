@@ -1,10 +1,9 @@
-/* style.css */
-
 @font-face {
     font-family: 'Ubuntu';
     src: url('fonts/Ubuntu/Ubuntu-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
@@ -12,6 +11,7 @@
     src: url('fonts/Ubuntu/Ubuntu-Bold.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
@@ -19,6 +19,7 @@
     src: url('fonts/Ubuntu/Ubuntu-Light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
@@ -26,28 +27,49 @@
     src: url('fonts/Ubuntu/Ubuntu-Medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: 'GeometricaSans';
-    src: url('fonts/GeometricaSans-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-family: 'Montserrat Arabic';
+    src: url("fonts/montserrat%20arabic/Montserrat-Arabic%20Regular%20400.otf") format('opentype');
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url("fonts/montserrat%20arabic/Montserrat-Arabic%20Bold%20700.otf") format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url("fonts/montserrat%20arabic/Montserrat-Arabic%20Light%20300.otf") format('opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
 }
 
 /* Reglas Base */
 body {
-    background-color: #F2E8DF;
-    /* Ivory */
-    color: #5D4037;
-    /* Cocoa */
-    background-image: radial-gradient(#A4A05D 0.5px, transparent 0.5px);
+    background-color: #f8f6f2; /* Off-white */
+    color: #26160c; /* Dark Brown */
+    background-image: radial-gradient(#9b7b37 0.5px, transparent 0.5px);
     background-size: 20px 20px;
     background-attachment: fixed;
+    font-family: 'Montserrat Arabic', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+    font-family: 'Ubuntu', sans-serif;
 }
 
 .brand-font {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Ubuntu', sans-serif;
 }
 
 .text-shadow-sm {
@@ -68,70 +90,6 @@ body {
     scrollbar-width: none;
 }
 
-
-/* --- BOTONES LATERALES VERTICALES --- */
-
-.side-btn {
-    padding: 20px 0;
-    position: relative;
-    transition: transform 0.4s ease;
-}
-
-/* Al hacer hover en el botón lateral, escala ligeramente */
-.side-btn:hover {
-    transform: scale(1.05);
-}
-
-/* Texto vertical lado izquierdo (lectura abajo->arriba) */
-.vertical-text {
-    white-space: nowrap;
-    cursor: pointer;
-    /* Color base visible */
-}
-
-/* Texto vertical lado derecho (lectura arriba->abajo) */
-.vertical-text-rl {
-    white-space: nowrap;
-    cursor: pointer;
-    /* Color base visible */
-}
-
-/* Efecto de brillo al hacer hover en el texto */
-.group:hover .vertical-text,
-.group:hover .vertical-text-rl {
-    text-shadow: 0 0 20px rgba(216, 191, 216, 0.6);
-    /* Brillo Lilac */
-}
-
-
-/* --- ANIMACIÓN CENTRAL --- */
-
-/* Animación de parpadeo suave para el cambio de palabra */
-@keyframes textFadeInOut {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    10% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    90% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-}
-
-/* Clase para aplicar si quisiéramos animación CSS pura, 
-   pero usaremos JS para control total */
-
 /* ======================================================= */
 /* LOGICA DEL CURSOR PERSONALIZADO (WEB)                   */
 /* ======================================================= */
@@ -148,7 +106,6 @@ body {
     z-index: 9999;
     transition: transform 0.1s ease-out;
     user-select: none;
-    /* Solo visible por defecto en Web. En móviles se oculta abajo */
 }
 
 .wink-cursor.clicking {
@@ -173,7 +130,6 @@ body.platform-web .cursor-pointer {
 /* REGLAS COMUNES APP (iOS y Android) */
 body.platform-ios,
 body.platform-android {
-    /* Restaurar cursor nativo (invisible en táctil) */
     cursor: auto !important;
 }
 
@@ -196,99 +152,9 @@ body.platform-android select {
 }
 
 /* ======================================================= */
-/* ANIMACIÓN DE FONDO AMBIENTAL (Zen & Fresh)              */
+/* FANTASY VIDEO LOGO                                      */
 /* ======================================================= */
 
-.ambient-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    z-index: -1;
-    pointer-events: none;
-}
-
-@keyframes floatLeftToRight {
-    0% {
-        transform: translate(0, 0) rotate(0deg) scale(1);
-    }
-
-    50% {
-        transform: translate(100px, -50px) rotate(180deg) scale(1.2);
-    }
-
-    100% {
-        transform: translate(0, 0) rotate(360deg) scale(1);
-    }
-}
-
-@keyframes floatRightToLeft {
-    0% {
-        transform: translate(0, 0) rotate(0deg) scale(1);
-    }
-
-    50% {
-        transform: translate(-100px, 50px) rotate(-180deg) scale(1.2);
-    }
-
-    100% {
-        transform: translate(0, 0) rotate(-360deg) scale(1);
-    }
-}
-
-@keyframes floatCenter {
-    0% {
-        transform: scale(1) translate(0, 0);
-    }
-
-    50% {
-        transform: scale(1.3) translate(20px, -20px);
-    }
-
-    100% {
-        transform: scale(1) translate(0, 0);
-    }
-}
-
-.ambient-shape {
-    position: absolute;
-    filter: blur(60px);
-    /* Menos blur para ver mejor el movimiento */
-    opacity: 0.6;
-    border-radius: 50%;
-    mix-blend-mode: multiply;
-}
-
-.shape-1 {
-    top: 10%;
-    left: 10%;
-    width: 60vw;
-    height: 60vw;
-    background: #A4A05D;
-    /* Olive */
-    animation: floatLeftToRight 20s infinite ease-in-out;
-}
-
-.shape-2 {
-    bottom: 10%;
-    right: 10%;
-    width: 55vw;
-    height: 55vw;
-    background: #5D4037;
-    /* Cocoa */
-    animation: floatRightToLeft 25s infinite ease-in-out;
-    opacity: 0.5;
-}
-
-.shape-3 {
-    top: 35%;
-    left: 35%;
-    width: 40vw;
-    height: 40vw;
-    background: #E1C699;
-    /* Sand */
-    animation: floatCenter 15s infinite ease-in-out;
-    opacity: 0.4;
+#logo-container {
+    perspective: 1000px;
 }

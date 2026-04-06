@@ -8,11 +8,9 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap"
-        rel="stylesheet">
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <link rel="stylesheet" href="styles.css?v=3">
@@ -22,12 +20,16 @@
             theme: {
                 extend: {
                     colors: {
-                        cocoa: '#5D4037',
-                        lilac: '#D8BFD8',
-                        sand: '#E1C699',
-                        olive: '#A4A05D',
-                        ivory: '#F2E8DF',
-                        slate: '#708090'
+                        cocoa: '#26160C',
+                        golden: '#9B7B37',
+                        terracotta: '#E1654E',
+                        mutedbrown: '#7F5040',
+                        mutedgold: '#A69C6A',
+                        beige: '#D3CAB4',
+                        ivory: '#F8F6F2',
+                        slate: '#708090',
+                        sand: '#D3CAB4', /* Alias for beige */
+                        olive: '#9B7B37'  /* Alias for golden */
                     },
                     spacing: {
                         '100': '25rem',
@@ -38,8 +40,8 @@
                         '200': '50rem',
                     },
                     fontFamily: {
-                        serif: ['Playfair Display', 'serif'],
-                        sans: ['Ubuntu', 'sans-serif'],
+                        serif: ['Ubuntu', 'sans-serif'],
+                        sans: ['"Montserrat Arabic"', 'Montserrat', 'sans-serif'],
                         ubuntu: ['Ubuntu', 'sans-serif']
                     }
                 }
@@ -121,22 +123,19 @@
 
         .ambient-shape {
             position: absolute;
-            filter: blur(90px);
-            opacity: 0.2;
-            /* Mucho más visibles como pidió el usuario */
+            filter: blur(50px);
+            opacity: 0.1;
             border-radius: 50%;
             mix-blend-mode: multiply;
-            will-change: transform;
         }
 
         .shape-1 {
             top: 10%;
             left: 10%;
             width: 70vw;
-            /* El doble de grandes */
             height: 70vw;
-            background: #D4A574;
-            /* Sand 1 */
+            background: #D27D60;
+            /* Terracotta */
             animation: wander1 35s infinite ease-in-out alternate;
         }
 
@@ -145,8 +144,8 @@
             right: 10%;
             width: 65vw;
             height: 65vw;
-            background: #8B5A2B;
-            /* Bronze 1 */
+            background: #B48A47;
+            /* Golden Ochre */
             animation: wander2 41s infinite ease-in-out alternate;
         }
 
@@ -155,8 +154,8 @@
             right: 30%;
             width: 45vw;
             height: 45vw;
-            background: #D4A574;
-            /* Sand 2 */
+            background: #8C8658;
+            /* Olive Green */
             animation: wander3 37s infinite ease-in-out alternate;
             animation-delay: -10s;
         }
@@ -166,51 +165,10 @@
             left: 10%;
             width: 50vw;
             height: 50vw;
-            background: #8B5A2B;
-            /* Bronze 2 */
+            background: #E6DCC3;
+            /* Soft Beige */
             animation: wander4 43s infinite ease-in-out alternate;
             animation-delay: -5s;
-        }
-
-        /* Custom Safe Layout Logic */
-        /* Only apply absolute positioning if we have enough Width AND Height */
-        @media (min-width: 1024px) and (min-height: 800px) {
-            .safe-absolute-top-left {
-                position: absolute;
-                top: 4rem;
-                left: 4rem;
-                transform: translateY(-50%);
-            }
-
-            .safe-absolute-bottom-left {
-                position: absolute;
-                bottom: 4rem;
-                left: 4rem;
-                transform: translateY(50%);
-            }
-
-            .safe-absolute-top-right {
-                position: absolute;
-                top: 4rem;
-                right: 4rem;
-                transform: translateY(-50%);
-            }
-
-            .safe-absolute-bottom-right {
-                position: absolute;
-                bottom: 4rem;
-                right: 4rem;
-                transform: translateY(50%);
-            }
-
-            /* safe-absolute-header rules removed as we switched to flexbox flow for safety */
-
-            /* Ensure navigation buttons are visible in the flow */
-            .safe-hidden-on-desktop {
-                display: grid;
-            }
-
-            /* Force grid display if we are not in safe mode */
         }
 
         /* Animation for rotating symbols in the center */
@@ -275,11 +233,10 @@
 </head>
 
 <body
-    class="min-h-screen w-screen overflow-x-hidden relative selection:bg-sand selection:text-cocoa font-sans lg:h-screen lg:overflow-hidden">
+    class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-sand selection:text-cocoa font-sans lg:h-screen lg:overflow-hidden">
 
-    <!-- Background Gradient: Adjusted for better contrast with white text -->
-    <div
-        class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)]">
+    <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
+    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
     </div>
 
     <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
@@ -287,26 +244,58 @@
         class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_50%)] pointer-events-none">
     </div>
 
+    <!-- Ambient background shapes (ZEN & FRESH) -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="ambient-shape shape-1"></div>
+        <div class="ambient-shape shape-2"></div>
+        <div class="ambient-shape shape-3"></div>
+        <div class="ambient-shape shape-4"></div>
+    </div>
+
     <!-- Main Content Container: Flex Column for safe stacking -->
     <div
-        class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between p-4 md:p-8 overflow-y-auto lg:h-screen lg:overflow-hidden">
+        class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between pt-4 pb-2 md:pt-8 md:pb-4 overflow-y-auto lg:h-screen lg:overflow-hidden">
 
-        <!-- HEADER / LOGO -->
-        <div class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0">
-            <h1
-                class="font-ubuntu text-[clamp(3rem,7vh,8rem)] text-white font-bold tracking-tighter leading-none drop-shadow-sm">
-                GEN</h1>
-            <p class="text-white text-[clamp(1rem,2vh,2rem)] tracking-[0.3em] font-medium mt-1">YOGA & WELL-BEING
-            </p>
+        <!-- HEADER / LOGO (Video replacement) -->
+        <div id="logo-container" onclick="triggerLogoFantasy()"
+            class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none cursor-pointer group">
+
+            <!-- MOVIL: Logo imagen estática (hidden md:block lo oculta en escritorio) -->
+            <!-- ESCRITORIO: Logo video (hidden en MOVIL con "hidden md:block") -->
+            <video id="logo-video" src="img/video1.mp4" muted playsinline preload="none"
+                class="hidden md:block h-[clamp(180px,30vh,450px)] w-auto aspect-[5/2] object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-300"
+                style="filter: url(#perfectKey) contrast(1.6) brightness(1.3) saturate(1.2); clip-path: inset(0 15% 15% 15%);"></video>
+
+            <!-- MOVIL: Logo imagen PNG blanco (block md:hidden lo muestra solo en MOVIL) -->
+            <img id="logo-img-mobile" src="img/logo1.png" alt="GEN Yoga Logo"
+                class="block md:hidden h-[clamp(120px,20vh,250px)] mt-[2vh] w-auto object-contain drop-shadow-2xl brightness-0 invert">
+
+            <!-- Advanced SVG Filter (Corrected for high-contrast visibility) -->
+            <svg width="0" height="0" class="absolute">
+                <filter id="perfectKey" color-interpolation-filters="sRGB">
+                    <!-- Step 1: Alpha mask from luminance with softer offset -->
+                    <feColorMatrix type="matrix" values="
+                        0 0 0 0 1
+                        0 0 0 0 1
+                        0 0 0 0 1
+                        1 1 1 0 -1.5" />
+
+                    <!-- Step 2: Smoother transition for better edges -->
+                    <feComponentTransfer>
+                        <feFuncA type="table" tableValues="0 0 0 0 0.2 0.5 0.8 1" />
+                    </feComponentTransfer>
+
+                    <!-- Step 3: Composite -->
+                    <feComposite operator="in" in="SourceGraphic" result="masked" />
+                </filter>
+            </svg>
         </div>
 
         <!-- CENTRAL CONTENT -->
         <div
-            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center max-w-2xl min-h-0 space-y-[1vh] my-[1vh] z-10 px-4">
-            <h2 class="font-sans text-[clamp(2.5rem,8vh,8rem)] text-white font-medium tracking-wide drop-shadow-md">Yo
-                soy</h2>
+            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center max-w-2xl min-h-0 space-y-[2vh] my-[2vh] z-10 px-4">
 
-            <div class="w-auto h-[clamp(4rem,10vh,10rem)] my-[0.5vh] aspect-square">
+            <div class="w-[clamp(8rem,20vh,20rem)] h-[clamp(8rem,20vh,20rem)] my-[1vh]">
                 <div class="symbol-stack">
                     <img src="img/simbolo1.png" alt="Símbolo 1">
                     <img src="img/simbolo2.png" alt="Símbolo 2">
@@ -316,58 +305,83 @@
                 </div>
             </div>
 
+            <!-- MOVIL: font-normal / ESCRITORIO: font-light (md:font-light) -->
             <p
-                class="text-white/90 text-[clamp(1.1rem,2.2vh,2rem)] font-light leading-relaxed max-w-4xl mx-auto drop-shadow-sm">
+                class="text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-normal md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md">
                 En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
                 mente encuentren su equilibrio natural
             </p>
 
-            <p class="text-white font-medium text-[clamp(1.2rem,2.5vh,3rem)] tracking-wide drop-shadow-md mt-[0.5vh]">
+            <!-- MOVIL: font-medium / ESCRITORIO: font-normal (md:font-normal) -->
+            <p
+                class="text-white font-medium md:font-normal text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-lg mt-[0.5vh]">
                 Tu refugio, tu energía, tu momento
             </p>
-        </div>
 
-        <!-- MOBILE NAVIGATION (Visible only on mobile) -->
-        <div class="lg:hidden w-full grid grid-cols-2 gap-4 px-4 mt-8 z-30 mb-8 flex-shrink-0">
-            <button onclick="openModal('clases')"
-                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 text-center hover:bg-white/20 transition duration-300 shadow-lg">
-                <span class="text-white text-lg font-bold tracking-widest block drop-shadow-md">CLASES</span>
-            </button>
-            <button onclick="openModal('precios')"
-                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 text-center hover:bg-white/20 transition duration-300 shadow-lg">
-                <span class="text-white text-lg font-bold tracking-widest block drop-shadow-md">TARIFAS</span>
-            </button>
-            <button onclick="openModal('profesores')"
-                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 text-center hover:bg-white/20 transition duration-300 shadow-lg">
-                <span class="text-white text-lg font-bold tracking-widest block drop-shadow-md">MAESTROS</span>
-            </button>
-            <a href="profile.html"
-                class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 text-center hover:bg-white/20 transition duration-300 flex items-center justify-center shadow-lg">
-                <span class="text-white text-lg font-bold tracking-widest block drop-shadow-md">MI PERFIL</span>
+            <!-- Instagram Button (below tagline) -->
+            <a href="https://www.instagram.com/genyoga.studio" target="_blank"
+                class="inline-flex items-center gap-2 mt-[1.5vh] text-white transition-colors duration-300 transform hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 md:w-12 md:h-12" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                </svg>
             </a>
         </div>
 
-        <!-- NAVIGATION LINKS (Responsive Wrapper) -->
+        <!-- ============================================ -->
+        <!-- MOVIL: NAVEGACIÓN (solo visible en < lg)     -->
+        <!-- Usa clase "lg:hidden" = se oculta en escritorio -->
+        <!-- ============================================ -->
+        <div class="lg:hidden w-full flex items-center justify-center px-4 mt-8 z-30 mb-8 flex-shrink-0">
+            <div class="flex flex-col gap-3 w-full max-w-[320px]">
+                <button onclick="openModal('clases')"
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                    <span
+                        class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
+                        CLASES <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
+                    </span>
+                </button>
+                <button onclick="openModal('precios')"
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                    <span
+                        class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
+                        TARIFAS <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
+                    </span>
+                </button>
+                <button onclick="openModal('profesores')"
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                    <span
+                        class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
+                        MAESTROS <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
+                    </span>
+                </button>
+                <button onclick="location.href='profile.html'"
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                    <span
+                        class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
+                        MI PERFIL <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
 
-        <!-- CORNER BUTTONS (Visible only in Safe Mode via CSS) -->
-        <!-- 
-             PARA RECOLOCAR LOS BOTONES:
-             Ahora están posicionados verticalmente con porcentajes ("top-1/4", "bottom-1/4").
-             Horizontalmente están separados del borde ("left-8", "right-8").
-        -->
-
-        <!-- LEFT SIDE NAVIGATION -->
-        <div class="hidden lg:flex flex-col items-start gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
+        <!-- ============================================ -->
+        <!-- ESCRITORIO: NAVEGACIÓN (solo visible en >= lg) -->
+        <!-- Usa clase "hidden lg:flex" = se oculta en MOVIL -->
+        <!-- ============================================ -->
+        <div class="hidden lg:flex flex-col items-center gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('clases')" onmouseenter="showHoverImage('left', 'clases')"
                 onmouseleave="hideHoverImage('left')"
-                class="group transition-transform duration-300 hover:scale-105 text-left w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">CLASES</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">CLASES</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-left"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative pr-20">
+                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
                 <img id="img-clases" src="img/clases.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-tarifas" src="img/tarifas.png"
@@ -376,24 +390,24 @@
 
             <button onclick="openModal('precios')" onmouseenter="showHoverImage('left', 'tarifas')"
                 onmouseleave="hideHoverImage('left')"
-                class="group transition-transform duration-300 hover:scale-105 text-left w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">TARIFAS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">TARIFAS</span>
             </button>
         </div>
 
-        <!-- RIGHT SIDE NAVIGATION -->
-        <div class="hidden lg:flex flex-col items-end gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
+        <!-- ESCRITORIO: Navegación lateral derecha -->
+        <div class="hidden lg:flex flex-col items-center gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('profesores')" onmouseenter="showHoverImage('right', 'maestros')"
                 onmouseleave="hideHoverImage('right')"
-                class="group transition-transform duration-300 hover:scale-105 text-right w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MAESTROS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">MAESTROS</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-right"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative pl-20">
+                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
                 <img id="img-maestros" src="img/maestros.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-perfil" src="img/miperfil.png"
@@ -402,56 +416,63 @@
 
             <a href="profile.html" onmouseenter="showHoverImage('right', 'perfil')"
                 onmouseleave="hideHoverImage('right')"
-                class="group transition-transform duration-300 hover:scale-105 block text-right w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 block text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MI
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">MI
                     PERFIL</span>
             </a>
         </div>
         <!-- FOOTER -->
-        <footer class="w-full flex flex-col items-center gap-2 mt-0 z-10 text-white flex-shrink-0">
+        <footer
+            class="w-full flex flex-col items-center gap-2 mt-0 z-10 text-white font-normal flex-shrink-0 drop-shadow-md">
             <!-- Instagram Icon -->
-            <a href="https://instagram.com" target="_blank"
-                class="hover:text-white transition-colors duration-300 transform hover:scale-110">
+            <a href="https://www.instagram.com/genyoga.studio" target="_blank"
+                class="text-white hover:text-white transition-colors duration-300 transform hover:scale-110">
                 <i data-lucide="instagram" class="w-12 h-12 md:w-14 md:h-14"></i>
             </a>
 
             <!-- Info Bar -->
             <div
-                class="w-full border-t border-white/30 pt-0 flex flex-col md:flex-row items-center justify-between gap-0 text-xs md:text-sm font-bold tracking-[0.2em] uppercase text-center md:text-left">
+                class="w-full border-t border-white/30 pt-3 pb-1 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6 text-sm font-normal tracking-[0.2em] uppercase text-center md:text-left drop-shadow-md">
 
-                <div class="flex flex-col md:flex-row gap-0 md:gap-0 items-center relative top-3">
-                    <span>Calle San Carlos, 2, Albacete </span>
+                <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-white">
+                    <span>Calle San Carlos, 2, Albacete</span>
                     <span class="hidden md:inline text-white">|</span>
-                    <a href="mailto:hola@genyoga.studio"
-                        class="hover:text-white/80 transition underline decoration-transparent hover:decoration-white">
-                        hola@genyoga.studio</a>
+                    <div class="flex items-center gap-1">
+                        <span class="text-white">CONTACTO:</span>
+                        <a href="mailto:hola@genyoga.studio"
+                            class="text-white hover:text-white transition underline decoration-transparent hover:decoration-white">
+                            hola@genyoga.studio</a>
+                    </div>
                 </div>
 
-                <div
-                    class="flex flex-col md:flex-row gap-0 md:gap-0 items-center text-center md:text-right relative top-3">
-                    <a href="#" class="hover:text-white transition">Terms & Conditions</a>
-                    <span>© 2026 GEN YOGA</span>
-                    <span class="text-white">. V2.6.5</span>
+                <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-center text-white md:text-right">
+                    <a href="#" class="text-white hover:text-white transition">Terms & Conditions</a>
+                    <span class="hidden md:inline text-white">|</span>
+                    <span class="text-white">© 2026 GEN YOGA</span>
+                    <span class="hidden md:inline text-white">·</span>
+                    <span class="text-white">V2.8.4</span>
                 </div>
             </div>
         </footer>
 
     </div>
 
-    <!-- Modals (Preserved functioning logic, hidden by default) -->
+    <!-- MOVIL: Modal con padding extra arriba (pt-16) / ESCRITORIO: padding normal (md:pt-8) -->
     <div id="modal-overlay"
-        class="fixed inset-0 bg-black/40 backdrop-blur-md z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        class="fixed inset-0 bg-black/40 backdrop-blur-md z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 pt-16 md:p-8 md:pt-8">
 
+        <!-- MOVIL: Botón cerrar con fondo oscuro / ESCRITORIO: transparente -->
         <button onclick="closeModal()"
-            class="absolute top-8 right-8 text-white hover:text-sand transition z-50 flex items-center gap-2 group">
-            <span class="text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Cerrar</span>
-            <i data-lucide="x" class="w-10 h-10"></i>
+            class="absolute top-3 right-3 md:top-8 md:right-8 z-[60] text-white hover:text-sand transition-all flex items-center justify-center gap-2 group bg-black/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border border-white/40 md:border-transparent rounded-lg md:rounded-none p-2 md:p-0 shadow-lg md:shadow-none">
+            <span
+                class="hidden md:block text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Cerrar</span>
+            <i data-lucide="x" class="w-6 h-6 md:w-10 md:h-10"></i>
         </button>
 
         <!-- Content for Modals (Same IDs as before for JS compatibility) -->
         <div id="modal-clases"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
             <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
                 Horario Semanal
             </h2>
@@ -462,31 +483,36 @@
         </div>
 
         <div id="modal-precios"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
             <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
                 Tarifas</h2>
             <!-- Rate cards content... kept simple for now as focus is on main page -->
-            <div class="grid md:grid-cols-3 gap-8 px-4">
-                <!-- ... (Rate cards logic would go here, simplified for this specific edit to focus on landing) ... -->
-                <div class="p-10 border border-cocoa/10 bg-white/40 text-center">
-                    <h3 class="text-2xl font-serif text-cocoa mb-2">Clase individual</h3>
-                    <div class="text-5xl font-serif text-olive mb-8">30€</div>
+            <div class="grid md:grid-cols-3 gap-8 px-4 items-center">
+                <!-- Side card -->
+                <div class="p-10 border border-white/20 bg-white/30 backdrop-blur-sm text-center rounded-2xl">
+                    <h3 class="text-2xl font-serif text-white/90 mb-2">Clase individual</h3>
+                    <div class="text-5xl font-serif text-white/80 mb-8">XX€</div>
                 </div>
-                <div class="p-10 border border-olive bg-olive/10 text-center shadow-2xl scale-105">
-                    <h3 class="text-2xl font-serif text-cocoa mb-2">Pack 10</h3>
-                    <div class="text-5xl font-serif text-olive mb-8">250€</div>
+                <!-- CENTRAL CARD — Most prominent -->
+                <div
+                    class="relative p-12 border-2 border-white bg-white/50 backdrop-blur-md text-center rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.3)] scale-110 z-10">
+                    <div
+                        class="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-cocoa text-[10px] font-bold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full shadow-md">
+                        ★ Más Popular</div>
+                    <h3 class="text-3xl font-serif text-cocoa mb-3 mt-2">Pack 10</h3>
+                    <div class="text-6xl font-bold font-serif text-cocoa mb-8">XX€</div>
                 </div>
-                <div class="p-10 border border-cocoa/10 bg-white/40 text-center">
-                    <h3 class="text-2xl font-serif text-cocoa mb-2">Ilimitado mensual</h3>
-                    <div class="text-5xl font-serif text-olive mb-8">150€</div>
+                <!-- Side card -->
+                <div class="p-10 border border-white/20 bg-white/30 backdrop-blur-sm text-center rounded-2xl">
+                    <h3 class="text-2xl font-serif text-white/90 mb-2">Ilimitado mensual</h3>
+                    <div class="text-5xl font-serif text-white/80 mb-8">XX€</div>
                 </div>
             </div>
         </div>
 
         <div id="modal-profesores"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
             <h2 class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-16 text-center drop-shadow-md">
-                Nuestros
                 Maestros
             </h2>
             <div id="landing-profesores-container"
@@ -495,19 +521,19 @@
             </div>
         </div>
 
-        <div id="modal-socials" class="modal-content hidden text-center bg-ivory rounded-xl p-8">
-            <h2 class="text-5xl text-olive brand-font">Síguenos</h2>
-            <div class="flex justify-center gap-4 mt-8">
-                <i data-lucide="instagram" class="w-12 h-12 text-cocoa"></i>
-            </div>
-        </div>
+
     </div>
 
     <!-- Scripts -->
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
     <script>
-        // Re-initialize Lucide icons
-        lucide.createIcons();
+        // Precargar video solo en escritorio
+        if (window.innerWidth >= 768) {
+            const v = document.getElementById('logo-video');
+            if (v) v.preload = 'auto';
+        }
+        // Re-initialize Lucide icons cuando cargue
+        document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
     </script>
 </body>
 

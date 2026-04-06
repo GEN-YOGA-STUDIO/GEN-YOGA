@@ -1,11 +1,43 @@
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('fonts/Ubuntu/Ubuntu-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('fonts/Ubuntu/Ubuntu-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat%20arabic/Montserrat-Arabic%20Regular%20400.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat%20arabic/Montserrat-Arabic%20Bold%20700.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* ======================================================= */
 /* 1. ESTILOS BASE Y CONFIGURACIÓN GENERAL                 */
 /* ======================================================= */
 body {
-    font-family: 'Lato', sans-serif;
-    /* Ivory White Theme */
-    background-color: #FAF0E6;
-    color: #5D4037;
+    font-family: 'Montserrat Arabic', sans-serif;
+    /* Brandbook theme */
+    background-color: #f8f6f2;
+    color: #26160c;
 
     /* Configuración por defecto (WEB) */
     cursor: none;
@@ -22,8 +54,11 @@ body {
 h1,
 h2,
 h3,
+h4,
+h5,
+h6,
 .brand-font {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Ubuntu', sans-serif;
 }
 
 /* ======================================================= */
@@ -70,13 +105,13 @@ h3,
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #A4A05D;
+    background: #B48A47; /* Golden Ochre */
     border-radius: 10px;
-    border: 2px solid #A4A05D;
+    border: 2px solid #B48A47;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #5D4037;
+    background: #26160C; /* Dark Brown */
 }
 
 /* Efecto Cristal */
@@ -102,15 +137,15 @@ h3,
 
 .calendar-day:hover:not(.disabled):not(.other-month) {
     transform: scale(1.05);
-    background: linear-gradient(135deg, #A4A05D, #5D4037);
+    background: linear-gradient(135deg, #D27D60, #8C8658);
     color: white;
 }
 
 .calendar-day.selected {
-    background: linear-gradient(135deg, #A4A05D, #5D4037) !important;
+    background: linear-gradient(135deg, #D27D60, #8C8658) !important;
     color: white !important;
     font-weight: bold;
-    box-shadow: 0 4px 12px rgba(164, 160, 93, 0.3);
+    box-shadow: 0 4px 12px rgba(210, 125, 96, 0.3);
 }
 
 .calendar-day.has-classes::after {
@@ -119,7 +154,7 @@ h3,
     bottom: 4px;
     width: 4px;
     height: 4px;
-    background: #5D4037;
+    background: #8C8658;
     border-radius: 50%;
 }
 
@@ -128,7 +163,7 @@ h3,
 }
 
 .calendar-day.disabled {
-    color: #E1C699;
+    color: #E6DCC3;
     /* Sand */
     filter: grayscale(1);
     cursor: not-allowed;
@@ -136,13 +171,13 @@ h3,
 }
 
 .calendar-day.other-month {
-    color: #E1C699;
+    color: #E6DCC3;
     /* Sand */
     opacity: 0.3;
 }
 
 .calendar-day.today {
-    border: 2px solid #A4A05D;
+    border: 2px solid #D27D60;
     font-weight: bold;
 }
 
@@ -150,7 +185,6 @@ h3,
 /* 4. LOGICA DEL CURSOR PERSONALIZADO (WEB)                */
 /* ======================================================= */
 
-/* El elemento visual del cursor */
 .wink-cursor {
     position: fixed;
     top: 0;
@@ -162,14 +196,12 @@ h3,
     z-index: 9999;
     transition: transform 0.1s ease-out;
     user-select: none;
-    /* Solo visible por defecto en Web. En móviles se oculta abajo */
 }
 
 .wink-cursor.clicking {
     transform: translate(-50%, -50%) scale(0.8) rotate(-10deg);
 }
 
-/* Forzar ocultación del cursor nativo SOLO en Web */
 body.platform-web a,
 body.platform-web button,
 body.platform-web input,
@@ -178,6 +210,7 @@ body.platform-web textarea,
 body.platform-web .cursor-pointer {
     cursor: none !important;
 }
+
 
 /* ======================================================= */
 /* 5. ADAPTACIONES MÓVILES (iOS + ANDROID)                 */

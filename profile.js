@@ -92,7 +92,7 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
         icon: 'error',
         title: 'Ups...',
         text: 'Credenciales incorrectas.',
-        confirmButtonColor: '#A4A05D'
+        confirmButtonColor: '#D27D60'
     });
     else Swal.close();
 });
@@ -129,7 +129,7 @@ document.getElementById('form-register').addEventListener('submit', async (e) =>
             icon: 'success',
             title: '¡Bienvenido a gen Yoga!',
             text: '¡Tu cuenta ha sido creada con éxito!.',
-            confirmButtonColor: '#A4A05D'
+            confirmButtonColor: '#D27D60'
         });
     }
 });
@@ -411,14 +411,19 @@ async function cargarHorarios() {
       <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando clases...</span>
     </div>`;
 
+    // Solo traer clases futuras (desde hoy - 2 horas para permitir ver la actual)
+    const now = new Date();
+    now.setHours(now.getHours() - 2);
+    const nowIso = now.toISOString();
+
     const { data: clases, error: errClases } =
-        await client.from('clases').select('*, profesores(*)').order('fecha_inicio');
+        await client.from('clases')
+            .select('*, profesores(*)')
+            .gte('fecha_inicio', nowIso)
+            .order('fecha_inicio');
 
-    const { data: reservas, error: errReservas } =
-        await client.from('reservas').select('*');
-
-    if (errClases || errReservas) {
-        console.error('Error cargando datos', { errClases, errReservas });
+    if (errClases) {
+        console.error('Error cargando clases', errClases);
         container.innerHTML = '';
         document.getElementById('empty-state').classList.remove('hidden');
         allClasesCache = [];
@@ -430,6 +435,18 @@ async function cargarHorarios() {
         document.getElementById('empty-state').classList.remove('hidden');
         allClasesCache = [];
         return;
+    }
+
+    // Traer solo reservas de estas clases para optimizar consumo
+    const claseIds = clases.map(c => c.id);
+    const { data: reservas, error: errReservas } =
+        await client.from('reservas')
+            .select('*')
+            .in('clase_id', claseIds);
+
+    if (errReservas) {
+        console.error('Error cargando reservas', errReservas);
+        // Continuamos con 0 reservas si falla pero hay clases
     }
     document.getElementById('empty-state').classList.add('hidden');
 
@@ -546,14 +563,14 @@ function renderizarClases() {
                 const btnText = (userBonos < 1 && !isAdmin) ? '0 Bonos' : 'RESERVAR';
 
                 btnAction = `
-                            <button onclick="reservar(${c.id})" class="bg-gradient-to-r from-cocoa to-olive text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
+                            <button onclick="reservar(${c.id})" class="bg-gradient-to-r from-terracotta to-golden text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
                                 ${btnText}
                             </button>`;
             }
 
             const adminTrash = `<button onclick="borrarClase(${c.id})" class="admin-only hidden text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash"></i></button>`;
 
-            const profesorName = c.profesores ? c.profesores.nombre : 'Staff Q19';
+            const profesorName = c.profesores ? c.profesores.nombre : 'Staff GEN Yoga';
             const profesorFoto = c.profesores && c.profesores.foto_url ? c.profesores.foto_url : null;
             const profesorAvatar = profesorFoto ? `<img src="${profesorFoto}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${profesorName.charAt(0)}</div>`;
 
@@ -635,7 +652,7 @@ async function reservar(claseId) {
         title: 'Sin bonos',
         text: 'Necesitas adquirir un bono para reservar.',
         confirmButtonText: 'Entendido',
-        confirmButtonColor: '#A4A05D'
+        confirmButtonColor: '#D27D60'
     });
 
     try {
@@ -682,9 +699,9 @@ async function cancelar(reservaId) {
         title: '¿Cancelar reserva?',
         text: "Se te devolverá el bono a tu cuenta.",
         icon: 'warning',
-        iconColor: '#A4A05D',
+        iconColor: '#D27D60',
         showCancelButton: true,
-        confirmButtonColor: '#5D4037',
+        confirmButtonColor: '#8C8658',
         cancelButtonColor: '#9ca3af',
         confirmButtonText: 'Sí, cancelar'
     });
@@ -2048,34 +2065,34 @@ function switchPublicView(viewName) {
     if (vProfesores) vProfesores.classList.add('hidden');
     if (vAsistencias) vAsistencias.classList.add('hidden');
 
-    btnHorarios.classList.remove('border-white', 'text-white');
-    btnHorarios.classList.add('border-transparent', 'text-white/60');
-    btnProfesores.classList.remove('border-white', 'text-white');
-    btnProfesores.classList.add('border-transparent', 'text-white/60');
+    btnHorarios.classList.remove('border-cocoa', 'text-cocoa');
+    btnHorarios.classList.add('border-transparent', 'text-cocoa/60');
+    btnProfesores.classList.remove('border-cocoa', 'text-cocoa');
+    btnProfesores.classList.add('border-transparent', 'text-cocoa/60');
     if (btnMisClases) {
-        btnMisClases.classList.remove('border-white', 'text-white');
-        btnMisClases.classList.add('border-transparent', 'text-white/60');
+        btnMisClases.classList.remove('border-cocoa', 'text-cocoa');
+        btnMisClases.classList.add('border-transparent', 'text-cocoa/60');
     }
 
     if (viewName === 'horarios') {
         vHorarios.classList.remove('hidden');
-        btnHorarios.classList.add('border-white', 'text-white');
-        btnHorarios.classList.remove('border-transparent', 'text-white/60');
+        btnHorarios.classList.add('border-cocoa', 'text-cocoa');
+        btnHorarios.classList.remove('border-transparent', 'text-cocoa/60');
     } else if (viewName === 'profesores') {
         if (vProfesores) {
             vProfesores.classList.remove('hidden');
             renderProfesoresPublic();
         }
-        btnProfesores.classList.add('border-white', 'text-white');
-        btnProfesores.classList.remove('border-transparent', 'text-white/60');
+        btnProfesores.classList.add('border-cocoa', 'text-cocoa');
+        btnProfesores.classList.remove('border-transparent', 'text-cocoa/60');
     } else if (viewName === 'mis-clases') {
         if (vAsistencias) {
             vAsistencias.classList.remove('hidden');
             cargarAsistenciasPorClase();
         }
         if (btnMisClases) {
-            btnMisClases.classList.add('border-white', 'text-white');
-            btnMisClases.classList.remove('border-transparent', 'text-white/60');
+            btnMisClases.classList.add('border-cocoa', 'text-cocoa');
+            btnMisClases.classList.remove('border-transparent', 'text-cocoa/60');
         }
     }
 }
@@ -2097,25 +2114,25 @@ function renderProfesoresPublic() {
         const baseColor = p.color || '#d4af37';
 
         return `
-                <div class="group relative bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 transform hover:-translate-y-2 border border-gray-100">
+                <div class="relative bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100">
                     <div class="h-[28rem] w-full relative overflow-hidden bg-gray-50 flex items-center justify-center">
-                        <div class="absolute inset-0 opacity-20 group-hover:opacity-30 transition duration-700"
+                        <div class="absolute inset-0 opacity-20"
                              style="background: radial-gradient(circle at 70% 20%, ${baseColor}, transparent 60%), radial-gradient(circle at 0% 100%, ${baseColor}, transparent 50%);">
                         </div>
-                         <span class="brand-font text-[12rem] leading-none font-bold opacity-10 select-none transform transition duration-1000 group-hover:scale-110 group-hover:rotate-6 group-hover:opacity-20"
+                         <span class="brand-font text-[12rem] leading-none font-bold opacity-10 select-none"
                                style="color: ${baseColor}; text-shadow: 0 10px 30px rgba(0,0,0,0.05);">
                             ${iniciales}
                         </span>
                         <div class="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
                         <div class="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-white via-white/90 to-transparent pt-24">
-                             <div class="relative transform translate-y-2 group-hover:translate-y-0 transition duration-500">
+                             <div class="relative">
                                 <span class="inline-block px-3 py-1 mb-3 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 bg-gray-100 rounded-full border border-gray-200">
                                     ${p.especialidad || 'Instructor'}
                                 </span>
                                 <h3 class="text-4xl brand-font font-bold text-gray-900 mb-2 leading-tight" style="color: ${baseColor}">
                                     ${p.nombre}
                                 </h3>
-                                <div class="h-0 group-hover:h-auto overflow-hidden transition-all duration-500 opacity-0 group-hover:opacity-100">
+                                <div>
                                     <p class="text-gray-500 text-sm font-light leading-relaxed mt-4 pt-4 border-t border-gray-100">
                                          ${p.descripcion || 'Instructor certificado apasionado por el bienestar y la enseñanza de técnicas avanzadas.'}
                                     </p>
@@ -2129,20 +2146,24 @@ function renderProfesoresPublic() {
 }
 
 // --- UTILIDADES EXTRA (CURSOR & SONIDO) ---
-document.addEventListener('DOMContentLoaded', () => {
-    const cursor = document.createElement('div');
-    cursor.classList.add('wink-cursor');
-    cursor.innerText = '🧘🏼';
-    document.body.appendChild(cursor);
 
-    document.addEventListener('mousemove', (e) => {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-    });
-    document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
-    document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
-    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
-    document.addEventListener('mouseover', () => cursor.style.display = 'block');
+document.addEventListener('DOMContentLoaded', () => {
+    // Platform checking here is done at the top of file via IIFE adding platform-web class
+    if (document.body.classList.contains('platform-web')) {
+        const cursor = document.createElement('div');
+        cursor.classList.add('wink-cursor');
+        cursor.innerText = '🧘🏼';
+        document.body.appendChild(cursor);
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+        document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
+        document.addEventListener('mouseover', () => cursor.style.display = 'block');
+    }
 });
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
