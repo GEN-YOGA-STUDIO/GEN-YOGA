@@ -17,14 +17,40 @@ document.addEventListener('DOMContentLoaded', () => {
         cursor.classList.add('wink-cursor');
         cursor.innerText = '🧘🏼';
         document.body.appendChild(cursor);
+
+        const cursorGlow = document.createElement('div');
+        cursorGlow.classList.add('cursor-glow');
+        document.body.appendChild(cursorGlow);
+        
+        const parallaxBg = document.getElementById('parallax-bg');
+
         document.addEventListener('mousemove', (e) => {
             cursor.style.left = e.clientX + 'px';
             cursor.style.top = e.clientY + 'px';
+
+            // Glow softly trails the cursor
+            cursorGlow.style.left = e.clientX + 'px';
+            cursorGlow.style.top = e.clientY + 'px';
+
+            if (parallaxBg) {
+                const x = (e.clientX / window.innerWidth - 0.5) * 40;
+                const y = (e.clientY / window.innerHeight - 0.5) * 40;
+                parallaxBg.style.transform = `translate(${x}px, ${y}px)`;
+            }
         });
+
         document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
         document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
-        document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
-        document.addEventListener('mouseover', () => cursor.style.display = 'block');
+        document.addEventListener('mouseout', (e) => { 
+            if (!e.relatedTarget) {
+                cursor.style.display = 'none'; 
+                cursorGlow.style.display = 'none';
+            }
+        });
+        document.addEventListener('mouseover', () => {
+            cursor.style.display = 'block';
+            cursorGlow.style.display = 'block';
+        });
     }
 
     fetchClasesLanding();
@@ -91,14 +117,14 @@ window.showHoverImage = function (side, imgName) {
             targetImg.classList.remove('hidden');
         }
 
-        container.classList.remove('opacity-0');
+        container.classList.add('active');
     }
 }
 
 window.hideHoverImage = function (side) {
     const container = document.getElementById(`hover-image-${side}`);
     if (container) {
-        container.classList.add('opacity-0');
+        container.classList.remove('active');
     }
 }
 
@@ -248,28 +274,3 @@ function renderProfesoresLanding(profesores) {
     });
 }
 
-
-window.triggerLogoFantasy = function() {
-    const video = document.getElementById('logo-video');
-    const container = document.getElementById('logo-container');
-    if (!video) return;
-
-    if (!video.paused) {
-        // Stop animation and reset to first frame
-        video.pause();
-        video.currentTime = 0;
-        container.classList.remove('fantasy-active');
-    } else {
-        // Start animation
-        video.play().then(() => {
-            container.classList.add('fantasy-active');
-        }).catch(err => {
-            console.error("Video play failed:", err);
-        });
-    }
-
-    video.onended = () => {
-        container.classList.remove('fantasy-active');
-        video.currentTime = 0;
-    };
-}

@@ -229,6 +229,136 @@
         .symbol-stack img:nth-child(5) {
             animation-delay: 12s;
         }
+
+        /* NEW: Dynamic subtle animations */
+        @keyframes gentleBreath {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.95;
+            }
+
+            50% {
+                transform: scale(1.02);
+                opacity: 1;
+            }
+        }
+
+        .animate-breath {
+            animation: gentleBreath 8s ease-in-out infinite;
+        }
+
+        @keyframes hoverFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .animate-float {
+            animation: hoverFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes fadeInUpSlow {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUpSlow 1.5s ease-out forwards;
+            opacity: 0;
+            /* Starts hidden before animation kicks in */
+        }
+
+        /* Nav Link Hover Effects */
+        .nav-link-strike {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block;
+            position: relative;
+        }
+
+        .nav-link-strike::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            transform: scaleX(0);
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: currentColor;
+            transform-origin: bottom right;
+            transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1);
+            opacity: 0.7;
+        }
+
+        .group:hover .nav-link-strike::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+
+        .group:hover .nav-link-strike {
+            letter-spacing: 0.15em;
+            transform: scale(1.05);
+            /* slightly subtler scale */
+        }
+
+        .hover-image-container {
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transform: scale(0.8) translateY(20px);
+            filter: blur(10px);
+            opacity: 0;
+        }
+
+        .hover-image-container.active {
+            opacity: 1 !important;
+            transform: scale(1) translateY(0);
+            filter: blur(0);
+        }
+
+        @keyframes slowZoomActive {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.08);
+            }
+        }
+
+        .hover-image-container.active img {
+            animation: slowZoomActive 8s ease-in-out infinite alternate;
+        }
+
+        /* Top Marquee Banner */
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .animate-marquee {
+            animation: marquee 90s linear infinite;
+            /* width needs to encompass double the text length so we only scroll to -50% to seamlessly loop */
+            display: flex;
+            width: max-content;
+        }
     </style>
 </head>
 
@@ -245,7 +375,8 @@
     </div>
 
     <!-- Ambient background shapes (ZEN & FRESH) -->
-    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div id="parallax-bg"
+        class="fixed inset-0 z-0 pointer-events-none overflow-hidden transition-transform duration-1000 ease-out">
         <div class="ambient-shape shape-1"></div>
         <div class="ambient-shape shape-2"></div>
         <div class="ambient-shape shape-3"></div>
@@ -254,48 +385,59 @@
 
     <!-- Main Content Container: Flex Column for safe stacking -->
     <div
-        class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between pt-4 pb-2 md:pt-8 md:pb-4 overflow-y-auto lg:h-screen lg:overflow-hidden">
+        class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between pb-2 md:pb-4 overflow-y-auto lg:h-screen lg:overflow-hidden">
 
-        <!-- HEADER / LOGO (Video replacement) -->
-        <div id="logo-container" onclick="triggerLogoFantasy()"
-            class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none cursor-pointer group">
+        <!-- Marquee Banner Superior -->
+        <div
+            class="w-full relative flex-shrink-0 z-60 bg-terracotta/40 backdrop-blur-lg border-b border-white/20 py-2.5 md:py-3 overflow-hidden flex items-center shadow-sm">
+            <div class="animate-marquee whitespace-nowrap flex items-center text-white pointer-events-none">
+                <span class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm">RESERVA TU
+                    PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp; PILATES REFORMER, YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
+                    LIDERADO
+                    POR PROFESIONALES SANITARIOS &nbsp;•&nbsp; ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
+                    &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp; ALBACETE</span>
+                <span class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm">RESERVA TU
+                    PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp; PILATES REFORMER, YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
+                    LIDERADO
+                    POR PROFESIONALES SANITARIOS &nbsp;•&nbsp; ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
+                    &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp; ALBACETE</span>
+                <span class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm">RESERVA TU
+                    PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp; PILATES REFORMER, YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
+                    LIDERADO
+                    POR PROFESIONALES SANITARIOS &nbsp;•&nbsp; ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
+                    &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp; ALBACETE</span>
+                <span class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm">RESERVA TU
+                    PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp; PILATES REFORMER, YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
+                    LIDERADO
+                    POR PROFESIONALES SANITARIOS &nbsp;•&nbsp; ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
+                    &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp; ALBACETE</span>
+                <span class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm">RESERVA TU
+                    PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp; PILATES REFORMER, YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
+                    LIDERADO
+                    POR PROFESIONALES SANITARIOS &nbsp;•&nbsp; ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
+                    &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp; ALBACETE</span>
+                <span class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm">RESERVA TU
+                    PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp; PILATES REFORMER, YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
+                    LIDERADO
+                    POR PROFESIONALES SANITARIOS &nbsp;•&nbsp; ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
+                    &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp; ALBACETE</span>
+            </div>
+        </div>
 
-            <!-- MOVIL: Logo imagen estática (hidden md:block lo oculta en escritorio) -->
-            <!-- ESCRITORIO: Logo video (hidden en MOVIL con "hidden md:block") -->
-            <video id="logo-video" src="img/video1.mp4" muted playsinline preload="none"
-                class="hidden md:block h-[clamp(180px,30vh,450px)] w-auto aspect-[5/2] object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-300"
-                style="filter: url(#perfectKey) contrast(1.6) brightness(1.3) saturate(1.2); clip-path: inset(0 15% 15% 15%);"></video>
+        <!-- HEADER / LOGO -->
+        <div id="logo-container"
+            class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none group">
 
-            <!-- MOVIL: Logo imagen PNG blanco (block md:hidden lo muestra solo en MOVIL) -->
-            <img id="logo-img-mobile" src="img/logo1.png" alt="GEN Yoga Logo"
-                class="block md:hidden h-[clamp(120px,20vh,250px)] mt-[2vh] w-auto object-contain drop-shadow-2xl brightness-0 invert">
-
-            <!-- Advanced SVG Filter (Corrected for high-contrast visibility) -->
-            <svg width="0" height="0" class="absolute">
-                <filter id="perfectKey" color-interpolation-filters="sRGB">
-                    <!-- Step 1: Alpha mask from luminance with softer offset -->
-                    <feColorMatrix type="matrix" values="
-                        0 0 0 0 1
-                        0 0 0 0 1
-                        0 0 0 0 1
-                        1 1 1 0 -1.5" />
-
-                    <!-- Step 2: Smoother transition for better edges -->
-                    <feComponentTransfer>
-                        <feFuncA type="table" tableValues="0 0 0 0 0.2 0.5 0.8 1" />
-                    </feComponentTransfer>
-
-                    <!-- Step 3: Composite -->
-                    <feComposite operator="in" in="SourceGraphic" result="masked" />
-                </filter>
-            </svg>
+            <!-- Logo imagen estática -->
+            <img id="logo-img" src="img/logo1.png" alt="GEN Yoga Logo"
+                class="h-[clamp(120px,20vh,250px)] md:h-[clamp(180px,30vh,450px)] mt-[2vh] md:mt-0 w-auto object-contain drop-shadow-2xl brightness-0 invert hover:scale-[1.02] transition duration-300">
         </div>
 
         <!-- CENTRAL CONTENT -->
         <div
-            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center max-w-2xl min-h-0 space-y-[2vh] my-[2vh] z-10 px-4">
+            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center max-w-2xl min-h-0 space-y-[2vh] my-[2vh] z-10 px-4 animate-fade-in-up">
 
-            <div class="w-[clamp(8rem,20vh,20rem)] h-[clamp(8rem,20vh,20rem)] my-[1vh]">
+            <div class="w-[clamp(8rem,20vh,20rem)] h-[clamp(8rem,20vh,20rem)] my-[1vh] animate-float">
                 <div class="symbol-stack">
                     <img src="img/simbolo1.png" alt="Símbolo 1">
                     <img src="img/simbolo2.png" alt="Símbolo 2">
@@ -307,9 +449,11 @@
 
             <!-- MOVIL: font-normal / ESCRITORIO: font-light (md:font-light) -->
             <p
-                class="text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-normal md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md">
+                class="text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-normal md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md animate-breath">
                 En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
-                mente encuentren su equilibrio natural
+                mente encuentren su equilibrio natural... <button onclick="openModal('historia')"
+                    class="inline-block text-inherit font-inherit underline decoration-white/50 hover:decoration-white transition-all opacity-80 hover:opacity-100 translate-y-[-0.05em] ml-1">leer
+                    más</button>
             </p>
 
             <!-- MOVIL: font-medium / ESCRITORIO: font-normal (md:font-normal) -->
@@ -336,29 +480,29 @@
         <!-- ============================================ -->
         <div class="lg:hidden w-full flex items-center justify-center px-4 mt-8 z-30 mb-8 flex-shrink-0">
             <div class="flex flex-col gap-3 w-full max-w-[320px]">
-                <button onclick="openModal('clases')"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                <button onclick="location.href='clases.html'"
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-4 md:p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
                         class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
                         CLASES <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
                     </span>
                 </button>
-                <button onclick="openModal('precios')"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                <button onclick="location.href='tarifas.html'"
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-4 md:p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
                         class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
                         TARIFAS <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
                     </span>
                 </button>
-                <button onclick="openModal('profesores')"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                <button onclick="location.href='maestros.html'"
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-4 md:p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
                         class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
                         MAESTROS <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
                     </span>
                 </button>
                 <button onclick="location.href='profile.html'"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-4 md:p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
                         class="relative z-10 flex items-center justify-between !text-white font-medium tracking-widest text-xl drop-shadow-md">
                         MI PERFIL <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
@@ -372,42 +516,39 @@
         <!-- Usa clase "hidden lg:flex" = se oculta en MOVIL -->
         <!-- ============================================ -->
         <div class="hidden lg:flex flex-col items-center gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
-            <button onclick="openModal('clases')" onmouseenter="showHoverImage('left', 'clases')"
-                onmouseleave="hideHoverImage('left')"
-                class="group transition-all duration-200 ease-out hover:scale-105 text-left w-full">
+            <button onclick="location.href='clases.html'" onmouseenter="showHoverImage('left', 'clases')"
+                onmouseleave="hideHoverImage('left')" class="group text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">CLASES</span>
+                    class="nav-link-strike text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg">CLASES</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-left"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
+                class="hover-image-container flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none opacity-0 z-0 relative">
                 <img id="img-clases" src="img/clases.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-tarifas" src="img/tarifas.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
             </div>
 
-            <button onclick="openModal('precios')" onmouseenter="showHoverImage('left', 'tarifas')"
-                onmouseleave="hideHoverImage('left')"
-                class="group transition-all duration-200 ease-out hover:scale-105 text-left w-full">
+            <button onclick="location.href='tarifas.html'" onmouseenter="showHoverImage('left', 'tarifas')"
+                onmouseleave="hideHoverImage('left')" class="group text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">TARIFAS</span>
+                    class="nav-link-strike text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg">TARIFAS</span>
             </button>
         </div>
 
         <!-- ESCRITORIO: Navegación lateral derecha -->
         <div class="hidden lg:flex flex-col items-center gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
-            <button onclick="openModal('profesores')" onmouseenter="showHoverImage('right', 'maestros')"
-                onmouseleave="hideHoverImage('right')"
-                class="group transition-all duration-200 ease-out hover:scale-105 text-right w-full">
+            <button onclick="location.href='maestros.html'" onmouseenter="showHoverImage('right', 'maestros')"
+                onmouseleave="hideHoverImage('right')" class="group text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">MAESTROS</span>
+                    class="nav-link-strike text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg">MAESTROS</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-right"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
+                class="hover-image-container flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none opacity-0 z-0 relative">
                 <img id="img-maestros" src="img/maestros.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-perfil" src="img/miperfil.png"
@@ -415,10 +556,9 @@
             </div>
 
             <a href="profile.html" onmouseenter="showHoverImage('right', 'perfil')"
-                onmouseleave="hideHoverImage('right')"
-                class="group transition-all duration-200 ease-out hover:scale-105 block text-right w-full">
+                onmouseleave="hideHoverImage('right')" class="group block text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">MI
+                    class="nav-link-strike text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg">MI
                     PERFIL</span>
             </a>
         </div>
@@ -447,11 +587,12 @@
                 </div>
 
                 <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-center text-white md:text-right">
-                    <a href="#" class="text-white hover:text-white transition">Terms & Conditions</a>
+                    <a href="politica-privacidad.html" class="text-white hover:text-white transition">POLÍTICA DE
+                        PRIVACIDAD</a>
                     <span class="hidden md:inline text-white">|</span>
                     <span class="text-white">© 2026 GEN YOGA</span>
                     <span class="hidden md:inline text-white">·</span>
-                    <span class="text-white">V2.8.4</span>
+                    <span class="text-white">V2.10.0</span>
                 </div>
             </div>
         </footer>
@@ -471,67 +612,136 @@
         </button>
 
         <!-- Content for Modals (Same IDs as before for JS compatibility) -->
-        <div id="modal-clases"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
-            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
-                Horario Semanal
-            </h2>
-            <div id="landing-clases-container"
-                class="space-y-6 [&>*]:bg-white/80 [&>*]:backdrop-blur-sm [&>*]:rounded-xl [&>*]:border-white/10">
-                <!-- Clases dinámicas aquí -->
-            </div>
-        </div>
-
-        <div id="modal-precios"
+        <div id="modal-historia"
             class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
-            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
-                Tarifas</h2>
-            <!-- Rate cards content... kept simple for now as focus is on main page -->
-            <div class="grid md:grid-cols-3 gap-8 px-4 items-center">
-                <!-- Side card -->
-                <div class="p-10 border border-white/20 bg-white/30 backdrop-blur-sm text-center rounded-2xl">
-                    <h3 class="text-2xl font-serif text-white/90 mb-2">Clase individual</h3>
-                    <div class="text-5xl font-serif text-white/80 mb-8">XX€</div>
-                </div>
-                <!-- CENTRAL CARD — Most prominent -->
+            <div class="max-w-4xl mx-auto">
+                <h2
+                    class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-12 text-center drop-shadow-md uppercase tracking-[0.1em]">
+                    GEN YOGA
+                </h2>
                 <div
-                    class="relative p-12 border-2 border-white bg-white/50 backdrop-blur-md text-center rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.3)] scale-110 z-10">
-                    <div
-                        class="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-cocoa text-[10px] font-bold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full shadow-md">
-                        ★ Más Popular</div>
-                    <h3 class="text-3xl font-serif text-cocoa mb-3 mt-2">Pack 10</h3>
-                    <div class="text-6xl font-bold font-serif text-cocoa mb-8">XX€</div>
-                </div>
-                <!-- Side card -->
-                <div class="p-10 border border-white/20 bg-white/30 backdrop-blur-sm text-center rounded-2xl">
-                    <h3 class="text-2xl font-serif text-white/90 mb-2">Ilimitado mensual</h3>
-                    <div class="text-5xl font-serif text-white/80 mb-8">XX€</div>
+                    class="space-y-8 text-white/95 text-[clamp(1.1rem,2.2vh,1.4rem)] leading-relaxed font-light drop-shadow-sm bg-black/10 p-6 md:p-10 lg:p-14 rounded-2xl border border-white/10 backdrop-blur-sm">
+
+                    <section class="space-y-4">
+                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-2">Historia de la marca</h3>
+                        <p>
+                            Estudio GEN Yoga es un espacio de bienestar individual y colectivo, nacido del compromiso
+                            con la salud física, mental y emocional desde el autoconocimiento y la capacitación como
+                            estrategia preventiva y sostenible.
+                        </p>
+                        <ul class="list-disc pl-5 md:pl-8 space-y-3 opacity-90 my-4">
+                            <li><strong>GEN</strong> tiene diversas connotaciones, una de ellas con el fundamento
+                                biológico de la salud. En ese sentido, estudio GEN Yoga es el primer centro de bienestar
+                                integrativo de Castilla-La Mancha liderado por una farmacéutica, Ana Isabel Meroño,
+                                instructora de yoga y especializada en nutrición, calidad del sueño, así como
+                                disciplinas orientales del bienestar. Desde tus GENes hasta tus emociones.</li>
+                            <li>Ana también gestiona la Farmacia Q19, a solo unos pasos del Estudio GEN Yoga, por lo
+                                cual ambos espacios contribuyen a la idea del ecosistema de la salud, tanto preventiva
+                                (GEN Yoga) como farmacológica (Q19), desde el rigor profesional y la atención adaptada a
+                                cada cliente.</li>
+                        </ul>
+                        <p>
+                            Estas sinergias no solo contribuyen al bienestar individual, sino al comunitario, haciendo
+                            del barrio y su entorno un lugar con más oportunidades y mejores servicios para tu salud.
+                        </p>
+                        <p>
+                            Creemos que la medicina convencional es imprescindible, pero no suficiente por sí sola, y
+                            por eso creamos un espacio donde las personas puedan escucharse, cuidarse y acompañarse de
+                            manera consciente y activa. Un proceso de presencialidad del bienestar en tiempo y espacios.
+                        </p>
+                        <p>
+                            Estudio GEN Yoga surge como una referencia que amplía la concepción del bienestar, tanto por
+                            sus servicios, yoga (y también pilates), como por sus profesionales (médicos, farmacéuticos,
+                            psicólogos, fisioterapeutas, nutricionistas), conectando GENeraciones. Para ello fomentamos
+                            la reGENeración personal y colectiva, esto es, la salud física, mental y emocional,
+                            promoviendo tu bienestar integral a través de la experiencia corporal, la atención
+                            consciente y los vínculos humanos.
+                        </p>
+                    </section>
+
+                    <section class="space-y-4">
+                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-4 border-t border-white/20">Misión
+                        </h3>
+                        <p>
+                            Acompañar a las personas a lograr su bienestar integral a través de prácticas físicas y
+                            espirituales, desde el yoga, y mediante asanas, respiración consciente, música, meditación y
+                            diálogo en un espacio profesional, humano y accesible.
+                        </p>
+                        <p>
+                            Lograr una atención personalizada, multidisciplinar y continuada, ampliando tus horizontes
+                            de salud preventiva y conectando contigo, tu grupo, tu barrio, tu ciudad, tu tierra.
+                        </p>
+                    </section>
+
+                    <section class="space-y-4">
+                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-4 border-t border-white/20">Visión
+                        </h3>
+                        <p>
+                            Ser un espacio inclusivo e interGENeracional que inspire confianza y GENere bienestar,
+                            otorgando para ello herramientas de autocuidado, capacitando al cliente para superar sus
+                            limitaciones, y conectando GENeraciones y saberes.
+                        </p>
+                        <p>
+                            Estudio GEN Yoga aspira a ofrecer una atención plena al usuario – al prójimo, en sinergia
+                            con Farmacia Q19, para contribuir a la reGENeración personal y colectiva de quienes lo
+                            forman, sus clientes, sus profesionales, su dirección, haciendo de Albacete una comunidad
+                            activa y atractiva, comprometida con la salud integral.
+                        </p>
+                    </section>
+
+                    <section class="space-y-4">
+                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-4 border-t border-white/20">
+                            Propuesta de Valor</h3>
+                        <ul class="list-none space-y-6">
+                            <li>
+                                <span
+                                    class="font-bold text-white tracking-wide uppercase text-[clamp(1rem,1.8vh,1.2rem)] block mb-1">•
+                                    Prevención e Integración:</span>
+                                <span class="opacity-90">combina yoga y prácticas conscientes, físicas y espirituales,
+                                    con un enfoque riguroso, desde la ética clínica y la evidencia farmacológica, por
+                                    ejemplo, la Respiración SOMA o el yoga terapéutico, promoviendo salud real y
+                                    responsable.</span>
+                                <ul class="list-disc pl-8 mt-2 opacity-80 text-[clamp(1rem,1.8vh,1.2rem)]">
+                                    <li>Para ello, atiende las comorbilidades que causan malestar, dolor o enfermedad,
+                                        como la alimentación, el estado físico y mental, y la gestión emocional.</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <span
+                                    class="font-bold text-white tracking-wide uppercase text-[clamp(1rem,1.8vh,1.2rem)] block mb-1">•
+                                    Acompañamiento Personalizado:</span>
+                                <span class="opacity-90">Brinda confianza, seguridad y respeto mediante procesos
+                                    individuales y continuados para cada persona.</span>
+                                <ul class="list-disc pl-8 mt-2 opacity-80 text-[clamp(1rem,1.8vh,1.2rem)]">
+                                    <li>Para ello, pone a disposición del cliente diversas opciones y diversos
+                                        profesionales que complementan los servicios del ciclo de vida en bienestar.
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <span
+                                    class="font-bold text-white tracking-wide uppercase text-[clamp(1rem,1.8vh,1.2rem)] block mb-1">•
+                                    Comunidad y Continuidad:</span>
+                                <span class="opacity-90">Fortalece el vínculo entre estudio, farmacia y comunidad,
+                                    GENerando bienestar, seguimiento y sentido de pertenencia.</span>
+                                <ul class="list-disc pl-8 mt-2 opacity-80 text-[clamp(1rem,1.8vh,1.2rem)]">
+                                    <li>Para ello, ofrece recursos digitales, como una aplicación móvil única, y
+                                        presenciales, como la atención en GEN Yoga y Farmacia Q19, ambas en una misma
+                                        calle, mismo barrio, misma ciudad, donde converGEN perfiles y saberes
+                                        GENeracionales diversos.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </section>
                 </div>
             </div>
         </div>
-
-        <div id="modal-profesores"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
-            <h2 class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-16 text-center drop-shadow-md">
-                Maestros
-            </h2>
-            <div id="landing-profesores-container"
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [&>*]:bg-white/80 [&>*]:backdrop-blur-sm [&>*]:rounded-3xl [&>*]:p-6 [&>*]:border-white/40">
-                <!-- Teachers content -->
-            </div>
-        </div>
-
 
     </div>
 
     <!-- Scripts -->
     <script src="app.js" defer></script>
     <script>
-        // Precargar video solo en escritorio
-        if (window.innerWidth >= 768) {
-            const v = document.getElementById('logo-video');
-            if (v) v.preload = 'auto';
-        }
         // Re-initialize Lucide icons cuando cargue
         document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
     </script>
