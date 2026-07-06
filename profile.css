@@ -70,23 +70,92 @@ h6,
     display: none !important;
 }
 
-.is-admin .admin-only {
+.is-admin .admin-only:not(.hidden) {
     display: block !important;
 }
 
-.is-admin .admin-flex {
+.is-admin .admin-flex:not(.hidden) {
     display: flex !important;
+}
+
+.is-profesor .staff-only {
+    display: block !important;
+}
+
+.is-profesor .staff-flex {
+    display: flex !important;
+}
+
+.is-admin .client-only,
+.is-profesor .client-only {
+    display: none !important;
+}
+
+.profile-header-actions {
+    gap: 0.75rem;
+}
+
+.profile-header-avatar {
+    display: none;
+}
+
+.profile-header-meta {
+    text-align: right;
+}
+
+.profile-header-name {
+    max-width: 7.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.profile-main-content {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+    .profile-header-actions {
+        gap: 1.5rem;
+    }
+
+    .profile-header-avatar {
+        display: flex;
+    }
+
+    .profile-header-meta {
+        text-align: left;
+    }
+
+    .profile-header-name {
+        max-width: 11.25rem;
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .profile-header-name {
+        max-width: 14.375rem;
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+
+    .profile-main-content {
+        padding-top: 1.5rem;
+        padding-bottom: 3rem;
+    }
 }
 
 /* Animaciones */
 .fade-in {
-    animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(8px);
     }
 
     to {
@@ -179,6 +248,129 @@ h6,
 .calendar-day.today {
     border: 2px solid #D27D60;
     font-weight: bold;
+}
+
+.calendar-day.inicio-calendar-day {
+    aspect-ratio: auto;
+    min-height: 5.25rem;
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.45rem;
+    overflow: hidden;
+}
+
+.calendar-day.inicio-calendar-day:hover:not(.disabled):not(.other-month) {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.9);
+    color: #26160c;
+    border-color: rgba(155, 123, 55, 0.45);
+    box-shadow: 0 8px 20px rgba(38, 22, 12, 0.08);
+}
+
+.calendar-day.inicio-calendar-day.selected {
+    background: #ffffff !important;
+    color: #26160c !important;
+    border: 2px solid #9b7b37 !important;
+    box-shadow: 0 10px 24px rgba(155, 123, 55, 0.18);
+}
+
+.calendar-day.inicio-calendar-day.has-reservations {
+    background: #ffffff;
+    border-color: rgba(155, 123, 55, 0.22);
+    box-shadow: 0 8px 18px rgba(38, 22, 12, 0.08);
+}
+
+.calendar-day-number {
+    width: 1.55rem;
+    height: 1.55rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    font-weight: 900;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.calendar-day.today .calendar-day-number {
+    background: rgba(225, 101, 78, 0.12);
+    color: #e1654e;
+}
+
+.calendar-day.selected .calendar-day-number {
+    background: #9b7b37;
+    color: #ffffff;
+}
+
+.calendar-reservation-list {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow: hidden;
+}
+
+.calendar-reservation-pill {
+    width: 100%;
+    min-width: 0;
+    border-radius: 0.55rem;
+    padding: 0.22rem 0.38rem;
+    font-size: 0.65rem;
+    line-height: 1.05;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid transparent;
+    box-shadow: 0 4px 10px rgba(38, 22, 12, 0.05);
+}
+
+.calendar-reservation-pill.yoga {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.28);
+}
+
+.calendar-reservation-pill.psicologia {
+    color: #1d4ed8;
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.28);
+}
+
+.calendar-reservation-pill.nutricion {
+    color: #6d28d9;
+    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(139, 92, 246, 0.28);
+}
+
+.calendar-reservation-more {
+    color: rgba(38, 22, 12, 0.55);
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    padding-left: 0.15rem;
+}
+
+@media (max-width: 640px) {
+    .calendar-day.inicio-calendar-day {
+        min-height: 4.25rem;
+        padding: 0.28rem;
+        gap: 0.18rem;
+    }
+
+    .calendar-day-number {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 0.75rem;
+    }
+
+    .calendar-reservation-pill {
+        font-size: 0.55rem;
+        padding: 0.16rem 0.22rem;
+    }
 }
 
 /* ======================================================= */
@@ -276,4 +468,414 @@ body:not(.platform-android) .android-only {
 /* Mostrar en CUALQUIER App Móvil (No Web) */
 body.platform-web .mobile-only {
     display: none !important;
+}
+
+/* ======================================================= */
+/* 7. INDICADORES MULTI-COLOR (Versión 3.0)                */
+/* ======================================================= */
+.calendar-dots {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.calendar-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+}
+
+.calendar-dot.yoga {
+    background-color: #10B981; /* Green */
+}
+
+.calendar-dot.psicologia {
+    background-color: #3B82F6; /* Blue */
+}
+
+.calendar-dot.nutricion {
+    background-color: #8B5CF6; /* Purple */
+}
+
+.calendar-day.selected .calendar-dot {
+    background-color: #ffffff !important;
+}
+
+/* Indicadores de calendarios específicos */
+.calendar-day.has-psicologia::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    width: 5px;
+    height: 5px;
+    background: #3B82F6;
+    border-radius: 50%;
+}
+
+.calendar-day.has-nutricion::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    width: 5px;
+    height: 5px;
+    background: #8B5CF6;
+    border-radius: 50%;
+}
+
+.calendar-day.selected.has-psicologia::after,
+.calendar-day.selected.has-nutricion::after {
+    background: #ffffff;
+}
+
+/* Estilos para sub-filtros de profesionales */
+.filtro-prof-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(38, 22, 12, 0.2);
+    color: rgba(38, 22, 12, 0.6);
+    background-color: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filtro-prof-btn:hover {
+    background-color: rgba(38, 22, 12, 0.05);
+    color: #26160c;
+}
+
+.filtro-prof-btn.active {
+    background-color: #26160c;
+    color: #ffffff;
+    border-color: #26160c;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 1024px) {
+    .profile-calendar-main {
+        grid-column: span 8 / span 8;
+    }
+
+    .profile-calendar-side {
+        grid-column: span 4 / span 4;
+    }
+}
+
+.inicio-booking-card {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    background: rgba(255, 255, 255, 0.72);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.inicio-booking-card:hover {
+    background: rgba(211, 202, 180, 0.12);
+}
+
+.inicio-booking-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.inicio-booking-time {
+    width: 4.65rem;
+    min-width: 4.65rem;
+    min-height: 4.65rem;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    box-shadow: 0 8px 18px rgba(38, 22, 12, 0.07);
+}
+
+.inicio-booking-time span {
+    font-size: 0.58rem;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.28rem;
+}
+
+.inicio-booking-time strong {
+    font-size: 1.08rem;
+    line-height: 1;
+    font-weight: 900;
+}
+
+.inicio-booking-time.yoga {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.28);
+}
+
+.inicio-booking-time.psicologia {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.28);
+}
+
+.inicio-booking-time.nutricion {
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.28);
+}
+
+.inicio-booking-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.inicio-booking-date {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    color: #9b7b37;
+    background: rgba(155, 123, 55, 0.09);
+    border: 1px solid rgba(155, 123, 55, 0.18);
+    border-radius: 0.55rem;
+    padding: 0.22rem 0.5rem;
+    font-size: 0.68rem;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.45rem;
+}
+
+.inicio-booking-title {
+    color: #26160c;
+    font-size: 1.25rem;
+    line-height: 1.1;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.inicio-booking-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+    margin-top: 0.55rem;
+}
+
+.inicio-booking-professional {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 100%;
+    min-width: 0;
+    background: rgba(211, 202, 180, 0.16);
+    border: 1px solid rgba(38, 22, 12, 0.08);
+    border-radius: 9999px;
+    padding: 0.25rem 0.65rem 0.25rem 0.25rem;
+    color: rgba(38, 22, 12, 0.72);
+    font-size: 0.78rem;
+    font-weight: 900;
+}
+
+.inicio-booking-professional span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inicio-booking-avatar {
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 9999px;
+    overflow: hidden;
+    border: 1px solid rgba(38, 22, 12, 0.08);
+    flex: 0 0 auto;
+}
+
+.inicio-booking-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #9b7b37;
+    background: rgba(155, 123, 55, 0.1);
+    border: 1px solid rgba(155, 123, 55, 0.2);
+    border-radius: 0.55rem;
+    padding: 0.32rem 0.55rem;
+    font-size: 0.68rem;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.inicio-booking-description {
+    margin-top: 0.5rem;
+    color: rgba(38, 22, 12, 0.55);
+    font-size: 0.78rem;
+    line-height: 1.25;
+}
+
+.inicio-booking-cancel {
+    width: 100%;
+    min-height: 2.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    color: rgba(38, 22, 12, 0.55);
+    background: #f8f6f2;
+    border: 1px solid rgba(38, 22, 12, 0.12);
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    box-shadow: 0 7px 16px rgba(38, 22, 12, 0.06);
+    transition: all 0.2s ease;
+}
+
+.inicio-booking-cancel:hover {
+    color: #dc2626;
+    background: #fff5f5;
+    border-color: rgba(220, 38, 38, 0.25);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+    .inicio-booking-main {
+        gap: 0.7rem;
+    }
+
+    .inicio-booking-time {
+        width: 4rem;
+        min-width: 4rem;
+        min-height: 4rem;
+    }
+
+    .inicio-booking-title {
+        font-size: 1.08rem;
+    }
+}
+
+/* Helper visibility for Admin view vs Client view */
+.is-admin-visible {
+    display: none !important;
+}
+.is-admin .is-admin-visible {
+    display: block !important;
+}
+.is-admin .is-admin-hidden {
+    display: none !important;
+}
+.is-admin #view-inicio {
+    display: none !important;
+}
+
+/* Reducir el tamaño del footer en modo administrador */
+.is-admin footer {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+.is-admin footer .w-10 {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    margin-bottom: 0.4rem !important;
+    padding: 0.3rem !important;
+}
+.is-admin footer p.brand-font {
+    font-size: 1rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+/* ======================================================= */
+/* 8. CORRECCIÓN DE BOTONES SWEETALERT (VISIBILIDAD)       */
+/* ======================================================= */
+.swal2-popup .swal2-styled.swal2-confirm {
+    background-color: #8C8658 !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    border-radius: 0.75rem !important;
+    padding: 0.625rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    transition: all 0.2s ease !important;
+}
+
+.swal2-popup .swal2-styled.swal2-confirm:hover {
+    background-color: #76704b !important; /* Tonalidad verde oliva más oscura */
+    transform: translateY(-1px) !important;
+}
+
+.swal2-popup .swal2-styled.swal2-cancel {
+    background-color: #e5e7eb !important; /* Gris claro */
+    color: #374151 !important; /* Texto gris oscuro */
+    font-weight: bold !important;
+    border-radius: 0.75rem !important;
+    padding: 0.625rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.swal2-popup .swal2-styled.swal2-cancel:hover {
+    background-color: #d1d5db !important; /* Gris más oscuro */
+    color: #1f2937 !important;
+}
+
+.swal2-popup .swal2-styled.swal2-deny {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    border-radius: 0.75rem !important;
+    padding: 0.625rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.swal2-popup .swal2-styled.swal2-deny:hover {
+    background-color: #dc2626 !important;
+}
+
+/* Botones de Abono Mensual */
+.btn-activar-mensual {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+.btn-activar-mensual:hover {
+    background-color: #059669 !important;
+}
+
+.btn-desactivar-mensual {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+.btn-desactivar-mensual:hover {
+    background-color: #dc2626 !important;
+}
+
+.btn-solicitar-mensual {
+    background-color: #e1654e !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+
+.btn-solicitar-mensual:hover {
+    background-color: #26160c !important;
+    transform: translateY(-1px);
 }

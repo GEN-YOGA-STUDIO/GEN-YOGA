@@ -1,0 +1,922 @@
+// GEN Yoga Internationalization Module (i18n.js)
+// Handles switching between Spanish (ES) and English (EN) dynamically.
+
+const translations = {
+    es: {
+        // Navigation & Menu
+        "nav_sessions": "SESIONES",
+        "nav_clases": "CLASES",
+        "nav_tarifas": "TARIFAS",
+        "nav_maestros": "MAESTROS",
+        "nav_profesores": "PROFESORES",
+        "nav_perfil": "MI PERFIL",
+        "nav_inicio": "Inicio",
+        "btn_back_home": "Inicio",
+        "btn_prof_all": "Todos",
+        "month_0": "Enero",
+        "month_1": "Febrero",
+        "month_2": "Marzo",
+        "month_3": "Abril",
+        "month_4": "Mayo",
+        "month_5": "Junio",
+        "month_6": "Julio",
+        "month_7": "Agosto",
+        "month_8": "Septiembre",
+        "month_9": "Octubre",
+        "month_10": "Noviembre",
+        "month_11": "Diciembre",
+
+        // index.html Central Hero
+        "hero_quote": "En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu mente encuentren su equilibrio natural...",
+        "hero_btn_more": "leer más",
+        "hero_subquote": "Tu refugio, tu energía, tu momento",
+        "marquee_text": "ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES",
+
+        // index.html Modals
+        "modal_history_title": "GEN YOGA",
+        "modal_history_sec1_title": "Historia de la marca",
+        "modal_history_sec1_p1": "Estudio GEN Yoga es un espacio de bienestar individual y colectivo, nacido del compromiso con la salud física, mental y emocional desde el autoconocimiento y la capacitación como estrategia preventiva y sostenible.",
+        "modal_history_sec1_bullet1": "<strong>GEN</strong> tiene diversas connotaciones, una de ellas con el fundamento biológico de la salud. En ese sentido, estudio GEN Yoga es el primer centro de bienestar integrativo de Castilla-La Mancha liderado por una farmacéutica, Ana Isabel Meroño, instructora de yoga y especializada en nutrición, calidad del sueño, así como disciplinas orientales del bienestar. Desde tus GENes hasta tus emociones.",
+        "modal_history_sec1_bullet2": "Ana también gestiona la Farmacia Q19, a solo unos pasos del Estudio GEN Yoga, por lo cual ambos espacios contribuyen a la idea del ecosistema de la salud, tanto preventiva (GEN Yoga) como farmacológica (Q19), desde el rigor profesional y la atención adaptada a cada cliente.",
+        "modal_history_sec1_p2": "Estas sinergias no solo contribuyen al bienestar individual, sino al comunitario, haciendo del barrio y su entorno un lugar con más oportunidades y mejores servicios para tu salud.",
+        "modal_history_sec1_p3": "Creemos que la medicina convencional es imprescindible, pero no suficiente por sí sola, y por eso creamos un espacio donde las personas puedan escucharse, cuidarse y acompañarse de manera consciente y activa. Un proceso de presencialidad del bienestar en tiempo y espacios.",
+        "modal_history_sec1_p4": "Estudio GEN Yoga surge como una referencia que amplía la concepción del bienestar, tanto por sus servicios de yoga, como por sus profesionales (médicos, farmacéuticos, psicólogos, fisioterapeutas, nutricionistas), conectando GENeraciones. Para ello fomentamos la reGENeración personal y colectiva, esto es, la salud física, mental y emocional, promoviendo tu bienestar integral a través de la experiencia corporal, la atención consciente y los vínculos humanos.",
+        "modal_history_mision_title": "Misión",
+        "modal_history_mision_p1": "Acompañar a las personas a lograr su bienestar integral a través de prácticas físicas y espirituales, desde el yoga, y mediante asanas, respiración consciente, música, meditación y diálogo en un espacio profesional, humano y accesible.",
+        "modal_history_mision_p2": "Lograr una atención personalizada, multidisciplinar y continuada, ampliando tus horizontes de salud preventiva y conectando contigo, tu grupo, tu barrio, tu ciudad, tu tierra.",
+        "modal_history_vision_title": "Visión",
+        "modal_history_vision_p1": "Ser un espacio inclusivo e interGENeracional que inspire confianza y GENere bienestar, otorgando para ello herramientas de autocuidado, capacitando al cliente para superar sus limitaciones, y conectando GENeraciones y saberes.",
+        "modal_history_vision_p2": "Estudio GEN Yoga aspira a ofrecer una atención plena al usuario – al prójimo, en sinergia con Farmacia Q19, para contribuir a la reGENeración personal y colectiva de quienes lo forman, sus clientes, sus profesionales, su dirección, haciendo de Albacete una comunidad activa y atractiva, comprometida con la salud integral.",
+        "modal_history_value_title": "Propuesta de Valor",
+        "modal_history_value_bullet1_title": "• Prevención e Integración:",
+        "modal_history_value_bullet1_desc": "combina yoga y prácticas conscientes, físicas y espirituales, con un enfoque riguroso, desde la ética clínica y la evidencia farmacológica, por ejemplo, la Respiración SOMA o el yoga terapéutico, promoviendo salud real y responsable.",
+        "modal_history_value_bullet1_sub": "Para ello, atiende las comorbilidades que causan malestar, dolor o enfermedad, como la alimentación, el estado físico y mental, y la gestión emocional.",
+        "modal_history_value_bullet2_title": "• Acompañamiento Personalizado:",
+        "modal_history_value_bullet2_desc": "Brinda confianza, seguridad y respeto mediante procesos individuales y continuados para cada persona.",
+        "modal_history_value_bullet2_sub": "Para ello, pone a disposición del cliente diversas opciones y diversos profesionales que complementan los servicios del ciclo de vida en bienestar.",
+        "modal_history_value_bullet3_title": "• Comunidad y Continuidad:",
+        "modal_history_value_bullet3_desc": "Fortalece el vínculo entre estudio, farmacia y comunidad, GENerando bienestar, seguimiento y sentido de pertenencia.",
+        "modal_history_value_bullet3_sub": "Para ello, ofrece recursos digitales, como una aplicación móvil única, y presenciales, como la atención en GEN Yoga y Farmacia Q19, ambas en una misma calle, mismo barrio, misma ciudad, donde converGEN perfiles y saberes GENeracionales diversos.",
+        "footer_privacy": "Política de privacidad",
+
+        // clases.html (Sessions list)
+        "classes_title": "Escoge tus clases",
+        "classes_subtitle": "Descubre nuestros estilos de yoga",
+        "classes_card_vinyasa_title": "Vinyasa Flow",
+        "classes_vinyasa_tagline": "¿Listx para fluir sin parar?",
+        "classes_card_vinyasa_desc": "Una clase dinámica donde cada respiración guía el movimiento. Conecta posturas en secuencias fluidas, suma fuerza, equilibrio y enfoque mientras tu cuerpo se mueve al ritmo de tu propia energía.",
+        "classes_card_hombres_title": "Yoga para Hombres",
+        "classes_hombres_tagline": "Fuerza, calma y espacio propio.",
+        "classes_card_hombres_desc": "Un espacio pensado para fortalecer cuerpo y mente sin presión ni comparaciones. Trabaja flexibilidad, fuerza y respiración consciente en un ambiente cómodo, directo y hecho a tu medida.",
+        "classes_card_restaurativa_title": "Yoga Restaurativa Suave",
+        "classes_restaurativa_tagline": "Suelta el día, respira despacio.",
+        "classes_card_restaurativa_desc": "Una práctica lenta y consciente diseñada para liberar tensión acumulada. Con posturas sostenidas y respiración profunda, esta clase invita a tu cuerpo y mente a descansar de verdad.",
+        "classes_cta_title": "¿No sabes por<br>dónde empezar?",
+        "classes_cta_desc": "<strong>Reserva</strong> tu primera clase y nosotros te guiamos desde ahí. Nuestros instructores te acompañarán en cada paso de tu camino.",
+        "classes_cta_btn": "Reservar mi primera clase",
+        "classes_scroll_arrow_text": "Ver más clases",
+        "classes_scroll_arrow_doubt": "¿Tienes dudas?",
+        "classes_tab_vinyasa": "VINYASA",
+        "classes_tab_hombres": "HOMBRES",
+        "classes_tab_restaurativa": "RESTAURATIVA",
+
+        // tarifas.html (Pricing)
+        "rates_title": "Tarifas",
+        "rates_tab_yoga": "Clases",
+        "rates_tab_psy": "Consultas",
+        "rates_tab_workshops": "Talleres",
+        "rates_suelta_title": "Clase suelta",
+        "rates_suelta_cat": "Yoga",
+        "rates_suelta_feat1": "1 clase de yoga",
+        "rates_suelta_feat2": "Reserva desde tu perfil o recepción",
+        "rates_suelta_feat3": "Cancelación hasta 12h antes de la clase",
+        "rates_suelta_btn": "Comprar clase",
+        "rates_mensual_badge": "★ Ahorra 25%",
+        "rates_mensual_title": "Bono Mensual",
+        "rates_mensual_cat": "Plan Flexible",
+        "rates_mensual_feat1": "2 clases cada semana (Lunes-Viernes)",
+        "rates_mensual_feat2": "Hasta 8 clases al mes en total",
+        "rates_mensual_feat3": "Reserva desde tu perfil o recepción",
+        "rates_mensual_feat4": "Clases sueltas para sesiones extra",
+        "rates_mensual_btn": "Adquirir Plan",
+        "rates_per_month": "/mes",
+        "rates_psy_title": "Psicología",
+        "rates_psy_cat": "Bienestar y salud mental",
+        "rates_psy_sub": "Sesión individual",
+        "rates_psy_desc": "Consulta personalizada para cuidar tu bienestar y salud mental. Asignación directa por administración.",
+        "rates_psy_contact_recep": "Consultar con recepción las tarifas",
+        "rates_psy_btn": "Contactar con Admin",
+        "rates_nut_title": "Nutrición",
+        "rates_nut_cat": "Alimentación y salud física",
+        "rates_nut_sub1": "Evaluación Inicial",
+        "rates_nut_desc1": "Analizamos tu punto de partida, objetivos e historial de hábitos para diseñar tu estrategia de nutrición.",
+        "rates_nut_sub2": "Sesión de Seguimiento",
+        "rates_nut_desc2": "Evaluamos tus progresos diarios y adaptamos tus pautas para consolidar hábitos saludables duraderos.",
+        "rates_talleres_title": "Talleres Temáticos",
+        "rates_talleres_cat": "Próximamente",
+        "rates_talleres_desc": "Sesiones especiales para profundizar en diferentes estilos y prácticas de yoga, meditación y bienestar holístico. Las temáticas, fechas e inscripciones se anunciarán muy pronto en recepción.",
+        "rates_talleres_contact_recep": "Consultar tarifas",
+        "rates_talleres_btn": "Saber Más",
+
+        "teachers_title": "Nuestros Profesionales",
+        "teachers_subtitle": "Un equipo dedicado a guiar tu camino de bienestar integral",
+        "teachers_read_more": "Saber más",
+        "teachers_read_less": "Saber menos",
+
+        // profile.html (Client Profile & Login)
+        "profile_slogan": "Tu espacio para el bienestar integral, la salud física y la paz mental.",
+        "profile_categories": "Clases de Yoga • Consultas de Psicología y Nutrición • Talleres",
+        "auth_welcome": "Bienvenido",
+        "auth_login_subtitle": "Accede a tu cuenta",
+        "auth_create_subtitle": "Únete a la comunidad",
+        "auth_back_login": "← Volver a Iniciar Sesión",
+        "profile_title": "Área de Clientes",
+        "profile_desc": "Gestiona tus clases, consultas y bienestar",
+        "profile_btn_logout": "Cerrar Sesión",
+        "login_card_title": "Iniciar Sesión",
+        "login_email_label": "Dirección de Email",
+        "login_password_label": "Contraseña",
+        "login_btn_submit": "Inicio sesión &rarr;",
+        "login_no_account": "¿Aún no tienes cuenta?",
+        "login_btn_register": "Regístrate gratis aquí",
+        "register_card_title": "Crear Cuenta",
+        "register_name_label": "Nombre",
+        "register_lastname_label": "Apellidos",
+        "register_email_label": "Email",
+        "register_password_label": "Contraseña (mín. 6 caracteres)",
+        "register_btn_submit": "Registrarse &rarr;",
+        "register_has_account": "¿Ya tienes una cuenta?",
+        "register_btn_login": "Inicia sesión aquí",
+        "profile_tab_inicio": "INICIO",
+        "profile_tab_horarios": "CLASES",
+        "profile_tab_psicologia": "CONSULTAS",
+        "profile_tab_nutricion": "NUTRICIÓN",
+        "profile_tab_profesores": "MAESTROS",
+        "profile_tab_configuracion": "Configuración",
+        "profile_tab_asistencias": "Asistencias",
+        "profile_btn_edit_profile": "Editar perfil",
+        "profile_saldos_label": "Mis saldos",
+        "profile_tab_my_calendar": "Mi calendario",
+        "profile_tab_students_per_class": "Alumnos por clase",
+        "common_yoga": "Yoga",
+        "common_classes": "Clases",
+        "common_class": "Clase",
+        "common_psychology": "Psicología",
+        "common_nutrition": "Nutrición",
+        "common_workshops": "Talleres",
+        "common_teacher": "Profesor",
+        "common_instructor": "Instructor",
+        "common_professional": "Profesional",
+        "common_appointment": "Cita",
+        "common_consultation": "Consulta",
+        "common_consultations": "Consultas",
+        "common_single_class": "Clase suelta",
+        "common_single_classes": "Clases sueltas",
+        "common_monthly_plan": "Bono Mensual",
+        "common_monthly_plan_active": "Bono Mensual Activo",
+        "common_monthly_plan_inactive": "Bono Mensual Inactivo",
+        "common_inactive": "Inactivo",
+        "profile_loading_classes": "Cargando clases...",
+        "profile_loading_consultations": "Cargando consultas...",
+        "profile_loading_nutrition": "Cargando consultas de nutrición...",
+        "profile_classes_bookings_calendar": "Calendario de Clases y Reservas",
+        "profile_general_calendar": "Calendario General",
+        "profile_view_all_bookings": "Ver todas las reservas",
+        "profile_upcoming_title": "Mis Próximas Citas y Clases",
+        "profile_no_bookings_title": "No tienes reservas",
+        "profile_no_bookings_desc": "Navega por las pestañas de Clases y Consultas para programar tus reservas.",
+        "profile_schedule_title": "Reserva tu práctica",
+        "profile_schedule_desc": "Encuentra el equilibrio perfecto entre cuerpo y mente. Selecciona tu clase y prepárate para desconectar.",
+        "profile_filter_teacher": "Profesor",
+        "profile_filter_type": "Tipo de Yoga",
+        "profile_filter_schedule": "Horario",
+        "profile_filter_availability": "Disponibilidad",
+        "profile_filter_all_teachers": "Todos los profesores",
+        "profile_filter_all_types": "Todos los tipos",
+        "profile_filter_any_time": "Cualquier hora",
+        "profile_filter_morning": "Mañana (07:00 - 12:00)",
+        "profile_filter_midday": "Mediodía (12:00 - 16:00)",
+        "profile_filter_afternoon": "Tarde (16:00 - 20:00)",
+        "profile_filter_evening": "Noche (20:00 - 23:00)",
+        "profile_filter_all_classes": "Todas las clases",
+        "profile_filter_free_spots": "Con plazas libres",
+        "profile_filter_full_classes": "Clases completas",
+        "profile_no_balance_title": "Saldo agotado",
+        "profile_no_balance_desc": "Recarga tus bonos para seguir reservando.",
+        "profile_directions": "Cómo llegar",
+        "profile_no_classes_available": "No hay clases disponibles",
+        "profile_no_classes_available_desc": "Estamos planificando la próxima semana. Vuelve a consultar en breve.",
+        "profile_select_day": "Selecciona un día",
+        "profile_view_all_classes": "Ver todas las clases",
+        "profile_no_matching_classes": "No hay clases que coincidan con los filtros",
+        "profile_reset_filters": "Restablecer filtros",
+        "profile_assign": "ASIGNAR",
+        "profile_cancel": "CANCELAR",
+        "profile_full": "Completa",
+        "profile_unavailable": "No Disponible",
+        "profile_no_balance": "Sin Saldo",
+        "profile_book": "RESERVAR",
+        "profile_your_spot": "Tu Plaza",
+        "profile_capacity": "Aforo",
+        "profile_request": "Solicitar",
+        "profile_request_activation": "Solicitar activación",
+        "profile_week_short": "Sem",
+        "profile_month_short": "Mes",
+        "profile_expires": "Vence",
+        "profile_mental_wellbeing": "Bienestar Mental",
+        "profile_nutritional_wellbeing": "Bienestar Nutricional",
+        "profile_psychology_title": "Consultas de Psicología",
+        "profile_psychology_desc": "Reserva tus consultas individuales de gestión emocional y desarrollo personal con nuestro equipo experto.",
+        "profile_nutrition_title": "Consultas de Nutrición",
+        "profile_nutrition_desc": "Mejora tus hábitos alimenticios y bienestar con el acompañamiento personalizado de nuestro equipo de nutrición.",
+        "profile_calendar_consultations": "Calendario de Consultas",
+        "profile_calendar_nutrition": "Calendario de Nutrición",
+        "profile_view_all_consultations": "Ver todas las consultas",
+        "profile_no_consultations_available": "No hay consultas disponibles",
+        "profile_no_consultations_available_desc": "Actualmente no hay disponibilidad configurada para consultas. Vuelve a consultar pronto.",
+        "profile_no_nutrition_available": "No hay consultas de nutrición disponibles",
+        "profile_no_nutrition_available_desc": "Actualmente no hay disponibilidad configurada para consultas de nutrición. Vuelve a consultar pronto.",
+        "profile_no_consultations_date": "No hay consultas en esta fecha",
+        "profile_no_nutrition_date": "No hay consultas de nutrición en esta fecha",
+        "profile_view_all": "Ver todas",
+        "profile_reserved": "Reservado",
+        "profile_zero_sessions": "0 Sesiones",
+        "profile_your_consultation": "Tu Consulta",
+        "profile_your_appointment": "Tu Cita",
+        "profile_confirmed": "Confirmada",
+        "profile_cancel_booking": "Cancelar reserva",
+        "profile_more": "más",
+        "profile_teachers_badge": "Maestros Expertos",
+        "profile_teachers_title": "Maestros del Centro",
+        "profile_teachers_desc": "Conoce a los maestros que guiarán tu práctica, consultas y talleres. Cada uno aporta una energía única y años de experiencia para ayudarte a crecer.",
+        "profile_filter_all": "Todos",
+        
+        // SweetAlerts & Dynamic labels (for app.js / profile.js)
+        "alert_error": "Error",
+        "alert_warning": "Atención",
+        "alert_success": "Éxito",
+        "alert_info": "Información",
+        "alert_cancel": "Cancelar",
+        "alert_yes_cancel": "Sí, cancelar",
+        "alert_yes_reserve": "Sí, reservar",
+        "alert_no_credits": "Sin clases sueltas",
+        "alert_no_credits_desc": "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan clases sueltas (15€). Adquiere clases sueltas para reservar.",
+        "alert_class_too_close": "La clase está demasiado cerca y no puedes reservar.",
+        "alert_cancel_too_close": "ya no se puede cancelar debido a que la clase es en menos de X horas.",
+        "alert_confirm_reservation": "Confirmar Reserva",
+        "alert_reserve_mensual": "¿Quieres reservar esta clase usando tu <b>Bono Mensual</b>?",
+        "alert_reserve_semana_limit": "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?",
+        "alert_reserve_mes_limit": "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?",
+        "alert_reserve_suelta": "¿Quieres reservar esta clase usando <b>1 clase suelta</b>?",
+        "alert_booking_confirmed": "¡Clase Reservada!",
+        "alert_booking_confirmed_desc": "Tu esterilla te espera. Namasté. 🙏",
+        "alert_cancel_confirmed": "Reserva cancelada. Clase devuelta.",
+        "btn_reserve": "RESERVAR",
+        "btn_no_balance": "Sin Saldo",
+        "btn_full": "Completa",
+        "btn_not_available": "No Disponible",
+        "badge_mensual_active": "Bono Mensual Activo",
+        "badge_mensual_inactive": "Bono Mensual Inactivo",
+        "badge_clases_sueltas": "Clase suelta",
+        "badge_clases_sueltas_pl": "Clases sueltas",
+        "title_cancel": "CANCELAR",
+        
+        // policy wording dynamic
+        "policy_booking_limit": "Reservas permitidas hasta <b>{res}h</b> antes de la clase.",
+        "policy_cancel_limit": "Cancelación permitida hasta <b>{can}h</b> antes de la clase.",
+        "footer_address": "Calle San Carlos 2, Albacete"
+    },
+    en: {
+        // Navigation & Menu
+        "nav_sessions": "SESSIONS",
+        "nav_clases": "CLASSES",
+        "nav_tarifas": "RATES",
+        "nav_maestros": "TEACHERS",
+        "nav_profesores": "TEACHERS",
+        "nav_perfil": "MY PROFILE",
+        "nav_inicio": "Home",
+        "btn_back_home": "Home",
+        "btn_prof_all": "All",
+        "month_0": "January",
+        "month_1": "February",
+        "month_2": "March",
+        "month_3": "April",
+        "month_4": "May",
+        "month_5": "June",
+        "month_6": "July",
+        "month_7": "August",
+        "month_8": "September",
+        "month_9": "October",
+        "month_10": "November",
+        "month_11": "December",
+
+        // index.html Central Hero
+        "hero_quote": "At GEN Yoga we fuse movement, breath and awareness to create a space where your body and mind find their natural balance...",
+        "hero_btn_more": "read more",
+        "hero_subquote": "Your refuge, your energy, your moment",
+        "marquee_text": "PREVENTIVE YOGA ECOSYSTEM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTER LED BY HEALTH PROFESSIONALS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BOOK YOUR FIRST TRIAL CLASS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA AND MEDITATION &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FLEXIBLE PACKAGES",
+
+        // index.html Modals
+        "modal_history_title": "GEN YOGA",
+        "modal_history_sec1_title": "Brand History",
+        "modal_history_sec1_p1": "Studio GEN Yoga is a space for individual and collective well-being, born from a commitment to physical, mental and emotional health based on self-knowledge and empowerment as a preventive and sustainable strategy.",
+        "modal_history_sec1_bullet1": "<strong>GEN</strong> has various connotations, one of which relates to the biological foundation of health. In this sense, Study GEN Yoga is the first integrative well-being center in Castilla-La Mancha led by a pharmacist, Ana Isabel Meroño, a yoga instructor specialized in nutrition, sleep quality, and Eastern well-being disciplines. From your GENes to your emotions.",
+        "modal_history_sec1_bullet2": "Ana also manages Farmacia Q19, just a few steps away from Study GEN Yoga, meaning both spaces contribute to the health ecosystem concept—both preventive (GEN Yoga) and pharmacological (Q19)—with professional rigor and personalized care tailored to each client.",
+        "modal_history_sec1_p2": "These synergies contribute not only to individual well-being but also to the community, making the neighborhood and its surroundings a place with more opportunities and better services for your health.",
+        "modal_history_sec1_p3": "We believe that conventional medicine is essential, but not sufficient on its own. That is why we created a space where people can listen to themselves, care for themselves, and support each other consciously and actively. A process of well-being presence in time and spaces.",
+        "modal_history_sec1_p4": "Study GEN Yoga emerges as a reference that broadens the concept of well-being, both through its yoga services and its professionals (doctors, pharmacists, psychologists, physiotherapists, nutritionists), connecting GENerations. To do this, we promote personal and collective reGENeration—physical, mental, and emotional health—supporting your overall well-being through bodily experience, mindful awareness, and human connection.",
+        "modal_history_mision_title": "Mission",
+        "modal_history_mision_p1": "To support people in achieving their overall well-being through physical and spiritual practices, starting from yoga, using asanas, conscious breathing, music, meditation, and dialogue in a professional, human, and accessible space.",
+        "modal_history_mision_p2": "To provide personalized, multidisciplinary, and continuous care, broadening your preventive health horizons and connecting with you, your group, your neighborhood, your city, your land.",
+        "modal_history_vision_title": "Vision",
+        "modal_history_vision_p1": "To be an inclusive, interGENerational space that inspires trust and GENerates well-being, providing tools for self-care, empowering clients to overcome their limitations, and connecting GENerations and knowledge.",
+        "modal_history_vision_p2": "Study GEN Yoga aspires to offer full attention to users in synergy with Farmacia Q19, contributing to the personal and collective reGENeration of its members, clients, professionals, and management, making Albacete an active, attractive community committed to holistic health.",
+        "modal_history_value_title": "Value Proposition",
+        "modal_history_value_bullet1_title": "• Prevention and Integration:",
+        "modal_history_value_bullet1_desc": "combines yoga and conscious physical and spiritual practices with a rigorous approach based on clinical ethics and pharmacological evidence, such as SOMA Breathwork or therapeutic yoga, promoting real and responsible health.",
+        "modal_history_value_bullet1_sub": "To do this, it addresses co-morbidities that cause discomfort, pain, or disease, such as nutrition, physical and mental state, and emotional management.",
+        "modal_history_value_bullet2_title": "• Personalized Support:",
+        "modal_history_value_bullet2_desc": "Provides trust, safety, and respect through continuous individual processes for each person.",
+        "modal_history_value_bullet2_sub": "To do this, it offers clients various options and professionals that complement well-being lifecycle services.",
+        "modal_history_value_bullet3_title": "• Community and Continuity:",
+        "modal_history_value_bullet3_desc": "Strengthens the bond between the studio, the pharmacy, and the community, GENerating well-being, follow-ups, and a sense of belonging.",
+        "modal_history_value_bullet3_sub": "To do this, it offers digital resources, such as a unique mobile application, and in-person resources, such as care at GEN Yoga and Farmacia Q19, both in the same street, same neighborhood, same city, where diverse profiles and generational knowledge converge.",
+        "footer_privacy": "Privacy Policy",
+
+        // clases.html (Sessions list)
+        "classes_title": "Choose your classes",
+        "classes_subtitle": "Discover our yoga styles",
+        "classes_card_vinyasa_title": "Vinyasa Flow",
+        "classes_vinyasa_tagline": "Ready to flow without stopping?",
+        "classes_card_vinyasa_desc": "A dynamic practice where every breath guides movement. Connect postures in flowing sequences, gain strength, balance and focus as your body moves to the rhythm of your own energy.",
+        "classes_card_hombres_title": "Yoga for Men",
+        "classes_hombres_tagline": "Strength, calm and space of your own.",
+        "classes_card_hombres_desc": "A space designed to strengthen body and mind without pressure or comparisons. Work on flexibility, strength, and mindful breathing in a comfortable, direct, and tailored environment.",
+        "classes_card_restaurativa_title": "Gentle Restorative Yoga",
+        "classes_restaurativa_tagline": "Let go of the day, breathe slowly.",
+        "classes_card_restaurativa_desc": "A slow and mindful practice designed to release accumulated tension. With held postures and deep breathing, this class invites your body and mind to truly rest.",
+        "classes_cta_title": "Don't know where<br>to start?",
+        "classes_cta_desc": "<strong>Book</strong> your first class and we will guide you from there. Our instructors will support you at every step of your path.",
+        "classes_cta_btn": "Book my first class",
+        "classes_scroll_arrow_text": "See more classes",
+        "classes_scroll_arrow_doubt": "Any doubts?",
+        "classes_tab_vinyasa": "VINYASA",
+        "classes_tab_hombres": "MEN YOGA",
+        "classes_tab_restaurativa": "RESTORATIVE",
+        "classes_scroll_arrow_doubt": "Any questions?",
+
+        // tarifas.html (Pricing)
+        "rates_title": "Rates",
+        "rates_tab_yoga": "Classes",
+        "rates_tab_psy": "Consultations",
+        "rates_tab_workshops": "Workshops",
+        "rates_suelta_title": "Single class",
+        "rates_suelta_cat": "Yoga",
+        "rates_suelta_feat1": "1 yoga class",
+        "rates_suelta_feat2": "Book from your profile or reception",
+        "rates_suelta_feat3": "Cancellation up to 12h before the class",
+        "rates_suelta_btn": "Buy class",
+        "rates_mensual_badge": "★ Save 25%",
+        "rates_mensual_title": "Monthly Plan",
+        "rates_mensual_cat": "Flexible Plan",
+        "rates_mensual_feat1": "2 classes per week (Monday-Friday)",
+        "rates_mensual_feat2": "Up to 8 classes per month total",
+        "rates_mensual_feat3": "Book from your profile or reception",
+        "rates_mensual_feat4": "Single classes for extra sessions",
+        "rates_mensual_btn": "Acquire Plan",
+        "rates_per_month": "/month",
+        "rates_psy_title": "Psychology",
+        "rates_psy_cat": "Well-being and mental health",
+        "rates_psy_sub": "Individual session",
+        "rates_psy_desc": "Personalized consultation to take care of your well-being and mental health. Direct assignment by administration.",
+        "rates_psy_contact_recep": "Consult rates with reception",
+        "rates_psy_btn": "Contact Admin",
+        "rates_nut_title": "Nutrition",
+        "rates_nut_cat": "Alimentation and physical health",
+        "rates_nut_sub1": "Initial Evaluation",
+        "rates_nut_desc1": "We analyze your starting point, objectives, and habit history to design your nutrition strategy.",
+        "rates_nut_sub2": "Follow-up Session",
+        "rates_nut_desc2": "We evaluate your daily progress and adapt your guidelines to consolidate lasting healthy habits.",
+        "rates_talleres_title": "Thematic Workshops",
+        "rates_talleres_cat": "Coming Soon",
+        "rates_talleres_desc": "Special sessions to deepen different styles and practices of yoga, meditation, and holistic well-being. Topics, dates, and registrations will be announced very soon at reception.",
+        "rates_talleres_contact_recep": "Check rates",
+        "rates_talleres_btn": "Learn More",
+
+        "teachers_title": "Our Professionals",
+        "teachers_subtitle": "A team dedicated to guiding your path of holistic well-being",
+        "teachers_read_more": "Read more",
+        "teachers_read_less": "Read less",
+
+        // profile.html (Client Profile & Login)
+        "profile_slogan": "Your space for holistic well-being, physical health, and peace of mind.",
+        "profile_categories": "Yoga Classes • Psychology & Nutrition Consultations • Workshops",
+        "auth_welcome": "Welcome",
+        "auth_login_subtitle": "Access your account",
+        "auth_create_subtitle": "Join the community",
+        "auth_back_login": "← Back to Sign In",
+        "profile_title": "Clients Area",
+        "profile_desc": "Manage your classes, consultations, and well-being",
+        "profile_btn_logout": "Logout",
+        "login_card_title": "Sign In",
+        "login_email_label": "Email Address",
+        "login_password_label": "Password",
+        "login_btn_submit": "Sign In &rarr;",
+        "login_no_account": "Don't have an account yet?",
+        "login_btn_register": "Register for free here",
+        "register_card_title": "Create Account",
+        "register_name_label": "First Name",
+        "register_lastname_label": "Last Name",
+        "register_email_label": "Email",
+        "register_password_label": "Password (min. 6 characters)",
+        "register_btn_submit": "Register &rarr;",
+        "register_has_account": "Already have an account?",
+        "register_btn_login": "Sign in here",
+        "profile_tab_inicio": "HOME",
+        "profile_tab_horarios": "CLASSES",
+        "profile_tab_psicologia": "CONSULTATIONS",
+        "profile_tab_nutricion": "NUTRITION",
+        "profile_tab_profesores": "TEACHERS",
+        "profile_tab_configuracion": "Configuration",
+        "profile_tab_asistencias": "Attendance",
+        "profile_btn_edit_profile": "Edit profile",
+        "profile_saldos_label": "My balances",
+        "profile_tab_my_calendar": "My schedule",
+        "profile_tab_students_per_class": "Students per class",
+        "common_yoga": "Yoga",
+        "common_classes": "Classes",
+        "common_class": "Class",
+        "common_psychology": "Psychology",
+        "common_nutrition": "Nutrition",
+        "common_workshops": "Workshops",
+        "common_teacher": "Teacher",
+        "common_instructor": "Instructor",
+        "common_professional": "Professional",
+        "common_appointment": "Appointment",
+        "common_consultation": "Consultation",
+        "common_consultations": "Consultations",
+        "common_single_class": "Single class",
+        "common_single_classes": "Single classes",
+        "common_monthly_plan": "Monthly Plan",
+        "common_monthly_plan_active": "Monthly Plan Active",
+        "common_monthly_plan_inactive": "Monthly Plan Inactive",
+        "common_inactive": "Inactive",
+        "profile_loading_classes": "Loading classes...",
+        "profile_loading_consultations": "Loading consultations...",
+        "profile_loading_nutrition": "Loading nutrition consultations...",
+        "profile_classes_bookings_calendar": "Classes and Bookings Calendar",
+        "profile_general_calendar": "General Calendar",
+        "profile_view_all_bookings": "View all bookings",
+        "profile_upcoming_title": "My Upcoming Appointments and Classes",
+        "profile_no_bookings_title": "You have no bookings",
+        "profile_no_bookings_desc": "Use the Classes and Consultations tabs to schedule your bookings.",
+        "profile_schedule_title": "Book your practice",
+        "profile_schedule_desc": "Find the perfect balance between body and mind. Choose your class and get ready to disconnect.",
+        "profile_filter_teacher": "Teacher",
+        "profile_filter_type": "Yoga Type",
+        "profile_filter_schedule": "Schedule",
+        "profile_filter_availability": "Availability",
+        "profile_filter_all_teachers": "All teachers",
+        "profile_filter_all_types": "All types",
+        "profile_filter_any_time": "Any time",
+        "profile_filter_morning": "Morning (07:00 - 12:00)",
+        "profile_filter_midday": "Midday (12:00 - 16:00)",
+        "profile_filter_afternoon": "Afternoon (16:00 - 20:00)",
+        "profile_filter_evening": "Evening (20:00 - 23:00)",
+        "profile_filter_all_classes": "All classes",
+        "profile_filter_free_spots": "With free spots",
+        "profile_filter_full_classes": "Full classes",
+        "profile_no_balance_title": "Balance depleted",
+        "profile_no_balance_desc": "Top up your class credits to keep booking.",
+        "profile_directions": "Directions",
+        "profile_no_classes_available": "No classes available",
+        "profile_no_classes_available_desc": "We are planning next week. Check back soon.",
+        "profile_select_day": "Select a day",
+        "profile_view_all_classes": "View all classes",
+        "profile_no_matching_classes": "No classes match the filters",
+        "profile_reset_filters": "Reset filters",
+        "profile_assign": "ASSIGN",
+        "profile_cancel": "CANCEL",
+        "profile_full": "Full",
+        "profile_unavailable": "Unavailable",
+        "profile_no_balance": "No Balance",
+        "profile_book": "BOOK",
+        "profile_your_spot": "Your Spot",
+        "profile_capacity": "Capacity",
+        "profile_request": "Request",
+        "profile_request_activation": "Request activation",
+        "profile_week_short": "Week",
+        "profile_month_short": "Month",
+        "profile_expires": "Expires",
+        "profile_mental_wellbeing": "Mental Well-being",
+        "profile_nutritional_wellbeing": "Nutritional Well-being",
+        "profile_psychology_title": "Psychology Consultations",
+        "profile_psychology_desc": "Book your individual consultations for emotional management and personal growth with our expert team.",
+        "profile_nutrition_title": "Nutrition Consultations",
+        "profile_nutrition_desc": "Improve your eating habits and well-being with personalized guidance from our nutrition team.",
+        "profile_calendar_consultations": "Consultations Calendar",
+        "profile_calendar_nutrition": "Nutrition Calendar",
+        "profile_view_all_consultations": "View all consultations",
+        "profile_no_consultations_available": "No consultations available",
+        "profile_no_consultations_available_desc": "There is currently no availability configured for consultations. Check back soon.",
+        "profile_no_nutrition_available": "No nutrition consultations available",
+        "profile_no_nutrition_available_desc": "There is currently no availability configured for nutrition consultations. Check back soon.",
+        "profile_no_consultations_date": "No consultations on this date",
+        "profile_no_nutrition_date": "No nutrition consultations on this date",
+        "profile_view_all": "View all",
+        "profile_reserved": "Booked",
+        "profile_zero_sessions": "0 Sessions",
+        "profile_your_consultation": "Your Consultation",
+        "profile_your_appointment": "Your Appointment",
+        "profile_confirmed": "Confirmed",
+        "profile_cancel_booking": "Cancel booking",
+        "profile_more": "more",
+        "profile_teachers_badge": "Expert Teachers",
+        "profile_teachers_title": "Studio Teachers",
+        "profile_teachers_desc": "Meet the teachers who will guide your practice, consultations and workshops. Each brings unique energy and years of experience to help you grow.",
+        "profile_filter_all": "All",
+
+        // SweetAlerts & Dynamic labels (for app.js / profile.js)
+        "alert_error": "Error",
+        "alert_warning": "Warning",
+        "alert_success": "Success",
+        "alert_info": "Information",
+        "alert_cancel": "Cancel",
+        "alert_yes_cancel": "Yes, cancel",
+        "alert_yes_reserve": "Yes, book",
+        "alert_no_credits": "No single classes left",
+        "alert_no_credits_desc": "You have reached your monthly class limits (or it is inactive) and you do not have single classes left (15€). Purchase classes to book.",
+        "alert_class_too_close": "The class starts too soon and you cannot book.",
+        "alert_cancel_too_close": "cancellations are not allowed within less than X hours from the class.",
+        "alert_confirm_reservation": "Confirm Booking",
+        "alert_reserve_mensual": "Do you want to book this class using your <b>Monthly Plan</b>?",
+        "alert_reserve_semana_limit": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>1 single class</b> (15€)?",
+        "alert_reserve_mes_limit": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>1 single class</b> (15€)?",
+        "alert_reserve_suelta": "Do you want to book this class using <b>1 single class</b>?",
+        "alert_booking_confirmed": "Class Booked!",
+        "alert_booking_confirmed_desc": "Your yoga mat awaits you. Namaste. 🙏",
+        "alert_cancel_confirmed": "Booking cancelled. Class credited back.",
+        "btn_reserve": "BOOK NOW",
+        "btn_no_balance": "No Balance",
+        "btn_full": "Full",
+        "btn_not_available": "Unavailable",
+        "badge_mensual_active": "Monthly Plan Active",
+        "badge_mensual_inactive": "Monthly Plan Inactive",
+        "badge_clases_sueltas": "Single class",
+        "badge_clases_sueltas_pl": "Single classes",
+        "title_cancel": "CANCEL",
+
+        // policy wording dynamic
+        "policy_booking_limit": "Bookings allowed up to <b>{res}h</b> before the class.",
+        "policy_cancel_limit": "Cancellations allowed up to <b>{can}h</b> before the class.",
+        "footer_address": "2 San Carlos St, Albacete"
+    }
+};
+
+const professionalTranslations = {
+    "en": {
+        "Yanira": {
+            "nombre": "Yanira",
+            "especialidad": "Vinyasa & Restorative Yoga",
+            "descripcion": `BACKGROUND:\nOriginally from the United States, with Salvadoran roots, I have had the opportunity to know and live in various parts of the world and feel fortunate to meet people from different places and paths in life, as each experience and learning has shaped the person I am today.\n\nA teacher by profession, I have taught in Washington D.C. area schools for twenty years. My studies of Yoga are a continuous process, but I consider my yoga mat to be my best guide.\n\nQUALIFICATIONS:\n• Master's in International Education (Framingham State College)\n• Master's in Educational Leadership (George Mason University)\n• Yoga Alliance Certified Yoga Instructor (training at DownDog in Georgetown, Washington D.C.)\n• Specializations in Anatomy applied to Yoga, Kids Yoga, Yoga and Mindfulness\n\nI ACCOMPANY YOU:\n• Vinyasa Yoga (Virtual and in-person classes)\n• Restorative Yoga and Meditation\n• Mindfulness for adults and kids`
+        },
+        "Silvia": {
+            "nombre": "Silvia",
+            "especialidad": "Hatha & Iyengar Yoga, Ayurveda",
+            "descripcion": `PLACE OF BIRTH: Madrid\n\nQUALIFICATIONS: Hatha Yoga and Iyengar Yoga by AIPYS. Yoga Center.\nAyurveda Therapist. COFENAT. Alsandara.\n\nABOUT ME:\nI am a Yoga teacher with more than 25 years dedicated to teaching and 30 years of personal practice, and an Ayurveda Therapist. Life has led me to help many people around the world through the practice of Yoga:\nI currently teach classes in many cities in Spain (Cordoba, Granada, Malaga, Valencia, Albacete, Elche, Alicante, ...)\nAnd training courses in Madrid, Canary Islands.\nI teach Therapeutic Yoga courses for teachers and students with extensive experience in the practice of yoga. I have taught courses for certified teachers in India, Greece, and Indonesia.\nIn recent years I have mentored yoga teachers to deepen their practice and pedagogy and support them in developing their yoga centers.\nFor me, Yoga is subtlety, adaptability, openness, surrender, acceptance, and awareness.\nAfter 15 years of teaching and more than 20 years of practice, I continue to get 100% involved in my work and deliver all my love and dedication in each of my classes.\n\nI ACCOMPANY YOU:\nI accompany physical, emotional, and nervous system well-being processes through therapeutic yoga, adapting the practice to the individual needs of each person.\nAreas of support:\n* Back, neck, and joint pain.\n* Musculoskeletal injuries and functional recovery processes.\n* Stress, anxiety, and physical and mental exhaustion.\n* Sleep disorders and insomnia.\n* Nervous system regulation.\n* Grief processes, life changes, and emotional management.\n* Menopause and women's health.\n* Fatigue, lack of energy, and lifestyle-related imbalances.\n* Improvement of mobility, posture, and breathing.\n\nDEFINES ME:\n"My job is to create spaces where the body can feel heard, the nervous system regulated, and the person accompanied in their process of returning to themselves through yoga and Ayurveda"`
+        },
+        "Ángel Javier": {
+            "nombre": "Ángel Javier",
+            "especialidad": "Yoga for Men & Therapeutic Yoga",
+            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nNone. I base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In September I begin the mentorship for certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
+        },
+        "Miriam": {
+            "nombre": "Miriam",
+            "especialidad": "Psychotherapy, Nutrition & Workshops",
+            "descripcion": `PLACE OF BIRTH: Cuenca (Spain)\n\nQUALIFICATIONS:\nGraduate in Psychology from the University of Valencia.\nMaster's in Eating Disorders from the Complutense University of Madrid.\nTraining in EMDR (Eye Movement Desensitization and Reprocessing).\nTraining in Brainspotting.\nTraining in Gestalt Therapy.\nSpecialized training in trauma, attachment, emotional regulation, gender violence, sexual abuse, and personal growth.\nTechnician in Dietetics and Nutrition.\nHigher Technician in Animation of Physical and Sports Activities.\nTechnician in Conducting Physical-Sports Activities in the Natural Environment.\nTraining in chiromassage and other disciplines linked to body care.\n\nABOUT ME:\nMy professional career began in the field of physical activity, sports, and the promotion of healthy habits. For years I worked as a sports monitor, lifeguard, and trainer, accompanying people of different ages in processes related to movement, well-being, and health.\nOver time, I became interested in understanding what is often expressed through the body: emotions, personal difficulties, suffering, and processes of transformation. That path led me to study Psychology and later specialize in Eating Disorders, trauma, and emotional regulation.\nCurrently, I am the founder of Respira, a psychological support space where I work mainly with adolescents and adults in processes related to self-esteem, anxiety, eating disorders, trauma, self-knowledge, and emotional well-being.\nIn addition to individual intervention, I conduct talks, workshops, and group activities, disseminating content on mental health through social networks and the radio program and podcast "Más allá de la comida". I have also promoted community initiatives such as a Therapeutic Reading Club and actively participate in social days, women's meetings, and activities related to the promotion of physical, mental, and emotional health.\n\nI ACCOMPANY YOU:\n* Eating Disorders (ED)\n* Relationship with food and body image\n* Self-esteem and self-confidence\n* Anxiety and emotional regulation\n* Trauma and emotional wounds\n* Life change processes\n* Grief and loss\n* Personal growth and autoconcern\n* Body-mind connection\n* Integral well-being and self-care\n\nDEFINES ME:\n"I deeply believe in people's ability to transform when they find a safe space to feel heard. My work consists of accompanying that process by integrating body, mind, and emotions to favor a more conscious, free, and authentic life."`
+        }
+    }
+};
+
+function translateProfessional(p) {
+    if (!p) return p;
+    const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
+    if (lang === 'en') {
+        const trans = professionalTranslations['en']?.[p.nombre] || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
+        if (trans) {
+            return {
+                ...p,
+                nombre: trans.nombre || p.nombre,
+                especialidad: trans.especialidad || p.especialidad,
+                descripcion: trans.descripcion || p.descripcion,
+                bio: trans.descripcion || p.bio
+            };
+        }
+    }
+    return p;
+}
+
+window.translateProfessional = translateProfessional;
+
+function safeGetItem(key, fallback) {
+    try {
+        return localStorage.getItem(key) || fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        // Safe fallback for sandboxed preview windows
+    }
+}
+
+let currentLang = safeGetItem('yoga-lang', 'es');
+
+function setLanguage(lang) {
+    if (lang !== 'es' && lang !== 'en') return;
+    currentLang = lang;
+    window.currentLang = currentLang;
+    document.documentElement.lang = lang;
+    if (document.body) document.body.dataset.lang = lang;
+    safeSetItem('yoga-lang', lang);
+    applyTranslations();
+    
+    // Update selector buttons styling using native CSS styles (bypassing Tailwind compiler completely)
+    const btnEs = document.getElementById('lang-btn-es');
+    const btnEn = document.getElementById('lang-btn-en');
+    
+    if (btnEs && btnEn) {
+        [btnEs, btnEn].forEach(btn => {
+            btn.style.cursor = 'pointer';
+            btn.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+            btn.style.border = 'none';
+            btn.style.background = 'none';
+            btn.style.padding = '2px 6px';
+            btn.style.outline = 'none';
+            btn.style.transition = 'all 0.2s ease';
+        });
+
+        if (lang === 'es') {
+            btnEs.style.fontWeight = '900';
+            btnEs.style.textDecoration = 'underline';
+            btnEs.style.textDecorationThickness = '2px';
+            btnEs.style.textUnderlineOffset = '4px';
+            btnEs.style.color = '#f8f6f2';
+            btnEs.style.opacity = '1';
+
+            btnEn.style.fontWeight = '500';
+            btnEn.style.textDecoration = 'none';
+            btnEn.style.color = '#f8f6f2';
+            btnEn.style.opacity = '0.5';
+        } else {
+            btnEn.style.fontWeight = '900';
+            btnEn.style.textDecoration = 'underline';
+            btnEn.style.textDecorationThickness = '2px';
+            btnEn.style.textUnderlineOffset = '4px';
+            btnEn.style.color = '#f8f6f2';
+            btnEn.style.opacity = '1';
+
+            btnEs.style.fontWeight = '500';
+            btnEs.style.textDecoration = 'none';
+            btnEs.style.color = '#f8f6f2';
+            btnEs.style.opacity = '0.5';
+        }
+    }
+
+    // Trigger standard global event so other modules can react
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
+}
+
+function t(key) {
+    return translations[currentLang]?.[key] || translations['es']?.[key] || key;
+}
+
+const alertTranslations = {
+    "Contraseña débil": "Weak password",
+    "Usa al menos 6 caracteres.": "Use at least 6 characters.",
+    "Error": "Error",
+    "Atención": "Warning",
+    "Éxito": "Success",
+    "Información": "Information",
+    "Acción no permitida": "Action not allowed",
+    "Solo los alumnos pueden realizar reservas de clases.": "Only students can book classes.",
+    "No se puede reservar": "Cannot book",
+    "La clase está demasiado cerca y no puedes reservar.": "The class starts too soon and you cannot book.",
+    "Ya estás inscrito": "Already registered",
+    "Ya tienes una reserva confirmada para esta clase.": "You already have a confirmed booking for this class.",
+    "Clase Completa": "Class Full",
+    "Lo sentimos, esta clase ya no tiene plazas disponibles.": "Sorry, this class has no places available.",
+    "¿Quieres reservar esta clase?": "Do you want to book this class?",
+    "¿Eliminar reserva?": "Delete booking?",
+    "Esta acción no se puede deshacer.": "This action cannot be undone.",
+    "Sí, borrar": "Yes, delete",
+    "No hay clases registradas o reservas aún.": "No classes or bookings registered yet.",
+    "¿Eliminar taller?": "Delete workshop?",
+    "Taller creado": "Workshop created",
+    "Taller eliminado": "Workshop deleted",
+    "Eliminando taller...": "Deleting workshop...",
+    "Clase creada": "Class created",
+    "Clase eliminada": "Class deleted",
+    "Eliminando clase...": "Deleting class...",
+    "Bono Mensual activado": "Monthly Plan activated",
+    "Bono Mensual desactivado": "Monthly Plan deactivated",
+    "No se pudo activar el bono": "Could not activate plan",
+    "Bono desactivado": "Plan deactivated",
+    "¿Desactivar bono?": "Deactivate plan?",
+    "Sí, desactivar": "Yes, deactivate",
+    "Bono activado": "Plan activated",
+    "Fallo al cargar": "Failed to load",
+    "¡Clase Reservada!": "Class Booked!",
+    "Tu esterilla te espera. Namasté. 🙏": "Your mat awaits you. Namaste. 🙏",
+    "Reserva Cancelada": "Booking Cancelled",
+    "La reserva ha sido cancelada y la clase devuelta a tu saldo.": "Your booking has been cancelled and the class credited back to your balance.",
+    "¿Quieres cancelar esta reserva?": "Do you want to cancel this booking?",
+    "Sí, cancelar": "Yes, cancel",
+    "No se puede cancelar": "Cannot cancel",
+    "No se puede reservar: ya es tarde.": "Cannot book: it's too late.",
+    "Error al reservar": "Booking error",
+    "Accediendo...": "Logging in...",
+    "Sesión iniciada": "Logged in",
+    "Bienvenido de nuevo": "Welcome back",
+    "Creando cuenta...": "Creating account...",
+    "Cuenta creada": "Account created",
+    "Sí, reservar": "Yes, book",
+    "Cancelar": "Cancel",
+    "Entendido": "Understood",
+    "Sin clases sueltas": "No single classes left",
+    "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan clases sueltas (15€). Adquiere clases sueltas para reservar.": "You have reached your monthly class limits (or it is inactive) and you do not have single classes left (15€). Purchase classes to book.",
+    "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>1 single class</b> (15€)?",
+    "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>1 single class</b> (15€)?",
+    "¿Quieres reservar esta clase usando <b>1 clase suelta</b>?": "Do you want to book this class using <b>1 single class</b>?"
+};
+
+function translateText(text) {
+    if (typeof text !== 'string') return text;
+    const trimmed = text.trim();
+    if (alertTranslations[trimmed]) {
+        return alertTranslations[trimmed];
+    }
+    // Check dynamic cancellation
+    if (trimmed.includes("ya no se puede cancelar debido a que la clase es en menos de")) {
+        const match = trimmed.match(/\d+/);
+        const hours = match ? match[0] : '24';
+        return `Cancellations are not allowed within less than ${hours} hours from the class.`;
+    }
+    // Check dynamic monthly plan info
+    if (trimmed.includes("¿Quieres reservar esta clase usando tu <b>Bono Mensual</b>?")) {
+        const matchW = trimmed.match(/semana:\s*(\d+)\/2/);
+        const matchM = trimmed.match(/mes:\s*(\d+)\/8/);
+        const wCount = matchW ? matchW[1] : '0';
+        const mCount = matchM ? matchM[1] : '0';
+        return `Do you want to book this class using your <b>Monthly Plan</b>?<br><span class="text-xs text-gray-500">(Bookings this week: ${wCount}/2, this month: ${mCount}/8)</span>`;
+    }
+    let newText = text;
+    for (const key in alertTranslations) {
+        if (newText.includes(key)) {
+            newText = newText.replaceAll(key, alertTranslations[key]);
+        }
+    }
+    return newText;
+}
+
+if (window.Swal) {
+    const originalSwalFire = window.Swal.fire;
+    window.Swal.fire = function(...args) {
+        if (currentLang === 'en') {
+            if (args.length === 1 && typeof args[0] === 'object') {
+                const opts = { ...args[0] };
+                if (opts.title) opts.title = translateText(opts.title);
+                if (opts.text) opts.text = translateText(opts.text);
+                if (opts.html) opts.html = translateText(opts.html);
+                if (opts.confirmButtonText) opts.confirmButtonText = translateText(opts.confirmButtonText);
+                if (opts.cancelButtonText) opts.cancelButtonText = translateText(opts.cancelButtonText);
+                return originalSwalFire.call(window.Swal, opts);
+            } else {
+                const newArgs = args.map(arg => typeof arg === 'string' ? translateText(arg) : arg);
+                return originalSwalFire.apply(window.Swal, newArgs);
+            }
+        }
+        return originalSwalFire.apply(window.Swal, args);
+    };
+}
+
+function translateDayHeaders() {
+    const daysES = ["L", "M", "X", "J", "V", "S", "D"];
+    const daysEN = ["M", "T", "W", "T", "F", "S", "S"];
+    
+    document.querySelectorAll(".grid-cols-7").forEach(grid => {
+        const children = Array.from(grid.children);
+        if (children.length === 7) {
+            const childTexts = children.map(c => c.textContent.trim());
+            const matchesES = childTexts.every((txt, idx) => txt === daysES[idx] || txt === daysEN[idx]);
+            if (matchesES) {
+                children.forEach((child, idx) => {
+                    child.textContent = currentLang === 'es' ? daysES[idx] : daysEN[idx];
+                });
+            }
+        }
+    });
+}
+
+function applyTranslations() {
+    // 1. Scopes static tags with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const translation = t(key);
+        if (translation) {
+            if (el.tagName === 'INPUT' && el.placeholder) {
+                el.placeholder = translation;
+            } else {
+                el.innerHTML = translation;
+            }
+        }
+    });
+
+    // 2. Translate document title dynamically based on key
+    const pageTitleKey = document.body.dataset.pageTitleKey;
+    if (pageTitleKey) {
+        document.title = t(pageTitleKey);
+    }
+
+    // 3. Translate day headers
+    translateDayHeaders();
+}
+
+// Global exposure
+window.translations = translations;
+window.setLanguage = setLanguage;
+window.t = t;
+window.currentLang = currentLang;
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Auto-inject language pill selector if not already statically defined
+    let langDiv = document.getElementById('floating-lang-selector');
+    if (!langDiv) {
+        langDiv = document.createElement('div');
+        langDiv.id = 'floating-lang-selector';
+        
+        // CSS Style declarations for layout and high-contrast styling (completely bypassing Tailwind to avoid compiling issues)
+        langDiv.style.position = 'fixed';
+        
+        // Calculate marquee height dynamically to avoid overlaps
+        const marquee = document.querySelector('.custom-marquee-bg') || document.querySelector('.animate-marquee');
+        let marqueeHeight = 0;
+        if (marquee) {
+            marqueeHeight = marquee.getBoundingClientRect().height;
+        }
+        
+        const isProfilePage = window.location.pathname.includes('profile.html');
+        if (isProfilePage) {
+            langDiv.style.top = 'auto';
+            langDiv.style.right = 'auto';
+            langDiv.style.bottom = '18px';
+            langDiv.style.left = '18px';
+        } else if (marqueeHeight > 0) {
+            langDiv.style.top = (marqueeHeight + 16) + 'px'; // Positioned mathematically below the marquee banner
+            langDiv.style.right = '24px';
+            langDiv.style.bottom = 'auto';
+            langDiv.style.left = 'auto';
+        } else {
+            langDiv.style.top = '16px';
+            langDiv.style.right = '24px';
+            langDiv.style.bottom = 'auto';
+            langDiv.style.left = 'auto';
+        }
+        
+        langDiv.style.zIndex = '9998'; // Below custom cursor (z-index: 9999), but above all other layout elements
+        langDiv.style.backgroundColor = '#795244'; // Elegant brand brown
+        langDiv.style.border = '1px solid rgba(248, 246, 242, 0.15)';
+        langDiv.style.borderRadius = '9999px';
+        langDiv.style.padding = '4px 10px';
+        langDiv.style.display = 'flex';
+        langDiv.style.alignItems = 'center';
+        langDiv.style.gap = '4px';
+        langDiv.style.fontSize = '11px';
+        langDiv.style.color = '#f8f6f2'; // Brand cream text
+        langDiv.style.boxShadow = '0 6px 16px rgba(38, 22, 12, 0.2)';
+        langDiv.style.userSelect = 'none';
+        langDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+        langDiv.style.pointerEvents = 'auto'; // Ensure clicks are always received
+        
+        langDiv.innerHTML = `
+            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1;">ES</button>
+            <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none; select-none">/</span>
+            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5;">EN</button>
+        `;
+        document.body.appendChild(langDiv);
+    }
+    
+    // Bind programmatic click handlers for ES/EN buttons
+    const btnEs = document.getElementById('lang-btn-es');
+    const btnEn = document.getElementById('lang-btn-en');
+    if (btnEs) btnEs.addEventListener('click', () => setLanguage('es'));
+    if (btnEn) btnEn.addEventListener('click', () => setLanguage('en'));
+    
+    // Set initial states
+    setLanguage(currentLang);
+});

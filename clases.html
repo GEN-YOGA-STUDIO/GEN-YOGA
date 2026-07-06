@@ -1,66 +1,596 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEN Yoga | Clases</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest" defer></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        cocoa: '#26160C',
-                        golden: '#B48A47',
-                        terracotta: '#D27D60',
-                        mutedbrown: '#7F5040',
-                        mutedgold: '#A69C6A',
-                        beige: '#E6DCC3',
-                        ivory: '#F8F6F2',
-                        slate: '#708090',
-                        sand: '#E6DCC3',
-                        olive: '#8C8658'
-                    },
-                    fontFamily: {
-                        serif: ['Ubuntu', 'serif'],
-                        sans: ['"Montserrat Arabic"', 'Montserrat', 'sans-serif'],
-                        ubuntu: ['Ubuntu', 'sans-serif']
-                    }
-                }
-            }
-        };
-    </script>
-</head>
-<body class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
+    <!-- Tailwind and Custom Fonts -->
+    <link rel="stylesheet" href="tailwind-compiled.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="i18n.js"></script>
+    
+    <style>
+        /* Reset and Lock Viewports for Fixed Presentation */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f6f2;
+        }
 
-    <!-- Ambient Background Shapes (Sincronizado con Mi Perfil) -->
-    <div id="parallax-bg" class="fixed inset-0 z-0 overflow-hidden pointer-events-none transition-transform duration-1000 ease-out">
-        <div class="absolute top-[10%] left-[10%] w-[70vw] h-[70vw] bg-[#D27D60] rounded-full blur-[80px] opacity-20 animate-pulse mix-blend-multiply"></div>
-        <div class="absolute bottom-[10%] right-[10%] w-[60vw] h-[60vw] bg-[#B48A47] rounded-full blur-[80px] opacity-20 animate-pulse mix-blend-multiply" style="animation-delay: 2s;"></div>
+        /* Hide Scrollbars */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Fixed Presentation Layer (Holds title, navigation, cards deck) */
+        .fixed-viewport {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        @media (min-width: 768px) {
+            .fixed-viewport {
+                padding: 4rem 4rem 2rem 4rem;
+            }
+        }
+
+        /* Folders Deck Container Height */
+        #folders-deck {
+            position: relative;
+            width: 100%;
+            height: 380px; /* Force height so absolute cards center correctly */
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+
+        @media (min-width: 768px) {
+            #folders-deck {
+                height: 480px;
+            }
+        }
+
+        /* Folder Card Container styling (strictly absolute to overlap cards) */
+        .folder-card-container {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            max-width: 56rem; /* 4xl */
+            margin: auto;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Folder Body (static, no hover scaling) */
+        .folder-body {
+            position: relative;
+            border-radius: 1.5rem;
+            border-top-left-radius: 0; /* Remove top-left corner to merge with leftmost tab */
+            width: 100%;
+            box-shadow: 0 20px 45px -15px rgba(38, 22, 12, 0.15);
+            z-index: 20;
+        }
+
+        /* Slide Dots styles (Discreet minimal dots) */
+        .slide-dot {
+            background-color: transparent;
+            border-color: currentColor;
+            opacity: 0.25;
+            transform: scale(0.75);
+            width: 8px;
+            height: 8px;
+            transition: all 0.3s ease;
+        }
+        .slide-dot.active {
+            background-color: currentColor;
+            opacity: 0.85;
+            transform: scale(1.15);
+        }
+
+        /* Pulse Animation for indicators */
+        @keyframes soft-pulse {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(6px) scale(1.05);
+            }
+        }
+
+        .scroll-indicator-anim {
+            animation: soft-pulse 2.2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
+
+    <!-- Backgrounds (Fades in/out behind the cards) -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div id="bg-cream" class="absolute inset-0 bg-[#f8f6f2] transition-opacity duration-300"></div>
     </div>
 
-    <div class="min-h-screen flex flex-col items-center p-4 md:p-8 pt-20 md:pt-24 relative z-10 w-full max-w-5xl mx-auto">
-        <a href="index.html"
-            class="absolute top-6 left-6 z-20 bg-terracotta backdrop-blur-md border border-terracotta text-white px-6 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-cocoa transition shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 group">
-            <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"></i> Volver a inicio
-        </a>
+    <!-- Floating Dot Navigation on the Right (Minimalistic) -->
+    <div id="slide-dots" class="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4 text-[#795244] transition-colors duration-500">
+        <button onclick="scrollToSlide(0)" class="slide-dot rounded-full border-2 border-current transition-all duration-300 active" aria-label="Slide 1"></button>
+        <button onclick="scrollToSlide(1)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 2"></button>
+        <button onclick="scrollToSlide(2)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 3"></button>
+        <button onclick="scrollToSlide(3)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 4"></button>
+        <button onclick="scrollToSlide(4)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 5"></button>
+    </div>
 
-        <div class="w-full bg-white/10 backdrop-blur-xl rounded-3xl p-6 md:p-12 border border-white/20 shadow-2xl mt-12 md:mt-8">
-            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
-                Horario Semanal
-            </h2>
-            <div id="landing-clases-container"
-                class="space-y-6 [&>*]:bg-white/80 [&>*]:backdrop-blur-sm [&>*]:rounded-xl [&>*]:border-white/10">
-                <!-- Clases dinámicas aquí -->
+    <!-- Fixed Presentation Layer (Viewport containing Title and Folders Deck) -->
+    <div class="fixed-viewport">
+        <!-- Button completely loose on the left (absolute positioning matching Canva spacing) -->
+        <button id="btn-inicio" onclick="handleNavClick(this, 'index.html')"
+            class="absolute left-4 md:left-12 top-4 md:top-8 bg-[#795244] border border-[#795244] text-[#f8f6f2] px-6 py-2.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2 shadow-md group z-40">
+            <svg class="w-4 h-4 text-current" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.5 12c-3 0.5-9 0.5-13.5 0M9 6c-1.5 2-3.5 4.5-5 6 1.5 1.5 3.5 4 5 6"></path>
+            </svg>
+            <span data-i18n="btn_back_home">Inicio</span>
+        </button>
+
+        <!-- Sticky Header (Title only, centered, with generous bottom padding to prevent overlap) -->
+        <div id="sticky-header" class="w-full flex flex-col items-center z-30 select-none pb-4 md:pb-8">
+            <h1 id="header-title" class="brand-font font-black text-[#795244] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.1em] text-center transition-opacity duration-300" data-i18n="classes_title">
+                Escoge tus clases
+            </h1>
+        </div>
+
+        <!-- Active Viewport Content Area -->
+        <div class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-8 md:pb-12 mt-4 md:mt-8">
+            
+            <!-- ==================================== -->
+            <!-- FOLDERS DECK (Cards 1, 2, 3)         -->
+            <!-- ==================================== -->
+            <div id="folders-deck" class="w-full relative transition-all duration-300">
+                
+                <!-- CARD 1 (Vinyasa Flow) -->
+                <div id="card-1" class="folder-card-container">
+                    <!-- Tab SVG (Perfect Bezier curves matching Canva tabs exactly) -->
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none pointer-events-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Tab 1 (Brown #795244) -->
+                            <path d="M 0 36 L 0 12 Q 0 0 12 0 L 158 0 Q 170 0 170 12 C 170 24 182 36 194 36 L 896 36 L 896 37 L 0 37 Z" fill="#795244" />
+                            <!-- Tab 1 Text Label -->
+                            <text x="85" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2" data-i18n="classes_tab_vinyasa">VINYASA</text>
+                        </svg>
+                    </div>
+                    <!-- Body (z-20) -->
+                    <div onclick="handleNavClick(this, 'profile.html')" 
+                        class="folder-body bg-[#795244] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80" alt="Vinyasa Flow" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_vinyasa_tagline">¿Listx para fluir sin parar?</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_vinyasa_title">Vinyasa Flow</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_vinyasa_desc">
+                                Una clase dinámica donde cada respiración guía el movimiento. Conecta posturas en secuencias fluidas, suma fuerza, equilibrio y enfoque mientras tu cuerpo se mueve al ritmo de tu propia energía.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2 (Yoga para Hombres) -->
+                <div id="card-2" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 21;">
+                    <!-- Tab SVG (Perfect Bezier curves matching Canva tabs exactly) -->
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Active Tab 2 + top bar (Terracotta #e06b53). Excludes Tab 1 so it doesn't slide up from below -->
+                            <path d="M 180 36 L 180 12 Q 180 0 192 0 L 338 0 Q 350 0 350 12 C 350 24 362 36 374 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#e06b53" />
+                            <!-- Tab 2 Text Label -->
+                            <text x="260" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2" data-i18n="classes_tab_hombres">HOMBRES</text>
+                        </svg>
+                        <!-- Click Targets for Tabs -->
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <!-- Body (z-20) -->
+                    <div onclick="handleNavClick(this, 'profile.html')" 
+                        class="folder-body bg-[#e06b53] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="https://images.unsplash.com/photo-1562088287-bde35a1ea917?auto=format&fit=crop&w=800&q=80" alt="Yoga para Hombres" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_hombres_tagline">Fuerza, calma y espacio propio.</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_hombres_title">Yoga para Hombres</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_hombres_desc">
+                                Un espacio pensado para fortalecer cuerpo y mente sin presión ni comparaciones. Trabaja flexibilidad, fuerza y respiración consciente en un ambiente cómodo, directo y hecho a tu medida.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3 (Yoga Restaurativa Suave) -->
+                <div id="card-3" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 22;">
+                    <!-- Tab SVG (Perfect Bezier curves matching Canva tabs exactly) -->
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Active Tab 3 + top bar (Peach #ee9785). Excludes Tab 1 and Tab 2 so they remain static -->
+                            <path d="M 360 36 L 360 12 Q 360 0 372 0 L 518 0 Q 530 0 530 12 C 530 24 542 36 554 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#ee9785" />
+                            <!-- Tab 3 Text Label -->
+                            <text x="445" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2" data-i18n="classes_tab_restaurativa">RESTAURATIVA</text>
+                        </svg>
+                        <!-- Click Targets for Tabs -->
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[42%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <!-- Body (z-20) -->
+                    <div onclick="handleNavClick(this, 'profile.html')" 
+                        class="folder-body bg-[#ee9785] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80" alt="Yoga Restaurativa Suave" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_restaurativa_tagline">Suelta el día, respira despacio.</span>
+                            <h2 class="brand-font text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_restaurativa_title">Yoga Restaurativa Suave</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_restaurativa_desc">
+                                Una práctica lenta y consciente diseñada para liberar tensión acumulada. Con posturas sostenidas y respiración profunda, esta clase invita a tu cuerpo y mente a descansar de verdad.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Floating Scroll Indicator -->
+        <div id="scroll-assist" onclick="scrollNext()" class="fixed bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-0 pointer-events-none z-40 text-[#795244] transition-all duration-500 cursor-pointer">
+            <span id="scroll-assist-text" class="text-[9px] uppercase tracking-[0.2em] font-bold" data-i18n="classes_scroll_arrow_text">Ver más clases</span>
+            <svg id="scroll-assist-arrow" class="w-4 h-4 text-current scroll-indicator-anim" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"></path>
+            </svg>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- UNIFIED SLIDE 4 & 5 PANEL (Rising Brown Curtain) -->
+    <!-- ============================================= -->
+    <div id="slide-4-panel" class="fixed inset-0 w-full h-full bg-[#795244] flex flex-col justify-between px-4 md:px-12 pb-6 pt-[90px] md:pt-[120px]" style="transform: translateY(100%); z-index: 35;">
+        
+        <!-- 3-Column Layout -->
+        <div class="flex-grow flex items-center justify-center w-full max-w-5xl mx-auto py-2">
+            <div class="flex items-center justify-between w-full gap-8 lg:gap-12 text-[#f8f6f2]">
+                
+                <!-- Left Column (Downward Dog Image) -->
+                <div id="cta-left-img" class="hidden md:block w-1/4 max-w-[210px] aspect-[3/4] overflow-hidden rounded-2xl shadow-lg border border-white/10 bg-white/5 opacity-0 transform translate-y-[120px] transition-all duration-500">
+                    <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80" alt="Downward Dog" class="w-full h-full object-cover brightness-95 opacity-90">
+                </div>
+
+                <!-- Center Column (Core Text + Fading CTA Button) -->
+                <div class="w-full md:w-2/4 flex flex-col items-center justify-center text-center gap-6">
+                    <h2 class="font-sans text-4xl md:text-6xl lg:text-7xl font-bold uppercase tracking-wider leading-tight text-white select-none" data-i18n="classes_cta_title">
+                        ¿No sabes por<br>dónde empezar?
+                    </h2>
+                    <p class="text-white text-base md:text-xl lg:text-2xl leading-relaxed font-light max-w-2xl mt-4" data-i18n="classes_cta_desc">
+                        <strong>Reserva</strong> tu primera clase y nosotros te guiamos desde ahí. Nuestros instructores te acompañarán en cada paso de tu camino.
+                    </p>
+                    <p id="cancelacion-horas-text" class="text-white/80 text-xs md:text-sm tracking-wide leading-relaxed mt-4 font-normal max-w-md">
+                        <!-- Cargado dinámicamente desde app.js -->
+                    </p>
+                    
+                    <!-- CTA Booking Button (fades and scales in dynamically) -->
+                    <div id="cta-btn-wrapper" class="opacity-0 transform scale-90 transition-all duration-300">
+                        <a href="profile.html" 
+                            class="inline-block px-8 py-3.5 bg-[#795244] border-2 border-white text-white font-extrabold rounded-full text-xs md:text-sm uppercase tracking-widest hover:bg-white hover:text-[#795244] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl text-center"
+                            data-i18n="classes_cta_btn">
+                            Reservar mi primera clase
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Column (Stacked Images: Arms & Bowls) -->
+                <div id="cta-right-imgs" class="hidden md:flex w-1/4 flex-col gap-4 max-w-[190px] opacity-0 transform translate-y-[120px] transition-all duration-500">
+                    <div class="aspect-square overflow-hidden rounded-2xl shadow-lg border border-white/10 bg-white/5">
+                        <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=400&q=80" alt="Yoga Hands" class="w-full h-full object-cover brightness-90 opacity-90">
+                    </div>
+                    <div class="aspect-square overflow-hidden rounded-2xl shadow-lg border border-white/10 bg-white/5">
+                        <img src="https://images.unsplash.com/photo-1600618528240-fb9fc964b853?auto=format&fit=crop&w=400&q=80" alt="Crystal Singing Bowls" class="w-full h-full object-cover brightness-95 opacity-90">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Unified Footer (Matches index.html exactly in size and style, fades in dynamically) -->
+        <div id="cta-footer" class="w-full border-t border-white/20 pt-3 pb-1.5 px-6 md:px-12 flex items-center justify-between gap-3 text-sm font-normal tracking-[0.2em] text-left opacity-0 transition-opacity duration-500">
+            <div class="flex items-center gap-2">
+                <a href="https://www.google.com/maps/place/C.+San+Carlos,+2,+02004+Albacete" target="_blank"
+                   class="hover:text-sand flex items-center gap-2 text-sm md:text-base font-normal tracking-[0.1em] text-white transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                    </svg>
+                    CALLE SANCARLOS 2, ALBACETE
+                </a>
+            </div>
+            <div class="flex items-center gap-6 justify-center text-white">
+                <a href="mailto:hola@genyoga.studio" class="hover:text-sand transition flex items-center">
+                    <svg class="w-6 h-6 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"></path>
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/genyoga.studio" target="_blank" class="hover:text-sand transition-colors duration-300 transform hover:scale-110 flex items-center">
+                    <svg class="w-6 h-6 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                    </svg>
+                </a>
+            </div>
+            <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
+                <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">POLÍTICA DE PRIVACIDAD</a>
+                <span class="opacity-60 text-[10px]">v4.3 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
 
+    <!-- Scroll height spacers (to allow native scroll physics, 6 sections in total) -->
+    <div id="scroll-height-provider" class="w-full relative z-5 pointer-events-none">
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+    </div>
+
+    <!-- Scripts -->
     <script src="app.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dots = document.querySelectorAll('.slide-dot');
+            const dotsContainer = document.getElementById('slide-dots');
+            
+            const card1 = document.getElementById('card-1');
+            const card2 = document.getElementById('card-2');
+            const card3 = document.getElementById('card-3');
+            const foldersDeck = document.getElementById('folders-deck');
+            
+            const slide4Panel = document.getElementById('slide-4-panel');
+            
+            const ctaLeftImg = document.getElementById('cta-left-img');
+            const ctaRightImgs = document.getElementById('cta-right-imgs');
+            const ctaBtnWrapper = document.getElementById('cta-btn-wrapper');
+            const ctaFooter = document.getElementById('cta-footer');
+            
+            const bgCream = document.getElementById('bg-cream');
+            const stickyHeader = document.getElementById('sticky-header');
+            const headerTitle = document.getElementById('header-title');
+            const btnInicio = document.getElementById('btn-inicio');
+            
+            const scrollAssist = document.getElementById('scroll-assist');
+            const scrollAssistText = document.getElementById('scroll-assist-text');
+            const scrollAssistArrow = document.getElementById('scroll-assist-arrow');
+
+            // Scroll positions mapped exactly to the visual zones (6 scroll spacers = [0, 5])
+            const slideScrollPositions = [0, 1.3, 2.6, 3.8, 5.0];
+
+            // Scroll helper (normal continuous scroll target)
+            window.scrollToSlide = function(index) {
+                const height = window.innerHeight;
+                window.scrollTo({ top: slideScrollPositions[index] * height, behavior: 'smooth' });
+            };
+
+            window.scrollNext = function() {
+                const height = window.innerHeight;
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const currentPos = scrollTop / height;
+                
+                // Find next slide position index
+                let nextIndex = 0;
+                for (let i = 0; i < slideScrollPositions.length; i++) {
+                    if (slideScrollPositions[i] > currentPos + 0.1) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+                if (nextIndex < slideScrollPositions.length) {
+                    scrollToSlide(nextIndex);
+                }
+            };
+
+            // Keyboard navigation (Arrow keys, Space and Page Up/Down)
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+                    e.preventDefault();
+                    scrollNext();
+                } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                    e.preventDefault();
+                    const height = window.innerHeight;
+                    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                    const currentPos = scrollTop / height;
+                    
+                    let prevIndex = 0;
+                    for (let i = slideScrollPositions.length - 1; i >= 0; i--) {
+                        if (slideScrollPositions[i] < currentPos - 0.1) {
+                            prevIndex = i;
+                            break;
+                        }
+                    }
+                    scrollToSlide(prevIndex);
+                }
+            });
+
+            // Scroll calculations and morphing transitions linked directly to window scroll
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const height = window.innerHeight;
+                
+                // Progress tracks the fractional slide index [0, 5]
+                const progress = Math.max(0, Math.min(5, scrollTop / height));
+                
+                // Determine active index for slide dots highlighting
+                let activeIndex = 0;
+                if (progress < 0.7) activeIndex = 0;
+                else if (progress < 1.9) activeIndex = 1;
+                else if (progress < 3.4) activeIndex = 2; 
+                else if (progress < 4.4) activeIndex = 3;
+                else activeIndex = 4;
+                
+                // 1. Sync dots active state and text colors
+                dots.forEach((dot, idx) => {
+                    if (idx === activeIndex) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+
+                if (activeIndex >= 3) {
+                    dotsContainer.style.color = '#ffffff';
+                } else {
+                    dotsContainer.style.color = '#795244';
+                }
+
+                // 2. Folder transitions (Slides 1 to 3: progress [0, 3.0])
+                if (progress <= 3.0) {
+                    foldersDeck.style.opacity = '1';
+                    foldersDeck.style.transform = 'translateY(0)';
+                    foldersDeck.style.pointerEvents = 'auto';
+                    
+                    headerTitle.style.opacity = '1';
+                    headerTitle.style.transform = 'translateY(0)';
+                    
+                    // Card 1: Static
+                    card1.style.opacity = '1';
+                    card1.style.transform = 'translateY(0)';
+                    
+                    // Card 2 Translation (Slides 1 -> 2)
+                    // Buffer: [0, 0.4] Card 1 static. [0.4, 1.0] Card 2 rises. [1.0, 1.6] Card 2 static.
+                    const p2 = Math.max(0, Math.min(1, (progress - 0.4) / 0.6));
+                    card2.style.transform = `translateY(${(1 - p2) * 100}%)`;
+                    card2.style.opacity = p2 > 0.01 ? '1' : '0';
+                    
+                    // Card 3 Translation (Slides 2 -> 3)
+                    // Buffer: [1.6, 2.2] Card 3 rises. [2.2, 3.0] Card 3 static.
+                    const p3 = Math.max(0, Math.min(1, (progress - 1.6) / 0.6));
+                    card3.style.transform = `translateY(${(1 - p3) * 100}%)`;
+                    card3.style.opacity = p3 > 0.01 ? '1' : '0';
+                } else {
+                    // PUSH TRANSITION: Translate folders deck and title upwards as Slide 4 panel rises
+                    const pPush = Math.max(0, Math.min(1, (progress - 3.0) / 0.8)); // [3.0, 3.8]
+                    foldersDeck.style.opacity = '1';
+                    foldersDeck.style.transform = `translateY(-${pPush * 100}vh)`;
+                    foldersDeck.style.pointerEvents = 'none';
+                    
+                    headerTitle.style.opacity = '1';
+                    headerTitle.style.transform = `translateY(-${pPush * 100}vh)`;
+                }
+
+                // 3. Slide 4 Panel rising transition (progress [3.0, 3.8])
+                if (progress >= 3.0) {
+                    const p4 = Math.max(0, Math.min(1, (progress - 3.0) / 0.8));
+                    slide4Panel.style.transform = `translateY(${(1 - p4) * 100}%)`;
+                    
+                    // Button theme swap (cream bg, brown text) as soon as Slide 4 rises halfway
+                    if (progress >= 3.4) {
+                        btnInicio.style.backgroundColor = '#f8f6f2';
+                        btnInicio.style.borderColor = '#f8f6f2';
+                        btnInicio.style.color = '#795244';
+                    } else {
+                        btnInicio.style.backgroundColor = '#795244';
+                        btnInicio.style.borderColor = '#795244';
+                        btnInicio.style.color = '#f8f6f2';
+                    }
+                } else {
+                    slide4Panel.style.transform = 'translateY(100%)';
+                    btnInicio.style.backgroundColor = '#795244';
+                    btnInicio.style.borderColor = '#795244';
+                    btnInicio.style.color = '#f8f6f2';
+                }
+
+                // 4. Parallax sliding entrance of images, button, and footer on scroll (progress [3.8, 5.0])
+                if (progress >= 3.8) {
+                    const pCTA = Math.max(0, Math.min(1, (progress - 3.8) / 1.2));
+                    
+                    // Left Image slides up
+                    if (ctaLeftImg) {
+                        ctaLeftImg.style.transform = `translateY(${(1 - pCTA) * 120}px)`;
+                        ctaLeftImg.style.opacity = `${pCTA}`;
+                    }
+                    
+                    // Right Images slide up
+                    if (ctaRightImgs) {
+                        ctaRightImgs.style.transform = `translateY(${(1 - pCTA) * 120}px)`;
+                        ctaRightImgs.style.opacity = `${pCTA}`;
+                    }
+                    
+                    // CTA Booking Button fades & scales in
+                    if (ctaBtnWrapper) {
+                        ctaBtnWrapper.style.transform = `scale(${0.9 + 0.1 * pCTA})`;
+                        ctaBtnWrapper.style.opacity = `${pCTA}`;
+                    }
+                    
+                    // Footer fades in & enables pointer clicks
+                    if (ctaFooter) {
+                        ctaFooter.style.opacity = `${pCTA}`;
+                        ctaFooter.style.pointerEvents = pCTA > 0.05 ? 'auto' : 'none';
+                    }
+                } else {
+                    if (ctaLeftImg) {
+                        ctaLeftImg.style.transform = 'translateY(120px)';
+                        ctaLeftImg.style.opacity = '0';
+                    }
+                    if (ctaRightImgs) {
+                        ctaRightImgs.style.transform = 'translateY(120px)';
+                        ctaRightImgs.style.opacity = '0';
+                    }
+                    if (ctaBtnWrapper) {
+                        ctaBtnWrapper.style.transform = 'scale(0.9)';
+                        ctaBtnWrapper.style.opacity = '0';
+                    }
+                    if (ctaFooter) {
+                        ctaFooter.style.opacity = '0';
+                        ctaFooter.style.pointerEvents = 'none';
+                    }
+                }
+
+                // 5. Scroll Assist Indicator styling and label updates (fades out early at progress 3.2)
+                if (progress >= 3.2) {
+                    scrollAssist.style.opacity = '0';
+                    scrollAssist.style.pointerEvents = 'none';
+                } else {
+                    scrollAssist.style.opacity = '0.6';
+                    scrollAssist.style.pointerEvents = 'auto';
+                    scrollAssist.style.color = '#795244';
+
+                    // Text labels
+                    if (progress < 0.8) {
+                        scrollAssistText.textContent = 'Ver más clases';
+                    } else if (progress < 1.8) {
+                        scrollAssistText.textContent = 'Ver más clases';
+                    } else {
+                        scrollAssistText.textContent = '¿Tienes dudas?';
+                    }
+                }
+            });
+
+            // Adjust layout triggers on load
+            window.dispatchEvent(new Event('scroll'));
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -5,185 +5,175 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GEN Yoga</title>
+    <link rel="stylesheet" href="tailwind-compiled.css">
 
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="i18n.js"></script>
 
 
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        cocoa: '#26160C',
-                        golden: '#B48A47',
-                        terracotta: '#D27D60',
-                        mutedbrown: '#7F5040',
-                        mutedgold: '#A69C6A',
-                        beige: '#E6DCC3',
-                        ivory: '#F8F6F2',
-                        slate: '#708090',
-                        sand: '#E6DCC3', /* Alias for beige */
-                        olive: '#8C8658'  /* Alias for golden */
-                    },
-                    fontFamily: {
-                        serif: ['Ubuntu', 'serif'],
-                        sans: ['"Montserrat Arabic"', 'Montserrat', 'sans-serif'],
-                    },
-                    backgroundImage: {
-                        'hero-pattern': "url('https://images.unsplash.com/photo-1552196563-55cd4e45efb3?q=80&w=1926&auto=format&fit=crop')",
-                    }
-                }
-            }
-        };
-    </script>
 
     <link rel="stylesheet" href="profile.css">
 </head>
 
 <body
-    class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
+    class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans">
 
-    <!-- Ambient Background Shapes (Sync with Index) -->
-    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div
-            class="absolute top-[10%] left-[10%] w-[60vw] h-[60vw] bg-[#D27D60] rounded-full blur-[50px] opacity-10 animate-pulse mix-blend-multiply">
-        </div>
-        <div class="absolute bottom-[10%] right-[10%] w-[50vw] h-[50vw] bg-[#B48A47] rounded-full blur-[50px] opacity-10 animate-pulse mix-blend-multiply"
-            style="animation-delay: 2s;"></div>
+
+    <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
+    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]">
     </div>
 
-    <div id="auth-container" class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative z-10">
-        <!-- Overlay removed for ivory theme -->
+    <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
+    <div
+        class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_50%)] pointer-events-none">
+    </div>
 
-        <a href="index.html"
-            class="relative md:absolute top-auto md:top-6 left-auto md:left-6 z-20 bg-terracotta backdrop-blur-md border border-terracotta text-white px-6 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-cocoa transition shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 group self-start ml-4 mt-4 md:ml-0 md:mt-0 mb-4 md:mb-0">
-            <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"></i> Volver a inicio
+    <!-- Ambient background shapes (ZEN & FRESH) -->
+    <div id="parallax-bg"
+        class="fixed inset-0 z-0 pointer-events-none overflow-hidden transition-transform duration-1000 ease-out">
+        <div class="ambient-shape shape-1"></div>
+        <div class="ambient-shape shape-2"></div>
+        <div class="ambient-shape shape-3"></div>
+        <div class="ambient-shape shape-4"></div>
+    </div>
+
+    <!-- Solid Cream Background (rendered only during auth flow) -->
+    <div id="auth-bg" class="fixed inset-0 z-0 bg-[#f8f6f2]"></div>
+
+    <!-- CSS Filter style for terracotta color -->
+    <style>
+        .filter-terracotta {
+            filter: brightness(0) saturate(100%) invert(48%) sepia(87%) saturate(541%) hue-rotate(345deg) brightness(85%) contrast(85%) !important;
+        }
+    </style>
+
+    <div id="auth-container" class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative z-10 w-full">
+        
+        <!-- Button completely loose on the left (matches classes.html and screenshot) -->
+        <a href="index.html" id="btn-inicio"
+            class="absolute left-4 md:left-12 top-4 md:top-8 bg-[#e06b53] border border-[#e06b53] text-white px-6 py-2.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-md z-40">
+            &larr; INICIO
         </a>
 
-        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10 items-center">
-            <div class="text-white fade-in order-2 lg:order-1 text-center lg:text-left">
-
-                <!-- Hero Logo replaces text -->
+        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center px-4 relative z-10 mt-[80px] md:mt-0">
+            <!-- Left Branding Column (Larger dimensions to fill blank space) -->
+            <div class="flex flex-col items-center lg:items-start text-center lg:text-left gap-8 select-none">
+                <!-- Colored Logo using terracotta filter -->
                 <img src="img/logo1.png" alt="GEN Yoga Logo"
-                    class="h-24 md:h-32 lg:h-40 w-auto object-contain drop-shadow-2xl mb-6 mx-auto lg:mx-0 brightness-0 invert">
-                <p
-                    class="text-white text-lg md:text-2xl font-medium leading-relaxed max-w-lg mx-auto lg:mx-0 mb-10 drop-shadow-md">
-                    Descubre tu mejor versión a través del movimiento consciente.
-                    <span class="block mt-2 text-white font-medium text-base">Pilates Reformer • Vinyasa • Hatha</span>
+                    class="h-28 md:h-36 lg:h-44 w-auto object-contain drop-shadow-md filter-terracotta">
+                
+                <h2 class="font-sans text-3xl md:text-4xl lg:text-[2.75rem] font-extrabold leading-tight text-[#e06b53] max-w-xl" data-i18n="profile_slogan">
+                    Tu espacio para el bienestar integral, la salud física y la paz mental.
+                </h2>
+                <p class="text-[#e06b53] text-base md:text-lg lg:text-xl font-semibold" data-i18n="profile_categories">
+                    Clases de Yoga • Consultas de Psicología y Nutrición • Talleres
                 </p>
-                <div class="flex flex-wrap justify-center lg:justify-start gap-4 text-xs font-bold text-white">
-                    <div
-                        class="flex items-center gap-2 bg-white/20 border border-white/40 px-4 py-2.5 rounded-full backdrop-blur-md drop-shadow-sm">
-                        <i class="ph-fill ph-calendar-check text-white text-lg"></i> <span>Reservas 24/7</span>
-                    </div>
-                    <div
-                        class="flex items-center gap-2 bg-white/20 border border-white/40 px-4 py-2.5 rounded-full backdrop-blur-md drop-shadow-sm">
-                        <i class="ph-fill ph-ticket text-white text-lg"></i> <span>Bonos Flexibles</span>
-                    </div>
-                </div>
             </div>
 
-            <div class="w-full max-w-md mx-auto order-1 lg:order-2 fade-in" style="animation-delay: 0.2s;">
+            <!-- Right Login Card Column (Increased width and height) -->
+            <div class="w-full max-w-[480px] mx-auto">
+                
+                <!-- LOGIN CARD -->
                 <div id="login-card"
-                    class="bg-white/20 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-2xl border border-white/30 relative overflow-hidden text-white">
-                    <div class="text-center mb-8 relative z-10">
-                        <h2 class="text-3xl font-bold text-white brand-font drop-shadow-sm">Bienvenido</h2>
-                        <p class="text-white mt-2 text-xs font-normal uppercase tracking-[0.2em] drop-shadow-sm">Accede
-                            a tu cuenta
-                        </p>
+                    class="bg-gradient-to-br from-[#e06b53] to-[#a69c6a] p-10 md:p-12 rounded-[2.5rem] shadow-2xl relative text-white flex flex-col gap-8">
+                    
+                    <div class="text-center select-none">
+                        <h2 class="text-3xl md:text-4xl font-black uppercase tracking-wider text-white" data-i18n="auth_welcome">Bienvenido</h2>
+                        <p class="text-white/90 text-sm md:text-base font-light mt-1" data-i18n="auth_login_subtitle">Accede a tu cuenta</p>
                     </div>
-                    <form id="form-login" class="space-y-5 relative z-10">
+                    
+                    <form id="form-login" class="space-y-6">
                         <div class="group">
-                            <label
-                                class="text-xs font-medium text-white uppercase tracking-wide ml-1 mb-1.5 block drop-shadow-sm">Email</label>
-                            <div class="relative">
-                                <i
-                                    class="ph-bold ph-envelope-simple absolute left-4 top-3.5 text-white/80 group-focus-within:text-white transition"></i>
-                                <input type="email" id="login-email"
-                                    class="w-full pl-11 pr-4 py-3 bg-white/20 border border-white/40 rounded-xl focus:ring-2 focus:ring-white focus:border-white outline-none transition placeholder-white text-white font-normal"
-                                    placeholder="hola@ejemplo.com" required>
-                            </div>
+                            <label class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left" data-i18n="register_email_label">Email</label>
+                            <input type="email" id="login-email"
+                                class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold"
+                                placeholder="" required>
                         </div>
                         <div class="group">
-                            <label
-                                class="text-xs font-medium text-white uppercase tracking-wide ml-1 mb-1.5 block drop-shadow-sm">Contraseña</label>
-                            <div class="relative">
-                                <i
-                                    class="ph-bold ph-lock-key absolute left-4 top-3.5 text-white/80 group-focus-within:text-white transition"></i>
-                                <input type="password" id="login-password"
-                                    class="w-full pl-11 pr-4 py-3 bg-white/20 border border-white/40 rounded-xl focus:ring-2 focus:ring-white focus:border-white outline-none transition placeholder-white text-white font-normal"
-                                    placeholder="••••••••" required>
-                            </div>
+                            <label class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left" data-i18n="login_password_label">Contraseña</label>
+                            <input type="password" id="login-password"
+                                class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold"
+                                placeholder="" required>
                         </div>
-                        <button type="submit"
-                            class="w-full bg-terracotta text-white py-4 rounded-xl font-bold hover:bg-cocoa transition shadow-lg hover:shadow-xl transform active:scale-[0.98] tracking-wide text-sm flex items-center justify-center gap-2 group border border-white/20">
-                            INICIAR SESIÓN <i
-                                class="ph-bold ph-arrow-right group-hover:translate-x-1 transition text-white"></i>
-                        </button>
+                        
+                        <!-- Log In Action Button (Outline pill matching screenshot) -->
+                        <div class="flex justify-center pt-4">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2.5 px-10 py-3.5 bg-transparent border-2 border-white text-white font-extrabold rounded-full text-sm md:text-base uppercase tracking-widest hover:bg-white hover:text-[#e06b53] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl cursor-pointer"
+                                data-i18n="login_btn_submit">
+                                Inicio sesión &rarr;
+                            </button>
+                        </div>
                     </form>
-                    <div class="mt-8 text-center relative z-10">
-                        <p class="text-white text-base font-medium drop-shadow-sm">¿Aún no tienes cuenta?</p>
+                    
+                    <div class="text-center mt-2">
+                        <p class="text-white/95 text-base font-light" data-i18n="login_no_account">¿Aún no tienes cuenta?</p>
                         <button onclick="toggleAuth('register')"
-                            class="text-white font-medium text-xl hover:underline mt-1 drop-shadow-md">Regístrate gratis
-                            aquí</button>
-                    </div>
-                    <div
-                        class="absolute -top-10 -right-10 w-32 h-32 bg-olive/20 rounded-full blur-3xl opacity-50 pointer-events-none">
-                    </div>
-                    <div
-                        class="absolute -bottom-10 -left-10 w-32 h-32 bg-sand/20 rounded-full blur-3xl opacity-50 pointer-events-none">
+                            class="text-white font-bold text-lg hover:underline mt-1.5 underline decoration-white/50 hover:decoration-white"
+                            data-i18n="login_btn_register">
+                            Regístrate gratis aquí
+                        </button>
                     </div>
                 </div>
 
+                <!-- REGISTER CARD -->
                 <div id="register-card"
-                    class="bg-white/95 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-2xl border-t-4 border-olive hidden relative">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-cocoa brand-font">Crear Cuenta</h2>
-                        <p class="text-cocoa/60 text-xs font-bold uppercase tracking-[0.2em] mt-2">Únete a la comunidad
-                        </p>
+                    class="bg-gradient-to-br from-[#e06b53] to-[#a69c6a] p-10 md:p-12 rounded-[2.5rem] shadow-2xl relative text-white hidden flex flex-col gap-8">
+                    
+                    <div class="text-center select-none">
+                        <h2 class="text-3xl md:text-4xl font-black uppercase tracking-wider text-white" data-i18n="register_card_title">Crear Cuenta</h2>
+                        <p class="text-white/90 text-sm md:text-base font-light mt-1" data-i18n="auth_create_subtitle">Únete a la comunidad</p>
                     </div>
-                    <form id="form-register" class="space-y-4">
+                    
+                    <form id="form-register" class="space-y-5">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                                <label class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left" data-i18n="register_name_label">Nombre</label>
                                 <input type="text" id="reg-nombre"
-                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-olive transition"
-                                    placeholder="Nombre" required>
+                                    class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold"
+                                    placeholder="" required>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Apellidos</label>
+                                <label class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left" data-i18n="register_lastname_label">Apellidos</label>
                                 <input type="text" id="reg-apellidos"
-                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-olive transition"
-                                    placeholder="Apellidos" required>
+                                    class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold"
+                                    placeholder="" required>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                            <label class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left" data-i18n="register_email_label">Email</label>
                             <input type="email" id="reg-email"
-                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-olive transition"
-                                placeholder="tu@email.com" required>
+                                class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold"
+                                placeholder="" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Contraseña</label>
+                            <label class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left" data-i18n="login_password_label">Contraseña</label>
                             <input type="password" id="reg-password"
-                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-olive transition"
-                                placeholder="Contraseña" required>
+                                class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold"
+                                placeholder="" required>
                         </div>
-                        <button type="submit"
-                            class="w-full bg-terracotta text-white py-4 rounded-xl font-bold hover:bg-cocoa transition shadow-lg transform active:scale-[0.98] tracking-wide text-sm">CREAR
-                            CUENTA</button>
+                        
+                        <!-- Register Action Button -->
+                        <div class="flex justify-center pt-4">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2.5 px-10 py-3.5 bg-transparent border-2 border-white text-white font-extrabold rounded-full text-sm md:text-base uppercase tracking-widest hover:bg-white hover:text-[#e06b53] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl cursor-pointer"
+                                data-i18n="register_btn_submit">
+                                Crear Cuenta &rarr;
+                            </button>
+                        </div>
                     </form>
-                    <div class="mt-6 text-center">
+                    
+                    <div class="text-center mt-2">
                         <button onclick="toggleAuth('login')"
-                            class="text-gray-500 font-medium text-sm hover:text-gray-800 transition">← Volver a Iniciar
-                            Sesión</button>
+                            class="text-white/80 hover:text-white font-medium text-base hover:underline transition"
+                            data-i18n="auth_back_login">
+                            ← Volver a Iniciar Sesión
+                        </button>
                     </div>
                 </div>
             </div>
@@ -196,20 +186,33 @@
         <div
             class="w-full max-w-[1400px] bg-white/80 backdrop-blur-2xl md:rounded-[2.5rem] shadow-2xl flex flex-col min-h-screen md:min-h-[90vh] overflow-hidden border border-cocoa/10 relative">
             <header class="bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-cocoa/10 shadow-sm">
-                <div class="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
+                <div class="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center gap-4">
                     <a href="index.html" class="flex items-center gap-3 group">
                         <img src="img/logo1.png" alt="GEN Yoga Logo"
                             class="h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition duration-300 brightness-0">
                     </a>
 
-                    <div class="flex items-center gap-4 sm:gap-8">
-                        <div class="flex flex-col items-end">
-                            <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Mis
-                                Bonos</span>
+                    <div class="profile-header-actions flex items-center justify-end gap-3 min-w-0">
+                        <div id="header-profile-summary" class="client-only flex items-center gap-3 min-w-0">
                             <div
-                                class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm hover:border-olive transition cursor-default">
-                                <i class="ph-fill ph-ticket text-olive text-lg"></i>
-                                <span id="bonos-count" class="font-bold text-cocoa text-lg leading-none">0</span>
+                                class="profile-header-avatar w-10 h-10 rounded-2xl bg-olive/10 border border-olive/20 items-center justify-center text-olive shrink-0">
+                                <i class="ph-fill ph-user text-xl"></i>
+                            </div>
+                            <div class="profile-header-meta min-w-0">
+                                <span id="profile-nombre-full"
+                                    class="profile-header-name block font-serif font-black text-cocoa tracking-tight truncate">--</span>
+                                <button onclick="abrirEditarPerfil()"
+                                    class="mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-cocoa/45 hover:text-olive transition"
+                                    title="Ajustes de Perfil">
+                                    <i class="ph-bold ph-gear text-xs"></i>
+                                    <span data-i18n="profile_btn_edit_profile">Editar perfil</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="header-bonos-container" class="flex flex-col items-end">
+                            <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5" data-i18n="profile_saldos_label">Mis saldos</span>
+                            <div id="header-saldos-wrapper" class="flex flex-wrap justify-end gap-2">
+                                <!-- Rellenado dinámicamente en JS -->
                             </div>
                         </div>
                         <div class="h-8 w-px bg-cocoa/10 hidden sm:block"></div>
@@ -222,23 +225,23 @@
                     </div>
                 </div>
 
-                <div class="admin-only hidden w-full bg-cocoa text-ivory text-xm font-medium shadow-inner">
+                <div class="admin-only w-full bg-cocoa text-ivory text-xm font-medium shadow-inner">
                     <div class="max-w-7xl mx-auto flex flex-wrap">
-                        <button onclick="switchTab('horarios')" id="tab-horarios"
+                        <button onclick="switchTab('crear')" id="tab-crear"
                             class="px-7 py-4 border-b-2 border-sand bg-cocoa/80 flex items-center gap-2 transition hover:bg-cocoa">
-                            <i class="ph-bold ph-calendar-check text-sand"></i> Gestión Reservas
+                            <i class="ph-bold ph-plus-circle text-sand"></i> Crear Sesiones
+                        </button>
+                        <button onclick="switchTab('gestion-alumnos')" id="tab-gestion-alumnos"
+                            class="px-7 py-4 border-b-2 border-transparent text-sand/70 hover:text-white hover:bg-cocoa transition flex items-center gap-2">
+                            <i class="ph-bold ph-list-checks text-sand"></i> Inscribir Alumnos
                         </button>
                         <button onclick="switchTab('admin-profesores')" id="tab-admin-profesores"
                             class="px-7 py-4 border-b-2 border-transparent text-sand/70 hover:text-white hover:bg-cocoa transition flex items-center gap-2">
-                            <i class="ph-bold ph-user-list text-sand"></i> Profesores
-                        </button>
-                        <button onclick="switchTab('asistencias')" id="tab-asistencias"
-                            class="px-7 py-4 border-b-2 border-transparent text-sand/70 hover:text-white hover:bg-cocoa transition flex items-center gap-2">
-                            <i class="ph-bold ph-list-checks text-sand"></i> Alumnos por clase
+                            <i class="ph-bold ph-users text-sand"></i> Altas/Bajas Profesionales
                         </button>
                         <button onclick="switchTab('usuarios')" id="tab-usuarios"
                             class="px-7 py-4 border-b-2 border-transparent text-sand/70 hover:text-white hover:bg-cocoa transition flex items-center gap-2">
-                            <i class="ph-bold ph-users-three text-sand"></i> Usuarios y Bonos
+                            <i class="ph-bold ph-users-three text-sand"></i> Gestionar Bonos
                         </button>
                         <button onclick="switchTab('configuracion')" id="tab-configuracion"
                             class="px-7 py-4 border-b-2 border-transparent text-sand/70 hover:text-white hover:bg-cocoa transition flex items-center gap-2">
@@ -249,103 +252,294 @@
             </header>
 
             <nav id="public-nav" class="sticky top-20 z-40 bg-white/60 backdrop-blur-md border-b border-cocoa/10 mb-6">
-                <div class="max-w-7xl mx-auto flex justify-center">
+                <div class="max-w-7xl mx-auto flex flex-wrap justify-center">
+                    <button id="nav-public-profesor-calendario" onclick="switchPublicView('profesor-calendario')"
+                        class="hidden px-5 sm:px-8 py-4 text-sm font-bold uppercase tracking-widest border-b-2 border-transparent text-cocoa/60 hover:text-cocoa transition hover:bg-cocoa/5">
+                        <i class="ph-bold ph-calendar-check mr-2"></i><span data-i18n="profile_tab_my_calendar">Mi calendario</span>
+                    </button>
+                    <button id="nav-public-inicio" onclick="switchPublicView('inicio')"
+                        class="px-5 sm:px-8 py-4 text-sm font-bold tracking-widest border-b-2 border-cocoa text-cocoa transition hover:bg-cocoa/5">
+                        <span data-i18n="profile_tab_inicio">INICIO</span>
+                    </button>
                     <button id="nav-public-horarios" onclick="switchPublicView('horarios')"
-                        class="px-8 py-4 text-sm font-bold tracking-widest border-b-2 border-cocoa text-cocoa transition hover:bg-cocoa/5">
-                        CLASES
+                        class="px-5 sm:px-8 py-4 text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
+                        <span data-i18n="profile_tab_horarios">CLASES</span>
+                    </button>
+                    <button id="nav-public-psicologia" onclick="switchPublicView('psicologia')"
+                        class="px-5 sm:px-8 py-4 text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
+                        <span data-i18n="profile_tab_psicologia">CONSULTAS</span>
+                    </button>
+                    <button id="nav-public-nutricion" onclick="switchPublicView('nutricion')"
+                        class="hidden px-5 sm:px-8 py-4 text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
+                        <span data-i18n="profile_tab_nutricion">NUTRICIÓN</span>
                     </button>
                     <button id="nav-public-profesores" onclick="switchPublicView('profesores')"
-                        class="px-8 py-4 text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
-                        MAESTROS
+                        class="px-5 sm:px-8 py-4 text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
+                        <span data-i18n="profile_tab_profesores">MAESTROS</span>
                     </button>
                     <button onclick="switchPublicView('mis-clases')" id="nav-public-mis-clases"
-                        class="hidden px-8 py-4 text-sm font-bold uppercase tracking-widest border-b-2 border-transparent text-cocoa/60 hover:text-cocoa transition hover:bg-cocoa/5">
-                        <i class="ph-bold ph-list-checks mr-2"></i> Mis Clases
+                        class="hidden px-5 sm:px-8 py-4 text-sm font-bold uppercase tracking-widest border-b-2 border-transparent text-cocoa/60 hover:text-cocoa transition hover:bg-cocoa/5">
+                        <i class="ph-bold ph-users-three mr-2"></i><span data-i18n="profile_tab_students_per_class">Alumnos por clase</span>
                     </button>
                 </div>
             </nav>
 
-            <main class="flex-grow max-w-7xl mx-auto px-4 py-8 md:py-12 w-full">
+            <main class="profile-main-content flex-grow min-h-[75vh] max-w-7xl mx-auto px-4 w-full">
 
-                <div id="view-horarios" class="fade-in">
-                    <div
-                        class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 pb-6 border-b border-cocoa/10">
-                        <div class="flex-1">
-                            <span
-                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">Calendario
-                                Semanal</span>
-                            <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-3">Reserva
-                                tu práctica
-                            </h2>
-                            <p class="text-cocoa/70 font-light text-lg max-w-xl leading-relaxed">Encuentra el equilibrio
-                                perfecto entre cuerpo y mente. Selecciona tu clase y prepárate para desconectar.</p>
-                        </div>
-
-                        <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
-                            <div id="profile-card" class="flex flex-col md:flex-row gap-5 max-w-4xl transition-all">
-                                <div
-                                    class="glass-panel rounded-3xl p-5 border border-white/60 shadow-lg flex flex-col items-center justify-center bg-white/70 backdrop-blur-xl w-full md:w-auto md:min-w-[200px] relative group hover:bg-white/80 transition-all">
-                                    <div class="relative h-24 mb-2 filter drop-shadow-md">
-                                        <img id="rank-badge" src="" alt="Rango"
-                                            class="h-full w-auto object-contain transition transform group-hover:scale-105 rounded-xl shadow-sm"
-                                            onerror="this.style.display='none'">
-                                    </div>
+                <!-- 1. VISTA INICIO -->
+                <div id="view-inicio" class="fade-in">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <!-- Left Column: Calendar (Big) -->
+                        <div class="profile-calendar-main">
+                            <h3 class="brand-font text-2xl font-bold text-cocoa mb-4 flex items-center gap-2 pl-2">
+                                <i class="ph-bold ph-calendar text-olive"></i> <span data-i18n="profile_classes_bookings_calendar">Calendario de Clases y Reservas</span>
+                            </h3>
+                            <div class="bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <button onclick="cambiarMesInicio(-1)"
+                                        class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                            class="ph-bold ph-caret-left text-lg"></i></button>
                                     <div class="text-center">
-                                        <span
-                                            class="block text-[10px] font-bold text-cocoa/40 uppercase tracking-widest mb-1">Nivel
-                                            Actual</span>
-                                        <div class="flex items-center justify-center gap-2">
-                                            <span class="text-lg font-black uppercase tracking-tight"
-                                                id="rank-name">--</span>
-                                            <span id="discount-badge"
-                                                class="hidden text-[10px] font-bold text-white bg-olive px-2 py-0.5 rounded-full shadow-sm"></span>
-                                        </div>
+                                        <h3 id="inicio-calendar-month-year"
+                                            class="brand-font text-xl font-bold text-cocoa">
+                                        </h3>
+                                        <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5" data-i18n="profile_general_calendar">Calendario
+                                            General</p>
+                                    </div>
+                                    <button onclick="cambiarMesInicio(1)"
+                                        class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                            class="ph-bold ph-caret-right text-lg"></i></button>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 mb-2">
+                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
+                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
+                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
+                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
+                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
+                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
+                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
+                                </div>
+                                <div id="inicio-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+
+                                <div
+                                    class="mt-6 pt-6 border-t border-cocoa/10 flex flex-row flex-wrap gap-6 justify-center">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
+                                        <span class="w-3 h-3 rounded-full bg-[#10B981] inline-block"></span>
+                                        <span data-i18n="common_classes">Clases</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
+                                        <span class="w-3 h-3 rounded-full bg-[#3B82F6] inline-block"></span>
+                                        <span data-i18n="common_psychology">Psicología</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
+                                        <span class="w-3 h-3 rounded-full bg-[#8B5CF6] inline-block"></span>
+                                        <span data-i18n="common_nutrition">Nutrición</span>
                                     </div>
                                 </div>
-                                <div
-                                    class="glass-panel rounded-3xl p-6 border border-white/60 shadow-lg flex flex-col justify-center bg-white/70 backdrop-blur-xl flex-grow relative group hover:bg-white/80 transition-all">
-                                    <div class="flex justify-between items-start mb-4">
-                                        <div class="flex items-center gap-3">
-                                            <span id="profile-nombre-full"
-                                                class="font-bold text-cocoa text-2xl leading-tight font-serif truncate max-w-[250px] block">--</span>
-                                            <button onclick="abrirEditarPerfil()"
-                                                class="text-cocoa/30 hover:text-olive transition p-1.5 rounded-full hover:bg-white/50"
-                                                title="Editar Nombre"><i class="ph-bold ph-gear text-lg"></i></button>
+
+                                <button onclick="limpiarFiltroFechaInicio()"
+                                    class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
+                                    <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_bookings">Ver todas las reservas</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Upcoming sessions list -->
+                        <div class="profile-calendar-side">
+                            <div class="sticky top-24">
+                                <h3 class="brand-font text-2xl font-bold text-cocoa mb-6 flex items-center gap-2">
+                                    <i class="ph-bold ph-calendar-check text-olive"></i> <span data-i18n="profile_upcoming_title">Mis Próximas Citas y Clases</span>
+                                </h3>
+                                <div id="inicio-consolidado-container" class="space-y-6"></div>
+                                <div id="inicio-empty-state"
+                                    class="hidden flex flex-col items-center justify-center py-10 text-center bg-white/50 border border-cocoa/10 rounded-3xl p-6">
+                                    <div class="bg-white p-6 rounded-full mb-4 shadow-sm border border-cocoa/10"><i
+                                            class="ph-duotone ph-calendar-blank text-4xl text-cocoa/30"></i></div>
+                                    <h4 class="brand-font text-xl font-bold text-cocoa mb-2" data-i18n="profile_no_bookings_title">No tienes reservas</h4>
+                                    <p class="text-cocoa/60 text-xs font-light max-w-xs mx-auto" data-i18n="profile_no_bookings_desc">Navega por las pestañas
+                                        de Clases y Consultas para programar tus reservas.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-profesor-calendario" class="hidden fade-in">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 pb-6 border-b border-cocoa/10">
+                        <div>
+                            <span
+                                class="inline-block py-1 px-3 rounded-full bg-olive/10 text-olive font-bold tracking-widest text-[10px] uppercase mb-3 border border-olive/20">Profesor</span>
+                            <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-3">Mi calendario</h2>
+                            <p class="text-cocoa/70 font-light text-lg max-w-xl leading-relaxed">Tus clases y consultas
+                                programadas en un calendario único.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div class="lg:col-span-8">
+                            <div id="profesor-agenda-container" class="space-y-6"></div>
+                            <div id="profesor-agenda-empty"
+                                class="hidden flex flex-col items-center justify-center py-24 text-center">
+                                <div class="bg-white p-8 rounded-full mb-6 shadow-sm border border-cocoa/10"><i
+                                        class="ph-duotone ph-calendar-slash text-5xl text-cocoa/30"></i></div>
+                                <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">No tienes clases programadas
+                                </h3>
+                                <p class="text-cocoa/60 text-sm font-light max-w-xs mx-auto">Cuando tengas horarios
+                                    asignados aparecerán aquí.</p>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-4">
+                            <div class="sticky top-24">
+                                <div class="bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
+                                    <div class="flex items-center justify-between mb-6">
+                                        <button onclick="cambiarMesProfesor(-1)"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                class="ph-bold ph-caret-left text-lg"></i></button>
+                                        <div class="text-center">
+                                            <h3 id="profesor-calendar-month-year"
+                                                class="brand-font text-xl font-bold text-cocoa"></h3>
+                                            <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5">Solo tus
+                                                horarios</p>
                                         </div>
-                                        <div class="text-right">
-                                            <span class="block text-3xl font-bold text-cocoa leading-none"
-                                                id="clases-count-num">0</span>
-                                            <span
-                                                class="text-[9px] font-bold text-cocoa/40 uppercase tracking-wide block mt-1">Clases
-                                                mes actual</span>
-                                        </div>
+                                        <button onclick="cambiarMesProfesor(1)"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                class="ph-bold ph-caret-right text-lg"></i></button>
                                     </div>
-                                    <div class="w-full space-y-3">
-                                        <div class="flex justify-between items-end">
-                                            <span id="progress-text"
-                                                class="text-[10px] font-bold text-cocoa/40 uppercase tracking-wider">Progreso
-                                                nivel</span>
-                                            <div class="text-right">
-                                                <span id="next-level-info"
-                                                    class="block text-xs font-bold text-cocoa">--</span>
-                                                <span id="next-discount-text"
-                                                    class="block text-[10px] font-bold text-olive mt-0.5"></span>
-                                            </div>
-                                        </div>
-                                        <div class="h-3 w-full bg-golden/20 rounded-full overflow-hidden shadow-inner">
-                                            <div id="rank-progress-bar"
-                                                class="h-full bg-gradient-to-r from-golden to-terracotta rounded-full transition-all duration-1000 ease-out"
-                                                style="width: 0%;"></div>
-                                        </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-2">
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
+                                    </div>
+                                    <div id="profesor-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                                    <button onclick="limpiarFiltroFechaProfesor()"
+                                        class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
+                                        <i class="ph-bold ph-x-circle"></i> Ver todos mis horarios
+                                    </button>
+                                </div>
+
+                                <!-- Tarjeta de Mi Grupo de Alumnos (Solo Lectura) -->
+                                <div class="bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6 mt-6">
+                                    <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
+                                        <i class="ph-fill ph-users-three text-olive"></i> Mi Grupo de Alumnos
+                                    </h3>
+                                    <div id="profesor-mi-grupo-container"
+                                        class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                        <!-- Se rellenará dinámicamente -->
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
+                <!-- Admin Sub-Navigation for Creation -->
+                <div class="admin-only hidden mb-8 border-b border-cocoa/10 pb-6 max-w-xl mx-auto text-center"
+                    id="admin-crear-tabs">
+                    <span class="block text-[10px] font-bold text-cocoa/40 uppercase tracking-widest mb-3">Panel de
+                        Creación</span>
+                    <div class="flex justify-center gap-3">
+                        <button id="btn-admin-tab-clases" onclick="switchAdminCrearTab('clases')"
+                            class="filtro-prof-btn active flex items-center gap-2">
+                            <i class="ph-bold ph-calendar"></i> Clases
+                        </button>
+                        <button id="btn-admin-tab-consultas" onclick="switchAdminCrearTab('consultas')"
+                            class="filtro-prof-btn flex items-center gap-2">
+                            <i class="ph-bold ph-brain"></i> Consultas
+                        </button>
+                        <button id="btn-admin-tab-talleres" onclick="switchAdminCrearTab('talleres')"
+                            class="filtro-prof-btn flex items-center gap-2">
+                            <i class="ph-bold ph-chalkboard-teacher"></i> Talleres
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. VISTA CLASES -->
+                <div id="view-horarios" class="hidden fade-in">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 pb-6 border-b border-cocoa/10">
+                        <div class="flex-1">
+                            <!-- Client Header -->
+                            <div class="is-admin-hidden">
+                                <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-3" data-i18n="profile_schedule_title">
+                                    Reserva tu práctica
+                                </h2>
+                                <p class="text-cocoa/70 font-light text-lg max-w-xl leading-relaxed" data-i18n="profile_schedule_desc">
+                                    Encuentra el equilibrio perfecto entre cuerpo y mente. Selecciona tu clase y
+                                    prepárate para desconectar.
+                                </p>
+                            </div>
+                            <!-- Admin Header -->
+                            <div class="is-admin-visible hidden">
+                                <span
+                                    class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
+                                    Gestión de Horarios
+                                </span>
+                                <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">
+                                    Administración de Clases
+                                </h2>
+                                <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">
+                                    Crea, programa y elimina clases de yoga. Revisa las reservas de los alumnos y el
+                                    aforo.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
                             <div class="admin-only">
-                                <button onclick="abrirModalCrearClase()"
-                                    class="flex bg-cocoa hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
-                                    <i class="ph-bold ph-plus-circle text-lg"></i> Crear Clase
-                                </button>
+                                <div class="flex flex-wrap gap-2 justify-end">
+                                    <button onclick="abrirModalCrearClase()"
+                                        class="flex bg-cocoa hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
+                                        <i class="ph-bold ph-plus-circle text-lg"></i> Crear Clase
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros de Clases -->
+                    <div id="clases-filtros-container" class="bg-white/80 backdrop-blur-md rounded-2xl p-5 mb-8 border border-cocoa/10 shadow-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Filtro por Profesor -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-profesor" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider" data-i18n="profile_filter_teacher">Profesor</label>
+                                <select id="filtro-profesor" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos" data-i18n="profile_filter_all_teachers">Todos los profesores</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Filtro por Tipo de Yoga -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-tipo-yoga" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider" data-i18n="profile_filter_type">Tipo de Yoga</label>
+                                <select id="filtro-tipo-yoga" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos" data-i18n="profile_filter_all_types">Todos los tipos</option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro por Rango de Horas -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-horario" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider" data-i18n="profile_filter_schedule">Horario</label>
+                                <select id="filtro-horario" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos" data-i18n="profile_filter_any_time">Cualquier hora</option>
+                                    <option value="manana" data-i18n="profile_filter_morning">Mañana (07:00 - 12:00)</option>
+                                    <option value="mediodia" data-i18n="profile_filter_midday">Mediodía (12:00 - 16:00)</option>
+                                    <option value="tarde" data-i18n="profile_filter_afternoon">Tarde (16:00 - 20:00)</option>
+                                    <option value="noche" data-i18n="profile_filter_evening">Noche (20:00 - 23:00)</option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro por Disponibilidad (Ocupadas / Huecos) -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-disponibilidad" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider" data-i18n="profile_filter_availability">Disponibilidad</label>
+                                <select id="filtro-disponibilidad" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos" data-i18n="profile_filter_all_classes">Todas las clases</option>
+                                    <option value="huecos" data-i18n="profile_filter_free_spots">Con plazas libres</option>
+                                    <option value="completas" data-i18n="profile_filter_full_classes">Clases completas</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -356,13 +550,13 @@
                             <div class="bg-white p-2.5 rounded-full text-terracotta shadow-sm"><i
                                     class="ph-fill ph-warning-circle text-2xl"></i></div>
                             <div>
-                                <p class="font-bold text-cocoa text-lg">Saldo agotado</p>
-                                <p class="text-sm text-cocoa/80">Recarga tus bonos para seguir
+                                <p class="font-bold text-cocoa text-lg" data-i18n="profile_no_balance_title">Saldo agotado</p>
+                                <p class="text-sm text-cocoa/80" data-i18n="profile_no_balance_desc">Recarga tus bonos para seguir
                                     reservando.</p>
                             </div>
                         </div>
                         <a href="https://maps.google.com/?q=Farmacia+Q19+Albacete" target="_blank"
-                            class="text-xs bg-terracotta text-white px-5 py-2.5 rounded-xl border border-terracotta/20 font-bold hover:bg-cocoa transition uppercase tracking-wide shadow-sm">Cómo
+                            class="text-xs bg-terracotta text-white px-5 py-2.5 rounded-xl border border-terracotta/20 font-bold hover:bg-cocoa transition uppercase tracking-wide shadow-sm" data-i18n="profile_directions">Cómo
                             llegar</a>
                     </div>
 
@@ -373,9 +567,9 @@
                                 class="hidden flex flex-col items-center justify-center py-24 text-center">
                                 <div class="bg-white p-8 rounded-full mb-6 shadow-sm border border-cocoa/10"><i
                                         class="ph-duotone ph-calendar-slash text-5xl text-cocoa/30"></i></div>
-                                <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">No hay clases disponibles
+                                <h3 class="brand-font text-2xl font-bold text-cocoa mb-2" data-i18n="profile_no_classes_available">No hay clases disponibles
                                 </h3>
-                                <p class="text-cocoa/60 text-sm font-light max-w-xs mx-auto">Estamos planificando la
+                                <p class="text-cocoa/60 text-sm font-light max-w-xs mx-auto" data-i18n="profile_no_classes_available_desc">Estamos planificando la
                                     próxima
                                     semana. Vuelve a consultar en breve.</p>
                             </div>
@@ -391,7 +585,7 @@
                                             <h3 id="calendar-month-year"
                                                 class="brand-font text-xl font-bold text-cocoa">
                                             </h3>
-                                            <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5">Selecciona
+                                            <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5" data-i18n="profile_select_day">Selecciona
                                                 un
                                                 día</p>
                                         </div>
@@ -411,7 +605,7 @@
                                     <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
                                     <button onclick="limpiarFiltroFecha()"
                                         class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
-                                        <i class="ph-bold ph-x-circle"></i> Ver todas las clases
+                                        <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_classes">Ver todas las clases</span>
                                     </button>
                                 </div>
                             </div>
@@ -419,26 +613,233 @@
                     </div>
                 </div>
 
+                <!-- 3. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
+                <div id="view-psicologia" class="hidden fade-in">
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición -->
+                    <div class="flex justify-center gap-3 mb-10 border-b border-cocoa/10 pb-6 max-w-md mx-auto">
+                        <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"
+                            class="filtro-prof-btn active flex items-center gap-2">
+                            <i class="ph-bold ph-brain text-base"></i>
+                            <span data-i18n="common_psychology">Psicología</span>
+                        </button>
+                        <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"
+                            class="filtro-prof-btn flex items-center gap-2">
+                            <i class="ph-bold ph-apple text-base"></i>
+                            <span data-i18n="common_nutrition">Nutrición</span>
+                        </button>
+                    </div>
+
+                    <!-- SUB-VISTA PSICOLOGÍA -->
+                    <div id="sub-view-psicologia" class="fade-in">
+                        <div
+                            class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 pb-6 border-b border-cocoa/10">
+                            <div class="flex-1">
+                                <span
+                                    class="inline-block py-1 px-3 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] font-bold tracking-widest text-[10px] uppercase mb-3 border border-[#3B82F6]/20" data-i18n="profile_mental_wellbeing">
+                                    Bienestar Mental
+                                </span>
+                                <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-3" data-i18n="profile_psychology_title">Consultas de
+                                    Psicología</h2>
+                                <p class="text-cocoa/70 font-light text-lg max-w-xl leading-relaxed" data-i18n="profile_psychology_desc">
+                                    Reserva tus consultas individuales de gestión emocional y desarrollo personal con
+                                    nuestro equipo experto.
+                                </p>
+                            </div>
+                            <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
+                                <div class="admin-only">
+                                    <button onclick="abrirModalCrearConsulta('psicologia')"
+                                        class="flex bg-[#3B82F6] hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
+                                        <i class="ph-bold ph-plus-circle text-lg"></i> Crear Consulta Psicológica
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div class="lg:col-span-8">
+                                <div id="psicologia-container" class="space-y-6"></div>
+                                <div id="psicologia-empty-state"
+                                    class="hidden flex flex-col items-center justify-center py-24 text-center">
+                                    <div class="bg-white p-8 rounded-full mb-6 shadow-sm border border-cocoa/10"><i
+                                            class="ph-duotone ph-calendar-slash text-5xl text-[#3B82F6]/50"></i></div>
+                                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2" data-i18n="profile_no_consultations_available">No hay consultas
+                                        disponibles</h3>
+                                    <p class="text-cocoa/60 text-sm font-light max-w-xs mx-auto" data-i18n="profile_no_consultations_available_desc">Actualmente no hay
+                                        disponibilidad configurada para consultas. Vuelve a consultar pronto.</p>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-4">
+                                <div class="sticky top-24">
+                                    <div class="bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
+                                        <div class="flex items-center justify-between mb-6">
+                                            <button onclick="cambiarMesPsicologia(-1)"
+                                                class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                    class="ph-bold ph-caret-left text-lg"></i></button>
+                                            <div class="text-center">
+                                                <h3 id="psicologia-calendar-month-year"
+                                                    class="brand-font text-xl font-bold text-cocoa">
+                                                </h3>
+                                                <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5" data-i18n="profile_calendar_consultations">
+                                                    Calendario de Consultas</p>
+                                            </div>
+                                            <button onclick="cambiarMesPsicologia(1)"
+                                                class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                    class="ph-bold ph-caret-right text-lg"></i></button>
+                                        </div>
+                                        <div class="grid grid-cols-7 gap-1 mb-2">
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
+                                        </div>
+                                        <div id="psicologia-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                                        <button onclick="limpiarFiltroFechaPsicologia()"
+                                            class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
+                                            <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VISTA NUTRICIÓN -->
+                    <div id="sub-view-nutricion" class="hidden fade-in">
+                        <div
+                            class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 pb-6 border-b border-cocoa/10">
+                            <div class="flex-1">
+                                <span
+                                    class="inline-block py-1 px-3 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] font-bold tracking-widest text-[10px] uppercase mb-3 border border-[#8B5CF6]/20" data-i18n="profile_nutritional_wellbeing">
+                                    Bienestar Nutricional
+                                </span>
+                                <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-3" data-i18n="profile_nutrition_title">Consultas de
+                                    Nutrición</h2>
+                                <p class="text-cocoa/70 font-light text-lg max-w-xl leading-relaxed" data-i18n="profile_nutrition_desc">
+                                    Mejora tus hábitos alimenticios y bienestar con el acompañamiento personalizado de
+                                    nuestro equipo de nutrición.
+                                </p>
+                            </div>
+                            <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
+                                <div class="admin-only">
+                                    <button onclick="abrirModalCrearConsulta('nutricion')"
+                                        class="flex bg-[#8B5CF6] hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
+                                        <i class="ph-bold ph-plus-circle text-lg"></i> Crear Consulta de Nutrición
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div class="lg:col-span-8">
+                                <div id="nutricion-container" class="space-y-6"></div>
+                                <div id="nutricion-empty-state"
+                                    class="hidden flex flex-col items-center justify-center py-24 text-center">
+                                    <div class="bg-white p-8 rounded-full mb-6 shadow-sm border border-cocoa/10"><i
+                                            class="ph-duotone ph-calendar-slash text-5xl text-[#8B5CF6]/50"></i></div>
+                                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2" data-i18n="profile_no_nutrition_available">No hay consultas de
+                                        nutrición disponibles</h3>
+                                    <p class="text-cocoa/60 text-sm font-light max-w-xs mx-auto" data-i18n="profile_no_nutrition_available_desc">Actualmente no hay
+                                        disponibilidad configurada para consultas de nutrición. Vuelve a consultar
+                                        pronto.</p>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-4">
+                                <div class="sticky top-24">
+                                    <div class="bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
+                                        <div class="flex items-center justify-between mb-6">
+                                            <button onclick="cambiarMesNutricion(-1)"
+                                                class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                    class="ph-bold ph-caret-left text-lg"></i></button>
+                                            <div class="text-center">
+                                                <h3 id="nutricion-calendar-month-year"
+                                                    class="brand-font text-xl font-bold text-cocoa">
+                                                </h3>
+                                                <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5" data-i18n="profile_calendar_nutrition">
+                                                    Calendario de Nutrición</p>
+                                            </div>
+                                            <button onclick="cambiarMesNutricion(1)"
+                                                class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                    class="ph-bold ph-caret-right text-lg"></i></button>
+                                        </div>
+                                        <div class="grid grid-cols-7 gap-1 mb-2">
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
+                                            <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
+                                        </div>
+                                        <div id="nutricion-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                                        <button onclick="limpiarFiltroFechaNutricion()"
+                                            class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
+                                            <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="view-profesores" class="hidden fade-in">
-                    <div class="text-center mb-12">
+                    <div class="text-center mb-8">
                         <span
-                            class="inline-block py-1 px-3 rounded-full bg-olive/10 text-olive font-bold tracking-widest text-[10px] uppercase mb-4 border border-olive/20">Instructores
+                            class="inline-block py-1 px-3 rounded-full bg-olive/10 text-olive font-bold tracking-widest text-[10px] uppercase mb-4 border border-olive/20" data-i18n="profile_teachers_badge">Maestros
                             Expertos</span>
-                        <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-4">Nuestro Equipo</h2>
-                        <p class="text-cocoa/60 font-light text-lg max-w-2xl mx-auto leading-relaxed">
-                            Conoce a los profesionales que guiarán tu práctica. Cada uno aporta una energía única y años
-                            de
-                            experiencia para ayudarte a crecer.
+                        <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-4" data-i18n="profile_teachers_title">Maestros del Centro</h2>
+                        <p class="text-cocoa/60 font-light text-lg max-w-2xl mx-auto leading-relaxed" data-i18n="profile_teachers_desc">
+                            Conoce a los maestros que guiarán tu práctica, consultas y talleres. Cada uno aporta una
+                            energía única y años de experiencia para ayudarte a crecer.
                         </p>
                     </div>
-                    <div id="public-profesores-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+                    <!-- Sub-pestañas de filtrado de profesionales -->
+                    <div
+                        class="flex flex-wrap justify-center gap-3 mb-10 border-b border-cocoa/10 pb-6 max-w-2xl mx-auto">
+                        <button id="btn-filtro-prof-todos" onclick="filtrarProfesionalesVista('todos')"
+                            class="filtro-prof-btn active" data-i18n="profile_filter_all">
+                            Todos
+                        </button>
+                        <button id="btn-filtro-prof-yoga" onclick="filtrarProfesionalesVista('yoga')"
+                            class="filtro-prof-btn" data-i18n="common_classes">
+                            Clases
+                        </button>
+                        <button id="btn-filtro-prof-psicologia" onclick="filtrarProfesionalesVista('psicologia')"
+                            class="filtro-prof-btn" data-i18n="common_consultations">
+                            Consultas
+                        </button>
+                        <button id="btn-filtro-prof-nutricion" onclick="filtrarProfesionalesVista('nutricion')"
+                            class="filtro-prof-btn" data-i18n="common_workshops">
+                            Talleres
+                        </button>
+                    </div>
+
+                    <div id="public-profesores-grid" class="flex flex-wrap justify-center gap-8 w-full"></div>
                 </div>
 
                 <div id="view-asistencias" class="hidden fade-in">
-                    <div class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 pb-6 border-b border-cocoa/10">
                         <div>
-                            <h2 class="text-3xl brand-font font-bold text-cocoa">Listado de Clases</h2>
-                            <p class="text-cocoa/60 mt-1">Detalle de alumnos y ocupación.</p>
+                            <span
+                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
+                                Inscribir Alumnos
+                            </span>
+                            <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Inscripción y
+                                Asistencias</h2>
+                            <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Selecciona una clase o
+                                consulta para revisar los alumnos apuntados, asignar plazas manualmente o cancelar
+                                reservas.</p>
+                        </div>
+                        <div class="relative w-full md:w-96">
+                            <select id="asistencias-filtro-clase" onchange="filtrarAsistenciaClase(this.value)"
+                                class="w-full px-4 py-3 bg-white/80 border border-cocoa/20 rounded-xl focus:ring-2 focus:ring-olive outline-none shadow-sm transition text-cocoa">
+                                <option value="todas">Todas las clases</option>
+                            </select>
                         </div>
                     </div>
                     <div id="asistencias-container" class="space-y-6"></div>
@@ -450,58 +851,136 @@
                 </div>
 
                 <div id="view-usuarios" class="hidden fade-in">
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 pb-6 border-b border-cocoa/10">
                         <div>
-                            <h2 class="text-3xl brand-font font-bold text-cocoa">Cartera de Clientes</h2>
-                            <p class="text-cocoa/60 mt-1">Gestión manual de bonos y accesos.</p>
+                            <span
+                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
+                                Gestionar Bonos
+                            </span>
+                            <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Saldos y Bonos de
+                                Usuarios</h2>
+                            <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Busca usuarios para
+                                gestionar manualmente sus saldos de clases, consultas de psicología y consultas de
+                                nutrición.</p>
                         </div>
-                        <div class="relative w-full md:w-80 group">
-                            <i
-                                class="ph-bold ph-magnifying-glass absolute left-4 top-3.5 text-cocoa/40 group-focus-within:text-olive transition"></i>
-                            <input type="text" id="user-search" onkeyup="filtrarUsuarios()"
-                                class="w-full pl-11 pr-4 py-3 bg-white/80 border border-cocoa/20 rounded-xl focus:ring-2 focus:ring-olive outline-none shadow-sm transition placeholder-cocoa/30"
-                                placeholder="Buscar email...">
+                        <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                            <button onclick="abrirCrearClienteMostrador()"
+                                class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-5 py-3 rounded-xl text-xs font-bold shadow-sm transition uppercase tracking-wide">
+                                <i class="ph-bold ph-user-plus text-base"></i> Crear cliente
+                            </button>
+                            <div class="relative w-full md:w-80 group">
+                                <i
+                                    class="ph-bold ph-magnifying-glass absolute left-4 top-3.5 text-cocoa/40 group-focus-within:text-olive transition"></i>
+                                <input type="text" id="user-search" onkeyup="filtrarUsuarios()"
+                                    class="w-full pl-11 pr-4 py-3 bg-white/80 border border-cocoa/20 rounded-xl focus:ring-2 focus:ring-olive outline-none shadow-sm transition placeholder-cocoa/30"
+                                    placeholder="Buscar nombre o email...">
+                            </div>
                         </div>
                     </div>
                     <div class="bg-white/80 rounded-2xl shadow-sm border border-cocoa/10 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-separate border-spacing-y-2">
                             <thead
                                 class="bg-sand/10 border-b border-cocoa/10 text-[10px] uppercase text-cocoa/50 font-bold tracking-wider">
                                 <tr>
                                     <th class="px-6 py-4">Usuario</th>
                                     <th class="px-6 py-4 text-center">Rol</th>
-                                    <th class="px-6 py-4 text-center">Saldo</th>
+                                    <th class="px-6 py-4 text-center">Saldos</th>
                                     <th class="px-6 py-4 text-right">Añadir / Quitar</th>
                                 </tr>
                             </thead>
-                            <tbody id="users-table-body" class="divide-y divide-cocoa/5 text-sm text-cocoa/70"></tbody>
+                            <tbody id="users-table-body" class="text-sm text-cocoa/70"></tbody>
                         </table>
                         <div id="no-users-found" class="hidden p-12 text-center text-cocoa/40 italic">No se han
                             encontrado
                             resultados.</div>
                     </div>
+
+                    <!-- Sección de Grupos de Alumnos por Profesional -->
+                    <div class="mt-10 mb-10 bg-white/80 rounded-2xl p-6 border border-cocoa/10 shadow-sm">
+                        <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
+                            <i class="ph-fill ph-users-three text-olive"></i> Grupos de Alumnos por Profesional
+                        </h3>
+                        <div id="grupos-profesionales-container"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Se rellenará dinámicamente en JS -->
+                        </div>
+                    </div>
+
+                    <!-- Sección de Personal y Administradores -->
+                    <div class="mt-10">
+                        <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
+                            <i class="ph-fill ph-shield-star text-olive"></i> Personal y Administradores
+                        </h3>
+                        <div class="bg-white/80 rounded-2xl shadow-sm border border-cocoa/10 overflow-hidden">
+                            <table class="w-full text-left border-separate border-spacing-y-2">
+                                <thead
+                                    class="bg-sand/10 border-b border-cocoa/10 text-[10px] uppercase text-cocoa/50 font-bold tracking-wider">
+                                    <tr>
+                                        <th class="px-6 py-4">Usuario</th>
+                                        <th class="px-6 py-4 text-center">Rol</th>
+                                        <th class="px-6 py-4 text-center">Público</th>
+                                        <th class="px-6 py-4 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staff-table-body" class="text-sm text-cocoa/70"></tbody>
+                            </table>
+                            <div id="no-staff-found" class="hidden p-8 text-center text-cocoa/40 italic">No hay personal
+                                registrado.</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="view-admin-profesores" class="hidden fade-in">
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 pb-6 border-b border-cocoa/10">
                         <div>
-                            <h2 class="text-3xl brand-font font-bold text-cocoa">Gestión de Profesores</h2>
-                            <p class="text-cocoa/60 mt-1">Administra el equipo docente. Nombres, especialidades y fotos.
-                            </p>
+                            <span
+                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
+                                Altas/Bajas Profesionales
+                            </span>
+                            <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Equipo de Profesionales
+                            </h2>
+                            <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Crea, edita o elimina
+                                profesionales y organiza sus especialidades y áreas de atención.</p>
                         </div>
+                        <button onclick="crearProfesor()"
+                            class="flex items-center gap-2 bg-cocoa text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition">
+                            <i class="ph-bold ph-plus-circle text-lg"></i> Nuevo Profesional
+                        </button>
                     </div>
-                    <div id="admin-profesores-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+                    <!-- Filtros por área -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <button id="prof-filter-todos" onclick="filtrarProfesoresAdmin('todos')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-cocoa text-white shadow-sm">Todos</button>
+                        <button id="prof-filter-clases" onclick="filtrarProfesoresAdmin('clases')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Clases
+                            (Yoga)</button>
+                        <button id="prof-filter-psico" onclick="filtrarProfesoresAdmin('psicologia')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Consultas</button>
+                        <button id="prof-filter-nutri" onclick="filtrarProfesoresAdmin('nutricion')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Talleres</button>
+                    </div>
+                    <div id="admin-profesores-grid" class="flex flex-wrap justify-center gap-6 w-full"></div>
                     <div id="no-profesores"
                         class="hidden p-12 text-center text-cocoa/40 italic bg-white/60 rounded-2xl border border-cocoa/10">
                         No
-                        hay profesores registrados.</div>
+                        hay profesionales registrados.</div>
                 </div>
 
                 <div id="view-configuracion" class="hidden fade-in">
-                    <div class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 pb-6 border-b border-cocoa/10">
                         <div>
-                            <h2 class="text-3xl brand-font font-bold text-cocoa">Configuración del Sistema</h2>
-                            <p class="text-cocoa/60 mt-1">Gestiona los parámetros de configuración de la aplicación.</p>
+                            <span
+                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
+                                Configuración
+                            </span>
+                            <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Configuración del
+                                Sistema</h2>
+                            <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Gestiona los
+                                parámetros globales de la aplicación, tarifas de bonos y opciones del sistema.</p>
                         </div>
                         <button onclick="agregarConfiguracion()"
                             class="flex items-center gap-2 bg-cocoa text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition">
@@ -525,33 +1004,87 @@
                             configuraciones disponibles.</div>
                     </div>
                 </div>
+
+                <!-- VIEW ADMIN CONSULTAS -->
+                <div id="view-admin-consultas" class="hidden fade-in">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 pb-6 border-b border-cocoa/10">
+                        <div>
+                            <span
+                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
+                                Crear Sesiones
+                            </span>
+                            <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Administración de
+                                Consultas</h2>
+                            <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Crea, programa y
+                                elimina turnos de psicología y nutrición. Revisa las reservas y estados de consulta.</p>
+                        </div>
+                        <button onclick="abrirModalCrearConsulta('psicologia')"
+                            class="flex bg-cocoa text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
+                            <i class="ph-bold ph-plus-circle text-lg"></i> Crear Consulta
+                        </button>
+                    </div>
+
+                    <!-- Filtro Consultas (Psicología / Nutrición) -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <button id="consulta-filter-todas" onclick="filtrarConsultasAdmin('todas')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-cocoa text-white shadow-sm">Todas</button>
+                        <button id="consulta-filter-psicologia" onclick="filtrarConsultasAdmin('psicologia')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Psicología</button>
+                        <button id="consulta-filter-nutricion" onclick="filtrarConsultasAdmin('nutricion')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Nutrición</button>
+                    </div>
+
+                    <div id="admin-consultas-container" class="space-y-6"></div>
+                    <div id="admin-consultas-empty"
+                        class="hidden bg-white/60 rounded-2xl p-12 text-center border border-cocoa/10 mt-4">
+                        <i class="ph-duotone ph-brain text-5xl text-cocoa/30 mb-4"></i>
+                        <p class="text-cocoa/60 font-medium">No hay consultas registradas.</p>
+                    </div>
+                </div>
+
+                <!-- VIEW ADMIN TALLERES -->
+                <div id="view-admin-talleres" class="hidden fade-in">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 pb-6 border-b border-cocoa/10">
+                        <div>
+                            <span
+                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
+                                Crear Sesiones
+                            </span>
+                            <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Administración de
+                                Talleres</h2>
+                            <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Crea, programa y
+                                elimina talleres y workshops. Revisa las reservas de los alumnos y el aforo.</p>
+                        </div>
+                        <button onclick="abrirModalCrearTaller()"
+                            class="flex bg-cocoa text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
+                            <i class="ph-bold ph-plus-circle text-lg"></i> Crear Taller
+                        </button>
+                    </div>
+                    <div id="admin-talleres-container" class="space-y-6"></div>
+                    <div id="admin-talleres-empty"
+                        class="hidden bg-white/60 rounded-2xl p-12 text-center border border-cocoa/10 mt-4">
+                        <i class="ph-duotone ph-chalkboard-teacher text-5xl text-cocoa/30 mb-4"></i>
+                        <p class="text-cocoa/60 font-medium">No hay talleres registrados.</p>
+                    </div>
+                </div>
             </main>
 
             <footer class="bg-ivory/50 border-t border-cocoa/10 py-12 mt-auto backdrop-blur-sm">
                 <div class="max-w-6xl mx-auto px-4 text-center">
                     <div
-                        class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-5 border border-cocoa/10 shadow-sm overflow-hidden p-3">
-                        <img src="img/logo1.png" alt="GEN Yoga" class="w-full h-full object-contain opacity-40">
+                        class="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-cocoa/10 shadow-sm overflow-hidden p-2">
+                        <img src="img/logo1.png" alt="GEN Yoga"
+                            class="w-full h-full object-contain brightness-0 opacity-60">
                     </div>
                     <p class="brand-font font-bold text-cocoa text-xl mb-1">GEN Yoga</p>
-                    <p class="text-cocoa/60 text-sm mb-8 max-w-md mx-auto leading-relaxed">
+                    <p class="text-cocoa/60 text-sm mb-8 max-w-md mx-auto leading-relaxed client-only">
                         Un espacio dedicado al bienestar integral, la salud física y la paz mental. <br>
                         Cuidamos de ti desde el interior.
                     </p>
-                    <div class="flex justify-center gap-8 text-2xl text-cocoa mb-8">
-                        <a href="https://www.instagram.com/genyoga/" target="_blank"
-                            class="hover:text-olive hover:scale-110 transition duration-300" aria-label="Instagram">
-                            <i class="ph-fill ph-instagram-logo"></i>
-                        </a>
-                        <a href="#" target="_blank"
-                            class="hover:text-olive hover:scale-110 transition duration-300 inline-flex items-center gap-2 text-base"
-                            aria-label="Tienda online">
-                            <i class="ph-fill ph-shopping-bag text-2xl"></i>
-                            <span class="text-sm font-semibold tracking-wide uppercase">Tienda online</span>
-                        </a>
-                    </div>
                     <div
-                        class="border-t border-cocoa/10 pt-8 mt-8 flex flex-col md:flex-row justify-center items-center gap-4 text-xs text-cocoa/40">
+                        class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
                         <span>© 2026 GEN Yoga. Todos los derechos reservados.</span>
                     </div>
                 </div>
@@ -600,10 +1133,10 @@
                     </div>
                     <div>
                         <label
-                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Profesor</label>
+                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Profesional</label>
                         <select id="clase-profesor-id" required
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
-                            <option value="" disabled selected>Selecciona un profesor</option>
+                            <option value="" disabled selected>Selecciona un profesional</option>
                         </select>
                     </div>
                     <div>
@@ -624,6 +1157,111 @@
                         <input type="number" id="clase-capacidad" min="1" max="30" value="10" required
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
+
+                    <!-- Repetición (solo clases) -->
+                    <div class="md:col-span-2">
+                        <div class="flex flex-col gap-4">
+                            <div
+                                class="flex items-center justify-between gap-4 bg-white/60 border border-cocoa/10 rounded-2xl px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <input id="clase-repeat-enabled" type="checkbox"
+                                        class="w-5 h-5 accent-olive cursor-pointer">
+                                    <label for="clase-repeat-enabled" class="text-sm font-bold text-cocoa">Repetir
+                                        clase</label>
+                                </div>
+                                <span class="text-[10px] text-cocoa/50 font-bold uppercase tracking-widest">Eventos
+                                    repetidos</span>
+                            </div>
+
+                            <div id="clase-repeat-options"
+                                class="hidden flex flex-col gap-4 bg-white/40 border border-cocoa/5 p-4 rounded-2xl">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label
+                                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Frecuencia</label>
+                                        <select id="clase-repeat-every"
+                                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                            <option value="semanal" selected>Una vez por semana</option>
+                                            <option value="mensual">Una vez al mes</option>
+                                            <option value="dias">Días específicos de la semana</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label id="clase-repeat-count-label"
+                                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Semanas
+                                            a repetir</label>
+                                        <input type="number" id="clase-repeat-count" min="1" max="52" value="4"
+                                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                        <p id="clase-repeat-count-help" class="text-[10px] text-cocoa/40 mt-1 ml-1">
+                                            Incluye la primera clase (ej: 4 = 4 semanas)</p>
+                                    </div>
+                                </div>
+                                <div id="clase-repeat-days-container"
+                                    class="hidden flex flex-col gap-2 bg-sand/5 border border-cocoa/5 p-3 rounded-xl">
+                                    <label
+                                        class="text-xs font-bold text-cocoa/60 uppercase tracking-wide block mb-1">Días
+                                        a repetir clase</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="1"
+                                                class="sr-only peer">
+                                            <span
+                                                class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">L</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="2"
+                                                class="sr-only peer">
+                                            <span
+                                                class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">M</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="3"
+                                                class="sr-only peer">
+                                            <span
+                                                class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">X</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="4"
+                                                class="sr-only peer">
+                                            <span
+                                                class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">J</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="5"
+                                                class="sr-only peer">
+                                            <span
+                                                class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">V</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="6"
+                                                class="sr-only peer">
+                                            <span
+                                                class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">S</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="0"
+                                                class="sr-only peer">
+                                            <span
+                                                class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">D</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="flex items-center justify-between gap-4 bg-white/60 border border-cocoa/10 rounded-2xl px-4 py-3 mt-1">
+                                <div class="flex items-center gap-3">
+                                    <input id="clase-add-group-enabled" type="checkbox"
+                                        class="w-5 h-5 accent-olive cursor-pointer">
+                                    <label for="clase-add-group-enabled"
+                                        class="text-sm font-bold text-cocoa">Autorellenar con grupo de alumnos del
+                                        profesor</label>
+                                </div>
+                                <span class="text-[10px] text-cocoa/50 font-bold uppercase tracking-widest">Grupo
+                                    Profesor</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex gap-3 pt-4 border-t border-cocoa/10">
                     <button type="button" onclick="cerrarModalCrearClase()"
@@ -631,6 +1269,235 @@
                     <button type="submit"
                         class="flex-1 bg-gradient-to-r from-cocoa to-olive text-white py-3 rounded-xl font-bold hover:shadow-lg transition flex items-center justify-center gap-2"><i
                             class="ph-bold ph-check-circle"></i> Crear Clase</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Crear (Consultas / Talleres) -->
+    <div id="modal-crear-consulta"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-cocoa/40 backdrop-blur-sm">
+        <div
+            class="bg-ivory rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-cocoa/10">
+            <div
+                class="sticky top-0 bg-gradient-to-r from-cocoa to-olive text-white p-6 rounded-t-3xl flex justify-between items-center">
+                <div>
+                    <h3 class="brand-font text-2xl font-bold" id="modal-consulta-title">Nueva Consulta</h3>
+                    <p class="text-white/80 text-sm mt-1" id="modal-consulta-subtitle">Completa los datos para abrir el
+                        horario</p>
+                </div>
+                <button onclick="cerrarModalCrearConsulta()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i
+                        class="ph-bold ph-x text-2xl"></i></button>
+            </div>
+            <form id="form-crear-consulta" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label
+                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Especialidad
+                            / Tipo de Consulta</label>
+                        <select id="consulta-tipo" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                            <option value="psicologia" selected>Psicología</option>
+                            <option value="nutricion">Nutrición</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Nombre
+                            del Profesional</label>
+                        <select id="consulta-profesor-id" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Fecha</label>
+                        <input type="text" id="consulta-fecha" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Hora de
+                            Inicio</label>
+                        <input type="time" id="consulta-hora-inicio" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Duración
+                            (minutos)</label>
+                        <select id="consulta-duracion" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                            <option value="30">30 minutos</option>
+                            <option value="45">45 minutos</option>
+                            <option value="50">50 minutos</option>
+                            <option value="60" selected>60 minutos</option>
+                            <option value="90">90 minutos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Notas /
+                            Ubicación</label>
+                        <input type="text" id="consulta-notas" placeholder="Ej: Consulta Online / Sala 2"
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+
+                    <!-- Repetición (consultas) -->
+                    <div class="md:col-span-2">
+                        <div
+                            class="flex items-center justify-between gap-4 bg-white/60 border border-cocoa/10 rounded-2xl px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <input id="consulta-repeat-enabled" type="checkbox"
+                                    class="w-5 h-5 accent-olive cursor-pointer">
+                                <label for="consulta-repeat-enabled" class="text-sm font-bold text-cocoa">Repetir
+                                    consulta</label>
+                            </div>
+                            <span class="text-[10px] text-cocoa/50 font-bold uppercase tracking-widest">Turnos
+                                repetidos</span>
+                        </div>
+
+                        <div id="consulta-repeat-options" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <div>
+                                <label
+                                    class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Frecuencia</label>
+                                <select id="consulta-repeat-every"
+                                    class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                    <option value="1" selected>Cada semana</option>
+                                    <option value="2">Cada 2 semanas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Repeticiones</label>
+                                <input type="number" id="consulta-repeat-count" min="1" max="52" value="4"
+                                    class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                <p class="text-[10px] text-cocoa/40 mt-1 ml-1">Incluye el primer turno (ej: 4 = 4
+                                    semanas)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4 border-t border-cocoa/10">
+                    <button type="button" onclick="cerrarModalCrearConsulta()"
+                        class="flex-1 bg-sand/10 text-cocoa/60 py-3 rounded-xl font-bold hover:bg-sand/20 transition">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-cocoa to-olive text-white py-3 rounded-xl font-bold hover:shadow-lg transition flex items-center justify-center gap-2"><i
+                            class="ph-bold ph-check-circle"></i> Guardar Horario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Crear Taller -->
+    <div id="modal-crear-taller"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-cocoa/40 backdrop-blur-sm">
+        <div
+            class="bg-ivory rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-cocoa/10">
+            <div
+                class="sticky top-0 bg-gradient-to-r from-terracotta to-golden text-white p-6 rounded-t-3xl flex justify-between items-center">
+                <div>
+                    <h3 class="brand-font text-2xl font-bold">Nuevo Taller</h3>
+                    <p class="text-white/80 text-sm mt-1">Completa los datos para crear el taller</p>
+                </div>
+                <button onclick="cerrarModalCrearTaller()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition"><i
+                        class="ph-bold ph-x text-2xl"></i></button>
+            </div>
+            <form id="form-crear-taller" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Nombre
+                            del Taller</label>
+                        <input type="text" id="taller-nombre" placeholder="Ej: Taller de Meditación y Mindfulness"
+                            required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+                    <div>
+                        <label
+                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Instructor /
+                            Profesional</label>
+                        <select id="taller-profesor-id" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                            <option value="" disabled selected>Selecciona un profesional</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Fecha</label>
+                        <input type="text" id="taller-fecha" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Hora de
+                            Inicio</label>
+                        <input type="time" id="taller-hora-inicio" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+                    <div>
+                        <label
+                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Duración</label>
+                        <select id="taller-duracion" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                            <option value="60">60 minutos</option>
+                            <option value="90">90 minutos</option>
+                            <option value="120" selected>120 minutos</option>
+                            <option value="150">150 minutos</option>
+                            <option value="180">180 minutos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Capacidad
+                            Máxima</label>
+                        <input type="number" id="taller-capacidad" min="1" max="100" value="15" required
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Notas /
+                            Descripción</label>
+                        <input type="text" id="taller-notas"
+                            placeholder="Ej: Traer esterilla propia / Sala de Meditación"
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                    </div>
+
+                    <!-- Repetición (talleres) -->
+                    <div class="md:col-span-2">
+                        <div
+                            class="flex items-center justify-between gap-4 bg-white/60 border border-cocoa/10 rounded-2xl px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <input id="taller-repeat-enabled" type="checkbox"
+                                    class="w-5 h-5 accent-olive cursor-pointer">
+                                <label for="taller-repeat-enabled" class="text-sm font-bold text-cocoa">Repetir
+                                    taller</label>
+                            </div>
+                            <span class="text-[10px] text-cocoa/50 font-bold uppercase tracking-widest">Talleres
+                                repetidos</span>
+                        </div>
+
+                        <div id="taller-repeat-options" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <div>
+                                <label
+                                    class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Frecuencia</label>
+                                <select id="taller-repeat-every"
+                                    class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                    <option value="1" selected>Cada semana</option>
+                                    <option value="2">Cada 2 semanas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Repeticiones</label>
+                                <input type="number" id="taller-repeat-count" min="1" max="52" value="4"
+                                    class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                <p class="text-[10px] text-cocoa/40 mt-1 ml-1">Incluye el primer taller (ej: 4 = 4
+                                    semanas)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4 border-t border-cocoa/10">
+                    <button type="button" onclick="cerrarModalCrearTaller()"
+                        class="flex-1 bg-sand/10 text-cocoa/60 py-3 rounded-xl font-bold hover:bg-sand/20 transition">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-cocoa to-olive text-white py-3 rounded-xl font-bold hover:shadow-lg transition flex items-center justify-center gap-2"><i
+                            class="ph-bold ph-check-circle"></i> Guardar Taller</button>
                 </div>
             </form>
         </div>

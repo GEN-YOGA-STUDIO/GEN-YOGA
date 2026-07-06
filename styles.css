@@ -175,3 +175,372 @@ body.platform-android select {
 #logo-container {
     perspective: 1000px;
 }
+/* Extracted from index.html */
+
+        @keyframes wander1 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(50vw, -30vh) scale(1.4);
+            }
+
+            66% {
+                transform: translate(-20vw, 40vh) scale(0.8);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes wander2 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(-40vw, 50vh) scale(1.3);
+            }
+
+            66% {
+                transform: translate(30vw, -20vh) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes wander3 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            45% {
+                transform: translate(60vw, 40vh) scale(1.2);
+            }
+
+            80% {
+                transform: translate(-30vw, -50vh) scale(0.8);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes wander4 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            40% {
+                transform: translate(-50vw, -40vh) scale(1.5);
+            }
+
+            70% {
+                transform: translate(40vw, 30vh) scale(0.8);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        .ambient-shape {
+            position: absolute;
+            filter: blur(50px);
+            opacity: 0.1;
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+        }
+
+        .shape-1 {
+            top: 10%;
+            left: 10%;
+            width: 70vw;
+            height: 70vw;
+            background: #AB593D;
+            /* Terracotta */
+            animation: wander1 35s infinite ease-in-out alternate;
+        }
+
+        .shape-2 {
+            top: 50%;
+            right: 10%;
+            width: 65vw;
+            height: 65vw;
+            background: #8F6B2D;
+            /* Golden Ochre */
+            animation: wander2 41s infinite ease-in-out alternate;
+        }
+
+        .shape-3 {
+            top: 20%;
+            right: 30%;
+            width: 45vw;
+            height: 45vw;
+            background: #6A6540;
+            /* Olive Green */
+            animation: wander3 37s infinite ease-in-out alternate;
+            animation-delay: -10s;
+        }
+
+        .shape-4 {
+            bottom: 10%;
+            left: 10%;
+            width: 50vw;
+            height: 50vw;
+            background: #C3B89A;
+            /* Soft Beige */
+            animation: wander4 43s infinite ease-in-out alternate;
+            animation-delay: -5s;
+        }
+
+        /* Animation for rotating symbols in the center */
+        @keyframes symbolCycle {
+
+            0%,
+            20% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            25%,
+            95% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        #symbols-container {
+            width: clamp(15rem, 38vh, 38rem);
+            height: clamp(15rem, 38vh, 38rem);
+        }
+
+        .symbol-stack {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .symbol-stack img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            animation: symbolCycle 12s infinite;
+        }
+
+        /* Stagger delays for 4 items over 12s (3s each) */
+        .symbol-stack img:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .symbol-stack img:nth-child(2) {
+            animation-delay: 3s;
+        }
+
+        .symbol-stack img:nth-child(3) {
+            animation-delay: 6s;
+        }
+
+        .symbol-stack img:nth-child(4) {
+            animation-delay: 9s;
+        }
+
+        /* NEW: Dynamic subtle animations */
+        @keyframes gentleBreath {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.95;
+            }
+
+            50% {
+                transform: scale(1.02);
+                opacity: 1;
+            }
+        }
+
+        .animate-breath {
+            animation: gentleBreath 8s ease-in-out infinite;
+        }
+
+        @keyframes hoverFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .animate-float {
+            animation: hoverFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes fadeInUpSlow {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUpSlow 1.5s ease-out forwards;
+            opacity: 0;
+            /* Starts hidden before animation kicks in */
+        }
+
+        /* Nav Link Hover Effects */
+        .nav-link-strike {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block;
+            position: relative;
+        }
+
+        .nav-link-strike::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            transform: scaleX(0);
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: currentColor;
+            transform-origin: bottom right;
+            transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1);
+            opacity: 0.7;
+            display: none; /* Hide underline effect */
+        }
+
+        .group:hover .nav-link-strike::after {
+            transform: scaleX(0);
+        }
+
+        .group:hover .nav-link-strike {
+            transform: scale(1.25);
+            /* scale up on hover instead of underline */
+        }
+
+        .hover-image-container {
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transform: scale(0.8) translateY(20px);
+            filter: blur(10px);
+            opacity: 0;
+        }
+
+        .hover-image-container.active {
+            opacity: 1 !important;
+            transform: scale(1) translateY(0);
+            filter: blur(0);
+        }
+
+        @keyframes slowZoomActive {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.08);
+            }
+        }
+
+        .hover-image-container.active img {
+            animation: slowZoomActive 8s ease-in-out infinite alternate;
+        }
+
+        /* Top Marquee Banner */
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .animate-marquee {
+            animation: marquee 55s linear infinite;
+            /* width needs to encompass double the text length so we only scroll to -50% to seamlessly loop */
+            display: flex;
+            width: max-content;
+        }
+
+        #symbols-container.hover-active .symbol-stack {
+            display: none !important;
+        }
+
+        /* ======================================================= */
+        /* CORRECCIÓN DE BOTONES SWEETALERT (VISIBILIDAD)          */
+        /* ======================================================= */
+        .swal2-popup .swal2-styled.swal2-confirm {
+            background-color: #8C8658 !important;
+            color: #ffffff !important;
+            font-weight: bold !important;
+            border-radius: 0.75rem !important;
+            padding: 0.625rem 1.5rem !important;
+            font-size: 0.875rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-confirm:hover {
+            background-color: #76704b !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-cancel {
+            background-color: #e5e7eb !important;
+            color: #374151 !important;
+            font-weight: bold !important;
+            border-radius: 0.75rem !important;
+            padding: 0.625rem 1.5rem !important;
+            font-size: 0.875rem !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-cancel:hover {
+            background-color: #d1d5db !important;
+            color: #1f2937 !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-deny {
+            background-color: #ef4444 !important;
+            color: #ffffff !important;
+            font-weight: bold !important;
+            border-radius: 0.75rem !important;
+            padding: 0.625rem 1.5rem !important;
+            font-size: 0.875rem !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-deny:hover {
+            background-color: #dc2626 !important;
+        }
+
+    
