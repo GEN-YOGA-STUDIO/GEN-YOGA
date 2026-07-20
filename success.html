@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Gracias por tu compra! | GEN Yoga</title>
+    
+    <link rel="stylesheet" href="tailwind-compiled.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        .brand-font {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative flex items-center justify-center p-4 selection:bg-mutedgold selection:text-cocoa">
+    
+    <!-- Background Gradient: Matches profile page -->
+    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"></div>
+
+    <!-- Main Container -->
+    <div id="main-card" class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/30 text-center flex flex-col items-center transition-all duration-300">
+        
+        <!-- Loading State -->
+        <div id="loading-state" class="py-12 flex flex-col items-center">
+            <i class="ph-bold ph-spinner text-5xl text-cocoa/40 animate-spin mb-4"></i>
+            <p class="text-cocoa/60 font-bold text-sm uppercase tracking-wider">Verificando tu compra...</p>
+        </div>
+
+        <!-- Verification Error (Hidden by default) -->
+        <div id="verification-error" class="hidden flex flex-col items-center w-full py-4" role="alert">
+            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-4 shadow-inner">
+                <i class="ph-bold ph-warning-circle text-3xl"></i>
+            </div>
+            <h1 class="brand-font text-2xl font-black text-cocoa mb-2">No pudimos verificar el pago</h1>
+            <p id="verification-error-message" class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+                No se ha confirmado ninguna compra. Comprueba el enlace o vuelve a intentarlo.
+            </p>
+            <div class="flex flex-col gap-3 w-full">
+                <button id="verification-retry" type="button" onclick="reintentarVerificacion()" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                    Reintentar verificación
+                </button>
+                <a href="tarifas.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm">
+                    Volver a Tarifas
+                </a>
+            </div>
+        </div>
+
+        <!-- Success Standard User (Hidden by default) -->
+        <div id="standard-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-6 shadow-inner">
+                <i class="ph-fill ph-check-circle text-5xl"></i>
+            </div>
+            <h1 class="brand-font text-3xl font-black text-cocoa mb-3">¡Pago Completado!</h1>
+            <p class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+                Tu compra se ha procesado con éxito. Hemos añadido el saldo a tu cuenta para que puedas reservar tu próxima clase.
+            </p>
+            <div class="bg-emerald-50/60 border border-emerald-500/10 px-4 py-2.5 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2 mb-8 w-full justify-center">
+                <i class="ph-bold ph-spinner text-sm animate-spin"></i>
+                <span>Redirigiéndote a tu perfil en <span id="countdown">5</span> segundos...</span>
+            </div>
+            <div class="flex flex-col gap-3 w-full">
+                <a href="profile.html" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+                    Ir a mi Perfil
+                </a>
+                <input type="hidden" id="session-id" name="session_id" value="" />
+                <button onclick="irAlPortalFacturas()" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-receipt text-base"></i> Gestionar mis Facturas / Suscripción
+                </button>
+            </div>
+        </div>
+
+        <!-- Success Guest User (Hidden by default) -->
+        <div id="guest-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-4 shadow-inner">
+                <i class="ph-fill ph-ticket text-3xl"></i>
+            </div>
+            <h1 class="brand-font text-2xl font-black text-cocoa mb-2">¡Clase Adquirida!</h1>
+            <p class="text-cocoa/70 text-xs mb-5 leading-relaxed">
+                Has comprado <strong>1 clase suelta</strong> como invitado. Selecciona a continuación la clase de Yoga a la que deseas asistir e introduce tus datos para confirmar tu plaza.
+            </p>
+
+            <div class="w-full text-left space-y-4">
+                <!-- Dropdown selector of classes -->
+                <div>
+                    <label class="block text-[10px] font-bold text-cocoa/50 uppercase tracking-wider mb-1.5">1. Selecciona tu clase de Yoga</label>
+                    <select id="guest-clase-select" class="w-full px-3.5 py-3 bg-white border border-cocoa/20 rounded-xl focus:ring-2 focus:ring-olive outline-none shadow-sm text-sm text-cocoa transition">
+                        <option value="">Cargando clases disponibles...</option>
+                    </select>
+                </div>
+
+                <!-- Miniform details -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-cocoa/50 uppercase tracking-wider mb-1">Nombre</label>
+                        <input type="text" id="guest-nombre" class="w-full px-3 py-2 bg-white border border-cocoa/20 rounded-lg focus:ring-2 focus:ring-olive outline-none shadow-sm text-sm text-cocoa transition" placeholder="Tu nombre">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-cocoa/50 uppercase tracking-wider mb-1">Apellidos</label>
+                        <input type="text" id="guest-apellidos" class="w-full px-3 py-2 bg-white border border-cocoa/20 rounded-lg focus:ring-2 focus:ring-olive outline-none shadow-sm text-sm text-cocoa transition" placeholder="Tus apellidos">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="confirmarReservaInvitado()" class="mt-6 w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                <i class="ph-fill ph-check-square-offset text-base"></i> Confirmar y Reservar Plaza
+            </button>
+            <a href="index.html" class="mt-3 text-[11px] font-bold uppercase tracking-wider text-cocoa/40 hover:text-cocoa transition">Volver a Inicio</a>
+        </div>
+
+        <!-- Success Guest Already Redeemed (Hidden by default) -->
+        <div id="guest-redeemed" class="hidden flex flex-col items-center w-full py-4">
+            <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mb-4 shadow-inner">
+                <i class="ph-bold ph-warning-circle text-3xl"></i>
+            </div>
+            <h1 class="brand-font text-2xl font-black text-cocoa mb-2">Reserva ya Canjeada</h1>
+            <p class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+                Esta compra de clase suelta ya ha sido utilizada para realizar una reserva. Si necesitas modificar tu reserva, ponte en contacto con recepción.
+            </p>
+            <a href="index.html" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                Volver a Inicio
+            </a>
+        </div>
+        
+        <!-- Footer logo -->
+        <div class="mt-8 opacity-45 flex items-center gap-1">
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga</span>
+        </div>
+    </div>
+
+    <!-- Script to verify session and handle guest booking -->
+    <script>
+        const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
+        const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
+        const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+        
+        let stripeSessionId = '';
+        let redirectCountdownTimer = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const searchParams = new URLSearchParams(window.location.search);
+            stripeSessionId = searchParams.get('session_id');
+            
+            if (!stripeSessionId || !stripeSessionId.startsWith('cs_live_')) {
+                mostrarErrorVerificacion(
+                    'El enlace no contiene una sesión de pago LIVE válida. No se ha confirmado ninguna compra.',
+                    false
+                );
+                return;
+            }
+
+            document.getElementById('session-id').value = stripeSessionId;
+
+            try {
+                if (!client) throw new Error('Supabase client failed to initialize.');
+
+                // Fetch details of checkout session from Deno function
+                const { data, error } = await client.functions.invoke('get-checkout-session', {
+                    body: { session_id: stripeSessionId }
+                });
+
+                if (error) throw error;
+                if (!data || data.paymentStatus !== 'paid') {
+                    throw new Error('La sesión no está confirmada como pagada.');
+                }
+
+                document.getElementById('loading-state').classList.add('hidden');
+
+                if (data.isGuest) {
+                    if (data.alreadyRedeemed) {
+                        document.getElementById('guest-redeemed').classList.remove('hidden');
+                    } else {
+                        // Prefill guest form details collected by Stripe or localStorage
+                        document.getElementById('guest-nombre').value = data.nombre || localStorage.getItem('guest_nombre') || '';
+                        document.getElementById('guest-apellidos').value = data.apellidos || localStorage.getItem('guest_apellidos') || '';
+                        
+                        document.getElementById('guest-success').classList.remove('hidden');
+                        // Make card wider to fit the form details nicely
+                        document.getElementById('main-card').classList.replace('max-w-md', 'max-w-lg');
+                        
+                        // Load available classes for booking
+                        await cargarClasesDisponiblesInvitado();
+                    }
+                } else {
+                    // Logged in user checkout
+                    await esperarActualizacionPerfil();
+                    document.getElementById('standard-success').classList.remove('hidden');
+                    startCountdown(5);
+                }
+            } catch (e) {
+                console.error("Verification error:", e);
+                mostrarErrorVerificacion(
+                    'No se ha podido confirmar el pago con Stripe. No reserves ni repitas el cobro hasta verificarlo de nuevo.',
+                    true
+                );
+            }
+        });
+
+        function mostrarErrorVerificacion(message, retryable) {
+            if (redirectCountdownTimer) {
+                clearInterval(redirectCountdownTimer);
+                redirectCountdownTimer = null;
+            }
+
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('standard-success').classList.add('hidden');
+            document.getElementById('guest-success').classList.add('hidden');
+            document.getElementById('guest-redeemed').classList.add('hidden');
+            document.getElementById('verification-error-message').textContent = message;
+            document.getElementById('verification-retry').classList.toggle('hidden', !retryable);
+            document.getElementById('verification-error').classList.remove('hidden');
+        }
+
+        function reintentarVerificacion() {
+            if (!stripeSessionId || !stripeSessionId.startsWith('cs_live_')) return;
+            window.location.reload();
+        }
+
+        async function esperarActualizacionPerfil() {
+            // Show loading message
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('loading-state').innerHTML = `
+                <i class="ph-bold ph-spinner text-5xl text-cocoa/40 animate-spin mb-4"></i>
+                <p class="text-cocoa/80 font-bold text-sm uppercase tracking-wider">Sincronizando tu compra...</p>
+                <p class="text-cocoa/50 text-xs mt-1">Cargando tu nuevo saldo en tu cuenta...</p>
+            `;
+
+            try {
+                const userRes = await client.auth.getUser();
+                const user = userRes.data?.user;
+                if (!user) return;
+
+                // Fetch initial state
+                const { data: initialProfile } = await client
+                    .from('profiles')
+                    .select('bonos, bono_mensual_activo')
+                    .eq('id', user.id)
+                    .single();
+
+                const oldBonos = initialProfile ? (parseInt(initialProfile.bonos, 10) || 0) : 0;
+                const oldBonoMensualActivo = initialProfile ? !!initialProfile.bono_mensual_activo : false;
+
+                // Poll every 1 second, up to 6 times
+                for (let i = 0; i < 6; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    console.log(`Comprobando actualización de perfil (intento ${i + 1})...`);
+                    
+                    const { data: profile } = await client
+                        .from('profiles')
+                        .select('bonos, bono_mensual_activo')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (profile) {
+                        const currentBonos = parseInt(profile.bonos, 10) || 0;
+                        const currentBonoMensualActivo = !!profile.bono_mensual_activo;
+
+                        if (currentBonos > oldBonos || currentBonoMensualActivo !== oldBonoMensualActivo) {
+                            console.log("¡Perfil actualizado detectado!");
+                            break;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error during profile polling:", err);
+                // Fallback wait
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+
+        function startCountdown(seconds) {
+            const countdownEl = document.getElementById('countdown');
+            if (redirectCountdownTimer) clearInterval(redirectCountdownTimer);
+            redirectCountdownTimer = setInterval(() => {
+                seconds--;
+                if (countdownEl) countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(redirectCountdownTimer);
+                    redirectCountdownTimer = null;
+                    window.location.href = 'profile.html';
+                }
+            }, 1000);
+        }
+
+        async function irAlPortalFacturas() {
+            if (!stripeSessionId) return;
+            if (redirectCountdownTimer) {
+                clearInterval(redirectCountdownTimer);
+                redirectCountdownTimer = null;
+            }
+
+            Swal.fire({
+                title: 'Conectando con la pasarela de pagos...',
+                text: 'Por favor, espera un momento.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+            });
+
+            try {
+                const { data, error } = await client.functions.invoke('create-portal-session', {
+                    body: { 
+                        session_id: stripeSessionId
+                    }
+                });
+
+                if (error) throw error;
+                if (data?.url) window.location.href = data.url;
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'No se pudo abrir el portal.' });
+            }
+        }
+
+        async function cargarClasesDisponiblesInvitado() {
+            const selectEl = document.getElementById('guest-clase-select');
+            try {
+                // Enforce that guest classes must start in more than 12 hours
+                const minDateIso = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+                
+                // Fetch classes of tipo_clase 'yoga' starting after the 12-hour limit
+                const { data: clases, error: errClases } = await client
+                    .from('clases')
+                    .select('*, profesionales(*)')
+                    .eq('tipo_clase', 'yoga')
+                    .gte('fecha_inicio', minDateIso)
+                    .order('fecha_inicio')
+                    .limit(15);
+
+                if (errClases) throw errClases;
+
+                if (!clases || clases.length === 0) {
+                    selectEl.innerHTML = '<option value="">No hay clases disponibles en este momento</option>';
+                    return;
+                }
+
+                // Fetch current bookings to calculate free spots
+                const claseIds = clases.map(c => c.id);
+                const { data: reservas, error: errRes } = await client
+                    .from('reservas_yoga')
+                    .select('clase_id')
+                    .in('clase_id', claseIds)
+                    .eq('estado', 'confirmada');
+
+                if (errRes) console.error("Error loading bookings:", errRes);
+
+                const bookingsMap = {};
+                (reservas || []).forEach(r => {
+                    bookingsMap[r.clase_id] = (bookingsMap[r.clase_id] || 0) + 1;
+                });
+
+                selectEl.innerHTML = '<option value="">-- Elige una clase de Yoga --</option>';
+                
+                clases.forEach(c => {
+                    const ocupadas = bookingsMap[c.id] || 0;
+                    const capacidad = c.capacidad_max || 0;
+                    const libres = Math.max(0, capacidad - ocupadas);
+                    
+                    if (libres > 0) {
+                        const dateStr = formatDateTimeSpanish(c.fecha_inicio);
+                        const profName = c.profesionales?.nombre || 'Instructor';
+                        selectEl.innerHTML += `<option value="${c.id}">${dateStr} · ${c.nombre} (con ${profName}) · ${libres} libres</option>`;
+                    }
+                });
+
+                // If all classes are full
+                if (selectEl.options.length <= 1) {
+                    selectEl.innerHTML = '<option value="">Todas las próximas clases están completas</option>';
+                }
+            } catch (error) {
+                console.error("Error loading classes:", error);
+                selectEl.innerHTML = '<option value="">Error al cargar los horarios</option>';
+            }
+        }
+
+        async function confirmarReservaInvitado() {
+            const claseId = document.getElementById('guest-clase-select').value;
+            const nombre = document.getElementById('guest-nombre').value.trim();
+            const apellidos = document.getElementById('guest-apellidos').value.trim();
+
+            if (!claseId) {
+                Swal.fire({ icon: 'warning', title: 'Atención', text: 'Por favor, selecciona una clase de Yoga.' });
+                return;
+            }
+            if (!nombre) {
+                Swal.fire({ icon: 'warning', title: 'Atención', text: 'El nombre es un campo obligatorio.' });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Reservando tu clase...',
+                text: 'Por favor, espera un momento.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+            });
+
+            try {
+                const dummyEmail = `guest_${stripeSessionId || Math.random().toString(36).substring(2)}@genyoga.es`;
+                const { data, error } = await client.functions.invoke('book-guest-class', {
+                    body: {
+                        session_id: stripeSessionId,
+                        clase_id: claseId,
+                        nombre: nombre,
+                        apellidos: apellidos,
+                        email: dummyEmail
+                    }
+                });
+
+                if (error) {
+                    let errMsg = error.message;
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errJson = await error.context.json();
+                            if (errJson && errJson.error) errMsg = errJson.error;
+                        }
+                    } catch(e){}
+                    throw new Error(errMsg);
+                }
+
+                localStorage.removeItem('guest_nombre');
+                localStorage.removeItem('guest_apellidos');
+                localStorage.removeItem('guest_email');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Reserva Completada!',
+                    text: 'Tu clase ha sido reservada con éxito. Te esperamos en el estudio.',
+                    confirmButtonColor: '#795244'
+                }).then(() => {
+                    window.location.href = 'index.html';
+                });
+
+            } catch (error) {
+                console.error("Booking error:", error);
+                const rawMessage = error.message || '';
+                const userMessage = /Failed to send a request to the Edge Function/i.test(rawMessage)
+                    ? 'No se pudo conectar con el servidor de reservas. Tu compra está registrada; inténtalo de nuevo en unos segundos o contacta con recepción para asignar tu plaza.'
+                    : (rawMessage || 'No se pudo procesar tu reserva. Inténtalo de nuevo.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al reservar',
+                    text: userMessage,
+                    confirmButtonColor: '#D27D60'
+                });
+            }
+        }
+
+        // Helper to format date in Spanish
+        function formatDateTimeSpanish(isoStr) {
+            const date = new Date(isoStr);
+            const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            
+            const diaSemana = dias[date.getDay()];
+            const diaNum = date.getDate();
+            const mesName = meses[date.getMonth()];
+            const horas = String(date.getHours()).padStart(2, '0');
+            const minutos = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${diaSemana}, ${diaNum} ${mesName} a las ${horas}:${minutos}`;
+        }
+    </script>
+</body>
+</html>

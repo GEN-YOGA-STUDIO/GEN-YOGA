@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Cancelado | GEN Yoga</title>
+    
+    <link rel="stylesheet" href="tailwind-compiled.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        .brand-font {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative flex items-center justify-center p-4 selection:bg-mutedgold selection:text-cocoa">
+    
+    <!-- Background Gradient: Matches profile page -->
+    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"></div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/30 text-center flex flex-col items-center">
+        
+        <!-- Icon -->
+        <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner animate-pulse">
+            <i class="ph-fill ph-warning-circle text-5xl"></i>
+        </div>
+        
+        <!-- Title -->
+        <h1 class="brand-font text-3xl font-black text-cocoa mb-3">Pago Cancelado</h1>
+        
+        <!-- Message -->
+        <p class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+            Parece que el proceso de pago ha sido cancelado y no se ha realizado ningún cargo. No te preocupes, puedes volver a intentarlo cuando estés listo.
+        </p>
+
+        <!-- Redirect Message -->
+        <div class="bg-amber-50/60 border border-amber-500/10 px-4 py-2.5 rounded-xl text-amber-800 text-xs font-semibold flex items-center gap-2 mb-8">
+            <i class="ph-bold ph-spinner text-sm animate-spin"></i>
+            <span id="redirect-message">Redirigiéndote a tarifas en <span id="countdown-dynamic">5</span> segundos...</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col gap-3 w-full">
+            <a id="btn-primary" href="tarifas.html" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+                Volver a Tarifas
+            </a>
+            <a id="btn-secondary" href="profile.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm">
+                Ir a mi Perfil
+            </a>
+        </div>
+        
+        <!-- Footer logo -->
+        <div class="mt-8 opacity-45 flex items-center gap-1">
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga</span>
+        </div>
+    </div>
+
+    <!-- Script to redirect -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const from = urlParams.get('from') || localStorage.getItem('stripe_checkout_origin') || 'tarifas';
+            
+            const btnPrimary = document.getElementById('btn-primary');
+            const btnSecondary = document.getElementById('btn-secondary');
+            const redirectMessage = document.getElementById('redirect-message');
+            
+            let redirectUrl = 'tarifas.html';
+            
+            if (from === 'profile') {
+                redirectUrl = 'profile.html';
+                if (btnPrimary) {
+                    btnPrimary.href = 'profile.html';
+                    btnPrimary.textContent = 'Volver a mi Perfil';
+                }
+                if (btnSecondary) {
+                    btnSecondary.href = 'tarifas.html';
+                    btnSecondary.textContent = 'Ver Tarifas';
+                }
+                if (redirectMessage) {
+                    redirectMessage.innerHTML = `Redirigiéndote a tu perfil en <span id="countdown-dynamic">5</span> segundos...`;
+                }
+            } else {
+                if (btnPrimary) {
+                    btnPrimary.href = 'tarifas.html';
+                    btnPrimary.textContent = 'Volver a Tarifas';
+                }
+                if (btnSecondary) {
+                    btnSecondary.href = 'profile.html';
+                    btnSecondary.textContent = 'Ir a mi Perfil';
+                }
+                if (redirectMessage) {
+                    redirectMessage.innerHTML = `Redirigiéndote a tarifas en <span id="countdown-dynamic">5</span> segundos...`;
+                }
+            }
+
+            // Countdown timer redirect
+            let seconds = 5;
+            const dynamicCountdownEl = document.getElementById('countdown-dynamic');
+            
+            const interval = setInterval(() => {
+                seconds--;
+                if (dynamicCountdownEl) dynamicCountdownEl.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
