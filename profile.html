@@ -1341,51 +1341,26 @@ h6,
     user-select: none;
 }
 
-.wink-cursor.clicking {
-    transform: translate(-50%, -50%) scale(0.8) rotate(-10deg);
+/* GARANTÍA UNIVERSAL DE CURSOR SIEMPRE VISIBLE Y ACTIVO */
+html, body {
+    cursor: default !important;
 }
 
-/* Punteros de cursor nativos restablecidos para usabilidad */
-body.platform-web a,
-body.platform-web button,
-body.platform-web select,
-body.platform-web .cursor-pointer,
-body.platform-web [onclick] {
+a, button, select, label, input[type="submit"], input[type="button"], input[type="reset"], input[type="checkbox"], input[type="radio"], [role="button"], [onclick], .cursor-pointer, a *, button *, select *, label * {
     cursor: pointer !important;
 }
-body.platform-web input,
-body.platform-web textarea {
+
+input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="tel"], input[type="url"], input[type="number"], textarea, [contenteditable="true"] {
     cursor: text !important;
 }
 
-
-/* ======================================================= */
-/* 5. ADAPTACIONES MÓVILES (iOS + ANDROID)                 */
-/* ======================================================= */
-
-/* REGLAS COMUNES APP (iOS y Android) */
-body.platform-ios,
-body.platform-android {
-    /* Restaurar cursor nativo (invisible en táctil) */
-    cursor: auto !important;
+:disabled, .cursor-not-allowed, [aria-disabled="true"] {
+    cursor: not-allowed !important;
 }
 
-/* Ocultar cursor personalizado en apps */
-body.platform-ios .wink-cursor,
-body.platform-android .wink-cursor {
+.wink-cursor, #custom-cursor, .custom-cursor {
     display: none !important;
-}
-
-/* Restaurar punteros en elementos interactivos para Apps */
-body.platform-ios a,
-body.platform-android a,
-body.platform-ios button,
-body.platform-android button,
-body.platform-ios input,
-body.platform-android input,
-body.platform-ios select,
-body.platform-android select {
-    cursor: auto !important;
+    pointer-events: none !important;
 }
 
 /* --- ESPECÍFICO iOS (iPhone/iPad) --- */
@@ -3325,7 +3300,7 @@ body.platform-web .mobile-only {
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-const APP_VERSION = '6.3';
+const APP_VERSION = '6.4';
 const APP_DEPLOYMENT_ENVIRONMENT = (() => {
     const origin = window.location.origin.toLowerCase();
     const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
