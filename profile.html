@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GEN Yoga</title>
-    <link rel="stylesheet" href="tailwind-compiled.css">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.5">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -911,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
             langDiv.style.left = 'auto';
         }
         
-        langDiv.style.zIndex = '9998'; // Below custom cursor (z-index: 9999), but above all other layout elements
+        langDiv.style.zIndex = '9998'; // Keep the language control above the page content.
         langDiv.style.backgroundColor = '#795244'; // Elegant brand brown
         langDiv.style.border = '1px solid rgba(248, 246, 242, 0.15)';
         langDiv.style.borderRadius = '9999px';
@@ -1322,45 +1322,6 @@ h6,
         font-size: 0.55rem;
         padding: 0.16rem 0.22rem;
     }
-}
-
-/* ======================================================= */
-/* 4. LOGICA DEL CURSOR PERSONALIZADO (WEB)                */
-/* ======================================================= */
-
-.wink-cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    font-size: 2rem;
-    line-height: 1;
-    transform: translate(-50%, -50%);
-    z-index: 9999;
-    transition: transform 0.1s ease-out;
-    user-select: none;
-}
-
-/* GARANTÍA UNIVERSAL DE CURSOR SIEMPRE VISIBLE Y ACTIVO */
-html, body, body * {
-    cursor: default !important;
-}
-
-a, button, select, label, input[type="submit"], input[type="button"], input[type="reset"], input[type="checkbox"], input[type="radio"], [role="button"], [onclick], .cursor-pointer, a *, button *, select *, label * {
-    cursor: pointer !important;
-}
-
-input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="tel"], input[type="url"], input[type="number"], textarea, [contenteditable="true"] {
-    cursor: text !important;
-}
-
-:disabled, .cursor-not-allowed, [aria-disabled="true"] {
-    cursor: not-allowed !important;
-}
-
-.wink-cursor, #custom-cursor, .custom-cursor {
-    display: none !important;
-    pointer-events: none !important;
 }
 
 /* --- ESPECÍFICO iOS (iPhone/iPad) --- */
@@ -1811,7 +1772,6 @@ body.platform-web .mobile-only {
 }
 
 </style>
-    <link rel="stylesheet" href="cursor-always-visible.css?v=6.1" data-cursor-guard>
 </head>
 
 <body
@@ -2877,7 +2837,7 @@ body.platform-web .mobile-only {
                     </p>
                     <div
                         class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga. Todos los derechos reservados.</span>
+                        <span>© 2026 GEN Yoga · v6.5. Todos los derechos reservados.</span>
                     </div>
                 </div>
             </footer>
@@ -3301,7 +3261,7 @@ body.platform-web .mobile-only {
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-const APP_VERSION = '6.4';
+const APP_VERSION = '6.5';
 const APP_DEPLOYMENT_ENVIRONMENT = (() => {
     const origin = window.location.origin.toLowerCase();
     const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
@@ -8617,9 +8577,7 @@ function renderProfesoresPublic(filtro = 'todos') {
     }).join('');
 }
 
-// --- UTILIDADES EXTRA (CURSOR & SONIDO) ---
-
-// Custom cursor handles natively via styles.css for maximum performance and compatibility.
+// --- UTILIDADES EXTRA (SONIDO) ---
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playYogaSound() {

@@ -33,51 +33,43 @@ async function checkTarget(label, directory) {
   if (!await exists(directory)) return;
 
   const guardPath = path.join(directory, 'cursor-always-visible.css');
-  if (!await exists(guardPath)) {
-    errors.push(`${label}: falta cursor-always-visible.css`);
-    return;
-  }
-
-  const guard = await readFile(guardPath, 'utf8');
-  for (const required of [
-    'html:root body *',
-    'cursor: default !important',
-    'cursor: pointer !important',
-    'cursor: text !important',
-    'cursor: not-allowed !important',
-  ]) {
-    if (!guard.includes(required)) errors.push(`${label}: el guard no contiene ${required}`);
-  }
-
-  const entries = await readdir(directory, { withFileTypes: true });
-  const htmlFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.html'));
-  for (const entry of htmlFiles) {
-    const html = await readFile(path.join(directory, entry.name), 'utf8');
-    const guardLinks = html.match(/<link\b[^>]*\bdata-cursor-guard\b[^>]*>/gi) || [];
-    if (guardLinks.length !== 1 || !guardLinks[0].includes('cursor-always-visible.css?v=6.1')) {
-      errors.push(`${label}/${entry.name}: debe cargar exactamente una vez el guard de cursor v6.1`);
-    }
-    const headEnd = html.toLowerCase().indexOf('</head>');
-    const guardIndex = html.indexOf(guardLinks[0] || '');
-    if (headEnd < 0 || guardIndex < 0 || guardIndex > headEnd) {
-      errors.push(`${label}/${entry.name}: el guard debe estar dentro del head`);
-    }
+  if (await exists(guardPath)) {
+    errors.push(`${label}: cursor-always-visible.css debe estar eliminado; el navegador debe gestionar el cursor nativo`);
   }
 
   for (const absolute of await collectWebFiles(directory)) {
     const webSource = await readFile(absolute, 'utf8');
     const relative = path.relative(directory, absolute);
-    if (/cursor\s*:\s*none\s*(?:!important\s*)?;/i.test(webSource)) {
+    if (/cursor\s*:\s*none\b/i.test(webSource)) {
       errors.push(`${label}/${relative}: contiene cursor:none`);
     }
     if (/cursor\s*:\s*url\s*\(/i.test(webSource)) {
       errors.push(`${label}/${relative}: contiene un cursor URL frágil`);
     }
-    if (/classList\.add\(\s*['"]wink-cursor['"]/i.test(webSource)) {
-      errors.push(`${label}/${relative}: vuelve a crear el cursor personalizado`);
+    if (/\b(?:wink-cursor|cursor-glow|custom-cursor)\b/i.test(webSource)) {
+      errors.push(`${label}/${relative}: contiene infraestructura de cursor personalizado`);
+    }
+    if (/\b(?:data-cursor-guard|cursor-always-visible\.css)\b/i.test(webSource)) {
+      errors.push(`${label}/${relative}: vuelve a cargar el antiguo guard de cursor`);
+    }
+    if (/\.style\.cursor\s*=\s*['"]none['"]/i.test(webSource)
+      || /\.style\.setProperty\(\s*['"]cursor['"]\s*,\s*['"]none['"]/i.test(webSource)) {
+      errors.push(`${label}/${relative}: oculta el cursor desde JavaScript`);
     }
     if (/requestPointerLock\s*\(/i.test(webSource)) {
       errors.push(`${label}/${relative}: intenta capturar u ocultar el puntero`);
+    }
+
+    for (const rule of webSource.matchAll(/([^{}]+)\{([^{}]*)\}/gs)) {
+      if (!/\bcursor\s*:/i.test(rule[2])) continue;
+      const globalSelector = rule[1]
+        .split(',')
+        .map((selector) => selector.trim().replace(/\s+/g, ' '))
+        .find((selector) => /^(?:\*|html(?::root)?|body|body \*|html(?::root)? body(?: \*)?)$/i.test(selector));
+      if (globalSelector) {
+        errors.push(`${label}/${relative}: fuerza el cursor globalmente sobre ${globalSelector}`);
+        break;
+      }
     }
   }
 }
@@ -91,4 +83,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Cursor visibility checks passed.');
+console.log('Native cursor checks passed.');
