@@ -242,14 +242,15 @@
                 min-width: clamp(240px, 19vw, 365px);
                 padding: 0.95rem 2rem;
                 border-radius: 999px;
-                color: white;
-                background: linear-gradient(90deg, #df795f 0%, #e7c0ae 100%);
+                color: #ffffff;
+                background: linear-gradient(90deg, #b45c47 0%, #8f4b38 100%);
+                box-shadow: 0 8px 24px rgba(38, 22, 12, 0.18);
                 font-size: clamp(1.35rem, 2vw, 2.1rem);
                 font-weight: 700;
                 letter-spacing: 0.03em;
                 text-decoration: none;
                 text-transform: uppercase;
-                transition: transform 180ms ease, filter 180ms ease;
+                transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
             }
 
             .teachers-gallery__home i {
@@ -257,8 +258,9 @@
             }
 
             .teachers-gallery__home:hover {
-                filter: saturate(1.08);
+                filter: saturate(1.12);
                 transform: translateY(-2px);
+                box-shadow: 0 12px 28px rgba(38, 22, 12, 0.24);
             }
 
             .teachers-gallery__filters {
@@ -274,7 +276,7 @@
                 padding: clamp(0.72rem, 1.35vh, 1rem) clamp(1rem, 1.8vw, 2.2rem);
                 border: 0;
                 border-radius: 999px;
-                color: rgba(248, 246, 242, 0.78);
+                color: #26160c;
                 font-family: 'Montserrat Arabic', sans-serif;
                 font-size: clamp(1.2rem, 2.1vw, 2.55rem);
                 font-weight: 700;
@@ -286,27 +288,40 @@
                 text-transform: uppercase;
                 white-space: nowrap;
                 cursor: pointer;
-                transition: transform 180ms ease, filter 180ms ease, color 180ms ease;
+                opacity: 0.88;
+                transition: transform 180ms ease, filter 180ms ease, color 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
             }
 
             .teacher-filter:hover,
             .teacher-filter:focus-visible {
-                color: white;
-                filter: saturate(1.08);
+                color: #26160c;
+                opacity: 1;
+                filter: saturate(1.1);
                 transform: translateY(-2px);
                 outline: none;
             }
 
-            .teacher-filter--todos { background: linear-gradient(90deg, #df674d 0%, #e8cdbf 100%); }
-            .teacher-filter--clases { background: linear-gradient(90deg, #b79f93 0%, #c5aa8c 100%); }
-            .teacher-filter--consultas { background: linear-gradient(90deg, #c0aa87 0%, #ded2a6 100%); }
-            .teacher-filter--talleres { background: linear-gradient(90deg, #b8b58e 0%, #d2d1ae 100%); }
+            .teacher-filter--todos { background: linear-gradient(90deg, #e89582 0%, #f3dcd2 100%); }
+            .teacher-filter--clases { background: linear-gradient(90deg, #cbbaa9 0%, #dfd4c5 100%); }
+            .teacher-filter--consultas { background: linear-gradient(90deg, #d4c2a3 0%, #eae1bf 100%); }
+            .teacher-filter--talleres { background: linear-gradient(90deg, #c9c7a5 0%, #e2e1c7 100%); }
 
             .teacher-filter.is-active {
-                color: white;
+                color: #ffffff !important;
+                opacity: 1;
                 text-decoration: none;
-                box-shadow: 0 8px 24px rgba(101, 63, 42, 0.08);
+                box-shadow: 0 8px 24px rgba(38, 22, 12, 0.22);
             }
+
+            .teacher-filter.is-active:hover,
+            .teacher-filter.is-active:focus-visible {
+                color: #ffffff !important;
+            }
+
+            .teacher-filter--todos.is-active { background: linear-gradient(90deg, #b45c47 0%, #8f4b38 100%); }
+            .teacher-filter--clases.is-active { background: linear-gradient(90deg, #795244 0%, #5d3b2f 100%); }
+            .teacher-filter--consultas.is-active { background: linear-gradient(90deg, #916a32 0%, #6e4e20 100%); }
+            .teacher-filter--talleres.is-active { background: linear-gradient(90deg, #6a6540 0%, #4c482b 100%); }
 
             .teachers-gallery__grid {
                 display: grid;
@@ -1037,13 +1052,7 @@ function escapeHtmlPublic(str) {
             if (origin === 'https://genyoga.studio' || origin === 'https://www.genyoga.studio') return 'production';
             return 'development';
         })();
-        const USING_PRODUCTION_BACKEND = (() => {
-            try { return new URL(SUPA_URL).hostname === 'jkjifmrrlyncuwpjhxvk.supabase.co'; }
-            catch (_) { return false; }
-        })();
-        const client = APP_DEPLOYMENT_ENVIRONMENT !== 'production' && USING_PRODUCTION_BACKEND
-            ? null
-            : (window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null);
+        const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         let allProfesionalesLanding = [];
         let cachedDbProfesionales = null;
@@ -1126,23 +1135,28 @@ function escapeHtmlPublic(str) {
 
             if (!cachedDbProfesionales) {
                 if (client) {
-                    const { data: profesionales, error } = await client
-                        .from('profesionales')
-                        .select('*')
-                        .order('nombre');
+                    try {
+                        const { data: profesionales, error } = await client
+                            .from('profesionales')
+                            .select('*')
+                            .order('nombre');
 
-                    if (error) {
-                        console.error('Error fetching professionals:', error);
-                        cachedDbProfesionales = [];
-                        profesionalesDbLoaded = true;
-                    } else {
-                        cachedDbProfesionales = profesionales || [];
-                        profesionalesDbLoaded = true;
+                        if (error || !profesionales || profesionales.length === 0) {
+                            if (error) console.error('Error fetching professionals:', error);
+                            cachedDbProfesionales = fallbackProfesionales;
+                            profesionalesDbLoaded = false;
+                        } else {
+                            cachedDbProfesionales = profesionales;
+                            profesionalesDbLoaded = true;
+                        }
+                    } catch (err) {
+                        console.error('Exception fetching professionals:', err);
+                        cachedDbProfesionales = fallbackProfesionales;
+                        profesionalesDbLoaded = false;
                     }
                 } else {
-                    cachedDbProfesionales = APP_DEPLOYMENT_ENVIRONMENT === 'production'
-                        ? []
-                        : fallbackProfesionales;
+                    cachedDbProfesionales = fallbackProfesionales;
+                    profesionalesDbLoaded = false;
                 }
             }
 
