@@ -132,7 +132,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga</span>
+            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga</span>
         </div>
     </div>
 
@@ -141,11 +141,39 @@
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+        const APP_VERSION = '6.3';
+        const APP_DEPLOYMENT_ENVIRONMENT = (() => {
+            const origin = window.location.origin.toLowerCase();
+            const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
+            if (origin === 'https://jaime312.github.io' && isCertificationPath) return 'certification';
+            if (origin === 'https://genyoga.studio' || origin === 'https://www.genyoga.studio') return 'production';
+            return 'development';
+        })();
         
         let stripeSessionId = '';
         let redirectCountdownTimer = null;
 
+        function ensureLivePaymentEnvironment() {
+            if (APP_DEPLOYMENT_ENVIRONMENT === 'production' || APP_DEPLOYMENT_ENVIRONMENT === 'certification') return true;
+            Swal.fire({
+                icon: 'info',
+                title: 'Entorno no soportado',
+                text: 'En el entorno de desarrollo local no se pueden verificar cobros reales.',
+                confirmButtonColor: '#795244'
+            });
+            return false;
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            document.documentElement.dataset.appEnvironment = APP_DEPLOYMENT_ENVIRONMENT;
+            if (APP_DEPLOYMENT_ENVIRONMENT !== 'production' && APP_DEPLOYMENT_ENVIRONMENT !== 'certification') {
+                mostrarErrorVerificacion(
+                    `Esta es la compilación de DESARROLLO v${APP_VERSION}. No puede verificar ni gestionar pagos LIVE.`,
+                    false
+                );
+                return;
+            }
+
             const searchParams = new URLSearchParams(window.location.search);
             stripeSessionId = searchParams.get('session_id');
             
@@ -291,6 +319,7 @@
         }
 
         async function irAlPortalFacturas() {
+            if (!ensureLivePaymentEnvironment()) return;
             if (!stripeSessionId) return;
             if (redirectCountdownTimer) {
                 clearInterval(redirectCountdownTimer);
@@ -380,6 +409,7 @@
         }
 
         async function confirmarReservaInvitado() {
+            if (!ensureLivePaymentEnvironment()) return;
             const claseId = document.getElementById('guest-clase-select').value;
             const nombre = document.getElementById('guest-nombre').value.trim();
             const apellidos = document.getElementById('guest-apellidos').value.trim();

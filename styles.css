@@ -93,67 +93,26 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 }
 
 /* ======================================================= */
-/* LOGICA DEL CURSOR PERSONALIZADO (WEB)                   */
+/* CURSOR PERSONALIZADO NATIVO (CHICA MORENA HACIENDO YOGA) */
 /* ======================================================= */
 
-/* El elemento visual del cursor */
-.wink-cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    font-size: 2rem;
-    line-height: 1;
-    transform: translate(-50%, -50%);
-    z-index: 9999;
-    transition: transform 0.1s ease-out;
-    user-select: none;
+/* Cursores nativos estables en escritorio (también tras volver desde Stripe/bfcache) */
+body.platform-web {
+    cursor: default !important;
 }
 
-.wink-cursor.clicking {
-    transform: translate(-50%, -50%) scale(0.8) rotate(-10deg);
-}
-
-.cursor-glow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle closest-side, rgba(255, 255, 255, 0.12), transparent);
-    border-radius: 50%;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    z-index: 5;
-    mix-blend-mode: overlay;
-    transition: opacity 0.3s ease;
-}
-
-/* Forzar ocultación del cursor nativo SOLO en Web */
-body.platform-web,
 body.platform-web a,
 body.platform-web button,
-body.platform-web input,
 body.platform-web select,
-body.platform-web textarea,
-body.platform-web .cursor-pointer {
-    cursor: none !important;
+body.platform-web .cursor-pointer,
+body.platform-web [onclick] {
+    cursor: pointer !important;
 }
 
-/* ======================================================= */
-/* ADAPTACIONES MÓVILES (iOS + ANDROID)                    */
-/* ======================================================= */
-
-/* REGLAS COMUNES APP (iOS y Android) */
-body.platform-ios,
-body.platform-android {
-    cursor: auto !important;
-}
-
-/* Ocultar cursor personalizado en apps */
-body.platform-ios .wink-cursor,
-body.platform-android .wink-cursor {
-    display: none !important;
+/* Permitir cursor de texto nativo en campos de formulario por usabilidad */
+body.platform-web input,
+body.platform-web textarea {
+    cursor: text !important;
 }
 
 /* Restaurar punteros en elementos interactivos para Apps */
@@ -543,4 +502,3 @@ body.platform-android select {
             background-color: #dc2626 !important;
         }
 
-    

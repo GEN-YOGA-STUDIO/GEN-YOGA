@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.0 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">&copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -1242,6 +1242,46 @@ document.addEventListener('DOMContentLoaded', () => {
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+const APP_VERSION = '6.3';
+const APP_DEPLOYMENT_ENVIRONMENT = (() => {
+    const origin = window.location.origin.toLowerCase();
+    const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
+    if (origin === 'https://jaime312.github.io' && isCertificationPath) return 'certification';
+    if (origin === 'https://genyoga.studio' || origin === 'https://www.genyoga.studio') return 'production';
+    return 'development';
+})();
+
+function ensureProductionPayments() {
+    if (APP_DEPLOYMENT_ENVIRONMENT === 'production' || APP_DEPLOYMENT_ENVIRONMENT === 'certification') return true;
+    Swal.fire({
+        icon: 'info',
+        title: 'Pagos no permitidos en desarrollo',
+        text: 'En el entorno de desarrollo local no se pueden realizar cobros reales.',
+        confirmButtonColor: '#795244'
+    });
+    return false;
+}
+
+function newCheckoutAttemptId() {
+    return typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : '';
+}
+
+function closePaymentUiBeforeNavigation() {
+    if (window.Swal && typeof window.Swal.close === 'function') window.Swal.close();
+}
+
+window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    if (window.Swal && typeof window.Swal.isLoading === 'function' && window.Swal.isLoading()) {
+        window.Swal.close();
+    }
+    document.documentElement.style.removeProperty('cursor');
+    document.body?.style.removeProperty('cursor');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.documentElement.dataset.appEnvironment = APP_DEPLOYMENT_ENVIRONMENT;
+});
 
 // --- DYNAMIC CATEGORIES HELPERS ---
 function getEspecialidadTexto(especialidad) {
@@ -2057,6 +2097,8 @@ function renderProfesionalesLanding(profesionales) {
                 event.stopPropagation();
             }
 
+            if (!ensureProductionPayments()) return;
+
             if (!supabaseClient) {
                 Swal.fire('Error', 'El cliente de base de datos no se pudo cargar.', 'error');
                 return;
@@ -2115,7 +2157,10 @@ function renderProfesionalesLanding(profesionales) {
                     body: {
                         lookup_key: 'clase_suelta',
                         user_id: userId,
-                        from: 'tarifas'
+                        from: 'tarifas',
+                        app_version: APP_VERSION,
+                        app_environment: APP_DEPLOYMENT_ENVIRONMENT,
+                        checkout_attempt_id: userId === 'guest' ? newCheckoutAttemptId() : undefined
                     }
                 });
 
@@ -2131,7 +2176,8 @@ function renderProfesionalesLanding(profesionales) {
                 }
 
                 if (data && data.url) {
-                    window.location.href = data.url;
+                    closePaymentUiBeforeNavigation();
+                    window.location.assign(data.url);
                 } else {
                     throw new Error('No se recibió la URL de la pasarela de pagos.');
                 }

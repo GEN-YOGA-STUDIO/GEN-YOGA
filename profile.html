@@ -3325,6 +3325,33 @@ body.platform-web .mobile-only {
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+const APP_VERSION = '6.3';
+const APP_DEPLOYMENT_ENVIRONMENT = (() => {
+    const origin = window.location.origin.toLowerCase();
+    const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
+    if (origin === 'https://jaime312.github.io' && isCertificationPath) return 'certification';
+    if (origin === 'https://genyoga.studio' || origin === 'https://www.genyoga.studio') return 'production';
+    return 'development';
+})();
+
+function ensureProductionPayments() {
+    if (APP_DEPLOYMENT_ENVIRONMENT === 'production' || APP_DEPLOYMENT_ENVIRONMENT === 'certification') return true;
+    Swal.fire({
+        icon: 'info',
+        title: 'Pagos no permitidos en desarrollo',
+        text: 'En el entorno de desarrollo local no se pueden realizar cobros reales.',
+        confirmButtonColor: '#795244'
+    });
+    return false;
+}
+
+function closePaymentUiBeforeNavigation() {
+    if (window.Swal && typeof window.Swal.close === 'function') window.Swal.close();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.documentElement.dataset.appEnvironment = APP_DEPLOYMENT_ENVIRONMENT;
+});
 
 // --- DYNAMIC CATEGORIES HELPERS ---
 function getEspecialidadTexto(especialidad) {
@@ -10869,6 +10896,7 @@ window.addEventListener('languageChanged', () => {
 
 // Stripe Checkout integration for purchasing a single class (clase suelta) directly without confirmation modal
 async function comprarClaseSueltaDirecto() {
+    if (!ensureProductionPayments()) return;
     Swal.fire({
         title: 'Cargando pasarela de pago...',
         text: 'Por favor, espera un momento.',
@@ -10884,7 +10912,9 @@ async function comprarClaseSueltaDirecto() {
             body: {
                 lookup_key: 'clase_suelta',
                 user_id: currentUser.id,
-                from: 'profile'
+                from: 'profile',
+                app_version: APP_VERSION,
+                app_environment: APP_DEPLOYMENT_ENVIRONMENT
             }
         });
 
@@ -10904,7 +10934,8 @@ async function comprarClaseSueltaDirecto() {
         }
 
         if (data && data.url) {
-            window.location.href = data.url;
+            closePaymentUiBeforeNavigation();
+            window.location.assign(data.url);
         } else {
             throw new Error('No se recibió la URL de redirección de la pasarela de pagos.');
         }
@@ -10925,6 +10956,8 @@ async function comprarClaseSuelta(event) {
         event.stopPropagation();
         event.preventDefault();
     }
+
+    if (!ensureProductionPayments()) return;
 
     if (!currentUser || !currentUser.id) {
         Swal.fire({
@@ -10966,7 +10999,9 @@ async function comprarClaseSuelta(event) {
             body: {
                 lookup_key: 'clase_suelta',
                 user_id: currentUser.id,
-                from: 'profile'
+                from: 'profile',
+                app_version: APP_VERSION,
+                app_environment: APP_DEPLOYMENT_ENVIRONMENT
             }
         });
 
@@ -10987,7 +11022,8 @@ async function comprarClaseSuelta(event) {
         }
 
         if (data && data.url) {
-            window.location.href = data.url;
+            closePaymentUiBeforeNavigation();
+            window.location.assign(data.url);
         } else {
             throw new Error('No se recibió la URL de redirección de la pasarela de pagos.');
         }
@@ -11008,6 +11044,8 @@ async function comprarBonoMensual(event) {
         event.stopPropagation();
         event.preventDefault();
     }
+
+    if (!ensureProductionPayments()) return;
 
     if (!currentUser || !currentUser.id) {
         Swal.fire({
@@ -11059,7 +11097,9 @@ async function comprarBonoMensual(event) {
             body: {
                 lookup_key: 'bono_mensual', // Direct generic lookup key for Bono Monthly subscription!
                 user_id: currentUser.id,
-                from: 'profile'
+                from: 'profile',
+                app_version: APP_VERSION,
+                app_environment: APP_DEPLOYMENT_ENVIRONMENT
             }
         });
 
@@ -11079,7 +11119,8 @@ async function comprarBonoMensual(event) {
         }
 
         if (data && data.url) {
-            window.location.href = data.url;
+            closePaymentUiBeforeNavigation();
+            window.location.assign(data.url);
         } else {
             throw new Error('No se recibió la URL de redirección de la pasarela de pagos.');
         }
@@ -11099,6 +11140,8 @@ async function gestionarSuscripcionStripe(event) {
         event.stopPropagation();
         event.preventDefault();
     }
+
+    if (!ensureProductionPayments()) return;
 
     if (!currentUser?.id) {
         return Swal.fire({
@@ -11126,7 +11169,10 @@ async function gestionarSuscripcionStripe(event) {
         }
 
         const { data, error } = await client.functions.invoke('create-portal-session', {
-            body: {},
+            body: {
+                app_version: APP_VERSION,
+                app_environment: APP_DEPLOYMENT_ENVIRONMENT
+            },
             headers: {
                 Authorization: `Bearer ${session.access_token}`
             }
@@ -11150,6 +11196,7 @@ async function gestionarSuscripcionStripe(event) {
             throw new Error('Stripe no devolvió una URL de facturación válida.');
         }
 
+        closePaymentUiBeforeNavigation();
         window.location.assign(portalUrl.href);
     } catch (error) {
         console.error('Error al abrir Customer Portal:', error);

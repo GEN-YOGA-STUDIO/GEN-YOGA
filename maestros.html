@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,98 +8,1528 @@
 
         <script src="https://unpkg.com/@phosphor-icons/web"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="i18n.js"></script>
+
+        <style>
+            :root {
+                --masters-ivory: #f8f6f2;
+                --masters-orange: #b45c47;
+                --masters-orange-dark: #a65e44;
+                --masters-green: #916a32;
+                --masters-cocoa: #26160c;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                min-height: 100%;
+                background-color: var(--masters-ivory) !important;
+                background-image: none !important;
+            }
+
+            .teachers-hero {
+                position: relative;
+                isolation: isolate;
+                display: grid;
+                min-height: 100vh;
+                min-height: 100svh;
+                place-items: center;
+                overflow: hidden;
+                background: var(--masters-ivory);
+            }
+
+            .teachers-hero__title {
+                position: relative;
+                z-index: 4;
+                width: min(72vw, 1050px);
+                margin: 0;
+                font-family: 'Ubuntu', sans-serif;
+                font-size: clamp(5rem, 8.6vw, 10.2rem);
+                font-weight: 700;
+                letter-spacing: -0.03em;
+                line-height: 0.96;
+                text-align: center;
+            }
+
+            .teachers-hero__title-line {
+                display: block;
+            }
+
+            .teachers-hero__title-line--orange {
+                color: #b45c47;
+                background-image: linear-gradient(180deg, #cc624a 0%, #8f5342 100%);
+                background-repeat: no-repeat;
+                background-size: 100% 100%;
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .teachers-hero__title-line--green {
+                color: #916a32;
+                background-image: linear-gradient(180deg, #7b4526 0%, #946f34 100%);
+                background-repeat: no-repeat;
+                background-size: 100% 100%;
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .teachers-hero__portrait {
+                position: absolute;
+                z-index: 2;
+                display: block;
+                height: auto;
+                object-fit: contain;
+                pointer-events: none;
+                user-select: none;
+                mix-blend-mode: normal;
+                filter: grayscale(1) contrast(1.06);
+            }
+
+            .teacher-card__portrait {
+                position: relative;
+                z-index: 2;
+                display: block;
+                max-width: 100%;
+                max-height: 100%;
+                width: auto;
+                height: auto;
+                object-fit: contain;
+                mix-blend-mode: normal;
+                filter: grayscale(1) contrast(1.12);
+                transition: transform 300ms ease;
+            }
+
+            .group:hover .teacher-card__portrait {
+                transform: scale(1.045);
+            }
+
+            .teachers-hero__portrait--left-top {
+                z-index: 2;
+                top: clamp(54px, 9vh, 88px);
+                left: clamp(64px, 5vw, 104px);
+                width: clamp(210px, 15vw, 280px);
+            }
+
+            .teachers-hero__portrait--left-bottom {
+                z-index: 3;
+                bottom: -1%;
+                left: clamp(24px, 2.2vw, 46px);
+                width: clamp(300px, 21.5vw, 405px);
+            }
+
+            .teachers-hero__portrait--right-top {
+                z-index: 2;
+                top: clamp(54px, 9vh, 88px);
+                right: clamp(54px, 4vw, 84px);
+                width: clamp(230px, 16vw, 300px);
+                border-radius: 30% 18% 28% 22% / 22% 26% 20% 28%;
+            }
+
+            .teachers-hero__portrait--right-bottom {
+                z-index: 3;
+                right: clamp(18px, 1.8vw, 38px);
+                bottom: -1%;
+                width: clamp(230px, 16vw, 300px);
+            }
+
+            .teachers-hero__doodle {
+                position: absolute;
+                z-index: 1;
+                width: min(29vw, 500px);
+                height: auto;
+                overflow: visible;
+                pointer-events: none;
+                opacity: 0.72;
+                filter: blur(1.5px);
+            }
+
+            .teachers-hero__doodle path {
+                fill: none;
+                stroke: currentColor;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                stroke-width: 18;
+            }
+
+            .teachers-hero__doodle--left {
+                top: -8%;
+                left: -5%;
+                color: var(--masters-orange-dark);
+                transform: rotate(-9deg);
+            }
+
+            .teachers-hero__doodle--right {
+                top: -12%;
+                right: -4%;
+                color: #b48b4c;
+                transform: rotate(10deg);
+            }
+
+            .teachers-hero__home {
+                position: absolute;
+                z-index: 8;
+                top: clamp(18px, 3vw, 42px);
+                left: clamp(18px, 3.5vw, 58px);
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                padding: 0.72rem 1.05rem;
+                border: 1px solid rgba(106, 101, 64, 0.24);
+                border-radius: 999px;
+                color: var(--masters-green);
+                background: rgba(248, 246, 242, 0.82);
+                box-shadow: 0 8px 28px rgba(38, 22, 12, 0.08);
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.14em;
+                text-decoration: none;
+                text-transform: uppercase;
+                backdrop-filter: blur(8px);
+                transition: transform 180ms ease, color 180ms ease, border-color 180ms ease;
+            }
+
+            .teachers-hero__home:hover {
+                color: var(--masters-orange);
+                border-color: rgba(216, 90, 56, 0.45);
+                transform: translateY(-2px);
+            }
+
+            .teachers-hero__scroll {
+                position: absolute;
+                z-index: 8;
+                bottom: clamp(18px, 3vw, 38px);
+                left: 50%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.15rem;
+                color: var(--masters-green);
+                font-size: 0.65rem;
+                font-weight: 700;
+                letter-spacing: 0.16em;
+                text-decoration: none;
+                text-transform: uppercase;
+                transform: translateX(-50%);
+            }
+
+            .teachers-hero__scroll i {
+                font-size: 1.6rem;
+                animation: masters-bob 1.8s ease-in-out infinite;
+            }
+
+            .teachers-gallery {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                min-height: 100vh;
+                min-height: 100svh;
+                padding: clamp(34px, 5.2vh, 58px) clamp(24px, 1.35vw, 30px) clamp(58px, 7vh, 86px);
+                overflow: hidden;
+                background: var(--masters-ivory);
+                border-top: 1px solid rgba(216, 90, 56, 0.08);
+            }
+
+            .teachers-gallery__home {
+                align-self: flex-start;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1.15rem;
+                min-width: clamp(240px, 19vw, 365px);
+                padding: 0.95rem 2rem;
+                border-radius: 999px;
+                color: white;
+                background: linear-gradient(90deg, #df795f 0%, #e7c0ae 100%);
+                font-size: clamp(1.35rem, 2vw, 2.1rem);
+                font-weight: 700;
+                letter-spacing: 0.03em;
+                text-decoration: none;
+                text-transform: uppercase;
+                transition: transform 180ms ease, filter 180ms ease;
+            }
+
+            .teachers-gallery__home i {
+                font-size: 1.45em;
+            }
+
+            .teachers-gallery__home:hover {
+                filter: saturate(1.08);
+                transform: translateY(-2px);
+            }
+
+            .teachers-gallery__filters {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: clamp(14px, 1.35vw, 26px);
+                width: min(80vw, 1515px);
+                margin: clamp(76px, 10vh, 108px) auto 0;
+            }
+
+            .teacher-filter {
+                min-width: 0;
+                padding: clamp(0.72rem, 1.35vh, 1rem) clamp(1rem, 1.8vw, 2.2rem);
+                border: 0;
+                border-radius: 999px;
+                color: rgba(248, 246, 242, 0.78);
+                font-family: 'Montserrat Arabic', sans-serif;
+                font-size: clamp(1.2rem, 2.1vw, 2.55rem);
+                font-weight: 700;
+                line-height: 1.15;
+                text-align: center;
+                text-decoration: underline;
+                text-decoration-thickness: 2px;
+                text-underline-offset: 0.16em;
+                text-transform: uppercase;
+                white-space: nowrap;
+                cursor: pointer;
+                transition: transform 180ms ease, filter 180ms ease, color 180ms ease;
+            }
+
+            .teacher-filter:hover,
+            .teacher-filter:focus-visible {
+                color: white;
+                filter: saturate(1.08);
+                transform: translateY(-2px);
+                outline: none;
+            }
+
+            .teacher-filter--todos { background: linear-gradient(90deg, #df674d 0%, #e8cdbf 100%); }
+            .teacher-filter--clases { background: linear-gradient(90deg, #b79f93 0%, #c5aa8c 100%); }
+            .teacher-filter--consultas { background: linear-gradient(90deg, #c0aa87 0%, #ded2a6 100%); }
+            .teacher-filter--talleres { background: linear-gradient(90deg, #b8b58e 0%, #d2d1ae 100%); }
+
+            .teacher-filter.is-active {
+                color: white;
+                text-decoration: none;
+                box-shadow: 0 8px 24px rgba(101, 63, 42, 0.08);
+            }
+
+            .teachers-gallery__grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                align-items: end;
+                gap: clamp(18px, 1.7vw, 34px);
+                width: 100%;
+                max-width: 1840px;
+                margin: clamp(70px, 9.5vh, 112px) auto 0;
+            }
+
+            .teachers-gallery__grid--1 { max-width: 450px; grid-template-columns: minmax(0, 1fr); }
+            .teachers-gallery__grid--2 { max-width: 920px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .teachers-gallery__grid--3 { max-width: 1380px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+            .teacher-card {
+                position: relative;
+                min-width: 0;
+                color: #1b100b;
+                text-align: left;
+                cursor: pointer;
+                transition: transform 250ms ease;
+            }
+
+            .teacher-card:hover {
+                transform: translateY(-6px);
+            }
+
+            .teacher-card__figure {
+                position: relative;
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+                width: 100%;
+                height: clamp(300px, 41vh, 445px);
+                margin-bottom: 0.3rem;
+            }
+
+            .teacher-card__name {
+                position: relative;
+                z-index: 3;
+                margin: 0;
+                font-family: 'Montserrat Arabic', sans-serif;
+                font-size: clamp(1.55rem, 2.05vw, 2.55rem);
+                font-weight: 700;
+                letter-spacing: 0.015em;
+                line-height: 1.02;
+                text-transform: uppercase;
+            }
+
+            .teacher-card__specialty {
+                position: relative;
+                z-index: 3;
+                margin: 0.2rem 0 0;
+                font-family: 'Montserrat Arabic', sans-serif;
+                font-size: clamp(0.98rem, 1.2vw, 1.5rem);
+                font-weight: 400;
+                line-height: 1.18;
+            }
+
+            body.teacher-modal-open {
+                overflow: hidden;
+            }
+
+            .teacher-modal-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 50;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: clamp(12px, 3vw, 36px);
+                background: rgba(248, 246, 242, 0.48);
+                opacity: 0;
+                visibility: hidden;
+                backdrop-filter: blur(12px) saturate(0.72);
+                transition: opacity 220ms ease, visibility 220ms ease;
+            }
+
+            .teacher-modal-overlay.is-hidden {
+                display: none;
+            }
+
+            .teacher-modal-overlay.is-open {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .teacher-modal {
+                position: relative;
+                width: min(980px, calc(100vw - 32px));
+                max-height: calc(100svh - 32px);
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: clamp(24px, 2.4vw, 32px);
+                color: #fff;
+                background: linear-gradient(120deg, #e66a54 0%, #dc662b 57%, #af7a34 100%);
+                box-shadow: 0 28px 70px rgba(74, 40, 17, 0.28);
+                transform: translateY(12px) scale(0.985);
+                transition: transform 220ms ease;
+            }
+
+            .teacher-modal-overlay.is-open .teacher-modal {
+                transform: translateY(0) scale(1);
+            }
+
+            .teacher-modal__close {
+                position: absolute;
+                z-index: 5;
+                top: 15px;
+                right: 16px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 38px;
+                padding: 0;
+                border: 1px solid rgba(255, 255, 255, 0.24);
+                border-radius: 999px;
+                color: #fff;
+                background: rgba(255, 255, 255, 0.1);
+                font-size: 1.15rem;
+                cursor: pointer;
+                transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+            }
+
+            .teacher-modal__close:hover,
+            .teacher-modal__close:focus-visible {
+                color: #9b572c;
+                background: #fff;
+                outline: none;
+                transform: rotate(4deg);
+            }
+
+            .teacher-modal__layout {
+                display: grid;
+                grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+                min-height: 440px;
+                font-family: 'Montserrat Arabic', Montserrat, sans-serif;
+            }
+
+            .teacher-modal__profile {
+                position: relative;
+                display: grid;
+                grid-template-rows: auto minmax(220px, 1fr) auto;
+                min-width: 0;
+                padding: 28px 24px 22px clamp(30px, 4vw, 48px);
+            }
+
+            .teacher-modal__identity {
+                position: relative;
+                z-index: 2;
+                padding-right: 6px;
+            }
+
+            .teacher-modal__name {
+                margin: 0;
+                font-size: clamp(1.65rem, 2.5vw, 2.15rem);
+                font-weight: 800;
+                letter-spacing: 0.01em;
+                line-height: 0.98;
+                text-transform: uppercase;
+            }
+
+            .teacher-modal__specialty {
+                max-width: 390px;
+                margin: 0.35rem 0 0;
+                font-size: clamp(0.78rem, 1.25vw, 0.98rem);
+                font-weight: 700;
+                line-height: 1.18;
+            }
+
+            .teacher-modal__portrait-stage {
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .teacher-modal__portrait {
+                display: block;
+                width: min(100%, 370px);
+                max-height: 285px;
+                object-fit: contain;
+                object-position: center bottom;
+                filter: grayscale(1) contrast(1.08);
+            }
+
+            .teacher-modal__quote {
+                position: relative;
+                z-index: 2;
+                max-width: 360px;
+                margin: 0.35rem 0 0;
+                font-size: 0.74rem;
+                font-weight: 700;
+                line-height: 1.25;
+            }
+
+            .teacher-modal__details {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: clamp(11px, 1.6vh, 17px);
+                min-width: 0;
+                padding: 34px clamp(42px, 4.4vw, 58px) 30px 20px;
+            }
+
+            .teacher-modal__section {
+                min-width: 0;
+            }
+
+            .teacher-modal__section-title,
+            .teacher-modal__location {
+                display: flex;
+                align-items: center;
+                gap: 0.38rem;
+                margin: 0 0 0.32rem;
+                color: #fff;
+                font-size: 0.74rem;
+                font-weight: 800;
+                letter-spacing: 0.015em;
+                line-height: 1.1;
+                text-transform: uppercase;
+            }
+
+            .teacher-modal__section-title i,
+            .teacher-modal__location i {
+                flex: 0 0 auto;
+                font-size: 1.05rem;
+            }
+
+            .teacher-modal__section-text {
+                margin: 0;
+                font-size: clamp(0.69rem, 1.02vw, 0.79rem);
+                font-weight: 600;
+                line-height: 1.28;
+            }
+
+            .teacher-modal__meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.65rem 1.15rem;
+                padding-top: 0.1rem;
+            }
+
+            .teacher-modal__location {
+                margin: 0;
+            }
+
+            .teacher-modal__location span {
+                line-height: 1.2;
+            }
+
+            @media (max-width: 700px) {
+                .teacher-modal-overlay {
+                    align-items: center;
+                    padding: 8px;
+                }
+
+                .teacher-modal {
+                    width: calc(100vw - 16px);
+                    max-height: calc(100svh - 16px);
+                    border-radius: 22px;
+                }
+
+                .teacher-modal__close {
+                    top: 12px;
+                    right: 12px;
+                    width: 34px;
+                    height: 34px;
+                }
+
+                .teacher-modal__layout {
+                    grid-template-columns: minmax(0, 1fr);
+                    grid-template-rows: minmax(210px, 31svh) auto;
+                    min-height: 0;
+                }
+
+                .teacher-modal__profile {
+                    grid-template-rows: auto 1fr auto;
+                    min-height: 210px;
+                    padding: 22px 18px 12px;
+                    overflow: hidden;
+                }
+
+                .teacher-modal__identity,
+                .teacher-modal__quote {
+                    width: 58%;
+                }
+
+                .teacher-modal__name {
+                    font-size: clamp(1.25rem, 6.4vw, 1.7rem);
+                }
+
+                .teacher-modal__specialty {
+                    font-size: 0.68rem;
+                }
+
+                .teacher-modal__portrait-stage {
+                    position: absolute;
+                    right: 2px;
+                    bottom: 0;
+                    width: 48%;
+                    height: 88%;
+                    justify-content: flex-end;
+                }
+
+                .teacher-modal__portrait {
+                    width: 100%;
+                    max-height: 100%;
+                }
+
+                .teacher-modal__quote {
+                    align-self: end;
+                    margin-top: 0.5rem;
+                    font-size: 0.64rem;
+                }
+
+                .teacher-modal__details {
+                    gap: 10px;
+                    padding: 14px 18px 18px;
+                }
+
+                .teacher-modal__section-title,
+                .teacher-modal__location {
+                    margin-bottom: 0.22rem;
+                    font-size: 0.66rem;
+                }
+
+                .teacher-modal__section-title i,
+                .teacher-modal__location i {
+                    font-size: 0.9rem;
+                }
+
+                .teacher-modal__section-text {
+                    font-size: 0.66rem;
+                    line-height: 1.24;
+                }
+            }
+
+            @media (max-height: 680px) and (max-width: 700px) {
+                .teacher-modal__layout {
+                    grid-template-rows: minmax(170px, 27svh) auto;
+                }
+
+                .teacher-modal__profile {
+                    min-height: 170px;
+                    padding-block: 16px 9px;
+                }
+
+                .teacher-modal__details {
+                    gap: 7px;
+                    padding-block: 10px 12px;
+                }
+
+                .teacher-modal__section-text {
+                    font-size: 0.61rem;
+                }
+            }
+
+            @media (min-width: 1401px) {
+                .teachers-gallery__grid { margin-top: 11vh; }
+                .teacher-card__figure { margin-bottom: 1.2rem; }
+                .teachers-gallery__grid--4 {
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: space-between;
+                }
+                .teachers-gallery__grid--4 .teacher-card { left: 20px; flex: 0 0 auto; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(1) { width: 400px; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(2) { width: 360px; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(3) { width: 320px; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(4) { width: 290px; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(1) .teacher-card__portrait { max-width: 390px; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(2) .teacher-card__portrait { max-width: 360px; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(3) .teacher-card__portrait { max-width: 280px; }
+                .teachers-gallery__grid--4 .teacher-card:nth-child(4) .teacher-card__portrait { max-width: 290px; }
+            }
+
+            @media (max-width: 1000px) {
+                .teachers-gallery { overflow: visible; }
+                .teachers-gallery__filters { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                .teachers-gallery__grid,
+                .teachers-gallery__grid--3,
+                .teachers-gallery__grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 900px; }
+                .teacher-card__figure { height: clamp(300px, 48vw, 430px); }
+            }
+
+            @keyframes masters-bob {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(7px); }
+            }
+
+            @media (max-width: 900px) {
+                .teachers-hero__title {
+                    width: 82vw;
+                    font-size: clamp(4.6rem, 13.4vw, 7.5rem);
+                }
+
+                .teachers-hero__portrait--left-top {
+                    top: 5%;
+                    left: 1%;
+                    width: 28vw;
+                }
+
+                .teachers-hero__portrait--left-bottom {
+                    left: 0;
+                    bottom: 0;
+                    width: 36vw;
+                }
+
+                .teachers-hero__portrait--right-top {
+                    top: 5%;
+                    right: 0;
+                    width: 28vw;
+                }
+
+                .teachers-hero__portrait--right-bottom {
+                    right: 0;
+                    bottom: 0;
+                    width: 30vw;
+                }
+            }
+
+            @media (max-width: 640px) {
+                .teachers-hero {
+                    min-height: 720px;
+                }
+
+                .teachers-hero__title {
+                    width: 94vw;
+                    font-size: clamp(3.7rem, 18.5vw, 5.5rem);
+                    line-height: 0.96;
+                }
+
+                .teachers-hero__portrait--left-top,
+                .teachers-hero__portrait--right-top {
+                    display: none;
+                }
+
+                .teachers-hero__portrait--left-bottom {
+                    bottom: 0;
+                    left: -26%;
+                    width: 74vw;
+                    opacity: 1;
+                }
+
+                .teachers-hero__portrait--right-bottom {
+                    right: -37%;
+                    bottom: -10%;
+                    width: 64vw;
+                    opacity: 1;
+                }
+
+                .teachers-hero__doodle {
+                    width: 55vw;
+                    opacity: 0.48;
+                }
+
+                .teachers-hero__home span {
+                    display: none;
+                }
+
+                .teachers-hero__home {
+                    width: 42px;
+                    height: 42px;
+                    justify-content: center;
+                    padding: 0;
+                }
+
+                .teachers-gallery { padding-inline: 18px; }
+                .teachers-gallery__home { min-width: 0; padding: 0.72rem 1.25rem; font-size: 1rem; }
+                .teachers-gallery__filters { margin-top: 62px; gap: 10px; }
+                .teacher-filter { padding: 0.78rem 0.45rem; font-size: 0.94rem; }
+                .teachers-gallery__grid,
+                .teachers-gallery__grid--1,
+                .teachers-gallery__grid--2,
+                .teachers-gallery__grid--3,
+                .teachers-gallery__grid--4 { grid-template-columns: minmax(0, 1fr); max-width: 430px; gap: 64px; }
+                .teacher-card__figure { height: 390px; }
+                .teacher-card__name { font-size: 2rem; }
+                .teacher-card__specialty { font-size: 1.05rem; }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                html { scroll-behavior: auto; }
+                .teachers-hero__scroll i { animation: none; }
+            }
+        </style>
+
+        <script>
+// INLINED i18n.js
+const translations = {
+    es: {
+        "nav_sessions": "SESIONES",
+        "nav_clases": "CLASES",
+        "nav_tarifas": "TARIFAS",
+        "nav_maestros": "MAESTROS",
+        "nav_profesores": "PROFESORES",
+        "nav_perfil": "MI PERFIL",
+        "nav_inicio": "Inicio",
+        "btn_back_home": "INICIO",
+        "btn_prof_all": "TODOS",
+        "rates_tab_yoga": "CLASES",
+        "rates_tab_psy": "CONSULTAS",
+        "rates_tab_workshops": "TALLERES",
+        "teachers_title": "Maestros",
+        "teachers_hero_our": "Nuestros",
+        "teachers_hero_teachers": "Maestros",
+        "teachers_scroll_meet": "Conócelos",
+        "teachers_no_category": "No hay profesores en esta categoría.",
+        "teachers_fallback_spec": "Profesor de GEN Yoga",
+        "teachers_view_card": "Ver ficha de"
+    },
+    en: {
+        "nav_sessions": "SESSIONS",
+        "nav_clases": "CLASSES",
+        "nav_tarifas": "RATES",
+        "nav_maestros": "TEACHERS",
+        "nav_profesores": "TEACHERS",
+        "nav_perfil": "MY PROFILE",
+        "nav_inicio": "Home",
+        "btn_back_home": "HOME",
+        "btn_prof_all": "ALL",
+        "rates_tab_yoga": "CLASSES",
+        "rates_tab_psy": "CONSULTATIONS",
+        "rates_tab_workshops": "WORKSHOPS",
+        "teachers_title": "Teachers",
+        "teachers_hero_our": "Our",
+        "teachers_hero_teachers": "Teachers",
+        "teachers_scroll_meet": "Meet them",
+        "teachers_no_category": "No teachers in this category.",
+        "teachers_fallback_spec": "GEN Yoga Teacher",
+        "teachers_view_card": "View profile of"
+    }
+};
+
+const professionalTranslations = {
+    "en": {
+        "Yanira": {
+            "nombre": "Yanira",
+            "especialidad": "Vinyasa & Restorative Yoga | classes,workshops",
+            "descripcion": `ABOUT ME:\nCertified yoga instructor with a close approach uniting movement, breath and calm.\n\nBACKGROUND:\nOriginally from the United States, with Salvadoran roots.\n\nQUALIFICATIONS:\n• Master's in International Education\n• Master's in Educational Leadership\n• Yoga Alliance Certified Yoga Instructor\n\nTE ACOMPAÑO:\nPractices adapted to all levels focusing on alignment, conscious breathing and inner peace.\n\nME DEFINE:\n"Movement and Serenity"`
+        },
+        "Silvia": {
+            "nombre": "Silvia",
+            "especialidad": "Hatha & Iyengar Yoga, Ayurveda | classes",
+            "descripcion": `ABOUT ME:\nYoga teacher with more than 25 years dedicated to teaching and conscious guidance.\n\nQUALIFICATIONS:\n• Hatha Yoga and Iyengar Yoga by AIPYS\n• Ayurveda Therapist\n\nTE ACOMPAÑO:\nPrecise alignment, adjustment and Ayurvedic principles for physical and mental well-being.\n\nME DEFINE:\n"Dedication and Care"`
+        },
+        "Ángel Javier": {
+            "nombre": "Ángel Javier",
+            "especialidad": "Yoga for Men & Therapeutic Yoga | classes",
+            "descripcion": `ABOUT ME:\nInstructor specialized in an accessible, safe practice adapted to each body.\n\nQUALIFICATIONS:\n• 6 years of experience in yoga practice\n• Specialized in Iyengar Yoga\n\nTE ACOMPAÑO:\nTherapeutic adjustment and accessible practice for men and all bodies.\n\nME DEFINE:\n"Presence and Strength"`
+        },
+        "Miriam": {
+            "nombre": "Miriam",
+            "especialidad": "Psychotherapy, Nutrition & Workshops | consultations",
+            "descripcion": `ABOUT ME:\nPsychologist specialized in emotional well-being, conscious eating and holistic guidance.\n\nQUALIFICATIONS:\n• Graduate in Psychology from University of Valencia\n• Master's in Eating Disorders\n\nTE ACOMPAÑO:\nIntegral psychotherapy, mindful nutrition and growth workshops.\n\nME DEFINE:\n"Empathy and Harmony"`
+        }
+    }
+};
+
+function translateProfessional(p) {
+    if (!p) return p;
+    const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
+    if (lang === 'en') {
+        const trans = professionalTranslations['en']?.[p.nombre] || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
+        if (trans) {
+            return {
+                ...p,
+                nombre: trans.nombre || p.nombre,
+                especialidad: trans.especialidad || p.especialidad,
+                descripcion: trans.descripcion || p.descripcion,
+                bio: trans.descripcion || p.bio
+            };
+        }
+    }
+    return p;
+}
+
+window.translateProfessional = translateProfessional;
+
+function safeGetItem(key, fallback) {
+    try { return localStorage.getItem(key) || fallback; } catch (e) { return fallback; }
+}
+function safeSetItem(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+}
+
+let currentLang = safeGetItem('yoga-lang', 'es');
+
+function setLanguage(lang) {
+    if (lang !== 'es' && lang !== 'en') return;
+    currentLang = lang;
+    window.currentLang = currentLang;
+    document.documentElement.lang = lang;
+    safeSetItem('yoga-lang', lang);
+
+    const btnEs = document.getElementById('lang-btn-es');
+    const btnEn = document.getElementById('lang-btn-en');
+    if (btnEs && btnEn) {
+        if (lang === 'es') {
+            btnEs.style.fontWeight = '900';
+            btnEs.style.textDecoration = 'underline';
+            btnEs.style.opacity = '1';
+            btnEn.style.fontWeight = '500';
+            btnEn.style.textDecoration = 'none';
+            btnEn.style.opacity = '0.5';
+        } else {
+            btnEn.style.fontWeight = '900';
+            btnEn.style.textDecoration = 'underline';
+            btnEn.style.opacity = '1';
+            btnEs.style.fontWeight = '500';
+            btnEs.style.textDecoration = 'none';
+            btnEs.style.opacity = '0.5';
+        }
+    }
+
+    applyTranslations();
+    if (typeof fetchProfesionalesLanding === 'function') {
+        fetchProfesionalesLanding();
+    }
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
+}
+
+function t(key) {
+    return translations[currentLang]?.[key] || translations['es']?.[key] || key;
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const translation = t(key);
+        if (translation) {
+            el.innerText = translation;
+        }
+    });
+}
+
+window.translations = translations;
+window.setLanguage = setLanguage;
+window.t = t;
+window.currentLang = currentLang;
+
+function escapeHtmlPublic(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
     </head>
-    <body
-        class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans"
-    >
-        <!-- Light Background -->
-        <div class="fixed inset-0 z-0 bg-[#f8f6f2]"></div>
+    <body class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
 
-        <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
-        <div
-            class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_0%,transparent_50%)] pointer-events-none"
-        ></div>
-
-        <!-- Ambient background shapes (ZEN & FRESH) -->
-        <div
-            id="parallax-bg"
-            class="fixed inset-0 z-0 pointer-events-none overflow-hidden transition-transform duration-1000 ease-out"
-        >
-            <div class="ambient-shape shape-1"></div>
-            <div class="ambient-shape shape-2"></div>
-            <div class="ambient-shape shape-3"></div>
-            <div class="ambient-shape shape-4"></div>
-        </div>
-
-        <div
-            class="min-h-screen flex flex-col items-center p-4 md:p-8 pt-20 md:pt-24 relative z-10 w-full max-w-6xl mx-auto"
-        >
-            <a
-                href="index.html"
-                class="absolute top-6 left-6 z-20 bg-terracotta backdrop-blur-md border border-terracotta text-white px-6 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-cocoa transition shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 group"
-            >
-                <i
-                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"
-                ></i>
-                <span data-i18n="btn_back_home">Volver a inicio</span>
+        <section class="teachers-hero" aria-labelledby="teachers-hero-title">
+            <a class="teachers-hero__home" href="index.html" aria-label="Volver a la página de inicio">
+                <i class="ph-bold ph-arrow-left" aria-hidden="true"></i>
+                <span data-i18n="btn_back_home">Inicio</span>
             </a>
 
-            <div
-                class="w-full bg-[#E2DDD5] border border-cocoa/10 rounded-3xl p-6 md:p-12 shadow-sm mt-12 md:mt-8 text-cocoa"
-            >
-                <h2
-                    class="text-3xl md:text-5xl lg:text-7xl text-cocoa brand-font mb-8 md:mb-12 text-center drop-shadow-sm"
-                    data-i18n="teachers_title"
-                >
-                    Maestros
-                </h2>
+            <svg class="teachers-hero__doodle teachers-hero__doodle--left" viewBox="0 0 380 470" aria-hidden="true">
+                <path d="M245 -35 C 55 25, 30 185, 147 205 C 290 230, 300 60, 202 38 C 80 10, 5 115, 57 255 C 105 385, 245 320, 213 242 C 180 163, 12 247, -42 355" />
+            </svg>
+            <svg class="teachers-hero__doodle teachers-hero__doodle--right" viewBox="0 0 400 470" aria-hidden="true">
+                <path d="M340 -40 C 150 4, 84 115, 166 156 C 258 201, 384 110, 330 64 C 267 10, 83 126, 132 226 C 181 326, 377 236, 345 180 C 306 113, 87 250, 144 355 C 194 448, 365 374, 406 310" />
+            </svg>
 
-                <!-- Sub-pestañas de filtrado de profesionales -->
-                <div class="flex justify-center gap-2 mb-12 flex-wrap">
-                    <button
-                        id="btn-filtro-prof-todos"
-                        onclick="filtrarProfesionalesLanding('todos')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95"
-                        data-i18n="btn_prof_all"
-                    >
-                        Todos
-                    </button>
-                    <button
-                        id="btn-filtro-prof-yoga"
-                        onclick="filtrarProfesionalesLanding('yoga')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
-                        data-i18n="rates_tab_yoga"
-                    >
-                        Clases
-                    </button>
-                    <button
-                        id="btn-filtro-prof-psicologia"
-                        onclick="filtrarProfesionalesLanding('psicologia')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
-                        data-i18n="rates_tab_psy"
-                    >
-                        Consultas
-                    </button>
-                    <button
-                        id="btn-filtro-prof-talleres"
-                        onclick="filtrarProfesionalesLanding('talleres')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
-                        data-i18n="rates_tab_workshops"
-                    >
-                        Talleres
-                    </button>
-                </div>
+            <img class="teachers-hero__portrait teachers-hero__portrait--left-top" src="img/maestra-silvia-recortada.png" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--left-bottom" src="img/maestro-angel-recortado.png" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--right-top" src="img/maestra-miriam-recortada.png" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--right-bottom" src="img/maestra-yanira-recortada.png" alt="" aria-hidden="true" loading="eager" />
 
-                <div
-                    id="landing-profesores-container"
-                    class="flex flex-wrap justify-center gap-8 w-full"
-                >
-                    <!-- Teachers content -->
-                </div>
+            <h1 id="teachers-hero-title" class="teachers-hero__title">
+                <span class="teachers-hero__title-line teachers-hero__title-line--orange" data-i18n="teachers_hero_our">Nuestros</span>
+                <span class="teachers-hero__title-line teachers-hero__title-line--green" data-i18n="teachers_hero_teachers">Maestros</span>
+            </h1>
+
+            <a href="#maestros-grid-section" class="teachers-hero__scroll">
+                <span data-i18n="teachers_scroll_meet">Conócelos</span>
+                <i class="ph-bold ph-caret-down" aria-hidden="true"></i>
+            </a>
+        </section>
+
+
+        <section id="maestros-grid-section" class="teachers-gallery" aria-label="Listado de maestros">
+            <a href="index.html" class="teachers-gallery__home">
+                <i class="ph-bold ph-arrow-left" aria-hidden="true"></i>
+                <span data-i18n="btn_back_home">INICIO</span>
+            </a>
+
+            <div class="teachers-gallery__filters" role="group" aria-label="Filtrar maestros por servicio">
+                <button id="btn-filtro-prof-todos" type="button" onclick="filtrarProfesionalesLanding('todos')" class="teacher-filter teacher-filter--todos is-active" data-i18n="btn_prof_all">TODOS</button>
+                <button id="btn-filtro-prof-yoga" type="button" onclick="filtrarProfesionalesLanding('yoga')" class="teacher-filter teacher-filter--clases" data-i18n="rates_tab_yoga">CLASES</button>
+                <button id="btn-filtro-prof-psicologia" type="button" onclick="filtrarProfesionalesLanding('psicologia')" class="teacher-filter teacher-filter--consultas" data-i18n="rates_tab_psy">CONSULTAS</button>
+                <button id="btn-filtro-prof-talleres" type="button" onclick="filtrarProfesionalesLanding('talleres')" class="teacher-filter teacher-filter--talleres" data-i18n="rates_tab_workshops">TALLERES</button>
             </div>
+
+            <div id="landing-profesores-container" class="teachers-gallery__grid teachers-gallery__grid--4" aria-live="polite"></div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TEACHER DETAILS MODAL                     -->
+        <!-- ========================================== -->
+        <div id="teacher-modal-overlay" class="teacher-modal-overlay is-hidden" aria-hidden="true" onclick="handleTeacherModalBackdrop(event)">
+            <article class="teacher-modal" role="dialog" aria-modal="true" aria-labelledby="teacher-modal-name">
+                <button type="button" class="teacher-modal__close" aria-label="Cerrar ficha del maestro" onclick="closeTeacherModal()">
+                    <i class="ph-bold ph-x" aria-hidden="true"></i>
+                </button>
+
+                <div id="teacher-modal-body" class="teacher-modal__body">
+                    <!-- Dynamic modal content -->
+                </div>
+            </article>
         </div>
 
-        <script src="app.js" defer></script>
+
+        <!-- ========================================== -->
+        <!-- JAVASCRIPT LOGIC & SUPABASE INTEGRATION    -->
+        <!-- ========================================== -->
+        <script>
+        const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
+        const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
+        const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+        let allProfesionalesLanding = [];
+        let cachedDbProfesionales = null;
+        let lastTeacherModalTrigger = null;
+        let teacherModalCloseTimer = null;
+
+        const fallbackProfesionales = [
+            {
+                id: 'silvia-local',
+                nombre: 'Silvia',
+                email: 'silvia@genyoga.es',
+                especialidad: 'Hatha & Iyengar Yoga, Ayurveda | clases',
+                descripcion: 'SOBRE MÍ:\nProfesora de yoga con más de 25 años dedicados a la enseñanza y al acompañamiento consciente.'
+            },
+            {
+                id: 'angel-local',
+                nombre: 'Ángel Javier',
+                email: 'angel@genyoga.es',
+                especialidad: 'Yoga para hombres & Yoga terapéutico | clases',
+                descripcion: 'SOBRE MÍ:\nInstructor especializado en una práctica accesible, segura y adaptada a cada cuerpo.'
+            },
+            {
+                id: 'miriam-local',
+                nombre: 'Miriam',
+                email: 'miriam@respirapsicologia.es',
+                especialidad: 'Psicoterapia, Nutrición y Talleres | consultas',
+                descripcion: 'SOBRE MÍ:\nPsicóloga especializada en bienestar emocional, alimentación consciente y acompañamiento integral.'
+            },
+            {
+                id: 'yanira-local',
+                nombre: 'Yanira',
+                email: 'yanira@genyoga.es',
+                especialidad: 'Vinyasa & Restaurativa | clases,talleres',
+                descripcion: 'SOBRE MÍ:\nInstructora de yoga certificada, con una mirada cercana que une movimiento, respiración y calma.'
+            }
+        ];
+
+        function getEspecialidadTexto(especialidad) {
+            if (!especialidad) return '';
+            return especialidad.split('|')[0].trim();
+        }
+
+        function getEspecialidadCategorias(p) {
+            if (!p) return [];
+            const especialidad = p.especialidad || '';
+            const email = (p.email || '').toLowerCase();
+            const nombre = (p.nombre || '').toLowerCase();
+
+            if (email.includes('yanira') || nombre.includes('yanira')) return ['clases', 'talleres'];
+            if (email.includes('miriam') || nombre.includes('miriam')) return ['consultas'];
+            if (email.includes('silvia') || nombre.includes('silvia')) return ['clases'];
+            if (email.includes('angel') || nombre.includes('ángel') || nombre.includes('angel')) return ['clases'];
+
+            const parts = especialidad.split('|');
+            if (parts.length > 1) {
+                return parts[1].split(',').map(c => c.trim().toLowerCase());
+            }
+
+            const esp = especialidad.toLowerCase();
+            const cats = [];
+            if (esp.includes('yoga') || esp.includes('clase') || esp.includes('vinyasa') || esp.includes('hatha')) cats.push('clases');
+            if (esp.includes('consulta') || esp.includes('psico') || esp.includes('nutri')) cats.push('consultas');
+            if (esp.includes('taller') || esp.includes('workshop')) cats.push('talleres');
+            return cats;
+        }
+
+        function getTeacherKey(p) {
+            const identity = `${p?.nombre || ''} ${p?.apellidos || ''} ${p?.email || ''}`.toLowerCase();
+            if (identity.includes('yanira')) return 'yanira';
+            if (identity.includes('miriam')) return 'miriam';
+            if (identity.includes('silvia')) return 'silvia';
+            if (identity.includes('ángel') || identity.includes('angel')) return 'angel';
+            return '';
+        }
+
+        async function fetchProfesionalesLanding() {
+            const container = document.getElementById('landing-profesores-container');
+            if (!container) return;
+
+            if (!cachedDbProfesionales) {
+                if (client) {
+                    const { data: profesionales, error } = await client
+                        .from('profesionales')
+                        .select('*')
+                        .order('nombre');
+
+                    if (error) {
+                        console.error('Error fetching professionals:', error);
+                        cachedDbProfesionales = fallbackProfesionales;
+                    } else {
+                        cachedDbProfesionales = profesionales?.length ? profesionales : fallbackProfesionales;
+                    }
+                } else {
+                    cachedDbProfesionales = fallbackProfesionales;
+                }
+            }
+
+            const fallbackByKey = new Map(fallbackProfesionales.map(p => [getTeacherKey(p), p]));
+            const databaseByKey = new Map(
+                cachedDbProfesionales
+                    .filter(p => (p.email || '').toLowerCase() !== 'profesor@profesor.com')
+                    .filter(p => getTeacherKey(p))
+                    .map(p => [getTeacherKey(p), p])
+            );
+            const orderedKeys = ['angel', 'miriam', 'silvia', 'yanira'];
+            const fourTeachers = orderedKeys.map(key => ({
+                ...fallbackByKey.get(key),
+                ...(databaseByKey.get(key) || {})
+            }));
+            const translatedProfs = fourTeachers.map(p => window.translateProfessional ? window.translateProfessional(p) : p);
+
+            allProfesionalesLanding = translatedProfs.map(p => {
+                const emailLower = (p.email || '').toLowerCase();
+                const nomLower = (p.nombre || '').toLowerCase();
+
+                const updated = { ...p };
+                if (emailLower.includes('angel') || nomLower.includes('ángel') || nomLower.includes('angel')) {
+                    updated.nombre = "ÁNGEL JAVIER";
+                    updated.foto_cutout = 'img/maestro-angel-recortado.png';
+                    updated.especialidad = 'Yoga para hombres & Yoga terapéutico | clases';
+                } else if (emailLower.includes('miriam') || nomLower.includes('miriam')) {
+                    updated.nombre = "MIRIAM";
+                    updated.foto_cutout = 'img/maestra-miriam-recortada.png';
+                    updated.especialidad = 'Psicoterapia, Nutrición y Talleres | consultas';
+                } else if (emailLower.includes('silvia') || nomLower.includes('silvia')) {
+                    updated.nombre = "SILVIA";
+                    updated.foto_cutout = 'img/maestra-silvia-recortada.png';
+                    updated.especialidad = 'Hatha & Iyengar Yoga, Ayurveda | clases';
+                } else if (emailLower.includes('yanira') || nomLower.includes('yanira')) {
+                    updated.nombre = "YANIRA";
+                    updated.foto_cutout = 'img/maestra-yanira-recortada.png';
+                    updated.especialidad = 'Vinyasa & Restaurativa | clases,talleres';
+                }
+                return updated;
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const catParam = urlParams.get('cat') || 'todos';
+            filtrarProfesionalesLanding(catParam);
+        }
+
+        window.filtrarProfesionalesLanding = function(category) {
+            const selectedCategory = category === 'nutricion' ? 'talleres' : category;
+
+            const btnTodos = document.getElementById('btn-filtro-prof-todos');
+            const btnYoga = document.getElementById('btn-filtro-prof-yoga');
+            const btnPsy = document.getElementById('btn-filtro-prof-psicologia');
+            const btnTalleres = document.getElementById('btn-filtro-prof-talleres');
+            const activeButton = {
+                todos: btnTodos,
+                yoga: btnYoga,
+                psicologia: btnPsy,
+                talleres: btnTalleres
+            }[selectedCategory];
+
+            [btnTodos, btnYoga, btnPsy, btnTalleres].filter(Boolean).forEach(button => {
+                const isActive = button === activeButton;
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-pressed', String(isActive));
+            });
+
+            let filtrados = allProfesionalesLanding;
+            if (selectedCategory === 'todos') {
+                filtrados = allProfesionalesLanding.filter(p => {
+                    const cats = getEspecialidadCategorias(p);
+                    return cats.length === 0 || cats.includes('clases') || cats.includes('consultas') || cats.includes('talleres');
+                });
+            } else if (selectedCategory === 'yoga') {
+                filtrados = allProfesionalesLanding.filter(p => getEspecialidadCategorias(p).includes('clases'));
+            } else if (selectedCategory === 'psicologia') {
+                filtrados = allProfesionalesLanding.filter(p => getEspecialidadCategorias(p).includes('consultas'));
+            } else if (selectedCategory === 'talleres') {
+                filtrados = allProfesionalesLanding.filter(p => getEspecialidadCategorias(p).includes('talleres'));
+            }
+
+            renderProfesionalesLanding(filtrados);
+        }
+
+        function getTeacherDoodlesSvg(nombre) {
+            const n = (nombre || '').toLowerCase();
+
+            if (n.includes('ángel') || n.includes('angel')) {
+                return `
+                    <svg class="absolute top-10 left-0 w-8 h-12 text-[#D95936] z-10 pointer-events-none" viewBox="0 0 40 60" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+                        <path d="M 10 10 Q 25 25 10 40" />
+                        <path d="M 20 15 Q 35 30 20 45" />
+                    </svg>
+                    <svg class="absolute top-12 right-0 w-11 h-11 text-[#744833] z-10 pointer-events-none" viewBox="0 0 60 60" fill="currentColor">
+                        <path d="M30 0 L36 21 L57 15 L42 30 L57 45 L36 39 L30 60 L24 39 L3 45 L18 30 L3 15 L24 21 Z" />
+                    </svg>
+                `;
+            } else if (n.includes('miriam')) {
+                return `
+                    <svg class="absolute -top-3 -left-3 w-14 h-16 text-[#D97236] z-10 pointer-events-none" viewBox="0 0 60 80" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round">
+                        <path d="M 10 10 C 40 25, 0 55, 30 70" />
+                        <path d="M 30 10 C 0 25, 40 55, 10 70" />
+                    </svg>
+                    <svg class="absolute bottom-10 right-0 w-10 h-10 text-[#C28E38] z-10 pointer-events-none" viewBox="0 0 50 50" fill="currentColor">
+                        <path d="M25 0 C25 15, 35 25, 50 25 C35 25, 25 35, 25 50 C25 35, 15 25, 0 25 C15 25, 25 15, 25 0 Z" />
+                    </svg>
+                `;
+            } else if (n.includes('silvia')) {
+                return `
+                    <svg class="absolute top-2 left-2 w-14 h-14 text-[#D95936] z-10 pointer-events-none" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">
+                        <path d="M 30,30 A 10,10 0 0,0 20,30 A 18,18 0 0,0 38,38 A 24,24 0 0,0 30,6" />
+                    </svg>
+                    <svg class="absolute bottom-12 right-2 w-10 h-10 text-[#C28E38] z-10 pointer-events-none" viewBox="0 0 50 50" fill="none" stroke="currentColor" stroke-width="3">
+                        <polygon points="25,5 31,18 45,18 34,27 38,40 25,31 12,40 16,27 5,18 19,18" />
+                    </svg>
+                `;
+            } else if (n.includes('yanira')) {
+                return `
+                    <svg class="absolute top-4 left-0 w-11 h-11 text-[#8A8C43] z-10 pointer-events-none" viewBox="0 0 60 60" fill="currentColor">
+                        <polygon points="30,5 36,20 52,10 42,24 57,35 40,36 45,52 32,42 22,57 20,40 5,42 18,30 5,18 20,20" />
+                    </svg>
+                    <svg class="absolute top-16 right-0 w-14 h-14 text-[#C85038] z-10 pointer-events-none" viewBox="0 0 70 70" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="35" cy="35" r="6" />
+                        <ellipse cx="35" cy="15" rx="7" ry="10" />
+                        <ellipse cx="35" cy="55" rx="7" ry="10" />
+                        <ellipse cx="15" cy="35" rx="10" ry="7" />
+                        <ellipse cx="55" cy="35" rx="10" ry="7" />
+                        <ellipse cx="21" cy="21" rx="8" ry="5" transform="rotate(45 21 21)" />
+                        <ellipse cx="49" cy="21" rx="8" ry="5" transform="rotate(-45 49 21)" />
+                        <ellipse cx="21" cy="49" rx="8" ry="5" transform="rotate(-45 21 49)" />
+                        <ellipse cx="49" cy="49" rx="8" ry="5" transform="rotate(45 49 49)" />
+                    </svg>
+                `;
+            }
+
+            return `
+                <svg class="absolute top-2 right-2 w-10 h-10 text-[#C28E38] z-10 pointer-events-none" viewBox="0 0 50 50" fill="currentColor">
+                    <path d="M25 0 C25 15, 35 25, 50 25 C35 25, 25 35, 25 50 C25 35, 15 25, 0 25 C15 25, 25 15, 25 0 Z" />
+                </svg>
+            `;
+        }
+
+        function getTeacherPhoto(nombre) {
+            const n = (nombre || '').toLowerCase();
+            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.png';
+            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.png';
+            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.png';
+            return 'img/maestra-silvia-recortada.png';
+        }
+
+        function getTeacherCutoutPhoto(nombre) {
+            const n = (nombre || '').toLowerCase();
+            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.png';
+            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.png';
+            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.png';
+            return 'img/maestra-silvia-recortada.png';
+        }
+
+        function renderProfesionalesLanding(profesionales) {
+            const container = document.getElementById('landing-profesores-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!profesionales || profesionales.length === 0) {
+                container.className = 'teachers-gallery__grid teachers-gallery__grid--1';
+                container.innerHTML = `<div class="text-center text-[#744833]/70 italic py-10 font-bold" data-i18n="teachers_no_category">
+                    ${t('teachers_no_category')}
+                </div>`;
+                return;
+            }
+
+            container.className = `teachers-gallery__grid teachers-gallery__grid--${Math.min(profesionales.length, 4)}`;
+
+            profesionales.forEach((prof, index) => {
+                const nombre = prof.nombre || 'PROFESOR';
+                const especialidadTexto = getEspecialidadTexto(prof.especialidad) || t('teachers_fallback_spec');
+                const doodlesSvg = getTeacherDoodlesSvg(nombre);
+                const photoUrl = prof.foto_cutout || getTeacherPhoto(nombre);
+
+                const card = document.createElement('div');
+                card.className = 'teacher-card group';
+                card.onclick = () => openTeacherModal(prof);
+                card.tabIndex = 0;
+                card.setAttribute('role', 'button');
+                card.setAttribute('aria-label', `${t('teachers_view_card')} ${nombre}`);
+                card.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openTeacherModal(prof);
+                    }
+                });
+
+                card.innerHTML = `
+                    <div class="teacher-card__figure">
+                        ${doodlesSvg}
+                        <img src="${escapeHtmlPublic(photoUrl)}" alt="Retrato en blanco y negro de ${escapeHtmlPublic(nombre)}" class="teacher-card__portrait" loading="lazy" />
+                    </div>
+
+                    <h3 class="teacher-card__name">${escapeHtmlPublic(nombre)}</h3>
+                    <p class="teacher-card__specialty">${escapeHtmlPublic(especialidadTexto)}</p>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function parseBio(text) {
+            const sections = { lugar: '', titulos: [], sobreMi: [], teAcompano: [], meDefine: '' };
+            if (!text) return sections;
+            const normalized = text.replace(/\r\n/g, '\n');
+            const parts = normalized.split(/(?:^|\n)\s*(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TRAYECTORIA|TE ACOMPAÑO|ME DEFINE|BACKGROUND|QUALIFICATIONS|ABOUT ME|I SUPPORT YOU|WHAT DEFINES ME):\s*/i);
+
+            for (let i = 1; i < parts.length; i += 2) {
+                const header = parts[i].toUpperCase();
+                const content = parts[i + 1] ? parts[i + 1].trim() : '';
+                if (header.includes('LUGAR')) sections.lugar = content.replace(/,$/, '').trim();
+                else if (header.includes('TITULACION') || header.includes('QUALIFICATION')) sections.titulos = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
+                else if (header.includes('SOBRE') || header.includes('TRAYECTORIA') || header.includes('ABOUT') || header.includes('BACKGROUND')) sections.sobreMi = content.split('\n').map(p => p.trim()).filter(Boolean);
+                else if (header.includes('ACOMPA') || header.includes('SUPPORT')) sections.teAcompano = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
+                else if (header.includes('DEFINE')) sections.meDefine = content.replace(/^["'“”«»]+/g, '').replace(/["'“”«»]+$/g, '').trim();
+            }
+            return sections;
+        }
+
+        function cleanModalText(text) {
+            return String(text || '')
+                .replace(/^[\s*\-•]+/g, '')
+                .replace(/\s+/g, ' ')
+                .replace(/\s+([,.;:])/g, '$1')
+                .trim();
+        }
+
+        function summarizeModalText(text, maxWords) {
+            const clean = cleanModalText(text);
+            if (!clean) return '';
+            const words = clean.split(' ');
+            if (words.length <= maxWords) return clean;
+
+            let summary = words.slice(0, maxWords).join(' ');
+            const lastSentence = Math.max(summary.lastIndexOf('.'), summary.lastIndexOf(';'));
+            if (lastSentence > summary.length * 0.58) {
+                summary = summary.slice(0, lastSentence + 1);
+            } else {
+                summary = `${summary.replace(/[,.;:]$/, '')}…`;
+            }
+            return summary;
+        }
+
+        function summarizeModalItems(items, maxItems, maxWordsPerItem, moreLabel, singleItemWords = maxWordsPerItem) {
+            const entries = (items || [])
+                .flatMap(item => String(item || '').split(/\n|•/))
+                .map(cleanModalText)
+                .filter(Boolean)
+                .filter(item => !/^(áreas? de acompañamiento|areas? of support):?$/i.test(item));
+
+            const visible = entries.slice(0, maxItems).map(item => summarizeModalText(
+                item,
+                entries.length === 1 ? singleItemWords : maxWordsPerItem
+            ));
+            const remaining = Math.max(0, entries.length - visible.length);
+            const suffix = remaining ? ` · +${remaining} ${moreLabel}` : '';
+            return `${visible.join(' · ')}${suffix}`;
+        }
+
+        function getTeacherModalCopy() {
+            if (window.currentLang === 'en') {
+                return {
+                    about: 'About me',
+                    qualifications: 'Qualifications',
+                    sessions: 'Session focus',
+                    moreQualifications: 'more qualifications',
+                    moreAreas: 'more areas',
+                    close: 'Close teacher profile'
+                };
+            }
+            return {
+                about: 'Sobre mí',
+                qualifications: 'Titulaciones',
+                sessions: 'Ámbitos de sesión',
+                moreQualifications: 'formaciones más',
+                moreAreas: 'áreas más',
+                close: 'Cerrar ficha del maestro'
+            };
+        }
+
+        function renderTeacherModalSection(icon, title, text) {
+            if (!text) return '';
+            return `
+                <section class="teacher-modal__section">
+                    <h4 class="teacher-modal__section-title">
+                        <i class="ph-fill ${icon}" aria-hidden="true"></i>
+                        <span>${escapeHtmlPublic(title)}</span>
+                    </h4>
+                    <p class="teacher-modal__section-text">${escapeHtmlPublic(text)}</p>
+                </section>
+            `;
+        }
+
+        function openTeacherModal(prof) {
+            const overlay = document.getElementById('teacher-modal-overlay');
+            const body = document.getElementById('teacher-modal-body');
+            if (!overlay || !body) return;
+
+            const rawBio = prof.descripcion || prof.bio || '';
+            const parsed = parseBio(rawBio);
+            const copy = getTeacherModalCopy();
+            const nombre = prof.nombre || 'Profesor';
+            const esp = getEspecialidadTexto(prof.especialidad) || 'GEN Yoga';
+            const photoUrl = getTeacherCutoutPhoto(nombre);
+            const aboutSource = parsed.sobreMi.length ? parsed.sobreMi.join(' ') : rawBio;
+            const aboutText = summarizeModalText(aboutSource || esp, 42);
+            const qualificationsText = summarizeModalItems(parsed.titulos, 3, 16, copy.moreQualifications, 32);
+            const sessionsText = parsed.teAcompano.length
+                ? summarizeModalItems(parsed.teAcompano, 4, 13, copy.moreAreas, 42)
+                : summarizeModalText(esp, 20);
+            const quoteText = summarizeModalText(parsed.meDefine, 20);
+            const locationText = summarizeModalText(parsed.lugar, 12);
+
+            body.innerHTML = `
+                <div class="teacher-modal__layout">
+                    <div class="teacher-modal__profile">
+                        <div class="teacher-modal__identity">
+                            <h3 id="teacher-modal-name" class="teacher-modal__name">${escapeHtmlPublic(nombre)}</h3>
+                            <p class="teacher-modal__specialty">${escapeHtmlPublic(esp)}</p>
+                        </div>
+
+                        <div class="teacher-modal__portrait-stage">
+                            <img src="${escapeHtmlPublic(photoUrl)}" alt="Retrato en blanco y negro de ${escapeHtmlPublic(nombre)}" class="teacher-modal__portrait" />
+                        </div>
+
+                        ${quoteText ? `<p class="teacher-modal__quote">“${escapeHtmlPublic(quoteText)}”</p>` : '<span aria-hidden="true"></span>'}
+                    </div>
+
+                    <div class="teacher-modal__details">
+                        ${renderTeacherModalSection('ph-user', copy.about, aboutText)}
+                        ${renderTeacherModalSection('ph-graduation-cap', copy.qualifications, qualificationsText)}
+                        ${renderTeacherModalSection('ph-heart', copy.sessions, sessionsText)}
+                        ${locationText ? `
+                            <div class="teacher-modal__meta">
+                                <p class="teacher-modal__location">
+                                    <i class="ph-fill ph-map-pin" aria-hidden="true"></i>
+                                    <span>${escapeHtmlPublic(locationText)}</span>
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            clearTimeout(teacherModalCloseTimer);
+            lastTeacherModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            overlay.classList.remove('is-hidden');
+            overlay.setAttribute('aria-hidden', 'false');
+            overlay.querySelector('.teacher-modal__close')?.setAttribute('aria-label', copy.close);
+            document.body.classList.add('teacher-modal-open');
+
+            requestAnimationFrame(() => {
+                overlay.classList.add('is-open');
+                overlay.querySelector('.teacher-modal__close')?.focus();
+            });
+        }
+
+        function closeTeacherModal() {
+            const overlay = document.getElementById('teacher-modal-overlay');
+            if (!overlay || overlay.classList.contains('is-hidden')) return;
+
+            overlay.classList.remove('is-open');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('teacher-modal-open');
+            clearTimeout(teacherModalCloseTimer);
+            teacherModalCloseTimer = setTimeout(() => overlay.classList.add('is-hidden'), 220);
+
+            if (lastTeacherModalTrigger?.isConnected) {
+                lastTeacherModalTrigger.focus();
+            }
+        }
+
+        function handleTeacherModalBackdrop(event) {
+            if (event.target?.id === 'teacher-modal-overlay') closeTeacherModal();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let langDiv = document.getElementById('floating-lang-selector');
+            if (!langDiv) {
+                langDiv = document.createElement('div');
+                langDiv.id = 'floating-lang-selector';
+                langDiv.style.cssText = 'position:fixed;top:16px;right:24px;z-index:9998;background-color:#795244;border:1px solid rgba(248, 246, 242, 0.15);border-radius:9999px;padding:4px 10px;display:flex;align-items:center;gap:4px;font-size:11px;color:#f8f6f2;box-shadow:0 6px 16px rgba(38, 22, 12, 0.2);user-select:none;font-family:system-ui, -apple-system, sans-serif;pointer-events:auto;';
+                langDiv.innerHTML = `
+                    <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1;">ES</button>
+                    <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none;">/</span>
+                    <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5;">EN</button>
+                `;
+                document.body.appendChild(langDiv);
+            }
+
+            const btnEs = document.getElementById('lang-btn-es');
+            const btnEn = document.getElementById('lang-btn-en');
+            if (btnEs) btnEs.addEventListener('click', () => setLanguage('es'));
+            if (btnEn) btnEn.addEventListener('click', () => setLanguage('en'));
+
+            setLanguage(currentLang);
+            fetchProfesionalesLanding();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeTeacherModal();
+        });
+        </script>
     </body>
 </html>
