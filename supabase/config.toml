@@ -17,3 +17,13 @@ verify_jwt = false
 
 [functions.create-portal-session]
 verify_jwt = false
+
+# The kiosk flow requires a signed-in administrator. The function repeats the
+# token and role checks before using the service role.
+[functions.create-kiosk-user]
+verify_jwt = true
+
+# Destructive account operations require a valid user JWT. The function also
+# validates that token explicitly and only elevates database calls server-side.
+[functions.delete-account]
+verify_jwt = true

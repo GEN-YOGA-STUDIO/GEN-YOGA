@@ -1,12 +1,14 @@
 {
   "name": "ultima-version",
   "version": "6.5.0",
-  "description": "",
-  "main": "app.js",
+  "description": "Sitio web de GEN Yoga y verificaciones de calidad para la versión 6.5",
   "scripts": {
-    "test": "npm run check:stripe && npm run check:cursor",
+    "test": "npm run check:web && npm run check:stripe && npm run check:cursor",
+    "check:web": "node scripts/check-web-quality.mjs",
     "check:stripe": "node scripts/check-stripe-production.mjs",
     "check:cursor": "node scripts/check-cursor-visibility.mjs",
+    "build:css": "tailwindcss -i ./tailwind-input.css -o ./tailwind-compiled.css",
+    "build:cert": "node scripts/build-certification.mjs",
     "dev": "npx -y live-server --port=5500"
   },
   "keywords": [],
@@ -14,6 +16,6 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "3.4.19"
   }
 }

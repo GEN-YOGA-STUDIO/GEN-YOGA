@@ -43,12 +43,9 @@ export type ValidatedPurchase = {
 
 const catalogCache = new Map<string, Promise<ValidatedCatalog>>()
 const PRODUCTION_SITE_ORIGIN = 'https://genyoga.studio'
-const CERTIFICATION_SITE_ORIGIN = 'https://jaime312.github.io'
-const CERTIFICATION_BASE_URL = 'https://jaime312.github.io/GEN-YOGA'
 const LIVE_PAYMENT_ORIGINS = new Set([
   PRODUCTION_SITE_ORIGIN,
   'https://www.genyoga.studio',
-  CERTIFICATION_SITE_ORIGIN,
 ])
 
 export class HttpError extends Error {
@@ -145,8 +142,10 @@ function buildPaymentAllowedOrigins(): ReadonlySet<string> {
 }
 
 export function readCorsConfig(): CorsConfig {
-  const { siteOrigin } = normaliseSiteUrl(requireEnv('SITE_URL'))
-  return { allowedOrigins: buildAllowedOrigins(siteOrigin) }
+  // CORS must be available even when another production secret is missing, so
+  // the browser receives the real JSON error instead of reporting a misleading
+  // network failure. The payment guard remains stricter and is checked later.
+  return { allowedOrigins: buildOriginSet('ALLOWED_ORIGINS', [...LIVE_PAYMENT_ORIGINS]) }
 }
 
 export function readProductionConfig(options: {
@@ -305,16 +304,12 @@ export function assertPaymentOrigin(
 }
 
 export function resolveReturnBaseUrl(
-  req: Request,
-  config: Pick<ProductionConfig, 'siteUrl' | 'paymentAllowedOrigins'>,
+  _req: Request,
+  config: Pick<ProductionConfig, 'siteUrl'>,
 ): string {
-  const origin = getRequestOrigin(req)
-  if (origin === CERTIFICATION_SITE_ORIGIN) {
-    return CERTIFICATION_BASE_URL
-  }
-  if (origin && config.paymentAllowedOrigins.has(origin)) {
-    return origin
-  }
+  // Stripe must always return to the canonical HTTPS hostname. Reflecting the
+  // browser Origin leaks the Checkout session through redirect chains and can
+  // make certification jump into a different published repository.
   return config.siteUrl
 }
 
@@ -423,6 +418,10 @@ export function validateCheckoutPurchase(
   if (session.currency?.toLowerCase() !== 'eur' || session.amount_total !== expectedAmount) {
     throw new HttpError(400, 'El importe de la sesión no coincide con el producto.')
   }
+  const expectedMode = purchaseType === PURCHASE_TYPES.BONO_MENSUAL ? 'subscription' : 'payment'
+  if (session.mode !== expectedMode || session.status !== 'complete') {
+    throw new HttpError(400, 'El tipo o estado de la sesión no coincide con el producto.')
+  }
 
   const metadata = session.metadata || {}
   const appUserId = metadata.app_user_id || session.client_reference_id || ''
@@ -453,7 +452,14 @@ export function validateMonthlySubscription(
   const matchingItem = subscription.items.data.find(
     (item: Stripe.SubscriptionItem) => item.price.id === catalog.bonoMensual.id,
   )
-  if (!matchingItem || subscription.items.data.length !== 1) {
+  // Stripe omits quantity in some historical API shapes; its documented
+  // default is one. Any explicit quantity above one would no longer match the
+  // fixed 90 EUR monthly product validated by this application.
+  if (
+    !matchingItem ||
+    subscription.items.data.length !== 1 ||
+    (matchingItem.quantity ?? 1) !== 1
+  ) {
     throw new HttpError(400, 'La suscripción no contiene el bono mensual permitido.')
   }
 

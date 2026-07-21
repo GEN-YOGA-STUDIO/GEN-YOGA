@@ -3,11 +3,11 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="application-version" content="6.5" />
+        <meta name="description" content="Conoce al equipo de profesionales de yoga, psicología, nutrición y talleres de GEN Yoga." />
         <title>GEN Yoga | Maestros</title>
-        <link rel="stylesheet" href="tailwind-compiled.css?v=6.5" />
-
-        <script src="https://unpkg.com/@phosphor-icons/web"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
 
         <style>
             :root {
@@ -960,7 +960,7 @@ function escapeHtmlPublic(str) {
         <link rel="stylesheet" href="styles.css?v=6.5" />
         <link rel="stylesheet" href="tailwind-compiled.css?v=6.5" />
     </head>
-    <body class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
+    <body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
 
         <section class="teachers-hero" aria-labelledby="teachers-hero-title">
             <a class="teachers-hero__home" href="index.html" aria-label="Volver a la página de inicio">
@@ -1030,10 +1030,24 @@ function escapeHtmlPublic(str) {
         <script>
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+        const APP_DEPLOYMENT_ENVIRONMENT = (() => {
+            const origin = window.location.origin.toLowerCase();
+            const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
+            if (origin === 'https://jaime312.github.io' && isCertificationPath) return 'certification';
+            if (origin === 'https://genyoga.studio' || origin === 'https://www.genyoga.studio') return 'production';
+            return 'development';
+        })();
+        const USING_PRODUCTION_BACKEND = (() => {
+            try { return new URL(SUPA_URL).hostname === 'jkjifmrrlyncuwpjhxvk.supabase.co'; }
+            catch (_) { return false; }
+        })();
+        const client = APP_DEPLOYMENT_ENVIRONMENT !== 'production' && USING_PRODUCTION_BACKEND
+            ? null
+            : (window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null);
 
         let allProfesionalesLanding = [];
         let cachedDbProfesionales = null;
+        let profesionalesDbLoaded = false;
         let lastTeacherModalTrigger = null;
         let teacherModalCloseTimer = null;
 
@@ -1119,28 +1133,38 @@ function escapeHtmlPublic(str) {
 
                     if (error) {
                         console.error('Error fetching professionals:', error);
-                        cachedDbProfesionales = fallbackProfesionales;
+                        cachedDbProfesionales = [];
+                        profesionalesDbLoaded = true;
                     } else {
-                        cachedDbProfesionales = profesionales?.length ? profesionales : fallbackProfesionales;
+                        cachedDbProfesionales = profesionales || [];
+                        profesionalesDbLoaded = true;
                     }
                 } else {
-                    cachedDbProfesionales = fallbackProfesionales;
+                    cachedDbProfesionales = APP_DEPLOYMENT_ENVIRONMENT === 'production'
+                        ? []
+                        : fallbackProfesionales;
                 }
             }
 
             const fallbackByKey = new Map(fallbackProfesionales.map(p => [getTeacherKey(p), p]));
-            const databaseByKey = new Map(
-                cachedDbProfesionales
-                    .filter(p => (p.email || '').toLowerCase() !== 'profesor@profesor.com')
-                    .filter(p => getTeacherKey(p))
-                    .map(p => [getTeacherKey(p), p])
-            );
             const orderedKeys = ['angel', 'miriam', 'silvia', 'yanira'];
-            const fourTeachers = orderedKeys.map(key => ({
-                ...fallbackByKey.get(key),
-                ...(databaseByKey.get(key) || {})
-            }));
-            const translatedProfs = fourTeachers.map(p => window.translateProfessional ? window.translateProfessional(p) : p);
+            let profesionalesVisibles;
+            if (profesionalesDbLoaded) {
+                const visibleRows = cachedDbProfesionales.filter(p => p.visible_publico !== false);
+                const databaseByKey = new Map(
+                    visibleRows
+                        .filter(p => getTeacherKey(p))
+                        .map(p => [getTeacherKey(p), p])
+                );
+                const knownTeachers = orderedKeys
+                    .filter(key => databaseByKey.has(key))
+                    .map(key => ({ ...fallbackByKey.get(key), ...databaseByKey.get(key) }));
+                const additionalTeachers = visibleRows.filter(p => !getTeacherKey(p));
+                profesionalesVisibles = [...knownTeachers, ...additionalTeachers];
+            } else {
+                profesionalesVisibles = orderedKeys.map(key => ({ ...fallbackByKey.get(key) }));
+            }
+            const translatedProfs = profesionalesVisibles.map(p => window.translateProfessional ? window.translateProfessional(p) : p);
 
             allProfesionalesLanding = translatedProfs.map(p => {
                 const emailLower = (p.email || '').toLowerCase();

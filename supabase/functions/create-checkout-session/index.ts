@@ -20,6 +20,22 @@ import {
   safeErrorResponse,
 } from "../_shared/stripe-production.ts"
 
+const APP_RELEASE = '6.5'
+
+async function expireCreatedCheckoutSession(
+  stripe: ReturnType<typeof createStripeClient>,
+  sessionId: string,
+): Promise<void> {
+  try {
+    await stripe.checkout.sessions.expire(sessionId)
+  } catch {
+    const currentSession = await stripe.checkout.sessions.retrieve(sessionId)
+    if (currentSession.status !== 'expired') {
+      throw new Error('No se pudo cerrar la sesión de pago creada durante la eliminación de la cuenta.')
+    }
+  }
+}
+
 serve(async (req) => {
   let headers: Record<string, string> = {}
   try {
@@ -51,17 +67,21 @@ serve(async (req) => {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta.')
     }
     const requestedAttemptId = String(body.checkout_attempt_id || '').trim()
-    const checkoutAttemptId = isGuest && isUuid(requestedAttemptId)
-      ? requestedAttemptId
-      : (isGuest ? crypto.randomUUID() : '')
-    const appVersion = String(body.app_version || 'legacy').trim()
-    if (!/^(?:legacy|\d+\.\d+(?:\.\d+)?)$/.test(appVersion)) {
-      throw new HttpError(400, 'La versión de la aplicación no es válida.')
+    if (requestedAttemptId && !isUuid(requestedAttemptId)) {
+      throw new HttpError(400, 'El identificador del intento de pago no es válido.')
+    }
+    const checkoutAttemptId = requestedAttemptId || crypto.randomUUID()
+    const appVersion = String(body.app_version || '').trim()
+    if (appVersion !== APP_RELEASE) {
+      throw new HttpError(409, 'La web está desactualizada. Recarga la versión 6.5 antes de pagar.')
+    }
+    const frontendEnvironment = String(body.app_environment || 'production').trim()
+    if (frontendEnvironment !== 'production') {
+      throw new HttpError(403, 'Los pagos LIVE solo se pueden iniciar desde producción.')
     }
 
     const stripe = createStripeClient(config)
     const supabase = createAdminClient(config)
-    const catalog = await getValidatedCatalog(stripe, config)
 
     const user = isGuest ? null : await getAuthenticatedUser(req, supabase, true)
     if (!isGuest && requestedUserId !== user?.id) {
@@ -72,11 +92,14 @@ serve(async (req) => {
     if (user) {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('bono_mensual_activo, bono_mensual_fin, stripe_subscription_status, stripe_customer_id')
+        .select('bono_mensual_activo, bono_mensual_fin, stripe_subscription_status, stripe_customer_id, account_deletion_pending')
         .eq('id', user.id)
         .single()
 
       if (error || !profile) throw new Error('No se pudo cargar el perfil del comprador.')
+      if (profile.account_deletion_pending) {
+        throw new HttpError(409, 'La cuenta se está eliminando y no puede iniciar nuevos pagos.')
+      }
 
       const manualMonthlyEnd = profile.bono_mensual_fin
         ? Date.parse(String(profile.bono_mensual_fin))
@@ -99,6 +122,7 @@ serve(async (req) => {
       stripeCustomerId = profile.stripe_customer_id || null
     }
 
+    const catalog = await getValidatedCatalog(stripe, config)
     const purchaseType = lookupKey
     const price = purchaseType === PURCHASE_TYPES.CLASE_SUELTA
       ? catalog.claseSuelta
@@ -113,8 +137,8 @@ serve(async (req) => {
       purchase_type: purchaseType,
       app_user_id: appUserId,
       source,
+      checkout_attempt_id: checkoutAttemptId,
     }
-    if (isGuest) metadata.checkout_attempt_id = checkoutAttemptId
 
     const returnBaseUrl = resolveReturnBaseUrl(req, config)
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -140,21 +164,35 @@ serve(async (req) => {
       sessionParams.subscription_data = { metadata }
     }
 
-    // Reuse the same Checkout Session for rapid retries/double-clicks. This keeps
-    // two concurrent requests from creating two immediately payable subscriptions.
-    const idempotencyWindow = Math.floor(Date.now() / (10 * 60 * 1000))
+    // Retries of the same UI action reuse one Checkout Session. A later purchase
+    // gets a fresh attempt id, so legitimate purchases never collide by time.
     const idempotencyKey = [
       'genyoga',
       'production',
       'checkout',
       purchaseType,
-      isGuest ? checkoutAttemptId : appUserId,
-      idempotencyWindow,
+      appUserId,
+      checkoutAttemptId,
     ].join(':')
     const session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
-    if (!session.livemode || !session.url) {
+    if (!session.livemode) {
       throw new Error('Stripe no devolvió una sesión LIVE válida.')
     }
+
+    if (user) {
+      const { data: deletionState, error: deletionStateError } = await supabase
+        .from('profiles')
+        .select('account_deletion_pending')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (deletionStateError || !deletionState || deletionState.account_deletion_pending) {
+        await expireCreatedCheckoutSession(stripe, session.id)
+        if (deletionStateError) throw new Error('No se pudo volver a comprobar el estado de la cuenta.')
+        throw new HttpError(409, 'La cuenta se está eliminando y la sesión de pago se ha cerrado.')
+      }
+    }
+
+    if (!session.url) throw new Error('Stripe no devolvió una URL de Checkout válida.')
 
     return jsonResponse({ url: session.url }, 200, headers)
   } catch (error) {

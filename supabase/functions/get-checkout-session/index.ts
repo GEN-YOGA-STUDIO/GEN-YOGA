@@ -15,6 +15,7 @@ import {
   readProductionConfig,
   requirePost,
   safeErrorResponse,
+  stripeObjectId,
   validateCheckoutPurchase,
 } from "../_shared/stripe-production.ts"
 
@@ -56,6 +57,36 @@ serve(async (req) => {
       const user = await getAuthenticatedUser(req, supabase, true)
       if (user?.id !== purchase.appUserId) {
         throw new HttpError(403, 'La sesión de pago pertenece a otro usuario.')
+      }
+
+      // A paid one-off class must be credited before success.html redirects to
+      // the promised automatic booking. This is idempotent with the webhook and
+      // also recovers safely if delivery of that webhook is delayed.
+      if (purchase.purchaseType === PURCHASE_TYPES.CLASE_SUELTA) {
+        const { error: fulfillError } = await supabase.rpc('stripe_fulfill_checkout', {
+          p_event_id: `checkout_return:${session.id}`,
+          p_event_type: 'checkout.session.completed',
+          p_event_created: session.created,
+          p_checkout_session_id: session.id,
+          p_user_id: purchase.appUserId,
+          p_is_guest: false,
+          p_purchase_type: purchase.purchaseType,
+          p_price_id: purchase.price.id,
+          p_payment_intent_id: stripeObjectId(session.payment_intent),
+          p_subscription_id: null,
+          p_customer_id: stripeObjectId(session.customer),
+          p_amount_total: session.amount_total,
+          p_currency: session.currency,
+          p_payment_status: session.payment_status,
+          p_period_start: null,
+          p_period_end: null,
+          p_subscription_status: null,
+          p_cancel_at_period_end: false,
+          p_livemode: session.livemode,
+        })
+        if (fulfillError) {
+          throw new Error(`No se pudo consolidar la compra verificada: ${fulfillError.message}`)
+        }
       }
     }
 

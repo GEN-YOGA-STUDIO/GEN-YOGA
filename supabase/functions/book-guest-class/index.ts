@@ -19,6 +19,43 @@ import {
   validateCheckoutPurchase,
 } from "../_shared/stripe-production.ts"
 
+const PERSON_NAME_PATTERN = /^[\p{L}][\p{L}\p{M}]*(?:[ .'’·-][\p{L}][\p{L}\p{M}]*)*$/u
+
+function normalizePersonName(
+  value: unknown,
+  fieldLabel: string,
+  maxLength: number,
+  required: boolean,
+): string {
+  if (value === undefined || value === null || value === '') {
+    if (required) throw new HttpError(400, `${fieldLabel} es obligatorio.`)
+    return ''
+  }
+  if (typeof value !== 'string') {
+    throw new HttpError(400, `${fieldLabel} no es válido.`)
+  }
+  if (/[\p{Cc}\p{Cf}<>&]/u.test(value)) {
+    throw new HttpError(400, `${fieldLabel} contiene caracteres no permitidos.`)
+  }
+
+  const normalized = value.normalize('NFC').trim().replace(/\s+/gu, ' ')
+  if (!normalized) {
+    if (required) throw new HttpError(400, `${fieldLabel} es obligatorio.`)
+    return ''
+  }
+  if ([...normalized].length > maxLength) {
+    throw new HttpError(400, `${fieldLabel} no puede superar ${maxLength} caracteres.`)
+  }
+  if (!PERSON_NAME_PATTERN.test(normalized)) {
+    throw new HttpError(
+      400,
+      `${fieldLabel} solo puede contener letras, espacios, apóstrofes, puntos y guiones.`,
+    )
+  }
+
+  return normalized
+}
+
 serve(async (req) => {
   let headers: Record<string, string> = {}
   try {
@@ -54,6 +91,18 @@ serve(async (req) => {
       throw new HttpError(403, 'Esta sesión no corresponde a una clase suelta de invitado.')
     }
 
+    const stripeNameParts = String(session.customer_details?.name || '').trim().split(/\s+/u).filter(Boolean)
+    const requestedName = body.nombre
+    const requestedLastName = body.apellidos
+    const rawName = requestedName === undefined || requestedName === null || requestedName === ''
+      ? (stripeNameParts.shift() || '')
+      : requestedName
+    const rawLastName = requestedLastName === undefined || requestedLastName === null || requestedLastName === ''
+      ? stripeNameParts.join(' ')
+      : requestedLastName
+    const nombre = normalizePersonName(rawName, 'El nombre', 80, true)
+    const apellidos = normalizePersonName(rawLastName, 'El campo «apellidos»', 120, false)
+
     const { error: registerError } = await supabase.rpc('stripe_register_guest_checkout', {
       p_checkout_session_id: session.id,
       p_price_id: purchase.price.id,
@@ -65,12 +114,6 @@ serve(async (req) => {
       p_livemode: session.livemode,
     })
     if (registerError) throw new Error(`No se pudo registrar la compra verificada: ${registerError.message}`)
-
-    const stripeName = (session.customer_details?.name || '').trim()
-    const requestedName = String(body.nombre || '').trim()
-    const nombre = (requestedName || stripeName.split(/\s+/)[0] || '').slice(0, 80)
-    const apellidos = String(body.apellidos || '').trim().slice(0, 120)
-    if (!nombre) throw new HttpError(400, 'El nombre es obligatorio.')
 
     // The client-provided email is deliberately ignored. This deterministic identity
     // makes one paid Checkout Session equivalent to exactly one guest account.

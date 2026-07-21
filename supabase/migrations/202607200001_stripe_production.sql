@@ -73,7 +73,10 @@ create table if not exists public.stripe_purchases (
   guest_reservation_id bigint,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check ((is_guest and user_id is null and purchase_type = 'clase_suelta') or (not is_guest and user_id is not null))
+  constraint stripe_purchases_owner_shape_check check (
+    (is_guest and user_id is null and purchase_type = 'clase_suelta')
+    or not is_guest
+  )
 );
 
 create unique index if not exists stripe_purchases_payment_intent_uidx
@@ -130,27 +133,40 @@ declare
   v_profile_updated integer;
   v_existing public.stripe_purchases%rowtype;
 begin
-  if not p_livemode then
+  if p_livemode is distinct from true then
     raise exception 'Only LIVE Stripe events are accepted' using errcode = '22023';
   end if;
-  if p_event_id is null or p_checkout_session_id is null or p_price_id is null then
+  if nullif(trim(p_event_id), '') is null
+    or nullif(trim(p_checkout_session_id), '') is null
+    or nullif(trim(p_price_id), '') is null
+    or p_event_type is distinct from 'checkout.session.completed'
+    or p_event_created is null or p_event_created <= 0 then
     raise exception 'Missing Stripe identifiers' using errcode = '22023';
   end if;
-  if p_payment_status <> 'paid' or lower(p_currency) <> 'eur' then
+  if p_payment_status is distinct from 'paid' or lower(p_currency) is distinct from 'eur' then
     raise exception 'Checkout is not a paid EUR session' using errcode = '22023';
   end if;
-  if p_purchase_type = 'clase_suelta' and p_amount_total <> 1500 then
+  if p_purchase_type = 'clase_suelta' and p_amount_total is distinct from 1500 then
     raise exception 'Invalid single-class amount' using errcode = '22023';
-  elsif p_purchase_type = 'bono_mensual' and p_amount_total <> 9000 then
+  elsif p_purchase_type = 'bono_mensual' and p_amount_total is distinct from 9000 then
     raise exception 'Invalid monthly-plan amount' using errcode = '22023';
-  elsif p_purchase_type not in ('clase_suelta', 'bono_mensual') then
+  elsif p_purchase_type is null or p_purchase_type not in ('clase_suelta', 'bono_mensual') then
     raise exception 'Unsupported purchase type' using errcode = '22023';
   end if;
-  if p_is_guest and (p_user_id is not null or p_purchase_type <> 'clase_suelta') then
+  if p_is_guest is null then
+    raise exception 'Missing guest purchase flag' using errcode = '22023';
+  elsif p_is_guest and (p_user_id is not null or p_purchase_type <> 'clase_suelta') then
     raise exception 'Invalid guest purchase' using errcode = '22023';
   elsif not p_is_guest and p_user_id is null then
     raise exception 'Authenticated purchase has no user' using errcode = '22023';
   end if;
+
+  -- The webhook and the success-page verification may fulfill the same paid
+  -- session concurrently. Serialize by Checkout id so the second caller sees
+  -- the canonical purchase instead of hitting a transient unique violation.
+  perform pg_advisory_xact_lock(
+    hashtextextended('gen_yoga_checkout:' || p_checkout_session_id, 0)
+  );
 
   insert into public.stripe_webhook_events (
     event_id, event_type, livemode, checkout_session_id, object_id
@@ -170,11 +186,27 @@ begin
 
   if found then
     if v_existing.is_guest <> p_is_guest
+      or v_existing.user_id is distinct from p_user_id
       or v_existing.purchase_type <> p_purchase_type
       or v_existing.price_id <> p_price_id
       or v_existing.amount_total <> p_amount_total
       or v_existing.currency <> lower(p_currency)
-      or v_existing.payment_status <> 'paid' then
+      or v_existing.payment_status <> 'paid'
+      or (
+        v_existing.payment_intent_id is not null
+        and p_payment_intent_id is not null
+        and v_existing.payment_intent_id <> p_payment_intent_id
+      )
+      or (
+        v_existing.subscription_id is not null
+        and p_subscription_id is not null
+        and v_existing.subscription_id <> p_subscription_id
+      )
+      or (
+        v_existing.customer_id is not null
+        and p_customer_id is not null
+        and v_existing.customer_id <> p_customer_id
+      ) then
       raise exception 'Checkout session conflicts with an existing purchase' using errcode = '23514';
     end if;
 
@@ -217,8 +249,14 @@ begin
     where id = p_user_id;
     get diagnostics v_profile_updated = row_count;
   else
-    if p_subscription_id is null or p_period_start is null or p_period_end is null then
+    if nullif(trim(p_subscription_id), '') is null
+      or nullif(trim(p_customer_id), '') is null
+      or nullif(trim(p_subscription_status), '') is null
+      or p_period_start is null or p_period_end is null then
       raise exception 'Monthly checkout lacks subscription period' using errcode = '22023';
+    end if;
+    if p_period_end <= p_period_start then
+      raise exception 'Monthly checkout has an invalid subscription period' using errcode = '22023';
     end if;
 
     insert into public.stripe_subscriptions (
@@ -293,11 +331,24 @@ declare
   v_subscription_updated integer;
   v_profile_updated integer;
 begin
-  if not p_livemode then
+  if p_livemode is distinct from true then
     raise exception 'Only LIVE Stripe events are accepted' using errcode = '22023';
   end if;
-  if p_event_id is null or p_user_id is null or p_subscription_id is null
-    or p_customer_id is null or p_price_id is null or p_status is null then
+  if nullif(trim(p_event_id), '') is null or p_user_id is null
+    or nullif(trim(p_subscription_id), '') is null
+    or nullif(trim(p_customer_id), '') is null
+    or nullif(trim(p_price_id), '') is null
+    or nullif(trim(p_status), '') is null
+    or p_event_created is null or p_event_created <= 0
+    or p_period_start is null or p_period_end is null
+    or p_period_end <= p_period_start
+    or p_entitled is null
+    or p_event_type is null or p_event_type not in (
+      'invoice.paid',
+      'invoice.payment_failed',
+      'customer.subscription.updated',
+      'customer.subscription.deleted'
+    ) then
     raise exception 'Missing subscription identifiers' using errcode = '22023';
   end if;
 
@@ -310,11 +361,6 @@ begin
   if v_inserted = 0 then
     return jsonb_build_object('processed', false, 'reason', 'duplicate_event');
   end if;
-
-  insert into public.stripe_customers (user_id, customer_id)
-  values (p_user_id, p_customer_id)
-  on conflict (user_id) do update
-    set customer_id = excluded.customer_id, updated_at = now();
 
   insert into public.stripe_subscriptions (
     subscription_id, user_id, customer_id, price_id, status,
@@ -341,6 +387,13 @@ begin
   if v_subscription_updated = 0 then
     return jsonb_build_object('processed', false, 'reason', 'stale_event');
   end if;
+
+  -- Do not let an out-of-order event rewrite the canonical customer mapping.
+  -- The subscription timestamp gate above is the ordering authority.
+  insert into public.stripe_customers (user_id, customer_id)
+  values (p_user_id, p_customer_id)
+  on conflict (user_id) do update
+    set customer_id = excluded.customer_id, updated_at = now();
 
   update public.profiles
   set bono_mensual_activo = p_entitled,
@@ -385,36 +438,17 @@ set search_path = public, pg_temp
 as $$
 declare
   v_existing public.stripe_purchases%rowtype;
+  v_inserted integer;
 begin
-  if not p_livemode or p_payment_status <> 'paid' or lower(p_currency) <> 'eur'
-    or p_amount_total <> 1500 then
+  if p_livemode is distinct from true
+    or p_payment_status is distinct from 'paid'
+    or lower(p_currency) is distinct from 'eur'
+    or p_amount_total is distinct from 1500 then
     raise exception 'Invalid LIVE guest checkout' using errcode = '22023';
   end if;
-  if p_checkout_session_id is null or p_price_id is null then
+  if nullif(trim(p_checkout_session_id), '') is null
+    or nullif(trim(p_price_id), '') is null then
     raise exception 'Missing guest checkout identifiers' using errcode = '22023';
-  end if;
-
-  select * into v_existing
-  from public.stripe_purchases
-  where checkout_session_id = p_checkout_session_id
-  for update;
-
-  if found then
-    if not v_existing.is_guest
-      or v_existing.purchase_type <> 'clase_suelta'
-      or v_existing.price_id <> p_price_id
-      or v_existing.amount_total <> 1500
-      or v_existing.currency <> 'eur'
-      or v_existing.payment_status <> 'paid' then
-      raise exception 'Guest checkout conflicts with an existing purchase' using errcode = '23514';
-    end if;
-
-    update public.stripe_purchases
-    set payment_intent_id = coalesce(payment_intent_id, p_payment_intent_id),
-        customer_id = coalesce(customer_id, p_customer_id),
-        updated_at = now()
-    where checkout_session_id = p_checkout_session_id;
-    return jsonb_build_object('registered', false, 'reason', 'already_registered');
   end if;
 
   insert into public.stripe_purchases (
@@ -423,9 +457,47 @@ begin
   ) values (
     p_checkout_session_id, null, true, 'clase_suelta', p_price_id,
     p_payment_intent_id, p_customer_id, 1500, 'eur', 'paid'
-  );
+  ) on conflict (checkout_session_id) do nothing;
+  get diagnostics v_inserted = row_count;
 
-  return jsonb_build_object('registered', true);
+  -- Lock and validate the canonical row even when two retries attempted the
+  -- first registration concurrently. SELECT-then-INSERT left a race that
+  -- surfaced as a transient duplicate-key error.
+  select * into v_existing
+  from public.stripe_purchases
+  where checkout_session_id = p_checkout_session_id
+  for update;
+
+  if not found
+    or not v_existing.is_guest
+    or v_existing.purchase_type <> 'clase_suelta'
+    or v_existing.price_id <> p_price_id
+    or v_existing.amount_total <> 1500
+    or v_existing.currency <> 'eur'
+    or v_existing.payment_status <> 'paid'
+    or (
+      v_existing.payment_intent_id is not null
+      and p_payment_intent_id is not null
+      and v_existing.payment_intent_id <> p_payment_intent_id
+    )
+    or (
+      v_existing.customer_id is not null
+      and p_customer_id is not null
+      and v_existing.customer_id <> p_customer_id
+    ) then
+    raise exception 'Guest checkout conflicts with an existing purchase' using errcode = '23514';
+  end if;
+
+  update public.stripe_purchases
+  set payment_intent_id = coalesce(payment_intent_id, p_payment_intent_id),
+      customer_id = coalesce(customer_id, p_customer_id),
+      updated_at = now()
+  where checkout_session_id = p_checkout_session_id;
+
+  return case when v_inserted = 1
+    then jsonb_build_object('registered', true)
+    else jsonb_build_object('registered', false, 'reason', 'already_registered')
+  end;
 end;
 $$;
 
@@ -487,13 +559,16 @@ begin
   end if;
 
   begin
-    select least(168, greatest(0, round(nullif(valor::text, '')::numeric)::integer))
+    select least(
+      168::numeric,
+      greatest(0::numeric, round(nullif(trim(both '"' from valor::text), '')::numeric))
+    )::integer
     into v_booking_limit_hours
     from public.configuracion
     where clave = 'horas_limite_reserva'
     limit 1;
   exception
-    when invalid_text_representation then
+    when invalid_text_representation or numeric_value_out_of_range then
       v_booking_limit_hours := 12;
   end;
   v_booking_limit_hours := coalesce(v_booking_limit_hours, 12);
@@ -512,22 +587,27 @@ begin
   limit 1
   for update;
 
-  if v_reservation_id is null then
-    select count(*)::integer into v_bookings
-    from public.reservas_yoga
-    where clase_id = p_clase_id
-      and estado = 'confirmada';
-
-    if v_bookings >= v_capacity then
-      raise exception 'Class is full' using errcode = 'P0001';
-    end if;
-
-    insert into public.reservas_yoga (
-      clase_id, user_id, estado, usado_bono_mensual
-    ) values (
-      p_clase_id, p_guest_user_id, 'confirmada', false
-    ) returning id into v_reservation_id;
+  if v_reservation_id is not null then
+    -- Only the purchase row can prove idempotency (handled above). Reusing an
+    -- unrelated reservation here would consume a second paid checkout without
+    -- granting a second class.
+    raise exception 'Guest identity already has a booking for this class' using errcode = '23505';
   end if;
+
+  select count(*)::integer into v_bookings
+  from public.reservas_yoga
+  where clase_id = p_clase_id
+    and estado = 'confirmada';
+
+  if v_bookings >= v_capacity then
+    raise exception 'Class is full' using errcode = 'P0001';
+  end if;
+
+  insert into public.reservas_yoga (
+    clase_id, user_id, estado, usado_bono_mensual
+  ) values (
+    p_clase_id, p_guest_user_id, 'confirmada', false
+  ) returning id into v_reservation_id;
 
   update public.stripe_purchases
   set guest_redeemed_at = now(),

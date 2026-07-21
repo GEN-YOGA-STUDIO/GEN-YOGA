@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="application-version" content="6.5">
+    <meta name="robots" content="noindex,nofollow">
     <title>Pago Cancelado | GEN Yoga</title>
     
     <link rel="stylesheet" href="styles.css?v=6.5">
     <link rel="stylesheet" href="tailwind-compiled.css?v=6.5">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
@@ -20,7 +22,7 @@
         }
     </style>
 </head>
-<body class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative flex items-center justify-center p-4 selection:bg-mutedgold selection:text-cocoa">
+<body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden relative flex items-center justify-center p-4 selection:bg-mutedgold selection:text-cocoa">
     
     <!-- Background Gradient: Matches profile page -->
     <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"></div>
@@ -59,7 +61,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga</span>
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.5</span>
         </div>
     </div>
 
@@ -67,11 +69,31 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const from = urlParams.get('from') || localStorage.getItem('stripe_checkout_origin') || 'tarifas';
+            let storedCheckoutOrigin = '';
+            try {
+                storedCheckoutOrigin = localStorage.getItem('stripe_checkout_origin') || '';
+                localStorage.removeItem('pending_booking_clase_id');
+                localStorage.removeItem('stripe_checkout_origin');
+            } catch (error) {
+                console.warn('No se pudo limpiar el estado local del checkout:', error);
+            }
+            const from = urlParams.get('from') || storedCheckoutOrigin || 'tarifas';
             
             const btnPrimary = document.getElementById('btn-primary');
             const btnSecondary = document.getElementById('btn-secondary');
             const redirectMessage = document.getElementById('redirect-message');
+
+            const setRedirectMessage = (destination) => {
+                if (!redirectMessage) return;
+                const countdown = document.createElement('span');
+                countdown.id = 'countdown-dynamic';
+                countdown.textContent = '5';
+                redirectMessage.replaceChildren(
+                    document.createTextNode(`Redirigiéndote a ${destination} en `),
+                    countdown,
+                    document.createTextNode(' segundos...')
+                );
+            };
             
             let redirectUrl = 'tarifas.html';
             
@@ -85,9 +107,7 @@
                     btnSecondary.href = 'tarifas.html';
                     btnSecondary.textContent = 'Ver Tarifas';
                 }
-                if (redirectMessage) {
-                    redirectMessage.innerHTML = `Redirigiéndote a tu perfil en <span id="countdown-dynamic">5</span> segundos...`;
-                }
+                setRedirectMessage('tu perfil');
             } else {
                 if (btnPrimary) {
                     btnPrimary.href = 'tarifas.html';
@@ -97,9 +117,7 @@
                     btnSecondary.href = 'profile.html';
                     btnSecondary.textContent = 'Ir a mi Perfil';
                 }
-                if (redirectMessage) {
-                    redirectMessage.innerHTML = `Redirigiéndote a tarifas en <span id="countdown-dynamic">5</span> segundos...`;
-                }
+                setRedirectMessage('tarifas');
             }
 
             // Countdown timer redirect

@@ -36,23 +36,26 @@ El proyecto enlazado es `jkjifmrrlyncuwpjhxvk`. En Supabase Dashboard abre
 `SUPABASE_SERVICE_ROLE_KEY`: Supabase la proporciona a las Edge Functions.
 
 `ALLOWED_ORIGINS` es una lista separada por comas con los demás orígenes HTTPS
-desde los que se publica el mismo frontend. No debe contener rutas: para GitHub
-Pages se autoriza el origen de la cuenta, no `/GEN-YOGA`. En producción usa:
+desde los que se publica exactamente el frontend de producción. En producción
+usa únicamente el dominio `www` alternativo:
 
 ```text
-https://www.genyoga.studio,https://jaime312.github.io
+https://www.genyoga.studio
 ```
 
-El origen de `SITE_URL` se permite siempre de forma automática. No uses `*` ni
-añadas dominios que no controlas.
+El origen de `SITE_URL` se permite siempre de forma automática. No uses `*`, no
+añadas GitHub Pages y no autorices dominios de certificación en el proyecto de
+producción.
 
-`PAYMENT_ALLOWED_ORIGINS` determina desde qué orígenes se pueden crear o consultar pagos LIVE y abrir Customer Portal. En v6.2 debe ser exactamente:
+`PAYMENT_ALLOWED_ORIGINS` determina desde qué orígenes se pueden crear o consultar pagos LIVE y abrir Customer Portal. Debe contener únicamente los hostnames productivos:
 
 ```text
-https://genyoga.studio,https://www.genyoga.studio,https://jaime312.github.io
+https://genyoga.studio,https://www.genyoga.studio
 ```
 
-La navegación entre páginas de ambos entornos se mantiene 100% separada (sin saltos de dominio), y ambas webs (producción y certificación en GitHub) procesan pagos en el entorno real de Stripe. La función valida que los orígenes pertenezcan a la lista blanca fijada en código.
+GitHub Pages y cualquier web de certificación deben quedar fuera de los pagos LIVE. El origen del navegador no incluye la ruta del repositorio, por lo que `jaime312.github.io/Q19-CERT` no se puede aislar de otros repositorios mediante CORS. Una certificación funcional requiere otro proyecto Supabase, Stripe TEST, Prices y webhook de prueba, preferiblemente bajo un hostname propio como `cert.genyoga.studio`.
+
+Todos los retornos de Checkout y Customer Portal se construyen con el `SITE_URL` canónico. Nunca se refleja el encabezado `Origin`, ni se usan rutas `/GEN-YOGA` o `/Q19-CERT` para sesiones LIVE.
 
 Como alternativa al Dashboard, crea localmente
 `supabase/functions/.env.production.local` a partir del ejemplo y ejecuta:
@@ -68,11 +71,11 @@ argumentos de consola, ya que podrían quedar en el historial.
 
 ## 3. Ejecutar la migración y desplegar
 
-Después de revisar la migración
-`supabase/migrations/202607200001_stripe_production.sql`, aplícala al proyecto
-enlazado antes de activar los cobros. La migración crea las tablas privadas de
-idempotencia, compras, clientes y suscripciones, junto con las RPC atómicas que
-utilizan las Edge Functions; no debe conceder acceso público mediante RLS.
+Después de revisar todas las migraciones de `supabase/migrations`, aplícalas en
+orden al proyecto enlazado antes de activar los cobros. Crean las tablas privadas
+de Stripe, las RPC atómicas de compras, reservas de consultas y saldos, y el
+bloqueo transaccional usado durante la eliminación de cuentas. No se debe
+conceder escritura pública directa sobre esas tablas mediante RLS.
 
 ```powershell
 npx supabase@latest db push --linked
@@ -81,6 +84,8 @@ $stripeFunctions = @(
   'get-checkout-session',
   'book-guest-class',
   'create-portal-session',
+  'create-kiosk-user',
+  'delete-account',
   'stripe-webhook'
 )
 foreach ($stripeFunction in $stripeFunctions) {
@@ -92,6 +97,26 @@ foreach ($stripeFunction in $stripeFunctions) {
 flujo actual necesita invocar como invitado y el webhook externo. Esto no elimina
 la obligación de validar dentro de cada función la firma, el pago, el Price y la
 propiedad del recurso.
+
+`delete-account` mantiene `verify_jwt = true` y vuelve a validar el token dentro
+de la función. Solo permite borrar la cuenta propia o, si el perfil solicitante
+es administrador, otra cuenta. Antes de eliminar datos consulta Stripe y bloquea
+la operación mientras exista una suscripción que no esté terminada. Al comenzar,
+marca el perfil con un identificador exclusivo de eliminación; mientras esa marca
+exista, `create-checkout-session` rechaza nuevos pagos y vuelve a comprobarla
+después de crear cada sesión, expirando la sesión si detecta una carrera. La
+función de borrado también expira Checkouts abiertos y espera si existe un pago
+recién completado cuyo webhook todavía no se ha consolidado.
+
+La migración `202607210003_account_deletion_guard.sql` instala además un trigger
+en `profiles`. Si un webhook intenta conceder bonos, saldos o renovar el plan
+mensual mientras la cuenta está marcada para borrado, la transacción falla y el
+webhook responde con error para que Stripe lo reintente. Si la eliminación no se
+completa, la función libera la marca con el mismo identificador exclusivo. Por
+eso esta migración debe desplegarse antes que las versiones nuevas de
+`create-checkout-session` y `delete-account`. La misma RPC serializa el borrado
+de administradores y evita en base de datos que dos solicitudes concurrentes
+eliminen entre ambas la última cuenta administradora.
 
 ## 4. Registrar el webhook live
 
