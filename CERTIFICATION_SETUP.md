@@ -10,8 +10,9 @@ podía mezclar versiones y datos reales.
 2. Aplicar allí las migraciones necesarias y usar únicamente datos de prueba.
 3. No desplegar las Edge Functions LIVE de este repositorio en certificación.
 4. Si se quieren probar pagos, crear una implementación separada con claves,
-   Prices y webhook de Stripe TEST. La versión web 6.5 bloquea expresamente los
-   cobros LIVE fuera de `https://genyoga.studio`.
+   Prices y webhook de Stripe TEST. El backend LIVE solo acepta operaciones desde
+   el origen autorizado de producción; la interfaz web mantiene la misma versión
+   6.6 y no muestra avisos técnicos distintos según el dominio.
 
 ## Construcción
 
@@ -24,7 +25,7 @@ npm run build:cert
 ```
 
 El comando falla si falta alguna variable o si se intenta usar el proyecto de
-producción. Regenera `../subir cert` como un artefacto exacto de la versión 6.5,
+producción. Regenera `../subir cert` como un artefacto exacto de la versión 6.6,
 elimina archivos heredados y crea `certification-build.json` para poder comprobar
 qué entorno se está publicando.
 

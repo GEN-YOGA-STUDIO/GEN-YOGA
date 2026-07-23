@@ -206,11 +206,11 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.5["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.5`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.6["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.6`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
-  if (/\bv6\.[0-4]\b/i.test(source)) errors.push(`${fileName}: contiene una versión visual anterior a 6.5`);
+  if (/\bv6\.[0-5]\b/i.test(source)) errors.push(`${fileName}: contiene una versión visual anterior a 6.6`);
 }
 
 for (const functionName of invokedEdgeFunctions) {
@@ -230,6 +230,83 @@ for (const rpc of ['reservar_consulta_atomica', 'cancelar_consulta_atomica']) {
 }
 if (/\.from\(['"]reservas_(?:psicologia|nutricion)['"]\)\.insert/.test(profile)) {
   errors.push('profile.html: vuelve a insertar reservas de consulta fuera de la RPC atómica');
+}
+
+const yogaPolicyMigrationPath = path.join(
+  root,
+  'supabase',
+  'migrations',
+  '202607230001_yoga_booking_policy_integrity.sql',
+);
+if (!await exists(yogaPolicyMigrationPath)) {
+  errors.push('Falta la migración que separa los límites de reserva y cancelación de yoga');
+} else {
+  const yogaPolicyMigration = await readFile(yogaPolicyMigrationPath, 'utf8');
+  const reserveFunction = yogaPolicyMigration.match(
+    /create or replace function public\.reservar_con_bono[\s\S]*?as \$\$([\s\S]*?)\$\$;/i,
+  )?.[1] || '';
+  const cancelFunction = yogaPolicyMigration.match(
+    /create or replace function public\.cancelar_con_bono[\s\S]*?as \$\$([\s\S]*?)\$\$;/i,
+  )?.[1] || '';
+
+  if (!reserveFunction.includes("clave = 'horas_limite_reserva'")) {
+    errors.push('La RPC de yoga no usa horas_limite_reserva');
+  }
+  if (reserveFunction.includes("clave = 'horas_limite_cancelacion'")) {
+    errors.push('La RPC de yoga vuelve a mezclar el límite de cancelación al reservar');
+  }
+  if (!/v_starts_at\s*<=\s*now\(\)\s*\+\s*make_interval\(hours\s*=>\s*v_booking_limit_hours\)/i.test(reserveFunction)) {
+    errors.push('La RPC de yoga no cierra la reserva exactamente en la frontera configurada');
+  }
+  if (!/from public\.profesionales[\s\S]*?where id = v_professor_id[\s\S]*?v_actor_email/i.test(reserveFunction)) {
+    errors.push('La RPC de yoga no limita al staff a sus propias clases');
+  }
+  if (!cancelFunction.includes("clave = 'horas_limite_cancelacion'")) {
+    errors.push('La cancelación de yoga no usa horas_limite_cancelacion');
+  }
+  if (cancelFunction.includes("clave = 'horas_limite_reserva'")) {
+    errors.push('La cancelación de yoga vuelve a mezclar el límite de reserva');
+  }
+  if (!/v_starts_at\s*<=\s*now\(\)\s*\+\s*make_interval\(hours\s*=>\s*v_cancel_limit_hours\)/i.test(cancelFunction)) {
+    errors.push('La RPC de yoga no cierra la cancelación exactamente en la frontera configurada');
+  }
+  for (const required of [
+    'for update',
+    'bono_descontado',
+    'reservas_yoga_proteger_mutacion_directa',
+    "v_actor_is_admin := v_actor_role = 'admin'",
+    "v_class_type <> 'yoga'",
+    'v_old_class_type',
+    'v_new_class_type',
+    'No se pudo verificar de forma segura la clase de la reserva.',
+    'admin_actualizar_limite_reservas',
+    'from public, anon',
+    'to authenticated',
+  ]) {
+    if (!yogaPolicyMigration.toLowerCase().includes(required.toLowerCase())) {
+      errors.push(`Migración de políticas de yoga: falta ${required}`);
+    }
+  }
+}
+
+if (!/hoursUntilClass\s*<=\s*bookingLimitHours/.test(profile)) {
+  errors.push('profile.html: la prevalidación no respeta la frontera de reserva');
+}
+if (!/hoursUntilClass\s*<=\s*cancellationLimitHours/.test(profile)) {
+  errors.push('profile.html: la prevalidación no respeta la frontera de cancelación');
+}
+
+for (const requiredFrontendText of [
+  "getPolicyHours('horas_limite_reserva')",
+  "getPolicyHours('horas_limite_cancelacion')",
+  "client.rpc('admin_actualizar_limite_reservas'",
+  "rawValue === ''",
+  'policySaveInProgress',
+  'El bono reservado no se devuelve.',
+]) {
+  if (!profile.includes(requiredFrontendText)) {
+    errors.push(`profile.html: falta la regla ${requiredFrontendText}`);
+  }
 }
 
 if (errors.length) {

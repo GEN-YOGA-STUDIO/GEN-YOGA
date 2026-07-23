@@ -100,8 +100,13 @@ requireText(checkout, 'checkoutAttemptId', 'Idempotencia individual de invitados
 requireText(checkout, 'profile.account_deletion_pending', 'Checkout bloqueado por eliminación pendiente');
 requireText(checkout, 'expireCreatedCheckoutSession', 'Cierre del Checkout creado durante eliminación');
 requireText(checkout, ".select('account_deletion_pending')", 'Revalidación post-Checkout del tombstone');
-requireText(checkout, "const APP_RELEASE = '6.5'", 'Versión autoritativa de Checkout');
-requireText(checkout, 'appVersion !== APP_RELEASE', 'Bloqueo de frontends Stripe desactualizados');
+requireText(checkout, "const APP_RELEASE = '6.6'", 'Versión autoritativa de Checkout');
+requireText(checkout, 'app_version: APP_RELEASE', 'Metadato uniforme de versión en Checkout');
+forbid(
+  checkout,
+  /appVersion\s*!==\s*APP_RELEASE|web está desactualizada/i,
+  'Checkout no muestra avisos de incompatibilidad entre builds',
+);
 requireText(getSession, 'validateCheckoutPurchase', 'Validación de retorno');
 requireText(guestBooking, 'stripe_redeem_guest_checkout', 'Canje invitado');
 requireText(webhook, 'constructEventAsync', 'Firma Stripe');
@@ -177,11 +182,26 @@ requireBefore(
   'Orden del guard productivo en eliminación de cuenta',
 );
 
-requireText(frontendSources[2], 'APP_DEPLOYMENT_ENVIRONMENT', 'Entorno explícito en success.html');
-requireText(frontendSources[2], 'ensureLivePaymentEnvironment()', 'Guard frontend en success.html');
-requireText(frontendSources[0], "APP_DEPLOYMENT_ENVIRONMENT === 'production'", 'Tarifas bloquea pagos fuera de producción');
-requireText(frontendSources[1], "APP_DEPLOYMENT_ENVIRONMENT === 'production'", 'Perfil bloquea pagos fuera de producción');
-requireText(frontendSources[2], "APP_DEPLOYMENT_ENVIRONMENT !== 'production'", 'Success bloquea verificación fuera de producción');
+const universalSupabaseClient =
+  'window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null';
+for (const [source, label] of [
+  [frontendSources[0], 'tarifas.html'],
+  [frontendSources[1], 'profile.html'],
+  [frontendSources[2], 'success.html'],
+]) {
+  requireText(source, universalSupabaseClient, `Cliente Supabase único en ${label}`);
+  forbid(source, /APP_DEPLOYMENT_ENVIRONMENT|USING_PRODUCTION_BACKEND/, `Sin bifurcación de build en ${label}`);
+  forbid(
+    source,
+    /Esta compilación|build aislado|Pagos desactivados en certificación|Pagos no permitidos en desarrollo|Pago LIVE bloqueado en certificación/,
+    `Sin avisos técnicos de entorno en ${label}`,
+  );
+}
+forbid(
+  checkout,
+  /app_environment|frontend_environment|frontendEnvironment/,
+  'Checkout no confía en una etiqueta de entorno enviada por el navegador',
+);
 
 for (const rpc of [
   'stripe_fulfill_checkout',

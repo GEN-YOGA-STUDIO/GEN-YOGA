@@ -20,7 +20,7 @@ import {
   safeErrorResponse,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.5'
+const APP_RELEASE = '6.6'
 
 async function expireCreatedCheckoutSession(
   stripe: ReturnType<typeof createStripeClient>,
@@ -71,14 +71,6 @@ serve(async (req) => {
       throw new HttpError(400, 'El identificador del intento de pago no es válido.')
     }
     const checkoutAttemptId = requestedAttemptId || crypto.randomUUID()
-    const appVersion = String(body.app_version || '').trim()
-    if (appVersion !== APP_RELEASE) {
-      throw new HttpError(409, 'La web está desactualizada. Recarga la versión 6.5 antes de pagar.')
-    }
-    const frontendEnvironment = String(body.app_environment || 'production').trim()
-    if (frontendEnvironment !== 'production') {
-      throw new HttpError(403, 'Los pagos LIVE solo se pueden iniciar desde producción.')
-    }
 
     const stripe = createStripeClient(config)
     const supabase = createAdminClient(config)
@@ -132,8 +124,7 @@ serve(async (req) => {
     const metadata: Stripe.MetadataParam = {
       app: 'gen_yoga',
       environment: 'production',
-      frontend_environment: 'production',
-      app_version: appVersion,
+      app_version: APP_RELEASE,
       purchase_type: purchaseType,
       app_user_id: appUserId,
       source,

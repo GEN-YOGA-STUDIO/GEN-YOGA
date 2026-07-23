@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.5">
+    <meta name="application-version" content="6.6">
     <meta name="robots" content="noindex,nofollow">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
-    <link rel="stylesheet" href="styles.css?v=6.5">
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.5">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.6">
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
@@ -135,7 +134,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.5</span>
+            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.6</span>
         </div>
     </div>
 
@@ -143,21 +142,8 @@
     <script>
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '6.5';
-        const APP_DEPLOYMENT_ENVIRONMENT = (() => {
-            const origin = window.location.origin.toLowerCase();
-            const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
-            if (origin === 'https://jaime312.github.io' && isCertificationPath) return 'certification';
-            if (origin === 'https://genyoga.studio' || origin === 'https://www.genyoga.studio') return 'production';
-            return 'development';
-        })();
-        const USING_PRODUCTION_BACKEND = (() => {
-            try { return new URL(SUPA_URL).hostname === 'jkjifmrrlyncuwpjhxvk.supabase.co'; }
-            catch (_) { return false; }
-        })();
-        const client = APP_DEPLOYMENT_ENVIRONMENT !== 'production' && USING_PRODUCTION_BACKEND
-            ? null
-            : (window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null);
+        const APP_VERSION = '6.6';
+        const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
         
         let stripeSessionId = '';
         let redirectCountdownTimer = null;
@@ -176,31 +162,7 @@
             } catch (_) {}
         }
 
-        function ensureLivePaymentEnvironment() {
-            if (APP_DEPLOYMENT_ENVIRONMENT === 'production') return true;
-            const isCertification = APP_DEPLOYMENT_ENVIRONMENT === 'certification';
-            Swal.fire({
-                icon: 'info',
-                title: isCertification ? 'Pago LIVE bloqueado en certificación' : 'Entorno no soportado',
-                text: isCertification
-                    ? 'Esta web no puede verificar ni gestionar cobros reales de producción.'
-                    : 'En el entorno de desarrollo local no se pueden verificar cobros reales.',
-                confirmButtonColor: '#795244'
-            });
-            return false;
-        }
-
         document.addEventListener('DOMContentLoaded', async () => {
-            document.documentElement.dataset.appEnvironment = APP_DEPLOYMENT_ENVIRONMENT;
-            if (APP_DEPLOYMENT_ENVIRONMENT !== 'production') {
-                const environmentLabel = APP_DEPLOYMENT_ENVIRONMENT === 'certification' ? 'CERTIFICACIÓN' : 'DESARROLLO';
-                mostrarErrorVerificacion(
-                    `Esta es la compilación de ${environmentLabel} v${APP_VERSION}. No puede verificar ni gestionar pagos LIVE de producción.`,
-                    false
-                );
-                return;
-            }
-
             const searchParams = new URLSearchParams(window.location.search);
             stripeSessionId = searchParams.get('session_id');
             
@@ -293,7 +255,6 @@
         }
 
         async function irAlPortalFacturas() {
-            if (!ensureLivePaymentEnvironment()) return;
             if (!stripeSessionId) return;
             if (redirectCountdownTimer) {
                 clearInterval(redirectCountdownTimer);
@@ -400,7 +361,6 @@
         }
 
         async function confirmarReservaInvitado() {
-            if (!ensureLivePaymentEnvironment()) return;
             const claseId = document.getElementById('guest-clase-select').value;
             const nombre = document.getElementById('guest-nombre').value.trim();
             const apellidos = document.getElementById('guest-apellidos').value.trim();
