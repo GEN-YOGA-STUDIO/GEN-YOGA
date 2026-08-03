@@ -59,10 +59,12 @@ serve(async (req) => {
         throw new HttpError(403, 'La sesión de pago pertenece a otro usuario.')
       }
 
-      // A paid one-off class must be credited before success.html redirects to
-      // the promised automatic booking. This is idempotent with the webhook and
-      // also recovers safely if delivery of that webhook is delayed.
-      if (purchase.purchaseType === PURCHASE_TYPES.CLASE_SUELTA) {
+      // Every paid one-off purchase must be credited before success.html
+      // redirects. This is idempotent with the webhook and also recovers safely
+      // if delivery of that webhook is delayed.
+      if (
+        purchase.purchaseType !== PURCHASE_TYPES.BONO_MENSUAL
+      ) {
         const { error: fulfillError } = await supabase.rpc('stripe_fulfill_checkout', {
           p_event_id: `checkout_return:${session.id}`,
           p_event_type: 'checkout.session.completed',
@@ -78,6 +80,7 @@ serve(async (req) => {
           p_amount_total: session.amount_total,
           p_currency: session.currency,
           p_payment_status: session.payment_status,
+          p_membership_month: purchase.membershipMonth,
           p_period_start: null,
           p_period_end: null,
           p_subscription_status: null,
@@ -107,6 +110,7 @@ serve(async (req) => {
     return jsonResponse({
       isGuest,
       purchaseType: purchase.purchaseType,
+      membershipMonth: purchase.membershipMonth,
       email: isGuest ? (session.customer_details?.email || '') : '',
       nombre: isGuest ? (nameParts[0] || '') : '',
       apellidos: isGuest ? nameParts.slice(1).join(' ') : '',

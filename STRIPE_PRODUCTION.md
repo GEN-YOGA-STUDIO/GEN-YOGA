@@ -10,21 +10,43 @@ En el Dashboard de Stripe, desactiva el modo de prueba y comprueba que la cuenta
 puede aceptar cobros reales. Crea o selecciona estos Prices activos:
 
 - `STRIPE_PRICE_CLASE_SUELTA`: pago único de 15 EUR.
-- `STRIPE_PRICE_BONO_MENSUAL`: suscripción recurrente de 90 EUR al mes.
+- `STRIPE_PRICE_PACK_4`: pago único de 50 EUR para 4 clases.
+- `STRIPE_PRICE_PACK_6`: pago único de 65 EUR para 6 clases.
+- `STRIPE_PRICE_PACK_10`: pago único de 95 EUR para 10 clases.
+- `STRIPE_PRICE_BONO_ILIMITADO`: pago único de 90 EUR para un mes natural.
+- `STRIPE_PRICE_BONO_MENSUAL`: Price de 90 EUR de la suscripción antigua; se
+  conserva para validar renovaciones de clientes que ya la tuvieran.
+
+Los packs se validan además contra sus productos live de Stripe:
+
+- 4 clases: `prod_V0ITB6mD71fwnD`.
+- 6 clases: `prod_V0IUpyuvd7uX00`.
+- 10 clases: `prod_V0IUYoGJJbX7FW`.
+
+La clase suelta y los tres packs caducan 60 días naturales después del evento
+de compra confirmado. El Bono Ilimitado se compra para un mes natural elegido:
+empieza el día 1 y termina al acabar el último día de ese mes en la zona horaria
+de Madrid. Cubre clases regulares sin límite, una clase especial y un invitado
+a una clase regular durante ese mes, además del beneficio del 30% en la primera
+consulta de nutrición o psicología.
 
 Configura también el Customer Portal en modo live si se va a ofrecer al cliente
-la gestión de su suscripción y sus facturas.
+la consulta de sus facturas o la gestión de suscripciones antiguas.
 
 ## 2. Configurar secretos en Supabase
 
 El proyecto enlazado es `jkjifmrrlyncuwpjhxvk`. En Supabase Dashboard abre
-**Edge Functions > Secrets** y configura las ocho variables documentadas en
+**Edge Functions > Secrets** y configura las variables documentadas en
 `supabase/functions/.env.example`:
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PORTAL_CONFIGURATION`
 - `STRIPE_PRICE_CLASE_SUELTA`
+- `STRIPE_PRICE_PACK_4`
+- `STRIPE_PRICE_PACK_6`
+- `STRIPE_PRICE_PACK_10`
+- `STRIPE_PRICE_BONO_ILIMITADO`
 - `STRIPE_PRICE_BONO_MENSUAL`
 - `SITE_URL`
 - `ALLOWED_ORIGINS`
@@ -83,6 +105,7 @@ $stripeFunctions = @(
   'create-checkout-session',
   'get-checkout-session',
   'book-guest-class',
+  'book-unlimited-guest',
   'create-portal-session',
   'create-kiosk-user',
   'delete-account',
@@ -144,12 +167,12 @@ función debe rechazar cualquier petición sin una firma válida.
 1. Publica también `success.html`, `cancel.html` y `profile.html` bajo
    `SITE_URL` y verifica que todos los retornos usan HTTPS.
 2. Realiza con una tarjeta propia una compra real de clase suelta.
-3. Comprueba en Stripe que el pago está completado y en Supabase que se concede
-   exactamente un bono, incluso al reenviar el mismo evento desde Stripe.
-4. Completa una suscripción mensual y comprueba cliente, suscripción y fecha de
-   acceso en Supabase.
-5. Prueba cancelación, renovación e impago y confirma que el estado local se
-   sincroniza mediante los eventos configurados.
+3. Comprueba en Stripe que cada pack concede exactamente 4, 6 o 10 clases con
+   una caducidad de 60 días, incluso al reenviar el mismo evento.
+4. Compra un mes ilimitado, comprueba que puedes elegir el mes y que Supabase
+   registra exactamente sus límites naturales, la clase especial y el invitado.
+5. Si todavía existen suscripciones antiguas, prueba cancelación, renovación e
+   impago y confirma que se sincronizan mediante los eventos configurados.
 6. Abre Customer Portal y comprueba que vuelve a `SITE_URL`.
 7. Reembolsa las compras reales de validación desde Stripe Dashboard y verifica
    el resultado antes de habilitar los botones para clientes.

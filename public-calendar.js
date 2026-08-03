@@ -63,7 +63,7 @@
             finished: 'Finalizada',
             closed: 'Reserva cerrada',
             buy: 'Comprar o reservar',
-            workshop: 'Ver taller',
+            workshop: 'Reservar clase especial',
             noDayClasses: 'No hay clases publicadas para este día.',
             selectedStyle: 'Mostrando {style}',
             selectedTeacher: 'con {teacher}',
@@ -123,7 +123,7 @@
             finished: 'Finished',
             closed: 'Booking closed',
             buy: 'Buy or book',
-            workshop: 'View workshop',
+            workshop: 'Book special class',
             noDayClasses: 'There are no published classes on this day.',
             selectedStyle: 'Showing {style}',
             selectedTeacher: 'with {teacher}',
@@ -489,12 +489,11 @@
         if (item.end.getTime() <= now) {
             return { disabled: true, stateClass: 'is-past', badge: text('finished'), hint: text('finished') };
         }
-        if (item.classType === 'yoga' && item.complete === true) {
+        if (item.complete === true) {
             return { disabled: true, stateClass: 'is-full', badge: text('full'), hint: text('full') };
         }
         if (
-            item.classType === 'yoga'
-            && item.start.getTime() <= now + bookingCutoffHours() * 60 * 60 * 1000
+            item.start.getTime() <= now + bookingCutoffHours() * 60 * 60 * 1000
         ) {
             return { disabled: true, stateClass: 'is-closed', badge: text('closed'), hint: text('closed') };
         }
@@ -1126,7 +1125,12 @@
         if (!item || getEventState(item).disabled) return;
 
         if (item.classType === 'taller') {
-            root.location.href = 'tarifas.html?category=talleres&from=calendario#section-talleres';
+            const params = new URLSearchParams({
+                view: 'especiales',
+                class: String(item.id),
+                from: 'calendario'
+            });
+            root.location.href = `profile.html?${params.toString()}`;
             return;
         }
 

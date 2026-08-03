@@ -85,6 +85,7 @@ serve(async (req) => {
         p_amount_total: session.amount_total,
         p_currency: session.currency,
         p_payment_status: session.payment_status,
+        p_membership_month: purchase.membershipMonth,
         p_period_start: subscription ? unixSecondsToIso(subscription.current_period_start) : null,
         p_period_end: subscription ? unixSecondsToIso(subscription.current_period_end) : null,
         p_subscription_status: subscription?.status || null,

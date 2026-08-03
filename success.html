@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.8">
+    <meta name="application-version" content="6.9">
     <meta name="robots" content="noindex,nofollow">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.8">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.9">
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
@@ -62,7 +62,7 @@
                 <i class="ph-fill ph-check-circle text-5xl"></i>
             </div>
             <h1 class="brand-font text-3xl font-black text-cocoa mb-3">¡Pago Completado!</h1>
-            <p class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+            <p id="standard-success-message" class="text-cocoa/75 text-sm mb-6 leading-relaxed">
                 Stripe ha confirmado tu compra. Tu cuenta se actualizará automáticamente; si aún no ves el nuevo saldo al entrar en tu perfil, recarga la página tras unos segundos.
             </p>
             <div class="bg-emerald-50/60 border border-emerald-500/10 px-4 py-2.5 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2 mb-8 w-full justify-center">
@@ -134,7 +134,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.8</span>
+            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.9</span>
         </div>
     </div>
 
@@ -142,7 +142,7 @@
     <script>
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '6.8';
+        const APP_VERSION = '6.9';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
         
         let stripeSessionId = '';
@@ -213,6 +213,18 @@
                     }
                 } else {
                     // Logged in user checkout
+                    const successMessage = document.getElementById('standard-success-message');
+                    if (successMessage && data.purchaseType === 'bono_ilimitado' && data.membershipMonth) {
+                        const [year, month] = String(data.membershipMonth).split('-').map(Number);
+                        const monthLabel = new Date(Date.UTC(year, month - 1, 1, 12)).toLocaleDateString('es-ES', {
+                            month: 'long', year: 'numeric', timeZone: 'UTC'
+                        });
+                        successMessage.textContent = `Tu Bono Ilimitado para ${monthLabel} ya está registrado. Podrás usarlo desde el día 1 hasta el último día de ese mes natural.`;
+                    } else if (successMessage && data.purchaseType === 'clase_suelta') {
+                        successMessage.textContent = 'Tu clase suelta ya está registrada como un bono independiente y caducará 60 días naturales después de la compra.';
+                    } else if (successMessage && /^pack_(4|6|10)$/.test(data.purchaseType || '')) {
+                        successMessage.textContent = 'Tu pack ya está registrado con su propio saldo y caducará 60 días naturales después de la compra.';
+                    }
                     document.getElementById('standard-success').classList.remove('hidden');
                     startCountdown(5);
                 }

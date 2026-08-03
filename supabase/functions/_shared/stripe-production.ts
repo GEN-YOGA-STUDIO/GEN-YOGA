@@ -7,7 +7,20 @@ import {
 
 export const PURCHASE_TYPES = {
   CLASE_SUELTA: 'clase_suelta',
+  PACK_4: 'pack_4',
+  PACK_6: 'pack_6',
+  PACK_10: 'pack_10',
+  BONO_ILIMITADO: 'bono_ilimitado',
   BONO_MENSUAL: 'bono_mensual',
+} as const
+
+// Public LIVE product identifiers supplied by GEN Yoga. Checkout still uses
+// Price IDs, but every configured pack Price must belong to its expected
+// product so a valid-looking Price from another Stripe product is rejected.
+export const PACK_PRODUCT_IDS = {
+  PACK_4: 'prod_V0ITB6mD71fwnD',
+  PACK_6: 'prod_V0IUpyuvd7uX00',
+  PACK_10: 'prod_V0IUYoGJJbX7FW',
 } as const
 
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
@@ -21,6 +34,10 @@ export type ProductionConfig = CorsConfig & {
   webhookSecret?: string
   portalConfigurationId?: string
   priceClaseSuelta: string
+  pricePack4: string
+  pricePack6: string
+  pricePack10: string
+  priceBonoIlimitado: string
   priceBonoMensual: string
   siteUrl: string
   siteOrigin: string
@@ -31,6 +48,10 @@ export type ProductionConfig = CorsConfig & {
 
 export type ValidatedCatalog = {
   claseSuelta: Stripe.Price
+  pack4: Stripe.Price
+  pack6: Stripe.Price
+  pack10: Stripe.Price
+  bonoIlimitado: Stripe.Price
   bonoMensual: Stripe.Price
 }
 
@@ -39,6 +60,7 @@ export type ValidatedPurchase = {
   price: Stripe.Price
   expectedAmount: number
   appUserId: string
+  membershipMonth: string | null
 }
 
 const catalogCache = new Map<string, Promise<ValidatedCatalog>>()
@@ -158,12 +180,34 @@ export function readProductionConfig(options: {
   }
 
   const priceClaseSuelta = requireEnv('STRIPE_PRICE_CLASE_SUELTA')
+  const pricePack4 = requireEnv('STRIPE_PRICE_PACK_4')
+  const pricePack6 = requireEnv('STRIPE_PRICE_PACK_6')
+  const pricePack10 = requireEnv('STRIPE_PRICE_PACK_10')
+  const priceBonoIlimitado = requireEnv('STRIPE_PRICE_BONO_ILIMITADO')
   const priceBonoMensual = requireEnv('STRIPE_PRICE_BONO_MENSUAL')
-  if (!priceClaseSuelta.startsWith('price_') || !priceBonoMensual.startsWith('price_')) {
+  const configuredPriceIds = [
+    priceClaseSuelta,
+    pricePack4,
+    pricePack6,
+    pricePack10,
+    priceBonoIlimitado,
+    priceBonoMensual,
+  ]
+  if (configuredPriceIds.some((priceId) => !priceId.startsWith('price_'))) {
     throw new Error('Los identificadores Stripe de precio no son válidos.')
   }
-  if (priceClaseSuelta === priceBonoMensual) {
-    throw new Error('Los dos productos no pueden compartir el mismo Price ID.')
+  const oneTimePriceIds = [
+    priceClaseSuelta,
+    pricePack4,
+    pricePack6,
+    pricePack10,
+    priceBonoIlimitado,
+  ]
+  if (new Set(oneTimePriceIds).size !== oneTimePriceIds.length) {
+    throw new Error('Los productos de pago único no pueden compartir Price ID.')
+  }
+  if (oneTimePriceIds.includes(priceBonoMensual)) {
+    throw new Error('El Price recurrente antiguo no puede reutilizar un Price de pago único.')
   }
 
   const { siteUrl, siteOrigin } = normaliseSiteUrl(requireEnv('SITE_URL'))
@@ -188,6 +232,10 @@ export function readProductionConfig(options: {
     webhookSecret,
     portalConfigurationId,
     priceClaseSuelta,
+    pricePack4,
+    pricePack6,
+    pricePack10,
+    priceBonoIlimitado,
     priceBonoMensual,
     siteUrl,
     siteOrigin,
@@ -211,12 +259,20 @@ export function createAdminClient(config: ProductionConfig): SupabaseClient {
   })
 }
 
-function validateCommonPrice(price: Stripe.Price, expectedId: string, expectedAmount: number): void {
+function validateCommonPrice(
+  price: Stripe.Price,
+  expectedId: string,
+  expectedAmount: number,
+  expectedProductId?: string,
+): void {
   if (price.id !== expectedId || !price.livemode || !price.active) {
     throw new Error(`El Price ${expectedId} no está activo en modo LIVE.`)
   }
   if (price.currency.toLowerCase() !== 'eur' || price.unit_amount !== expectedAmount) {
     throw new Error(`El Price ${expectedId} no tiene el importe EUR esperado.`)
+  }
+  if (expectedProductId && stripeObjectId(price.product) !== expectedProductId) {
+    throw new Error(`El Price ${expectedId} no pertenece al producto ${expectedProductId}.`)
   }
 }
 
@@ -224,14 +280,34 @@ export async function loadAndValidateCatalog(
   stripe: Stripe,
   config: ProductionConfig,
 ): Promise<ValidatedCatalog> {
-  const [claseSuelta, bonoMensual] = await Promise.all([
+  const [claseSuelta, pack4, pack6, pack10, bonoIlimitado, bonoMensual] = await Promise.all([
     stripe.prices.retrieve(config.priceClaseSuelta),
+    stripe.prices.retrieve(config.pricePack4),
+    stripe.prices.retrieve(config.pricePack6),
+    stripe.prices.retrieve(config.pricePack10),
+    stripe.prices.retrieve(config.priceBonoIlimitado),
     stripe.prices.retrieve(config.priceBonoMensual),
   ])
 
   validateCommonPrice(claseSuelta, config.priceClaseSuelta, 1500)
   if (claseSuelta.type !== 'one_time' || claseSuelta.recurring) {
     throw new Error('STRIPE_PRICE_CLASE_SUELTA debe ser un pago único.')
+  }
+
+  for (const [price, priceId, amount, variableName, expectedProductId] of [
+    [pack4, config.pricePack4, 5000, 'STRIPE_PRICE_PACK_4', PACK_PRODUCT_IDS.PACK_4],
+    [pack6, config.pricePack6, 6500, 'STRIPE_PRICE_PACK_6', PACK_PRODUCT_IDS.PACK_6],
+    [pack10, config.pricePack10, 9500, 'STRIPE_PRICE_PACK_10', PACK_PRODUCT_IDS.PACK_10],
+  ] as const) {
+    validateCommonPrice(price, priceId, amount, expectedProductId)
+    if (price.type !== 'one_time' || price.recurring) {
+      throw new Error(`${variableName} debe ser un pago único.`)
+    }
+  }
+
+  validateCommonPrice(bonoIlimitado, config.priceBonoIlimitado, 9000)
+  if (bonoIlimitado.type !== 'one_time' || bonoIlimitado.recurring) {
+    throw new Error('STRIPE_PRICE_BONO_ILIMITADO debe ser un pago único de un mes natural.')
   }
 
   validateCommonPrice(bonoMensual, config.priceBonoMensual, 9000)
@@ -243,14 +319,21 @@ export async function loadAndValidateCatalog(
     throw new Error('STRIPE_PRICE_BONO_MENSUAL debe ser una suscripción mensual.')
   }
 
-  return { claseSuelta, bonoMensual }
+  return { claseSuelta, pack4, pack6, pack10, bonoIlimitado, bonoMensual }
 }
 
 export function getValidatedCatalog(
   stripe: Stripe,
   config: ProductionConfig,
 ): Promise<ValidatedCatalog> {
-  const cacheKey = `${config.priceClaseSuelta}:${config.priceBonoMensual}`
+  const cacheKey = [
+    config.priceClaseSuelta,
+    config.pricePack4,
+    config.pricePack6,
+    config.pricePack10,
+    config.priceBonoIlimitado,
+    config.priceBonoMensual,
+  ].join(':')
   let promise = catalogCache.get(cacheKey)
   if (!promise) {
     promise = loadAndValidateCatalog(stripe, config)
@@ -407,6 +490,22 @@ export function validateCheckoutPurchase(
     purchaseType = PURCHASE_TYPES.CLASE_SUELTA
     price = catalog.claseSuelta
     expectedAmount = 1500
+  } else if (priceId === catalog.pack4.id) {
+    purchaseType = PURCHASE_TYPES.PACK_4
+    price = catalog.pack4
+    expectedAmount = 5000
+  } else if (priceId === catalog.pack6.id) {
+    purchaseType = PURCHASE_TYPES.PACK_6
+    price = catalog.pack6
+    expectedAmount = 6500
+  } else if (priceId === catalog.pack10.id) {
+    purchaseType = PURCHASE_TYPES.PACK_10
+    price = catalog.pack10
+    expectedAmount = 9500
+  } else if (priceId === catalog.bonoIlimitado.id) {
+    purchaseType = PURCHASE_TYPES.BONO_ILIMITADO
+    price = catalog.bonoIlimitado
+    expectedAmount = 9000
   } else if (priceId === catalog.bonoMensual.id) {
     purchaseType = PURCHASE_TYPES.BONO_MENSUAL
     price = catalog.bonoMensual
@@ -418,7 +517,9 @@ export function validateCheckoutPurchase(
   if (session.currency?.toLowerCase() !== 'eur' || session.amount_total !== expectedAmount) {
     throw new HttpError(400, 'El importe de la sesión no coincide con el producto.')
   }
-  const expectedMode = purchaseType === PURCHASE_TYPES.BONO_MENSUAL ? 'subscription' : 'payment'
+  const expectedMode = purchaseType === PURCHASE_TYPES.BONO_MENSUAL
+    ? 'subscription'
+    : 'payment'
   if (session.mode !== expectedMode || session.status !== 'complete') {
     throw new HttpError(400, 'El tipo o estado de la sesión no coincide con el producto.')
   }
@@ -441,7 +542,18 @@ export function validateCheckoutPurchase(
     throw new HttpError(400, 'La sesión no está vinculada a un usuario válido.')
   }
 
-  return { purchaseType, price, expectedAmount, appUserId }
+  const membershipMonth = metadata.membership_month?.trim() || null
+  if (
+    purchaseType === PURCHASE_TYPES.BONO_ILIMITADO &&
+    (!membershipMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth))
+  ) {
+    throw new HttpError(400, 'La sesión no contiene un mes natural válido.')
+  }
+  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && membershipMonth) {
+    throw new HttpError(400, 'El producto no admite un mes natural seleccionado.')
+  }
+
+  return { purchaseType, price, expectedAmount, appUserId, membershipMonth }
 }
 
 export function validateMonthlySubscription(
@@ -468,7 +580,10 @@ export function validateMonthlySubscription(
   if (
     metadata.app !== 'gen_yoga' ||
     metadata.environment !== 'production' ||
-    metadata.purchase_type !== PURCHASE_TYPES.BONO_MENSUAL ||
+    !([
+      PURCHASE_TYPES.BONO_MENSUAL,
+      PURCHASE_TYPES.BONO_ILIMITADO,
+    ] as readonly string[]).includes(metadata.purchase_type || '') ||
     !isUuid(appUserId)
   ) {
     throw new HttpError(400, 'Los metadatos de la suscripción no son válidos.')

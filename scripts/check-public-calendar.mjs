@@ -50,9 +50,9 @@ for (const id of [
 ]) {
   assert.match(classesPage, new RegExp(`id=["']${id}["']`), `Falta #${id} en clases.html`);
 }
-assert.match(classesPage, /public-calendar\.css\?v=6\.8/);
-assert.match(classesPage, /public-calendar\.js\?v=6\.8/);
-assert.match(classesPage, /facilities-carousel\.js\?v=6\.8/);
+assert.match(classesPage, /public-calendar\.css\?v=6\.9/);
+assert.match(classesPage, /public-calendar\.js\?v=6\.9/);
+assert.match(classesPage, /facilities-carousel\.js\?v=6\.9/);
 assert.match(classesPage, /GENPublicCalendar\?\.init\(\{\s*client\s*\}\)/);
 assert.match(classesPage, /id=["']facilities-gallery["'][\s\S]*data-facilities-slide/);
 assert.match(classesPage, /aria-roledescription=["']carousel["']/);
@@ -117,6 +117,7 @@ assert.doesNotMatch(calendarScript, /reservas_yoga.*select|select\([^)]*user_id/
 assert.match(calendarScript, /timeZone:\s*TIME_ZONE/);
 assert.match(calendarScript, /genyoga:calendar:open/);
 assert.match(calendarScript, /genyoga:calendar:close/);
+assert.match(calendarScript, /profile\.html\?\$\{params\.toString\(\)\}/);
 
 assert.match(facilitiesScript, /AUTOPLAY_MS\s*=\s*6_500/);
 assert.match(facilitiesScript, /prefers-reduced-motion:\s*reduce/);
@@ -153,6 +154,10 @@ assert.match(successPage, /preferred_guest_class_id/);
 assert.match(successPage, /\.eq\('activa',\s*true\)/);
 assert.match(profilePage, /tipo_clase_id:\s*tipoClaseId/);
 assert.match(profilePage, /duracion_minutos:\s*duracion/);
+assert.match(profilePage, /id="view-especiales"/);
+assert.match(profilePage, /\.eq\('tipo_clase',\s*'taller'\)/);
+assert.match(profilePage, /\.eq\('categoria',\s*'taller'\)/);
+assert.doesNotMatch(profilePage, /id="clase-es-especial"|toggleClaseEspecial/);
 
 assert.match(migration, /security definer/i);
 assert.match(migration, /time zone 'Europe\/Madrid'/i);
