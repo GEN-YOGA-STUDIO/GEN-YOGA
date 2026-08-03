@@ -100,7 +100,7 @@ requireText(checkout, 'checkoutAttemptId', 'Idempotencia individual de invitados
 requireText(checkout, 'profile.account_deletion_pending', 'Checkout bloqueado por eliminación pendiente');
 requireText(checkout, 'expireCreatedCheckoutSession', 'Cierre del Checkout creado durante eliminación');
 requireText(checkout, ".select('account_deletion_pending')", 'Revalidación post-Checkout del tombstone');
-requireText(checkout, "const APP_RELEASE = '6.6'", 'Versión autoritativa de Checkout');
+requireText(checkout, "const APP_RELEASE = '6.8'", 'Versión autoritativa de Checkout');
 requireText(checkout, 'app_version: APP_RELEASE', 'Metadato uniforme de versión en Checkout');
 forbid(
   checkout,

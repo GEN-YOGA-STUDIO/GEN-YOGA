@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.6">
+    <meta name="application-version" content="6.8">
     <meta name="robots" content="noindex,nofollow">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.6">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.8">
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
@@ -134,7 +134,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.6</span>
+            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.8</span>
         </div>
     </div>
 
@@ -142,7 +142,7 @@
     <script>
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '6.6';
+        const APP_VERSION = '6.8';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
         
         let stripeSessionId = '';
@@ -160,6 +160,11 @@
             try {
                 localStorage.removeItem(key);
             } catch (_) {}
+        }
+
+        function safePositiveInteger(value) {
+            const parsed = Number(String(value ?? '').trim());
+            return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -286,6 +291,18 @@
             }
         }
 
+        function getPublicYogaClassName(value) {
+            const original = String(value || '').trim();
+            const normalized = original
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/\s+/g, ' ');
+            if (normalized === 'yoga aryuveda') return 'Yoga Ayurveda';
+            if (normalized === 'yoga (silvia) consultas') return 'Yoga con Silvia';
+            return original;
+        }
+
         async function cargarClasesDisponiblesInvitado() {
             const selectEl = document.getElementById('guest-clase-select');
 
@@ -301,17 +318,52 @@
             try {
                 // Enforce that guest classes must start in more than 12 hours
                 const minDateIso = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
-                
+                const preferredClassRaw = safeStoredValue('preferred_guest_class_id');
+                const preferredClassId = safePositiveInteger(preferredClassRaw);
+                if (preferredClassRaw && !preferredClassId) {
+                    safeRemoveStoredValue('preferred_guest_class_id');
+                }
+
                 // Fetch classes of tipo_clase 'yoga' starting after the 12-hour limit
-                const { data: clases, error: errClases } = await client
+                const classColumns = 'id, nombre, fecha_inicio, capacidad_max, activa, profesionales(nombre, apellidos)';
+                const classesRequest = client
                     .from('clases')
-                    .select('*, profesionales(*)')
+                    .select(classColumns)
                     .eq('tipo_clase', 'yoga')
+                    .eq('activa', true)
                     .gte('fecha_inicio', minDateIso)
                     .order('fecha_inicio')
                     .limit(15);
+                const preferredClassRequest = preferredClassId
+                    ? client
+                        .from('clases')
+                        .select(classColumns)
+                        .eq('id', preferredClassId)
+                        .eq('tipo_clase', 'yoga')
+                        .eq('activa', true)
+                        .gte('fecha_inicio', minDateIso)
+                        .maybeSingle()
+                    : Promise.resolve({ data: null, error: null });
+
+                const [
+                    { data: upcomingClasses, error: errClases },
+                    { data: preferredClass, error: preferredClassError }
+                ] = await Promise.all([classesRequest, preferredClassRequest]);
 
                 if (errClases) throw errClases;
+                if (preferredClassError) {
+                    console.warn('No se pudo comprobar la clase preferida:', preferredClassError);
+                }
+
+                const classesById = new Map(
+                    (upcomingClasses || []).map(clase => [String(clase.id), clase])
+                );
+                if (preferredClass?.id) {
+                    classesById.set(String(preferredClass.id), preferredClass);
+                }
+                const clases = Array.from(classesById.values()).sort(
+                    (a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio)
+                );
 
                 if (!clases || clases.length === 0) {
                     replaceOptions([{ label: 'No hay clases disponibles en este momento' }]);
@@ -342,10 +394,10 @@
                     
                     if (libres > 0) {
                         const dateStr = formatDateTimeSpanish(c.fecha_inicio);
-                        const profName = c.profesionales?.nombre || 'Instructor';
+                        const profName = `${c.profesionales?.nombre || ''} ${c.profesionales?.apellidos || ''}`.trim() || 'Instructor';
                         options.push({
                             value: c.id,
-                            label: `${dateStr} · ${c.nombre || 'Clase de Yoga'} (con ${profName}) · ${libres} libres`
+                            label: `${dateStr} · ${getPublicYogaClassName(c.nombre) || 'Clase de Yoga'} (con ${profName}) · ${libres} libres`
                         });
                     }
                 });
@@ -354,6 +406,13 @@
                 replaceOptions(options.length > 1
                     ? options
                     : [{ label: 'Todas las próximas clases están completas' }]);
+
+                if (
+                    preferredClassId
+                    && options.some(option => String(option.value || '') === String(preferredClassId))
+                ) {
+                    selectEl.value = String(preferredClassId);
+                }
             } catch (error) {
                 console.error("Error loading classes:", error);
                 replaceOptions([{ label: 'No se pudieron comprobar las plazas disponibles' }]);
@@ -405,6 +464,7 @@
                 safeRemoveStoredValue('guest_nombre');
                 safeRemoveStoredValue('guest_apellidos');
                 safeRemoveStoredValue('guest_email');
+                safeRemoveStoredValue('preferred_guest_class_id');
 
                 Swal.fire({
                     icon: 'success',

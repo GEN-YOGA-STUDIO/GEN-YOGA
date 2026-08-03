@@ -4,14 +4,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="6.6" />
+    <meta name="application-version" content="6.8" />
     <meta name="robots" content="noindex,nofollow" />
     <title>Mi perfil | GEN Yoga</title>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.6">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.8">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
+    <script src="teacher-profiles.js?v=6.8"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
@@ -612,8 +613,8 @@ const professionalTranslations = {
         },
         "Ángel Javier": {
             "nombre": "Ángel Javier",
-            "especialidad": "Yoga for Men & Therapeutic Yoga",
-            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nNone. I base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In September I begin the mentorship for certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
+            "especialidad": "Yoga for Men & Yoga for Everyone",
+            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nI base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In addition, I am currently undertaking a mentorship toward certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
         },
         "Miriam": {
             "nombre": "Miriam",
@@ -627,7 +628,9 @@ function translateProfessional(p) {
     if (!p) return p;
     const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
     if (lang === 'en') {
-        const trans = professionalTranslations['en']?.[p.nombre] || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
+        const trans = window.GENTeacherProfiles?.getEnglishProfile(p)
+            || professionalTranslations['en']?.[p.nombre]
+            || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
         if (trans) {
             return {
                 ...p,
@@ -3056,7 +3059,7 @@ main .sticky.top-24 {
                     </p>
                     <div
                         class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-            <span>© 2026 GEN Yoga · v6.6. Todos los derechos reservados.</span>
+            <span>© 2026 GEN Yoga · v6.8. Todos los derechos reservados.</span>
                     </div>
                 </div>
             </footer>
@@ -3479,7 +3482,7 @@ main .sticky.top-24 {
 // --- 1. CONFIGURACIÓN ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '6.6';
+const APP_VERSION = '6.8';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 function closePaymentUiBeforeNavigation() {
@@ -4307,46 +4310,24 @@ async function cargarProfesionalesCache() {
     }
 
     allProfesionalesCache = (data || []).map(p => {
-            if ((p.email || '').toLowerCase() === 'angel@genyoga.es' || (p.nombre || '').toLowerCase() === 'ángel') {
+            p = window.GENTeacherProfiles?.repairLegacyDescription(p) || p;
+            const teacherKey = window.GENTeacherProfiles?.getKey(p) || '';
+            if (teacherKey === 'angel') {
                 const updated = { ...p };
                 if (!updated.nombre.includes('Javier')) {
                     updated.nombre = "Ángel Javier";
                 }
                 if (!updated.descripcion || !updated.descripcion.includes('LUGAR DE NACIMIENTO')) {
-                    updated.descripcion = `LUGAR DE NACIMIENTO: La Roda
-
-TITULACIONES:
-Ninguna. Baso mi aprendizaje en el autoestudio/práctica, en recibir clases e intensivos de profesores con larga trayectoria (anatomía, asana, filosofía, etc., lo necesario para mi desarrollo en el camino de Yoga). En septiembre empiezo la mentoría para la certificación como profesor de Yoga Iyengar.
-
-SOBRE MI:
-Cuento con 6 años de experiencia en la práctica de yoga, de los cuales 5 años y medio están dedicados a estudiar y practicar Iyengar Yoga en Valencia y La Roda.
-
-TE ACOMPAÑO:
-La práctica está basada en el ajuste preciso y la correcta alineación del cuerpo, adaptando la postura a las condiciones de cada alumno/a para encontrar los efectos y beneficios en asana. Trabajamos en la comprensión de las acciones, en sentir lo que hacemos y, desde la profundidad de ese trabajo físico, damos la posibilidad a una manera de relación acorde al conocimiento propio que se va dando con la práctica.
-
-ME DEFINE:
-"Dedicación y Cuidado"`;
+                    updated.descripcion = window.GENTeacherProfiles?.descriptions.angel
+                        || 'SOBRE MÍ:\nInstructor especializado en una práctica accesible, segura y adaptada a cada cuerpo.';
                 }
                 return updated;
             }
             if (p.id === 14 || (p.email || '').toLowerCase() === 'yanira@genyoga.es' || (p.nombre || '').toLowerCase().includes('yanira')) {
                 const updated = { ...p };
                 updated.foto_url = 'img/yanira.jpg';
-                updated.descripcion = `TRAYECTORIA:
-Procedente de Estados Unidos, con raíces salvadoreñas, he tenido la oportunidad de conocer y vivir en varias partes del mundo y me siento afortunada de conocer a personas de diferentes lugares y de varios caminos en la vida, ya que cada experiencia y aprendizaje me han formado como la persona que ahora soy.
-
-Docente de profesión, he enseñado en las escuelas del área de Washington D.C. por veinte años. Mis estudios del Yoga son un proceso continuo, pero considero que mi yoga mat es mi mejor guía.
-
-TITULACIONES:
-• Máster en Educación Internacional (Framingham State College)
-• Máster en Liderazgo en Educación (Universidad de George Mason)
-• Instructora de Yoga certificada por Yoga Alliance (entrenamiento en DownDog en Georgetown, Washington D.C.)
-• Especializaciones en Anatomía aplicada al Yoga, Yoga Infantil, Yoga y Mindfulness
-
-TE ACOMPAÑO:
-• Vinyasa Yoga (Clases virtuales y presenciales)
-• Yoga Restaurativo y Meditación
-• Mindfulness para adultos y niños`;
+                updated.descripcion = window.GENTeacherProfiles?.descriptions.yanira
+                    || 'SOBRE MÍ:\nInstructora de yoga certificada, con una mirada cercana que une movimiento, respiración y calma.';
                 return updated;
             }
             return p;
@@ -7699,6 +7680,7 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
 
     const tipoSelect = document.getElementById('clase-tipo-select');
     const nombre = tipoSelect.options[tipoSelect.selectedIndex].text;
+    const tipoClaseId = safePositiveInteger(tipoSelect.value);
     const fecha = document.getElementById('clase-fecha').value;
     const horaInicio = document.getElementById('clase-hora-inicio').value;
     const duracion = parseInt(document.getElementById('clase-duracion').value);
@@ -7713,6 +7695,11 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
 
     const addGroupEnabled = !!document.getElementById('clase-add-group-enabled')?.checked;
 
+    if (!tipoClaseId) {
+        Swal.fire('Error', 'Debes seleccionar un tipo de clase válido', 'error');
+        return;
+    }
+
     if (!profesorId) {
         Swal.fire('Error', 'Debes seleccionar un profesional', 'error');
         return;
@@ -7726,9 +7713,12 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
         const end = new Date(fechaInicio.getTime() + duracion * 60000);
         inserts.push({
             tipo_clase: 'yoga',
+            activa: true,
+            tipo_clase_id: tipoClaseId,
             nombre,
             fecha_inicio: fechaInicio.toISOString(),
             fecha_fin: end.toISOString(),
+            duracion_minutos: duracion,
             capacidad_max: capacidad,
             profesor_id: profesorId
         });
@@ -7739,9 +7729,12 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
             const end = new Date(start.getTime() + duracion * 60000);
             inserts.push({
                 tipo_clase: 'yoga',
+                activa: true,
+                tipo_clase_id: tipoClaseId,
                 nombre,
                 fecha_inicio: start.toISOString(),
                 fecha_fin: end.toISOString(),
+                duracion_minutos: duracion,
                 capacidad_max: capacidad,
                 profesor_id: profesorId
             });
@@ -7753,9 +7746,12 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
             const end = new Date(start.getTime() + duracion * 60000);
             inserts.push({
                 tipo_clase: 'yoga',
+                activa: true,
+                tipo_clase_id: tipoClaseId,
                 nombre,
                 fecha_inicio: start.toISOString(),
                 fecha_fin: end.toISOString(),
+                duracion_minutos: duracion,
                 capacidad_max: capacidad,
                 profesor_id: profesorId
             });
@@ -7782,9 +7778,12 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
                     const end = new Date(dayOfWeekDate.getTime() + duracion * 60000);
                     inserts.push({
                         tipo_clase: 'yoga',
+                        activa: true,
+                        tipo_clase_id: tipoClaseId,
                         nombre,
                         fecha_inicio: dayOfWeekDate.toISOString(),
                         fecha_fin: end.toISOString(),
+                        duracion_minutos: duracion,
                         capacidad_max: capacidad,
                         profesor_id: profesorId
                     });
@@ -8875,30 +8874,24 @@ function parseBio(text) {
     if (!text) return sections;
 
     const normalized = text.replace(/\r\n/g, '\n');
-    const parts = normalized.split(/\n?(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TRAYECTORIA|TE ACOMPAÑO|ME DEFINE):?\s*/i);
+    const parts = normalized.split(/(?:^|\n)\s*(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TRAYECTORIA|TE ACOMPAÑO|ME DEFINE|PLACE OF BIRTH|QUALIFICATIONS|ABOUT ME|BACKGROUND|I SUPPORT YOU|WHAT DEFINES ME):\s*/i);
     
     for (let i = 1; i < parts.length; i += 2) {
         const header = parts[i].toUpperCase();
         const content = parts[i+1] ? parts[i+1].trim() : '';
-        if (header.includes('LUGAR')) {
+        if (header.includes('LUGAR') || header.includes('PLACE OF BIRTH')) {
             sections.lugar = content.replace(/,$/, '').trim();
-        } else if (header.includes('TITULACION')) {
+        } else if (header.includes('TITULACION') || header.includes('QUALIFICATION')) {
             sections.titulos = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
-        } else if (header.includes('SOBRE') || header.includes('TRAYECTORIA')) {
+        } else if (header.includes('SOBRE') || header.includes('TRAYECTORIA') || header.includes('ABOUT') || header.includes('BACKGROUND')) {
             sections.sobreMi = content.split('\n').map(p => p.trim()).filter(Boolean);
-        } else if (header.includes('ACOMPA')) {
+        } else if (header.includes('ACOMPA') || header.includes('SUPPORT')) {
             sections.teAcompano = content.split('\n').map(l => l.replace(/^[\s*\-•*]+/g, '').trim()).filter(Boolean);
         } else if (header.includes('DEFINE')) {
             sections.meDefine = content.replace(/^["'“”«»]+/g, '').replace(/["'“”«»]+$/g, '').trim();
         }
     }
     return sections;
-}
-
-function truncateTextProfile(text, max = 150) {
-    const clean = String(text || '').replace(/\s+/g, ' ').trim();
-    if (clean.length <= max) return clean;
-    return `${clean.slice(0, max).trim()}...`;
 }
 
 window.toggleProfesorDetalle = function(cardId) {
@@ -8989,15 +8982,14 @@ function renderProfesoresPublic(filtro = 'todos') {
                  </svg>
                </div>`;
 
-        const fullBio = parsed.sobreMi.join(' ');
-        const bioText = truncateTextProfile(fullBio || p.descripcion || p.bio || 'Profesional de GEN Yoga.', 180);
+        const bioText = parsed.sobreMi[0] || p.descripcion || p.bio || 'Profesional de GEN Yoga.';
 
         const titulosParagraphs = parsed.titulos.length
-            ? parsed.titulos.map(t => `<p class="flex items-start gap-1.5"><span class="text-olive text-sm font-bold leading-none">•</span><span>${escapeHtml(t)}</span></p>`).join('')
+            ? parsed.titulos.map(t => `<p>${escapeHtml(t)}</p>`).join('')
             : '';
 
         const acompanoParagraphs = parsed.teAcompano.length
-            ? parsed.teAcompano.map(item => `<p class="flex items-start gap-1.5"><span class="text-olive text-sm font-bold leading-none">•</span><span>${escapeHtml(item)}</span></p>`).join('')
+            ? parsed.teAcompano.map(item => `<p>${escapeHtml(item)}</p>`).join('')
             : '';
 
         const defineText = parsed.meDefine ? `"${escapeHtml(parsed.meDefine)}"` : '';
@@ -11380,6 +11372,7 @@ async function guardarTallerAdmin(e) {
             capacidad_max: capacidad,
             profesor_id: profesorId,
             tipo_clase: 'taller',
+            activa: true,
             descripcion: notas,
             duracion_minutos: duracion
         });

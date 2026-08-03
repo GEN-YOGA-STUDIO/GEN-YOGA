@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.6">
+    <meta name="application-version" content="6.8">
     <title>GEN Yoga | Tarifas</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.6">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.8">
     
     <!-- Lucide & Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/lucide@1.16.0" defer></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
+    <script src="teacher-profiles.js?v=6.8"></script>
     <script>
 // INLINED i18n.js
 // GEN Yoga Internationalization Module (i18n.js)
@@ -108,6 +109,10 @@ const translations = {
         "rates_suelta_feat1": "1 clase de yoga",
         "rates_suelta_feat2": "Reserva desde tu perfil o recepción",
         "rates_suelta_feat3": "Cancelación según el plazo vigente",
+        "rates_selected_class_label": "Clase seleccionada",
+        "rates_selected_class_loading": "Comprobando la clase seleccionada...",
+        "rates_selected_class_unavailable": "La clase seleccionada ya no está disponible. Puedes comprar una clase suelta y elegir otro horario.",
+        "rates_selected_class_teacher": "Con {teacher}",
         "rates_suelta_btn": "Comprar clase",
         "rates_mensual_badge": "★ Ahorra 25%",
         "rates_mensual_title": "Bono Mensual",
@@ -393,6 +398,10 @@ const translations = {
         "rates_suelta_feat1": "1 yoga class",
         "rates_suelta_feat2": "Book from your profile or reception",
         "rates_suelta_feat3": "Cancellation according to the current policy",
+        "rates_selected_class_label": "Selected class",
+        "rates_selected_class_loading": "Checking the selected class...",
+        "rates_selected_class_unavailable": "The selected class is no longer available. You can buy a single class and choose another time.",
+        "rates_selected_class_teacher": "With {teacher}",
         "rates_suelta_btn": "Buy class",
         "rates_mensual_badge": "★ Save 25%",
         "rates_mensual_title": "Monthly Plan",
@@ -605,8 +614,8 @@ const professionalTranslations = {
         },
         "Ángel Javier": {
             "nombre": "Ángel Javier",
-            "especialidad": "Yoga for Men & Therapeutic Yoga",
-            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nNone. I base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In September I begin the mentorship for certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
+            "especialidad": "Yoga for Men & Yoga for Everyone",
+            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nI base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In addition, I am currently undertaking a mentorship toward certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
         },
         "Miriam": {
             "nombre": "Miriam",
@@ -620,7 +629,9 @@ function translateProfessional(p) {
     if (!p) return p;
     const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
     if (lang === 'en') {
-        const trans = professionalTranslations['en']?.[p.nombre] || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
+        const trans = window.GENTeacherProfiles?.getEnglishProfile(p)
+            || professionalTranslations['en']?.[p.nombre]
+            || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
         if (trans) {
             return {
                 ...p,
@@ -1110,10 +1121,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat2">Reserva desde tu perfil o recepción</span></li>
                             <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat3">Cancelación según el plazo vigente</span></li>
                         </ul>
+                        <div id="selected-yoga-class-summary"
+                            class="hidden mt-5 rounded-2xl border border-cocoa/10 bg-sand/10 p-4 text-left"
+                            role="status" aria-live="polite" aria-atomic="true">
+                            <p id="selected-yoga-class-label"
+                                class="text-[10px] font-bold uppercase tracking-widest text-suelta"
+                                data-i18n="rates_selected_class_label">Clase seleccionada</p>
+                            <p id="selected-yoga-class-name" class="mt-1 font-bold text-cocoa"></p>
+                            <p id="selected-yoga-class-time" class="mt-1 text-xs text-cocoa/70"></p>
+                            <p id="selected-yoga-class-teacher" class="mt-1 text-xs font-semibold text-cocoa/70"></p>
+                        </div>
                     </div>
                     <div class="mt-8">
                         <div class="text-4xl font-serif font-bold text-cocoa mb-5">15€</div>
-                        <button onclick="adquirirClaseSuelta(event)" class="block w-full py-3.5 bg-suelta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]" data-i18n="rates_suelta_btn">Comprar clase</button>
+                        <button id="buy-single-class-button" onclick="adquirirClaseSuelta(event)" class="block w-full py-3.5 bg-suelta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]" data-i18n="rates_suelta_btn">Comprar clase</button>
                     </div>
                 </div>
 
@@ -1238,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.6 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.8 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -1250,8 +1271,199 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- CONFIGURACIÓN SUPABASE ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '6.6';
+const APP_VERSION = '6.8';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+let requestedYogaClassParamPresent = false;
+let requestedYogaClassId = null;
+let selectedYogaClass = null;
+let selectedYogaClassState = 'idle';
+let selectedYogaClassLoadPromise = Promise.resolve(null);
+
+function normaliseSelectedClassId(value) {
+    const parsed = Number(String(value ?? '').trim());
+    return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function getRequestedYogaClassSelection() {
+    const params = new URLSearchParams(window.location.search);
+    const candidates = [params.get('class'), params.get('clase')];
+    const hadParameter = candidates.some(value => value !== null);
+
+    for (const candidate of candidates) {
+        const id = normaliseSelectedClassId(candidate);
+        if (id) return { hadParameter, id };
+    }
+
+    return { hadParameter, id: null };
+}
+
+function selectedClassTranslation(key, fallback) {
+    const translated = typeof window.t === 'function' ? window.t(key) : '';
+    return translated && translated !== key ? translated : fallback;
+}
+
+function getPublicYogaClassName(value) {
+    const original = String(value || '').trim();
+    const normalized = original
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+    if (normalized === 'yoga aryuveda') return 'Yoga Ayurveda';
+    if (normalized === 'yoga (silvia) consultas') return 'Yoga con Silvia';
+    return original;
+}
+
+function getSelectedClassTeacherName(clase) {
+    const professional = Array.isArray(clase?.profesionales)
+        ? clase.profesionales[0]
+        : clase?.profesionales;
+    const fullName = `${professional?.nombre || ''} ${professional?.apellidos || ''}`.trim();
+    return fullName || (window.currentLang === 'en' ? 'GEN Yoga teacher' : 'Profesorado GEN Yoga');
+}
+
+function formatSelectedClassSchedule(clase) {
+    const start = new Date(clase?.fecha_inicio);
+    const end = new Date(clase?.fecha_fin);
+    if (Number.isNaN(start.getTime())) return '';
+
+    const locale = window.currentLang === 'en' ? 'en-GB' : 'es-ES';
+    const dateText = new Intl.DateTimeFormat(locale, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'Europe/Madrid'
+    }).format(start);
+    const timeFormatter = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Madrid'
+    });
+    const startTime = timeFormatter.format(start);
+    const endTime = Number.isNaN(end.getTime()) ? '' : timeFormatter.format(end);
+    const capitalizedDate = dateText.charAt(0).toUpperCase() + dateText.slice(1);
+
+    return `${capitalizedDate} · ${startTime}${endTime ? `–${endTime}` : ''}`;
+}
+
+function renderSelectedYogaClassSummary() {
+    const summary = document.getElementById('selected-yoga-class-summary');
+    const label = document.getElementById('selected-yoga-class-label');
+    const name = document.getElementById('selected-yoga-class-name');
+    const time = document.getElementById('selected-yoga-class-time');
+    const teacher = document.getElementById('selected-yoga-class-teacher');
+    const buyButton = document.getElementById('buy-single-class-button');
+    if (!summary || !label || !name || !time || !teacher) return;
+
+    if (!requestedYogaClassParamPresent || selectedYogaClassState === 'idle') {
+        summary.classList.add('hidden');
+        buyButton?.removeAttribute('aria-describedby');
+        return;
+    }
+
+    summary.classList.remove('hidden');
+    buyButton?.setAttribute('aria-describedby', 'selected-yoga-class-summary');
+    label.textContent = selectedClassTranslation('rates_selected_class_label', 'Clase seleccionada');
+    time.textContent = '';
+    teacher.textContent = '';
+
+    if (selectedYogaClassState === 'loading') {
+        name.textContent = selectedClassTranslation(
+            'rates_selected_class_loading',
+            'Comprobando la clase seleccionada...'
+        );
+        return;
+    }
+
+    if (selectedYogaClassState !== 'ready' || !selectedYogaClass) {
+        name.textContent = selectedClassTranslation(
+            'rates_selected_class_unavailable',
+            'La clase seleccionada ya no está disponible. Puedes comprar una clase suelta y elegir otro horario.'
+        );
+        return;
+    }
+
+    name.textContent = getPublicYogaClassName(selectedYogaClass.nombre)
+        || (window.currentLang === 'en' ? 'Yoga class' : 'Clase de yoga');
+    time.textContent = formatSelectedClassSchedule(selectedYogaClass);
+    teacher.textContent = selectedClassTranslation(
+        'rates_selected_class_teacher',
+        'Con {teacher}'
+    ).replace('{teacher}', getSelectedClassTeacherName(selectedYogaClass));
+}
+
+async function loadSelectedYogaClassFromUrl() {
+    const selection = getRequestedYogaClassSelection();
+    requestedYogaClassParamPresent = selection.hadParameter;
+    requestedYogaClassId = selection.id;
+    selectedYogaClass = null;
+
+    if (!requestedYogaClassParamPresent) {
+        selectedYogaClassState = 'idle';
+        renderSelectedYogaClassSummary();
+        return null;
+    }
+
+    if (!requestedYogaClassId || !client) {
+        selectedYogaClassState = 'unavailable';
+        safeRemoveItem('pending_booking_clase_id');
+        safeRemoveItem('preferred_guest_class_id');
+        renderSelectedYogaClassSummary();
+        return null;
+    }
+
+    selectedYogaClassState = 'loading';
+    renderSelectedYogaClassSummary();
+
+    try {
+        const { data, error } = await client
+            .from('clases')
+            .select('id, nombre, fecha_inicio, fecha_fin, activa, profesionales!inner(nombre, apellidos)')
+            .eq('id', requestedYogaClassId)
+            .eq('tipo_clase', 'yoga')
+            .eq('activa', true)
+            .eq('profesionales.visible_publico', true)
+            .maybeSingle();
+
+        if (error) throw error;
+        if (!data || normaliseSelectedClassId(data.id) !== requestedYogaClassId || data.activa !== true) {
+            selectedYogaClassState = 'unavailable';
+            safeRemoveItem('pending_booking_clase_id');
+            safeRemoveItem('preferred_guest_class_id');
+            renderSelectedYogaClassSummary();
+            return null;
+        }
+
+        selectedYogaClass = data;
+        selectedYogaClassState = 'ready';
+        renderSelectedYogaClassSummary();
+        return data;
+    } catch (error) {
+        console.error('No se pudo cargar la clase seleccionada:', error);
+        selectedYogaClass = null;
+        selectedYogaClassState = 'unavailable';
+        safeRemoveItem('pending_booking_clase_id');
+        safeRemoveItem('preferred_guest_class_id');
+        renderSelectedYogaClassSummary();
+        return null;
+    }
+}
+
+function persistSelectedYogaClassForPurchase(userId) {
+    const classId = normaliseSelectedClassId(selectedYogaClass?.id);
+    if (userId === 'guest') {
+        safeRemoveItem('pending_booking_clase_id');
+        if (classId) safeSetItem('preferred_guest_class_id', String(classId));
+        else safeRemoveItem('preferred_guest_class_id');
+        return;
+    }
+
+    safeRemoveItem('preferred_guest_class_id');
+    if (classId) safeSetItem('pending_booking_clase_id', String(classId));
+    else safeRemoveItem('pending_booking_clase_id');
+}
 
 function newCheckoutAttemptId() {
     return typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : '';
@@ -1302,7 +1514,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    selectedYogaClassLoadPromise = loadSelectedYogaClassFromUrl();
 });
+
+window.addEventListener('languageChanged', renderSelectedYogaClassSummary);
 
 // 2. SISTEMA DE MODALES
 const modalOverlay = document.getElementById('modal-overlay');
@@ -1507,6 +1722,13 @@ window.handleNavClick = function (btn, url) {
             });
         }
 
+        document.addEventListener('DOMContentLoaded', () => {
+            const requestedCategory = new URLSearchParams(window.location.search).get('category');
+            if (['yoga', 'psicologia', 'talleres'].includes(requestedCategory)) {
+                switchCategory(requestedCategory);
+            }
+        });
+
         // --- GUEST STRIPE CHECKOUT INTEGRATION ---
         // Reuse Supabase client declared in the inlined app.js script block
         const supabaseClient = client;
@@ -1522,13 +1744,15 @@ window.handleNavClick = function (btn, url) {
                 return;
             }
 
+            await selectedYogaClassLoadPromise;
+
             // Check if user is logged in
             const sessionRes = await supabaseClient.auth.getSession();
             const session = sessionRes.data?.session;
 
             if (session) {
                 // User is logged in, redirect to checkout with their user ID
-                iniciarPagoStripe(session.user.id);
+                await iniciarPagoStripe(session.user.id);
             } else {
                 // User is not logged in, ask if they want to pay as guest or login/register
                 const result = await Swal.fire({
@@ -1551,10 +1775,14 @@ window.handleNavClick = function (btn, url) {
                     safeRemoveItem('guest_nombre');
                     safeRemoveItem('guest_apellidos');
                     safeRemoveItem('guest_email');
-                    iniciarPagoStripe('guest');
+                    await iniciarPagoStripe('guest');
                 } else if (result.isDenied) {
-                    // Redirect to login
-                    window.location.href = 'profile.html?buy=clase_suelta';
+                    // Preserve the chosen class while the user signs in or registers.
+                    persistSelectedYogaClassForPurchase('authenticated');
+                    const classQuery = selectedYogaClass?.id
+                        ? `&class=${encodeURIComponent(String(selectedYogaClass.id))}`
+                        : '';
+                    window.location.href = `profile.html?buy=clase_suelta${classQuery}`;
                 }
             }
         }
@@ -1562,6 +1790,7 @@ window.handleNavClick = function (btn, url) {
         async function iniciarPagoStripe(userId) {
             if (checkoutRequestInProgress) return;
             checkoutRequestInProgress = true;
+            persistSelectedYogaClassForPurchase(userId);
             const checkoutAttemptId = newCheckoutAttemptId();
             Swal.fire({
                 title: 'Conectando con la pasarela de pagos...',

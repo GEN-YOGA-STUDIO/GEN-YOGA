@@ -9,7 +9,7 @@ const expectedTarget = path.join(workspaceRoot, 'subir cert');
 const productionProjectId = 'jkjifmrrlyncuwpjhxvk';
 const productionUrl = `https://${productionProjectId}.supabase.co`;
 const productionPublishableKey = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const version = '6.6';
+const version = '6.8';
 
 function requireVariable(name) {
   const value = process.env[name]?.trim();
@@ -69,6 +69,10 @@ const htmlFiles = [
 ];
 const staticFiles = [
   'tailwind-compiled.css',
+  'teacher-profiles.js',
+  'public-calendar.css',
+  'public-calendar.js',
+  'facilities-carousel.js',
 ];
 const staticDirectories = ['fonts', 'img'];
 
@@ -88,7 +92,7 @@ for (const fileName of htmlFiles) {
     transformed = transformed.replace(/<meta\s+name=["']robots["'][^>]*>/i, robotsMeta);
   } else {
     transformed = transformed.replace(
-      /(<meta\s+name=["']application-version["']\s+content=["']6\.6["']\s*\/?>)/i,
+      /(<meta\s+name=["']application-version["']\s+content=["']6\.8["']\s*\/?>)/i,
       `$1\n    ${robotsMeta}`,
     );
   }

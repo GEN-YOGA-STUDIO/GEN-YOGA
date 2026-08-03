@@ -20,7 +20,7 @@ import {
   safeErrorResponse,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.6'
+const APP_RELEASE = '6.8'
 
 async function expireCreatedCheckoutSession(
   stripe: ReturnType<typeof createStripeClient>,

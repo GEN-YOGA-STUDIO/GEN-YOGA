@@ -206,11 +206,11 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.6["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.6`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.8["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.8`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
-  if (/\bv6\.[0-5]\b/i.test(source)) errors.push(`${fileName}: contiene una versión visual anterior a 6.6`);
+  if (/\bv6\.[0-7]\b/i.test(source)) errors.push(`${fileName}: contiene una versión visual anterior a 6.8`);
 }
 
 for (const functionName of invokedEdgeFunctions) {

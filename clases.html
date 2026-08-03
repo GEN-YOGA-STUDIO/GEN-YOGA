@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.6">
+    <meta name="application-version" content="6.8">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
     <title>GEN Yoga | Clases</title>
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@1.16.0" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
+    <script src="teacher-profiles.js?v=6.8"></script>
     <script>
 // INLINED i18n.js
 // GEN Yoga Internationalization Module (i18n.js)
@@ -93,6 +94,7 @@ const translations = {
         "classes_tab_vinyasa": "VINYASA",
         "classes_tab_hombres": "HOMBRES",
         "classes_tab_restaurativa": "RESTAURATIVA",
+        "classes_calendar_btn": "Ver horario semanal",
 
         // tarifas.html (Pricing)
         "rates_title": "Tarifas",
@@ -378,6 +380,7 @@ const translations = {
         "classes_tab_hombres": "MEN YOGA",
         "classes_tab_restaurativa": "RESTORATIVE",
         "classes_scroll_arrow_doubt": "Any questions?",
+        "classes_calendar_btn": "View weekly schedule",
 
         // tarifas.html (Pricing)
         "rates_title": "Rates",
@@ -601,8 +604,8 @@ const professionalTranslations = {
         },
         "Ángel Javier": {
             "nombre": "Ángel Javier",
-            "especialidad": "Yoga for Men & Therapeutic Yoga",
-            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nNone. I base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In September I begin the mentorship for certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
+            "especialidad": "Yoga for Men & Yoga for Everyone",
+            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nI base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In addition, I am currently undertaking a mentorship toward certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
         },
         "Miriam": {
             "nombre": "Miriam",
@@ -616,7 +619,9 @@ function translateProfessional(p) {
     if (!p) return p;
     const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
     if (lang === 'en') {
-        const trans = professionalTranslations['en']?.[p.nombre] || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
+        const trans = window.GENTeacherProfiles?.getEnglishProfile(p)
+            || professionalTranslations['en']?.[p.nombre]
+            || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
         if (trans) {
             return {
                 ...p,
@@ -937,7 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.6" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.8" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -1203,6 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
+    <link rel="stylesheet" href="public-calendar.css?v=6.8">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
 
@@ -1236,6 +1242,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <h1 id="header-title" class="brand-font font-black text-[#795244] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.1em] text-center transition-opacity duration-300" data-i18n="classes_title">
                 Escoge tus clases
             </h1>
+            <button id="public-calendar-launch" type="button"
+                class="gy-calendar-launch mt-3 md:mt-5"
+                onclick="window.GENPublicCalendar?.open()">
+                <span class="gy-calendar-launch__live" aria-hidden="true"></span>
+                <span data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 3v3M19 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"></path>
+                </svg>
+            </button>
         </div>
 
         <!-- Active Viewport Content Area -->
@@ -1258,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </svg>
                     </div>
                     <!-- Body (z-20) -->
-                    <div onclick="handleNavClick(this, 'profile.html')" 
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'vinyasa' })"
                         class="folder-body bg-[#795244] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
                             <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80" alt="Vinyasa Flow" class="w-full h-full object-cover">
@@ -1269,6 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_vinyasa_desc">
                                 Una clase dinámica donde cada respiración guía el movimiento. Conecta posturas en secuencias fluidas, suma fuerza, equilibrio y enfoque mientras tu cuerpo se mueve al ritmo de tu propia energía.
                             </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
                         </div>
                     </div>
                 </div>
@@ -1288,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
                     <!-- Body (z-20) -->
-                    <div onclick="handleNavClick(this, 'profile.html')" 
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'yoga-para-hombres' })"
                         class="folder-body bg-[#e06b53] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
                             <img src="https://images.unsplash.com/photo-1562088287-bde35a1ea917?auto=format&fit=crop&w=800&q=80" alt="Yoga para Hombres" class="w-full h-full object-cover">
@@ -1299,6 +1315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_hombres_desc">
                                 Un espacio pensado para fortalecer cuerpo y mente sin presión ni comparaciones. Trabaja flexibilidad, fuerza y respiración consciente en un ambiente cómodo, directo y hecho a tu medida.
                             </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
                         </div>
                     </div>
                 </div>
@@ -1319,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div onclick="scrollToSlide(2)" class="absolute left-[42%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
                     <!-- Body (z-20) -->
-                    <div onclick="handleNavClick(this, 'profile.html')" 
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'restaurativa' })"
                         class="folder-body bg-[#ee9785] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
                             <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80" alt="Yoga Restaurativa Suave" class="w-full h-full object-cover">
@@ -1330,6 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_restaurativa_desc">
                                 Una práctica lenta y consciente diseñada para liberar tensión acumulada. Con posturas sostenidas y respiración profunda, esta clase invita a tu cuerpo y mente a descansar de verdad.
                             </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
                         </div>
                     </div>
                 </div>
@@ -1374,7 +1392,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <!-- CTA Booking Button (fades and scales in dynamically) -->
                     <div id="cta-btn-wrapper" class="opacity-0 transform scale-90 transition-all duration-300">
-                        <a href="profile.html" 
+                        <a href="#calendario-publico"
+                            onclick="event.preventDefault(); window.GENPublicCalendar?.open()"
                             class="inline-block px-8 py-3.5 bg-[#795244] border-2 border-white text-white font-extrabold rounded-full text-xs md:text-sm uppercase tracking-widest hover:bg-white hover:text-[#795244] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl text-center"
                             data-i18n="classes_cta_btn">
                             Reservar mi primera clase
@@ -1423,10 +1442,219 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                 <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">POLÍTICA DE PRIVACIDAD</a>
-                <span class="opacity-60 text-[10px]">v6.6 | @2026 Gen Yoga</span>
+                <span class="opacity-60 text-[10px]">v6.8 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
+
+    <!-- Public, database-backed weekly calendar -->
+    <section id="public-calendar-panel" class="gy-calendar" role="dialog" aria-modal="true"
+        aria-labelledby="public-calendar-title" aria-hidden="true" hidden>
+        <div class="gy-calendar__decor gy-calendar__decor--one" aria-hidden="true"></div>
+        <div class="gy-calendar__decor gy-calendar__decor--two" aria-hidden="true"></div>
+
+        <div class="gy-calendar__shell">
+            <header class="gy-calendar__hero">
+                <div class="gy-calendar__topbar">
+                    <button id="public-calendar-close" type="button" class="gy-calendar__back">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m15 18-6-6 6-6"></path>
+                        </svg>
+                        <span data-calendar-copy="back">Clases</span>
+                    </button>
+                    <span class="gy-calendar__live">
+                        <span aria-hidden="true"></span>
+                        <span data-calendar-copy="live">Horario conectado en directo</span>
+                    </span>
+                </div>
+
+                <div class="gy-calendar__heading">
+                    <p class="gy-calendar__eyebrow">GEN YOGA · ALBACETE</p>
+                    <h2 id="public-calendar-title"><span data-calendar-copy="schedule">Horario</span><em data-calendar-copy="weekly"> semanal</em></h2>
+                    <p data-calendar-copy="intro">Elige tu momento. Cada cambio realizado en el estudio aparece aquí automáticamente.</p>
+                </div>
+
+                <div class="gy-calendar__controls" aria-label="Navegación por semanas">
+                    <button id="calendar-prev-week" type="button" class="gy-calendar__nav-button" aria-label="Semana anterior">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <button id="calendar-today" type="button" class="gy-calendar__today" data-calendar-copy="today">Hoy</button>
+                    <div class="gy-calendar__range">
+                        <span id="calendar-week-kicker" data-calendar-copy="weekOf">Semana del</span>
+                        <strong id="calendar-week-range" aria-live="polite"></strong>
+                    </div>
+                    <button id="calendar-next-week" type="button" class="gy-calendar__nav-button" aria-label="Semana siguiente">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="gy-calendar__content">
+                <div class="gy-calendar__filter-row">
+                    <div>
+                        <p class="gy-calendar__filter-label" data-calendar-copy="filter">Filtrar por práctica</p>
+                        <div id="calendar-style-filters" class="gy-calendar__filters" role="group" aria-label="Filtrar por práctica"></div>
+                    </div>
+                    <button id="calendar-clear-filters" type="button" class="gy-calendar__clear" hidden>
+                        <span data-calendar-copy="clear">Quitar filtros</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                    </button>
+                </div>
+
+                <div id="calendar-selection-note" class="gy-calendar__selection" hidden></div>
+                <div id="calendar-status" class="gy-calendar__status" role="status" aria-live="polite"></div>
+
+                <div id="calendar-skeleton" class="gy-calendar__skeleton" aria-hidden="true" hidden>
+                    <span></span><span></span><span></span><span></span>
+                </div>
+
+                <div id="calendar-error" class="gy-calendar__message" hidden>
+                    <div class="gy-calendar__message-icon" aria-hidden="true">!</div>
+                    <h3 data-calendar-copy="errorTitle">No hemos podido cargar el horario</h3>
+                    <p data-calendar-copy="errorText">Comprueba tu conexión y vuelve a intentarlo.</p>
+                    <button id="calendar-retry" type="button" data-calendar-copy="retry">Reintentar</button>
+                </div>
+
+                <div id="calendar-empty" class="gy-calendar__message" hidden>
+                    <div class="gy-calendar__lotus" aria-hidden="true">✦</div>
+                    <h3 data-calendar-copy="emptyTitle">Esta semana respira un poco más despacio</h3>
+                    <p id="calendar-empty-copy" data-calendar-copy="emptyText">No hay clases publicadas para esta selección.</p>
+                    <button id="calendar-empty-next" type="button" data-calendar-copy="nextWeek">Ver semana siguiente</button>
+                </div>
+
+                <div id="calendar-desktop" class="gy-calendar__table-wrap" hidden>
+                    <table class="gy-calendar__table">
+                        <caption class="sr-only" data-calendar-copy="caption">Horario semanal público de GEN Yoga</caption>
+                        <thead id="calendar-table-head"></thead>
+                        <tbody id="calendar-table-body"></tbody>
+                    </table>
+                </div>
+
+                <div id="calendar-mobile" class="gy-calendar__mobile" hidden>
+                    <div id="calendar-day-tabs" class="gy-calendar__day-tabs" role="tablist" aria-label="Días de la semana"></div>
+                    <div id="calendar-day-agenda" class="gy-calendar__agenda" role="tabpanel"></div>
+                </div>
+
+                <div class="gy-calendar__footer-note">
+                    <span><i aria-hidden="true"></i><span data-calendar-copy="updated">Datos actualizados desde el estudio</span></span>
+                    <span data-calendar-copy="timezone">Horario de Albacete · Europe/Madrid</span>
+                </div>
+
+                <section id="facilities-gallery" class="gy-facilities" aria-labelledby="facilities-title">
+                    <div class="gy-facilities__header">
+                        <div class="gy-facilities__heading">
+                            <p class="gy-facilities__eyebrow" data-calendar-copy="facilitiesEyebrow">El espacio</p>
+                            <h3 id="facilities-title" data-calendar-copy="facilitiesTitle">Instalaciones</h3>
+                            <p data-calendar-copy="facilitiesIntro">Luz, calma y todo lo necesario para que llegues, respires y solo tengas que estar.</p>
+                        </div>
+
+                        <div class="gy-facilities__controls">
+                            <button id="facilities-prev" type="button" class="gy-facilities__control"
+                                aria-controls="facilities-viewport" aria-label="Foto anterior">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m15 18-6-6 6-6"></path>
+                                </svg>
+                            </button>
+                            <button id="facilities-toggle" type="button" class="gy-facilities__control gy-facilities__control--toggle"
+                                aria-controls="facilities-viewport" data-paused="false" aria-label="Pausar carrusel">
+                                <svg class="gy-facilities__pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9 5v14M15 5v14"></path>
+                                </svg>
+                                <svg class="gy-facilities__play-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m8 5 11 7-11 7Z"></path>
+                                </svg>
+                                <span data-facilities-toggle-copy>Pausar</span>
+                            </button>
+                            <button id="facilities-next" type="button" class="gy-facilities__control"
+                                aria-controls="facilities-viewport" aria-label="Foto siguiente">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m9 18 6-6-6-6"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="facilities-carousel" class="gy-facilities__carousel" role="region"
+                        aria-roledescription="carousel" aria-label="Galería de instalaciones">
+                        <div id="facilities-viewport" class="gy-facilities__viewport" tabindex="0">
+                            <div id="facilities-track" class="gy-facilities__track">
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0375-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0375-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0375-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0375-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Sala principal de GEN Yoga con suelo de madera, grandes ventanales y luz natural">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">01</span>
+                                    <figcaption data-calendar-copy="facilityOne">Sala de práctica</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0373-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0373-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0373-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0373-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Vista panorámica de la sala y la zona de recepción de GEN Yoga">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">02</span>
+                                    <figcaption data-calendar-copy="facilityTwo">Luz y amplitud</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0364-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0364-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0364-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0364-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Estanterías con esterillas, mantas y material de práctica junto a un ventanal">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">03</span>
+                                    <figcaption data-calendar-copy="facilityThree">Todo preparado</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0406-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0406-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0406-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0406-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Zona de espera de GEN Yoga con dos sillas de madera y una mesa redonda">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">04</span>
+                                    <figcaption data-calendar-copy="facilityFour">Un rincón para llegar</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0405-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0405-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0405-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0405-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Espacio de consulta de GEN Yoga con escritorio, sillas y luz cálida">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">05</span>
+                                    <figcaption data-calendar-copy="facilityFive">Atención cercana</figcaption>
+                                </figure>
+                            </div>
+                        </div>
+
+                        <div class="gy-facilities__footer">
+                            <div id="facilities-dots" class="gy-facilities__dots" role="group" aria-label="Elegir fotografía"></div>
+                            <p class="gy-facilities__counter" aria-hidden="true">
+                                <span id="facilities-current">01</span>
+                                <i></i>
+                                <span>05</span>
+                            </p>
+                        </div>
+                        <p id="facilities-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </section>
 
     <!-- Scroll height spacers (to allow native scroll physics, 6 sections in total) -->
     <div id="scroll-height-provider" class="w-full relative z-5 pointer-events-none">
@@ -1667,6 +1895,11 @@ window.handleNavClick = function (btn, url) {
 }
 
 </script>
+    <script src="public-calendar.js?v=6.8"></script>
+    <script>
+        window.GENPublicCalendar?.init({ client });
+    </script>
+    <script src="facilities-carousel.js?v=6.8"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const dots = document.querySelectorAll('.slide-dot');
@@ -1722,6 +1955,7 @@ window.handleNavClick = function (btn, url) {
 
             // Keyboard navigation (Arrow keys, Space and Page Up/Down)
             window.addEventListener('keydown', (e) => {
+                if (document.body.classList.contains('gy-calendar-open')) return;
                 if (e.target instanceof Element && e.target.closest('input, textarea, select, button, a, [contenteditable="true"]')) return;
                 if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
                     e.preventDefault();
