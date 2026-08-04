@@ -3,12 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="application-version" content="6.10" />
+        <meta name="application-version" content="6.11" />
         <meta name="description" content="Conoce al equipo de profesionales de yoga, psicología, nutrición y talleres de GEN Yoga." />
         <title>GEN Yoga | Maestros</title>
         <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-        <script src="teacher-profiles.js?v=6.10"></script>
+        <script src="teacher-profiles.js?v=6.11"></script>
 
         <style>
             :root {
@@ -327,7 +327,7 @@
             .teachers-gallery__grid {
                 display: grid;
                 grid-template-columns: repeat(4, minmax(0, 1fr));
-                align-items: end;
+                align-items: start;
                 gap: clamp(18px, 1.7vw, 34px);
                 width: 100%;
                 max-width: 1840px;
@@ -372,7 +372,7 @@
             .teacher-card__figure {
                 position: relative;
                 display: flex;
-                align-items: flex-end;
+                align-items: flex-start;
                 justify-content: center;
                 width: 100%;
                 height: clamp(300px, 41vh, 445px);
@@ -659,11 +659,19 @@
                 font-size: 1.05rem;
             }
 
+            .teacher-modal__section-title {
+                font-family: 'Ubuntu', sans-serif;
+                font-size: 0.82rem;
+                font-weight: 700;
+                letter-spacing: 0.025em;
+            }
+
             .teacher-modal__section-text {
                 margin: 0;
                 font-size: clamp(0.69rem, 1.02vw, 0.79rem);
-                font-weight: 600;
-                line-height: 1.28;
+                font-family: 'Montserrat Arabic', Montserrat, sans-serif;
+                font-weight: 300;
+                line-height: 1.4;
             }
 
             .teacher-modal__section-copy {
@@ -775,9 +783,15 @@
                     font-size: 0.9rem;
                 }
 
+                .teacher-modal__section-title {
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                }
+
                 .teacher-modal__section-text {
-                    font-size: 0.66rem;
-                    line-height: 1.24;
+                    font-size: 0.7rem;
+                    font-weight: 300;
+                    line-height: 1.38;
                 }
             }
 
@@ -797,27 +811,13 @@
                 }
 
                 .teacher-modal__section-text {
-                    font-size: 0.61rem;
+                    font-size: 0.67rem;
                 }
             }
 
             @media (min-width: 1401px) {
                 .teachers-gallery__grid { margin-top: 11vh; }
                 .teacher-card__figure { margin-bottom: 1.2rem; }
-                .teachers-gallery__grid--4 {
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: space-between;
-                }
-                .teachers-gallery__grid--4 .teacher-card { left: 20px; flex: 0 0 auto; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(1) { width: 400px; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(2) { width: 360px; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(3) { width: 320px; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(4) { width: 290px; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(1) .teacher-card__portrait { max-width: 390px; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(2) .teacher-card__portrait { max-width: 360px; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(3) .teacher-card__portrait { max-width: 280px; }
-                .teachers-gallery__grid--4 .teacher-card:nth-child(4) .teacher-card__portrait { max-width: 290px; }
             }
 
             @media (max-width: 1000px) {
@@ -931,174 +931,14 @@
             }
         </style>
 
+        <script src="i18n.js?v=6.11"></script>
         <script>
-// INLINED i18n.js
-const translations = {
-    es: {
-        "nav_sessions": "SESIONES",
-        "nav_clases": "CLASES",
-        "nav_tarifas": "TARIFAS",
-        "nav_maestros": "MAESTROS",
-        "nav_profesores": "PROFESORES",
-        "nav_perfil": "MI PERFIL",
-        "nav_inicio": "Inicio",
-        "btn_back_home": "INICIO",
-        "btn_prof_all": "TODOS",
-        "rates_tab_yoga": "CLASES",
-        "rates_tab_psy": "CONSULTAS",
-        "rates_tab_workshops": "TALLERES",
-        "teachers_title": "Maestros",
-        "teachers_hero_our": "Nuestros",
-        "teachers_hero_teachers": "Maestros",
-        "teachers_scroll_meet": "Conócelos",
-        "teachers_no_category": "No hay profesores en esta categoría.",
-        "teachers_fallback_spec": "Profesor de GEN Yoga",
-        "teachers_view_card": "Ver ficha de",
-        "teachers_upcoming_classes": "Próximas clases",
-        "teachers_class_links_label": "Próximas clases de",
-        "teachers_view_next_class": "Ver la próxima clase de"
-    },
-    en: {
-        "nav_sessions": "SESSIONS",
-        "nav_clases": "CLASSES",
-        "nav_tarifas": "RATES",
-        "nav_maestros": "TEACHERS",
-        "nav_profesores": "TEACHERS",
-        "nav_perfil": "MY PROFILE",
-        "nav_inicio": "Home",
-        "btn_back_home": "HOME",
-        "btn_prof_all": "ALL",
-        "rates_tab_yoga": "CLASSES",
-        "rates_tab_psy": "CONSULTATIONS",
-        "rates_tab_workshops": "WORKSHOPS",
-        "teachers_title": "Teachers",
-        "teachers_hero_our": "Our",
-        "teachers_hero_teachers": "Teachers",
-        "teachers_scroll_meet": "Meet them",
-        "teachers_no_category": "No teachers in this category.",
-        "teachers_fallback_spec": "GEN Yoga Teacher",
-        "teachers_view_card": "View profile of",
-        "teachers_upcoming_classes": "Upcoming classes",
-        "teachers_class_links_label": "Upcoming classes with",
-        "teachers_view_next_class": "View the next"
-    }
-};
-
-const professionalTranslations = {
-    "en": {
-        "Yanira": {
-            "nombre": "Yanira",
-            "especialidad": "Vinyasa & Restorative Yoga | classes,workshops",
-            "descripcion": `ABOUT ME:\nCertified yoga instructor with a close approach uniting movement, breath and calm.\n\nBACKGROUND:\nOriginally from the United States, with Salvadoran roots.\n\nQUALIFICATIONS:\n• Master's in International Education\n• Master's in Educational Leadership\n• Yoga Alliance Certified Yoga Instructor\n\nTE ACOMPAÑO:\nPractices adapted to all levels focusing on alignment, conscious breathing and inner peace.\n\nME DEFINE:\n"Movement and Serenity"`
-        },
-        "Silvia": {
-            "nombre": "Silvia",
-            "especialidad": "Hatha & Iyengar Yoga, Ayurveda | classes",
-            "descripcion": `ABOUT ME:\nYoga teacher with more than 25 years dedicated to teaching and conscious guidance.\n\nQUALIFICATIONS:\n• Hatha Yoga and Iyengar Yoga by AIPYS\n• Ayurveda Therapist\n\nTE ACOMPAÑO:\nPrecise alignment, adjustment and Ayurvedic principles for physical and mental well-being.\n\nME DEFINE:\n"Dedication and Care"`
-        },
-        "Ángel Javier": {
-            "nombre": "Ángel Javier",
-            "especialidad": "Yoga for Men & Yoga for Everyone | classes",
-            "descripcion": `ABOUT ME:\nInstructor specialized in an accessible, safe practice adapted to each body.\n\nQUALIFICATIONS:\n• 6 years of experience in yoga practice\n• Specialized in Iyengar Yoga\n\nTE ACOMPAÑO:\nPrecise adjustment and accessible practice for men and all bodies.\n\nME DEFINE:\n"Presence and Strength"`
-        },
-        "Miriam": {
-            "nombre": "Miriam",
-            "especialidad": "Psychotherapy, Nutrition & Workshops | consultations",
-            "descripcion": `ABOUT ME:\nPsychologist specialized in emotional well-being, conscious eating and holistic guidance.\n\nQUALIFICATIONS:\n• Graduate in Psychology from University of Valencia\n• Master's in Eating Disorders\n\nTE ACOMPAÑO:\nIntegral psychotherapy, mindful nutrition and growth workshops.\n\nME DEFINE:\n"Empathy and Harmony"`
+        function escapeHtmlPublic(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
-    }
-};
-
-function translateProfessional(p) {
-    if (!p) return p;
-    const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
-    if (lang === 'en') {
-        const trans = window.GENTeacherProfiles?.getEnglishProfile(p)
-            || professionalTranslations['en']?.[p.nombre]
-            || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
-        if (trans) {
-            return {
-                ...p,
-                nombre: trans.nombre || p.nombre,
-                especialidad: trans.especialidad || p.especialidad,
-                descripcion: trans.descripcion || p.descripcion,
-                bio: trans.descripcion || p.bio
-            };
-        }
-    }
-    return p;
-}
-
-window.translateProfessional = translateProfessional;
-
-function safeGetItem(key, fallback) {
-    try { return localStorage.getItem(key) || fallback; } catch (e) { return fallback; }
-}
-function safeSetItem(key, value) {
-    try { localStorage.setItem(key, value); } catch (e) {}
-}
-
-let currentLang = safeGetItem('yoga-lang', 'es');
-
-function setLanguage(lang) {
-    if (lang !== 'es' && lang !== 'en') return;
-    currentLang = lang;
-    window.currentLang = currentLang;
-    document.documentElement.lang = lang;
-    safeSetItem('yoga-lang', lang);
-
-    const btnEs = document.getElementById('lang-btn-es');
-    const btnEn = document.getElementById('lang-btn-en');
-    if (btnEs && btnEn) {
-        if (lang === 'es') {
-            btnEs.style.fontWeight = '900';
-            btnEs.style.textDecoration = 'underline';
-            btnEs.style.opacity = '1';
-            btnEn.style.fontWeight = '500';
-            btnEn.style.textDecoration = 'none';
-            btnEn.style.opacity = '0.5';
-        } else {
-            btnEn.style.fontWeight = '900';
-            btnEn.style.textDecoration = 'underline';
-            btnEn.style.opacity = '1';
-            btnEs.style.fontWeight = '500';
-            btnEs.style.textDecoration = 'none';
-            btnEs.style.opacity = '0.5';
-        }
-    }
-
-    applyTranslations();
-    if (typeof fetchProfesionalesLanding === 'function') {
-        fetchProfesionalesLanding();
-    }
-    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
-}
-
-function t(key) {
-    return translations[currentLang]?.[key] || translations['es']?.[key] || key;
-}
-
-function applyTranslations() {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        const translation = t(key);
-        if (translation) {
-            el.innerText = translation;
-        }
-    });
-}
-
-window.translations = translations;
-window.setLanguage = setLanguage;
-window.t = t;
-window.currentLang = currentLang;
-
-function escapeHtmlPublic(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-</script>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.10" />
+        </script>
+        <link rel="stylesheet" href="tailwind-compiled.css?v=6.11" />
     </head>
     <body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
 
@@ -1115,10 +955,10 @@ function escapeHtmlPublic(str) {
                 <path d="M340 -40 C 150 4, 84 115, 166 156 C 258 201, 384 110, 330 64 C 267 10, 83 126, 132 226 C 181 326, 377 236, 345 180 C 306 113, 87 250, 144 355 C 194 448, 365 374, 406 310" />
             </svg>
 
-            <img class="teachers-hero__portrait teachers-hero__portrait--left-top" src="img/maestra-silvia-recortada.png" alt="" aria-hidden="true" loading="eager" />
-            <img class="teachers-hero__portrait teachers-hero__portrait--left-bottom" src="img/maestro-angel-recortado.png" alt="" aria-hidden="true" loading="eager" />
-            <img class="teachers-hero__portrait teachers-hero__portrait--right-top" src="img/maestra-miriam-recortada.png" alt="" aria-hidden="true" loading="eager" />
-            <img class="teachers-hero__portrait teachers-hero__portrait--right-bottom" src="img/maestra-yanira-recortada.png" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--left-top" src="img/maestra-silvia-recortada.webp" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--left-bottom" src="img/maestro-angel-recortado.webp" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--right-top" src="img/maestra-miriam-recortada.webp" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--right-bottom" src="img/maestra-yanira-recortada.webp" alt="" aria-hidden="true" loading="eager" />
 
             <h1 id="teachers-hero-title" class="teachers-hero__title">
                 <span class="teachers-hero__title-line teachers-hero__title-line--orange" data-i18n="teachers_hero_our">Nuestros</span>
@@ -1561,19 +1401,19 @@ function escapeHtmlPublic(str) {
                 const updated = { ...p };
                 if (emailLower.includes('angel') || nomLower.includes('ángel') || nomLower.includes('angel')) {
                     updated.nombre = "ÁNGEL JAVIER";
-                    updated.foto_cutout = 'img/maestro-angel-recortado.png';
+                    updated.foto_cutout = 'img/maestro-angel-recortado.webp';
                     updated.especialidad = 'Yoga para hombres & Yoga para Todos | clases';
                 } else if (emailLower.includes('miriam') || nomLower.includes('miriam')) {
                     updated.nombre = "MIRIAM";
-                    updated.foto_cutout = 'img/maestra-miriam-recortada.png';
+                    updated.foto_cutout = 'img/maestra-miriam-recortada.webp';
                     updated.especialidad = 'Psicoterapia, Nutrición y Talleres | consultas';
                 } else if (emailLower.includes('silvia') || nomLower.includes('silvia')) {
                     updated.nombre = "SILVIA";
-                    updated.foto_cutout = 'img/maestra-silvia-recortada.png';
+                    updated.foto_cutout = 'img/maestra-silvia-recortada.webp';
                     updated.especialidad = 'Hatha & Iyengar Yoga, Ayurveda | clases';
                 } else if (emailLower.includes('yanira') || nomLower.includes('yanira')) {
                     updated.nombre = "YANIRA";
-                    updated.foto_cutout = 'img/maestra-yanira-recortada.png';
+                    updated.foto_cutout = 'img/maestra-yanira-recortada.webp';
                     updated.especialidad = 'Vinyasa & Restaurativa | clases,talleres';
                 }
                 return updated;
@@ -1688,18 +1528,18 @@ function escapeHtmlPublic(str) {
 
         function getTeacherPhoto(nombre) {
             const n = (nombre || '').toLowerCase();
-            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.png';
-            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.png';
-            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.png';
-            return 'img/maestra-silvia-recortada.png';
+            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
+            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.webp';
+            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
+            return 'img/maestra-silvia-recortada.webp';
         }
 
         function getTeacherCutoutPhoto(nombre) {
             const n = (nombre || '').toLowerCase();
-            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.png';
-            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.png';
-            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.png';
-            return 'img/maestra-silvia-recortada.png';
+            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
+            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.webp';
+            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
+            return 'img/maestra-silvia-recortada.webp';
         }
 
         function renderProfesionalesLanding(profesionales) {
@@ -1742,7 +1582,6 @@ function escapeHtmlPublic(str) {
                         <h3 class="teacher-card__name">${escapeHtmlPublic(nombre)}</h3>
                         <p class="teacher-card__specialty">${escapeHtmlPublic(especialidadTexto)}</p>
                     </a>
-                    ${renderTeacherClassLinks(prof, 'card')}
                 `;
 
                 const trigger = card.querySelector('.teacher-card__trigger');
@@ -1963,29 +1802,8 @@ function escapeHtmlPublic(str) {
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            let langDiv = document.getElementById('floating-lang-selector');
-            if (!langDiv) {
-                langDiv = document.createElement('div');
-                langDiv.id = 'floating-lang-selector';
-                langDiv.style.cssText = 'position:fixed;top:16px;right:24px;z-index:9998;background-color:#795244;border:1px solid rgba(248, 246, 242, 0.15);border-radius:9999px;padding:4px 10px;display:flex;align-items:center;gap:4px;font-size:11px;color:#f8f6f2;box-shadow:0 6px 16px rgba(38, 22, 12, 0.2);user-select:none;font-family:system-ui, -apple-system, sans-serif;pointer-events:auto;';
-                langDiv.innerHTML = `
-                    <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1;">ES</button>
-                    <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none;">/</span>
-                    <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5;">EN</button>
-                `;
-                document.body.appendChild(langDiv);
-            }
-
-            const btnEs = document.getElementById('lang-btn-es');
-            const btnEn = document.getElementById('lang-btn-en');
-            if (btnEs) btnEs.addEventListener('click', () => setLanguage('es'));
-            if (btnEn) btnEn.addEventListener('click', () => setLanguage('en'));
-
-            setLanguage(currentLang);
-        });
-
         document.addEventListener('keydown', handleTeacherModalKeyboard);
+        window.addEventListener('languageChanged', fetchProfesionalesLanding);
         window.addEventListener('popstate', syncTeacherModalWithUrl);
         </script>
     </body>

@@ -77,12 +77,19 @@ const [maestros, profile, migration] = await Promise.all([
 ]);
 
 for (const page of [maestros, profile]) {
-  assert.match(page, /teacher-profiles\.js\?v=6\.10/);
+  assert.match(page, /teacher-profiles\.js\?v=6\.11/);
 }
 
 assert.doesNotMatch(maestros, /summarizeModalText|summarizeModalItems|moreAreas|moreQualifications/);
 assert.doesNotMatch(maestros, /\+\$\{remaining\}|visible\.join\(['"] · ['"]\)/);
 assert.match(maestros, /entries\.map\(item => `<p class="teacher-modal__section-text">/);
+const galleryRenderer = maestros.match(/function renderProfesionalesLanding[\s\S]*?function parseBio/)?.[0] || '';
+assert.doesNotMatch(galleryRenderer, /renderTeacherClassLinks\(prof,\s*['"]card['"]\)/);
+assert.match(maestros, /renderTeacherClassLinks\(prof,\s*['"]modal['"]\)/);
+assert.match(maestros, /\.teachers-gallery__grid\s*\{[\s\S]*?align-items:\s*start;/);
+assert.doesNotMatch(maestros, /\.teachers-gallery__grid--4\s*\{[\s\S]*?align-items:\s*flex-end;/);
+assert.match(maestros, /\.teacher-modal__section-title\s*\{[\s\S]*?font-family:\s*['"]Ubuntu['"][\s\S]*?font-weight:\s*700;/);
+assert.match(maestros, /\.teacher-modal__section-text\s*\{[\s\S]*?font-family:\s*['"]Montserrat Arabic['"][\s\S]*?font-weight:\s*300;/);
 
 assert.doesNotMatch(profile, /function truncateTextProfile/);
 assert.match(profile, /const bioText = parsed\.sobreMi\[0\]/);

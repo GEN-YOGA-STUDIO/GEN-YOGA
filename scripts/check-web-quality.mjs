@@ -14,6 +14,12 @@ const expectedPages = [
   'success.html',
   'tarifas.html',
 ];
+const browserJavaScriptFiles = [
+  'facilities-carousel.js',
+  'i18n.js',
+  'public-calendar.js',
+  'teacher-profiles.js',
+];
 const errors = [];
 const invokedEdgeFunctions = new Set();
 
@@ -149,6 +155,15 @@ if (actualPages.join('|') !== expectedPages.join('|')) {
   errors.push(`Páginas inesperadas. Esperadas: ${expectedPages.join(', ')}; encontradas: ${actualPages.join(', ')}`);
 }
 
+for (const fileName of browserJavaScriptFiles) {
+  const source = await readFile(path.join(root, fileName), 'utf8');
+  try {
+    new Script(source, { filename: fileName });
+  } catch (error) {
+    errors.push(`${fileName}: JavaScript inválido (${error.message})`);
+  }
+}
+
 for (const fileName of actualPages) {
   const source = await readFile(path.join(root, fileName), 'utf8');
   const markup = stripExecutableBlocks(source);
@@ -206,11 +221,15 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.10["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.10`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.11["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.11`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
-  if (/\bv6\.[0-9]\b/i.test(source)) errors.push(`${fileName}: contiene una versión visual anterior a 6.10`);
+  const staleVisualVersion = [...source.matchAll(/\bv(\d+)\.(\d+)\b/gi)]
+    .find(([, major, minor]) => `${major}.${minor}` !== '6.11');
+  if (staleVisualVersion) {
+    errors.push(`${fileName}: contiene una versión visual distinta de 6.11 (${staleVisualVersion[0]})`);
+  }
 }
 
 for (const functionName of invokedEdgeFunctions) {

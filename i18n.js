@@ -1,5 +1,7 @@
-// GEN Yoga Internationalization Module (i18n.js)
-// Handles switching between Spanish (ES) and English (EN) dynamically.
+
+// GEN Yoga shared internationalization module.
+// Loaded by the public pages and the client profile to avoid duplicating the
+// same translations and language-switching logic in every HTML document.
 
 const translations = {
     es: {
@@ -79,6 +81,7 @@ const translations = {
         "classes_tab_vinyasa": "VINYASA",
         "classes_tab_hombres": "HOMBRES",
         "classes_tab_restaurativa": "RESTAURATIVA",
+        "classes_calendar_btn": "Ver horario semanal",
 
         // tarifas.html (Pricing)
         "rates_title": "Tarifas",
@@ -89,17 +92,29 @@ const translations = {
         "rates_suelta_cat": "Yoga",
         "rates_suelta_feat1": "1 clase de yoga",
         "rates_suelta_feat2": "Reserva desde tu perfil o recepción",
-        "rates_suelta_feat3": "Cancelación hasta 12h antes de la clase",
+        "rates_suelta_feat3": "60 días naturales desde la compra",
+        "rates_selected_class_label": "Clase seleccionada",
+        "rates_selected_class_loading": "Comprobando la clase seleccionada...",
+        "rates_selected_class_unavailable": "La clase seleccionada ya no está disponible. Puedes comprar una clase suelta y elegir otro horario.",
+        "rates_selected_class_teacher": "Con {teacher}",
         "rates_suelta_btn": "Comprar clase",
-        "rates_mensual_badge": "★ Ahorra 25%",
-        "rates_mensual_title": "Bono Mensual",
-        "rates_mensual_cat": "Plan Flexible",
-        "rates_mensual_feat1": "2 clases cada semana (Lunes-Viernes)",
-        "rates_mensual_feat2": "Hasta 8 clases al mes en total",
-        "rates_mensual_feat3": "Reserva desde tu perfil o recepción",
-        "rates_mensual_feat4": "Clases sueltas para sesiones extra",
-        "rates_mensual_btn": "Adquirir Plan",
-        "rates_per_month": "/mes",
+        "rates_pack4_title": "Pack 4 clases",
+        "rates_pack6_title": "Pack 6 clases",
+        "rates_pack10_title": "Pack 10 clases",
+        "rates_pack_cat": "Bono flexible",
+        "rates_pack_validity": "60 días desde la compra",
+        "rates_pack_regular": "Válido para clases no especiales",
+        "rates_pack_profile": "Saldo y caducidad visibles en tu perfil",
+        "rates_pack_btn": "Comprar pack",
+        "rates_mensual_badge": "★ Libertad total",
+        "rates_mensual_title": "Bono Ilimitado",
+        "rates_mensual_cat": "Mes natural elegido",
+        "rates_mensual_feat1": "Todas las clases regulares que quieras",
+        "rates_mensual_feat2": "1 clase especial en el mes elegido",
+        "rates_mensual_feat3": "1 invitado gratis en el mes elegido",
+        "rates_mensual_feat4": "30% en la primera consulta de nutrición o psicología",
+        "rates_mensual_btn": "Elegir mes",
+        "rates_per_month": "/mes natural",
         "rates_psy_title": "Psicología",
         "rates_psy_cat": "Bienestar y salud mental",
         "rates_psy_sub": "Sesión individual",
@@ -112,16 +127,25 @@ const translations = {
         "rates_nut_desc1": "Analizamos tu punto de partida, objetivos e historial de hábitos para diseñar tu estrategia de nutrición.",
         "rates_nut_sub2": "Sesión de Seguimiento",
         "rates_nut_desc2": "Evaluamos tus progresos diarios y adaptamos tus pautas para consolidar hábitos saludables duraderos.",
-        "rates_talleres_title": "Talleres Temáticos",
-        "rates_talleres_cat": "Próximamente",
-        "rates_talleres_desc": "Sesiones especiales para profundizar en diferentes estilos y prácticas de yoga, meditación y bienestar holístico. Las temáticas, fechas e inscripciones se anunciarán muy pronto en recepción.",
-        "rates_talleres_contact_recep": "Consultar tarifas",
-        "rates_talleres_btn": "Saber Más",
+        "rates_talleres_title": "Clases especiales / Talleres",
+        "rates_talleres_cat": "Calendario independiente",
+        "rates_talleres_desc": "Experiencias puntuales separadas de las clases regulares. El Bono Ilimitado incluye una clase especial por cada mes natural comprado.",
+        "rates_talleres_contact_recep": "1 clase especial al mes con el Bono Ilimitado",
+        "rates_talleres_btn": "Ver próximas fechas",
 
         "teachers_title": "Nuestros Profesionales",
         "teachers_subtitle": "Un equipo dedicado a guiar tu camino de bienestar integral",
         "teachers_read_more": "Saber más",
         "teachers_read_less": "Saber menos",
+        "teachers_hero_our": "Nuestros",
+        "teachers_hero_teachers": "Maestros",
+        "teachers_scroll_meet": "Conócelos",
+        "teachers_no_category": "No hay profesores en esta categoría.",
+        "teachers_fallback_spec": "Profesor de GEN Yoga",
+        "teachers_view_card": "Ver ficha de",
+        "teachers_upcoming_classes": "Próximas clases",
+        "teachers_class_links_label": "Próximas clases de",
+        "teachers_view_next_class": "Ver la próxima clase de",
 
         // profile.html (Client Profile & Login)
         "profile_slogan": "Tu espacio para el bienestar integral, la salud física y la paz mental.",
@@ -149,6 +173,13 @@ const translations = {
         "register_btn_login": "Inicia sesión aquí",
         "profile_tab_inicio": "INICIO",
         "profile_tab_horarios": "CLASES",
+        "profile_tab_specials": "ESPECIALES / TALLERES",
+        "profile_specials_badge": "Experiencias únicas",
+        "profile_specials_title": "Clases especiales / Talleres",
+        "profile_specials_desc": "Actividades independientes del horario habitual. El Bono Ilimitado incluye una reserva especial por cada mes natural comprado.",
+        "profile_specials_unlimited": "VER BONO ILIMITADO",
+        "profile_specials_empty": "No hay clases especiales programadas todavía.",
+        "profile_specials_empty_desc": "Cuando publiquemos un nuevo taller aparecerá aquí.",
         "profile_tab_psicologia": "CONSULTAS",
         "profile_tab_nutricion": "NUTRICIÓN",
         "profile_tab_profesores": "MAESTROS",
@@ -172,9 +203,9 @@ const translations = {
         "common_consultations": "Consultas",
         "common_single_class": "Clase suelta",
         "common_single_classes": "Clases sueltas",
-        "common_monthly_plan": "Bono Mensual",
-        "common_monthly_plan_active": "Bono Mensual Activo",
-        "common_monthly_plan_inactive": "Bono Mensual Inactivo",
+        "common_monthly_plan": "Bono Ilimitado",
+        "common_monthly_plan_active": "Bono Ilimitado Activo",
+        "common_monthly_plan_inactive": "Bono Ilimitado Inactivo",
         "common_inactive": "Inactivo",
         "profile_loading_classes": "Cargando clases...",
         "profile_loading_consultations": "Cargando consultas...",
@@ -201,8 +232,8 @@ const translations = {
         "profile_filter_all_classes": "Todas las clases",
         "profile_filter_free_spots": "Con plazas libres",
         "profile_filter_full_classes": "Clases completas",
-        "profile_no_balance_title": "Saldo agotado",
-        "profile_no_balance_desc": "Recarga tus bonos para seguir reservando.",
+        "profile_no_balance_title": "Sin bonos disponibles",
+        "profile_no_balance_desc": "Elige un pack de 4, 6 o 10 clases para reservar tu próxima sesión.",
         "profile_directions": "Cómo llegar",
         "profile_no_classes_available": "No hay clases disponibles",
         "profile_no_classes_available_desc": "Estamos planificando la próxima semana. Vuelve a consultar en breve.",
@@ -215,11 +246,14 @@ const translations = {
         "profile_full": "Completa",
         "profile_unavailable": "No Disponible",
         "profile_no_balance": "Sin Saldo",
+        "profile_buy_extra_credit": "Ver packs",
+        "profile_buy_extra_credit_short": "Ver packs",
         "profile_book": "RESERVAR",
         "profile_your_spot": "Tu Plaza",
         "profile_capacity": "Aforo",
         "profile_request": "Solicitar",
         "profile_request_activation": "Solicitar activación",
+        "profile_manage_billing": "Gestionar suscripción y facturación",
         "profile_week_short": "Sem",
         "profile_month_short": "Mes",
         "profile_expires": "Vence",
@@ -259,18 +293,18 @@ const translations = {
         "alert_cancel": "Cancelar",
         "alert_yes_cancel": "Sí, cancelar",
         "alert_yes_reserve": "Sí, reservar",
-        "alert_no_credits": "Sin clases sueltas",
-        "alert_no_credits_desc": "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan clases sueltas (15€). Adquiere clases sueltas para reservar.",
-        "alert_class_too_close": "La clase está demasiado cerca y no puedes reservar.",
-        "alert_cancel_too_close": "ya no se puede cancelar debido a que la clase es en menos de X horas.",
+        "alert_no_credits": "Compra un bono extra",
+        "alert_no_credits_desc": "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos disponibles. Compra un bono extra por 15€ para reservar.",
+        "alert_class_too_close": "Las reservas cierran {hours} h antes del inicio. Para esta clase ya ha pasado el plazo.",
+        "alert_cancel_too_close": "Ya no puedes cancelar: faltan {hours} h o menos para la clase. El bono reservado no se devuelve.",
         "alert_confirm_reservation": "Confirmar Reserva",
         "alert_reserve_mensual": "¿Quieres reservar esta clase usando tu <b>Bono Mensual</b>?",
-        "alert_reserve_semana_limit": "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?",
-        "alert_reserve_mes_limit": "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?",
-        "alert_reserve_suelta": "¿Quieres reservar esta clase usando <b>1 clase suelta</b>?",
+        "alert_reserve_semana_limit": "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>uno de tus bonos</b>?",
+        "alert_reserve_mes_limit": "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>uno de tus bonos</b>?",
+        "alert_reserve_suelta": "¿Quieres reservar esta clase usando <b>uno de tus bonos</b>?",
         "alert_booking_confirmed": "¡Clase Reservada!",
         "alert_booking_confirmed_desc": "Tu esterilla te espera. Namasté. 🙏",
-        "alert_cancel_confirmed": "Reserva cancelada. Clase devuelta.",
+        "alert_cancel_confirmed": "Reserva cancelada. Saldo actualizado.",
         "btn_reserve": "RESERVAR",
         "btn_no_balance": "Sin Saldo",
         "btn_full": "Completa",
@@ -282,8 +316,8 @@ const translations = {
         "title_cancel": "CANCELAR",
         
         // policy wording dynamic
-        "policy_booking_limit": "Reservas permitidas hasta <b>{res}h</b> antes de la clase.",
-        "policy_cancel_limit": "Cancelación permitida hasta <b>{can}h</b> antes de la clase.",
+        "policy_booking_limit": "Las reservas cierran <b>{res} h</b> antes del inicio.",
+        "policy_cancel_limit": "Puedes cancelar y recuperar el bono mientras falten más de <b>{can} h</b>. Al llegar a ese límite, la cancelación se bloquea y el bono no se devuelve.",
         "footer_address": "Calle San Carlos 2, Albacete"
     },
     en: {
@@ -364,6 +398,7 @@ const translations = {
         "classes_tab_hombres": "MEN YOGA",
         "classes_tab_restaurativa": "RESTORATIVE",
         "classes_scroll_arrow_doubt": "Any questions?",
+        "classes_calendar_btn": "View weekly schedule",
 
         // tarifas.html (Pricing)
         "rates_title": "Rates",
@@ -374,17 +409,29 @@ const translations = {
         "rates_suelta_cat": "Yoga",
         "rates_suelta_feat1": "1 yoga class",
         "rates_suelta_feat2": "Book from your profile or reception",
-        "rates_suelta_feat3": "Cancellation up to 12h before the class",
+        "rates_suelta_feat3": "Valid for 60 calendar days after purchase",
+        "rates_selected_class_label": "Selected class",
+        "rates_selected_class_loading": "Checking the selected class...",
+        "rates_selected_class_unavailable": "The selected class is no longer available. You can buy a single class and choose another time.",
+        "rates_selected_class_teacher": "With {teacher}",
         "rates_suelta_btn": "Buy class",
-        "rates_mensual_badge": "★ Save 25%",
-        "rates_mensual_title": "Monthly Plan",
-        "rates_mensual_cat": "Flexible Plan",
-        "rates_mensual_feat1": "2 classes per week (Monday-Friday)",
-        "rates_mensual_feat2": "Up to 8 classes per month total",
-        "rates_mensual_feat3": "Book from your profile or reception",
-        "rates_mensual_feat4": "Single classes for extra sessions",
-        "rates_mensual_btn": "Acquire Plan",
-        "rates_per_month": "/month",
+        "rates_pack4_title": "4-class pack",
+        "rates_pack6_title": "6-class pack",
+        "rates_pack10_title": "10-class pack",
+        "rates_pack_cat": "Flexible pass",
+        "rates_pack_validity": "60 days from purchase",
+        "rates_pack_regular": "Valid for non-special classes",
+        "rates_pack_profile": "Balance and expiry shown in your profile",
+        "rates_pack_btn": "Buy pack",
+        "rates_mensual_badge": "★ Total freedom",
+        "rates_mensual_title": "Unlimited Pass",
+        "rates_mensual_cat": "Selected calendar month",
+        "rates_mensual_feat1": "Unlimited regular classes",
+        "rates_mensual_feat2": "1 special class in the selected month",
+        "rates_mensual_feat3": "1 free guest in the selected month",
+        "rates_mensual_feat4": "30% off the first nutrition or psychology consultation",
+        "rates_mensual_btn": "Choose month",
+        "rates_per_month": "/calendar month",
         "rates_psy_title": "Psychology",
         "rates_psy_cat": "Well-being and mental health",
         "rates_psy_sub": "Individual session",
@@ -397,16 +444,25 @@ const translations = {
         "rates_nut_desc1": "We analyze your starting point, objectives, and habit history to design your nutrition strategy.",
         "rates_nut_sub2": "Follow-up Session",
         "rates_nut_desc2": "We evaluate your daily progress and adapt your guidelines to consolidate lasting healthy habits.",
-        "rates_talleres_title": "Thematic Workshops",
-        "rates_talleres_cat": "Coming Soon",
-        "rates_talleres_desc": "Special sessions to deepen different styles and practices of yoga, meditation, and holistic well-being. Topics, dates, and registrations will be announced very soon at reception.",
-        "rates_talleres_contact_recep": "Check rates",
-        "rates_talleres_btn": "Learn More",
+        "rates_talleres_title": "Special Classes / Workshops",
+        "rates_talleres_cat": "Independent calendar",
+        "rates_talleres_desc": "One-off experiences kept separate from regular classes. The Unlimited Plan includes one special class in each purchased calendar month.",
+        "rates_talleres_contact_recep": "1 special class per month with the Unlimited Plan",
+        "rates_talleres_btn": "See upcoming dates",
 
         "teachers_title": "Our Professionals",
         "teachers_subtitle": "A team dedicated to guiding your path of holistic well-being",
         "teachers_read_more": "Read more",
         "teachers_read_less": "Read less",
+        "teachers_hero_our": "Our",
+        "teachers_hero_teachers": "Teachers",
+        "teachers_scroll_meet": "Meet them",
+        "teachers_no_category": "No teachers in this category.",
+        "teachers_fallback_spec": "GEN Yoga Teacher",
+        "teachers_view_card": "View profile of",
+        "teachers_upcoming_classes": "Upcoming classes",
+        "teachers_class_links_label": "Upcoming classes with",
+        "teachers_view_next_class": "View the next",
 
         // profile.html (Client Profile & Login)
         "profile_slogan": "Your space for holistic well-being, physical health, and peace of mind.",
@@ -434,6 +490,13 @@ const translations = {
         "register_btn_login": "Sign in here",
         "profile_tab_inicio": "HOME",
         "profile_tab_horarios": "CLASSES",
+        "profile_tab_specials": "SPECIALS / WORKSHOPS",
+        "profile_specials_badge": "Unique experiences",
+        "profile_specials_title": "Special Classes / Workshops",
+        "profile_specials_desc": "Activities kept separate from the regular timetable. The Unlimited Plan includes one special booking in each purchased calendar month.",
+        "profile_specials_unlimited": "VIEW UNLIMITED PLAN",
+        "profile_specials_empty": "There are no special classes scheduled yet.",
+        "profile_specials_empty_desc": "New workshops will appear here when they are published.",
         "profile_tab_psicologia": "CONSULTATIONS",
         "profile_tab_nutricion": "NUTRITION",
         "profile_tab_profesores": "TEACHERS",
@@ -457,9 +520,9 @@ const translations = {
         "common_consultations": "Consultations",
         "common_single_class": "Single class",
         "common_single_classes": "Single classes",
-        "common_monthly_plan": "Monthly Plan",
-        "common_monthly_plan_active": "Monthly Plan Active",
-        "common_monthly_plan_inactive": "Monthly Plan Inactive",
+        "common_monthly_plan": "Unlimited Pass",
+        "common_monthly_plan_active": "Unlimited Pass Active",
+        "common_monthly_plan_inactive": "Unlimited Pass Inactive",
         "common_inactive": "Inactive",
         "profile_loading_classes": "Loading classes...",
         "profile_loading_consultations": "Loading consultations...",
@@ -486,8 +549,8 @@ const translations = {
         "profile_filter_all_classes": "All classes",
         "profile_filter_free_spots": "With free spots",
         "profile_filter_full_classes": "Full classes",
-        "profile_no_balance_title": "Balance depleted",
-        "profile_no_balance_desc": "Top up your class credits to keep booking.",
+        "profile_no_balance_title": "No class credits available",
+        "profile_no_balance_desc": "Buy an extra credit for 15€ to book your next class.",
         "profile_directions": "Directions",
         "profile_no_classes_available": "No classes available",
         "profile_no_classes_available_desc": "We are planning next week. Check back soon.",
@@ -500,11 +563,14 @@ const translations = {
         "profile_full": "Full",
         "profile_unavailable": "Unavailable",
         "profile_no_balance": "No Balance",
+        "profile_buy_extra_credit": "Buy extra credit 15€",
+        "profile_buy_extra_credit_short": "Pay 15€",
         "profile_book": "BOOK",
         "profile_your_spot": "Your Spot",
         "profile_capacity": "Capacity",
         "profile_request": "Request",
         "profile_request_activation": "Request activation",
+        "profile_manage_billing": "Manage subscription and billing",
         "profile_week_short": "Week",
         "profile_month_short": "Month",
         "profile_expires": "Expires",
@@ -544,18 +610,18 @@ const translations = {
         "alert_cancel": "Cancel",
         "alert_yes_cancel": "Yes, cancel",
         "alert_yes_reserve": "Yes, book",
-        "alert_no_credits": "No single classes left",
-        "alert_no_credits_desc": "You have reached your monthly class limits (or it is inactive) and you do not have single classes left (15€). Purchase classes to book.",
-        "alert_class_too_close": "The class starts too soon and you cannot book.",
-        "alert_cancel_too_close": "cancellations are not allowed within less than X hours from the class.",
+        "alert_no_credits": "Buy an extra credit",
+        "alert_no_credits_desc": "You have reached your monthly class limits (or it is inactive) and you do not have any class credits left. Buy an extra credit for 15€ to book.",
+        "alert_class_too_close": "Bookings close {hours} hours before the start. The deadline for this class has passed.",
+        "alert_cancel_too_close": "You can no longer cancel: the class starts in {hours} hours or less. The reserved credit is not refunded.",
         "alert_confirm_reservation": "Confirm Booking",
         "alert_reserve_mensual": "Do you want to book this class using your <b>Monthly Plan</b>?",
-        "alert_reserve_semana_limit": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>1 single class</b> (15€)?",
-        "alert_reserve_mes_limit": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>1 single class</b> (15€)?",
-        "alert_reserve_suelta": "Do you want to book this class using <b>1 single class</b>?",
+        "alert_reserve_semana_limit": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>one of your class credits</b>?",
+        "alert_reserve_mes_limit": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>one of your class credits</b>?",
+        "alert_reserve_suelta": "Do you want to book this class using <b>one of your class credits</b>?",
         "alert_booking_confirmed": "Class Booked!",
         "alert_booking_confirmed_desc": "Your yoga mat awaits you. Namaste. 🙏",
-        "alert_cancel_confirmed": "Booking cancelled. Class credited back.",
+        "alert_cancel_confirmed": "Booking cancelled. Balance updated.",
         "btn_reserve": "BOOK NOW",
         "btn_no_balance": "No Balance",
         "btn_full": "Full",
@@ -567,34 +633,9 @@ const translations = {
         "title_cancel": "CANCEL",
 
         // policy wording dynamic
-        "policy_booking_limit": "Bookings allowed up to <b>{res}h</b> before the class.",
-        "policy_cancel_limit": "Cancellations allowed up to <b>{can}h</b> before the class.",
+        "policy_booking_limit": "Bookings close <b>{res} hours</b> before the start.",
+        "policy_cancel_limit": "You can cancel and recover the credit while more than <b>{can} hours</b> remain. At that cutoff, cancellation is blocked and the credit is not refunded.",
         "footer_address": "2 San Carlos St, Albacete"
-    }
-};
-
-const professionalTranslations = {
-    "en": {
-        "Yanira": {
-            "nombre": "Yanira",
-            "especialidad": "Vinyasa & Restorative Yoga",
-            "descripcion": `BACKGROUND:\nOriginally from the United States, with Salvadoran roots, I have had the opportunity to know and live in various parts of the world and feel fortunate to meet people from different places and paths in life, as each experience and learning has shaped the person I am today.\n\nA teacher by profession, I have taught in Washington D.C. area schools for twenty years. My studies of Yoga are a continuous process, but I consider my yoga mat to be my best guide.\n\nQUALIFICATIONS:\n• Master's in International Education (Framingham State College)\n• Master's in Educational Leadership (George Mason University)\n• Yoga Alliance Certified Yoga Instructor (training at DownDog in Georgetown, Washington D.C.)\n• Specializations in Anatomy applied to Yoga, Kids Yoga, Yoga and Mindfulness\n\nI ACCOMPANY YOU:\n• Vinyasa Yoga (Virtual and in-person classes)\n• Restorative Yoga and Meditation\n• Mindfulness for adults and kids`
-        },
-        "Silvia": {
-            "nombre": "Silvia",
-            "especialidad": "Hatha & Iyengar Yoga, Ayurveda",
-            "descripcion": `PLACE OF BIRTH: Madrid\n\nQUALIFICATIONS: Hatha Yoga and Iyengar Yoga by AIPYS. Yoga Center.\nAyurveda Therapist. COFENAT. Alsandara.\n\nABOUT ME:\nI am a Yoga teacher with more than 25 years dedicated to teaching and 30 years of personal practice, and an Ayurveda Therapist. Life has led me to help many people around the world through the practice of Yoga:\nI currently teach classes in many cities in Spain (Cordoba, Granada, Malaga, Valencia, Albacete, Elche, Alicante, ...)\nAnd training courses in Madrid, Canary Islands.\nI teach Therapeutic Yoga courses for teachers and students with extensive experience in the practice of yoga. I have taught courses for certified teachers in India, Greece, and Indonesia.\nIn recent years I have mentored yoga teachers to deepen their practice and pedagogy and support them in developing their yoga centers.\nFor me, Yoga is subtlety, adaptability, openness, surrender, acceptance, and awareness.\nAfter 15 years of teaching and more than 20 years of practice, I continue to get 100% involved in my work and deliver all my love and dedication in each of my classes.\n\nI ACCOMPANY YOU:\nI accompany physical, emotional, and nervous system well-being processes through therapeutic yoga, adapting the practice to the individual needs of each person.\nAreas of support:\n* Back, neck, and joint pain.\n* Musculoskeletal injuries and functional recovery processes.\n* Stress, anxiety, and physical and mental exhaustion.\n* Sleep disorders and insomnia.\n* Nervous system regulation.\n* Grief processes, life changes, and emotional management.\n* Menopause and women's health.\n* Fatigue, lack of energy, and lifestyle-related imbalances.\n* Improvement of mobility, posture, and breathing.\n\nDEFINES ME:\n"My job is to create spaces where the body can feel heard, the nervous system regulated, and the person accompanied in their process of returning to themselves through yoga and Ayurveda"`
-        },
-        "Ángel Javier": {
-            "nombre": "Ángel Javier",
-            "especialidad": "Yoga for Men & Therapeutic Yoga",
-            "descripcion": `PLACE OF BIRTH: La Roda\n\nQUALIFICATIONS:\nNone. I base my learning on self-study/practice, attending classes and intensives by teachers with a long trajectory (anatomy, asana, philosophy, etc., whatever is necessary for my development on the path of Yoga). In September I begin the mentorship for certification as an Iyengar Yoga teacher.\n\nABOUT ME:\nI have 6 years of experience in the practice of yoga, of which 5 and a half years are dedicated to studying and practicing Iyengar Yoga in Valencia and La Roda.\n\nI ACCOMPANY YOU:\nThe practice is based on precise adjustment and correct alignment of the body, adapting the posture to the conditions of each student to find the effects and benefits in asana. We work on understanding actions, on feeling what we do, and, from the depth of that physical work, we enable a way of relationship in accordance with the self-knowledge that comes with practice.\n\nDEFINES ME:\n"Dedicación y Cuidado"`
-        },
-        "Miriam": {
-            "nombre": "Miriam",
-            "especialidad": "Psychotherapy, Nutrition & Workshops",
-            "descripcion": `PLACE OF BIRTH: Cuenca (Spain)\n\nQUALIFICATIONS:\nGraduate in Psychology from the University of Valencia.\nMaster's in Eating Disorders from the Complutense University of Madrid.\nTraining in EMDR (Eye Movement Desensitization and Reprocessing).\nTraining in Brainspotting.\nTraining in Gestalt Therapy.\nSpecialized training in trauma, attachment, emotional regulation, gender violence, sexual abuse, and personal growth.\nTechnician in Dietetics and Nutrition.\nHigher Technician in Animation of Physical and Sports Activities.\nTechnician in Conducting Physical-Sports Activities in the Natural Environment.\nTraining in chiromassage and other disciplines linked to body care.\n\nABOUT ME:\nMy professional career began in the field of physical activity, sports, and the promotion of healthy habits. For years I worked as a sports monitor, lifeguard, and trainer, accompanying people of different ages in processes related to movement, well-being, and health.\nOver time, I became interested in understanding what is often expressed through the body: emotions, personal difficulties, suffering, and processes of transformation. That path led me to study Psychology and later specialize in Eating Disorders, trauma, and emotional regulation.\nCurrently, I am the founder of Respira, a psychological support space where I work mainly with adolescents and adults in processes related to self-esteem, anxiety, eating disorders, trauma, self-knowledge, and emotional well-being.\nIn addition to individual intervention, I conduct talks, workshops, and group activities, disseminating content on mental health through social networks and the radio program and podcast "Más allá de la comida". I have also promoted community initiatives such as a Therapeutic Reading Club and actively participate in social days, women's meetings, and activities related to the promotion of physical, mental, and emotional health.\n\nI ACCOMPANY YOU:\n* Eating Disorders (ED)\n* Relationship with food and body image\n* Self-esteem and self-confidence\n* Anxiety and emotional regulation\n* Trauma and emotional wounds\n* Life change processes\n* Grief and loss\n* Personal growth and autoconcern\n* Body-mind connection\n* Integral well-being and self-care\n\nDEFINES ME:\n"I deeply believe in people's ability to transform when they find a safe space to feel heard. My work consists of accompanying that process by integrating body, mind, and emotions to favor a more conscious, free, and authentic life."`
-        }
     }
 };
 
@@ -602,7 +643,7 @@ function translateProfessional(p) {
     if (!p) return p;
     const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
     if (lang === 'en') {
-        const trans = professionalTranslations['en']?.[p.nombre] || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
+        const trans = window.GENTeacherProfiles?.getEnglishProfile(p);
         if (trans) {
             return {
                 ...p,
@@ -629,6 +670,14 @@ function safeGetItem(key, fallback) {
 function safeSetItem(key, value) {
     try {
         localStorage.setItem(key, value);
+    } catch (e) {
+        // Safe fallback for sandboxed preview windows
+    }
+}
+
+function safeRemoveItem(key) {
+    try {
+        localStorage.removeItem(key);
     } catch (e) {
         // Safe fallback for sandboxed preview windows
     }
@@ -747,11 +796,11 @@ const alertTranslations = {
     "Sí, reservar": "Yes, book",
     "Cancelar": "Cancel",
     "Entendido": "Understood",
-    "Sin clases sueltas": "No single classes left",
-    "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan clases sueltas (15€). Adquiere clases sueltas para reservar.": "You have reached your monthly class limits (or it is inactive) and you do not have single classes left (15€). Purchase classes to book.",
-    "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>1 single class</b> (15€)?",
-    "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>1 single class</b> (15€)?",
-    "¿Quieres reservar esta clase usando <b>1 clase suelta</b>?": "Do you want to book this class using <b>1 single class</b>?"
+    "Compra un bono extra": "Buy an extra credit",
+    "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos disponibles. Compra un bono extra por 15€ para reservar.": "You have reached your monthly class limits (or it is inactive) and you do not have any class credits left. Buy an extra credit for 15€ to book.",
+    "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>uno de tus bonos</b>?": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>one of your class credits</b>?",
+    "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>uno de tus bonos</b>?": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>one of your class credits</b>?",
+    "¿Quieres reservar esta clase usando <b>uno de tus bonos</b>?": "Do you want to book this class using <b>one of your class credits</b>?"
 };
 
 function translateText(text) {
@@ -888,7 +937,7 @@ document.addEventListener('DOMContentLoaded', () => {
             langDiv.style.left = 'auto';
         }
         
-        langDiv.style.zIndex = '9998'; // Below custom cursor (z-index: 9999), but above all other layout elements
+        langDiv.style.zIndex = '9998'; // Keep the language control above the page content.
         langDiv.style.backgroundColor = '#795244'; // Elegant brand brown
         langDiv.style.border = '1px solid rgba(248, 246, 242, 0.15)';
         langDiv.style.borderRadius = '9999px';
@@ -905,7 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         langDiv.innerHTML = `
             <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1;">ES</button>
-            <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none; select-none">/</span>
+            <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none; user-select:none;">/</span>
             <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5;">EN</button>
         `;
         document.body.appendChild(langDiv);
