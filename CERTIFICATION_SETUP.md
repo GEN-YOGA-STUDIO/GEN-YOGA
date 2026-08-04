@@ -12,7 +12,7 @@ podía mezclar versiones y datos reales.
 4. Si se quieren probar pagos, crear una implementación separada con claves,
    Prices y webhook de Stripe TEST. El backend LIVE solo acepta operaciones desde
    el origen autorizado de producción; la interfaz web mantiene la misma versión
-   6.9 y no muestra avisos técnicos distintos según el dominio.
+   6.10 y no muestra avisos técnicos distintos según el dominio.
 
 ## Construcción
 
@@ -25,7 +25,7 @@ npm run build:cert
 ```
 
 El comando falla si falta alguna variable o si se intenta usar el proyecto de
-producción. Regenera `../subir cert` como un artefacto exacto de la versión 6.9,
+producción. Regenera `../subir cert` como un artefacto exacto de la versión 6.10,
 elimina archivos heredados y crea `certification-build.json` para poder comprobar
 qué entorno se está publicando.
 
