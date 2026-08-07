@@ -221,14 +221,14 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.13["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.13`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.15["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.15`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
   const staleVisualVersion = [...source.matchAll(/\bv(\d+)\.(\d+)\b/gi)]
-    .find(([, major, minor]) => `${major}.${minor}` !== '6.13');
+    .find(([, major, minor]) => `${major}.${minor}` !== '6.15');
   if (staleVisualVersion) {
-    errors.push(`${fileName}: contiene una versión visual distinta de 6.13 (${staleVisualVersion[0]})`);
+    errors.push(`${fileName}: contiene una versión visual distinta de 6.15 (${staleVisualVersion[0]})`);
   }
 }
 

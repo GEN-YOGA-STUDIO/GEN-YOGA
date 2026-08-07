@@ -20,7 +20,7 @@ import {
   safeErrorResponse,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.13'
+const APP_RELEASE = '6.15'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -96,6 +96,10 @@ serve(async (req) => {
       PURCHASE_TYPES.PACK_6,
       PURCHASE_TYPES.PACK_10,
       PURCHASE_TYPES.BONO_ILIMITADO,
+      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A,
+      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
+      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
+      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
     ])
     if (!allowedPurchaseTypes.has(lookupKey)) {
       throw new HttpError(400, 'Producto no permitido.')
@@ -106,8 +110,15 @@ serve(async (req) => {
 
     const requestedUserId = String(body.user_id || '').trim()
     const isGuest = requestedUserId === 'guest'
-    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA) {
-      throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta.')
+    const isMiriamPsychologySingle = [
+      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A,
+      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
+      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
+      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
+    ].includes(lookupKey as any)
+
+    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isMiriamPsychologySingle) {
+      throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta o consulta individual.')
     }
     const requestedAttemptId = String(body.checkout_attempt_id || '').trim()
     if (requestedAttemptId && !isUuid(requestedAttemptId)) {

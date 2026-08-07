@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.13">
+    <meta name="application-version" content="6.15">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
     <title>GEN Yoga | Clases</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-    <script src="i18n.js?v=6.13"></script>
+    <script src="i18n.js?v=6.15"></script>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.13" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.15" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -276,7 +276,7 @@
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
-    <link rel="stylesheet" href="public-calendar.css?v=6.13">
+    <link rel="stylesheet" href="public-calendar.css?v=6.15">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
 
@@ -306,45 +306,65 @@
         </button>
 
         <!-- Sticky Header (Title only, centered, with generous bottom padding to prevent overlap) -->
-        <div id="sticky-header" class="w-full flex flex-col items-center z-30 select-none pb-4 md:pb-8">
+        <div id="sticky-header" class="w-full flex flex-col items-center z-30 select-none pb-4 md:pb-6">
             <h1 id="header-title" class="brand-font font-black text-[#795244] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.1em] text-center transition-opacity duration-300" data-i18n="classes_title">
-                Escoge tus clases
+                Escoge tus sesiones
             </h1>
-            <button id="public-calendar-launch" type="button"
-                class="gy-calendar-launch mt-3 md:mt-5"
-                onclick="window.GENPublicCalendar?.open()">
-                <span class="gy-calendar-launch__live" aria-hidden="true"></span>
-                <span data-i18n="classes_calendar_btn">Ver horario semanal</span>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 3v3M19 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"></path>
-                </svg>
-            </button>
+
+            <div class="flex items-center justify-center gap-2 mt-4 mb-1 z-30">
+                <button id="btn-cat-yoga" type="button" onclick="switchCategoryDeck('yoga')"
+                    class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-md bg-[#795244] text-white border border-[#795244]">
+                    <span>Clases de Yoga</span>
+                </button>
+                <button id="btn-cat-consultas" type="button" onclick="switchCategoryDeck('consultas')"
+                    class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30">
+                    <span>Consultas por Profesor</span>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-3 mt-3 md:mt-4">
+                <button id="public-calendar-launch" type="button"
+                    class="gy-calendar-launch"
+                    onclick="window.GENPublicCalendar?.open({ mode: 'clases' })">
+                    <span class="gy-calendar-launch__live" aria-hidden="true"></span>
+                    <span data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 3v3M19 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"></path>
+                    </svg>
+                </button>
+                <button id="public-consultas-calendar-launch" type="button"
+                    class="gy-calendar-launch gy-calendar-launch--consultas"
+                    onclick="window.GENPublicCalendar?.open({ mode: 'consultas' })">
+                    <span class="gy-calendar-launch__live" aria-hidden="true" style="background:#8f6b2d; box-shadow: 0 0 0 5px rgba(143, 107, 45, 0.15);"></span>
+                    <span data-i18n="classes_consultas_calendar_btn">Ver consultas por profesor</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"></path>
+                        <path d="M12 8v4l3 3"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- Active Viewport Content Area -->
         <div id="classes-stage" class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-8 md:pb-12 mt-4 md:mt-8">
             
             <!-- ==================================== -->
-            <!-- FOLDERS DECK (Cards 1, 2, 3)         -->
+            <!-- FOLDERS DECK 1: YOGA CLASSES        -->
             <!-- ==================================== -->
             <div id="folders-deck" class="w-full relative transition-all duration-300">
                 
                 <!-- CARD 1 (Vinyasa Flow) -->
                 <div id="card-1" class="folder-card-container">
-                    <!-- Tab SVG (Perfect Bezier curves matching Canva tabs exactly) -->
                     <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none pointer-events-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Tab 1 (Brown #795244) -->
                             <path d="M 0 36 L 0 12 Q 0 0 12 0 L 158 0 Q 170 0 170 12 C 170 24 182 36 194 36 L 896 36 L 896 37 L 0 37 Z" fill="#795244" />
-                            <!-- Tab 1 Text Label -->
                             <text x="85" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2" data-i18n="classes_tab_vinyasa">VINYASA</text>
                         </svg>
                     </div>
-                    <!-- Body (z-20) -->
                     <div onclick="window.GENPublicCalendar?.open({ style: 'vinyasa' })"
                         class="folder-body bg-[#795244] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
-                            <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80" alt="Vinyasa Flow" class="w-full h-full object-cover">
+                            <img src="img/clases-vinyasa.jpg" alt="Vinyasa Flow" class="w-full h-full object-cover">
                         </div>
                         <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
                             <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_vinyasa_tagline">¿Listx para fluir sin parar?</span>
@@ -359,23 +379,18 @@
 
                 <!-- CARD 2 (Yoga para Hombres) -->
                 <div id="card-2" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 21;">
-                    <!-- Tab SVG (Perfect Bezier curves matching Canva tabs exactly) -->
                     <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Active Tab 2 + top bar (Terracotta #e06b53). Excludes Tab 1 so it doesn't slide up from below -->
                             <path d="M 180 36 L 180 12 Q 180 0 192 0 L 338 0 Q 350 0 350 12 C 350 24 362 36 374 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#e06b53" />
-                            <!-- Tab 2 Text Label -->
                             <text x="260" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2" data-i18n="classes_tab_hombres">HOMBRES</text>
                         </svg>
-                        <!-- Click Targets for Tabs -->
                         <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
                         <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
-                    <!-- Body (z-20) -->
                     <div onclick="window.GENPublicCalendar?.open({ style: 'yoga-para-hombres' })"
                         class="folder-body bg-[#e06b53] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
-                            <img src="https://images.unsplash.com/photo-1562088287-bde35a1ea917?auto=format&fit=crop&w=800&q=80" alt="Yoga para Hombres" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                            <img src="img/clases-hombres.jpg" alt="Yoga para Hombres" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         </div>
                         <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
                             <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_hombres_tagline">Fuerza, calma y espacio propio.</span>
@@ -390,24 +405,19 @@
 
                 <!-- CARD 3 (Yoga Restaurativa Suave) -->
                 <div id="card-3" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 22;">
-                    <!-- Tab SVG (Perfect Bezier curves matching Canva tabs exactly) -->
                     <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Active Tab 3 + top bar (Peach #ee9785). Excludes Tab 1 and Tab 2 so they remain static -->
                             <path d="M 360 36 L 360 12 Q 360 0 372 0 L 518 0 Q 530 0 530 12 C 530 24 542 36 554 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#ee9785" />
-                            <!-- Tab 3 Text Label -->
                             <text x="445" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2" data-i18n="classes_tab_restaurativa">RESTAURATIVA</text>
                         </svg>
-                        <!-- Click Targets for Tabs -->
                         <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
                         <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                         <div onclick="scrollToSlide(2)" class="absolute left-[42%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
-                    <!-- Body (z-20) -->
                     <div onclick="window.GENPublicCalendar?.open({ style: 'restaurativa' })"
                         class="folder-body bg-[#ee9785] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
-                            <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80" alt="Yoga Restaurativa Suave" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                            <img src="img/clases-restaurativa.jpg" alt="Yoga Restaurativa Suave" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         </div>
                         <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
                             <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_restaurativa_tagline">Suelta el día, respira despacio.</span>
@@ -419,8 +429,37 @@
                         </div>
                     </div>
                 </div>
-                
             </div>
+
+            <!-- ==================================== -->
+            <!-- FOLDERS DECK 2: CONSULTAS            -->
+            <!-- ==================================== -->
+            <div id="consultas-deck" class="w-full relative transition-all duration-300 hidden">
+                <!-- CARD MIRIAM -->
+                <div class="folder-card-container">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none pointer-events-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 0 36 L 0 12 Q 0 0 12 0 L 158 0 Q 170 0 170 12 C 170 24 182 36 194 36 L 896 36 L 896 37 L 0 37 Z" fill="#744833" />
+                            <text x="85" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2">MIRIAM</text>
+                        </svg>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'miriam' })"
+                        class="folder-body bg-[#744833] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-cta.jpg" alt="Miriam - Psicología" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2">Psicología · Salud Mental</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none">Miriam</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light mb-4">
+                                Acompañamiento psicoterapéutico individual (1ª sesión 75 € / sig. 65 €) y terapia de pareja (1ª 120 € / sig. 100 €). Sesiones de 50 minutos de duración.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_consultas_calendar_btn">Ver consultas por profesor</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Floating Scroll Indicator -->
@@ -443,7 +482,7 @@
                 
                 <!-- Left Column (Downward Dog Image) -->
                 <div id="cta-left-img" class="hidden md:block w-1/4 max-w-[210px] aspect-[3/4] overflow-hidden rounded-2xl shadow-lg border border-white/10 bg-white/5 opacity-0 transform translate-y-[120px] transition-all duration-500">
-                    <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80" alt="Downward Dog" loading="lazy" decoding="async" class="w-full h-full object-cover brightness-95 opacity-90">
+                    <img src="img/clases-cta.jpg" alt="Downward Dog" loading="lazy" decoding="async" class="w-full h-full object-cover brightness-95 opacity-90">
                 </div>
 
                 <!-- Center Column (Core Text + Fading CTA Button) -->
@@ -510,7 +549,7 @@
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                 <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">POLÍTICA DE PRIVACIDAD</a>
-                <span class="opacity-60 text-[10px]">v6.13 | @2026 Gen Yoga</span>
+                <span class="opacity-60 text-[10px]">v6.15 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
@@ -540,6 +579,11 @@
                     <p class="gy-calendar__eyebrow">GEN YOGA · ALBACETE</p>
                     <h2 id="public-calendar-title"><span data-calendar-copy="schedule">Horario</span><em data-calendar-copy="weekly"> semanal</em></h2>
                     <p data-calendar-copy="intro">Elige tu momento. Cada cambio realizado en el estudio aparece aquí automáticamente.</p>
+                    
+                    <div id="calendar-mode-toggle" class="gy-calendar__mode-bar" role="tablist">
+                        <button id="calendar-mode-clases" type="button" class="gy-calendar__mode-btn active" data-calendar-mode="clases" data-calendar-copy="calendar_mode_classes">Clases de Yoga</button>
+                        <button id="calendar-mode-consultas" type="button" class="gy-calendar__mode-btn" data-calendar-mode="consultas" data-calendar-copy="calendar_mode_consultations">Consultas (Psicología / Nutrición)</button>
+                    </div>
                 </div>
 
                 <div class="gy-calendar__controls" aria-label="Navegación por semanas">
@@ -955,12 +999,39 @@ window.handleNavClick = function (btn, url) {
     }, 150);
 }
 
+window.switchCategoryDeck = function(cat) {
+    const yogaDeck = document.getElementById('folders-deck');
+    const consultasDeck = document.getElementById('consultas-deck');
+    const btnYoga = document.getElementById('btn-cat-yoga');
+    const btnConsultas = document.getElementById('btn-cat-consultas');
+
+    if (cat === 'consultas') {
+        if (yogaDeck) yogaDeck.classList.add('hidden');
+        if (consultasDeck) consultasDeck.classList.remove('hidden');
+        if (btnYoga) {
+            btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#795244] border border-[#795244]/30';
+        }
+        if (btnConsultas) {
+            btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-md bg-[#8f6b2d] text-white border border-[#8f6b2d]';
+        }
+    } else {
+        if (consultasDeck) consultasDeck.classList.add('hidden');
+        if (yogaDeck) yogaDeck.classList.remove('hidden');
+        if (btnConsultas) {
+            btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30';
+        }
+        if (btnYoga) {
+            btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-md bg-[#795244] text-white border border-[#795244]';
+        }
+    }
+};
+
 </script>
-    <script src="public-calendar.js?v=6.13"></script>
+    <script src="public-calendar.js?v=6.15"></script>
+    <script src="facilities-carousel.js?v=6.15"></script>
     <script>
         window.GENPublicCalendar?.init({ client });
     </script>
-    <script src="facilities-carousel.js?v=6.13"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const dots = document.querySelectorAll('.slide-dot');

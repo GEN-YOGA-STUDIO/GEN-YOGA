@@ -81,6 +81,10 @@ for (const [productId, label] of [
   ['prod_V0ITB6mD71fwnD', 'pack de 4 clases'],
   ['prod_V0IUpyuvd7uX00', 'pack de 6 clases'],
   ['prod_V0IUYoGJJbX7FW', 'pack de 10 clases'],
+  ['prod_V1pKHgtMwPkCpC', 'Miriam acompañamiento inicial'],
+  ['prod_V1pLmzpCRU8ZpL', 'Miriam acompañamiento sucesivo'],
+  ['prod_V1pLCY3t5sprlK', 'Miriam pareja inicial'],
+  ['prod_V1pLWNLzr9Vb3g', 'Miriam pareja sucesiva'],
 ]) {
   requireText(shared, productId, `Producto Stripe de ${label}`);
 }
@@ -118,7 +122,7 @@ requireText(checkout, 'checkoutAttemptId', 'Idempotencia individual de invitados
 requireText(checkout, 'profile.account_deletion_pending', 'Checkout bloqueado por eliminación pendiente');
 requireText(checkout, 'expireCreatedCheckoutSession', 'Cierre del Checkout creado durante eliminación');
 requireText(checkout, ".select('account_deletion_pending')", 'Revalidación post-Checkout del tombstone');
-requireText(checkout, "const APP_RELEASE = '6.13'", 'Versión autoritativa de Checkout');
+requireText(checkout, "const APP_RELEASE = '6.15'", 'Versión autoritativa de Checkout');
 requireText(checkout, 'app_version: APP_RELEASE', 'Metadato uniforme de versión en Checkout');
 requireText(shared, "bonoIlimitado.type !== 'one_time'", 'Bono Ilimitado como pago único');
 requireText(shared, 'membership_month', 'Mes natural validado desde Stripe');

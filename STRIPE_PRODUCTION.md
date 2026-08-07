@@ -17,11 +17,15 @@ puede aceptar cobros reales. Crea o selecciona estos Prices activos:
 - `STRIPE_PRICE_BONO_MENSUAL`: Price de 90 EUR de la suscripción antigua; se
   conserva para validar renovaciones de clientes que ya la tuvieran.
 
-Los packs se validan además contra sus productos live de Stripe:
+Los packs y consultas se validan además contra sus productos live de Stripe:
 
 - 4 clases: `prod_V0ITB6mD71fwnD`.
 - 6 clases: `prod_V0IUpyuvd7uX00`.
 - 10 clases: `prod_V0IUYoGJJbX7FW`.
+- Miriam Acompañamiento 1ª sesión (75 €): `prod_V1pKHgtMwPkCpC`.
+- Miriam Acompañamiento siguientes (65 €): `prod_V1pLmzpCRU8ZpL`.
+- Miriam Terapia de pareja 1ª sesión (120 €): `prod_V1pLCY3t5sprlK`.
+- Miriam Terapia de pareja siguientes (100 €): `prod_V1pLWNLzr9Vb3g`.
 
 La clase suelta y los tres packs caducan 60 días naturales después del evento
 de compra confirmado. El Bono Ilimitado se compra para un mes natural elegido:

@@ -50,9 +50,9 @@ for (const id of [
 ]) {
   assert.match(classesPage, new RegExp(`id=["']${id}["']`), `Falta #${id} en clases.html`);
 }
-assert.match(classesPage, /public-calendar\.css\?v=6\.13/);
-assert.match(classesPage, /public-calendar\.js\?v=6\.13/);
-assert.match(classesPage, /facilities-carousel\.js\?v=6\.13/);
+assert.match(classesPage, /public-calendar\.css\?v=6\.15/);
+assert.match(classesPage, /public-calendar\.js\?v=6\.15/);
+assert.match(classesPage, /facilities-carousel\.js\?v=6\.15/);
 assert.match(classesPage, /GENPublicCalendar\?\.init\(\{\s*client\s*\}\)/);
 assert.match(classesPage, /id=["']facilities-gallery["'][\s\S]*data-facilities-slide/);
 assert.match(classesPage, /aria-roledescription=["']carousel["']/);

@@ -154,6 +154,7 @@
         initialized: false,
         open: false,
         client: null,
+        mode: 'clases',
         weekStart: '',
         classes: [],
         typeColors: new Map(),
@@ -489,6 +490,12 @@
         if (item.end.getTime() <= now) {
             return { disabled: true, stateClass: 'is-past', badge: text('finished'), hint: text('finished') };
         }
+        if (item.classType === 'psicologia' || item.classType === 'nutricion') {
+            if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
+                return { disabled: true, stateClass: 'is-full gy-calendar__event-badge--occupied', badge: text('calendar_spot_occupied'), hint: text('calendar_spot_occupied') };
+            }
+            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: text('calendar_spot_free'), hint: text('calendar_book_consultation') };
+        }
         if (item.complete === true) {
             return { disabled: true, stateClass: 'is-full', badge: text('full'), hint: text('full') };
         }
@@ -732,6 +739,10 @@
     function render() {
         if (!state.initialized) return;
         syncStaticCopy();
+        const btnClases = document.getElementById('calendar-mode-clases');
+        const btnConsultas = document.getElementById('calendar-mode-consultas');
+        if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
+        if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
         el.weekRange.textContent = weekRangeLabel(state.weekStart);
         renderFilters();
         renderSelectionNote();
@@ -835,6 +846,48 @@
     }
 
     async function fetchWeekData(weekStart) {
+        if (state.mode === 'consultas') {
+            const bounds = broadUtcBounds(weekStart);
+            const { data: clasesData, error } = await state.client
+                .from('clases')
+                .select(DIRECT_SELECT)
+                .in('tipo_clase', ['psicologia', 'nutricion'])
+                .eq('activa', true)
+                .gte('fecha_inicio', bounds.start)
+                .lt('fecha_inicio', bounds.end)
+                .order('fecha_inicio')
+                .limit(300);
+
+            if (error) throw error;
+            const validClases = (clasesData || [])
+                .map(row => normalizeClassRow(row, false))
+                .filter(Boolean)
+                .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
+
+            if (validClases.length > 0) {
+                const ids = validClases.map(c => c.id);
+                const [resPsico, resNutri] = await Promise.all([
+                    state.client.from('reservas_psicologia').select('clase_id,estado').in('clase_id', ids),
+                    state.client.from('reservas_nutricion').select('clase_id,estado').in('clase_id', ids)
+                ]);
+                const mapReservas = {};
+                [...(resPsico.data || []), ...(resNutri.data || [])].forEach(r => {
+                    if (r.estado === 'confirmada') {
+                        mapReservas[r.clase_id] = (mapReservas[r.clase_id] || 0) + 1;
+                    }
+                });
+
+                validClases.forEach(item => {
+                    const occupied = mapReservas[item.id] || 0;
+                    item.occupied = occupied;
+                    item.freeSpots = Math.max(0, item.capacity - occupied);
+                    item.complete = item.freeSpots <= 0;
+                });
+            }
+
+            return { exactAvailability: true, classes: validClases };
+        }
+
         if (state.rpcAvailable !== false) {
             const { data, error } = await state.client.rpc('get_public_weekly_schedule', {
                 p_week_start: weekStart
@@ -1020,6 +1073,9 @@
     }
 
     function applyOpenOptions(options) {
+        if (Object.prototype.hasOwnProperty.call(options, 'mode')) {
+            state.mode = options.mode === 'consultas' ? 'consultas' : 'clases';
+        }
         if (Object.prototype.hasOwnProperty.call(options, 'style')) {
             state.style = canonicalStyle(options.style);
             if (!Object.prototype.hasOwnProperty.call(options, 'teacher')) state.teacher = '';
@@ -1124,6 +1180,16 @@
         const item = state.classes.find(entry => entry.id === safePositiveInteger(classId));
         if (!item || getEventState(item).disabled) return;
 
+        if (item.classType === 'psicologia' || item.classType === 'nutricion') {
+            const params = new URLSearchParams({
+                view: item.classType,
+                clase: String(item.id),
+                from: 'calendario'
+            });
+            root.location.href = `profile.html?${params.toString()}`;
+            return;
+        }
+
         if (item.classType === 'taller') {
             const params = new URLSearchParams({
                 view: 'especiales',
@@ -1164,6 +1230,26 @@
             updateUrl('replace');
             render();
         });
+        const modeToggle = document.getElementById('calendar-mode-toggle');
+        if (modeToggle) {
+            modeToggle.addEventListener('click', event => {
+                const btn = event.target.closest('[data-calendar-mode]');
+                if (!btn) return;
+                const newMode = btn.dataset.calendarMode === 'consultas' ? 'consultas' : 'clases';
+                if (state.mode !== newMode) {
+                    state.mode = newMode;
+                    state.style = '';
+                    state.teacher = '';
+                    state.classId = null;
+                    const btnClases = document.getElementById('calendar-mode-clases');
+                    const btnConsultas = document.getElementById('calendar-mode-consultas');
+                    if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
+                    if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
+                    loadWeek();
+                }
+            });
+        }
+
         el.styleFilters.addEventListener('click', event => {
             const button = event.target.closest('[data-calendar-style]');
             if (!button) return;

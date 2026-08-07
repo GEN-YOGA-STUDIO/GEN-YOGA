@@ -12,6 +12,10 @@ export const PURCHASE_TYPES = {
   PACK_10: 'pack_10',
   BONO_ILIMITADO: 'bono_ilimitado',
   BONO_MENSUAL: 'bono_mensual',
+  MIRIAM_PSICO_INDIVIDUAL_1A: 'miriam_psico_individual_1a',
+  MIRIAM_PSICO_INDIVIDUAL_SIG: 'miriam_psico_individual_sig',
+  MIRIAM_PSICO_PAREJA_1A: 'miriam_psico_pareja_1a',
+  MIRIAM_PSICO_PAREJA_SIG: 'miriam_psico_pareja_sig',
 } as const
 
 // Public LIVE product identifiers supplied by GEN Yoga. Checkout still uses
@@ -21,6 +25,13 @@ export const PACK_PRODUCT_IDS = {
   PACK_4: 'prod_V0ITB6mD71fwnD',
   PACK_6: 'prod_V0IUpyuvd7uX00',
   PACK_10: 'prod_V0IUYoGJJbX7FW',
+} as const
+
+export const MIRIAM_PRODUCT_IDS = {
+  INDIVIDUAL_1A: 'prod_V1pKHgtMwPkCpC',
+  INDIVIDUAL_SIG: 'prod_V1pLmzpCRU8ZpL',
+  PAREJA_1A: 'prod_V1pLCY3t5sprlK',
+  PAREJA_SIG: 'prod_V1pLWNLzr9Vb3g',
 } as const
 
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
