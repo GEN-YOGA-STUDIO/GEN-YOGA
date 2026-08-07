@@ -9,7 +9,7 @@ const expectedTarget = path.join(workspaceRoot, 'subir cert');
 const productionProjectId = 'jkjifmrrlyncuwpjhxvk';
 const productionUrl = `https://${productionProjectId}.supabase.co`;
 const productionPublishableKey = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const version = '6.12';
+const version = '6.13';
 
 function requireVariable(name) {
   const value = process.env[name]?.trim();

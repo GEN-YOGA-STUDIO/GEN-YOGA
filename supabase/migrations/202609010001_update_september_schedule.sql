@@ -59,39 +59,35 @@ schedule_rules as (
 ),
 classes_to_create as (
   -- LUNES (dow = 1) - Ángel
-  select sr.fecha, '16:00'::time as hora_ini, '17:00'::time as hora_fin, 'Yoga para Todos' as nombre_clase, t.angel_id as profesor_id, s.para_todos_id as tipo_clase_id
+  select sr.fecha, '16:15'::time as hora_ini, '17:30'::time as hora_fin, 'Yoga para Todos' as nombre_clase, t.angel_id as profesor_id, s.para_todos_id as tipo_clase_id
   from schedule_rules sr, teachers t, styles s where sr.dow = 1
   union all
   select sr.fecha, '18:00'::time, '19:00'::time, 'Yoga para Hombres', t.angel_id, s.para_hombres_id
   from schedule_rules sr, teachers t, styles s where sr.dow = 1
   union all
-  select sr.fecha, '20:00'::time, '21:00'::time, 'Yoga para Todos', t.angel_id, s.para_todos_id
+  select sr.fecha, '19:45'::time, '21:00'::time, 'Yoga para Todos', t.angel_id, s.para_todos_id
   from schedule_rules sr, teachers t, styles s where sr.dow = 1
 
   -- MARTES (dow = 2) - Yanira
   union all select sr.fecha, '07:00'::time, '08:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 2
-  union all select sr.fecha, '09:00'::time, '10:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 2
-  union all select sr.fecha, '10:00'::time, '11:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 2
+  union all select sr.fecha, '09:30'::time, '10:30'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 2
   union all select sr.fecha, '19:00'::time, '20:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 2
 
   -- MIÉRCOLES (dow = 3) - Yanira & Ángel
   union all select sr.fecha, '08:00'::time, '09:00'::time, 'Restaurativo y Suave', t.yanira_id, s.restaurativo_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
-  union all select sr.fecha, '09:00'::time, '10:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
-  union all select sr.fecha, '10:00'::time, '11:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
-  union all select sr.fecha, '16:00'::time, '17:00'::time, 'Yoga para Todos', t.angel_id, s.para_todos_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
+  union all select sr.fecha, '09:30'::time, '10:30'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
+  union all select sr.fecha, '16:15'::time, '17:30'::time, 'Yoga para Todos', t.angel_id, s.para_todos_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
   union all select sr.fecha, '18:00'::time, '19:00'::time, 'Yoga para Hombres', t.angel_id, s.para_hombres_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
-  union all select sr.fecha, '20:00'::time, '21:00'::time, 'Yoga para Todos', t.angel_id, s.para_todos_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
+  union all select sr.fecha, '19:45'::time, '21:00'::time, 'Yoga para Todos', t.angel_id, s.para_todos_id from schedule_rules sr, teachers t, styles s where sr.dow = 3
 
   -- JUEVES (dow = 4) - Yanira
   union all select sr.fecha, '07:00'::time, '08:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 4
-  union all select sr.fecha, '09:00'::time, '10:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 4
-  union all select sr.fecha, '10:00'::time, '11:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 4
+  union all select sr.fecha, '09:30'::time, '10:30'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 4
   union all select sr.fecha, '19:00'::time, '20:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 4
 
   -- VIERNES (dow = 5) - Yanira & Silvia (Silvia: Viernes 2º y 4º de cada mes -> 11 y 25 de septiembre y sus viernes alternos)
   union all select sr.fecha, '08:00'::time, '09:00'::time, 'Restaurativo y Suave', t.yanira_id, s.restaurativo_id from schedule_rules sr, teachers t, styles s where sr.dow = 5
-  union all select sr.fecha, '09:00'::time, '10:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 5
-  union all select sr.fecha, '10:00'::time, '11:00'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 5
+  union all select sr.fecha, '09:30'::time, '10:30'::time, 'Power Vinyasa', t.yanira_id, s.power_vinyasa_id from schedule_rules sr, teachers t, styles s where sr.dow = 5
   union all select sr.fecha, '11:00'::time, '12:00'::time, 'Yoga Ayurveda', t.silvia_id, s.ayurveda_id from schedule_rules sr, teachers t, styles s where sr.dow = 5 and sr.week_of_month in (2, 4)
   union all select sr.fecha, '13:00'::time, '14:00'::time, 'Yoga Ayurveda', t.silvia_id, s.ayurveda_id from schedule_rules sr, teachers t, styles s where sr.dow = 5 and sr.week_of_month in (2, 4)
 )
