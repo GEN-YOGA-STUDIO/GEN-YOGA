@@ -20,7 +20,7 @@ import {
   safeErrorResponse,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.15'
+const APP_RELEASE = '6.17'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 

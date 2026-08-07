@@ -55,15 +55,23 @@ TITULACIONES:
 Hatha Yoga y Yoga Iyengar por AIPYS. Yoga Center
 Terapeuta Ayurveda. COFENAT. Alsandara
 
-SOBRE MÍ:
-Soy profesora de Yoga con más de 25 años dedicados a la enseñanza, 30 años de práctica personal y terapeuta Ayurveda. La vida me ha llevado a ayudar a muchas personas de todo el mundo a través de la práctica del Yoga.
-Actualmente imparto clases en distintas ciudades de España, entre ellas Córdoba, Granada, Málaga, Valencia, Albacete, Elche y Alicante, así como cursos de formación en Madrid y Canarias.
-Imparto cursos de Yoga Terapéutico para profesores y alumnos con amplia experiencia en la práctica del yoga. También he impartido cursos para profesores titulados en India, Grecia e Indonesia.
-En los últimos años acompaño a profesores de yoga en mentorías para profundizar en su práctica y pedagogía y acompañarlos en el desarrollo de sus centros de yoga.
-Para mí, el Yoga es sutilidad, adaptabilidad, apertura, entrega, aceptación y conciencia.
-Tras más de 25 años de enseñanza y 30 de práctica, continúo implicándome al cien por cien en mi trabajo y entregando todo mi amor y dedicación en cada clase.
+SOBRE SILVIA:
+Es profesora de Yoga con más de 25 años dedicados a la enseñanza, 30 años de práctica personal y terapeuta Ayurveda. La vida la ha llevado a ayudar a muchas personas de todo el mundo a través de la práctica del Yoga.
+Actualmente imparte clases en distintas ciudades de España, entre ellas Córdoba, Granada, Málaga, Valencia, Albacete, Elche y Alicante, así como cursos de formación en Madrid y Canarias.
+Imparte cursos de Yoga Terapéutico para profesores y alumnos con amplia experiencia en la práctica del yoga. También ha impartido cursos para profesores titulados en India, Grecia e Indonesia.
+En los últimos años acompaña a profesores de yoga en mentorías para profundizar en su práctica y pedagogía y acompañarlos en el desarrollo de sus centros de yoga.
+Para ella, el Yoga es sutilidad, adaptabilidad, apertura, entrega, aceptación y conciencia.
+Tras más de 25 años de enseñanza y 30 de práctica, continúa implicándose al cien por cien en su trabajo y entregando todo su amor y dedicación en cada clase.
 
-TE ACOMPAÑO:
+YOGA & AYURVEDA:
+Clases en las que el Yoga y el Ayurveda se integran para ofrecer una práctica precisa, consciente y adaptada a cada persona según sus necesidades.
+A través de las asanas, el pranayama (respiración) y la observación, enseña a conocer el cuerpo, aquietar la mente y cultivar un equilibrio profundo que favorece la salud, la vitalidad y el bienestar físico, mental y emocional.
+
+CONSULTAS AYURVEDA:
+La Consulta de Ayurveda es un espacio abierto para quienes buscan armonizar su vida a través de la alimentación consciente, rutinas saludables y remedios naturales. Acompaña a cada persona en un viaje de regreso a su esencia, ayudándole a redescubrir su bienestar desde una mirada holística y profunda.
+A través de la escucha profunda, la observación del cuerpo y el entendimiento de los doshas, identifica los desequilibrios que bloquean el flujo natural de la energía vital. Desde ahí, ofrece recomendaciones sutiles y conscientes (como alimentación, rutinas, hierbas y hábitos) para armonizar cuerpo, mente y alma. Su propósito es guiar con amor y presencia hacia una vida más plena y conectada con la sabiduría interior. Además, incluye una sesión de Yoga personalizada para experimentar un bienestar profundo.
+
+TE ACOMPAÑA EN:
 Acompaño procesos de bienestar físico, emocional y del sistema nervioso mediante el yoga terapéutico, adaptando la práctica a las necesidades individuales de cada persona.
 Dolor de espalda, cervicales y articulaciones
 Lesiones musculoesqueléticas y procesos de recuperación funcional
@@ -76,7 +84,7 @@ Fatiga, falta de energía y desequilibrios asociados al estilo de vida
 Mejora de la movilidad, la postura y la respiración
 
 ME DEFINE:
-"Mi trabajo consiste en crear espacios donde el cuerpo pueda sentirse escuchado, el sistema nervioso regulado y la persona acompañada en su proceso de volver a sí misma a través del yoga y del Ayurveda."`,
+"Su trabajo consiste en crear espacios donde el cuerpo pueda sentirse escuchado, el sistema nervioso regulado y la persona acompañada en su proceso de volver a sí misma a través del yoga y del Ayurveda."`,
         yanira: `TRAYECTORIA:
 Procedente de Estados Unidos y con raíces salvadoreñas, he tenido la oportunidad de vivir en distintos lugares del mundo y conocer a personas con trayectorias muy diversas. Cada experiencia y aprendizaje han contribuido a formar la persona que soy hoy.
 Docente de profesión, he enseñado durante veinte años en escuelas del área de Washington D. C. Mi formación en yoga es un proceso continuo, pero considero que mi esterilla es mi mejor guía.
@@ -158,16 +166,24 @@ QUALIFICATIONS:
 Hatha Yoga and Iyengar Yoga through AIPYS. Yoga Center
 Ayurveda therapist. COFENAT. Alsandara
 
-ABOUT ME:
-I am a yoga teacher with more than 25 years devoted to teaching, 30 years of personal practice and experience as an Ayurveda therapist. Life has led me to help people from around the world through the practice of yoga.
-I currently teach in several Spanish cities, including Córdoba, Granada, Málaga, Valencia, Albacete, Elche and Alicante, and lead training courses in Madrid and the Canary Islands.
-I teach therapeutic yoga courses for teachers and experienced students. I have also taught qualified teachers in India, Greece and Indonesia.
-In recent years, I have mentored yoga teachers to deepen their practice and teaching skills and supported the development of their yoga centres.
-For me, yoga is subtlety, adaptability, openness, surrender, acceptance and awareness.
-After more than 25 years of teaching and 30 years of practice, I remain fully committed to my work and bring all my care and dedication to every class.
+ABOUT SILVIA:
+She is a yoga teacher with more than 25 years devoted to teaching, 30 years of personal practice and experience as an Ayurveda therapist. Life has led her to help people from around the world through the practice of yoga.
+She currently teaches in several Spanish cities, including Córdoba, Granada, Málaga, Valencia, Albacete, Elche and Alicante, and leads training courses in Madrid and the Canary Islands.
+She teaches therapeutic yoga courses for teachers and experienced students. She has also taught qualified teachers in India, Greece and Indonesia.
+In recent years, she has mentored yoga teachers to deepen their practice and teaching skills and supported the development of their yoga centres.
+For her, yoga is subtlety, adaptability, openness, surrender, acceptance and awareness.
+After more than 25 years of teaching and 30 years of practice, she remains fully committed to her work and brings all her care and dedication to every class.
 
-I SUPPORT YOU:
-I support physical, emotional and nervous-system well-being through therapeutic yoga, adapting the practice to each person's needs.
+YOGA & AYURVEDA:
+Classes in which Yoga and Ayurveda integrate to offer a precise, conscious practice adapted to each person according to their needs.
+Through asanas, pranayama (breathing) and observation, she teaches how to understand the body, quiet the mind and cultivate a deep balance that promotes health, vitality and physical, mental and emotional well-being.
+
+AYURVEDA CONSULTATIONS:
+The Ayurveda Consultation is an open space for those seeking to harmonize their lives through conscious nutrition, healthy routines and natural remedies. She accompanies each person on a journey back to their essence, helping them rediscover their well-being from a holistic and deep perspective.
+Through deep listening, body observation and understanding the doshas, she identifies the imbalances that block the natural flow of vital energy. From there, she offers subtle and conscious recommendations (such as nutrition, routines, herbs and habits) to harmonize body, mind and soul. Her purpose is to guide with love and presence toward a more full life connected with inner wisdom. Additionally, it includes a personalized Yoga session to experience deep well-being.
+
+SHE SUPPORTS YOU IN:
+She supports physical, emotional and nervous-system well-being through therapeutic yoga, adapting the practice to each person's needs.
 Back, neck and joint pain
 Musculoskeletal injuries and functional recovery
 Stress, anxiety and physical and mental exhaustion
@@ -178,8 +194,8 @@ Menopause and women's health
 Fatigue, low energy and lifestyle-related imbalances
 Improved mobility, posture and breathing
 
-WHAT DEFINES ME:
-"My work is to create spaces where the body feels heard, the nervous system can regulate and each person feels supported in the process of returning to themselves through yoga and Ayurveda."`
+WHAT DEFINES HER:
+"Her work is to create spaces where the body feels heard, the nervous system can regulate and each person feels supported in the process of returning to themselves through yoga and Ayurveda."`
         }),
         yanira: Object.freeze({
             nombre: 'Yanira',
@@ -192,7 +208,7 @@ QUALIFICATIONS:
 Master's degree in International Education (Framingham State College)
 Master's degree in Educational Leadership (George Mason University)
 Yoga Alliance certified yoga instructor (training at Down Dog Yoga in Georgetown, Washington, D. C.)
-Specialist training in yoga anatomy, children's yoga, yoga and mindfulness
+Especializaciones en anatomía aplicada al yoga, yoga infantil, yoga y mindfulness
 
 I SUPPORT YOU:
 Vinyasa Yoga (online and in-person classes)

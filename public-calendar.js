@@ -147,7 +147,8 @@
         'angel-javier': '#7f9fc0',
         yanira: '#df7fa5',
         silvia: '#c9a74c',
-        miriam: '#9a83b9'
+        miriam: '#9a83b9',
+        isabel: '#8f6b2d'
     });
 
     const state = {
@@ -848,24 +849,32 @@
     async function fetchWeekData(weekStart) {
         if (state.mode === 'consultas') {
             const bounds = broadUtcBounds(weekStart);
-            const { data: clasesData, error } = await state.client
-                .from('clases')
-                .select(DIRECT_SELECT)
-                .in('tipo_clase', ['psicologia', 'nutricion'])
-                .eq('activa', true)
-                .gte('fecha_inicio', bounds.start)
-                .lt('fecha_inicio', bounds.end)
-                .order('fecha_inicio')
-                .limit(300);
+            const [clasesRes, professionalsRes] = await Promise.all([
+                state.client
+                    .from('clases')
+                    .select(DIRECT_SELECT)
+                    .in('tipo_clase', ['psicologia', 'nutricion'])
+                    .eq('activa', true)
+                    .gte('fecha_inicio', bounds.start)
+                    .lt('fecha_inicio', bounds.end)
+                    .order('fecha_inicio')
+                    .limit(300),
+                state.client
+                    .from('profesionales')
+                    .select('id, nombre, apellidos, email, color, visible_publico')
+                    .eq('visible_publico', true)
+            ]);
 
-            if (error) throw error;
-            const validClases = (clasesData || [])
+            if (clasesRes.error) throw clasesRes.error;
+            if (professionalsRes.error) throw professionalsRes.error;
+
+            const dbClases = (clasesRes.data || [])
                 .map(row => normalizeClassRow(row, false))
                 .filter(Boolean)
                 .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
 
-            if (validClases.length > 0) {
-                const ids = validClases.map(c => c.id);
+            if (dbClases.length > 0) {
+                const ids = dbClases.map(c => c.id);
                 const [resPsico, resNutri] = await Promise.all([
                     state.client.from('reservas_psicologia').select('clase_id,estado').in('clase_id', ids),
                     state.client.from('reservas_nutricion').select('clase_id,estado').in('clase_id', ids)
@@ -877,7 +886,7 @@
                     }
                 });
 
-                validClases.forEach(item => {
+                dbClases.forEach(item => {
                     const occupied = mapReservas[item.id] || 0;
                     item.occupied = occupied;
                     item.freeSpots = Math.max(0, item.capacity - occupied);
@@ -885,7 +894,75 @@
                 });
             }
 
-            return { exactAvailability: true, classes: validClases };
+            const professionalsData = professionalsRes.data || [];
+            const selectedProf = professionalsData.find(prof => {
+                const slug = normalizeTeacherParam(root.GENTeacherProfiles?.getSlug?.(prof) || `${prof.nombre || ''} ${prof.apellidos || ''}`);
+                return slug === state.teacher || String(prof.id) === state.teacher;
+            });
+
+            let virtualIdCounter = 9000000;
+            const generatedSlots = [];
+            const profsToGenerate = selectedProf ? [selectedProf] : professionalsData.filter(p => {
+                const slug = teacherSlug(p);
+                return ['miriam', 'silvia', 'isabel'].includes(slug);
+            });
+
+            profsToGenerate.forEach(prof => {
+                const profSlug = teacherSlug(prof);
+                const slotType = profSlug === 'miriam' ? 'psicologia' : 'nutricion';
+                const displayName = `${prof.nombre || ''} ${prof.apellidos || ''}`.trim();
+                const profColor = prof.color || knownTeacherColors[profSlug] || '#d96542';
+
+                for (let dayIdx = 0; dayIdx < 6; dayIdx++) {
+                    const dateKey = addDays(weekStart, dayIdx);
+                    const startHours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+
+                    startHours.forEach(hour => {
+                        const startMinutes = hour * 60;
+                        const existsInDb = dbClases.some(c =>
+                            c.dateKey === dateKey &&
+                            c.startMinutes === startMinutes &&
+                            c.professor.id === prof.id
+                        );
+
+                        if (!existsInDb) {
+                            const startStr = `${dateKey}T${String(hour).padStart(2, '0')}:00:00`;
+                            const start = new Date(startStr);
+                            const end = new Date(start.getTime() + 60 * 60_000);
+                            const name = slotType === 'psicologia' ? 'Consulta Psicología' : 'Consulta Nutrición';
+
+                            generatedSlots.push({
+                                id: ++virtualIdCounter,
+                                name,
+                                start,
+                                end,
+                                dateKey,
+                                startMinutes,
+                                durationMinutes: 60,
+                                capacity: 1,
+                                occupied: 0,
+                                freeSpots: 1,
+                                complete: false,
+                                professor: {
+                                    id: prof.id,
+                                    nombre: prof.nombre || '',
+                                    apellidos: prof.apellidos || '',
+                                    color: profColor,
+                                    slug: profSlug,
+                                    displayName
+                                },
+                                classType: slotType,
+                                classTypeId: null,
+                                style: canonicalStyle(name),
+                                isVirtual: true
+                            });
+                        }
+                    });
+                }
+            });
+
+            const allSlots = [...dbClases, ...generatedSlots];
+            return { exactAvailability: true, classes: allSlots };
         }
 
         if (state.rpcAvailable !== false) {
@@ -1186,6 +1263,12 @@
                 clase: String(item.id),
                 from: 'calendario'
             });
+            if (item.isVirtual) {
+                params.set('virtual', 'true');
+                params.set('fecha', item.dateKey);
+                params.set('hora', formatTime(item.start));
+                params.set('profesor_id', String(item.professor.id));
+            }
             root.location.href = `profile.html?${params.toString()}`;
             return;
         }

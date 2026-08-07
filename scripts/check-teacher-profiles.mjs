@@ -77,7 +77,7 @@ const [maestros, profile, migration] = await Promise.all([
 ]);
 
 for (const page of [maestros, profile]) {
-  assert.match(page, /teacher-profiles\.js\?v=6\.15/);
+  assert.match(page, /teacher-profiles\.js\?v=6\.17/);
 }
 
 assert.doesNotMatch(maestros, /summarizeModalText|summarizeModalItems|moreAreas|moreQualifications/);

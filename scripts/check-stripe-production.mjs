@@ -122,7 +122,7 @@ requireText(checkout, 'checkoutAttemptId', 'Idempotencia individual de invitados
 requireText(checkout, 'profile.account_deletion_pending', 'Checkout bloqueado por eliminación pendiente');
 requireText(checkout, 'expireCreatedCheckoutSession', 'Cierre del Checkout creado durante eliminación');
 requireText(checkout, ".select('account_deletion_pending')", 'Revalidación post-Checkout del tombstone');
-requireText(checkout, "const APP_RELEASE = '6.15'", 'Versión autoritativa de Checkout');
+requireText(checkout, "const APP_RELEASE = '6.17'", 'Versión autoritativa de Checkout');
 requireText(checkout, 'app_version: APP_RELEASE', 'Metadato uniforme de versión en Checkout');
 requireText(shared, "bonoIlimitado.type !== 'one_time'", 'Bono Ilimitado como pago único');
 requireText(shared, 'membership_month', 'Mes natural validado desde Stripe');
