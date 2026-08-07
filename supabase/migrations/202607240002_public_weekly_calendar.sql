@@ -10,6 +10,16 @@ update public.clases
 set nombre = 'Yoga Ayurveda'
 where lower(btrim(coalesce(nombre, ''))) = 'yoga aryuveda';
 
+-- Production inherited an incorrect foreign key from tipo_clase_id to
+-- tipos_servicios. The application stores yoga style IDs from tipos_clases in
+-- this column, and historical rows are still NULL, so repair the relationship
+-- before backfilling the configured styles.
+alter table public.clases
+  drop constraint if exists clases_tipo_clase_id_fkey;
+alter table public.clases
+  add constraint clases_tipo_clase_id_fkey
+  foreign key (tipo_clase_id) references public.tipos_clases(id) on delete set null;
+
 update public.clases as c
 set tipo_clase_id = tc.id
 from public.tipos_clases as tc

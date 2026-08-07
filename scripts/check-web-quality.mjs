@@ -221,14 +221,14 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.11["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.11`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.12["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.12`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
   const staleVisualVersion = [...source.matchAll(/\bv(\d+)\.(\d+)\b/gi)]
-    .find(([, major, minor]) => `${major}.${minor}` !== '6.11');
+    .find(([, major, minor]) => `${major}.${minor}` !== '6.12');
   if (staleVisualVersion) {
-    errors.push(`${fileName}: contiene una versión visual distinta de 6.11 (${staleVisualVersion[0]})`);
+    errors.push(`${fileName}: contiene una versión visual distinta de 6.12 (${staleVisualVersion[0]})`);
   }
 }
 
@@ -249,6 +249,12 @@ for (const rpc of ['reservar_consulta_atomica', 'cancelar_consulta_atomica']) {
 }
 if (/\.from\(['"]reservas_(?:psicologia|nutricion)['"]\)\.insert/.test(profile)) {
   errors.push('profile.html: vuelve a insertar reservas de consulta fuera de la RPC atómica');
+}
+if (/\.from\(['"]reservas_yoga['"]\)\s*\.(?:insert|upsert|update|delete)\s*\(/.test(profile)) {
+  errors.push('profile.html: vuelve a modificar reservas de yoga o talleres fuera de la RPC atómica');
+}
+if (!profile.includes("client.rpc('cancelar_con_bono'")) {
+  errors.push('profile.html: la cancelación de yoga y talleres debe usar cancelar_con_bono');
 }
 
 const yogaPolicyMigrationPath = path.join(
@@ -305,6 +311,31 @@ if (!await exists(yogaPolicyMigrationPath)) {
     if (!yogaPolicyMigration.toLowerCase().includes(required.toLowerCase())) {
       errors.push(`Migración de políticas de yoga: falta ${required}`);
     }
+  }
+}
+
+const bookingMutationGuardPath = path.join(
+  root,
+  'supabase',
+  'migrations',
+  '202608060001_protect_taller_booking_mutations.sql',
+);
+if (!await exists(bookingMutationGuardPath)) {
+  errors.push('Falta la migración que protege las reservas directas de talleres');
+} else {
+  const bookingMutationGuard = await readFile(bookingMutationGuardPath, 'utf8');
+  for (const required of [
+    "v_old_class_type in ('yoga', 'taller')",
+    "v_new_class_type in ('yoga', 'taller')",
+    "current_user in ('postgres', 'supabase_admin', 'service_role')",
+    'revoke insert, update, delete on table public.reservas_yoga',
+  ]) {
+    if (!bookingMutationGuard.toLowerCase().includes(required.toLowerCase())) {
+      errors.push(`Guard de reservas de talleres: falta ${required}`);
+    }
+  }
+  if (/security\s+definer/i.test(bookingMutationGuard)) {
+    errors.push('Guard de reservas de talleres: la función trigger no puede ser SECURITY DEFINER');
   }
 }
 

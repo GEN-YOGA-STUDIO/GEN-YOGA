@@ -50,9 +50,9 @@ for (const id of [
 ]) {
   assert.match(classesPage, new RegExp(`id=["']${id}["']`), `Falta #${id} en clases.html`);
 }
-assert.match(classesPage, /public-calendar\.css\?v=6\.11/);
-assert.match(classesPage, /public-calendar\.js\?v=6\.11/);
-assert.match(classesPage, /facilities-carousel\.js\?v=6\.11/);
+assert.match(classesPage, /public-calendar\.css\?v=6\.12/);
+assert.match(classesPage, /public-calendar\.js\?v=6\.12/);
+assert.match(classesPage, /facilities-carousel\.js\?v=6\.12/);
 assert.match(classesPage, /GENPublicCalendar\?\.init\(\{\s*client\s*\}\)/);
 assert.match(classesPage, /id=["']facilities-gallery["'][\s\S]*data-facilities-slide/);
 assert.match(classesPage, /aria-roledescription=["']carousel["']/);
@@ -162,6 +162,8 @@ assert.doesNotMatch(profilePage, /id="clase-es-especial"|toggleClaseEspecial/);
 assert.match(migration, /security definer/i);
 assert.match(migration, /time zone 'Europe\/Madrid'/i);
 assert.match(migration, /booking\.estado = 'confirmada'/);
+assert.match(migration, /foreign key \(tipo_clase_id\) references public\.tipos_clases\(id\)/i);
+assert.doesNotMatch(migration, /foreign key \(tipo_clase_id\) references public\.tipos_servicios\(id\)/i);
 assert.match(migration, /revoke all on function public\.get_public_weekly_schedule\(date\)/i);
 assert.match(migration, /grant execute on function public\.get_public_weekly_schedule\(date\)[\s\S]*to anon, authenticated/i);
 assert.doesNotMatch(migration, /user_id\s+(?:uuid|text)|returns table[\s\S]*email/i);

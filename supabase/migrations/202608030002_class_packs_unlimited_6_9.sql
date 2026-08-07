@@ -20,6 +20,13 @@ alter table public.tipos_clases
   add constraint tipos_clases_categoria_check
   check (categoria in ('yoga', 'taller'));
 
+update public.tipos_clases
+   set categoria = 'taller'
+ where lower(trim(coalesce(nombre, ''))) in (
+   'clase especial (taller)',
+   'clase especial / taller'
+ );
+
 update public.clases
    set tipo_clase = 'taller'
  where coalesce(es_especial, false)
