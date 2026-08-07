@@ -16,6 +16,8 @@ export const PURCHASE_TYPES = {
   MIRIAM_PSICO_INDIVIDUAL_SIG: 'miriam_psico_individual_sig',
   MIRIAM_PSICO_PAREJA_1A: 'miriam_psico_pareja_1a',
   MIRIAM_PSICO_PAREJA_SIG: 'miriam_psico_pareja_sig',
+  SILVIA_AYURVEDA_1A: 'silvia_ayurveda_1a',
+  SILVIA_AYURVEDA_SIG: 'silvia_ayurveda_sig',
 } as const
 
 // Public LIVE product identifiers supplied by GEN Yoga. Checkout still uses
@@ -497,6 +499,17 @@ export function validateCheckoutPurchase(
   let purchaseType: PurchaseType
   let price: Stripe.Price
   let expectedAmount: number
+
+  // Known consultation amounts (dynamically-priced products)
+  const CONSULTATION_AMOUNTS: Record<string, number> = {
+    [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A]: 7500,
+    [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG]: 6500,
+    [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A]: 12000,
+    [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG]: 10000,
+    [PURCHASE_TYPES.SILVIA_AYURVEDA_1A]: 8000,
+    [PURCHASE_TYPES.SILVIA_AYURVEDA_SIG]: 6000,
+  }
+
   if (priceId === catalog.claseSuelta.id) {
     purchaseType = PURCHASE_TYPES.CLASE_SUELTA
     price = catalog.claseSuelta
@@ -522,7 +535,17 @@ export function validateCheckoutPurchase(
     price = catalog.bonoMensual
     expectedAmount = 9000
   } else {
-    throw new HttpError(400, 'El producto comprado no está permitido.')
+    // Psychology consultations use dynamic prices (price_data or lookup_key),
+    // so the priceId won't match any catalog entry. Identify them via metadata.
+    const metaPurchaseType = (session.metadata || {}).purchase_type || ''
+    const consultationAmount = CONSULTATION_AMOUNTS[metaPurchaseType]
+    if (consultationAmount !== undefined) {
+      purchaseType = metaPurchaseType as PurchaseType
+      price = lineItems[0].price
+      expectedAmount = consultationAmount
+    } else {
+      throw new HttpError(400, 'El producto comprado no está permitido.')
+    }
   }
 
   if (session.currency?.toLowerCase() !== 'eur' || session.amount_total !== expectedAmount) {

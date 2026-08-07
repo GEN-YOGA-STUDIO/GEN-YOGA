@@ -100,6 +100,8 @@ serve(async (req) => {
       PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
       PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
       PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
+      PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
+      PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
     ])
     if (!allowedPurchaseTypes.has(lookupKey)) {
       throw new HttpError(400, 'Producto no permitido.')
@@ -110,14 +112,16 @@ serve(async (req) => {
 
     const requestedUserId = String(body.user_id || '').trim()
     const isGuest = requestedUserId === 'guest'
-    const isMiriamPsychologySingle = [
+    const isConsultationSingle = [
       PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A,
       PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
       PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
       PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
+      PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
+      PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
     ].includes(lookupKey as any)
 
-    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isMiriamPsychologySingle) {
+    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle) {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta o consulta individual.')
     }
     const requestedAttemptId = String(body.checkout_attempt_id || '').trim()
@@ -190,8 +194,78 @@ serve(async (req) => {
     if (membershipMonth) metadata.membership_month = membershipMonth
 
     const returnBaseUrl = resolveReturnBaseUrl(req, config)
+
+    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
+
+    if (price) {
+      lineItems = [{ price: price.id, quantity: 1 }]
+    } else if (isConsultationSingle) {
+      // Lookup existing active price in Stripe by lookup_key
+      let stripePriceId: string | null = null
+      try {
+        const prices = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 })
+        if (prices.data.length > 0) {
+          stripePriceId = prices.data[0].id
+        }
+      } catch (err) {
+        console.warn('No se pudo consultar el price por lookup_key en Stripe:', err)
+      }
+
+      if (stripePriceId) {
+        lineItems = [{ price: stripePriceId, quantity: 1 }]
+      } else {
+        const consultationProductDetails: Record<string, { name: string; amount: number }> = {
+          [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A]: {
+            name: 'Acompañamiento psicoterapéutico (1ª sesión)',
+            amount: 7500,
+          },
+          [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG]: {
+            name: 'Acompañamiento psicoterapéutico (siguientes)',
+            amount: 6500,
+          },
+          [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A]: {
+            name: 'Terapia de pareja (1ª sesión)',
+            amount: 12000,
+          },
+          [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG]: {
+            name: 'Terapia de pareja (siguientes)',
+            amount: 10000,
+          },
+          [PURCHASE_TYPES.SILVIA_AYURVEDA_1A]: {
+            name: 'Consulta de Ayurveda (1ª sesión)',
+            amount: 8000,
+          },
+          [PURCHASE_TYPES.SILVIA_AYURVEDA_SIG]: {
+            name: 'Consulta de Ayurveda (seguimiento)',
+            amount: 6000,
+          },
+        }
+
+        const details = consultationProductDetails[lookupKey]
+        if (!details) {
+          throw new HttpError(400, 'Configuración de tarifa de consulta no encontrada.')
+        }
+
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: details.amount,
+              product_data: {
+                name: details.name,
+                metadata: { lookup_key: lookupKey },
+              },
+            },
+            quantity: 1,
+          },
+        ]
+      }
+    } else {
+      throw new HttpError(400, 'Precio no configurado para el producto seleccionado.')
+    }
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      line_items: [{ price: price.id, quantity: 1 }],
+      line_items: lineItems,
       mode: isSubscription ? 'subscription' : 'payment',
       client_reference_id: appUserId,
       success_url: `${returnBaseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}${isGuest ? '&guest=true' : ''}&from=${source}`,
