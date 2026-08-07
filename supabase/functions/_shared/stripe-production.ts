@@ -18,6 +18,10 @@ export const PURCHASE_TYPES = {
   MIRIAM_PSICO_PAREJA_SIG: 'miriam_psico_pareja_sig',
   SILVIA_AYURVEDA_1A: 'silvia_ayurveda_1a',
   SILVIA_AYURVEDA_SIG: 'silvia_ayurveda_sig',
+  SILVIA_AYURVEDA_BONO3: 'silvia_ayurveda_bono3',
+  SILVIA_AYURVEDA_BONO6: 'silvia_ayurveda_bono6',
+  ISABEL_PNI_1A: 'isabel_pni_1a',
+  ISABEL_PNI_SIG: 'isabel_pni_sig',
 } as const
 
 // Public LIVE product identifiers supplied by GEN Yoga. Checkout still uses
@@ -508,6 +512,10 @@ export function validateCheckoutPurchase(
     [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG]: 10000,
     [PURCHASE_TYPES.SILVIA_AYURVEDA_1A]: 8000,
     [PURCHASE_TYPES.SILVIA_AYURVEDA_SIG]: 6000,
+    [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO3]: 17000,
+    [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO6]: 28000,
+    [PURCHASE_TYPES.ISABEL_PNI_1A]: 8000,
+    [PURCHASE_TYPES.ISABEL_PNI_SIG]: 6000,
   }
 
   if (priceId === catalog.claseSuelta.id) {
@@ -569,8 +577,19 @@ export function validateCheckoutPurchase(
   ) {
     throw new HttpError(400, 'Los metadatos de la sesión no son válidos.')
   }
-  if (appUserId === 'guest' && purchaseType !== PURCHASE_TYPES.CLASE_SUELTA) {
-    throw new HttpError(400, 'Una compra de invitado solo puede ser una clase suelta.')
+  const isConsultationSingle = [
+    PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A,
+    PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
+    PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
+    PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
+    PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
+    PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
+    PURCHASE_TYPES.ISABEL_PNI_1A,
+    PURCHASE_TYPES.ISABEL_PNI_SIG,
+  ].includes(purchaseType as any)
+
+  if (appUserId === 'guest' && purchaseType !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle) {
+    throw new HttpError(400, 'Una compra de invitado solo puede ser una clase suelta o consulta individual.')
   }
   if (appUserId !== 'guest' && !isUuid(appUserId)) {
     throw new HttpError(400, 'La sesión no está vinculada a un usuario válido.')

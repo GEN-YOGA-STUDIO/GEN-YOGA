@@ -20,7 +20,7 @@ import {
   safeErrorResponse,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.17'
+const APP_RELEASE = '6.18'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -102,6 +102,10 @@ serve(async (req) => {
       PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
       PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
       PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
+      PURCHASE_TYPES.SILVIA_AYURVEDA_BONO3,
+      PURCHASE_TYPES.SILVIA_AYURVEDA_BONO6,
+      PURCHASE_TYPES.ISABEL_PNI_1A,
+      PURCHASE_TYPES.ISABEL_PNI_SIG,
     ])
     if (!allowedPurchaseTypes.has(lookupKey)) {
       throw new HttpError(400, 'Producto no permitido.')
@@ -119,6 +123,8 @@ serve(async (req) => {
       PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
       PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
       PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
+      PURCHASE_TYPES.ISABEL_PNI_1A,
+      PURCHASE_TYPES.ISABEL_PNI_SIG,
     ].includes(lookupKey as any)
 
     if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle) {
@@ -237,6 +243,22 @@ serve(async (req) => {
           },
           [PURCHASE_TYPES.SILVIA_AYURVEDA_SIG]: {
             name: 'Consulta de Ayurveda (seguimiento)',
+            amount: 6000,
+          },
+          [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO3]: {
+            name: 'Bono de Salud Integrativa (3 consultas)',
+            amount: 17000,
+          },
+          [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO6]: {
+            name: 'Bono de Salud Integrativa (6 consultas)',
+            amount: 28000,
+          },
+          [PURCHASE_TYPES.ISABEL_PNI_1A]: {
+            name: 'Consulta de Psiconeuroinmunología Clínica (1ª sesión)',
+            amount: 8000,
+          },
+          [PURCHASE_TYPES.ISABEL_PNI_SIG]: {
+            name: 'Consulta de Psiconeuroinmunología Clínica (seguimiento)',
             amount: 6000,
           },
         }

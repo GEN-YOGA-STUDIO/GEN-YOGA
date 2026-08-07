@@ -3,12 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="application-version" content="6.17" />
+        <meta name="application-version" content="6.18" />
         <meta name="description" content="Conoce al equipo de profesionales de yoga, psicología, nutrición y talleres de GEN Yoga." />
         <title>GEN Yoga | Maestros</title>
         <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-        <script src="teacher-profiles.js?v=6.17"></script>
+        <script src="teacher-profiles.js?v=6.18"></script>
 
         <style>
             :root {
@@ -931,14 +931,14 @@
             }
         </style>
 
-        <script src="i18n.js?v=6.17"></script>
+        <script src="i18n.js?v=6.18"></script>
         <script>
         function escapeHtmlPublic(str) {
             if (!str) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
         </script>
-        <link rel="stylesheet" href="tailwind-compiled.css?v=6.17" />
+        <link rel="stylesheet" href="tailwind-compiled.css?v=6.18" />
     </head>
     <body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
 
@@ -1025,9 +1025,9 @@
                 id: 'silvia-local',
                 nombre: 'Silvia',
                 email: 'silvia@genyoga.es',
-                especialidad: 'Hatha & Iyengar Yoga, Ayurveda | clases',
+                especialidad: 'Hatha & Iyengar Yoga, Ayurveda | clases,consultas',
                 descripcion: window.GENTeacherProfiles?.descriptions.silvia
-                    || 'SOBRE MÍ:\nProfesora de yoga con más de 25 años dedicados a la enseñanza y al acompañamiento consciente.'
+                    || 'SOBRE MÍ:\nProfesora de yoga con más de 25 años dedicados a la enseñanza y al acompañamiento consciente. Terapeuta Ayurveda.'
             },
             {
                 id: 'angel-local',
@@ -1044,6 +1044,13 @@
                 especialidad: 'Psicoterapia, Nutrición y Talleres | consultas',
                 descripcion: window.GENTeacherProfiles?.descriptions.miriam
                     || 'SOBRE MÍ:\nPsicóloga especializada en bienestar emocional, alimentación consciente y acompañamiento integral.'
+            },
+            {
+                id: 'isabel-local',
+                nombre: 'Isabel',
+                email: 'isabel@genyoga.es',
+                especialidad: 'Psiconeuroinmunología Clínica (PNI) | consultas',
+                descripcion: 'SOBRE MÍ:\nEspecialista en Psiconeuroinmunología Clínica (PNI). Acompaño a las personas hacia el equilibrio de su organismo a través de la nutrición, el ejercicio físico y la gestión emocional, integrando la ciencia con un enfoque humano y personalizado.\n\nTE ACOMPAÑO:\nOptimización del sistema inmunitario, salud digestiva, regulación metabólica y hormonal, gestión del estrés y la inflamación crónica, y mejora de la composición corporal.'
             },
             {
                 id: 'yanira-local',
@@ -1068,7 +1075,8 @@
 
             if (email.includes('yanira') || nombre.includes('yanira')) return ['clases', 'talleres'];
             if (email.includes('miriam') || nombre.includes('miriam')) return ['consultas'];
-            if (email.includes('silvia') || nombre.includes('silvia')) return ['clases'];
+            if (email.includes('silvia') || nombre.includes('silvia')) return ['clases', 'consultas'];
+            if (email.includes('isabel') || nombre.includes('isabel')) return ['consultas'];
             if (email.includes('angel') || nombre.includes('ángel') || nombre.includes('angel')) return ['clases'];
 
             const parts = especialidad.split('|');
@@ -1079,7 +1087,7 @@
             const esp = especialidad.toLowerCase();
             const cats = [];
             if (esp.includes('yoga') || esp.includes('clase') || esp.includes('vinyasa') || esp.includes('hatha')) cats.push('clases');
-            if (esp.includes('consulta') || esp.includes('psico') || esp.includes('nutri')) cats.push('consultas');
+            if (esp.includes('consulta') || esp.includes('psico') || esp.includes('nutri') || esp.includes('pni') || esp.includes('ayurveda')) cats.push('consultas');
             if (esp.includes('taller') || esp.includes('workshop')) cats.push('talleres');
             return cats;
         }
@@ -1092,6 +1100,7 @@
             if (identity.includes('yanira')) return 'yanira';
             if (identity.includes('miriam')) return 'miriam';
             if (identity.includes('silvia')) return 'silvia';
+            if (identity.includes('isabel')) return 'isabel';
             if (identity.includes('ángel') || identity.includes('angel')) return 'angel';
             return '';
         }
@@ -1372,7 +1381,7 @@
             }
 
             const fallbackByKey = new Map(fallbackProfesionales.map(p => [getTeacherKey(p), p]));
-            const orderedKeys = ['angel', 'miriam', 'silvia', 'yanira'];
+            const orderedKeys = ['angel', 'miriam', 'silvia', 'isabel', 'yanira'];
             let profesionalesVisibles;
             if (profesionalesDbLoaded) {
                 const visibleRows = cachedDbProfesionales.filter(p => p.visible_publico !== false);
@@ -1410,7 +1419,11 @@
                 } else if (emailLower.includes('silvia') || nomLower.includes('silvia')) {
                     updated.nombre = "SILVIA";
                     updated.foto_cutout = 'img/maestra-silvia-recortada.webp';
-                    updated.especialidad = 'Hatha & Iyengar Yoga, Ayurveda | clases';
+                    updated.especialidad = 'Hatha & Iyengar Yoga, Ayurveda | clases,consultas';
+                } else if (emailLower.includes('isabel') || nomLower.includes('isabel')) {
+                    updated.nombre = "ISABEL";
+                    updated.foto_cutout = 'img/espacio/gen-yoga-0364-desktop.jpg';
+                    updated.especialidad = 'Psiconeuroinmunología Clínica (PNI) | consultas';
                 } else if (emailLower.includes('yanira') || nomLower.includes('yanira')) {
                     updated.nombre = "YANIRA";
                     updated.foto_cutout = 'img/maestra-yanira-recortada.webp';
@@ -1531,6 +1544,7 @@
             if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
             if (n.includes('miriam')) return 'img/maestra-miriam-recortada.webp';
             if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
+            if (n.includes('isabel')) return 'img/espacio/gen-yoga-0364-desktop.jpg';
             return 'img/maestra-silvia-recortada.webp';
         }
 
@@ -1539,6 +1553,7 @@
             if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
             if (n.includes('miriam')) return 'img/maestra-miriam-recortada.webp';
             if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
+            if (n.includes('isabel')) return 'img/espacio/gen-yoga-0364-desktop.jpg';
             return 'img/maestra-silvia-recortada.webp';
         }
 

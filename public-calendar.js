@@ -909,7 +909,7 @@
 
             profsToGenerate.forEach(prof => {
                 const profSlug = teacherSlug(prof);
-                const slotType = profSlug === 'miriam' ? 'psicologia' : 'nutricion';
+                const slotType = (profSlug === 'miriam' || profSlug === 'isabel') ? 'psicologia' : 'nutricion';
                 const displayName = `${prof.nombre || ''} ${prof.apellidos || ''}`.trim();
                 const profColor = prof.color || knownTeacherColors[profSlug] || '#d96542';
 
@@ -929,7 +929,7 @@
                             const startStr = `${dateKey}T${String(hour).padStart(2, '0')}:00:00`;
                             const start = new Date(startStr);
                             const end = new Date(start.getTime() + 60 * 60_000);
-                            const name = slotType === 'psicologia' ? 'Consulta Psicología' : 'Consulta Nutrición';
+                            const name = profSlug === 'isabel' ? 'Consulta PNI / Psicología' : (profSlug === 'silvia' ? 'Consulta Ayurveda' : 'Consulta Psicología');
 
                             generatedSlots.push({
                                 id: ++virtualIdCounter,
