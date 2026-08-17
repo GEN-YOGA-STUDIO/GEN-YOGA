@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.23">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.23">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.23">
+    <meta name="application-version" content="6.24">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.24">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.24">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.23">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.24">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=6.23"></script>
+    <script src="i18n.js?v=6.24"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -521,7 +521,7 @@
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.23 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.24 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -529,7 +529,7 @@
     <script>
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '6.23';
+const APP_VERSION = '6.24';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 let selectedYogaClassState = 'idle';
@@ -1089,10 +1089,60 @@ window.handleNavClick = function (btn, url) {
 
         async function iniciarCheckoutConsultaStripe(lookupKey, title, price) {
             if (checkoutRequestInProgress) return;
+
+            const isMultiSessionBono = lookupKey === 'silvia_ayurveda_bono3' || lookupKey === 'silvia_ayurveda_bono6';
+            const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
+            const session = sessionRes?.data?.session;
+            let userId = session?.user?.id || null;
+
+            if (!userId) {
+                if (isMultiSessionBono) {
+                    const result = await Swal.fire({
+                        title: 'Cuenta Requerida',
+                        text: 'Para adquirir y gestionar bonos de múltiples sesiones es necesario tener una cuenta registrada.',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Iniciar Sesión / Registrarme',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#795244',
+                        cancelButtonColor: '#d33',
+                        background: '#fff',
+                        color: '#333'
+                    });
+                    if (result.isConfirmed) {
+                        window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    }
+                    return;
+                }
+
+                const result = await Swal.fire({
+                    title: title || 'Comprar Consulta',
+                    text: '¿Quieres comprar esta consulta iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado sin registrarte?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Pagar como Invitado',
+                    denyButtonText: 'Iniciar Sesión',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#795244',
+                    denyButtonColor: '#6a6540',
+                    cancelButtonColor: '#d33',
+                    background: '#fff',
+                    color: '#333'
+                });
+
+                if (result.isConfirmed) {
+                    userId = 'guest';
+                } else if (result.isDenied) {
+                    window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    return;
+                } else {
+                    return;
+                }
+            }
+
             checkoutRequestInProgress = true;
             const checkoutAttemptId = newCheckoutAttemptId();
-            const sessionResult = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
-            const userId = sessionResult?.data?.session?.user?.id || 'guest';
 
             Swal.fire({
                 title: 'Conectando con la pasarela de pagos...',

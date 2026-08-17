@@ -171,6 +171,13 @@
         miriam: Object.freeze([2, 3]),
         isabel: Object.freeze([2, 4])
     });
+    const SEASON_START_WEEK = '2026-08-31';
+    const SEASON_START_DATE = '2026-09-01';
+
+    function defaultWeekStart() {
+        const currentMonday = mondayFor(todayKeyMadrid());
+        return currentMonday < SEASON_START_WEEK ? SEASON_START_WEEK : currentMonday;
+    }
 
     const state = {
         initialized: false,
@@ -444,7 +451,7 @@
         }
 
         const madridStart = dateKeyPartsInMadrid(start);
-        if (!madridStart) return null;
+        if (!madridStart || madridStart.dateKey < SEASON_START_DATE) return null;
         const professional = Array.isArray(raw?.profesionales)
             ? raw.profesionales[0]
             : raw?.profesionales;
@@ -800,6 +807,11 @@
         if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
         if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
         el.weekRange.textContent = weekRangeLabel(state.weekStart);
+        if (el.prevWeek) {
+            const atSeasonStart = state.weekStart <= SEASON_START_WEEK;
+            el.prevWeek.disabled = atSeasonStart;
+            el.prevWeek.classList.toggle('gy-calendar__nav-button--disabled', atSeasonStart);
+        }
         renderFilters();
         renderSelectionNote();
         hideResultViews();
@@ -971,6 +983,7 @@
 
                 for (let dayIdx = 0; dayIdx < 6; dayIdx++) {
                     const dateKey = addDays(weekStart, dayIdx);
+                    if (dateKey < SEASON_START_DATE) continue;
                     const slotStarts = consultationStartMinutesFor(prof, dateKey);
 
                     slotStarts.forEach(startMinutes => {
@@ -1088,7 +1101,10 @@
         const rawStyle = url.searchParams.get('style') || url.searchParams.get('type') || '';
         const style = canonicalStyle(rawStyle);
 
-        state.weekStart = week ? mondayFor(week) : mondayFor(todayKeyMadrid());
+        state.weekStart = week ? mondayFor(week) : defaultWeekStart();
+        if (state.weekStart < SEASON_START_WEEK) {
+            state.weekStart = SEASON_START_WEEK;
+        }
         state.explicitWeek = Boolean(week);
         state.classId = classId;
         state.teacher = teacher;
@@ -1110,7 +1126,9 @@
     }
 
     async function findNextMatchingClass() {
-        const start = new Date();
+        const now = Date.now();
+        const seasonTime = new Date(`${SEASON_START_DATE}T00:00:00+02:00`).getTime();
+        const start = new Date(Math.max(now, Number.isFinite(seasonTime) ? seasonTime : now));
         const end = new Date(start.getTime() + MAX_DEEP_LINK_DAYS * 24 * 60 * 60 * 1000);
         const { data, error } = await state.client
             .from('clases')
@@ -1142,6 +1160,7 @@
                 if (target) state.classId = target.id;
             }
             if (target) state.weekStart = mondayFor(target.dateKey);
+            if (state.weekStart < SEASON_START_WEEK) state.weekStart = SEASON_START_WEEK;
         } catch (error) {
             console.warn('No se pudo resolver el enlace directo del calendario:', error?.message || error);
         } finally {
@@ -1249,41 +1268,25 @@
         state.open = true;
         state.lastFocus = wasOpen ? state.lastFocus : document.activeElement;
         el.panel.hidden = false;
-        el.panel.setAttribute('aria-hidden', 'false');
-        if (!wasOpen) setBackgroundInert(true);
         document.body.classList.add('gy-calendar-open');
-        el.panel.scrollTop = 0;
+        setBackgroundInert(true);
         startPolling();
-        syncStaticCopy();
-        render();
-        if (!wasOpen) {
-            root.dispatchEvent(new CustomEvent('genyoga:calendar:open'));
-        }
-
         await resolveTargetIfNeeded();
-        if (!state.open) return;
-
-        const historyMode = options.historyMode
-            || (wasOpen ? 'replace' : 'push');
-        if (historyMode !== 'none') updateUrl(historyMode);
+        updateUrl(wasOpen ? 'replace' : 'push');
+        root.dispatchEvent(new CustomEvent('genyoga:calendar:open', { detail: { week: state.weekStart } }));
         await loadWeek();
-
-        if (!wasOpen) {
-            requestAnimationFrame(() => el.close?.focus());
-        }
+        el.panel.scrollTo({ top: 0, behavior: 'auto' });
+        el.close.focus();
     }
 
     function hidePanel() {
-        if (!state.open) return;
-        state.open = false;
-        state.requestSerial += 1;
         el.panel.hidden = true;
-        el.panel.setAttribute('aria-hidden', 'true');
-        setBackgroundInert(false);
         document.body.classList.remove('gy-calendar-open');
+        setBackgroundInert(false);
         stopPolling();
+        state.open = false;
         root.dispatchEvent(new CustomEvent('genyoga:calendar:close'));
-        if (state.lastFocus instanceof HTMLElement && state.lastFocus.isConnected) {
+        if (state.lastFocus && typeof state.lastFocus.focus === 'function') {
             state.lastFocus.focus();
         }
     }
@@ -1301,7 +1304,9 @@
     }
 
     function navigateWeek(dayDelta) {
-        state.weekStart = addDays(state.weekStart, dayDelta);
+        const nextWeek = addDays(state.weekStart, dayDelta);
+        if (dayDelta < 0 && nextWeek < SEASON_START_WEEK) return;
+        state.weekStart = nextWeek;
         state.classId = null;
         state.selectedDay = '';
         state.explicitWeek = true;
@@ -1350,12 +1355,15 @@
 
     function bindEvents() {
         el.close.addEventListener('click', close);
-        el.prevWeek.addEventListener('click', () => navigateWeek(-7));
+        el.prevWeek.addEventListener('click', () => {
+            if (state.weekStart <= SEASON_START_WEEK) return;
+            navigateWeek(-7);
+        });
         el.nextWeek.addEventListener('click', () => navigateWeek(7));
         el.today.addEventListener('click', () => {
-            state.weekStart = mondayFor(todayKeyMadrid());
+            state.weekStart = defaultWeekStart();
             state.classId = null;
-            state.selectedDay = todayKeyMadrid();
+            state.selectedDay = todayKeyMadrid() < SEASON_START_DATE ? SEASON_START_DATE : todayKeyMadrid();
             state.explicitWeek = true;
             state.targetResolved = true;
             updateUrl('replace');
@@ -1369,7 +1377,7 @@
             state.classId = null;
             state.targetResolved = true;
             updateUrl('replace');
-            render();
+            loadWeek();
         });
         const modeToggle = document.getElementById('calendar-mode-toggle');
         if (modeToggle) {
