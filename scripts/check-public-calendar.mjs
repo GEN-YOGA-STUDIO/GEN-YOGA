@@ -19,6 +19,7 @@ const [
   migration,
   angelMigration,
   consultationAvailabilityMigration,
+  effectiveConsultationAvailabilityMigration,
   certificationBuild,
 ] = await Promise.all([
   read('clases.html'),
@@ -32,6 +33,7 @@ const [
   read('supabase/migrations/202607240002_public_weekly_calendar.sql'),
   read('supabase/migrations/202608030001_angel_profile_schedule_6_8.sql'),
   read('supabase/migrations/20260817110547_consultation_availability_miriam_isabel.sql'),
+  read('supabase/migrations/202609020005_silvia_ayurveda_availability.sql'),
   read('scripts/build-certification.mjs'),
 ]);
 
@@ -52,9 +54,9 @@ for (const id of [
 ]) {
   assert.match(classesPage, new RegExp(`id=["']${id}["']`), `Falta #${id} en clases.html`);
 }
-assert.match(classesPage, /public-calendar\.css\?v=6\.22/);
-assert.match(classesPage, /public-calendar\.js\?v=6\.22/);
-assert.match(classesPage, /facilities-carousel\.js\?v=6\.22/);
+assert.match(classesPage, /public-calendar\.css\?v=6\.23/);
+assert.match(classesPage, /public-calendar\.js\?v=6\.23/);
+assert.match(classesPage, /facilities-carousel\.js\?v=6\.23/);
 assert.match(classesPage, /GENPublicCalendar\?\.init\(\{\s*client\s*\}\)/);
 assert.match(classesPage, /id=["']facilities-gallery["'][\s\S]*data-facilities-slide/);
 assert.match(classesPage, /aria-roledescription=["']carousel["']/);
@@ -135,6 +137,39 @@ assert.deepEqual(
 );
 assert.deepEqual([...calendarApi.consultationStartMinutesFor({ nombre: 'Isabel' }, '2026-08-19')], []);
 
+const expectedSilviaStarts = [900, 990, 1080];
+for (const dateKey of ['2026-06-19', '2026-08-28', '2026-09-11']) {
+  assert.deepEqual(
+    [...calendarApi.consultationStartMinutesFor({ nombre: 'Silvia' }, dateKey)],
+    expectedSilviaStarts,
+    `Silvia debe ofrecer 15:00, 16:30 y 18:00 el viernes alterno ${dateKey}`,
+  );
+}
+for (const dateKey of ['2026-08-21', '2026-09-04', '2026-09-12']) {
+  assert.deepEqual(
+    [...calendarApi.consultationStartMinutesFor({ nombre: 'Silvia' }, dateKey)],
+    [],
+    `Silvia no debe ofrecer consultas fuera de la paridad quincenal (${dateKey})`,
+  );
+}
+assert.equal(calendarApi.consultationDurationMinutesFor({ nombre: 'Silvia' }), 90);
+assert.equal(calendarApi.consultationDurationMinutesFor({ nombre: 'Miriam' }), 60);
+assert.equal(calendarApi.consultationDurationMinutesFor({ nombre: 'Isabel' }), 60);
+const virtualConsultationSlotBuilder = calendarScript.match(
+  /if\s*\(!existsInDb\)\s*\{[\s\S]*?generatedSlots\.push\(\{[\s\S]*?\}\);\s*\}/,
+)?.[0] || '';
+assert.match(virtualConsultationSlotBuilder, /const durationMinutes = consultationDurationMinutesFor\(prof\)/);
+assert.match(
+  virtualConsultationSlotBuilder,
+  /const end = new Date\(start\.getTime\(\) \+ durationMinutes \* 60_000\)/,
+  'El fin virtual debe derivarse de la duración profesional',
+);
+assert.match(
+  virtualConsultationSlotBuilder,
+  /\bdurationMinutes\s*,/,
+  'La duración calculada debe acompañar al hueco virtual',
+);
+
 assert.match(calendarScript, /\.eq\('activa',\s*true\)/);
 assert.match(calendarScript, /\.in\('tipo_clase',\s*\['yoga',\s*'taller'\]\)/);
 assert.match(calendarScript, /\.rpc\('get_public_weekly_schedule'/);
@@ -207,6 +242,84 @@ for (const start of ['09:30', '10:30', '11:30', '12:30', '13:30', '17:00', '18:0
 }
 assert.match(consultationAvailabilityMigration, /revoke all on function public\.reservar_consulta_virtual[\s\S]*from public, anon, authenticated/i);
 assert.match(consultationAvailabilityMigration, /grant execute on function public\.reservar_consulta_virtual[\s\S]*to authenticated/i);
+
+const effectiveVirtualFunction = effectiveConsultationAvailabilityMigration.match(
+  /create or replace function public\.reservar_consulta_virtual\([\s\S]*?\$function\$;/i,
+)?.[0] || '';
+const effectiveAtomicFunction = effectiveConsultationAvailabilityMigration.match(
+  /create or replace function public\.reservar_consulta_atomica\([\s\S]*?\$function\$;/i,
+)?.[0] || '';
+assert.ok(effectiveVirtualFunction, 'La migración efectiva debe redefinir reservar_consulta_virtual');
+assert.ok(effectiveAtomicFunction, 'La migración efectiva debe redefinir reservar_consulta_atomica');
+
+for (const [functionSql, functionName] of [
+  [effectiveVirtualFunction, 'reservar_consulta_virtual'],
+  [effectiveAtomicFunction, 'reservar_consulta_atomica'],
+]) {
+  assert.match(functionSql, /security definer/i, `${functionName} debe ser SECURITY DEFINER`);
+  assert.match(functionSql, /set search_path = pg_catalog, public/i, `${functionName} debe fijar search_path`);
+  assert.match(functionSql, /auth\.uid\(\)/i, `${functionName} debe exigir una identidad autenticada`);
+  assert.match(functionSql, /v_professional_identity like '%silvia%'/i, `${functionName} debe identificar a Silvia`);
+  assert.match(functionSql, /p_tipo <> 'nutricion'/i, `${functionName} debe limitar a Silvia a nutrición`);
+  assert.match(functionSql, /(?:v_local_weekday|extract\(isodow[^)]*\)::integer)\s*<>\s*5/i, `${functionName} debe limitar a Silvia a viernes`);
+  assert.match(
+    functionSql,
+    /mod\([^;\n]*date '2026-06-19'[^;\n]*,\s*14\)\s*<>\s*0/i,
+    `${functionName} debe conservar el ancla quincenal 2026-06-19`,
+  );
+  const silviaTimes = functionSql.match(
+    /v_silvia_start_times\s+constant time without time zone\[\]\s*:=\s*array\[([\s\S]*?)\];/i,
+  )?.[1] || '';
+  assert.deepEqual(
+    [...silviaTimes.matchAll(/'(\d{2}:\d{2})'::time/gi)].map((match) => match[1]),
+    ['15:00', '16:30', '18:00'],
+    `${functionName} debe aceptar exclusivamente los tres inicios de Silvia`,
+  );
+}
+
+assert.match(effectiveVirtualFunction, /perform pg_advisory_xact_lock\s*\(/i);
+assert.match(effectiveVirtualFunction, /v_duracion\s*:=\s*90/i);
+assert.match(effectiveVirtualFunction, /v_fecha_fin\s*:=\s*p_fecha_inicio\s*\+\s*make_interval\(mins\s*=>\s*v_duracion\)/i);
+assert.match(effectiveAtomicFunction, /v_ends_at\s*<>\s*v_starts_at\s*\+\s*interval '90 minutes'/i);
+assert.match(effectiveAtomicFunction, /coalesce\(v_duration,\s*0\)\s*<>\s*90/i);
+
+const defensiveCleanup = effectiveConsultationAvailabilityMigration.match(
+  /with invalid_legacy_slot as \([\s\S]*?delete from public\.clases[\s\S]*?;/i,
+)?.[0] || '';
+assert.ok(defensiveCleanup, 'La migración efectiva debe retirar defensivamente el hueco legado inválido');
+for (const requiredCleanupGuard of [
+  "lower(trim(professional.nombre)) = 'silvia'",
+  "class.tipo_clase = 'yoga'",
+  'public.reservas_yoga',
+  'public.reservas_psicologia',
+  'public.reservas_nutricion',
+  'public.reservas_talleres',
+  'public.unlimited_guest_passes',
+]) {
+  assert.ok(
+    defensiveCleanup.toLowerCase().includes(requiredCleanupGuard.toLowerCase()),
+    `El borrado defensivo debe incluir ${requiredCleanupGuard}`,
+  );
+}
+assert.equal(
+  (defensiveCleanup.match(/\bnot exists\s*\(/gi) || []).length,
+  5,
+  'El hueco legado solo se puede borrar si no tiene ninguna reserva ni pase asociado',
+);
+
+for (const rpcSignature of [
+  'reservar_consulta_virtual\\(text, bigint, timestamptz, uuid, boolean\\)',
+  'reservar_consulta_atomica\\(text, bigint, uuid, boolean\\)',
+]) {
+  assert.match(
+    effectiveConsultationAvailabilityMigration,
+    new RegExp(`revoke all on function public\\.${rpcSignature}[\\s\\S]*?from public, anon, authenticated`, 'i'),
+  );
+  assert.match(
+    effectiveConsultationAvailabilityMigration,
+    new RegExp(`grant execute on function public\\.${rpcSignature}[\\s\\S]*?to authenticated`, 'i'),
+  );
+}
 
 assert.match(certificationBuild, /'public-calendar\.css'/);
 assert.match(certificationBuild, /'public-calendar\.js'/);

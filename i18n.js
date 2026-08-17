@@ -30,7 +30,7 @@ const translations = {
 
         // index.html Central Hero
         "hero_quote": "En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu mente encuentren su equilibrio natural...",
-        "hero_btn_more": "saber más",
+        "hero_btn_more": "Ver más",
         "hero_subquote": "Tu refugio, tu energía, tu momento",
         "marquee_text": "ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES",
 
@@ -136,13 +136,13 @@ const translations = {
         "rates_ayur_desc2": "Evaluamos tus progresos y adaptamos las pautas ayurvédicas para consolidar tu equilibrio a largo plazo.",
         "rates_ayur_buy_btn_80": "Comprar 1ª consulta (80 €)",
         "rates_ayur_buy_btn_60": "Comprar seguimiento (60 €)",
-        "rates_ayur_contact_recep": "Consultas con Silvia · 2 viernes al mes",
+        "rates_ayur_contact_recep": "Viernes alternos · 15:00–19:30",
         "rates_talleres_title": "Clases especiales / Talleres",
         "rates_talleres_cat": "Calendario independiente",
         "rates_talleres_desc": "Experiencias puntuales separadas de las clases regulares. El Bono Ilimitado incluye una clase especial por cada mes natural comprado.",
         "rates_talleres_contact_recep": "1 clase especial al mes con el Bono Ilimitado",
         "rates_talleres_btn": "Ver próximas fechas",
-        "classes_consultas_calendar_btn": "Ver consultas por profesor",
+        "classes_consultas_calendar_btn": "Ver disponibilidad",
         "calendar_mode_classes": "Clases de Yoga",
         "calendar_mode_consultations": "Consultas (Psicología / Nutrición)",
         "calendar_filter_teacher": "Filtrar por profesional",
@@ -365,7 +365,7 @@ const translations = {
 
         // index.html Central Hero
         "hero_quote": "At GEN Yoga we fuse movement, breath and awareness to create a space where your body and mind find their natural balance...",
-        "hero_btn_more": "read more",
+        "hero_btn_more": "learn more",
         "hero_subquote": "Your refuge, your energy, your moment",
         "marquee_text": "PREVENTIVE YOGA ECOSYSTEM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTER LED BY HEALTH PROFESSIONALS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BOOK YOUR FIRST TRIAL CLASS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA AND MEDITATION &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FLEXIBLE PACKAGES",
 
@@ -472,13 +472,13 @@ const translations = {
         "rates_ayur_desc2": "We evaluate your progress and adapt Ayurvedic guidelines to consolidate your long-term balance.",
         "rates_ayur_buy_btn_80": "Buy 1st consultation (€80)",
         "rates_ayur_buy_btn_60": "Buy follow-up (€60)",
-        "rates_ayur_contact_recep": "Consultations with Silvia · 2 Fridays per month",
+        "rates_ayur_contact_recep": "Alternate Fridays · 15:00–19:30",
         "rates_talleres_title": "Special Classes / Workshops",
         "rates_talleres_cat": "Independent calendar",
         "rates_talleres_desc": "One-off experiences kept separate from regular classes. The Unlimited Plan includes one special class in each purchased calendar month.",
         "rates_talleres_contact_recep": "1 special class per month with the Unlimited Plan",
         "rates_talleres_btn": "See upcoming dates",
-        "classes_consultas_calendar_btn": "View consultations by professional",
+        "classes_consultas_calendar_btn": "View availability",
         "calendar_mode_classes": "Yoga Classes",
         "calendar_mode_consultations": "Consultations (Psychology / Nutrition)",
         "calendar_filter_teacher": "Filter by professional",

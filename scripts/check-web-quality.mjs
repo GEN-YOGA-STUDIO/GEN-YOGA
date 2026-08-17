@@ -42,6 +42,32 @@ function stripExecutableBlocks(source) {
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
 }
 
+function openHtmlElementsAt(source, index) {
+  const voidElements = new Set([
+    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+    'link', 'meta', 'param', 'source', 'track', 'wbr',
+  ]);
+  const stack = [];
+  const prefix = source.slice(0, index).replace(/<!--[\s\S]*?-->/g, '');
+  for (const match of prefix.matchAll(/<(\/)?([a-z][\w:-]*)\b([^>]*)>/gi)) {
+    const closing = Boolean(match[1]);
+    const tagName = match[2].toLowerCase();
+    if (closing) {
+      const matchingIndex = stack.map((element) => element.tagName).lastIndexOf(tagName);
+      if (matchingIndex >= 0) stack.splice(matchingIndex);
+      continue;
+    }
+    if (!voidElements.has(tagName) && !/\/\s*>$/.test(match[0])) {
+      stack.push({ tagName, attributes: match[3] });
+    }
+  }
+  return stack;
+}
+
+function visibleText(markup) {
+  return markup.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 function isPinnedPackageCdn(rawUrl) {
   let parsed;
   try {
@@ -181,11 +207,11 @@ for (const fileName of actualPages) {
     if (count(markup, pattern) !== 1) errors.push(`${fileName}: debe contener exactamente un ${label}`);
   }
 
-  const canonicalFavicon = /<link\s+rel=["']icon["']\s+type=["']image\/png["']\s+sizes=["']64x64["']\s+href=["']img\/favicon-64\.png\?v=6\.22["']\s*\/?>/gi;
+  const canonicalFavicon = /<link\s+rel=["']icon["']\s+type=["']image\/png["']\s+sizes=["']64x64["']\s+href=["']img\/favicon-64\.png\?v=6\.23["']\s*\/?>/gi;
   if (count(markup, canonicalFavicon) !== 1) {
-    errors.push(`${fileName}: debe incluir exactamente el favicon PNG 64x64 de la versión 6.22`);
+    errors.push(`${fileName}: debe incluir exactamente el favicon PNG 64x64 de la versión 6.23`);
   }
-  const canonicalTouchIcon = /<link\s+rel=["']apple-touch-icon["']\s+sizes=["']180x180["']\s+href=["']img\/apple-touch-icon\.png\?v=6\.22["']\s*\/?>/gi;
+  const canonicalTouchIcon = /<link\s+rel=["']apple-touch-icon["']\s+sizes=["']180x180["']\s+href=["']img\/apple-touch-icon\.png\?v=6\.23["']\s*\/?>/gi;
   if (count(markup, canonicalTouchIcon) !== 1) {
     errors.push(`${fileName}: debe incluir exactamente el icono de favoritos móvil 180x180`);
   }
@@ -230,14 +256,14 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.22["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.22`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.23["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.23`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
   const staleVisualVersion = [...source.matchAll(/\bv(\d+)\.(\d+)\b/gi)]
-    .find(([, major, minor]) => `${major}.${minor}` !== '6.22');
+    .find(([, major, minor]) => `${major}.${minor}` !== '6.23');
   if (staleVisualVersion) {
-    errors.push(`${fileName}: contiene una versión visual distinta de 6.22 (${staleVisualVersion[0]})`);
+    errors.push(`${fileName}: contiene una versión visual distinta de 6.23 (${staleVisualVersion[0]})`);
   }
 }
 
@@ -255,7 +281,7 @@ for (const functionName of invokedEdgeFunctions) {
 const classesPage = await readFile(path.join(root, 'clases.html'), 'utf8');
 for (const [teacher, background] of [
   ['miriam', '#744833'],
-  ['silvia', '#6b4226'],
+  ['silvia', '#68704a'],
   ['isabel', '#8f6b2d'],
 ]) {
   const cardClass = new RegExp(
@@ -282,17 +308,101 @@ for (const requiredClass of [
     errors.push(`clases.html: falta la jerarquía visual ${requiredClass}`);
   }
 }
-if (/bg-\[#(?:744833|6b4226)\]/i.test(classesPage)) {
+if (/bg-\[#(?:744833|68704a)\]/i.test(classesPage)) {
   errors.push('clases.html: Miriam o Silvia vuelven a depender de un fondo Tailwind no compilado');
 }
 
+const consultationTab = classesPage.match(
+  /<button\b[^>]*\bid=["']btn-cat-consultas["'][^>]*>[\s\S]*?<\/button>/i,
+)?.[0] || '';
+if (visibleText(consultationTab) !== 'Consultas') {
+  errors.push('clases.html: la pestaña de consultas debe usar el rótulo breve "Consultas"');
+}
+if (/consultas\s+por\s+profesor/i.test(classesPage)) {
+  errors.push('clases.html: la pestaña y el CTA de consultas vuelven a repetir "Consultas por profesor"');
+}
+
+const yogaCalendarLaunch = classesPage.match(
+  /<button\b[^>]*\bid=["']public-calendar-launch["'][^>]*>[\s\S]*?<\/button>/i,
+)?.[0] || '';
+const consultationCalendarLaunch = classesPage.match(
+  /<button\b[^>]*\bid=["']public-consultas-calendar-launch["'][^>]*>[\s\S]*?<\/button>/i,
+)?.[0] || '';
+if (!yogaCalendarLaunch || /\bclass=["'][^"']*\bhidden\b/i.test(yogaCalendarLaunch)) {
+  errors.push('clases.html: el CTA de horario de yoga debe ser el único visible al abrir la categoría inicial');
+}
+if (!consultationCalendarLaunch || !/\bclass=["'][^"']*\bhidden\b/i.test(consultationCalendarLaunch)) {
+  errors.push('clases.html: el CTA general de consultas debe empezar oculto');
+}
+if (visibleText(consultationCalendarLaunch) !== 'Ver disponibilidad') {
+  errors.push('clases.html: el CTA de consultas debe evitar repetir el nombre de la pestaña');
+}
+
+const categorySwitchFlow = classesPage.match(
+  /window\.switchCategoryDeck\s*=\s*function\s*\(cat\)\s*\{[\s\S]*?\n\};/,
+)?.[0] || '';
+for (const [pattern, label] of [
+  [/cat === 'consultas'[\s\S]*?yogaCalendarLaunch\.classList\.add\('hidden'\)[\s\S]*?consultasCalendarLaunch\.classList\.remove\('hidden'\)/, 'mostrar solo el CTA de consultas en Consultas'],
+  [/\}\s*else\s*\{[\s\S]*?consultasCalendarLaunch\.classList\.add\('hidden'\)[\s\S]*?yogaCalendarLaunch\.classList\.remove\('hidden'\)/, 'mostrar solo el CTA de horario en Yoga'],
+]) {
+  if (!pattern.test(categorySwitchFlow)) errors.push(`clases.html: switchCategoryDeck debe ${label}`);
+}
+
+const calendarStyles = await readFile(path.join(root, 'public-calendar.css'), 'utf8');
+for (const selector of ['gy-calendar-launch', 'gy-folder-calendar-link']) {
+  const spacingValues = [
+    ...calendarStyles.matchAll(new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`, 'g')),
+  ].flatMap((match) => [
+    ...match[1].matchAll(/letter-spacing:\s*([0-9.]+)em/gi),
+  ].map((spacing) => Number(spacing[1])));
+  if (!spacingValues.length || spacingValues.some((spacing) => spacing > 0.05)) {
+    errors.push(`public-calendar.css: ${selector} debe mantener un letter-spacing máximo de 0.05em`);
+  }
+  const mobileSpacing = new RegExp(
+    `@media \\(max-width:\\s*767px\\)\\s*\\{[\\s\\S]*?\\.${selector}\\s*\\{[^}]*letter-spacing:\\s*0\\.03em`,
+    'i',
+  );
+  if (!mobileSpacing.test(calendarStyles)) {
+    errors.push(`public-calendar.css: ${selector} debe reducir el letter-spacing móvil a 0.03em`);
+  }
+}
+
 const homePage = await readFile(path.join(root, 'index.html'), 'utf8');
-if (count(homePage, /aria-controls=["']modal-historia["']/g) !== 2) {
-  errors.push('index.html: Saber más debe abrir el vídeo tanto en escritorio como en móvil');
+const translationsScript = await readFile(path.join(root, 'i18n.js'), 'utf8');
+const spanishTranslations = translationsScript.match(
+  /\bes\s*:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en\s*:/,
+)?.[1] || '';
+const historyTriggers = [...homePage.matchAll(
+  /<button\b(?=[^>]*\baria-controls=["']modal-historia["'])[^>]*>[\s\S]*?<\/button>/gi,
+)];
+if (historyTriggers.length !== 2) {
+  errors.push('index.html: Ver más debe conservar exactamente un acceso de escritorio y otro móvil');
 }
-if (!/\blg:hidden\b[\s\S]*?class=["'][^"']*\bhistory-modal-trigger\b/i.test(homePage)) {
-  errors.push('index.html: falta el acceso móvil a Saber más');
+for (const trigger of historyTriggers) {
+  if (!/\bclass=["'][^"']*\bhistory-modal-trigger\b/i.test(trigger[0])
+      || !/\bonclick=["']openModal\('historia'\)["']/i.test(trigger[0])) {
+    errors.push('index.html: cada acceso Ver más debe abrir modal-historia con el trigger común');
+  }
+  if (visibleText(trigger[0]) !== 'Ver más') {
+    errors.push('index.html: el texto HTML de respaldo de ambos triggers debe ser "Ver más"');
+  }
 }
+if (!/["']hero_btn_more["']\s*:\s*["']Ver más["']/.test(spanishTranslations)) {
+  errors.push('i18n.js: la traducción española hero_btn_more debe ser "Ver más"');
+}
+
+const desktopHistoryTrigger = historyTriggers.find((trigger) => openHtmlElementsAt(homePage, trigger.index)
+  .some((element) => /\bid=["']desktop-central-content["']/.test(element.attributes)));
+if (!desktopHistoryTrigger) {
+  errors.push('index.html: falta el trigger de escritorio dentro de #desktop-central-content');
+} else if (openHtmlElementsAt(homePage, desktopHistoryTrigger.index)
+  .some((element) => /\bclass=["'][^"']*\bhide-on-short\b/.test(element.attributes))) {
+  errors.push('index.html: el trigger de escritorio no puede quedar dentro de hide-on-short');
+}
+const mobileHistoryTrigger = historyTriggers.find((trigger) => openHtmlElementsAt(homePage, trigger.index)
+  .some((element) => /\bclass=["'][^"']*\blg:hidden\b/.test(element.attributes)));
+if (!mobileHistoryTrigger) errors.push('index.html: falta el acceso móvil a Ver más');
+
 const historyVideo = homePage.match(/<iframe\b[^>]*\bid=["']history-video["'][^>]*>/i)?.[0] || '';
 for (const [required, label] of [
   ['src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"', 'URL privada del vídeo de presentación'],
@@ -307,15 +417,34 @@ if (/autoplay/i.test(historyVideo)) errors.push('index.html: el vídeo de presen
 const historyVideoIndex = homePage.indexOf('id="history-video"');
 const historyTextIndex = homePage.indexOf('data-i18n="modal_history_sec1_title"');
 if (historyVideoIndex < 0 || historyTextIndex < 0 || historyVideoIndex >= historyTextIndex) {
-  errors.push('index.html: el vídeo de presentación debe aparecer antes del texto de Saber más');
+  errors.push('index.html: el vídeo de presentación debe aparecer antes del texto de Ver más');
 }
-for (const [required, label] of [
-  ['type="button" aria-label="Cerrar" onclick="closeModal()"', 'nombre accesible del botón de cierre'],
-  ['function stopModalMedia()', 'parada del vídeo al cerrar el modal'],
-  ["frame.src = 'about:blank'", 'reinicio del iframe al cerrar el modal'],
-  ["if (frame.src === 'about:blank') frame.src = frame.dataset.src", 'restauración del vídeo al reabrir'],
-]) {
-  if (!homePage.includes(required)) errors.push(`index.html: falta ${label}`);
+const modalCloseButton = homePage.match(
+  /<button\b(?=[^>]*\bonclick=["']closeModal\(\)["'])[^>]*>[\s\S]*?<\/button>/i,
+)?.[0] || '';
+if (!/\btype=["']button["']/i.test(modalCloseButton)
+    || !/\baria-label=["']Cerrar["']/i.test(modalCloseButton)
+    || !/<svg\b[^>]*\baria-hidden=["']true["']/i.test(modalCloseButton)) {
+  errors.push('index.html: la X del modal debe ser un botón con nombre accesible y gráfico decorativo');
+}
+const stopModalMediaFlow = homePage.match(
+  /function stopModalMedia\(\)\s*\{[\s\S]*?(?=\n\s*window\.openModal\s*=)/,
+)?.[0] || '';
+const openModalFlow = homePage.match(
+  /window\.openModal\s*=\s*function[\s\S]*?(?=\n\s*window\.closeModal\s*=)/,
+)?.[0] || '';
+const closeModalFlow = homePage.match(
+  /window\.closeModal\s*=\s*function[\s\S]*?(?=\n\s*document\.addEventListener\('keydown')/,
+)?.[0] || '';
+if (!/querySelectorAll\('iframe'\)/.test(stopModalMediaFlow)
+    || !/frame\.src\s*=\s*'about:blank'/.test(stopModalMediaFlow)) {
+  errors.push('index.html: cerrar el modal debe descargar el iframe para pausar y reiniciar el vídeo');
+}
+if (!/frame\.src === 'about:blank'[\s\S]*?frame\.src = frame\.dataset\.src/.test(openModalFlow)) {
+  errors.push('index.html: reabrir el modal debe restaurar el vídeo desde data-src');
+}
+if (!/stopModalMedia\(\)/.test(closeModalFlow)) {
+  errors.push('index.html: closeModal debe ejecutar la pausa/reinicialización multimedia');
 }
 
 const profile = await readFile(path.join(root, 'profile.html'), 'utf8');
