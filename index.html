@@ -366,12 +366,13 @@
 
     <!-- UNIVERSAL MODAL SYSTEM -->
     <div id="modal-overlay"
-        class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-3 sm:p-4 pt-14 md:p-8">
-        <!-- MOVIL: Botón cerrar con fondo oscuro / ESCRITORIO: transparente -->
+        class="fixed inset-0 bg-black/85 backdrop-blur-xl z-[90] hidden opacity-0 transition-opacity duration-300 overflow-y-auto overflow-x-hidden p-3 sm:p-6 md:p-10">
+        
+        <!-- MOVIL & ESCRITORIO: Botón cerrar flotante con alta visibilidad -->
         <button type="button" aria-label="Cerrar" onclick="closeModal()"
-            class="absolute top-3 right-3 md:top-6 md:right-6 z-[60] text-white hover:text-sand transition-all flex items-center justify-center gap-2 group bg-black/50 md:bg-black/30 hover:bg-black/70 backdrop-blur-md border border-white/30 rounded-full p-2.5 shadow-xl">
+            class="fixed top-3 right-3 md:top-6 md:right-6 z-[110] text-white hover:text-sand transition-all flex items-center justify-center gap-2 group bg-black/60 md:bg-black/40 hover:bg-black/80 backdrop-blur-md border border-white/30 rounded-full p-2.5 shadow-2xl hover:scale-105 active:scale-95">
             <span
-                class="hidden md:block text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition px-1">Cerrar</span>
+                class="hidden md:block text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition px-1 font-bold">Cerrar</span>
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                 stroke-linecap="round" aria-hidden="true">
                 <path d="M18 6 6 18"></path>
@@ -379,16 +380,35 @@
             </svg>
         </button>
 
-        <!-- Content for Modals (Same IDs as before for JS compatibility) -->
-        <div id="modal-historia" role="dialog" aria-modal="true" aria-labelledby="modal-historia-title"
-            class="modal-content hidden w-full max-w-[96vw] md:max-w-5xl lg:max-w-6xl h-auto max-h-[88vh] overflow-y-auto hide-scrollbar rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-10 text-cocoa bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)] shadow-2xl border border-white/20">
-            <div class="max-w-5xl mx-auto">
-                <h2 id="modal-historia-title" class="sr-only"
-                    data-i18n="modal_history_title">
-                    GEN YOGA
-                </h2>
+        <div class="w-full max-w-5xl mx-auto flex flex-col items-center">
+            
+            <!-- STICKY TOPBAR: Volver & Cerrar -->
+            <div class="sticky top-0 z-[100] w-full flex items-center justify-between py-2 sm:py-3 mb-3 sm:mb-4 bg-black/50 backdrop-blur-md rounded-2xl px-3 sm:px-5 border border-white/15 shadow-lg">
+                <button type="button" onclick="closeModal()"
+                    class="flex items-center gap-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"></path>
+                    </svg>
+                    <span>Volver al inicio</span>
+                </button>
+                <span class="text-white/80 font-bold text-xs uppercase tracking-[0.2em] hidden sm:inline-block">GEN YOGA · PRESENTACIÓN</span>
+                <button type="button" onclick="closeModal()"
+                    class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition-all hover:scale-105 active:scale-95 shadow-md">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content Card -->
+            <div id="modal-historia" role="dialog" aria-modal="true" aria-labelledby="modal-historia-title"
+                class="modal-content hidden w-full rounded-2xl md:rounded-3xl p-5 sm:p-8 md:p-12 text-white bg-[linear-gradient(to_bottom,_#8F6B2D_0%,_#795244_35%,_#52372d_70%,_#38241d_100%)] shadow-2xl border border-white/20 mb-8">
+                
+                <h2 id="modal-historia-title" class="sr-only" data-i18n="modal_history_title">GEN YOGA</h2>
+                
                 <!-- Video principal de YouTube enmarcado -->
-                <div class="relative w-full overflow-hidden rounded-2xl md:rounded-3xl bg-black shadow-2xl mb-8 md:mb-12 border border-white/20"
+                <div class="relative w-full overflow-hidden rounded-xl md:rounded-2xl bg-black shadow-2xl mb-8 md:mb-12 border-2 border-white/25"
                     style="aspect-ratio: 16 / 9;">
                     <iframe id="history-video" class="absolute inset-0 h-full w-full"
                         src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"
@@ -398,191 +418,108 @@
                         allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowfullscreen></iframe>
                 </div>
+
                 <!-- Información detallada del estudio -->
-                <div
-                    class="space-y-8 text-white/95 text-[clamp(1.05rem,2.1vh,1.35rem)] leading-relaxed font-light drop-shadow-sm bg-black/20 p-6 md:p-10 lg:p-12 rounded-2xl md:rounded-3xl border border-white/15 backdrop-blur-md">
+                <div class="space-y-10 text-white/95 text-[clamp(1rem,2vh,1.25rem)] leading-relaxed font-light drop-shadow-sm bg-black/25 p-6 md:p-10 lg:p-12 rounded-2xl md:rounded-3xl border border-white/15 backdrop-blur-md">
                     <section class="space-y-4">
-                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-2"
-                            data-i18n="modal_history_sec1_title">
+                        <span class="text-xs uppercase tracking-[0.25em] font-extrabold text-[#e1daca] block">Conoce nuestro centro</span>
+                        <h3 class="text-2xl md:text-4xl font-serif font-black text-white mb-3" data-i18n="modal_history_sec1_title">
                             Historia de la marca
                         </h3>
                         <p data-i18n="modal_history_sec1_p1">
-                            Estudio GEN Yoga es un espacio de bienestar
-                            individual y colectivo, nacido del compromiso
-                            con la salud física, mental y emocional desde el
-                            autoconocimiento y la capacitación como
-                            estrategia preventiva y sostenible.
+                            Estudio GEN Yoga es un espacio de bienestar individual y colectivo, nacido del compromiso con la salud física, mental y emocional desde el autoconocimiento y la capacitación como estrategia preventiva y sostenible.
                         </p>
                         <ul class="list-disc pl-5 md:pl-8 space-y-3 opacity-90 my-4">
                             <li data-i18n="modal_history_sec1_bullet1">
-                                <strong>GEN</strong> tiene diversas
-                                connotaciones, una de ellas con el
-                                fundamento biológico de la salud. En ese
-                                sentido, estudio GEN Yoga es el primer
-                                centro de bienestar integrativo de
-                                Castilla-La Mancha liderado por una
-                                farmacéutica, Ana Isabel Meroño, instructora
-                                de yoga y especializada en nutrición,
-                                calidad del sueño, así como disciplinas
-                                orientales del bienestar. Desde tus GENes
-                                hasta tus emociones.
+                                <strong>GEN</strong> tiene diversas connotaciones, una de ellas con el fundamento biológico de la salud. En ese sentido, estudio GEN Yoga es el primer centro de bienestar integrativo de Castilla-La Mancha liderado por una farmacéutica, Ana Isabel Meroño, instructora de yoga y especializada en nutrición, calidad del sueño, así como disciplinas orientales del bienestar. Desde tus GENes hasta tus emociones.
                             </li>
                             <li data-i18n="modal_history_sec1_bullet2">
-                                Ana también gestiona la Farmacia Q19, a solo
-                                unos pasos del Estudio GEN Yoga, por lo cual
-                                ambos espacios contribuyen a la idea del
-                                ecosistema de la salud, tanto preventiva
-                                (GEN Yoga) como farmacológica (Q19), desde
-                                el rigor profesional y la atención adaptada
-                                a cada cliente.
+                                Ana también gestiona la Farmacia Q19, a solo unos pasos del Estudio GEN Yoga, por lo cual ambos espacios contribuyen a la idea del ecosistema de la salud, tanto preventiva (GEN Yoga) como farmacológica (Q19), desde el rigor profesional y la atención adaptada a cada cliente.
                             </li>
                         </ul>
                         <p data-i18n="modal_history_sec1_p2">
-                            Estas sinergias no solo contribuyen al bienestar
-                            individual, sino al comunitario, haciendo del
-                            barrio y su entorno un lugar con más
-                            oportunidades y mejores servicios para tu salud.
+                            Estas sinergias no solo contribuyen al bienestar individual, sino al comunitario, haciendo del barrio y su entorno un lugar con más oportunidades y mejores servicios para tu salud.
                         </p>
                         <p data-i18n="modal_history_sec1_p3">
-                            Creemos que la medicina convencional es
-                            imprescindible, pero no suficiente por sí sola,
-                            y por eso creamos un espacio donde las personas
-                            puedan escucharse, cuidarse y acompañarse de
-                            manera consciente y activa. Un proceso de
-                            presencialidad del bienestar en tiempo y
-                            espacios.
+                            Creemos que la medicina convencional es imprescindible, pero no suficiente por sí sola, y por eso creamos un espacio donde las personas puedan escucharse, cuidarse y acompañarse de manera consciente y activa. Un proceso de presencialidad del bienestar en tiempo y espacios.
                         </p>
                         <p data-i18n="modal_history_sec1_p4">
-                            Estudio GEN Yoga surge como una referencia que
-                            amplía la concepción del bienestar, tanto por
-                            sus servicios de yoga, como
-                            por sus profesionales (médicos, farmacéuticos,
-                            psicólogos, fisioterapeutas, nutricionistas),
-                            conectando GENeraciones. Para ello fomentamos la
-                            reGENeración personal y colectiva, esto es, la
-                            salud física, mental y emocional, promoviendo tu
-                            bienestar integral a través de la experiencia
-                            corporal, la atención consciente y los vínculos
-                            humanos.
+                            Estudio GEN Yoga surge como una referencia que amplía la concepción del bienestar, tanto por sus servicios de yoga, como por sus profesionales (médicos, farmacéuticos, psicólogos, fisioterapeutas, nutricionistas), conectando GENeraciones. Para ello fomentamos la reGENeración personal y colectiva, esto es, la salud física, mental y emocional, promoviendo tu bienestar integral a través de la experiencia corporal, la atención consciente y los vínculos humanos.
                         </p>
                     </section>
 
-                    <section class="space-y-4">
-                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-4 border-t border-white/20"
-                            data-i18n="modal_history_mision_title">
-                            Misión
-                        </h3>
-                        <p data-i18n="modal_history_mision_p1">
-                            Acompañar a las personas a lograr su bienestar
-                            integral a través de prácticas físicas y
-                            espirituales, desde el yoga, y mediante asanas,
-                            respiración consciente, música, meditación y
-                            diálogo en un espacio profesional, humano y
-                            accesible.
-                        </p>
-                        <p data-i18n="modal_history_mision_p2">
-                            Lograr una atención personalizada,
-                            multidisciplinar y continuada, ampliando tus
-                            horizontes de salud preventiva y conectando
-                            contigo, tu grupo, tu barrio, tu ciudad, tu
-                            tierra.
-                        </p>
-                    </section>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/20">
+                        <section class="space-y-3 bg-white/5 p-6 rounded-2xl border border-white/10">
+                            <h3 class="text-2xl md:text-3xl font-serif font-black text-white mb-2" data-i18n="modal_history_mision_title">
+                                Misión
+                            </h3>
+                            <p data-i18n="modal_history_mision_p1">
+                                Acompañar a las personas a lograr su bienestar integral a través de prácticas físicas y espirituales, desde el yoga, y mediante asanas, respiración consciente, música, meditación y diálogo en un espacio profesional, humano y accesible.
+                            </p>
+                            <p data-i18n="modal_history_mision_p2">
+                                Lograr una atención personalizada, multidisciplinar y continuada, ampliando tus horizontes de salud preventiva y conectando contigo, tu grupo, tu barrio, tu ciudad, tu tierra.
+                            </p>
+                        </section>
 
-                    <section class="space-y-4">
-                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-4 border-t border-white/20"
-                            data-i18n="modal_history_vision_title">
-                            Visión
-                        </h3>
-                        <p data-i18n="modal_history_vision_p1">
-                            Ser un espacio inclusivo e interGENeracional que
-                            inspire confianza y GENere bienestar, otorgando
-                            para ello herramientas de autocuidado,
-                            capacitando al cliente para superar sus
-                            limitaciones, y conectando GENeraciones y
-                            saberes.
-                        </p>
-                        <p data-i18n="modal_history_vision_p2">
-                            Estudio GEN Yoga aspira a ofrecer una atención
-                            plena al usuario – al prójimo, en sinergia con
-                            Farmacia Q19, para contribuir a la reGENeración
-                            personal y colectiva de quienes lo forman, sus
-                            clientes, sus profesionales, su dirección,
-                            haciendo de Albacete una comunidad activa y
-                            atractiva, comprometida con la salud integral.
-                        </p>
-                    </section>
+                        <section class="space-y-3 bg-white/5 p-6 rounded-2xl border border-white/10">
+                            <h3 class="text-2xl md:text-3xl font-serif font-black text-white mb-2" data-i18n="modal_history_vision_title">
+                                Visión
+                            </h3>
+                            <p data-i18n="modal_history_vision_p1">
+                                Ser un espacio inclusivo e interGENeracional que inspire confianza y GENere bienestar, otorgando para ello herramientas de autocuidado, capacitando al cliente para superar sus limitaciones, y conectando GENeraciones y saberes.
+                            </p>
+                            <p data-i18n="modal_history_vision_p2">
+                                Estudio GEN Yoga aspira a ofrecer una atención plena al usuario – al prójimo, en sinergia con Farmacia Q19, para contribuir a la reGENeración personal y colectiva de quienes lo forman, sus clientes, sus profesionales, su dirección, haciendo de Albacete una comunidad activa y atractiva, comprometida con la salud integral.
+                            </p>
+                        </section>
+                    </div>
 
-                    <section class="space-y-4">
-                        <h3 class="text-2xl md:text-3xl font-serif text-white mb-3 pt-4 border-t border-white/20"
-                            data-i18n="modal_history_value_title">
+                    <section class="space-y-4 pt-4 border-t border-white/20">
+                        <h3 class="text-2xl md:text-3xl font-serif font-black text-white mb-3" data-i18n="modal_history_value_title">
                             Propuesta de Valor
                         </h3>
-                        <ul class="list-none space-y-6">
-                            <li>
-                                <span
-                                    class="font-bold text-white tracking-wide uppercase text-[clamp(1rem,1.8vh,1.2rem)] block mb-1"
-                                    data-i18n="modal_history_value_bullet1_title">• Prevención e Integración:</span>
-                                <span class="opacity-90" data-i18n="modal_history_value_bullet1_desc">combina yoga y
-                                    prácticas conscientes,
-                                    físicas y espirituales, con un enfoque
-                                    riguroso, desde la ética clínica y la
-                                    evidencia farmacológica, por ejemplo, la
-                                    Respiración SOMA o el yoga terapéutico,
-                                    promoviendo salud real y
-                                    responsable.</span>
-                                <ul class="list-disc pl-8 mt-2 opacity-80 text-[clamp(1rem,1.8vh,1.2rem)]">
-                                    <li data-i18n="modal_history_value_bullet1_sub">
-                                        Para ello, atiende las
-                                        comorbilidades que causan malestar,
-                                        dolor o enfermedad, como la
-                                        alimentación, el estado físico y
-                                        mental, y la gestión emocional.
-                                    </li>
-                                </ul>
-                            </li>
-                            <li>
-                                <span
-                                    class="font-bold text-white tracking-wide uppercase text-[clamp(1rem,1.8vh,1.2rem)] block mb-1"
-                                    data-i18n="modal_history_value_bullet2_title">• Acompañamiento Personalizado:</span>
-                                <span class="opacity-90" data-i18n="modal_history_value_bullet2_desc">Brinda confianza,
-                                    seguridad y respeto
-                                    mediante procesos individuales y
-                                    continuados para cada persona.</span>
-                                <ul class="list-disc pl-8 mt-2 opacity-80 text-[clamp(1rem,1.8vh,1.2rem)]">
-                                    <li data-i18n="modal_history_value_bullet2_sub">
-                                        Para ello, pone a disposición del
-                                        cliente diversas opciones y diversos
-                                        profesionales que complementan los
-                                        servicios del ciclo de vida en
-                                        bienestar.
-                                    </li>
-                                </ul>
-                            </li>
-                            <li>
-                                <span
-                                    class="font-bold text-white tracking-wide uppercase text-[clamp(1rem,1.8vh,1.2rem)] block mb-1"
-                                    data-i18n="modal_history_value_bullet3_title">• Comunidad y Continuidad:</span>
-                                <span class="opacity-90" data-i18n="modal_history_value_bullet3_desc">Fortalece el
-                                    vínculo entre estudio,
-                                    farmacia y comunidad, GENerando
-                                    bienestar, seguimiento y sentido de
-                                    pertenencia.</span>
-                                <ul class="list-disc pl-8 mt-2 opacity-80 text-[clamp(1rem,1.8vh,1.2rem)]">
-                                    <li data-i18n="modal_history_value_bullet3_sub">
-                                        Para ello, ofrece recursos
-                                        digitales, como una aplicación móvil
-                                        única, y presenciales, como la
-                                        atención en GEN Yoga y Farmacia Q19,
-                                        ambas en una misma calle, mismo
-                                        barrio, misma ciudad, donde
-                                        converGEN perfiles y saberes
-                                        GENeracionales diversos.
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white/5 p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+                                <div>
+                                    <span class="font-bold text-white tracking-wide uppercase text-sm block mb-2" data-i18n="modal_history_value_bullet1_title">• Prevención e Integración:</span>
+                                    <span class="text-sm opacity-90 leading-relaxed block" data-i18n="modal_history_value_bullet1_desc">combina yoga y prácticas conscientes, físicas y espirituales, con un enfoque riguroso, desde la ética clínica y la evidencia farmacológica, por ejemplo, la Respiración SOMA o el yoga terapéutico, promoviendo salud real y responsable.</span>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-white/10 text-xs opacity-80" data-i18n="modal_history_value_bullet1_sub">
+                                    Para ello, atiende las comorbilidades que causan malestar, dolor o enfermedad, como la alimentación, el estado físico y mental, y la gestión emocional.
+                                </div>
+                            </div>
+                            <div class="bg-white/5 p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+                                <div>
+                                    <span class="font-bold text-white tracking-wide uppercase text-sm block mb-2" data-i18n="modal_history_value_bullet2_title">• Acompañamiento Personalizado:</span>
+                                    <span class="text-sm opacity-90 leading-relaxed block" data-i18n="modal_history_value_bullet2_desc">Brinda confianza, seguridad y respeto mediante procesos individuales y continuados para cada persona.</span>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-white/10 text-xs opacity-80" data-i18n="modal_history_value_bullet2_sub">
+                                    Para ello, pone a disposición del cliente diversas opciones y diversos profesionales que complementan los servicios del ciclo de vida en bienestar.
+                                </div>
+                            </div>
+                            <div class="bg-white/5 p-5 rounded-2xl border border-white/10 flex flex-col justify-between">
+                                <div>
+                                    <span class="font-bold text-white tracking-wide uppercase text-sm block mb-2" data-i18n="modal_history_value_bullet3_title">• Comunidad y Continuidad:</span>
+                                    <span class="text-sm opacity-90 leading-relaxed block" data-i18n="modal_history_value_bullet3_desc">Fortalece el vínculo entre estudio, farmacia y comunidad, GENerando bienestar, seguimiento y sentido de pertenencia.</span>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-white/10 text-xs opacity-80" data-i18n="modal_history_value_bullet3_sub">
+                                    Para ello, ofrece recursos digitales, como una aplicación móvil única, y presenciales, como la atención en GEN Yoga y Farmacia Q19, ambas en una misma calle, mismo barrio, misma ciudad, donde converGEN perfiles y saberes GENeracionales diversos.
+                                </div>
+                            </div>
+                        </div>
                     </section>
+
+                    <!-- Bottom Return & CTA Footer -->
+                    <div class="pt-8 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <button onclick="closeModal()" type="button"
+                            class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white text-[#795244] font-extrabold text-xs md:text-sm uppercase tracking-widest hover:bg-[#f8f6f2] hover:scale-105 active:scale-95 transition-all shadow-xl text-center">
+                            ← Volver al inicio
+                        </button>
+                        <a href="clases.html"
+                            class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#795244] text-white border-2 border-white font-extrabold text-xs md:text-sm uppercase tracking-widest hover:bg-white hover:text-[#795244] hover:scale-105 active:scale-95 transition-all shadow-xl text-center">
+                            Ver nuestras sesiones →
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -636,19 +573,26 @@
                 });
                 target.classList.remove('hidden');
                 modalOverlay.classList.remove('hidden');
+                modalOverlay.scrollTop = 0;
+                document.body.style.overflow = 'hidden';
                 setTimeout(() => modalOverlay.classList.remove('opacity-0'), 10);
-                history.pushState({ modalOpen: true }, "", `#${modalId}`);
+                if (window.location.hash !== `#${modalId}`) {
+                    history.pushState({ modalOpen: true }, "", `#${modalId}`);
+                }
             }
         }
 
         window.closeModal = function () {
             stopModalMedia();
             modalOverlay.classList.add('opacity-0');
+            document.body.style.overflow = '';
             setTimeout(() => {
                 modalOverlay.classList.add('hidden');
                 modalContents.forEach(el => el.classList.add('hidden'));
             }, 300);
-            if (window.location.hash) history.replaceState(null, "", " ");
+            if (window.location.hash) {
+                history.replaceState(null, "", window.location.pathname + window.location.search);
+            }
         }
 
         document.addEventListener('keydown', (e) => {
