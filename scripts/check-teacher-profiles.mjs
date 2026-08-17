@@ -77,7 +77,7 @@ const [maestros, profile, migration] = await Promise.all([
 ]);
 
 for (const page of [maestros, profile]) {
-  assert.match(page, /teacher-profiles\.js\?v=6\.17/);
+  assert.match(page, /teacher-profiles\.js\?v=6\.21/);
 }
 
 assert.doesNotMatch(maestros, /summarizeModalText|summarizeModalItems|moreAreas|moreQualifications/);
@@ -90,6 +90,10 @@ assert.match(maestros, /\.teachers-gallery__grid\s*\{[\s\S]*?align-items:\s*star
 assert.doesNotMatch(maestros, /\.teachers-gallery__grid--4\s*\{[\s\S]*?align-items:\s*flex-end;/);
 assert.match(maestros, /\.teacher-modal__section-title\s*\{[\s\S]*?font-family:\s*['"]Ubuntu['"][\s\S]*?font-weight:\s*700;/);
 assert.match(maestros, /\.teacher-modal__section-text\s*\{[\s\S]*?font-family:\s*['"]Montserrat Arabic['"][\s\S]*?font-weight:\s*300;/);
+assert.match(maestros, /id:\s*['"]isabel-local['"]/);
+assert.match(maestros, /Psiconeuroinmunología Clínica \(PNI\) \| consultas/);
+assert.match(maestros, /orderedKeys = \['angel', 'miriam', 'silvia', 'isabel', 'yanira'\]/);
+assert.match(maestros, /identity\.includes\('isabel'\)/);
 
 assert.doesNotMatch(profile, /function truncateTextProfile/);
 assert.match(profile, /const bioText = parsed\.sobreMi\[0\]/);
@@ -106,4 +110,4 @@ for (const expected of [
   assert.ok(migration.includes(expected), `La migración no contiene: ${expected}`);
 }
 
-console.log('Teacher profile checks passed for Ángel Javier, Silvia, Miriam and Yanira.');
+console.log('Teacher profile checks passed for Ángel Javier, Silvia, Miriam, Isabel and Yanira.');

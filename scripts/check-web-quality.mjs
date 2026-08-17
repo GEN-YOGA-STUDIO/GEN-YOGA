@@ -221,14 +221,14 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.17["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.17`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.21["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.21`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
   const staleVisualVersion = [...source.matchAll(/\bv(\d+)\.(\d+)\b/gi)]
-    .find(([, major, minor]) => `${major}.${minor}` !== '6.17');
+    .find(([, major, minor]) => `${major}.${minor}` !== '6.21');
   if (staleVisualVersion) {
-    errors.push(`${fileName}: contiene una versión visual distinta de 6.17 (${staleVisualVersion[0]})`);
+    errors.push(`${fileName}: contiene una versión visual distinta de 6.21 (${staleVisualVersion[0]})`);
   }
 }
 
@@ -241,6 +241,40 @@ for (const functionName of invokedEdgeFunctions) {
   if (!await exists(entrypoint)) {
     errors.push(`El frontend invoca ${functionName}, pero falta ${path.relative(root, entrypoint)}`);
   }
+}
+
+const classesPage = await readFile(path.join(root, 'clases.html'), 'utf8');
+for (const [teacher, background] of [
+  ['miriam', '#744833'],
+  ['silvia', '#6b4226'],
+  ['isabel', '#8f6b2d'],
+]) {
+  const cardClass = new RegExp(
+    `id=["']card-${teacher}["'][\\s\\S]*?class=["'][^"']*\\bconsultation-card\\b[^"']*\\bconsultation-card--${teacher}\\b`,
+    'i',
+  );
+  if (!cardClass.test(classesPage)) {
+    errors.push(`clases.html: la tarjeta de ${teacher} no usa su clase de contraste estable`);
+  }
+  const backgroundRule = new RegExp(
+    `\\.consultation-card--${teacher}\\s*\\{[^}]*background-color:\\s*${background}`,
+    'i',
+  );
+  if (!backgroundRule.test(classesPage)) {
+    errors.push(`clases.html: la tarjeta de ${teacher} no declara el fondo ${background}`);
+  }
+}
+for (const requiredClass of [
+  'consultation-card__eyebrow',
+  'consultation-card__title',
+  'consultation-card__description',
+]) {
+  if (!classesPage.includes(requiredClass)) {
+    errors.push(`clases.html: falta la jerarquía visual ${requiredClass}`);
+  }
+}
+if (/bg-\[#(?:744833|6b4226)\]/i.test(classesPage)) {
+  errors.push('clases.html: Miriam o Silvia vuelven a depender de un fondo Tailwind no compilado');
 }
 
 const profile = await readFile(path.join(root, 'profile.html'), 'utf8');

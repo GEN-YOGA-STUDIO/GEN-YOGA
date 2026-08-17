@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import Stripe from "https://esm.sh/stripe@14.22.0?target=deno"
 import {
+  CONSULTATION_CATALOG,
   PURCHASE_TYPES,
   HttpError,
   assertAllowedOrigin,
@@ -9,6 +10,7 @@ import {
   createAdminClient,
   createStripeClient,
   getAuthenticatedUser,
+  getConsultationDetails,
   getValidatedCatalog,
   handleOptions,
   isUuid,
@@ -16,11 +18,13 @@ import {
   readCorsConfig,
   readProductionConfig,
   requirePost,
+  resolveConsultationPrice,
   resolveReturnBaseUrl,
   safeErrorResponse,
+  isSingleConsultation,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.18'
+const APP_RELEASE = '6.21'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -96,16 +100,7 @@ serve(async (req) => {
       PURCHASE_TYPES.PACK_6,
       PURCHASE_TYPES.PACK_10,
       PURCHASE_TYPES.BONO_ILIMITADO,
-      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A,
-      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
-      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
-      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
-      PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
-      PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
-      PURCHASE_TYPES.SILVIA_AYURVEDA_BONO3,
-      PURCHASE_TYPES.SILVIA_AYURVEDA_BONO6,
-      PURCHASE_TYPES.ISABEL_PNI_1A,
-      PURCHASE_TYPES.ISABEL_PNI_SIG,
+      ...Object.keys(CONSULTATION_CATALOG),
     ])
     if (!allowedPurchaseTypes.has(lookupKey)) {
       throw new HttpError(400, 'Producto no permitido.')
@@ -116,16 +111,7 @@ serve(async (req) => {
 
     const requestedUserId = String(body.user_id || '').trim()
     const isGuest = requestedUserId === 'guest'
-    const isConsultationSingle = [
-      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A,
-      PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
-      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
-      PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
-      PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
-      PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
-      PURCHASE_TYPES.ISABEL_PNI_1A,
-      PURCHASE_TYPES.ISABEL_PNI_SIG,
-    ].includes(lookupKey as any)
+    const isConsultationSingle = isSingleConsultation(lookupKey)
 
     if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle) {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta o consulta individual.')
@@ -205,69 +191,19 @@ serve(async (req) => {
 
     if (price) {
       lineItems = [{ price: price.id, quantity: 1 }]
-    } else if (isConsultationSingle) {
-      // Lookup existing active price in Stripe by lookup_key
-      let stripePriceId: string | null = null
-      try {
-        const prices = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 })
-        if (prices.data.length > 0) {
-          stripePriceId = prices.data[0].id
-        }
-      } catch (err) {
-        console.warn('No se pudo consultar el price por lookup_key en Stripe:', err)
-      }
+    } else if (getConsultationDetails(purchaseType)) {
+      const details = getConsultationDetails(purchaseType)!
+      const consultationPrice = await resolveConsultationPrice(stripe, purchaseType)
 
-      if (stripePriceId) {
-        lineItems = [{ price: stripePriceId, quantity: 1 }]
+      if (consultationPrice) {
+        lineItems = [{ price: consultationPrice.id, quantity: 1 }]
       } else {
-        const consultationProductDetails: Record<string, { name: string; amount: number }> = {
-          [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A]: {
-            name: 'Acompañamiento psicoterapéutico (1ª sesión)',
-            amount: 7500,
-          },
-          [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG]: {
-            name: 'Acompañamiento psicoterapéutico (siguientes)',
-            amount: 6500,
-          },
-          [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A]: {
-            name: 'Terapia de pareja (1ª sesión)',
-            amount: 12000,
-          },
-          [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG]: {
-            name: 'Terapia de pareja (siguientes)',
-            amount: 10000,
-          },
-          [PURCHASE_TYPES.SILVIA_AYURVEDA_1A]: {
-            name: 'Consulta de Ayurveda (1ª sesión)',
-            amount: 8000,
-          },
-          [PURCHASE_TYPES.SILVIA_AYURVEDA_SIG]: {
-            name: 'Consulta de Ayurveda (seguimiento)',
-            amount: 6000,
-          },
-          [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO3]: {
-            name: 'Bono de Salud Integrativa (3 consultas)',
-            amount: 17000,
-          },
-          [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO6]: {
-            name: 'Bono de Salud Integrativa (6 consultas)',
-            amount: 28000,
-          },
-          [PURCHASE_TYPES.ISABEL_PNI_1A]: {
-            name: 'Consulta de Psiconeuroinmunología Clínica (1ª sesión)',
-            amount: 8000,
-          },
-          [PURCHASE_TYPES.ISABEL_PNI_SIG]: {
-            name: 'Consulta de Psiconeuroinmunología Clínica (seguimiento)',
-            amount: 6000,
-          },
+        if (details.productId) {
+          throw new Error(`No se pudo resolver el Price del producto ${details.productId}.`)
         }
-
-        const details = consultationProductDetails[lookupKey]
-        if (!details) {
-          throw new HttpError(400, 'Configuración de tarifa de consulta no encontrada.')
-        }
-
+        // Some legacy consultation entries do not yet have a canonical Product
+        // supplied by GEN Yoga. Keep their existing inline fallback isolated;
+        // mapped products such as Isabel must always use their reusable Price.
         lineItems = [
           {
             price_data: {
@@ -292,7 +228,6 @@ serve(async (req) => {
       client_reference_id: appUserId,
       success_url: `${returnBaseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}${isGuest ? '&guest=true' : ''}&from=${source}`,
       cancel_url: `${returnBaseUrl}/cancel.html?from=${source}`,
-      payment_method_types: ['card'],
       metadata,
     }
 
