@@ -70,15 +70,42 @@ const miriamEnglish = getEnglishProfile({ email: 'miriam_profesora@genyoga.studi
 assert.match(miriamEnglish.descripcion, /self-awareness/);
 assert.doesNotMatch(miriamEnglish.descripcion, /autoconcern/);
 
-const [maestros, profile, migration] = await Promise.all([
+const [maestros, profile, clases, migration] = await Promise.all([
   readFile(path.join(root, 'maestros.html'), 'utf8'),
   readFile(path.join(root, 'profile.html'), 'utf8'),
+  readFile(path.join(root, 'clases.html'), 'utf8'),
   readFile(path.join(root, 'supabase', 'migrations', '202608030001_angel_profile_schedule_6_8.sql'), 'utf8'),
 ]);
 
 for (const page of [maestros, profile]) {
   assert.match(page, /teacher-profiles\.js\?v=6\.26/);
 }
+
+// Check teacher image cutouts and assets
+const requiredImages = [
+  'maestra-isabel-recortada.webp',
+  'maestro-angel-recortado.webp',
+  'maestra-miriam-recortada.webp',
+  'maestra-silvia-recortada.webp',
+  'maestra-yanira-recortada.webp',
+  'isabel-pni.jpg',
+  'clases-hombres.jpg',
+  'profes/isabel-pni.jpg',
+  'profes/angel-upavistha.jpg',
+  'profes/angel-handstand.jpg',
+  'profes/angel-sarvangasana.jpg',
+  'profes/angel-supta-virasana.jpg',
+];
+
+for (const imgName of requiredImages) {
+  const imgPath = path.join(root, 'img', imgName);
+  const exists = await readFile(imgPath).then(() => true).catch(() => false);
+  assert.ok(exists, `Falta la imagen de profesor requerida: img/${imgName}`);
+}
+
+assert.match(maestros, /updated\.foto_cutout = 'img\/maestra-isabel-recortada\.webp'/);
+assert.match(maestros, /updated\.foto_cutout = 'img\/maestro-angel-recortado\.webp'/);
+assert.match(clases, /src="img\/isabel-pni\.jpg"/);
 
 assert.doesNotMatch(maestros, /summarizeModalText|summarizeModalItems|moreAreas|moreQualifications/);
 assert.doesNotMatch(maestros, /\+\$\{remaining\}|visible\.join\(['"] · ['"]\)/);
