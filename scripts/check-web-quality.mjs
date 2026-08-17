@@ -181,6 +181,15 @@ for (const fileName of actualPages) {
     if (count(markup, pattern) !== 1) errors.push(`${fileName}: debe contener exactamente un ${label}`);
   }
 
+  const canonicalFavicon = /<link\s+rel=["']icon["']\s+type=["']image\/png["']\s+sizes=["']64x64["']\s+href=["']img\/favicon-64\.png\?v=6\.22["']\s*\/?>/gi;
+  if (count(markup, canonicalFavicon) !== 1) {
+    errors.push(`${fileName}: debe incluir exactamente el favicon PNG 64x64 de la versión 6.22`);
+  }
+  const canonicalTouchIcon = /<link\s+rel=["']apple-touch-icon["']\s+sizes=["']180x180["']\s+href=["']img\/apple-touch-icon\.png\?v=6\.22["']\s*\/?>/gi;
+  if (count(markup, canonicalTouchIcon) !== 1) {
+    errors.push(`${fileName}: debe incluir exactamente el icono de favoritos móvil 180x180`);
+  }
+
   compileInlineScripts(fileName, source);
   checkInlineHandlers(fileName, source);
 
@@ -221,14 +230,14 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.21["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.21`);
+  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.22["']\s*\/?>/i.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación 6.22`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
   const staleVisualVersion = [...source.matchAll(/\bv(\d+)\.(\d+)\b/gi)]
-    .find(([, major, minor]) => `${major}.${minor}` !== '6.21');
+    .find(([, major, minor]) => `${major}.${minor}` !== '6.22');
   if (staleVisualVersion) {
-    errors.push(`${fileName}: contiene una versión visual distinta de 6.21 (${staleVisualVersion[0]})`);
+    errors.push(`${fileName}: contiene una versión visual distinta de 6.22 (${staleVisualVersion[0]})`);
   }
 }
 
@@ -277,7 +286,170 @@ if (/bg-\[#(?:744833|6b4226)\]/i.test(classesPage)) {
   errors.push('clases.html: Miriam o Silvia vuelven a depender de un fondo Tailwind no compilado');
 }
 
+const homePage = await readFile(path.join(root, 'index.html'), 'utf8');
+if (count(homePage, /aria-controls=["']modal-historia["']/g) !== 2) {
+  errors.push('index.html: Saber más debe abrir el vídeo tanto en escritorio como en móvil');
+}
+if (!/\blg:hidden\b[\s\S]*?class=["'][^"']*\bhistory-modal-trigger\b/i.test(homePage)) {
+  errors.push('index.html: falta el acceso móvil a Saber más');
+}
+const historyVideo = homePage.match(/<iframe\b[^>]*\bid=["']history-video["'][^>]*>/i)?.[0] || '';
+for (const [required, label] of [
+  ['src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"', 'URL privada del vídeo de presentación'],
+  ['data-src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"', 'URL restaurable del vídeo'],
+  ['title="Vídeo de presentación de GEN Yoga"', 'título accesible del vídeo'],
+  ['loading="lazy"', 'carga diferida del vídeo'],
+  ['allowfullscreen', 'reproducción del vídeo a pantalla completa'],
+]) {
+  if (!historyVideo.includes(required)) errors.push(`index.html: falta ${label}`);
+}
+if (/autoplay/i.test(historyVideo)) errors.push('index.html: el vídeo de presentación no debe reproducirse automáticamente');
+const historyVideoIndex = homePage.indexOf('id="history-video"');
+const historyTextIndex = homePage.indexOf('data-i18n="modal_history_sec1_title"');
+if (historyVideoIndex < 0 || historyTextIndex < 0 || historyVideoIndex >= historyTextIndex) {
+  errors.push('index.html: el vídeo de presentación debe aparecer antes del texto de Saber más');
+}
+for (const [required, label] of [
+  ['type="button" aria-label="Cerrar" onclick="closeModal()"', 'nombre accesible del botón de cierre'],
+  ['function stopModalMedia()', 'parada del vídeo al cerrar el modal'],
+  ["frame.src = 'about:blank'", 'reinicio del iframe al cerrar el modal'],
+  ["if (frame.src === 'about:blank') frame.src = frame.dataset.src", 'restauración del vídeo al reabrir'],
+]) {
+  if (!homePage.includes(required)) errors.push(`index.html: falta ${label}`);
+}
+
 const profile = await readFile(path.join(root, 'profile.html'), 'utf8');
+const adminStudentSearchFlow = profile.match(
+  /const ADMIN_STUDENT_SEARCH_RESULT_LIMIT[\s\S]*?(?=\nasync function abrirModalAsignarClaseYoga)/,
+)?.[0] || '';
+const manualYogaAssignmentFlow = profile.match(
+  /async function abrirModalAsignarClaseYoga[\s\S]*?(?=\nasync function cargarGrupoEnClaseCreada)/,
+)?.[0] || '';
+const manualConsultationAssignmentFlow = profile.match(
+  /async function abrirModalAsignarConsulta[\s\S]*?(?=\nasync function asignarClienteAConsulta)/,
+)?.[0] || '';
+const consultationAssignmentRpcFlow = profile.match(
+  /async function asignarClienteAConsulta[\s\S]*?(?=\n\/\/ Las funciones legacy)/,
+)?.[0] || '';
+const manualWorkshopAssignmentFlow = profile.match(
+  /async function abrirModalAsignarTaller[\s\S]*?(?=\nasync function cancelarReservaTaller)/,
+)?.[0] || '';
+
+for (const [required, label] of [
+  ['ADMIN_STUDENT_SEARCH_RESULT_LIMIT = 50', 'límite de resultados del buscador de alumnos'],
+  ['function normalizarBusquedaAlumnosAdmin', 'búsqueda normalizada de alumnos'],
+  ['function crearMarkupBuscadorAlumnosAdmin', 'markup accesible reutilizable del buscador'],
+  ['function crearBuscadorAlumnosAdmin', 'combobox de alumnos reutilizable'],
+  ['const idPrefix = String(config.idPrefix', 'identificadores aislados por modal'],
+  ['searchText: normalizarBusquedaAlumnosAdmin(`${label} ${email}', 'filtro por nombre y correo'],
+  ['const selectionText = `${label} · ${identifier}`', 'identificador visible de la selección'],
+  ['status.textContent = `Seleccionado: ${record.selectionText}.`', 'confirmación inequívoca de la selección'],
+  ['name.textContent = record.label', 'nombre insertado sin HTML'],
+  ['meta.textContent = record.meta', 'email o identificador insertado sin HTML'],
+  ["event.key === 'ArrowDown'", 'navegación con flecha abajo'],
+  ["event.key === 'ArrowUp'", 'navegación con flecha arriba'],
+  ["event.key === 'Enter'", 'selección con Enter'],
+  ["event.key === 'Escape'", 'cierre de resultados con Escape'],
+  ['aria-activedescendant', 'opción activa accesible'],
+  ['No hay ${entityPlural} que coincidan', 'estado vacío adaptable del buscador'],
+  ['role="combobox"', 'rol combobox del buscador de alumnos'],
+  ['aria-autocomplete="list"', 'autocompletado accesible del buscador'],
+  ['role="listbox"', 'lista accesible de alumnos'],
+  ['role="status" aria-live="polite"', 'anuncio accesible de resultados'],
+]) {
+  if (!adminStudentSearchFlow.includes(required)) {
+    errors.push(`profile.html: falta ${label}`);
+  }
+}
+
+if (/\.innerHTML\s*=/.test(adminStudentSearchFlow)) {
+  errors.push('profile.html: el buscador reutilizable vuelve a interpolar perfiles mediante innerHTML');
+}
+
+const scalableAssignmentFlows = [
+  {
+    label: 'clases',
+    source: manualYogaAssignmentFlow,
+    idPrefix: 'swal-cliente-clase',
+    permission: 'if (!tieneAccesoGestionAlumnos()) return;',
+    required: [
+      ["client.rpc('reservar_con_bono'", 'RPC reservar_con_bono'],
+      ['p_clase_id: claseId', 'clase elegida'],
+      ['p_user_id: result.value', 'alumno elegido'],
+      ['btn-swal-cargar-grupo', 'botón para cargar grupo'],
+      ['cargarGrupoEnClaseCreada', 'operación vigente para cargar grupo'],
+    ],
+  },
+  {
+    label: 'consultas',
+    source: manualConsultationAssignmentFlow,
+    idPrefix: 'swal-cliente-consulta',
+    permission: 'if (!tieneAccesoConsultasAdmin()) return;',
+    required: [
+      ['await asignarClienteAConsulta(tipo, claseId, result.value)', 'enlace con la reserva atómica de consulta'],
+    ],
+  },
+  {
+    label: 'talleres',
+    source: manualWorkshopAssignmentFlow,
+    idPrefix: 'swal-cliente-taller',
+    permission: 'if (!tieneAccesoGestionAlumnos()) return;',
+    required: [
+      ["client.rpc('reservar_con_bono'", 'RPC reservar_con_bono'],
+      ['p_clase_id: claseId', 'taller elegido'],
+      ['p_user_id: result.value', 'alumno elegido'],
+    ],
+  },
+];
+
+for (const { label, source, idPrefix, permission, required } of scalableAssignmentFlows) {
+  for (const [needle, description] of [
+    ['crearMarkupBuscadorAlumnosAdmin({', 'markup del buscador reutilizable'],
+    ['crearBuscadorAlumnosAdmin(clientes, {', 'inicialización del buscador reutilizable'],
+    ['studentPicker?.focus()', 'foco inicial en la búsqueda'],
+    ['studentPicker?.getSelectedId()', 'selección estable por UUID'],
+    ["customClass: { popup: 'admin-student-picker-popup' }", 'ancho accesible del modal'],
+    [permission, 'permiso vigente'],
+    ...required,
+  ]) {
+    if (!source.includes(needle)) {
+      errors.push(`profile.html: el flujo de ${label} no conserva ${description}`);
+    }
+  }
+
+  const prefixUses = source.match(new RegExp(`idPrefix: '${idPrefix}'`, 'g'))?.length || 0;
+  if (prefixUses < 2) {
+    errors.push(`profile.html: el flujo de ${label} no enlaza markup y lógica con ${idPrefix}`);
+  }
+
+  if (new RegExp(`<select[^>]+id=["']${idPrefix}(?:-[^"']*)?["']`, 'i').test(source)) {
+    errors.push(`profile.html: la asignación de ${label} vuelve al desplegable no escalable`);
+  }
+}
+
+for (const [required, label] of [
+  ["client.rpc('reservar_consulta_atomica'", 'RPC atómica al asignar consultas'],
+  ['p_tipo: tipo', 'tipo de consulta elegido'],
+  ['p_clase_id: claseId', 'hueco de consulta elegido'],
+  ['p_user_id: userId', 'cliente de consulta elegido'],
+  ['p_cobrar_saldo: false', 'asignación admin sin consumo de saldo'],
+]) {
+  if (!consultationAssignmentRpcFlow.includes(required)) {
+    errors.push(`profile.html: falta ${label}`);
+  }
+}
+
+for (const cssClass of [
+  '.admin-student-combobox__input:focus-visible',
+  '.admin-student-combobox__listbox[hidden]',
+  '.admin-student-combobox__option.is-active',
+  '.admin-student-combobox__empty',
+]) {
+  if (!profile.includes(cssClass)) {
+    errors.push(`profile.html: falta el estilo accesible ${cssClass}`);
+  }
+}
+
 for (const rpc of ['reservar_consulta_atomica', 'cancelar_consulta_atomica']) {
   if (!profile.includes(`client.rpc('${rpc}'`)) errors.push(`profile.html: falta el flujo atómico ${rpc}`);
 }

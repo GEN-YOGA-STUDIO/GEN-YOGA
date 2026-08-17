@@ -30,7 +30,7 @@ const translations = {
 
         // index.html Central Hero
         "hero_quote": "En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu mente encuentren su equilibrio natural...",
-        "hero_btn_more": "leer más",
+        "hero_btn_more": "saber más",
         "hero_subquote": "Tu refugio, tu energía, tu momento",
         "marquee_text": "ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES",
 

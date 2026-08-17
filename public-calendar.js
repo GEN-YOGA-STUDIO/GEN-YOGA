@@ -150,6 +150,21 @@
         miriam: '#9a83b9',
         isabel: '#8f6b2d'
     });
+    const consultationSlotStartMinutes = Object.freeze([
+        9 * 60 + 30,
+        10 * 60 + 30,
+        11 * 60 + 30,
+        12 * 60 + 30,
+        13 * 60 + 30,
+        17 * 60,
+        18 * 60,
+        19 * 60,
+        20 * 60
+    ]);
+    const consultationWeekdays = Object.freeze({
+        miriam: Object.freeze([2, 3]),
+        isabel: Object.freeze([2, 4])
+    });
 
     const state = {
         initialized: false,
@@ -267,12 +282,31 @@
         const fromShared = root.GENTeacherProfiles?.getSlug?.(profile);
         if (fromShared) return normalizeTeacherParam(fromShared);
 
-        const identity = `${profile?.nombre || ''} ${profile?.apellidos || ''}`.toLowerCase();
+        const identity = `${profile?.nombre || ''} ${profile?.apellidos || ''} ${profile?.email || ''}`.toLowerCase();
         if (identity.includes('yanira')) return 'yanira';
         if (identity.includes('miriam')) return 'miriam';
         if (identity.includes('silvia')) return 'silvia';
+        if (identity.includes('isabel')) return 'isabel';
         if (identity.includes('ángel') || identity.includes('angel')) return 'angel-javier';
         return slugify(identity) || (safePositiveInteger(profile?.id) ? `profesor-${profile.id}` : 'profesor');
+    }
+
+    function consultationStartMinutesFor(profile, dateKey) {
+        const validDate = validDateKey(dateKey);
+        if (!validDate) return [];
+
+        const weekday = new Date(`${validDate}T12:00:00Z`).getUTCDay() || 7;
+        const slug = teacherSlug(profile);
+        const allowedWeekdays = consultationWeekdays[slug];
+        if (allowedWeekdays) {
+            return allowedWeekdays.includes(weekday) ? consultationSlotStartMinutes : [];
+        }
+
+        // Silvia mantiene de momento su disponibilidad previa de lunes a sábado.
+        if (slug === 'silvia' && weekday >= 1 && weekday <= 6) {
+            return Object.freeze([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map(hour => hour * 60));
+        }
+        return [];
     }
 
     function isPublicScheduleSlot(profile, dateKey) {
@@ -915,10 +949,9 @@
 
                 for (let dayIdx = 0; dayIdx < 6; dayIdx++) {
                     const dateKey = addDays(weekStart, dayIdx);
-                    const startHours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+                    const slotStarts = consultationStartMinutesFor(prof, dateKey);
 
-                    startHours.forEach(hour => {
-                        const startMinutes = hour * 60;
+                    slotStarts.forEach(startMinutes => {
                         const existsInDb = dbClases.some(c =>
                             c.dateKey === dateKey &&
                             c.startMinutes === startMinutes &&
@@ -926,7 +959,9 @@
                         );
 
                         if (!existsInDb) {
-                            const startStr = `${dateKey}T${String(hour).padStart(2, '0')}:00:00`;
+                            const startHour = Math.floor(startMinutes / 60);
+                            const startMinute = startMinutes % 60;
+                            const startStr = `${dateKey}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`;
                             const start = new Date(startStr);
                             const end = new Date(start.getTime() + 60 * 60_000);
                             const name = profSlug === 'isabel' ? 'Consulta PNI / Psicología' : (profSlug === 'silvia' ? 'Consulta Ayurveda' : 'Consulta Psicología');
@@ -1486,6 +1521,7 @@
         close,
         refresh: () => loadWeek({ silent: true }),
         canonicalStyle,
-        isPublicScheduleSlot
+        isPublicScheduleSlot,
+        consultationStartMinutesFor
     });
 })(typeof window !== 'undefined' ? window : globalThis);

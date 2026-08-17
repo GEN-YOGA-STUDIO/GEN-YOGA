@@ -4,14 +4,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="6.21" />
+    <meta name="application-version" content="6.22" />
     <meta name="description"
         content="GEN Yoga en Albacete: clases de yoga, bienestar integral y consultas guiadas por profesionales." />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.22" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.22" />
     <title>GEN Yoga | Studio</title>
 
-    <script src="i18n.js?v=6.21"></script>
+    <script src="i18n.js?v=6.22"></script>
 
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.21" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.22" />
 
     <style>
         @media (max-height: 820px) {
@@ -167,10 +169,11 @@
                     class="font-ubuntu text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-normal md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md animate-breath hide-on-short">
                     <span data-i18n="hero_quote">En GEN Yoga fusionamos movimiento, respiración y consciencia para crear
                         un espacio donde tu cuerpo y tu mente encuentren su equilibrio natural...</span>
-                    <button onclick="openModal('historia')"
-                        class="inline-block text-inherit font-inherit underline decoration-white/50 hover:decoration-white transition-all opacity-80 hover:opacity-100 translate-y-[-0.05em] ml-1"
+                    <button type="button" onclick="openModal('historia')" aria-haspopup="dialog"
+                        aria-controls="modal-historia"
+                        class="history-modal-trigger inline-block text-inherit font-inherit underline decoration-white/50 hover:decoration-white transition-all opacity-80 hover:opacity-100 translate-y-[-0.05em] ml-1"
                         data-i18n="hero_btn_more">
-                        leer más
+                        saber más
                     </button>
                 </p>
 
@@ -222,6 +225,12 @@
                         MAESTROS
                     </span>
                 </button>
+                <button type="button" onclick="openModal('historia')" aria-haspopup="dialog"
+                    aria-controls="modal-historia"
+                    class="history-modal-trigger mt-1 py-3 text-white/90 hover:text-white underline decoration-white/50 hover:decoration-white font-ubuntu text-sm uppercase tracking-[0.18em] transition"
+                    data-i18n="hero_btn_more">
+                    saber más
+                </button>
             </div>
         </div>
 
@@ -262,7 +271,7 @@
                     <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">
                         Política de privacidad
                     </a>
-                    <span class="opacity-60 text-[10px]">v6.21 | @2026 Gen Yoga</span>
+                    <span class="opacity-60 text-[10px]">v6.22 | @2026 Gen Yoga</span>
                 </div>
             </div>
         </div>
@@ -348,7 +357,7 @@
                     <a href="politica-privacidad.html"
                         class="hover:text-sand transition underline decoration-transparent hover:decoration-sand"
                         data-i18n="footer_privacy">Política de privacidad</a>
-                    <span class="opacity-60 text-[10px]">v6.21 | @2026 Gen Yoga</span>
+                    <span class="opacity-60 text-[10px]">v6.22 | @2026 Gen Yoga</span>
                 </div>
             </div>
         </footer>
@@ -358,7 +367,7 @@
     <div id="modal-overlay"
         class="fixed inset-0 bg-black/40 backdrop-blur-md z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 pt-16 md:p-8 md:pt-8">
         <!-- MOVIL: Botón cerrar con fondo oscuro / ESCRITORIO: transparente -->
-        <button onclick="closeModal()"
+        <button type="button" aria-label="Cerrar" onclick="closeModal()"
             class="absolute top-3 right-3 md:top-8 md:right-8 z-[60] text-white hover:text-sand transition-all flex items-center justify-center gap-2 group bg-black/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border border-white/40 md:border-transparent rounded-lg md:rounded-none p-2 md:p-0 shadow-lg md:shadow-none">
             <span
                 class="hidden md:block text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Cerrar</span>
@@ -370,13 +379,23 @@
         </button>
 
         <!-- Content for Modals (Same IDs as before for JS compatibility) -->
-        <div id="modal-historia"
+        <div id="modal-historia" role="dialog" aria-modal="true" aria-labelledby="modal-historia-title"
             class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)] shadow-2xl">
             <div class="max-w-4xl mx-auto">
-                <h2 class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-12 text-center drop-shadow-md uppercase tracking-[0.1em]"
+                <h2 id="modal-historia-title" class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-12 text-center drop-shadow-md uppercase tracking-[0.1em]"
                     data-i18n="modal_history_title">
                     GEN YOGA
                 </h2>
+                <div class="relative w-full overflow-hidden rounded-2xl bg-black shadow-2xl mb-8 md:mb-12"
+                    style="aspect-ratio: 16 / 9;">
+                    <iframe id="history-video" class="absolute inset-0 h-full w-full"
+                        src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"
+                        data-src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"
+                        title="Vídeo de presentación de GEN Yoga" loading="lazy"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen></iframe>
+                </div>
                 <div
                     class="space-y-8 text-white/95 text-[clamp(1.1rem,2.2vh,1.4rem)] leading-relaxed font-light drop-shadow-sm bg-black/10 p-6 md:p-10 lg:p-14 rounded-2xl border border-white/10 backdrop-blur-sm">
                     <section class="space-y-4">
@@ -596,10 +615,22 @@
         const modalOverlay = document.getElementById('modal-overlay');
         const modalContents = document.querySelectorAll('.modal-content');
 
+        function stopModalMedia() {
+            modalContents.forEach(content => {
+                content.querySelectorAll('iframe').forEach(frame => {
+                    if (frame.src && frame.src !== 'about:blank') frame.dataset.src = frame.src;
+                    frame.src = 'about:blank';
+                });
+            });
+        }
+
         window.openModal = function (modalId) {
             modalContents.forEach(el => el.classList.add('hidden'));
             const target = document.getElementById(`modal-${modalId}`);
             if (target) {
+                target.querySelectorAll('iframe[data-src]').forEach(frame => {
+                    if (frame.src === 'about:blank') frame.src = frame.dataset.src;
+                });
                 target.classList.remove('hidden');
                 modalOverlay.classList.remove('hidden');
                 setTimeout(() => modalOverlay.classList.remove('opacity-0'), 10);
@@ -608,6 +639,7 @@
         }
 
         window.closeModal = function () {
+            stopModalMedia();
             modalOverlay.classList.add('opacity-0');
             setTimeout(() => {
                 modalOverlay.classList.add('hidden');
@@ -622,6 +654,7 @@
 
         window.addEventListener('popstate', () => {
             if (!modalOverlay.classList.contains('hidden')) {
+                stopModalMedia();
                 modalOverlay.classList.add('opacity-0');
                 setTimeout(() => {
                     modalOverlay.classList.add('hidden');
