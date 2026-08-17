@@ -98,7 +98,28 @@ Especializaciones en anatomía aplicada al yoga, yoga infantil, yoga y mindfulne
 TE ACOMPAÑO:
 Vinyasa Yoga (clases virtuales y presenciales)
 Yoga restaurativo y meditación
-Mindfulness para adultos y niños`
+Mindfulness para adultos y niños`,
+        isabel: `LUGAR DE NACIMIENTO: Albacete (España)
+
+TITULACIONES:
+Especialista en Psiconeuroinmunología Clínica (PNI)
+Grado en Nutrición Humana y Dietética
+Formación en Salud Digestiva, Microbiota e Inmunonutrición
+Especialización en Regulación Hormonal y Estrés Crónico
+
+SOBRE MÍ:
+Acompaño a las personas hacia el equilibrio integral de su organismo a través de la nutrición clínica, la modulación del estilo de vida y la gestión del estrés, integrando el conocimiento científico con una mirada cercana, humana y personalizada.
+La Psiconeuroinmunología Clínica nos permite entender cómo interactúan la mente, el sistema nervioso, el sistema inmunitario y el sistema endocrino, abordando el origen profundo de los desequilibrios para recuperar la vitalidad y el bienestar.
+
+TE ACOMPAÑO:
+Optimización del sistema inmunitario
+Salud digestiva y microbiota
+Regulación metabólica y hormonal
+Gestión del estrés y la inflamación crónica
+Mejora de la composición corporal y hábitos de vida saludables
+
+ME DEFINE:
+"Comprender el cuerpo como un todo interconectado es la clave para acompañar a cada persona a recuperar su equilibrio y bienestar duradero."`
     });
 
     const englishProfiles = Object.freeze({
@@ -121,7 +142,7 @@ WHAT DEFINES ME:
         }),
         miriam: Object.freeze({
             nombre: 'Miriam',
-            especialidad: 'Psychotherapy, Nutrition & Workshops | consultations',
+            especialidad: 'Psychotherapy, Nutrition & Workshops | consultations,workshops',
             descripcion: `PLACE OF BIRTH: Cuenca (Spain)
 
 QUALIFICATIONS:
@@ -159,7 +180,7 @@ WHAT DEFINES ME:
         }),
         silvia: Object.freeze({
             nombre: 'Silvia',
-            especialidad: 'Hatha & Iyengar Yoga, Ayurveda | classes',
+            especialidad: 'Hatha & Iyengar Yoga, Ayurveda | classes,consultations',
             descripcion: `PLACE OF BIRTH: Madrid
 
 QUALIFICATIONS:
@@ -197,6 +218,31 @@ Improved mobility, posture and breathing
 WHAT DEFINES HER:
 "Her work is to create spaces where the body feels heard, the nervous system can regulate and each person feels supported in the process of returning to themselves through yoga and Ayurveda."`
         }),
+        isabel: Object.freeze({
+            nombre: 'Isabel',
+            especialidad: 'Clinical Psychoneuroimmunology (PNI) | consultations',
+            descripcion: `PLACE OF BIRTH: Albacete (Spain)
+
+QUALIFICATIONS:
+Specialist in Clinical Psychoneuroimmunology (PNI)
+Degree in Human Nutrition and Dietetics
+Training in Digestive Health, Microbiota and Immunonutrition
+Specialisation in Hormonal Regulation and Chronic Stress
+
+ABOUT ME:
+I guide people toward holistic balance through clinical nutrition, lifestyle medicine and stress management, combining scientific evidence with a caring, personal and human approach.
+Clinical Psychoneuroimmunology explores how the mind, nervous system, immune system and endocrine system interact, addressing the root causes of imbalances to restore vitality and long-term health.
+
+I SUPPORT YOU:
+Immune system optimization
+Digestive health and gut microbiota
+Metabolic and hormonal regulation
+Stress management and chronic inflammation
+Healthy lifestyle habits and body composition
+
+WHAT DEFINES ME:
+"Understanding the body as an interconnected whole is the key to supporting each person in regaining lasting balance and vitality."`
+        }),
         yanira: Object.freeze({
             nombre: 'Yanira',
             especialidad: 'Vinyasa & Restorative Yoga | classes,workshops',
@@ -221,6 +267,7 @@ Mindfulness for adults and children`
         angel: 'angel-javier',
         miriam: 'miriam',
         silvia: 'silvia',
+        isabel: 'isabel',
         yanira: 'yanira'
     });
 
@@ -241,6 +288,7 @@ Mindfulness for adults and children`
         if (identity.includes('yanira')) return 'yanira';
         if (identity.includes('miriam')) return 'miriam';
         if (identity.includes('silvia')) return 'silvia';
+        if (identity.includes('isabel')) return 'isabel';
         if (identity.includes('ángel') || identity.includes('angel')) return 'angel';
         return '';
     }

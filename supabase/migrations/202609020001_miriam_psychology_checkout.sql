@@ -7,7 +7,11 @@
 
 begin;
 
--- Registro auditado del catálogo de consultas de psicología de Miriam
-comment on table public.compras_stripe is 'Registro de compras realizadas mediante Stripe Checkout (clases, bonos y consultas de psicología con Miriam).';
+do $$
+begin
+  if exists (select 1 from pg_tables where schemaname = 'public' and tablename = 'compras_stripe') then
+    comment on table public.compras_stripe is 'Registro de compras realizadas mediante Stripe Checkout (clases, bonos y consultas de psicología con Miriam).';
+  end if;
+end $$;
 
 commit;

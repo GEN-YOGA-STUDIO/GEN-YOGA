@@ -4,21 +4,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="6.24" />
+    <meta name="application-version" content="6.25" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.24" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.24" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.25" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.25" />
     <title>Mi perfil | GEN Yoga</title>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.24">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.25">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=6.24"></script>
+    <script src="teacher-profiles.js?v=6.25"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=6.24"></script>
+    <script src="i18n.js?v=6.25"></script>
 
     <style>
 /* INLINED profile.css */
@@ -2158,7 +2158,7 @@ main .sticky.top-24 {
                     </p>
                     <div
                         class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-            <span>© 2026 GEN Yoga • v6.24. Todos los derechos reservados.</span>
+            <span>© 2026 GEN Yoga • v6.25. Todos los derechos reservados.</span>
                     </div>
                 </div>
             </footer>
@@ -2588,7 +2588,7 @@ main .sticky.top-24 {
 // --- 1. CONFIGURACIÓN ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '6.24';
+const APP_VERSION = '6.25';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 function closePaymentUiBeforeNavigation() {
@@ -2637,32 +2637,50 @@ function getEspecialidadCategorias(p) {
     const email = (p.email || '').toLowerCase();
     const nombre = (p.nombre || '').toLowerCase();
     
+    let cats = [];
     const parts = especialidad.split('|');
     if (parts.length > 1) {
-        return parts[1].split(',').map(c => c.trim().toLowerCase());
+        cats = parts[1].split(',').map(c => c.trim().toLowerCase());
     }
     
-    // Explicit overrides for Yanira and Miriam if no pipe structure exists
+    // Explicit canonical overrides
     if (email === 'yanira@genyoga.es' || nombre.includes('yanira')) {
-        return ['clases', 'talleres'];
-    }
-    if (email === 'miriam@respirapsicologia.es' || nombre.includes('miriam')) {
-        return ['consultas'];
+        cats = [...new Set([...cats, 'clases', 'talleres'])];
+    } else if (email === 'isabel@genyoga.es' || nombre.includes('isabel')) {
+        cats = [...new Set([...cats, 'consultas', 'psicologia', 'nutricion'])];
+    } else if (email === 'miriam@respirapsicologia.es' || (email.includes('miriam') && email.includes('genyoga')) || nombre.includes('miriam')) {
+        cats = [...new Set([...cats, 'consultas', 'psicologia', 'nutricion', 'talleres'])];
+    } else if (email === 'silvia@genyoga.es' || (email.includes('silvia') && email.includes('genyoga')) || nombre.includes('silvia')) {
+        cats = [...new Set([...cats, 'clases', 'consultas', 'nutricion'])];
+    } else if (email === 'angel@genyoga.es' || (email.includes('angel') && email.includes('genyoga')) || nombre.includes('angel') || nombre.includes('ángel')) {
+        cats = [...new Set([...cats, 'clases'])];
     }
     
-    // Fallback/legacy matching based on keywords
+    // Fallback/keyword matching
     const esp = especialidad.toLowerCase();
-    const cats = [];
-    if (esp.includes('yoga') || esp.includes('clase') || esp.includes('instructor') || esp.includes('vinyasa') || esp.includes('hatha')) {
+    if (esp.includes('yoga') || esp.includes('clase') || esp.includes('instructor') || esp.includes('vinyasa') || esp.includes('hatha') || esp.includes('iyengar')) {
         cats.push('clases');
     }
-    if (esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen')) {
+    if (esp.includes('psico') || esp.includes('terapia') || esp.includes('emocion')) {
+        cats.push('psicologia');
+        cats.push('consultas');
+    }
+    if (esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen') || esp.includes('ayurved') || esp.includes('pni')) {
+        cats.push('nutricion');
+        cats.push('consultas');
+    }
+    if (esp.includes('consulta')) {
         cats.push('consultas');
     }
     if (esp.includes('taller') || esp.includes('workshop')) {
         cats.push('talleres');
     }
-    return cats;
+
+    if (cats.includes('psicologia') || cats.includes('nutricion')) {
+        cats.push('consultas');
+    }
+
+    return [...new Set(cats)];
 }
 
 
@@ -6479,18 +6497,15 @@ let activeProfesoresAdminFilter = 'todos';
 
 function filtrarProfesionalesPorArea(profesionales = [], filtro = 'todos') {
     const f = (filtro || 'todos').toLowerCase();
-    if (f === 'todos') {
-        return profesionales.filter(p => {
-            const cats = getEspecialidadCategorias(p);
-            return cats.includes('clases') || cats.includes('consultas') || cats.includes('talleres');
-        });
-    }
+    if (f === 'todos') return profesionales;
 
     return profesionales.filter(p => {
         const cats = getEspecialidadCategorias(p);
-        if (f === 'clases') return cats.includes('clases');
-        if (f === 'psicologia') return cats.includes('consultas');
-        if (f === 'nutricion') return cats.includes('talleres');
+        if (f === 'clases' || f === 'yoga') return cats.includes('clases');
+        if (f === 'psicologia') return cats.includes('psicologia') || cats.includes('consultas');
+        if (f === 'nutricion') return cats.includes('nutricion') || cats.includes('consultas');
+        if (f === 'consultas') return cats.includes('consultas') || cats.includes('psicologia') || cats.includes('nutricion');
+        if (f === 'talleres') return cats.includes('talleres');
         return true;
     });
 }
@@ -6504,6 +6519,8 @@ function setBotonFiltroProfesActive(filtro) {
     const ids = [
         { id: 'prof-filter-todos', key: 'todos' },
         { id: 'prof-filter-clases', key: 'clases' },
+        { id: 'prof-filter-consultas', key: 'consultas' },
+        { id: 'prof-filter-talleres', key: 'talleres' },
         { id: 'prof-filter-psico', key: 'psicologia' },
         { id: 'prof-filter-nutri', key: 'nutricion' }
     ];
@@ -6528,42 +6545,50 @@ window.crearProfesor = async function() {
         html: `
             <div class="space-y-4 text-left">
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre</label>
-                    <input id="swal-prof-nombre" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="">
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre *</label>
+                    <input id="swal-prof-nombre" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" placeholder="Nombre (ej. Isabel)">
                 </div>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Email (opcional)</label>
-                    <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="">
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Apellidos (opcional)</label>
+                    <input id="swal-prof-apellidos" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" placeholder="Apellidos">
                 </div>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad Texto (ej: Vinyasa & Restaurativa)</label>
-                    <input id="swal-prof-especialidad-texto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="Yoga">
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Email de Vinculación (opcional)</label>
+                    <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" placeholder="email@genyoga.es">
+                    <p class="text-[11px] text-gray-400 mt-1">Si este email coincide con un usuario registrado, se le asignará rol de profesor para que pueda acceder con su contraseña.</p>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad / Título Visible *</label>
+                    <input id="swal-prof-especialidad-texto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="Yoga" placeholder="Ej: Hatha Yoga & Ayurveda">
                 </div>
                 <div class="space-y-2">
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categorías / Subcategorías (Elige al menos una)</label>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Servicios que imparte (Elige todos los que apliquen)</label>
                     <div class="flex flex-col gap-2 bg-sand/5 p-3 rounded-lg border border-cocoa/10">
                         <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
                             <input type="checkbox" id="swal-prof-cat-clases" class="accent-olive w-4 h-4" checked>
-                            <span>Clases (Yoga)</span>
+                            <span>Yoga (Clases Regulares)</span>
                         </label>
                         <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
-                            <input type="checkbox" id="swal-prof-cat-consultas" class="accent-olive w-4 h-4">
-                            <span>Consultas (Psicología / Nutrición)</span>
+                            <input type="checkbox" id="swal-prof-cat-psico" class="accent-olive w-4 h-4">
+                            <span>Consultas de Psicología</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-nutri" class="accent-olive w-4 h-4">
+                            <span>Consultas de Nutrición / Ayurveda / PNI</span>
                         </label>
                         <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
                             <input type="checkbox" id="swal-prof-cat-talleres" class="accent-olive w-4 h-4">
-                            <span>Talleres (Workshops)</span>
+                            <span>Talleres Especiales (Workshops)</span>
                         </label>
                     </div>
-                    <p class="text-[10px] text-gray-400">Nota: Un profesional no puede estar en Clases y Consultas a la vez. Debe estar en al menos una categoría.</p>
                 </div>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción (opcional)</label>
-                    <textarea id="swal-prof-descripcion" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" rows="3"></textarea>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción / Bio (opcional)</label>
+                    <textarea id="swal-prof-descripcion" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" rows="3" placeholder="Información del profesional..."></textarea>
                 </div>
                 <div>
                     <label class="text-xs font-bold uppercase text-gray-500 block mb-1">URL Foto (opcional)</label>
-                    <input id="swal-prof-foto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="">
+                    <input id="swal-prof-foto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="">
                 </div>
                 <div>
                     <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Color Identificativo</label>
@@ -6573,10 +6598,11 @@ window.crearProfesor = async function() {
         `,
         focusConfirm: false,
         showCancelButton: true,
-        confirmButtonText: 'Crear',
+        confirmButtonText: 'Crear Profesional',
         confirmButtonColor: '#1a4d4f',
         preConfirm: () => {
             const nombre = document.getElementById('swal-prof-nombre')?.value?.trim();
+            const apellidos = document.getElementById('swal-prof-apellidos')?.value?.trim() || '';
             const email = document.getElementById('swal-prof-email')?.value?.trim();
             const especialidadTexto = document.getElementById('swal-prof-especialidad-texto')?.value?.trim() || 'General';
             const descripcion = document.getElementById('swal-prof-descripcion')?.value?.trim();
@@ -6584,20 +6610,18 @@ window.crearProfesor = async function() {
             const color = document.getElementById('swal-prof-color')?.value;
 
             const catClases = document.getElementById('swal-prof-cat-clases')?.checked;
-            const catConsultas = document.getElementById('swal-prof-cat-consultas')?.checked;
+            const catPsico = document.getElementById('swal-prof-cat-psico')?.checked;
+            const catNutri = document.getElementById('swal-prof-cat-nutri')?.checked;
             const catTalleres = document.getElementById('swal-prof-cat-talleres')?.checked;
 
             const selectedCats = [];
             if (catClases) selectedCats.push('clases');
-            if (catConsultas) selectedCats.push('consultas');
+            if (catPsico) { selectedCats.push('psicologia'); selectedCats.push('consultas'); }
+            if (catNutri) { selectedCats.push('nutricion'); selectedCats.push('consultas'); }
             if (catTalleres) selectedCats.push('talleres');
 
             if (selectedCats.length === 0) {
-                Swal.showValidationMessage('Debes seleccionar al menos una categoría.');
-                return false;
-            }
-            if (catClases && catConsultas) {
-                Swal.showValidationMessage('Un profesional no puede pertenecer a Clases y Consultas a la vez.');
+                Swal.showValidationMessage('Debes seleccionar al menos un servicio.');
                 return false;
             }
             const fotoSegura = foto_url ? safeImageUrl(foto_url) : '';
@@ -6608,10 +6632,11 @@ window.crearProfesor = async function() {
 
             return {
                 nombre,
-                email,
-                especialidad: `${especialidadTexto} | ${selectedCats.join(', ')}`,
+                apellidos,
+                email: email || null,
+                especialidad: `${especialidadTexto} | ${[...new Set(selectedCats)].join(', ')}`,
                 descripcion,
-                foto_url: fotoSegura,
+                foto_url: fotoSegura || null,
                 color: safeCssColor(color, '#2d8a8e')
             };
         }
@@ -6621,10 +6646,11 @@ window.crearProfesor = async function() {
     if (!formValues.nombre) return Swal.fire('Error', 'El nombre es obligatorio', 'error');
 
     const { error } = await client.from('profesionales').insert([formValues]);
-    if (error) Swal.fire('Error', error.message, 'error');
-    else {
+    if (error) {
+        Swal.fire('Error', error.message, 'error');
+    } else {
         await cargarProfesionalesCache();
-        Swal.fire({ icon: 'success', title: 'Profesional creado', timer: 1200, showConfirmButton: false });
+        Swal.fire({ icon: 'success', title: 'Profesional creado con éxito', timer: 1500, showConfirmButton: false });
         cargarProfesoresAdmin();
     }
 };
@@ -6634,20 +6660,21 @@ async function cargarProfesoresAdmin() {
     const noData = document.getElementById('no-profesores');
 
     await cargarProfesionalesCache();
+    if (!grid) return;
     grid.innerHTML = '';
 
     if (!allProfesionalesCache || allProfesionalesCache.length === 0) {
-        noData.classList.remove('hidden');
+        if (noData) noData.classList.remove('hidden');
         return;
     }
-    noData.classList.add('hidden');
+    if (noData) noData.classList.add('hidden');
 
     setBotonFiltroProfesActive(activeProfesoresAdminFilter);
     const profesionales = filtrarProfesionalesPorArea(allProfesionalesCache, activeProfesoresAdminFilter);
 
     if (!profesionales || profesionales.length === 0) {
         grid.innerHTML = '';
-        noData.classList.remove('hidden');
+        if (noData) noData.classList.remove('hidden');
         return;
     }
 
@@ -6657,17 +6684,16 @@ async function cargarProfesoresAdmin() {
             ? p.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
             : '??';
 
-        // Determinar icono según especialidad
         let iconClass = 'ph-user';
-        const esp = (p.especialidad || '').toLowerCase();
-        if (esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia')) {
+        const cats = getEspecialidadCategorias(p);
+        if (cats.includes('psicologia')) {
             iconClass = 'ph-brain';
-        } else if (esp.includes('nutri') || esp.includes('diet')) {
+        } else if (cats.includes('nutricion')) {
             iconClass = 'ph-apple';
-        } else if (esp.includes('taller') || esp.includes('workshop')) {
-            iconClass = 'ph-chalkboard-teacher';
-        } else if (esp.includes('yoga') || esp.includes('instructor')) {
+        } else if (cats.includes('clases')) {
             iconClass = 'ph-person-simple-tai-chi';
+        } else if (cats.includes('talleres')) {
+            iconClass = 'ph-chalkboard-teacher';
         }
 
         const baseColor = safeCssColor(p.color);
@@ -6695,6 +6721,12 @@ async function cargarProfesoresAdmin() {
                 <i class="ph ph-envelope-simple"></i> ${escapeHtml(p.email)}
                </div>`
             : '';
+
+        const badges = [];
+        if (cats.includes('clases')) badges.push('<span class="inline-block py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-olive/15 text-olive border border-olive/25">Yoga</span>');
+        if (cats.includes('psicologia')) badges.push('<span class="inline-block py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-purple-100 text-purple-800 border border-purple-200">Psicología</span>');
+        if (cats.includes('nutricion')) badges.push('<span class="inline-block py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-amber-100 text-amber-800 border border-amber-200">Nutrición/Ayurveda</span>');
+        if (cats.includes('talleres')) badges.push('<span class="inline-block py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-blue-100 text-blue-800 border border-blue-200">Talleres</span>');
 
         return `
         <div class="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-cocoa/10 hover:shadow-md hover:scale-[1.01] transition duration-300 group flex flex-col items-center relative min-h-[260px] w-full sm:w-[300px]">
@@ -6728,11 +6760,16 @@ async function cargarProfesoresAdmin() {
             ${emailHtml}
 
             <!-- Etiqueta de Especialidad -->
-            <div class="mt-3">
+            <div class="mt-2 text-center">
                 <span class="inline-block py-1 px-3 rounded-full text-[9px] font-bold tracking-widest uppercase"
                       style="background-color: ${tagBg}; color: ${textColor}; border: 1px solid ${baseColor}20;">
                     ${escapeHtml(getEspecialidadTexto(p.especialidad) || 'Instructor')}
                 </span>
+            </div>
+
+            <!-- Badges de Servicios -->
+            <div class="flex flex-wrap gap-1 justify-center mt-2">
+                ${badges.join('')}
             </div>
 
             <!-- Descripción (Bio) -->
@@ -6749,60 +6786,64 @@ async function editarProfesor(id) {
     const espTexto = getEspecialidadTexto(profesor.especialidad);
     const espCats = getEspecialidadCategorias(profesor);
     const tieneClases = espCats.includes('clases');
-    const tieneConsultas = espCats.includes('consultas');
+    const tienePsico = espCats.includes('psicologia') || (espCats.includes('consultas') && !espCats.includes('nutricion'));
+    const tieneNutri = espCats.includes('nutricion') || (espCats.includes('consultas') && (profesor.especialidad.toLowerCase().includes('nutri') || profesor.especialidad.toLowerCase().includes('ayurved') || profesor.especialidad.toLowerCase().includes('pni') || (profesor.nombre || '').toLowerCase().includes('silvia') || (profesor.nombre || '').toLowerCase().includes('isabel')));
     const tieneTalleres = espCats.includes('talleres');
 
     const { value: formValues } = await Swal.fire({
         title: 'Editar Profesional',
         html: `
-                        <div class="space-y-4 text-left">
-                            <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre</label>
-                                <input id="swal-prof-nombre" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="${escapeHtml(profesor.nombre || '')}">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Email (opcional)</label>
-                                <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="${escapeHtml(profesor.email || '')}">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad Texto (ej: Vinyasa & Restaurativa)</label>
-                                <input id="swal-prof-especialidad-texto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="${escapeHtml(espTexto)}">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categorías / Subcategorías (Elige al menos una)</label>
-                                <div class="flex flex-col gap-2 bg-sand/5 p-3 rounded-lg border border-cocoa/10">
-                                    <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
-                                        <input type="checkbox" id="swal-prof-cat-clases" class="accent-olive w-4 h-4" ${tieneClases ? 'checked' : ''}>
-                                        <span>Clases (Yoga)</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
-                                        <input type="checkbox" id="swal-prof-cat-consultas" class="accent-olive w-4 h-4" ${tieneConsultas ? 'checked' : ''}>
-                                        <span>Consultas (Psicología / Nutrición)</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
-                                        <input type="checkbox" id="swal-prof-cat-talleres" class="accent-olive w-4 h-4" ${tieneTalleres ? 'checked' : ''}>
-                                        <span>Talleres (Workshops)</span>
-                                    </label>
-                                </div>
-                                <p class="text-[10px] text-gray-400">Nota: Un profesional no puede estar en Clases y Consultas a la vez. Debe estar en al menos una categoría.</p>
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción (opcional)</label>
-                                <textarea id="swal-prof-descripcion" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" rows="3">${escapeHtml(profesor.descripcion || '')}</textarea>
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">URL Foto</label>
-                                <input id="swal-prof-foto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="${escapeHtml(profesor.foto_url || '')}">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Color Identificativo</label>
-                                <input id="swal-prof-color" type="color" class="w-full h-10 rounded cursor-pointer border border-gray-200" value="${safeCssColor(profesor.color, '#2d8a8e')}">
-                            </div>
-                        </div>
-                    `,
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre *</label>
+                    <input id="swal-prof-nombre" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="${escapeHtml(profesor.nombre || '')}">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Email de Vinculación (opcional)</label>
+                    <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="${escapeHtml(profesor.email || '')}">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad / Título Visible *</label>
+                    <input id="swal-prof-especialidad-texto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="${escapeHtml(espTexto)}">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Servicios que imparte (Elige todos los que apliquen)</label>
+                    <div class="flex flex-col gap-2 bg-sand/5 p-3 rounded-lg border border-cocoa/10">
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-clases" class="accent-olive w-4 h-4" ${tieneClases ? 'checked' : ''}>
+                            <span>Yoga (Clases Regulares)</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-psico" class="accent-olive w-4 h-4" ${tienePsico ? 'checked' : ''}>
+                            <span>Consultas de Psicología</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-nutri" class="accent-olive w-4 h-4" ${tieneNutri ? 'checked' : ''}>
+                            <span>Consultas de Nutrición / Ayurveda / PNI</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-talleres" class="accent-olive w-4 h-4" ${tieneTalleres ? 'checked' : ''}>
+                            <span>Talleres Especiales (Workshops)</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción / Bio (opcional)</label>
+                    <textarea id="swal-prof-descripcion" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" rows="3">${escapeHtml(profesor.descripcion || '')}</textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">URL Foto (opcional)</label>
+                    <input id="swal-prof-foto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="${escapeHtml(profesor.foto_url || '')}">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Color Identificativo</label>
+                    <input id="swal-prof-color" type="color" class="w-full h-10 rounded cursor-pointer border border-gray-200" value="${safeCssColor(profesor.color, '#2d8a8e')}">
+                </div>
+            </div>
+        `,
         focusConfirm: false,
         showCancelButton: true,
-        confirmButtonText: 'Guardar',
+        confirmButtonText: 'Guardar Cambios',
         confirmButtonColor: '#1a4d4f',
         preConfirm: () => {
             const nombre = document.getElementById('swal-prof-nombre')?.value?.trim();
@@ -6813,20 +6854,18 @@ async function editarProfesor(id) {
             const color = document.getElementById('swal-prof-color')?.value;
 
             const catClases = document.getElementById('swal-prof-cat-clases')?.checked;
-            const catConsultas = document.getElementById('swal-prof-cat-consultas')?.checked;
+            const catPsico = document.getElementById('swal-prof-cat-psico')?.checked;
+            const catNutri = document.getElementById('swal-prof-cat-nutri')?.checked;
             const catTalleres = document.getElementById('swal-prof-cat-talleres')?.checked;
 
             const selectedCats = [];
             if (catClases) selectedCats.push('clases');
-            if (catConsultas) selectedCats.push('consultas');
+            if (catPsico) { selectedCats.push('psicologia'); selectedCats.push('consultas'); }
+            if (catNutri) { selectedCats.push('nutricion'); selectedCats.push('consultas'); }
             if (catTalleres) selectedCats.push('talleres');
 
             if (selectedCats.length === 0) {
-                Swal.showValidationMessage('Debes seleccionar al menos una categoría.');
-                return false;
-            }
-            if (catClases && catConsultas) {
-                Swal.showValidationMessage('Un profesional no puede pertenecer a Clases y Consultas a la vez.');
+                Swal.showValidationMessage('Debes seleccionar al menos un servicio.');
                 return false;
             }
             const fotoSegura = foto_url ? safeImageUrl(foto_url) : '';
@@ -6837,10 +6876,10 @@ async function editarProfesor(id) {
 
             return {
                 nombre,
-                email,
-                especialidad: `${especialidadTexto} | ${selectedCats.join(', ')}`,
+                email: email || null,
+                especialidad: `${especialidadTexto} | ${[...new Set(selectedCats)].join(', ')}`,
                 descripcion,
-                foto_url: fotoSegura,
+                foto_url: fotoSegura || null,
                 color: safeCssColor(color, '#2d8a8e')
             };
         }
@@ -6850,8 +6889,9 @@ async function editarProfesor(id) {
         if (!formValues.nombre) return Swal.fire('Error', 'El nombre es obligatorio', 'error');
 
         const { error } = await client.from('profesionales').update(formValues).eq('id', id);
-        if (error) Swal.fire('Error', error.message, 'error');
-        else {
+        if (error) {
+            Swal.fire('Error', error.message, 'error');
+        } else {
             Swal.fire({
                 icon: 'success',
                 title: 'Profesional actualizado',
@@ -7070,12 +7110,29 @@ async function abrirModalCrearClase() {
 
     if (allProfesionalesCache && allProfesionalesCache.length > 0) {
         const clasesProfs = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('clases'));
+        const clasesIds = new Set(clasesProfs.map(p => p.id));
+
         clasesProfs.forEach(p => {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
             selectProfesor.appendChild(option);
         });
+
+        if (isAdmin) {
+            const others = allProfesionalesCache.filter(p => !clasesIds.has(p.id));
+            if (others.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = 'Otros Profesionales';
+                others.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
+                    optgroup.appendChild(opt);
+                });
+                selectProfesor.appendChild(optgroup);
+            }
+        }
     } else {
         const option = document.createElement('option');
         option.disabled = true;
@@ -7858,24 +7915,92 @@ async function cargarConfiguracion() {
     };
 
     window.promoverAProfesor = async (uid, email) => {
-        const res = await Swal.fire({
-            title: '¿Promover a Profesional?',
-            text: `El usuario ${email} tendrá acceso al panel de profesionales.`,
-            icon: 'question',
+        const targetUser = (typeof allUsersCache !== 'undefined' ? allUsersCache.find(u => u.id === uid) : null) || { email };
+        const defaultNombre = targetUser.nombre ? `${targetUser.nombre} ${targetUser.apellidos || ''}`.trim() : '';
+
+        const { value: formValues } = await Swal.fire({
+            title: 'Promover a Profesional',
+            html: `
+                <div class="space-y-4 text-left">
+                    <p class="text-xs text-cocoa/70">Configura los servicios y la especialidad para <strong>${escapeHtml(email)}</strong>.</p>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre y Apellidos</label>
+                        <input id="swal-prom-nombre" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="${escapeHtml(defaultNombre)}" placeholder="Nombre del profesional">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad / Título Visible</label>
+                        <input id="swal-prom-especialidad" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="Yoga" placeholder="Ej: Vinyasa & Meditación">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Servicios que imparte (Elige todos los que apliquen)</label>
+                        <div class="flex flex-col gap-2 bg-sand/5 p-3 rounded-lg border border-cocoa/10">
+                            <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                                <input type="checkbox" id="swal-prom-cat-clases" class="accent-olive w-4 h-4" checked>
+                                <span>Yoga (Clases Regulares)</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                                <input type="checkbox" id="swal-prom-cat-psico" class="accent-olive w-4 h-4">
+                                <span>Consultas de Psicología</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                                <input type="checkbox" id="swal-prom-cat-nutri" class="accent-olive w-4 h-4">
+                                <span>Consultas de Nutrición / Ayurveda / PNI</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                                <input type="checkbox" id="swal-prom-cat-talleres" class="accent-olive w-4 h-4">
+                                <span>Talleres Especiales (Workshops)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `,
+            focusConfirm: false,
             showCancelButton: true,
-            confirmButtonColor: '#9333ea',
-            confirmButtonText: 'Sí, promover'
+            confirmButtonText: 'Promover a Profesor',
+            confirmButtonColor: '#1a4d4f',
+            preConfirm: () => {
+                const nombre = document.getElementById('swal-prom-nombre')?.value?.trim();
+                const espTexto = document.getElementById('swal-prom-especialidad')?.value?.trim() || 'General';
+                const catClases = document.getElementById('swal-prom-cat-clases')?.checked;
+                const catPsico = document.getElementById('swal-prom-cat-psico')?.checked;
+                const catNutri = document.getElementById('swal-prom-cat-nutri')?.checked;
+                const catTalleres = document.getElementById('swal-prom-cat-talleres')?.checked;
+
+                const cats = [];
+                if (catClases) cats.push('clases');
+                if (catPsico) { cats.push('psicologia'); cats.push('consultas'); }
+                if (catNutri) { cats.push('nutricion'); cats.push('consultas'); }
+                if (catTalleres) cats.push('talleres');
+
+                if (cats.length === 0) {
+                    Swal.showValidationMessage('Debes seleccionar al menos un servicio.');
+                    return false;
+                }
+
+                return {
+                    nombre: nombre || 'Profesional',
+                    especialidad: `${espTexto} | ${[...new Set(cats)].join(', ')}`
+                };
+            }
         });
 
-        if (res.isConfirmed) {
+        if (formValues) {
             Swal.showLoading();
             try {
                 const { error } = await client.rpc('admin_promover_usuario_profesor', {
-                    p_user_id: uid
+                    p_user_id: uid,
+                    p_especialidad: formValues.especialidad
                 });
                 if (error) throw error;
-                Swal.fire({ icon: 'success', title: '¡Promoción Completada!', timer: 2500, showConfirmButton: false });
-                window.buscarUsuariosPromocion();
+                if (formValues.nombre) {
+                    await client.from('profesionales').update({ nombre: formValues.nombre }).ilike('email', email.trim());
+                }
+                await cargarProfesionalesCache();
+                if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
+                Swal.fire({ icon: 'success', title: '¡Promovido a profesional!', timer: 2000, showConfirmButton: false });
+                if (typeof window.buscarUsuariosPromocion === 'function') {
+                    window.buscarUsuariosPromocion();
+                }
             } catch (err) {
                 Swal.fire('Error', err.message, 'error');
             }
@@ -9635,13 +9760,17 @@ function getProfesionalesConsultaDisponibles(tipo) {
     
     if (tipo === 'psicologia') {
         filteredProfs = filteredProfs.filter(p => {
-            const esp = getEspecialidadTexto(p.especialidad).toLowerCase();
-            return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp === '';
+            const cats = getEspecialidadCategorias(p);
+            const esp = (p.especialidad || '').toLowerCase();
+            const nom = (p.nombre || '').toLowerCase();
+            return cats.includes('psicologia') || esp.includes('psico') || esp.includes('terapia') || esp.includes('pni') || nom.includes('miriam') || nom.includes('isabel') || esp === '';
         });
     } else if (tipo === 'nutricion') {
         filteredProfs = filteredProfs.filter(p => {
-            const esp = getEspecialidadTexto(p.especialidad).toLowerCase();
-            return esp.includes('consulta') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen') || esp === '';
+            const cats = getEspecialidadCategorias(p);
+            const esp = (p.especialidad || '').toLowerCase();
+            const nom = (p.nombre || '').toLowerCase();
+            return cats.includes('nutricion') || esp.includes('nutri') || esp.includes('diet') || esp.includes('ayurved') || esp.includes('pni') || nom.includes('silvia') || nom.includes('miriam') || nom.includes('isabel') || esp === '';
         });
     }
 
@@ -10560,21 +10689,37 @@ async function borrarConsultaAdmin(tipo, claseId) {
 
 function actualizarProfesoresSelectConsulta(tipo) {
     const select = document.getElementById('consulta-profesor-id');
-    if (select) {
-        select.innerHTML = '<option value="" disabled selected>Selecciona Profesional</option>';
-        
-        const filteredProfs = getProfesionalesConsultaDisponibles(tipo);
+    if (!select) return;
 
-        filteredProfs.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
-            select.appendChild(opt);
-        });
+    select.innerHTML = '<option value="" disabled selected>Selecciona Profesional</option>';
+    
+    const filteredProfs = getProfesionalesConsultaDisponibles(tipo);
+    const filteredIds = new Set(filteredProfs.map(p => p.id));
 
-        if (filteredProfs.length === 1) {
-            select.value = filteredProfs[0].id;
+    filteredProfs.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
+        select.appendChild(opt);
+    });
+
+    if (isAdmin && allProfesionalesCache) {
+        const others = allProfesionalesCache.filter(p => !filteredIds.has(p.id));
+        if (others.length > 0) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = 'Otros Profesionales';
+            others.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
+                optgroup.appendChild(opt);
+            });
+            select.appendChild(optgroup);
         }
+    }
+
+    if (filteredProfs.length === 1 && !select.value) {
+        select.value = filteredProfs[0].id;
     }
 }
 
@@ -11041,12 +11186,28 @@ async function abrirModalCrearTaller() {
         select.innerHTML = '<option value="" disabled selected>Selecciona Instructor</option>';
         
         const talleresProfs = (allProfesionalesCache || []).filter(p => getEspecialidadCategorias(p).includes('talleres'));
+        const tallerIds = new Set(talleresProfs.map(p => p.id));
         talleresProfs.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
             opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
             select.appendChild(opt);
         });
+
+        if (isAdmin && allProfesionalesCache) {
+            const others = allProfesionalesCache.filter(p => !tallerIds.has(p.id));
+            if (others.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = 'Otros Profesionales';
+                others.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
+                    optgroup.appendChild(opt);
+                });
+                select.appendChild(optgroup);
+            }
+        }
     }
 }
 

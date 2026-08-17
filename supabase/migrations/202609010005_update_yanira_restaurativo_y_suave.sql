@@ -1,15 +1,21 @@
 begin;
 
--- 1. Actualizar el nombre en public.tipos_clases a 'Restaurativo y Suave' (con Y)
-update public.tipos_clases
-set nombre = 'Restaurativo y Suave'
-where lower(btrim(coalesce(nombre, ''))) in (
-  'restaurativa o suave',
-  'restaurativo o suave',
-  'yoga restaurativo o suave',
-  'yoga restaurativa o suave',
-  'restaurativo y suave'
-);
+-- 1. Si ya existe 'Restaurativo y Suave', reasociar clases y borrar el duplicado 'Restaurativo o Suave'
+do $$
+declare
+  v_main_id bigint;
+  v_dup_id bigint;
+begin
+  select id into v_main_id from public.tipos_clases where lower(btrim(nombre)) = 'restaurativo y suave' limit 1;
+  select id into v_dup_id from public.tipos_clases where lower(btrim(nombre)) in ('restaurativa o suave', 'restaurativo o suave', 'yoga restaurativo o suave', 'yoga restaurativa o suave') and id != coalesce(v_main_id, 0) limit 1;
+
+  if v_main_id is not null and v_dup_id is not null then
+    update public.clases set tipo_clase_id = v_main_id where tipo_clase_id = v_dup_id;
+    delete from public.tipos_clases where id = v_dup_id;
+  elsif v_main_id is null and v_dup_id is not null then
+    update public.tipos_clases set nombre = 'Restaurativo y Suave' where id = v_dup_id;
+  end if;
+end $$;
 
 -- Asegurar existencia en public.tipos_clases
 insert into public.tipos_clases (nombre, duracion_predeterminada, color, icono, activo, orden, categoria)
