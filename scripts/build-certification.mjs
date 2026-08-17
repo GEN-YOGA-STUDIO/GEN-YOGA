@@ -9,7 +9,8 @@ const expectedTarget = path.join(workspaceRoot, 'subir cert');
 const productionProjectId = 'jkjifmrrlyncuwpjhxvk';
 const productionUrl = `https://${productionProjectId}.supabase.co`;
 const productionPublishableKey = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const version = '6.17';
+const version = '6.21';
+const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function requireVariable(name) {
   const value = process.env[name]?.trim();
@@ -93,7 +94,7 @@ for (const fileName of htmlFiles) {
     transformed = transformed.replace(/<meta\s+name=["']robots["'][^>]*>/i, robotsMeta);
   } else {
     transformed = transformed.replace(
-      /(<meta\s+name=["']application-version["']\s+content=["']6\.11["']\s*\/?>)/i,
+      new RegExp(`(<meta\\s+name=["']application-version["']\\s+content=["']${escapedVersion}["']\\s*\\/?>)`, 'i'),
       `$1\n    ${robotsMeta}`,
     );
   }

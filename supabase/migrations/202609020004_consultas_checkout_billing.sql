@@ -29,7 +29,31 @@ alter table public.stripe_purchases
     )
   );
 
--- 2. Actualizar la función stripe_fulfill_checkout para procesar el catálogo completo de consultas
+-- 2. Permitir compras de invitado solo para clases sueltas y consultas individuales
+alter table public.stripe_purchases
+  drop constraint if exists stripe_purchases_owner_shape_check;
+
+alter table public.stripe_purchases
+  add constraint stripe_purchases_owner_shape_check check (
+    (
+      is_guest
+      and user_id is null
+      and purchase_type in (
+        'clase_suelta',
+        'miriam_psico_individual_1a',
+        'miriam_psico_individual_sig',
+        'miriam_psico_pareja_1a',
+        'miriam_psico_pareja_sig',
+        'silvia_ayurveda_1a',
+        'silvia_ayurveda_sig',
+        'isabel_pni_1a',
+        'isabel_pni_sig'
+      )
+    )
+    or not is_guest
+  );
+
+-- 3. Actualizar la función stripe_fulfill_checkout para procesar el catálogo completo de consultas
 create or replace function public.stripe_fulfill_checkout(
   p_event_id text,
   p_event_type text,
@@ -156,7 +180,7 @@ begin
   elsif p_is_guest and (p_user_id is not null or p_purchase_type not in (
     'clase_suelta', 'miriam_psico_individual_1a', 'miriam_psico_individual_sig',
     'miriam_psico_pareja_1a', 'miriam_psico_pareja_sig', 'silvia_ayurveda_1a', 'silvia_ayurveda_sig',
-    'silvia_ayurveda_bono3', 'silvia_ayurveda_bono6', 'isabel_pni_1a', 'isabel_pni_sig'
+    'isabel_pni_1a', 'isabel_pni_sig'
   )) then
     raise exception 'Invalid guest purchase' using errcode = '22023';
   elsif not p_is_guest and p_user_id is null then

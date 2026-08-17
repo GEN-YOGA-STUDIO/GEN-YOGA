@@ -40,7 +40,89 @@ export const MIRIAM_PRODUCT_IDS = {
   PAREJA_SIG: 'prod_V1pLWNLzr9Vb3g',
 } as const
 
+export const ISABEL_PRODUCT_IDS = {
+  PNI_1A: 'prod_V1ppAeiDF9dlkZ',
+  PNI_SIG: 'prod_V1pqPF6rtJf0SW',
+} as const
+
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
+
+export type ConsultationDetails = {
+  name: string
+  amount: number
+  productId?: string
+  guestAllowed: boolean
+}
+
+// Product IDs are the canonical Stripe identity when GEN Yoga has supplied
+// one. The internal purchase type remains application metadata; it must never
+// be treated as if it were necessarily a Stripe Price lookup_key.
+export const CONSULTATION_CATALOG: Partial<Record<PurchaseType, ConsultationDetails>> = {
+  [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A]: {
+    name: 'Acompañamiento psicoterapéutico (1ª sesión)',
+    amount: 7500,
+    productId: MIRIAM_PRODUCT_IDS.INDIVIDUAL_1A,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG]: {
+    name: 'Acompañamiento psicoterapéutico (siguientes)',
+    amount: 6500,
+    productId: MIRIAM_PRODUCT_IDS.INDIVIDUAL_SIG,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A]: {
+    name: 'Terapia de pareja (1ª sesión)',
+    amount: 12000,
+    productId: MIRIAM_PRODUCT_IDS.PAREJA_1A,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG]: {
+    name: 'Terapia de pareja (siguientes)',
+    amount: 10000,
+    productId: MIRIAM_PRODUCT_IDS.PAREJA_SIG,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.SILVIA_AYURVEDA_1A]: {
+    name: 'Consulta de Ayurveda (1ª sesión)',
+    amount: 8000,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.SILVIA_AYURVEDA_SIG]: {
+    name: 'Consulta de Ayurveda (seguimiento)',
+    amount: 6000,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO3]: {
+    name: 'Bono de Salud Integrativa (3 consultas)',
+    amount: 17000,
+    guestAllowed: false,
+  },
+  [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO6]: {
+    name: 'Bono de Salud Integrativa (6 consultas)',
+    amount: 28000,
+    guestAllowed: false,
+  },
+  [PURCHASE_TYPES.ISABEL_PNI_1A]: {
+    name: 'Consulta de Psiconeuroinmunología Clínica (1ª sesión)',
+    amount: 8000,
+    productId: ISABEL_PRODUCT_IDS.PNI_1A,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.ISABEL_PNI_SIG]: {
+    name: 'Consulta de Psiconeuroinmunología Clínica (seguimiento)',
+    amount: 6000,
+    productId: ISABEL_PRODUCT_IDS.PNI_SIG,
+    guestAllowed: true,
+  },
+}
+
+export function getConsultationDetails(purchaseType: string): ConsultationDetails | null {
+  return CONSULTATION_CATALOG[purchaseType as PurchaseType] || null
+}
+
+export function isSingleConsultation(purchaseType: string): boolean {
+  return getConsultationDetails(purchaseType)?.guestAllowed === true
+}
 
 export type CorsConfig = {
   allowedOrigins: ReadonlySet<string>
@@ -483,6 +565,64 @@ export function stripeObjectId(value: string | { id: string } | null | undefined
   return typeof value === 'string' ? value : value.id
 }
 
+function consultationPriceMatches(
+  price: Stripe.Price,
+  details: ConsultationDetails,
+  requireActive: boolean,
+): boolean {
+  return (
+    price.livemode &&
+    (!requireActive || price.active) &&
+    price.currency.toLowerCase() === 'eur' &&
+    price.unit_amount === details.amount &&
+    price.type === 'one_time' &&
+    !price.recurring &&
+    (!details.productId || stripeObjectId(price.product) === details.productId)
+  )
+}
+
+export async function resolveConsultationPrice(
+  stripe: Stripe,
+  purchaseType: string,
+): Promise<Stripe.Price | null> {
+  const details = getConsultationDetails(purchaseType)
+  if (!details) return null
+
+  const params: Stripe.PriceListParams = {
+    active: true,
+    currency: 'eur',
+    type: 'one_time',
+    limit: 100,
+  }
+  if (details.productId) {
+    params.product = details.productId
+  } else {
+    params.lookup_keys = [purchaseType]
+  }
+
+  const prices = await stripe.prices.list(params)
+  const matchingPrice = prices.data.find(
+    (price: Stripe.Price) => consultationPriceMatches(price, details, true),
+  ) || null
+  if (!matchingPrice && details.productId) {
+    throw new Error(
+      `El producto ${details.productId} no tiene un Price LIVE activo de ${details.amount} EUR céntimos.`,
+    )
+  }
+  return matchingPrice
+}
+
+export function assertValidConsultationPrice(
+  price: Stripe.Price,
+  purchaseType: string,
+): ConsultationDetails {
+  const details = getConsultationDetails(purchaseType)
+  if (!details || !consultationPriceMatches(price, details, false)) {
+    throw new HttpError(400, 'La consulta comprada no coincide con el producto y precio autorizados.')
+  }
+  return details
+}
+
 export function unixSecondsToIso(value: number | null | undefined): string | null {
   return typeof value === 'number' ? new Date(value * 1000).toISOString() : null
 }
@@ -500,23 +640,10 @@ export function validateCheckoutPurchase(
   }
 
   const priceId = lineItems[0].price.id
+  const metadata = session.metadata || {}
   let purchaseType: PurchaseType
   let price: Stripe.Price
   let expectedAmount: number
-
-  // Known consultation amounts (dynamically-priced products)
-  const CONSULTATION_AMOUNTS: Record<string, number> = {
-    [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A]: 7500,
-    [PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG]: 6500,
-    [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A]: 12000,
-    [PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG]: 10000,
-    [PURCHASE_TYPES.SILVIA_AYURVEDA_1A]: 8000,
-    [PURCHASE_TYPES.SILVIA_AYURVEDA_SIG]: 6000,
-    [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO3]: 17000,
-    [PURCHASE_TYPES.SILVIA_AYURVEDA_BONO6]: 28000,
-    [PURCHASE_TYPES.ISABEL_PNI_1A]: 8000,
-    [PURCHASE_TYPES.ISABEL_PNI_SIG]: 6000,
-  }
 
   if (priceId === catalog.claseSuelta.id) {
     purchaseType = PURCHASE_TYPES.CLASE_SUELTA
@@ -543,14 +670,15 @@ export function validateCheckoutPurchase(
     price = catalog.bonoMensual
     expectedAmount = 9000
   } else {
-    // Psychology consultations use dynamic prices (price_data or lookup_key),
-    // so the priceId won't match any catalog entry. Identify them via metadata.
-    const metaPurchaseType = (session.metadata || {}).purchase_type || ''
-    const consultationAmount = CONSULTATION_AMOUNTS[metaPurchaseType]
-    if (consultationAmount !== undefined) {
+    // Consultations do not live in the fixed class-pack catalog. Their signed
+    // Checkout metadata selects a server-owned definition, and the resulting
+    // line-item Price is then checked against its canonical Product and amount.
+    const metaPurchaseType = metadata.purchase_type || ''
+    const consultationDetails = getConsultationDetails(metaPurchaseType)
+    if (consultationDetails) {
       purchaseType = metaPurchaseType as PurchaseType
       price = lineItems[0].price
-      expectedAmount = consultationAmount
+      expectedAmount = assertValidConsultationPrice(price, purchaseType).amount
     } else {
       throw new HttpError(400, 'El producto comprado no está permitido.')
     }
@@ -566,7 +694,6 @@ export function validateCheckoutPurchase(
     throw new HttpError(400, 'El tipo o estado de la sesión no coincide con el producto.')
   }
 
-  const metadata = session.metadata || {}
   const appUserId = metadata.app_user_id || session.client_reference_id || ''
   if (
     metadata.app !== 'gen_yoga' ||
@@ -577,18 +704,11 @@ export function validateCheckoutPurchase(
   ) {
     throw new HttpError(400, 'Los metadatos de la sesión no son válidos.')
   }
-  const isConsultationSingle = [
-    PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_1A,
-    PURCHASE_TYPES.MIRIAM_PSICO_INDIVIDUAL_SIG,
-    PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_1A,
-    PURCHASE_TYPES.MIRIAM_PSICO_PAREJA_SIG,
-    PURCHASE_TYPES.SILVIA_AYURVEDA_1A,
-    PURCHASE_TYPES.SILVIA_AYURVEDA_SIG,
-    PURCHASE_TYPES.ISABEL_PNI_1A,
-    PURCHASE_TYPES.ISABEL_PNI_SIG,
-  ].includes(purchaseType as any)
-
-  if (appUserId === 'guest' && purchaseType !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle) {
+  if (
+    appUserId === 'guest' &&
+    purchaseType !== PURCHASE_TYPES.CLASE_SUELTA &&
+    !isSingleConsultation(purchaseType)
+  ) {
     throw new HttpError(400, 'Una compra de invitado solo puede ser una clase suelta o consulta individual.')
   }
   if (appUserId !== 'guest' && !isUuid(appUserId)) {

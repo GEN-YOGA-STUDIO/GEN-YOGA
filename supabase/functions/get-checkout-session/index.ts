@@ -10,6 +10,7 @@ import {
   getAuthenticatedUser,
   getValidatedCatalog,
   handleOptions,
+  isSingleConsultation,
   jsonResponse,
   readCorsConfig,
   readProductionConfig,
@@ -39,6 +40,7 @@ serve(async (req) => {
       throw new HttpError(400, 'El cuerpo de la solicitud no es válido.')
     }
     const sessionId = String(body.session_id || '').trim()
+    const supportsGuestConsultationUi = body.supports_guest_consultation_ui === true
     if (!sessionId.startsWith('cs_live_')) throw new HttpError(400, 'La sesión LIVE no es válida.')
 
     const stripe = createStripeClient(config)
@@ -48,9 +50,10 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['line_items'] })
     const purchase = validateCheckoutPurchase(session, catalog)
     const isGuest = purchase.appUserId === 'guest'
+    const isGuestConsultation = isGuest && isSingleConsultation(purchase.purchaseType)
 
     if (isGuest) {
-      if (purchase.purchaseType !== PURCHASE_TYPES.CLASE_SUELTA) {
+      if (purchase.purchaseType !== PURCHASE_TYPES.CLASE_SUELTA && !isGuestConsultation) {
         throw new HttpError(403, 'La compra de invitado no es válida.')
       }
     } else {
@@ -58,43 +61,44 @@ serve(async (req) => {
       if (user?.id !== purchase.appUserId) {
         throw new HttpError(403, 'La sesión de pago pertenece a otro usuario.')
       }
+    }
 
-      // Every paid one-off purchase must be credited before success.html
-      // redirects. This is idempotent with the webhook and also recovers safely
-      // if delivery of that webhook is delayed.
-      if (
-        purchase.purchaseType !== PURCHASE_TYPES.BONO_MENSUAL
-      ) {
-        const { error: fulfillError } = await supabase.rpc('stripe_fulfill_checkout', {
-          p_event_id: `checkout_return:${session.id}`,
-          p_event_type: 'checkout.session.completed',
-          p_event_created: session.created,
-          p_checkout_session_id: session.id,
-          p_user_id: purchase.appUserId,
-          p_is_guest: false,
-          p_purchase_type: purchase.purchaseType,
-          p_price_id: purchase.price.id,
-          p_payment_intent_id: stripeObjectId(session.payment_intent),
-          p_subscription_id: null,
-          p_customer_id: stripeObjectId(session.customer),
-          p_amount_total: session.amount_total,
-          p_currency: session.currency,
-          p_payment_status: session.payment_status,
-          p_membership_month: purchase.membershipMonth,
-          p_period_start: null,
-          p_period_end: null,
-          p_subscription_status: null,
-          p_cancel_at_period_end: false,
-          p_livemode: session.livemode,
-        })
-        if (fulfillError) {
-          throw new Error(`No se pudo consolidar la compra verificada: ${fulfillError.message}`)
-        }
+    // Every authenticated one-off purchase and every guest consultation must
+    // be recorded before success.html renders. The Checkout Session remains the
+    // idempotency boundary shared with the webhook. Guest yoga classes keep
+    // their existing redemption flow and are therefore not fulfilled here.
+    const shouldFulfillOnReturn = purchase.purchaseType !== PURCHASE_TYPES.BONO_MENSUAL &&
+      (!isGuest || isGuestConsultation)
+    if (shouldFulfillOnReturn) {
+      const { error: fulfillError } = await supabase.rpc('stripe_fulfill_checkout', {
+        p_event_id: `checkout_return:${session.id}`,
+        p_event_type: 'checkout.session.completed',
+        p_event_created: session.created,
+        p_checkout_session_id: session.id,
+        p_user_id: isGuest ? null : purchase.appUserId,
+        p_is_guest: isGuest,
+        p_purchase_type: purchase.purchaseType,
+        p_price_id: purchase.price.id,
+        p_payment_intent_id: stripeObjectId(session.payment_intent),
+        p_subscription_id: null,
+        p_customer_id: stripeObjectId(session.customer),
+        p_amount_total: session.amount_total,
+        p_currency: session.currency,
+        p_payment_status: session.payment_status,
+        p_membership_month: purchase.membershipMonth,
+        p_period_start: null,
+        p_period_end: null,
+        p_subscription_status: null,
+        p_cancel_at_period_end: false,
+        p_livemode: session.livemode,
+      })
+      if (fulfillError) {
+        throw new Error(`No se pudo consolidar la compra verificada: ${fulfillError.message}`)
       }
     }
 
     let alreadyRedeemed = false
-    if (isGuest) {
+    if (isGuest && purchase.purchaseType === PURCHASE_TYPES.CLASE_SUELTA) {
       const { data, error } = await supabase
         .from('stripe_purchases')
         .select('guest_redeemed_at')
@@ -106,9 +110,15 @@ serve(async (req) => {
 
     const rawName = isGuest ? (session.customer_details?.name || '').trim() : ''
     const nameParts = rawName.split(/\s+/).filter(Boolean)
+    // The production v6.17 success page treats every `isGuest` purchase as a
+    // yoga class. Keep that page on its generic success state until the v6.18+
+    // consultation UI declares support explicitly.
+    const uiIsGuest = isGuest && (!isGuestConsultation || supportsGuestConsultationUi)
 
     return jsonResponse({
-      isGuest,
+      isGuest: uiIsGuest,
+      purchaseIsGuest: isGuest,
+      isGuestConsultation,
       purchaseType: purchase.purchaseType,
       membershipMonth: purchase.membershipMonth,
       email: isGuest ? (session.customer_details?.email || '') : '',

@@ -62,6 +62,7 @@ const balanceMigration = await read('supabase/migrations/202607210002_admin_bala
 const accountDeletionMigration = await read('supabase/migrations/202607210003_account_deletion_guard.sql');
 const profileAuthorizationMigration = await read('supabase/migrations/202607210004_profile_authorization_integrity.sql');
 const packsMigration = await read('supabase/migrations/202608030002_class_packs_unlimited_6_9.sql');
+const consultationBillingMigration = await read('supabase/migrations/202609020004_consultas_checkout_billing.sql');
 const config = await read('supabase/config.toml');
 const envExample = await read('supabase/functions/.env.example');
 const productionGuide = await read('STRIPE_PRODUCTION.md');
@@ -85,6 +86,8 @@ for (const [productId, label] of [
   ['prod_V1pLmzpCRU8ZpL', 'Miriam acompañamiento sucesivo'],
   ['prod_V1pLCY3t5sprlK', 'Miriam pareja inicial'],
   ['prod_V1pLWNLzr9Vb3g', 'Miriam pareja sucesiva'],
+  ['prod_V1ppAeiDF9dlkZ', 'Isabel PNI inicial'],
+  ['prod_V1pqPF6rtJf0SW', 'Isabel PNI sucesiva'],
 ]) {
   requireText(shared, productId, `Producto Stripe de ${label}`);
 }
@@ -122,8 +125,26 @@ requireText(checkout, 'checkoutAttemptId', 'Idempotencia individual de invitados
 requireText(checkout, 'profile.account_deletion_pending', 'Checkout bloqueado por eliminación pendiente');
 requireText(checkout, 'expireCreatedCheckoutSession', 'Cierre del Checkout creado durante eliminación');
 requireText(checkout, ".select('account_deletion_pending')", 'Revalidación post-Checkout del tombstone');
-requireText(checkout, "const APP_RELEASE = '6.17'", 'Versión autoritativa de Checkout');
+requireText(checkout, "const APP_RELEASE = '6.21'", 'Versión autoritativa de Checkout');
 requireText(checkout, 'app_version: APP_RELEASE', 'Metadato uniforme de versión en Checkout');
+requireText(shared, 'getConsultationDetails', 'Catálogo canónico de consultas');
+requireText(checkout, 'getConsultationDetails', 'Resolución canónica de consultas en Checkout');
+requireText(shared, 'resolveConsultationPrice', 'Resolución del Price reutilizable de consultas');
+requireText(checkout, 'resolveConsultationPrice', 'Price reutilizable de consultas en Checkout');
+const resolveConsultationPriceBlock = shared.match(
+  /export async function resolveConsultationPrice[\s\S]*?(?=\nexport function assertValidConsultationPrice)/,
+)?.[0] || '';
+requireText(resolveConsultationPriceBlock, 'params.product = details.productId', 'Filtrado de Prices por Product canónico');
+requireText(resolveConsultationPriceBlock, 'active: true', 'Price activo de consulta');
+requireText(resolveConsultationPriceBlock, "type: 'one_time'", 'Price de pago único de consulta');
+requireText(checkout, 'if (details.productId)', 'Sin fallback efímero para Products canónicos');
+const validateCheckoutPurchaseBlock = shared.match(
+  /export function validateCheckoutPurchase[\s\S]*?(?=\nexport function validateMonthlySubscription)/,
+)?.[0] || '';
+requireText(validateCheckoutPurchaseBlock, 'getConsultationDetails', 'Catálogo canónico al validar Checkout');
+requireText(validateCheckoutPurchaseBlock, 'assertValidConsultationPrice', 'Validación del Price de consulta en Checkout');
+requireText(shared, 'stripeObjectId(price.product) === details.productId', 'Validación de price.product de consulta');
+forbid(checkout, /\bpayment_method_types\s*:/, 'Checkout con métodos de pago dinámicos');
 requireText(shared, "bonoIlimitado.type !== 'one_time'", 'Bono Ilimitado como pago único');
 requireText(shared, 'membership_month', 'Mes natural validado desde Stripe');
 requireText(checkout, 'validateMembershipMonth(body.membership_month)', 'Mes natural validado antes de Checkout');
@@ -262,6 +283,39 @@ for (const expected of [
 ]) {
   requireText(packsMigration, expected, `Migración de packs 6.9`);
 }
+for (const [expected, label] of [
+  ["'isabel_pni_1a'", 'tipo de compra Isabel PNI inicial'],
+  ["'isabel_pni_sig'", 'tipo de compra Isabel PNI sucesiva'],
+  ["p_purchase_type = 'isabel_pni_1a' and p_amount_total is distinct from 8000", 'importe Isabel PNI inicial'],
+  ["p_purchase_type = 'isabel_pni_sig' and p_amount_total is distinct from 6000", 'importe Isabel PNI sucesiva'],
+]) {
+  requireText(consultationBillingMigration, expected, `Migración de consultas: ${label}`);
+}
+const ownerShapeBlock = consultationBillingMigration.match(
+  /drop constraint if exists stripe_purchases_owner_shape_check;[\s\S]*?add constraint stripe_purchases_owner_shape_check check \([\s\S]*?\n\s*\);/,
+)?.[0] || '';
+for (const expected of [
+  'is_guest',
+  'user_id is null',
+  'purchase_type in (',
+  "'clase_suelta'",
+  "'miriam_psico_individual_1a'",
+  "'miriam_psico_individual_sig'",
+  "'miriam_psico_pareja_1a'",
+  "'miriam_psico_pareja_sig'",
+  "'silvia_ayurveda_1a'",
+  "'silvia_ayurveda_sig'",
+  "'isabel_pni_1a'",
+  "'isabel_pni_sig'",
+  'or not is_guest',
+]) {
+  requireText(ownerShapeBlock, expected, 'Owner shape de consultas de invitado');
+}
+forbid(ownerShapeBlock, /silvia_ayurveda_bono(?:3|6)/, 'Owner shape sin bonos de consulta para invitados');
+const isabelCreditBlock = consultationBillingMigration.match(
+  /elsif p_purchase_type in \(\s*'miriam_psico_individual_1a',[\s\S]*?'isabel_pni_1a',[\s\S]*?'isabel_pni_sig'\s*\) then[\s\S]*?get diagnostics v_profile_updated = row_count;/,
+)?.[0] || '';
+requireText(isabelCreditBlock, 'set saldo_psicologia = saldo_psicologia + 1', 'Crédito de consultas de Isabel');
 requireText(frontendSources[1], 'role="progressbar" aria-label="Clases utilizadas"', 'Progreso de consumo en el perfil');
 requireText(frontendSources[1], 'role="progressbar" aria-label="Tiempo transcurrido del mes"', 'Progreso del mes natural en el perfil');
 requireText(frontendSources[1], 'membership_month: membershipMonth', 'Mes natural enviado desde el perfil');

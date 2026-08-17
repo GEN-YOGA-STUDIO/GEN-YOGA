@@ -26,6 +26,13 @@ Los packs y consultas se validan además contra sus productos live de Stripe:
 - Miriam Acompañamiento siguientes (65 €): `prod_V1pLmzpCRU8ZpL`.
 - Miriam Terapia de pareja 1ª sesión (120 €): `prod_V1pLCY3t5sprlK`.
 - Miriam Terapia de pareja siguientes (100 €): `prod_V1pLWNLzr9Vb3g`.
+- Isabel PNI 1ª consulta (80 €): `prod_V1ppAeiDF9dlkZ`.
+- Isabel PNI consulta sucesiva (60 €): `prod_V1pqPF6rtJf0SW`.
+
+Cada producto de consulta con ID canónico debe tener un Price LIVE activo, de
+pago único y en EUR por el importe indicado. Checkout resuelve el Price por
+Product ID y el webhook vuelve a validar producto, moneda e importe antes de
+registrar la compra o acreditar saldo.
 
 La clase suelta y los tres packs caducan 60 días naturales después del evento
 de compra confirmado. El Bono Ilimitado se compra para un mes natural elegido:
