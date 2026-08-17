@@ -18,6 +18,7 @@ const [
   profilePage,
   migration,
   angelMigration,
+  consultationAvailabilityMigration,
   certificationBuild,
 ] = await Promise.all([
   read('clases.html'),
@@ -30,6 +31,7 @@ const [
   read('profile.html'),
   read('supabase/migrations/202607240002_public_weekly_calendar.sql'),
   read('supabase/migrations/202608030001_angel_profile_schedule_6_8.sql'),
+  read('supabase/migrations/20260817110547_consultation_availability_miriam_isabel.sql'),
   read('scripts/build-certification.mjs'),
 ]);
 
@@ -50,9 +52,9 @@ for (const id of [
 ]) {
   assert.match(classesPage, new RegExp(`id=["']${id}["']`), `Falta #${id} en clases.html`);
 }
-assert.match(classesPage, /public-calendar\.css\?v=6\.21/);
-assert.match(classesPage, /public-calendar\.js\?v=6\.21/);
-assert.match(classesPage, /facilities-carousel\.js\?v=6\.21/);
+assert.match(classesPage, /public-calendar\.css\?v=6\.22/);
+assert.match(classesPage, /public-calendar\.js\?v=6\.22/);
+assert.match(classesPage, /facilities-carousel\.js\?v=6\.22/);
 assert.match(classesPage, /GENPublicCalendar\?\.init\(\{\s*client\s*\}\)/);
 assert.match(classesPage, /id=["']facilities-gallery["'][\s\S]*data-facilities-slide/);
 assert.match(classesPage, /aria-roledescription=["']carousel["']/);
@@ -108,6 +110,30 @@ assert.equal(calendarApi.canonicalStyle('Clase Especial (Taller)'), 'taller');
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Ángel Javier' }, '2026-08-07'), false);
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Ángel Javier' }, '2026-08-05'), true);
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Yanira' }, '2026-08-07'), true);
+
+const expectedConsultationStarts = [570, 630, 690, 750, 810, 1020, 1080, 1140, 1200];
+assert.deepEqual(
+  [...calendarApi.consultationStartMinutesFor({ nombre: 'Miriam' }, '2026-08-18')],
+  expectedConsultationStarts,
+  'Miriam debe estar disponible los martes de 09:30 a 14:30 y de 17:00 a 21:00',
+);
+assert.deepEqual(
+  [...calendarApi.consultationStartMinutesFor({ nombre: 'Miriam' }, '2026-08-19')],
+  expectedConsultationStarts,
+  'Miriam debe estar disponible los miércoles',
+);
+assert.deepEqual([...calendarApi.consultationStartMinutesFor({ nombre: 'Miriam' }, '2026-08-20')], []);
+assert.deepEqual(
+  [...calendarApi.consultationStartMinutesFor({ nombre: 'Isabel', apellidos: 'Rodriguez' }, '2026-08-18')],
+  expectedConsultationStarts,
+  'Isabel debe reconocerse con apellidos y estar disponible los martes',
+);
+assert.deepEqual(
+  [...calendarApi.consultationStartMinutesFor({ nombre: 'Isabel', apellidos: 'Rodriguez' }, '2026-08-20')],
+  expectedConsultationStarts,
+  'Isabel debe estar disponible los jueves',
+);
+assert.deepEqual([...calendarApi.consultationStartMinutesFor({ nombre: 'Isabel' }, '2026-08-19')], []);
 
 assert.match(calendarScript, /\.eq\('activa',\s*true\)/);
 assert.match(calendarScript, /\.in\('tipo_clase',\s*\['yoga',\s*'taller'\]\)/);
@@ -172,6 +198,15 @@ assert.match(angelMigration, /set nombre = 'Yoga para Todos'/);
 assert.match(angelMigration, /set activa = false/);
 assert.match(angelMigration, /extract\(isodow from c\.fecha_inicio at time zone 'Europe\/Madrid'\) = 5/);
 assert.doesNotMatch(angelMigration, /\bNinguna\b|\bseptiembre\b/i);
+
+assert.match(consultationAvailabilityMigration, /time zone 'Europe\/Madrid'/i);
+assert.match(consultationAvailabilityMigration, /v_local_weekday not in \(2, 3\)/i);
+assert.match(consultationAvailabilityMigration, /v_local_weekday not in \(2, 4\)/i);
+for (const start of ['09:30', '10:30', '11:30', '12:30', '13:30', '17:00', '18:00', '19:00', '20:00']) {
+  assert.ok(consultationAvailabilityMigration.includes(`'${start}'::time`), `Falta el inicio ${start} en la validación SQL`);
+}
+assert.match(consultationAvailabilityMigration, /revoke all on function public\.reservar_consulta_virtual[\s\S]*from public, anon, authenticated/i);
+assert.match(consultationAvailabilityMigration, /grant execute on function public\.reservar_consulta_virtual[\s\S]*to authenticated/i);
 
 assert.match(certificationBuild, /'public-calendar\.css'/);
 assert.match(certificationBuild, /'public-calendar\.js'/);
