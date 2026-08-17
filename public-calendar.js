@@ -79,7 +79,12 @@
             therapeutic: 'Yoga terapéutico',
             silviaYoga: 'Yoga con Silvia',
             ayurveda: 'Ayurveda',
-            special: 'Talleres'
+            special: 'Talleres',
+            calendar_mode_classes: 'Clases de Yoga',
+            calendar_mode_consultations: 'Consultas (Psicología / Nutrición)',
+            calendar_spot_free: 'Disponible',
+            calendar_spot_occupied: 'Ocupada',
+            calendar_book_consultation: 'Reservar consulta'
         },
         en: {
             back: 'Classes',
@@ -139,7 +144,12 @@
             therapeutic: 'Therapeutic yoga',
             silviaYoga: 'Yoga with Silvia',
             ayurveda: 'Ayurveda',
-            special: 'Workshops'
+            special: 'Workshops',
+            calendar_mode_classes: 'Yoga Classes',
+            calendar_mode_consultations: 'Consultations (Psychology / Nutrition)',
+            calendar_spot_free: 'Available',
+            calendar_spot_occupied: 'Occupied',
+            calendar_book_consultation: 'Book consultation'
         }
     };
 
@@ -221,7 +231,15 @@
     }
 
     function text(key, replacements) {
-        let value = copy[currentLanguage()][key] || copy.es[key] || key;
+        let value = copy[currentLanguage()]?.[key] || copy.es?.[key] || '';
+        if (!value) {
+            // Clean fallback: remove technical prefix and formatting
+            value = String(key || '')
+                .replace(/^calendar_mode_/, '')
+                .replace(/^calendar_spot_/, '')
+                .replace(/^calendar_/, '')
+                .replace(/_/g, ' ');
+        }
         Object.entries(replacements || {}).forEach(([name, replacement]) => {
             value = value.replace(`{${name}}`, String(replacement));
         });
@@ -729,7 +747,8 @@
     function syncStaticCopy() {
         document.querySelectorAll('[data-calendar-copy]').forEach(node => {
             const key = node.getAttribute('data-calendar-copy');
-            if (copy[currentLanguage()][key]) node.textContent = text(key);
+            const translation = copy[currentLanguage()]?.[key] || copy.es?.[key];
+            if (translation) node.textContent = text(key);
         });
         el.prevWeek?.setAttribute('aria-label', text('previousWeek'));
         el.nextWeek?.setAttribute('aria-label', text('followingWeek'));

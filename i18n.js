@@ -73,15 +73,24 @@ const translations = {
         "classes_card_restaurativa_title": "Yoga Restaurativa Suave",
         "classes_restaurativa_tagline": "Suelta el día, respira despacio.",
         "classes_card_restaurativa_desc": "Una práctica lenta y consciente diseñada para liberar tensión acumulada. Con posturas sostenidas y respiración profunda, esta clase invita a tu cuerpo y mente a descansar de verdad.",
+        "classes_cta_tagline": "Tu práctica empieza aquí",
         "classes_cta_title": "¿No sabes por<br>dónde empezar?",
-        "classes_cta_desc": "<strong>Reserva</strong> tu primera clase y nosotros te guiamos desde ahí. Nuestros instructores te acompañarán en cada paso de tu camino.",
+        "classes_cta_desc": "Ven a probar tu primera sesión sin compromiso. Te acompañamos a elegir el estilo y ritmo que mejor conecte con tu energía.",
         "classes_cta_btn": "Reservar mi primera clase",
+        "classes_scroll_prompt": "Ver más clases",
         "classes_scroll_arrow_text": "Ver más clases",
         "classes_scroll_arrow_doubt": "¿Tienes dudas?",
         "classes_tab_vinyasa": "VINYASA",
         "classes_tab_hombres": "HOMBRES",
         "classes_tab_restaurativa": "RESTAURATIVA",
         "classes_calendar_btn": "Ver horario semanal",
+        "classes_consultas_calendar_btn": "Ver disponibilidad",
+        "footer_address": "Calle San Carlos 2, Albacete",
+        "calendar_mode_classes": "Clases de Yoga",
+        "calendar_mode_consultations": "Consultas (Psicología / Nutrición)",
+        "calendar_spot_free": "Disponible",
+        "calendar_spot_occupied": "Ocupada",
+        "calendar_book_consultation": "Reservar consulta",
 
         // tarifas.html (Pricing)
         "rates_title": "Tarifas",
@@ -408,16 +417,24 @@ const translations = {
         "classes_card_restaurativa_title": "Gentle Restorative Yoga",
         "classes_restaurativa_tagline": "Let go of the day, breathe slowly.",
         "classes_card_restaurativa_desc": "A slow and mindful practice designed to release accumulated tension. With held postures and deep breathing, this class invites your body and mind to truly rest.",
+        "classes_cta_tagline": "Your journey starts here",
         "classes_cta_title": "Don't know where<br>to start?",
-        "classes_cta_desc": "<strong>Book</strong> your first class and we will guide you from there. Our instructors will support you at every step of your path.",
+        "classes_cta_desc": "Come try your first session with no commitment. We will guide you to find the style and pace that connects with your energy.",
         "classes_cta_btn": "Book my first class",
+        "classes_scroll_prompt": "See more classes",
         "classes_scroll_arrow_text": "See more classes",
-        "classes_scroll_arrow_doubt": "Any doubts?",
+        "classes_scroll_arrow_doubt": "Any questions?",
         "classes_tab_vinyasa": "VINYASA",
         "classes_tab_hombres": "MEN YOGA",
         "classes_tab_restaurativa": "RESTORATIVE",
-        "classes_scroll_arrow_doubt": "Any questions?",
         "classes_calendar_btn": "View weekly schedule",
+        "classes_consultas_calendar_btn": "Check availability",
+        "footer_address": "Calle San Carlos 2, Albacete",
+        "calendar_mode_classes": "Yoga Classes",
+        "calendar_mode_consultations": "Consultations (Psychology / Nutrition)",
+        "calendar_spot_free": "Available",
+        "calendar_spot_occupied": "Occupied",
+        "calendar_book_consultation": "Book consultation",
 
         // tarifas.html (Pricing)
         "rates_title": "Rates",
@@ -779,7 +796,13 @@ function setLanguage(lang) {
 }
 
 function t(key) {
-    return translations[currentLang]?.[key] || translations['es']?.[key] || key;
+    if (translations[currentLang]?.[key] !== undefined) {
+        return translations[currentLang][key];
+    }
+    if (translations['es']?.[key] !== undefined) {
+        return translations['es'][key];
+    }
+    return '';
 }
 
 const alertTranslations = {
@@ -914,8 +937,8 @@ function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         const translation = t(key);
-        if (translation) {
-            if (el.tagName === 'INPUT' && el.placeholder) {
+        if (translation && translation !== key) {
+            if (el.tagName === 'INPUT' && el.placeholder !== undefined) {
                 el.placeholder = translation;
             } else {
                 el.innerHTML = translation;
@@ -926,7 +949,8 @@ function applyTranslations() {
     // 2. Translate document title dynamically based on key
     const pageTitleKey = document.body.dataset.pageTitleKey;
     if (pageTitleKey) {
-        document.title = t(pageTitleKey);
+        const pageTitle = t(pageTitleKey);
+        if (pageTitle) document.title = pageTitle;
     }
 
     // 3. Translate day headers

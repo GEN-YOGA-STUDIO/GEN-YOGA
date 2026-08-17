@@ -694,6 +694,52 @@ for (const requiredFrontendText of [
   }
 }
 
+// Validate that all data-i18n and data-calendar-copy keys exist in dictionaries
+const i18nFileContent = await readFile(path.join(root, 'i18n.js'), 'utf8');
+const calFileContent = await readFile(path.join(root, 'public-calendar.js'), 'utf8');
+
+const fnI18n = new Function(`
+  const window = { location: { search: '', pathname: '/' }, addEventListener: () => {}, dispatchEvent: () => {}, localStorage: { getItem: () => null, setItem: () => {} }, document: { documentElement: { lang: 'es' }, body: { dataset: {} }, querySelectorAll: () => [], getElementById: () => null, createElement: () => ({ style: {} }), addEventListener: () => {} } };
+  const document = window.document;
+  const localStorage = window.localStorage;
+  ${i18nFileContent}
+  return translations;
+`);
+let i18nTranslations = { es: {}, en: {} };
+try {
+  i18nTranslations = fnI18n();
+} catch (e) {
+  errors.push(`i18n.js parse error: ${e.message}`);
+}
+
+const esKeys = new Set(Object.keys(i18nTranslations.es || {}));
+const enKeys = new Set(Object.keys(i18nTranslations.en || {}));
+
+const startCal = calFileContent.indexOf('const copy =');
+const endCal = calFileContent.indexOf('const knownTeacherColors');
+let calCopy = { es: {}, en: {} };
+if (startCal !== -1 && endCal !== -1) {
+  const copyCode = calFileContent.substring(startCal, endCal);
+  const fnCal = new Function(`${copyCode}; return copy;`);
+  calCopy = fnCal();
+}
+const calEsKeys = new Set(Object.keys(calCopy.es || {}));
+const calEnKeys = new Set(Object.keys(calCopy.en || {}));
+
+for (const pageName of actualPages) {
+  const pageMarkup = await readFile(path.join(root, pageName), 'utf8');
+  for (const match of pageMarkup.matchAll(/data-i18n=["']([^"']+)["']/g)) {
+    const key = match[1];
+    if (!esKeys.has(key)) errors.push(`${pageName}: data-i18n key "${key}" falta en i18n.js (es)`);
+    if (!enKeys.has(key)) errors.push(`${pageName}: data-i18n key "${key}" falta en i18n.js (en)`);
+  }
+  for (const match of pageMarkup.matchAll(/data-calendar-copy=["']([^"']+)["']/g)) {
+    const key = match[1];
+    if (!calEsKeys.has(key)) errors.push(`${pageName}: data-calendar-copy key "${key}" falta en public-calendar.js (es)`);
+    if (!calEnKeys.has(key)) errors.push(`${pageName}: data-calendar-copy key "${key}" falta en public-calendar.js (en)`);
+  }
+}
+
 if (errors.length) {
   console.error('Web quality check failed:');
   for (const error of [...new Set(errors)]) console.error(`- ${error}`);
