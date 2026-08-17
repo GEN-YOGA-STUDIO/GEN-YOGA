@@ -24,7 +24,7 @@ import {
   isSingleConsultation,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.23'
+const APP_RELEASE = '6.24'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -235,6 +235,10 @@ serve(async (req) => {
       sessionParams.customer = stripeCustomerId
     } else if (user?.email) {
       sessionParams.customer_email = user.email
+    }
+
+    if (isGuest || isConsultationSingle) {
+      sessionParams.phone_number_collection = { enabled: true }
     }
 
     if (!isSubscription) {

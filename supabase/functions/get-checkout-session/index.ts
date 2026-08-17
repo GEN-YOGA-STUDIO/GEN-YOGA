@@ -122,6 +122,7 @@ serve(async (req) => {
       purchaseType: purchase.purchaseType,
       membershipMonth: purchase.membershipMonth,
       email: isGuest ? (session.customer_details?.email || '') : '',
+      phone: isGuest ? (session.customer_details?.phone || '') : '',
       nombre: isGuest ? (nameParts[0] || '') : '',
       apellidos: isGuest ? nameParts.slice(1).join(' ') : '',
       alreadyRedeemed,
