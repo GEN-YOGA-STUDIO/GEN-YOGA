@@ -70,11 +70,18 @@ const miriamEnglish = getEnglishProfile({ email: 'miriam_profesora@genyoga.studi
 assert.match(miriamEnglish.descripcion, /self-awareness/);
 assert.doesNotMatch(miriamEnglish.descripcion, /autoconcern/);
 
-const [maestros, profile, clases, migration] = await Promise.all([
+const isabelKey = teacherProfiles.getKey({ email: 'isarodriguez.pni@gmail.com' });
+assert.equal(isabelKey, 'isabel', 'isarodriguez.pni@gmail.com debe resolver a la clave isabel');
+
+const silviaKey = teacherProfiles.getKey({ email: 'sil-hada@hotmail.com' });
+assert.equal(silviaKey, 'silvia', 'sil-hada@hotmail.com debe resolver a la clave silvia');
+
+const [maestros, profile, clases, migration, mergeMigration] = await Promise.all([
   readFile(path.join(root, 'maestros.html'), 'utf8'),
   readFile(path.join(root, 'profile.html'), 'utf8'),
   readFile(path.join(root, 'clases.html'), 'utf8'),
   readFile(path.join(root, 'supabase', 'migrations', '202608030001_angel_profile_schedule_6_8.sql'), 'utf8'),
+  readFile(path.join(root, 'supabase', 'migrations', '202609020008_merge_teacher_profiles_isabel_silvia.sql'), 'utf8'),
 ]);
 
 for (const page of [maestros, profile]) {
@@ -105,7 +112,11 @@ for (const imgName of requiredImages) {
 
 assert.match(maestros, /updated\.foto_cutout = 'img\/maestra-isabel-recortada\.webp'/);
 assert.match(maestros, /updated\.foto_cutout = 'img\/maestro-angel-recortado\.webp'/);
+assert.match(maestros, /email:\s*'isarodriguez\.pni@gmail\.com'/);
+assert.match(maestros, /email:\s*'sil-hada@hotmail\.com'/);
 assert.match(clases, /src="img\/isabel-pni\.jpg"/);
+assert.match(profile, /isarodriguez\.pni@gmail\.com/);
+assert.match(profile, /sil-hada@hotmail\.com/);
 
 assert.doesNotMatch(maestros, /summarizeModalText|summarizeModalItems|moreAreas|moreQualifications/);
 assert.doesNotMatch(maestros, /\+\$\{remaining\}|visible\.join\(['"] · ['"]\)/);
@@ -135,6 +146,18 @@ for (const expected of [
   'extract(isodow from c.fecha_inicio at time zone \'Europe/Madrid\') = 5',
 ]) {
   assert.ok(migration.includes(expected), `La migración no contiene: ${expected}`);
+}
+
+for (const expected of [
+  'isarodriguez.pni@gmail.com',
+  'sil-hada@hotmail.com',
+  'Psiconeuroinmunología Clínica (PNI) | consultas, psicologia, nutricion',
+  'Hatha & Iyengar Yoga, Ayurveda | clases, consultas, nutricion',
+  'Yoga para hombres & Yoga para Todos | clases',
+  'Vinyasa & Restaurativa | clases, talleres',
+  'delete from public.profesionales where id = v_dup_id',
+]) {
+  assert.ok(mergeMigration.includes(expected), `La migración de fusión no contiene: ${expected}`);
 }
 
 console.log('Teacher profile checks passed for Ángel Javier, Silvia, Miriam, Isabel and Yanira.');

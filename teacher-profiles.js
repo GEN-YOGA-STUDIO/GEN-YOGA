@@ -286,9 +286,9 @@ Mindfulness for adults and children`
     function getKey(profile) {
         const identity = `${profile?.nombre || ''} ${profile?.apellidos || ''} ${profile?.email || ''}`.toLowerCase();
         if (identity.includes('yanira')) return 'yanira';
-        if (identity.includes('miriam')) return 'miriam';
-        if (identity.includes('silvia')) return 'silvia';
-        if (identity.includes('isabel')) return 'isabel';
+        if (identity.includes('miriam') || identity.includes('respira')) return 'miriam';
+        if (identity.includes('silvia') || identity.includes('sil-hada')) return 'silvia';
+        if (identity.includes('isabel') || identity.includes('isarodriguez')) return 'isabel';
         if (identity.includes('ángel') || identity.includes('angel')) return 'angel';
         return '';
     }
