@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +19,7 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%;
+            min-height: 100%;
             background-color: #f8f6f2;
         }
 
@@ -443,11 +443,14 @@
                 
                 <!-- CARD 1 (Vinyasa Flow) -->
                 <div id="card-1" class="folder-card-container">
-                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none pointer-events-none">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M 0 36 L 0 12 Q 0 0 12 0 L 158 0 Q 170 0 170 12 C 170 24 182 36 194 36 L 896 36 L 896 37 L 0 37 Z" fill="#795244" />
                             <text x="85" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2" data-i18n="classes_tab_vinyasa">VINYASA</text>
                         </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[42%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
                     <div onclick="window.GENPublicCalendar?.open({ style: 'vinyasa' })"
                         class="folder-body bg-[#795244] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
@@ -525,11 +528,14 @@
             <div id="consultas-deck" class="w-full relative transition-all duration-300 hidden">
                 <!-- CARD MIRIAM (Psicología) -->
                 <div id="card-miriam" class="folder-card-container">
-                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none pointer-events-none">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M 0 36 L 0 12 Q 0 0 12 0 L 158 0 Q 170 0 170 12 C 170 24 182 36 194 36 L 896 36 L 896 37 L 0 37 Z" fill="#744833" />
                             <text x="85" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="0.6">MIRIAM</text>
                         </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[42%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
                     <div onclick="window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'miriam' })"
                         onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'miriam' }); }"
@@ -1281,6 +1287,37 @@ window.switchCategoryDeck = function(cat) {
                     scrollToSlide(prevIndex);
                 }
             });
+
+            // Touch gesture support for mobile / touchpads
+            let touchStartY = 0;
+            let touchStartX = 0;
+            let isTouching = false;
+
+            window.addEventListener('touchstart', (e) => {
+                if (document.body.classList.contains('gy-calendar-open')) return;
+                if (e.touches && e.touches.length > 0) {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX;
+                    isTouching = true;
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!isTouching || document.body.classList.contains('gy-calendar-open')) return;
+                if (e.target instanceof Element && e.target.closest('#public-calendar-panel, #booking-modal, .modal-content, .gy-calendar__shell, input, select, textarea')) return;
+                if (e.touches && e.touches.length > 0) {
+                    const deltaY = touchStartY - e.touches[0].clientY;
+                    const deltaX = touchStartX - e.touches[0].clientX;
+                    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+                        window.scrollBy({ top: deltaY, behavior: 'auto' });
+                        touchStartY = e.touches[0].clientY;
+                    }
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', () => {
+                isTouching = false;
+            }, { passive: true });
 
             // Scroll calculations and morphing transitions linked directly to window scroll
             window.addEventListener('scroll', () => {
