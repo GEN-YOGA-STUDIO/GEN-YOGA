@@ -161,6 +161,12 @@
         19 * 60,
         20 * 60
     ]);
+    const silviaConsultationSlotStartMinutes = Object.freeze([
+        15 * 60,
+        16 * 60 + 30,
+        18 * 60
+    ]);
+    const silviaConsultationAnchorDate = '2026-06-19';
     const consultationWeekdays = Object.freeze({
         miriam: Object.freeze([2, 3]),
         isabel: Object.freeze([2, 4])
@@ -302,11 +308,26 @@
             return allowedWeekdays.includes(weekday) ? consultationSlotStartMinutes : [];
         }
 
-        // Silvia mantiene de momento su disponibilidad previa de lunes a sábado.
-        if (slug === 'silvia' && weekday >= 1 && weekday <= 6) {
-            return Object.freeze([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map(hour => hour * 60));
+        if (slug === 'silvia') {
+            const anchor = new Date(`${silviaConsultationAnchorDate}T12:00:00Z`);
+            const requested = new Date(`${validDate}T12:00:00Z`);
+            const daysFromAnchor = Math.round((requested.getTime() - anchor.getTime()) / 86_400_000);
+            return weekday === 5 && daysFromAnchor % 14 === 0
+                ? silviaConsultationSlotStartMinutes
+                : [];
         }
         return [];
+    }
+
+    function consultationDurationMinutesFor(profile) {
+        return teacherSlug(profile) === 'silvia' ? 90 : 60;
+    }
+
+    function isCanonicalConsultationClass(item) {
+        if (item?.professor?.slug !== 'silvia') return true;
+        return item.classType === 'nutricion'
+            && item.durationMinutes === 90
+            && consultationStartMinutesFor(item.professor, item.dateKey).includes(item.startMinutes);
     }
 
     function isPublicScheduleSlot(profile, dateKey) {
@@ -905,6 +926,7 @@
             const dbClases = (clasesRes.data || [])
                 .map(row => normalizeClassRow(row, false))
                 .filter(Boolean)
+                .filter(isCanonicalConsultationClass)
                 .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
 
             if (dbClases.length > 0) {
@@ -959,11 +981,12 @@
                         );
 
                         if (!existsInDb) {
+                            const durationMinutes = consultationDurationMinutesFor(prof);
                             const startHour = Math.floor(startMinutes / 60);
                             const startMinute = startMinutes % 60;
                             const startStr = `${dateKey}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`;
                             const start = new Date(startStr);
-                            const end = new Date(start.getTime() + 60 * 60_000);
+                            const end = new Date(start.getTime() + durationMinutes * 60_000);
                             const name = profSlug === 'isabel' ? 'Consulta PNI / Psicología' : (profSlug === 'silvia' ? 'Consulta Ayurveda' : 'Consulta Psicología');
 
                             generatedSlots.push({
@@ -973,7 +996,7 @@
                                 end,
                                 dateKey,
                                 startMinutes,
-                                durationMinutes: 60,
+                                durationMinutes,
                                 capacity: 1,
                                 occupied: 0,
                                 freeSpots: 1,
@@ -1522,6 +1545,7 @@
         refresh: () => loadWeek({ silent: true }),
         canonicalStyle,
         isPublicScheduleSlot,
-        consultationStartMinutesFor
+        consultationStartMinutesFor,
+        consultationDurationMinutesFor
     });
 })(typeof window !== 'undefined' ? window : globalThis);
