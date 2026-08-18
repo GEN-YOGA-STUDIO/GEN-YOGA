@@ -549,11 +549,26 @@
             .join(' ');
     }
 
+    const defaultStyleColors = Object.freeze({
+        'power-vinyasa': '#df7fa5',
+        vinyasa: '#df7fa5',
+        restaurativa: '#5a8f76',
+        'yoga-para-hombres': '#7f9fc0',
+        'yoga-para-todos': '#5d7fa3',
+        'yoga-terapeutico': '#68704a',
+        'yoga-con-silvia': '#c9a74c',
+        ayurveda: '#68704a',
+        taller: '#c07238'
+    });
+
     function eventColor(item) {
-        if (item.professor.color) return item.professor.color;
         const byTypeId = item.classTypeId ? state.typeColors.get(`id:${item.classTypeId}`) : '';
         const byStyle = state.typeColors.get(`style:${item.style}`);
-        return byTypeId || byStyle || knownTeacherColors[item.professor.slug] || '#d96542';
+        if (byTypeId) return byTypeId;
+        if (byStyle) return byStyle;
+        if (defaultStyleColors[item.style]) return defaultStyleColors[item.style];
+        if (item.professor.color) return item.professor.color;
+        return knownTeacherColors[item.professor.slug] || '#d96542';
     }
 
     function bookingCutoffHours() {
