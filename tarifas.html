@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.37">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.37">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.37">
+    <meta name="application-version" content="6.38">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.38">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.38">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.37">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.38">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=6.37"></script>
+    <script src="i18n.js?v=6.38"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -196,8 +196,12 @@
 
             <!-- Sub-pestañas de filtrado (Matches layout & colors of Canva screen) -->
             <div class="flex justify-center gap-3 flex-wrap">
+                <button id="tab-ofertas" onclick="switchCategory('ofertas')"
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#047857] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5" data-i18n="rates_tab_offers">
+                    🎁 Ofertas
+                </button>
                 <button id="tab-yoga" onclick="switchCategory('yoga')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#795244] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_yoga">
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_yoga">
                     Clases
                 </button>
                 <button id="tab-psicologia" onclick="switchCategory('psicologia')"
@@ -208,10 +212,6 @@
                     class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_workshops">
                     Talleres
                 </button>
-                <button id="tab-ofertas" onclick="switchCategory('ofertas')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5" data-i18n="rates_tab_offers">
-                    🎁 Ofertas
-                </button>
             </div>
         </div>
 
@@ -219,7 +219,7 @@
         <div class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-12 mt-4">
             
             <!-- 1. CATEGORY: YOGA (CLASES) -->
-            <div id="section-yoga" class="grid sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto gap-6 w-full px-4 items-stretch transition-all duration-500">
+            <div id="section-yoga" class="grid sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto gap-6 w-full px-4 items-stretch transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
                 <!-- Clase suelta -->
                 <div class="tariff-card flex flex-col justify-between border-suelta">
                     <div>
@@ -574,39 +574,40 @@
             </div>
 
             <!-- 4. CATEGORY: OFERTAS & SESIONES GRATUITAS -->
-            <div id="section-ofertas" class="max-w-6xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+            <div id="section-ofertas" class="max-w-6xl mx-auto w-full px-4 transition-all duration-500">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                     
                     <!-- Oferta 1: Bono de Bienvenida (100% Gratis) -->
-                    <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 border-emerald-400/40 shadow-xl relative overflow-hidden ring-2 ring-emerald-500/10">
-                        <div class="absolute top-0 right-0 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm">
+                    <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 border-emerald-500/30 shadow-xl relative overflow-hidden ring-2 ring-emerald-500/10">
+                        <div class="absolute top-0 right-0 bg-[#047857] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm">
                             ★ 100% Gratuito
                         </div>
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-4">
-                                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shadow-inner">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner" style="background-color: rgba(4, 120, 87, 0.1); color: #047857;">
                                     <i class="ph-fill ph-gift text-2xl"></i>
                                 </div>
-                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider mr-16">Pack de Bienvenida</span>
+                                <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mr-16" style="background-color: rgba(4, 120, 87, 0.12); color: #047857; border: 1px solid rgba(4, 120, 87, 0.25);">Pack de Bienvenida</span>
                             </div>
                             <h3 class="text-2xl font-serif text-cocoa font-bold mb-1">Bono de Bienvenida</h3>
                             <div class="flex items-baseline gap-2 mb-3">
-                                <span class="text-3xl font-extrabold text-emerald-700">0 €</span>
+                                <span class="text-3xl font-extrabold text-[#047857]">0 €</span>
                                 <span class="text-xs text-cocoa/60 font-light">/ para nuevos alumnos</span>
                             </div>
-                            <p class="text-[11px] text-emerald-700 font-bold uppercase tracking-wider mb-3">1 Clase Gratis + 1 Consulta Gratis</p>
+                            <p class="text-[11px] text-[#047857] font-bold uppercase tracking-wider mb-3">1 Clase Gratis + 1 Consulta Gratis</p>
                             <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-4">
                                 Crea tu cuenta gratis y recibe al instante 1 pase para una sesión de yoga introductoria y 1 pase para una consulta personalizada de bienestar o salud.
                             </p>
                             <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-emerald-600"></i><span>1 Clase de Yoga gratuita incluida</span></li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-emerald-600"></i><span>1 Consulta de PNI / Bienestar gratuita</span></li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-emerald-600"></i><span>Sin cuotas de alta ni compromiso</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#047857]"></i><span>1 Clase de Yoga gratuita incluida</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#047857]"></i><span>1 Consulta de PNI / Bienestar gratuita</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#047857]"></i><span>Sin cuotas de alta ni compromiso</span></li>
                             </ul>
                         </div>
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
                             <a href="profile.html#auth"
-                                class="block w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
+                                class="block w-full py-3.5 bg-[#047857] hover:bg-[#065f46] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
+                                style="background-color: #047857; color: #ffffff;">
                                 Crear Cuenta Gratis
                             </a>
                             <span class="text-center text-[10px] text-cocoa/50 font-medium">Se activa automáticamente al registrarte</span>
@@ -617,14 +618,14 @@
                     <div class="tariff-card flex flex-col justify-between h-full bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/60 shadow-lg relative overflow-hidden">
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-4">
-                                <div class="w-12 h-12 rounded-2xl bg-olive/10 flex items-center justify-center text-olive shadow-inner">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner" style="background-color: rgba(106, 101, 64, 0.1); color: #6a6540;">
                                     <i class="ph-fill ph-sun text-2xl"></i>
                                 </div>
-                                <span class="text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-3 py-1 rounded-full uppercase tracking-wider">Sesiones Especiales</span>
+                                <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider" style="background-color: rgba(106, 101, 64, 0.12); color: #6a6540; border: 1px solid rgba(106, 101, 64, 0.25);">Sesiones Especiales</span>
                             </div>
                             <h3 class="text-2xl font-serif text-cocoa font-bold mb-1">Yoga Introductorio</h3>
                             <div class="flex items-baseline gap-2 mb-3">
-                                <span class="text-3xl font-extrabold text-olive">0 €</span>
+                                <span class="text-3xl font-extrabold text-[#6a6540]">0 €</span>
                                 <span class="text-xs text-cocoa/60 font-light">/ con Bono de Bienvenida</span>
                             </div>
                             <p class="text-[11px] text-cocoa/60 mb-3 font-semibold uppercase tracking-wider">Con Ángel & Silvia</p>
@@ -632,17 +633,18 @@
                                 Descubre nuestro espacio y conoce a nuestros maestros en una sesión guiada para todos los niveles:
                             </p>
                             <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-calendar text-olive"></i><span><strong>Ángel:</strong> Dom 20 Sep (10:00 y 12:00)</span></li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-calendar text-olive"></i><span><strong>Silvia:</strong> Vie 18 y 25 Sep (11:00)</span></li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-users text-olive"></i><span>Aforo limitado a 10 plazas por clase</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-calendar text-[#6a6540]"></i><span><strong>Ángel:</strong> Dom 20 Sep (10:00 y 12:00)</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-calendar text-[#6a6540]"></i><span><strong>Silvia:</strong> Vie 18 y 25 Sep (11:00)</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-users text-[#6a6540]"></i><span>Aforo limitado a 10 plazas por clase</span></li>
                             </ul>
                         </div>
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
                             <a href="clases.html#calendario-publico"
-                                class="block w-full py-3.5 bg-olive hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                                class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md"
+                                style="background-color: #6a6540; color: #ffffff;">
                                 Ver Horarios de Yoga
                             </a>
-                            <a href="profile.html?view=horarios" class="text-center text-[11px] font-semibold text-olive hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
+                            <a href="profile.html?view=horarios" class="text-center text-[11px] font-semibold text-[#6a6540] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
                                 Reservar plaza desde tu perfil →
                             </a>
                         </div>
@@ -652,14 +654,14 @@
                     <div class="tariff-card flex flex-col justify-between h-full bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/60 shadow-lg relative overflow-hidden">
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-4">
-                                <div class="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center text-pink-600 shadow-inner">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner" style="background-color: rgba(143, 107, 45, 0.1); color: #8f6b2d;">
                                     <i class="ph-fill ph-brain text-2xl"></i>
                                 </div>
-                                <span class="text-[10px] font-bold text-pink-700 bg-pink-100 border border-pink-200 px-3 py-1 rounded-full uppercase tracking-wider">Salud Integral</span>
+                                <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider" style="background-color: rgba(143, 107, 45, 0.12); color: #8f6b2d; border: 1px solid rgba(143, 107, 45, 0.25);">Salud Integral</span>
                             </div>
                             <h3 class="text-2xl font-serif text-cocoa font-bold mb-1">PNI & Bienestar</h3>
                             <div class="flex items-baseline gap-2 mb-3">
-                                <span class="text-3xl font-extrabold text-pink-700">0 €</span>
+                                <span class="text-3xl font-extrabold text-[#8f6b2d]">0 €</span>
                                 <span class="text-xs text-cocoa/60 font-light">/ con Bono de Bienvenida</span>
                             </div>
                             <p class="text-[11px] text-cocoa/60 mb-3 font-semibold uppercase tracking-wider">Con Isabel (Psiconeuroinmunología)</p>
@@ -667,17 +669,18 @@
                                 Sesiones introductorias de Psiconeuroinmunología clínica para comprender y optimizar tu salud de forma holística:
                             </p>
                             <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-calendar text-pink-600"></i><span><strong>Isabel:</strong> Jue 3 Sep y Mar 22 Sep (11:00)</span></li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-pink-600"></i><span>Orientación terapéutica y evaluación inicial</span></li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-sparkle text-pink-600"></i><span>Canjeable con tu bono de consulta gratis</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-calendar text-[#8f6b2d]"></i><span><strong>Isabel:</strong> Jue 3 Sep y Mar 22 Sep (11:00)</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#8f6b2d]"></i><span>Orientación terapéutica y evaluación inicial</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-sparkle text-[#8f6b2d]"></i><span>Canjeable con tu bono de consulta gratis</span></li>
                             </ul>
                         </div>
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
                             <a href="profile.html?view=psicologia"
-                                class="block w-full py-3.5 bg-pink-700 hover:bg-pink-800 text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                                class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md"
+                                style="background-color: #8f6b2d; color: #ffffff;">
                                 Reservar Consulta Gratis
                             </a>
-                            <a href="maestros.html#teacher-isabel" class="text-center text-[11px] font-semibold text-pink-700 hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
+                            <a href="maestros.html?cat=consultas&teacher=isabel#teacher-isabel" class="text-center text-[11px] font-semibold text-[#8f6b2d] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
                                 Conoce a Isabel en Maestros →
                             </a>
                         </div>
@@ -690,7 +693,7 @@
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.37 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.38 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -1147,6 +1150,8 @@ window.handleNavClick = function (btn, url) {
             const requestedCategory = new URLSearchParams(window.location.search).get('category');
             if (['yoga', 'psicologia', 'talleres', 'ofertas'].includes(requestedCategory)) {
                 switchCategory(requestedCategory);
+            } else {
+                switchCategory('ofertas');
             }
         });
 
