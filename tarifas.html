@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.32">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.32">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.32">
+    <meta name="application-version" content="6.33">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.33">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.33">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.32">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.33">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=6.32"></script>
+    <script src="i18n.js?v=6.33"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -490,29 +490,80 @@
                 </div>
             </div>
 
-            <!-- 3. CATEGORY: TALLERES -->
-            <div id="section-talleres" class="max-w-xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
-                <!-- Talleres Especiales -->
-                <div class="tariff-card flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
-                            <i class="ph-fill ph-sketch-logo text-2xl text-[#6a6540]"></i>
+            <!-- 3. CATEGORY: TALLERES & CLASES ESPECIALES -->
+            <div id="section-talleres" class="max-w-4xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                    <!-- 1. Clase Especial -->
+                    <div class="tariff-card flex flex-col justify-between h-full bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/60 shadow-lg relative overflow-hidden">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <div class="w-12 h-12 rounded-2xl bg-[#6a6540]/10 flex items-center justify-center text-[#6a6540] shadow-inner">
+                                    <i class="ph-fill ph-sparkle text-2xl"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-[#6a6540] bg-[#6a6540]/10 border border-[#6a6540]/20 px-3 py-1 rounded-full uppercase tracking-wider">Práctica de Profundización</span>
+                            </div>
+                            <h3 class="text-2xl font-serif text-cocoa font-bold mb-1" data-i18n="rates_talleres_title">Clase Especial</h3>
+                            <p class="text-[11px] text-cocoa/60 mb-4 font-light uppercase tracking-wider" data-i18n="rates_talleres_cat">Sesiones Temáticas · 75 a 90 min</p>
+                            
+                            <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-4" data-i18n="rates_talleres_desc">
+                                Prácticas temáticas de profundización guiadas por nuestros profesores. Incluye sesiones de meditación, pranayama, alineación avanzada o secuencias reconstituyentes.
+                            </p>
+                            <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#6a6540]"></i><span>Grupos reducidos (máximo 10 plazas)</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#6a6540]"></i><span><strong>1 clase al mes incluida</strong> con el Bono Ilimitado</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#6a6540]"></i><span>Disponible para compra suelta</span></li>
+                            </ul>
                         </div>
-                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_talleres_title">Clases especiales / Talleres</h3>
-                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider" data-i18n="rates_talleres_cat">Calendario independiente</p>
-                        
-                        <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-6" data-i18n="rates_talleres_desc">
-                            Experiencias puntuales separadas de las clases regulares. El Bono Ilimitado incluye una clase especial por cada mes natural comprado.
-                        </p>
+                        <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
+                            <button onclick="iniciarCheckoutTallerStripe('clase_especial', 'Clase Especial', '')"
+                                class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_talleres_btn">
+                                Comprar Clase Especial
+                            </button>
+                            <a href="clases.html?style=taller#calendario-publico" class="text-center text-[11px] font-semibold text-[#6a6540] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
+                                Ver próximas fechas en horario →
+                            </a>
+                        </div>
                     </div>
-                    <div class="mt-8">
-                        <div class="text-xs font-bold text-[#6a6540] border border-[#6a6540]/20 bg-[#6a6540]/5 px-4 py-3 rounded-xl mb-4 text-center" data-i18n="rates_talleres_contact_recep">
-                            1 clase especial al mes con el Bono Ilimitado
+
+                    <!-- 2. Taller Concreto: Introducción a Power Vinyasa -->
+                    <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 border-[#AB593D]/30 shadow-xl relative overflow-hidden ring-2 ring-[#AB593D]/10">
+                        <div class="absolute top-0 right-0 bg-[#AB593D] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm">
+                            Próximo Taller
                         </div>
-                        <button onclick="window.location.href='clases.html?style=taller#calendario-publico'"
-                            class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_talleres_btn">
-                            Ver próximas fechas
-                        </button>
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <div class="w-12 h-12 rounded-2xl bg-[#AB593D]/10 flex items-center justify-center text-[#AB593D] shadow-inner">
+                                    <i class="ph-fill ph-fire text-2xl"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-[#AB593D] bg-[#AB593D]/10 border border-[#AB593D]/20 px-3 py-1 rounded-full uppercase tracking-wider mr-16">Sábado 19 Sep · 9:00 a 11:00</span>
+                            </div>
+                            <div class="flex items-baseline justify-between gap-2 mb-1">
+                                <h3 class="text-2xl font-serif text-cocoa font-bold">Introducción a Power Vinyasa</h3>
+                            </div>
+                            <div class="flex items-baseline gap-2 mb-3">
+                                <span class="text-3xl font-extrabold text-[#AB593D]">35 €</span>
+                                <span class="text-xs text-cocoa/60 font-light">/ plaza (120 min)</span>
+                            </div>
+                            <p class="text-[11px] text-[#AB593D] font-bold uppercase tracking-wider mb-3">Con Yanira · 2 Horas de Inmersión</p>
+                            
+                            <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-4">
+                                Inmersión completa de 2 horas (09:00 a 11:00) diseñada para aprender y consolidar los fundamentos de Power Vinyasa: alineación precisa, control del flujo respiratorio y transiciones fluidas.
+                            </p>
+                            <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#AB593D]"></i><span>Máximo 10 alumnos para atención personalizada</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#AB593D]"></i><span>Ajustes manuales y soporte individual</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#AB593D]"></i><span>Material de apoyo e infusiones incluidas</span></li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
+                            <button onclick="iniciarCheckoutTallerStripe('taller_intro_power_vinyasa', 'Taller: Introducción a Power Vinyasa', '35')"
+                                class="block w-full py-3.5 bg-[#AB593D] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
+                                Reservar Plaza (35 €)
+                            </button>
+                            <a href="clases.html?style=taller#calendario-publico" class="text-center text-[11px] font-semibold text-[#AB593D] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
+                                Ver detalles en el calendario →
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -521,7 +572,7 @@
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.32 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.33 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -1147,6 +1198,90 @@ window.handleNavClick = function (btn, url) {
             Swal.fire({
                 title: 'Conectando con la pasarela de pagos...',
                 text: `Iniciando compra de ${title} (${price} €)...`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                safeSetItem('stripe_checkout_origin', 'tarifas');
+                const { data, error } = await supabaseClient.functions.invoke('create-checkout-session', {
+                    body: {
+                        lookup_key: lookupKey,
+                        user_id: userId,
+                        from: 'tarifas',
+                        app_version: APP_VERSION,
+                        checkout_attempt_id: checkoutAttemptId
+                    }
+                });
+
+                if (error) {
+                    let errMsg = error.message;
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errJson = await error.context.json();
+                            if (errJson && errJson.error) errMsg = errJson.error;
+                        }
+                    } catch(e){}
+                    throw new Error(errMsg);
+                }
+
+                if (data && data.url) {
+                    const checkoutUrl = getValidatedStripeCheckoutUrl(data.url);
+                    closePaymentUiBeforeNavigation();
+                    window.location.assign(checkoutUrl);
+                } else {
+                    throw new Error('No se recibió la URL de la pasarela de pagos.');
+                }
+            } catch (e) {
+                checkoutRequestInProgress = false;
+                safeRemoveItem('stripe_checkout_origin');
+                console.error("Payment redirection error:", e);
+                Swal.fire('No se pudo iniciar el pago', e.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.', 'error');
+            }
+        }
+
+        async function iniciarCheckoutTallerStripe(lookupKey, title, price) {
+            if (checkoutRequestInProgress) return;
+
+            const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
+            const session = sessionRes?.data?.session;
+            let userId = session?.user?.id || null;
+
+            if (!userId) {
+                const result = await Swal.fire({
+                    title: title || 'Comprar Plaza de Taller',
+                    text: `¿Quieres reservar y pagar ${title}${price ? ` (${price} €)` : ''} iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Pagar como Invitado',
+                    denyButtonText: 'Iniciar Sesión',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#AB593D',
+                    denyButtonColor: '#6a6540',
+                    cancelButtonColor: '#d33',
+                    background: '#fff',
+                    color: '#333'
+                });
+
+                if (result.isConfirmed) {
+                    userId = 'guest';
+                } else if (result.isDenied) {
+                    window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    return;
+                } else {
+                    return;
+                }
+            }
+
+            checkoutRequestInProgress = true;
+            const checkoutAttemptId = newCheckoutAttemptId();
+
+            Swal.fire({
+                title: 'Conectando con la pasarela de pagos...',
+                text: `Iniciando compra de ${title}${price ? ` (${price} €)` : ''}...`,
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
                 background: '#fff',

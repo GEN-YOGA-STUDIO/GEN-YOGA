@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import Stripe from "https://esm.sh/stripe@14.22.0?target=deno"
 import {
   CONSULTATION_CATALOG,
+  WORKSHOP_CATALOG,
   PURCHASE_TYPES,
   HttpError,
   assertAllowedOrigin,
@@ -11,6 +12,7 @@ import {
   createStripeClient,
   getAuthenticatedUser,
   getConsultationDetails,
+  getWorkshopDetails,
   getValidatedCatalog,
   handleOptions,
   isUuid,
@@ -19,12 +21,14 @@ import {
   readProductionConfig,
   requirePost,
   resolveConsultationPrice,
+  resolveWorkshopPrice,
   resolveReturnBaseUrl,
   safeErrorResponse,
   isSingleConsultation,
+  isWorkshopPurchase,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.32'
+const APP_RELEASE = '6.33'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -101,6 +105,7 @@ serve(async (req) => {
       PURCHASE_TYPES.PACK_10,
       PURCHASE_TYPES.BONO_ILIMITADO,
       ...Object.keys(CONSULTATION_CATALOG),
+      ...Object.keys(WORKSHOP_CATALOG),
     ])
     if (!allowedPurchaseTypes.has(lookupKey)) {
       throw new HttpError(400, 'Producto no permitido.')
@@ -112,9 +117,10 @@ serve(async (req) => {
     const requestedUserId = String(body.user_id || '').trim()
     const isGuest = requestedUserId === 'guest'
     const isConsultationSingle = isSingleConsultation(lookupKey)
+    const isWorkshop = isWorkshopPurchase(lookupKey)
 
-    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle) {
-      throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta o consulta individual.')
+    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && !isWorkshop) {
+      throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta, consulta individual o taller.')
     }
     const requestedAttemptId = String(body.checkout_attempt_id || '').trim()
     if (requestedAttemptId && !isUuid(requestedAttemptId)) {
@@ -201,9 +207,6 @@ serve(async (req) => {
         if (details.productId) {
           throw new Error(`No se pudo resolver el Price del producto ${details.productId}.`)
         }
-        // Some legacy consultation entries do not yet have a canonical Product
-        // supplied by GEN Yoga. Keep their existing inline fallback isolated;
-        // mapped products such as Isabel must always use their reusable Price.
         lineItems = [
           {
             price_data: {
@@ -218,6 +221,12 @@ serve(async (req) => {
           },
         ]
       }
+    } else if (getWorkshopDetails(purchaseType)) {
+      const workshopPrice = await resolveWorkshopPrice(stripe, purchaseType)
+      if (!workshopPrice) {
+        throw new Error(`No se pudo resolver el precio del taller ${purchaseType}.`)
+      }
+      lineItems = [{ price: workshopPrice.id, quantity: 1 }]
     } else {
       throw new HttpError(400, 'Precio no configurado para el producto seleccionado.')
     }
@@ -237,7 +246,7 @@ serve(async (req) => {
       sessionParams.customer_email = user.email
     }
 
-    if (isGuest || isConsultationSingle) {
+    if (isGuest || isConsultationSingle || isWorkshop) {
       sessionParams.phone_number_collection = { enabled: true }
     }
 

@@ -88,6 +88,8 @@ for (const [productId, label] of [
   ['prod_V1pLWNLzr9Vb3g', 'Miriam pareja sucesiva'],
   ['prod_V1ppAeiDF9dlkZ', 'Isabel PNI inicial'],
   ['prod_V1pqPF6rtJf0SW', 'Isabel PNI sucesiva'],
+  ['prod_V5uBKuweMRE6ig', 'Clase Especial'],
+  ['prod_V5uCPKKKH5K74P', 'Taller Introducción Power Vinyasa'],
 ]) {
   requireText(shared, productId, `Producto Stripe de ${label}`);
 }

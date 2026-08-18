@@ -22,6 +22,8 @@ export const PURCHASE_TYPES = {
   SILVIA_AYURVEDA_BONO6: 'silvia_ayurveda_bono6',
   ISABEL_PNI_1A: 'isabel_pni_1a',
   ISABEL_PNI_SIG: 'isabel_pni_sig',
+  CLASE_ESPECIAL: 'clase_especial',
+  TALLER_INTRO_POWER_VINYASA: 'taller_intro_power_vinyasa',
 } as const
 
 // Public LIVE product identifiers supplied by GEN Yoga. Checkout still uses
@@ -45,12 +47,24 @@ export const ISABEL_PRODUCT_IDS = {
   PNI_SIG: 'prod_V1pqPF6rtJf0SW',
 } as const
 
+export const WORKSHOP_PRODUCT_IDS = {
+  CLASE_ESPECIAL: 'prod_V5uBKuweMRE6ig',
+  TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P',
+} as const
+
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
 
 export type ConsultationDetails = {
   name: string
   amount: number
   productId?: string
+  guestAllowed: boolean
+}
+
+export type WorkshopDetails = {
+  name: string
+  amount?: number
+  productId: string
   guestAllowed: boolean
 }
 
@@ -116,12 +130,34 @@ export const CONSULTATION_CATALOG: Partial<Record<PurchaseType, ConsultationDeta
   },
 }
 
+export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = {
+  [PURCHASE_TYPES.CLASE_ESPECIAL]: {
+    name: 'Clase Especial',
+    productId: WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.TALLER_INTRO_POWER_VINYASA]: {
+    name: 'Taller: Introducción a Power Vinyasa',
+    amount: 3500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+    guestAllowed: true,
+  },
+}
+
 export function getConsultationDetails(purchaseType: string): ConsultationDetails | null {
   return CONSULTATION_CATALOG[purchaseType as PurchaseType] || null
 }
 
+export function getWorkshopDetails(purchaseType: string): WorkshopDetails | null {
+  return WORKSHOP_CATALOG[purchaseType as PurchaseType] || null
+}
+
 export function isSingleConsultation(purchaseType: string): boolean {
   return getConsultationDetails(purchaseType)?.guestAllowed === true
+}
+
+export function isWorkshopPurchase(purchaseType: string): boolean {
+  return getWorkshopDetails(purchaseType) !== null
 }
 
 export type CorsConfig = {
@@ -623,6 +659,53 @@ export function assertValidConsultationPrice(
   return details
 }
 
+export async function resolveWorkshopPrice(
+  stripe: Stripe,
+  purchaseType: string,
+): Promise<Stripe.Price | null> {
+  const details = getWorkshopDetails(purchaseType)
+  if (!details) return null
+
+  const params: Stripe.PriceListParams = {
+    active: true,
+    currency: 'eur',
+    type: 'one_time',
+    product: details.productId,
+    limit: 20,
+  }
+  const prices = await stripe.prices.list(params)
+  const matchingPrice = prices.data.find((price: Stripe.Price) => {
+    if (!price.livemode || !price.active || price.currency.toLowerCase() !== 'eur' || price.type !== 'one_time' || price.recurring) {
+      return false
+    }
+    if (stripeObjectId(price.product) !== details.productId) return false
+    if (details.amount !== undefined && price.unit_amount !== details.amount) return false
+    return true
+  }) || prices.data[0] || null
+
+  if (!matchingPrice) {
+    throw new Error(`El producto ${details.productId} no tiene un Price LIVE activo en Stripe.`)
+  }
+  return matchingPrice
+}
+
+export function assertValidWorkshopPrice(
+  price: Stripe.Price,
+  purchaseType: string,
+): WorkshopDetails {
+  const details = getWorkshopDetails(purchaseType)
+  if (!details) {
+    throw new HttpError(400, 'El taller o clase especial comprado no está autorizado.')
+  }
+  if (!price.livemode || price.currency.toLowerCase() !== 'eur' || stripeObjectId(price.product) !== details.productId) {
+    throw new HttpError(400, 'El producto comprado no coincide con el producto autorizado de Stripe.')
+  }
+  if (details.amount !== undefined && price.unit_amount !== details.amount) {
+    throw new HttpError(400, 'El importe del taller no coincide con el precio esperado.')
+  }
+  return details
+}
+
 export function unixSecondsToIso(value: number | null | undefined): string | null {
   return typeof value === 'number' ? new Date(value * 1000).toISOString() : null
 }
@@ -670,15 +753,20 @@ export function validateCheckoutPurchase(
     price = catalog.bonoMensual
     expectedAmount = 9000
   } else {
-    // Consultations do not live in the fixed class-pack catalog. Their signed
-    // Checkout metadata selects a server-owned definition, and the resulting
-    // line-item Price is then checked against its canonical Product and amount.
+    // Consultations and workshops select their server-owned definition,
+    // and the line-item Price is validated against its canonical product.
     const metaPurchaseType = metadata.purchase_type || ''
     const consultationDetails = getConsultationDetails(metaPurchaseType)
+    const workshopDetails = getWorkshopDetails(metaPurchaseType)
     if (consultationDetails) {
       purchaseType = metaPurchaseType as PurchaseType
       price = lineItems[0].price
       expectedAmount = assertValidConsultationPrice(price, purchaseType).amount
+    } else if (workshopDetails) {
+      purchaseType = metaPurchaseType as PurchaseType
+      price = lineItems[0].price
+      const validDetails = assertValidWorkshopPrice(price, purchaseType)
+      expectedAmount = validDetails.amount ?? price.unit_amount ?? session.amount_total
     } else {
       throw new HttpError(400, 'El producto comprado no está permitido.')
     }
@@ -707,9 +795,10 @@ export function validateCheckoutPurchase(
   if (
     appUserId === 'guest' &&
     purchaseType !== PURCHASE_TYPES.CLASE_SUELTA &&
-    !isSingleConsultation(purchaseType)
+    !isSingleConsultation(purchaseType) &&
+    !isWorkshopPurchase(purchaseType)
   ) {
-    throw new HttpError(400, 'Una compra de invitado solo puede ser una clase suelta o consulta individual.')
+    throw new HttpError(400, 'Una compra de invitado solo puede ser una clase suelta, consulta individual o taller.')
   }
   if (appUserId !== 'guest' && !isUuid(appUserId)) {
     throw new HttpError(400, 'La sesión no está vinculada a un usuario válido.')
