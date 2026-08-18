@@ -2100,7 +2100,7 @@ main .sticky.top-24 {
                         </button>
                     </div>
 
-                    <!-- Filtro Consultas (Psicología / Nutrición) -->
+                    <!-- Filtro Consultas (Psicología / Nutrición / Disponibilidad) -->
                     <div class="flex flex-wrap gap-2 mb-6">
                         <button id="consulta-filter-todas" onclick="filtrarConsultasAdmin('todas')"
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-cocoa text-white shadow-sm">Todas</button>
@@ -2108,6 +2108,10 @@ main .sticky.top-24 {
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Psicología</button>
                         <button id="consulta-filter-nutricion" onclick="filtrarConsultasAdmin('nutricion')"
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Nutrición</button>
+                        <button id="consulta-filter-disponibles" onclick="filtrarConsultasAdmin('disponibles')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Solo disponibles</button>
+                        <button id="consulta-filter-ocupadas" onclick="filtrarConsultasAdmin('ocupadas')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Solo reservadas</button>
                     </div>
 
                     <div id="admin-consultas-container" class="space-y-6"></div>
@@ -5479,23 +5483,43 @@ async function cargarMiGrupoProfesor() {
             return;
         }
 
-        const { data: groupMembers, error: errGroup } = await client
+        const studentIdsSet = new Set();
+
+        // 1. Obtener alumnos asignados explícitamente en grupos_profesionales
+        const { data: groupMembers } = await client
             .from('grupos_profesionales')
             .select('alumno_id')
             .eq('profesional_id', prof.id);
 
-        if (errGroup) {
-            console.error('Error al cargar alumnos del grupo:', errGroup);
-            container.innerHTML = '<p class="text-xs text-red-500 italic py-2 text-center">Error al cargar alumnos.</p>';
-            return;
+        (groupMembers || []).forEach(m => {
+            if (m && m.alumno_id) studentIdsSet.add(m.alumno_id);
+        });
+
+        // 2. Obtener alumnos con reservas en clases o consultas de este profesional
+        const { data: profClases } = await client
+            .from('clases')
+            .select('id')
+            .eq('profesor_id', prof.id);
+
+        if (profClases && profClases.length > 0) {
+            const cIds = profClases.map(c => c.id);
+            const [resYoga, resPsico, resNutri] = await Promise.all([
+                client.from('reservas_yoga').select('user_id').in('clase_id', cIds),
+                client.from('reservas_psicologia').select('user_id').in('clase_id', cIds),
+                client.from('reservas_nutricion').select('user_id').in('clase_id', cIds)
+            ]);
+
+            [...(resYoga.data || []), ...(resPsico.data || []), ...(resNutri.data || [])].forEach(r => {
+                if (r && r.user_id) studentIdsSet.add(r.user_id);
+            });
         }
 
-        if (!groupMembers || groupMembers.length === 0) {
-            container.innerHTML = '<p class="text-xs text-cocoa/40 italic py-4 text-center">Sin alumnos asignados.</p>';
+        const studentIds = Array.from(studentIdsSet);
+
+        if (studentIds.length === 0) {
+            container.innerHTML = '<p class="text-xs text-cocoa/40 italic py-4 text-center">Sin alumnos o pacientes asignados.</p>';
             return;
         }
-
-        const studentIds = groupMembers.map(m => m.alumno_id);
 
         let clientes = allUsersCache;
         if (!clientes || clientes.length === 0) {
@@ -5509,7 +5533,7 @@ async function cargarMiGrupoProfesor() {
         const alumnosGrupo = (clientes || []).filter(c => studentIds.includes(c.id));
 
         if (alumnosGrupo.length === 0) {
-            container.innerHTML = '<p class="text-xs text-cocoa/40 italic py-4 text-center">Sin alumnos asignados.</p>';
+            container.innerHTML = '<p class="text-xs text-cocoa/40 italic py-4 text-center">Sin alumnos o pacientes asignados.</p>';
             return;
         }
 
@@ -5659,28 +5683,58 @@ function renderizarAgendaProfesor() {
             const horaFin = fin ? formatDisplayTime(fin) : null;
             const tipoMeta = getTipoClaseMeta(c.tipo_clase);
             const ocupadas = toSafeNumber(c.reservasCount);
+            const esConsulta = c.tipo_clase === 'psicologia' || c.tipo_clase === 'nutricion';
+            const estaVacia = ocupadas === 0;
+
+            let estadoBadge = '';
+            let accionBtn = '';
+
+            if (esConsulta) {
+                if (estaVacia) {
+                    estadoBadge = `<span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5"><i class="ph-bold ph-check-circle"></i> Hueco disponible</span>`;
+                    accionBtn = `
+                        <button onclick="abrirModalAsignarConsulta(${inlineJsString(c.tipo_clase)}, ${safePositiveInteger(c.id) || 0})"
+                            class="inline-flex items-center justify-center gap-2 bg-olive hover:bg-cocoa text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">
+                            <i class="ph-bold ph-user-plus"></i> Asignar paciente
+                        </button>
+                    `;
+                } else {
+                    estadoBadge = `<span class="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5"><i class="ph-bold ph-user"></i> Reserva confirmada</span>`;
+                    accionBtn = `
+                        <button onclick="abrirAlumnosClase(${safePositiveInteger(c.id) || 0})"
+                            class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">
+                            <i class="ph-bold ph-users-three"></i> Ver paciente
+                        </button>
+                    `;
+                }
+            } else {
+                estadoBadge = `<span class="text-xs font-bold text-cocoa/50 bg-sand/20 px-2.5 py-1 rounded-lg">${ocupadas} / ${toSafeNumber(c.capacidad_max) || 1} alumnos</span>`;
+                accionBtn = `
+                    <button onclick="abrirAlumnosClase(${safePositiveInteger(c.id) || 0})"
+                        class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">
+                        <i class="ph-bold ph-users-three"></i> Ver alumnos
+                    </button>
+                `;
+            }
 
             const row = document.createElement('div');
             row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/5 transition';
             row.innerHTML = `
                 <div class="flex items-start gap-4">
-                    <div class="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-cocoa text-white border border-cocoa shadow-sm flex-shrink-0">
+                    <div class="flex flex-col items-center justify-center w-16 h-16 rounded-xl ${estaVacia && esConsulta ? 'bg-emerald-700 border-emerald-600' : 'bg-cocoa border-cocoa'} text-white border shadow-sm flex-shrink-0">
                         <i class="ph-bold ${safeIconClass(tipoMeta.icon)} text-sand text-base"></i>
                         <span class="text-xs font-bold font-mono mt-1">${escapeHtml(hora)}</span>
                     </div>
                     <div>
                         <div class="flex flex-wrap items-center gap-2 mb-2">
                             <span class="text-xs font-bold border px-2.5 py-1 rounded-lg ${tipoMeta.colorClass}">${escapeHtml(tipoMeta.label)}</span>
-                            <span class="text-xs font-bold text-cocoa/50 bg-sand/20 px-2.5 py-1 rounded-lg">${ocupadas} / ${toSafeNumber(c.capacidad_max) || 1} alumnos</span>
+                            ${estadoBadge}
                         </div>
-                        <h3 class="brand-font text-xl font-bold text-cocoa">${escapeHtml(c.nombre || 'Clase')}</h3>
+                        <h3 class="brand-font text-xl font-bold text-cocoa">${escapeHtml(c.nombre || 'Consulta')}</h3>
                         <p class="text-sm text-cocoa/50 mt-1">${escapeHtml(horaFin ? `${hora} - ${horaFin}` : hora)}${c.descripcion ? ` · ${escapeHtml(c.descripcion)}` : ''}</p>
                     </div>
                 </div>
-                <button onclick="abrirAlumnosClase(${safePositiveInteger(c.id) || 0})"
-                    class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">
-                    <i class="ph-bold ph-users-three"></i> Ver alumnos
-                </button>
+                ${accionBtn}
             `;
             grid.appendChild(row);
         });
@@ -10529,7 +10583,16 @@ async function guardarConsultaAdmin(e) {
         didOpen: () => Swal.showLoading()
     });
 
-    const nombreClase = tipo === 'psicologia' ? 'Consulta Psicología' : 'Consulta Nutrición';
+    const prof = (allProfesionalesCache || []).find(p => String(p.id) === String(profesorId));
+    const profNameLower = (prof?.nombre || '').toLowerCase();
+    let nombreClase = tipo === 'psicologia' ? 'Consulta Psicología' : 'Consulta Nutrición';
+    if (profNameLower.includes('isabel')) {
+        nombreClase = tipo === 'psicologia' ? 'Consulta PNI / Psicología' : 'Consulta PNI / Nutrición';
+    } else if (profNameLower.includes('silvia')) {
+        nombreClase = 'Consulta Ayurveda';
+    } else if (profNameLower.includes('miriam')) {
+        nombreClase = tipo === 'psicologia' ? 'Consulta Psicología' : 'Consulta Psiconutrición';
+    }
 
     const inserts = [];
     for (let i = 0; i < repeatCount; i++) {
@@ -10792,8 +10855,13 @@ function renderizarConsultasAdmin() {
     container.innerHTML = '';
 
     const filtradas = window.allConsultasAdminCache.filter(c => {
+        const reserva = window.allConsultasAdminReservasMap[c.id];
         if (filtroConsultasActual === 'todas') return true;
-        return c.tipo_clase === filtroConsultasActual;
+        if (filtroConsultasActual === 'psicologia') return c.tipo_clase === 'psicologia';
+        if (filtroConsultasActual === 'nutricion') return c.tipo_clase === 'nutricion';
+        if (filtroConsultasActual === 'disponibles') return !reserva;
+        if (filtroConsultasActual === 'ocupadas') return !!reserva;
+        return true;
     });
 
     if (filtradas.length === 0) {
@@ -10840,7 +10908,7 @@ function renderizarConsultasAdmin() {
                 <div class="mt-4 px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-sm text-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-calendar-blank"></i>
-                        <span>Disponible (sin reservar)</span>
+                        <span>Hueco disponible (sin reservar)</span>
                     </div>
                     <button onclick="abrirModalAsignarConsulta(${inlineJsString(tipoConsulta)}, ${claseId})" class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
                         <i class="ph-bold ph-user-plus"></i> Asignar cliente
@@ -10861,6 +10929,7 @@ function renderizarConsultasAdmin() {
                     <div class="flex items-center gap-2 mb-2">
                         <span class="text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide border ${tagColor}">${tagLabel}</span>
                         <span class="text-xs font-bold text-gray-400">${toSafeNumber(c.duracion_minutos)} min</span>
+                        ${reserva ? '<span class="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md">Confirmada</span>' : '<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md">Disponible</span>'}
                     </div>
                     <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || 'Consulta Individual')}</h3>
                     <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fecha)} - ${escapeHtml(hora)}</p>
@@ -10882,7 +10951,7 @@ function renderizarConsultasAdmin() {
 function filtrarConsultasAdmin(filtro) {
     filtroConsultasActual = filtro;
     
-    ['todas', 'psicologia', 'nutricion'].forEach(f => {
+    ['todas', 'psicologia', 'nutricion', 'disponibles', 'ocupadas'].forEach(f => {
         const btn = document.getElementById(`consulta-filter-${f}`);
         if (btn) {
             if (f === filtro) {
