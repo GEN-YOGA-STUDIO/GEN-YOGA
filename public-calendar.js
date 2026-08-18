@@ -569,7 +569,7 @@
     const defaultStyleColors = Object.freeze({
         'power-vinyasa': '#df7fa5',
         vinyasa: '#df7fa5',
-        restaurativa: '#5a8f76',
+        restaurativa: '#c3b89a',
         'yoga-para-hombres': '#7f9fc0',
         'yoga-para-todos': '#5d7fa3',
         'yoga-terapeutico': '#68704a',
