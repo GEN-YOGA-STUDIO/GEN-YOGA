@@ -348,10 +348,17 @@
     }
 
     function isCanonicalConsultationClass(item) {
-        if (item?.professor?.slug !== 'silvia') return true;
-        return item.classType === 'nutricion'
-            && item.durationMinutes === 90
-            && consultationStartMinutesFor(item.professor, item.dateKey).includes(item.startMinutes);
+        if (!item) return false;
+        if (item?.professor?.slug === 'silvia') {
+            return item.classType === 'nutricion'
+                && item.durationMinutes === 90
+                && consultationStartMinutesFor(item.professor, item.dateKey).includes(item.startMinutes);
+        }
+        if (item?.professor?.slug === 'angel-javier') {
+            if (item.startMinutes >= 1260) return false;
+            if (item.startMinutes === 1080 && item.durationMinutes === 60) return false;
+        }
+        return true;
     }
 
     function isPublicScheduleSlot(profile, dateKey) {
