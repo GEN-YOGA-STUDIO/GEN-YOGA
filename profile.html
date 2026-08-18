@@ -4,21 +4,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="6.35" />
+    <meta name="application-version" content="6.36" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.35" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.35" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.36" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.36" />
     <title>Mi perfil | GEN Yoga</title>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.35">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.36">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=6.35"></script>
+    <script src="teacher-profiles.js?v=6.36"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=6.35"></script>
+    <script src="i18n.js?v=6.36"></script>
 
     <style>
 /* INLINED profile.css */
@@ -2166,7 +2166,7 @@ main .sticky.top-24 {
                     </p>
                     <div
                         class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-            <span>© 2026 GEN Yoga • v6.35. Todos los derechos reservados.</span>
+            <span>© 2026 GEN Yoga • v6.36. Todos los derechos reservados.</span>
                     </div>
                 </div>
             </footer>
@@ -2596,7 +2596,7 @@ main .sticky.top-24 {
 // --- 1. CONFIGURACIÓN ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '6.35';
+const APP_VERSION = '6.36';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 function closePaymentUiBeforeNavigation() {
@@ -2703,6 +2703,8 @@ let userUnlimitedGuestPasses = [];
 let userUnlimitedSpecialReservations = [];
 let userSaldoPsicologia = 0;
 let userSaldoNutricion = 0;
+let userSaldoClasesGratis = 1;
+let userSaldoConsultasGratis = 1;
 let userBonoMensualActivo = false;
 let userBonoMensualInicio = null;
 let userBonoMensualFin = null;
@@ -2751,7 +2753,9 @@ const STAFF_ROLES = ['profesor', 'trabajador', 'profesional'];
 const SALDOS_CONFIG = {
     yoga: { field: 'bonos', label: 'Clases', icon: 'ph-ticket', color: 'text-olive', badge: 'bg-olive/10 text-olive border-olive/20' },
     psicologia: { field: 'saldo_psicologia', label: 'Psicología', icon: 'ph-brain', color: 'text-[#3B82F6]', badge: 'bg-blue-50 text-[#3B82F6] border-blue-100' },
-    nutricion: { field: 'saldo_nutricion', label: 'Nutrición', icon: 'ph-apple', color: 'text-[#8B5CF6]', badge: 'bg-purple-50 text-[#8B5CF6] border-purple-100' }
+    nutricion: { field: 'saldo_nutricion', label: 'Nutrición', icon: 'ph-apple', color: 'text-[#8B5CF6]', badge: 'bg-purple-50 text-[#8B5CF6] border-purple-100' },
+    clases_gratis: { field: 'saldo_clases_gratis', label: 'Clase Gratis', icon: 'ph-gift', color: 'text-[#10B981]', badge: 'bg-emerald-50 text-[#10B981] border-emerald-200' },
+    consultas_gratis: { field: 'saldo_consultas_gratis', label: 'Consulta Gratis', icon: 'ph-sparkle', color: 'text-[#EC4899]', badge: 'bg-pink-50 text-[#EC4899] border-pink-200' }
 };
 const CONSULTA_CONFIG = {
     psicologia: { table: 'reservas_psicologia', saldoField: 'saldo_psicologia', label: 'Psicología', color: '#3B82F6' },
@@ -3680,18 +3684,32 @@ function renderSaldosClienteV69() {
 
     if (headerWrapper) {
         headerWrapper.innerHTML = `
-            <div class="bg-white px-3 py-2 rounded-2xl border border-olive/20 shadow-sm min-w-[155px]">
+            <div class="bg-white px-3 py-2 rounded-2xl border border-olive/20 shadow-sm min-w-[130px]">
                 <span class="block text-[9px] text-cocoa/50 font-bold uppercase tracking-widest">Clases vigentes</span>
                 <div class="flex items-center justify-between gap-3 mt-1.5">
                     <span class="flex items-center gap-1.5 font-black text-cocoa text-lg"><i class="ph-fill ph-ticket text-olive"></i>${userBonos}</span>
                     <button onclick="abrirCompraPacks(event)" class="px-2 py-0.5 text-[9px] font-bold uppercase bg-olive hover:bg-black text-white rounded transition">+ Packs</button>
                 </div>
             </div>
-            <div class="bg-white px-3 py-2 rounded-2xl border ${userBonoMensualActivo ? 'border-emerald-300' : 'border-dashed border-terracotta/30'} shadow-sm min-w-[165px]">
+            <div class="bg-white px-3 py-2 rounded-2xl border ${userBonoMensualActivo ? 'border-emerald-300' : 'border-dashed border-terracotta/30'} shadow-sm min-w-[150px]">
                 <span class="block text-[9px] ${userBonoMensualActivo ? 'text-emerald-600' : 'text-terracotta'} font-bold uppercase tracking-widest">Bono Ilimitado</span>
                 <div class="flex items-center justify-between gap-3 mt-1.5">
-                    <span class="text-[10px] font-bold ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próximo: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes comprado')}</span>
+                    <span class="text-[10px] font-bold ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próximo: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes')}</span>
                     <button onclick="comprarBonoMensual(event)" class="px-2 py-0.5 text-[9px] font-bold uppercase bg-terracotta text-white rounded transition">+ Mes</button>
+                </div>
+            </div>
+            <div class="bg-white px-3 py-2 rounded-2xl border border-emerald-200 shadow-sm min-w-[125px]">
+                <span class="block text-[9px] text-emerald-700 font-bold uppercase tracking-widest">🎁 Clase Gratis</span>
+                <div class="flex items-center justify-between gap-3 mt-1.5">
+                    <span class="flex items-center gap-1.5 font-black text-emerald-800 text-lg"><i class="ph-fill ph-gift text-emerald-600"></i>${userSaldoClasesGratis}</span>
+                    <span class="text-[9px] font-bold ${userSaldoClasesGratis > 0 ? 'text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded' : 'text-cocoa/40'}">${userSaldoClasesGratis > 0 ? 'Disponible' : 'Canjeada'}</span>
+                </div>
+            </div>
+            <div class="bg-white px-3 py-2 rounded-2xl border border-pink-200 shadow-sm min-w-[135px]">
+                <span class="block text-[9px] text-pink-700 font-bold uppercase tracking-widest">🎁 Consulta Gratis</span>
+                <div class="flex items-center justify-between gap-3 mt-1.5">
+                    <span class="flex items-center gap-1.5 font-black text-pink-800 text-lg"><i class="ph-fill ph-sparkle text-pink-600"></i>${userSaldoConsultasGratis}</span>
+                    <span class="text-[9px] font-bold ${userSaldoConsultasGratis > 0 ? 'text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded' : 'text-cocoa/40'}">${userSaldoConsultasGratis > 0 ? 'Disponible' : 'Canjeada'}</span>
                 </div>
             </div>`;
     }
@@ -3785,15 +3803,38 @@ function renderSaldosClienteV69() {
             <div class="mb-3">${benefitBadge(userConsultationDiscountUsed, '30% primera consulta disponible', 'Descuento de consulta utilizado')}</div>
             ${manageBillingButton}
             <button onclick="comprarBonoMensual(event)" class="w-full mt-2 py-2.5 bg-terracotta text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition">Elegir y comprar un mes</button>
+        </div>
+        <div class="bg-white/95 p-5 rounded-3xl border border-emerald-200 shadow-md min-w-[280px] flex-1">
+            <div class="flex items-center justify-between gap-4 mb-4">
+                <div><span class="block text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Bonos Gratuitos de Bienvenida</span><p class="text-lg font-black text-cocoa mt-1">Sesiones de Prueba</p></div>
+                <i class="ph-fill ph-gift text-3xl text-emerald-600"></i>
+            </div>
+            <p class="text-xs text-cocoa/60 leading-relaxed mb-4">Dispones de bonos introductorios gratuitos otorgados con tu cuenta para probar clases de yoga y consultas especializadas.</p>
+            <div class="space-y-2 mb-4">
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 text-left flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-cocoa">🎁 Bono Clase de Yoga Gratuita</p>
+                        <p class="text-[10px] text-cocoa/55 mt-0.5">Válido para sesiones introductorias marcadas</p>
+                    </div>
+                    <span class="text-xs font-black ${userSaldoClasesGratis > 0 ? 'text-emerald-700 bg-emerald-100' : 'text-cocoa/40 bg-cocoa/5'} px-2.5 py-1 rounded-full">${userSaldoClasesGratis} disp.</span>
+                </div>
+                <div class="rounded-2xl border border-pink-100 bg-pink-50/60 p-3 text-left flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-cocoa">🎁 Bono Consulta Gratuita</p>
+                        <p class="text-[10px] text-cocoa/55 mt-0.5">Válido para consultas introductorias de PNI y bienestar</p>
+                    </div>
+                    <span class="text-xs font-black ${userSaldoConsultasGratis > 0 ? 'text-pink-700 bg-pink-100' : 'text-cocoa/40 bg-cocoa/5'} px-2.5 py-1 rounded-full">${userSaldoConsultasGratis} disp.</span>
+                </div>
+            </div>
         </div>`;
 }
 
 
 async function checkProfile() {
-    // Las primeras variantes incluyen el Customer persistente de Stripe. Las
-    // alternativas mantienen compatibilidad mientras termina de propagarse el
-    // esquema o en instalaciones antiguas que no tienen saldos opcionales.
+    // Las primeras variantes incluyen saldos gratuitos y Customer persistente de Stripe.
     const profileSelectVariants = [
+        'rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
+        'rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
         'rol, bonos, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
         'rol, bonos, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
         'rol, bonos, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
@@ -3813,7 +3854,7 @@ async function checkProfile() {
         error = result.error;
         if (!error) break;
 
-        const missingOptionalColumn = /saldo_psicologia|saldo_nutricion|bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin|stripe_customer_id|stripe_subscription_status/i
+        const missingOptionalColumn = /saldo_clases_gratis|saldo_consultas_gratis|saldo_psicologia|saldo_nutricion|bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin|stripe_customer_id|stripe_subscription_status/i
             .test(error.message || '');
         if (!missingOptionalColumn) break;
     }
@@ -3832,6 +3873,8 @@ async function checkProfile() {
         userBonos = userLegacyBonos;
         userSaldoPsicologia = toSafeNumber(data.saldo_psicologia);
         userSaldoNutricion = toSafeNumber(data.saldo_nutricion);
+        userSaldoClasesGratis = toSafeNumber(data.saldo_clases_gratis);
+        userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
         userLegacyUnlimitedActive = !!data.bono_mensual_activo;
         userLegacyUnlimitedStart = data.bono_mensual_inicio;
         userLegacyUnlimitedEnd = data.bono_mensual_fin;
@@ -3839,12 +3882,6 @@ async function checkProfile() {
         userBonoMensualInicio = userLegacyUnlimitedStart;
         userBonoMensualFin = userLegacyUnlimitedEnd;
         userStripeCustomerId = typeof data.stripe_customer_id === 'string'
-            ? data.stripe_customer_id.trim()
-            : null;
-        userStripeSubscriptionStatus = typeof data.stripe_subscription_status === 'string'
-            ? data.stripe_subscription_status.trim().toLowerCase()
-            : '';
-
         await cargarEntitlementsV69();
         renderSaldosClienteV69();
 
@@ -4572,6 +4609,7 @@ function renderizarClases() {
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
 
+            const isFree = !!c.es_gratuita;
             let btnAction = '';
             if (isAdmin) {
                 btnAction = `
@@ -4589,6 +4627,18 @@ function renderizarClases() {
                 const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                 if (!esAlumno) {
                     btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
+                } else if (isFree) {
+                    const hasFreeCredit = userSaldoClasesGratis >= 1;
+                    const buttonStateClass = (!hasFreeCredit)
+                        ? 'opacity-60 cursor-not-allowed grayscale bg-gray-400'
+                        : 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:brightness-110 active:scale-95';
+                    const btnText = (!hasFreeCredit)
+                        ? '0 BONOS GRATIS'
+                        : 'RESERVAR GRATIS (0 €)';
+                    btnAction = `
+                                <button onclick="reservar(${claseId})" class="${buttonStateClass} text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform">
+                                    ${escapeHtml(btnText)}
+                                </button>`;
                 } else {
                     const classDate = new Date(c.fecha_inicio);
                     const membershipCoversClass = !!getUnlimitedPeriodForDate(classDate);
@@ -4608,7 +4658,7 @@ function renderizarClases() {
             const classDateForGuest = new Date(c.fecha_inicio);
             const guestMembershipPeriod = getUnlimitedPeriodForDate(classDateForGuest);
             const guestBenefitCoversClass = !!(
-                !isAdmin && !STAFF_ROLES.includes(currentUserRole) && !llena &&
+                !isAdmin && !STAFF_ROLES.includes(currentUserRole) && !llena && !isFree &&
                 guestMembershipPeriod && !isGuestBenefitUsedForPeriod(guestMembershipPeriod)
             );
             if (guestBenefitCoversClass) {
@@ -4622,6 +4672,10 @@ function renderizarClases() {
             const profesorAvatar = profesorFoto
                 ? `<img src="${escapeHtml(profesorFoto)}" alt="" class="w-full h-full object-cover">`
                 : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${escapeHtml(profesorName.charAt(0))}</div>`;
+
+            const freeBadge = isFree
+                ? `<span class="text-[9px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-gift"></i> Sesión Gratuita</span>`
+                : '';
 
             const row = document.createElement('div');
             row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/10 transition duration-300 group';
@@ -4639,6 +4693,7 @@ function renderizarClases() {
                                         <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-olive transition leading-tight">
                                             ${escapeHtml(nombreClase)}
                                         </h4>
+                                        ${freeBadge}
                                         <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_instructor', 'Instructor'))}">
                                             <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
                                                 ${profesorAvatar}
@@ -4825,9 +4880,22 @@ async function reservar(claseId, options = {}) {
     const periodoIlimitado = getUnlimitedPeriodForDate(fechaClase);
     const cubiertaPorIlimitado = !!periodoIlimitado;
     const esEspecial = String(clase.tipo_clase || '').toLowerCase() === 'taller';
+    const esGratuita = !!clase.es_gratuita;
     let mensajeConfirmacion;
 
-    if (esEspecial) {
+    if (esGratuita) {
+        if (userSaldoClasesGratis < 1 && !isAdmin) {
+            if (automaticPostPayment) safeRemoveItem('pending_booking_clase_id');
+            await Swal.fire({
+                icon: 'info',
+                title: 'Bono de Clase Gratuita agotado',
+                text: 'Ya has utilizado tu bono de clase gratuita de bienvenida.',
+                confirmButtonColor: '#10B981'
+            });
+            return false;
+        }
+        mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Clase Gratuita</b> (0 €)?';
+    } else if (esEspecial) {
         if (!cubiertaPorIlimitado) {
             if (automaticPostPayment) safeRemoveItem('pending_booking_clase_id');
             await Swal.fire({
@@ -6145,17 +6213,39 @@ function getSaldoConfig(tipo) {
 
 
 function renderSaldoBadgeAdmin(u) {
-    // Saldo Individual
+    // Saldo Clases Sueltas
     const indValue = toSafeNumber(u.bonos);
     const indClass = indValue > 0 ? 'text-olive font-black text-base' : 'text-gray-300';
     const indBadge = 'bg-olive/10 text-olive border-olive/20';
 
     const indHtml = `
-        <div class="flex items-center justify-between gap-3 rounded-xl border ${indBadge} px-3 py-1.5 bg-opacity-80">
+        <div class="flex items-center justify-between gap-3 rounded-xl border ${indBadge} px-3 py-1 bg-opacity-80">
             <span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide">
                 <i class="ph-bold ph-ticket"></i> Clases Sueltas
             </span>
             <span class="${indClass}">${indValue}</span>
+        </div>`;
+
+    // Saldo Clase Gratis
+    const freeClassVal = toSafeNumber(u.saldo_clases_gratis);
+    const freeClassClass = freeClassVal > 0 ? 'text-emerald-700 font-black text-base' : 'text-gray-300';
+    const freeClassHtml = `
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 px-3 py-1 bg-emerald-50/60">
+            <span class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 uppercase tracking-wide">
+                <i class="ph-bold ph-gift"></i> Clase Gratis
+            </span>
+            <span class="${freeClassClass}">${freeClassVal}</span>
+        </div>`;
+
+    // Saldo Consulta Gratis
+    const freeConsVal = toSafeNumber(u.saldo_consultas_gratis);
+    const freeConsClass = freeConsVal > 0 ? 'text-pink-700 font-black text-base' : 'text-gray-300';
+    const freeConsHtml = `
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-pink-200 px-3 py-1 bg-pink-50/60">
+            <span class="flex items-center gap-1.5 text-[10px] font-bold text-pink-800 uppercase tracking-wide">
+                <i class="ph-bold ph-sparkle"></i> Consulta Gratis
+            </span>
+            <span class="${freeConsClass}">${freeConsVal}</span>
         </div>`;
 
     // Bono Mensual
@@ -6163,7 +6253,7 @@ function renderSaldoBadgeAdmin(u) {
     if (u.bono_mensual_activo) {
         const fechaFin = u.bono_mensual_fin ? new Date(u.bono_mensual_fin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
         mensualHtml = `
-            <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 px-3 py-1.5 bg-emerald-50 bg-opacity-80">
+            <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 px-3 py-1 bg-emerald-50 bg-opacity-80">
                 <span class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wide">
                     <i class="ph-bold ph-infinity"></i> Ilimitado activo
                 </span>
@@ -6171,7 +6261,7 @@ function renderSaldoBadgeAdmin(u) {
             </div>`;
     } else {
         mensualHtml = `
-            <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-3 py-1.5 bg-gray-50 bg-opacity-80">
+            <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-3 py-1 bg-gray-50 bg-opacity-80">
                 <span class="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
                     <i class="ph-bold ph-infinity"></i> Ilimitado inactivo
                 </span>
@@ -6179,18 +6269,40 @@ function renderSaldoBadgeAdmin(u) {
             </div>`;
     }
 
-    return `<div class="flex flex-col gap-1.5 w-full min-w-[200px]">${indHtml}${mensualHtml}</div>`;
+    return `<div class="flex flex-col gap-1 w-full min-w-[200px]">${indHtml}${freeClassHtml}${freeConsHtml}${mensualHtml}</div>`;
 }
 
 function renderActionsAdmin(u) {
     const userId = inlineJsString(u.id);
     const indButtons = `
         <div class="flex items-center gap-1.5">
-            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide w-14 text-right">Clases Sueltas:</span>
-            <button onclick="sumarSaldo(${userId}, 'yoga', -1)" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition font-bold" title="Restar 1 clase suelta">
+            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide w-24 text-right">Clases Sueltas:</span>
+            <button onclick="sumarSaldo(${userId}, 'yoga', -1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition font-bold" title="Restar 1 clase suelta">
                 -1
             </button>
-            <button onclick="sumarSaldo(${userId}, 'yoga', 1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-900 text-white hover:bg-black transition font-bold shadow-sm" title="Añadir 1 clase suelta">
+            <button onclick="sumarSaldo(${userId}, 'yoga', 1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-900 text-white hover:bg-black transition font-bold shadow-sm" title="Añadir 1 clase suelta">
+                +1
+            </button>
+        </div>`;
+
+    const freeClassButtons = `
+        <div class="flex items-center gap-1.5">
+            <span class="text-[9px] font-bold text-emerald-600 uppercase tracking-wide w-24 text-right">Clase Gratis:</span>
+            <button onclick="sumarSaldo(${userId}, 'clases_gratis', -1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 hover:bg-red-50 hover:text-red-600 transition font-bold" title="Restar 1 clase gratis">
+                -1
+            </button>
+            <button onclick="sumarSaldo(${userId}, 'clases_gratis', 1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition font-bold shadow-sm" title="Añadir 1 clase gratis">
+                +1
+            </button>
+        </div>`;
+
+    const freeConsButtons = `
+        <div class="flex items-center gap-1.5">
+            <span class="text-[9px] font-bold text-pink-600 uppercase tracking-wide w-24 text-right">Consulta Gratis:</span>
+            <button onclick="sumarSaldo(${userId}, 'consultas_gratis', -1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-pink-200 text-pink-700 hover:bg-red-50 hover:text-red-600 transition font-bold" title="Restar 1 consulta gratis">
+                -1
+            </button>
+            <button onclick="sumarSaldo(${userId}, 'consultas_gratis', 1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-pink-600 text-white hover:bg-pink-700 transition font-bold shadow-sm" title="Añadir 1 consulta gratis">
                 +1
             </button>
         </div>`;
@@ -6199,16 +6311,16 @@ function renderActionsAdmin(u) {
     let consultationDiscountButton = '';
     if (u.bono_mensual_activo) {
         mensualButton = `
-            <button onclick="cambiarBonoMensual(${userId}, false)" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider btn-desactivar-mensual rounded-lg transition shadow-sm flex items-center gap-1">
+            <button onclick="cambiarBonoMensual(${userId}, false)" class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider btn-desactivar-mensual rounded-lg transition shadow-sm flex items-center gap-1">
                 <i class="ph-bold ph-x-circle text-xs"></i> Desactivar ilimitado
             </button>`;
         consultationDiscountButton = `
-            <button onclick="aplicarDescuentoPrimeraConsulta(${userId})" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition flex items-center gap-1" title="Registrar el 30% incluido en la primera consulta">
-                <i class="ph-bold ph-percent"></i> 30% primera consulta
+            <button onclick="aplicarDescuentoPrimeraConsulta(${userId})" class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition flex items-center gap-1" title="Registrar el 30% incluido en la primera consulta">
+                <i class="ph-bold ph-percent"></i> 30% 1ª consulta
             </button>`;
     } else {
         mensualButton = `
-            <button onclick="cambiarBonoMensual(${userId}, true)" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider btn-activar-mensual rounded-lg transition shadow-sm flex items-center gap-1">
+            <button onclick="cambiarBonoMensual(${userId}, true)" class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider btn-activar-mensual rounded-lg transition shadow-sm flex items-center gap-1">
                 <i class="ph-bold ph-check-circle text-xs"></i> Activar ilimitado
             </button>`;
     }
@@ -6219,8 +6331,10 @@ function renderActionsAdmin(u) {
         </button>`;
 
     return `
-        <div class="flex flex-col items-end gap-2">
+        <div class="flex flex-col items-end gap-1.5">
             ${indButtons}
+            ${freeClassButtons}
+            ${freeConsButtons}
             <div class="flex items-center gap-2 mt-1">
                 ${mensualButton}
                 ${consultationDiscountButton}
@@ -8994,6 +9108,7 @@ function renderizarPsicologia() {
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
 
+            const isFree = !!c.es_gratuita;
             let btnAction = '';
             if (isAdmin) {
                 if (c.reservaConfirmada) {
@@ -9026,6 +9141,14 @@ function renderizarPsicologia() {
                 const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                 if (!esAlumno) {
                     btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
+                } else if (isFree) {
+                    const hasFreeCredit = userSaldoConsultasGratis >= 1;
+                    const disabledClass = (!hasFreeCredit) ? 'opacity-50 cursor-not-allowed grayscale bg-gray-400' : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:shadow-lg hover:brightness-110 active:scale-95';
+                    const btnText = (!hasFreeCredit) ? '0 BONOS GRATIS' : 'RESERVAR GRATIS (0 €)';
+                    btnAction = `
+                        <button onclick="reservarConsulta('psicologia', ${claseId})" class="${disabledClass} text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform">
+                            ${escapeHtml(btnText)}
+                        </button>`;
                 } else {
                     const saldo = getSaldoConsultaActual('psicologia');
                     const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
@@ -9045,6 +9168,10 @@ function renderizarPsicologia() {
                 ? `<img src="${escapeHtml(profesionalFoto)}" alt="" class="w-full h-full object-cover">`
                 : `<div class="w-full h-full bg-blue-50 flex items-center justify-center text-[#3B82F6] text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
 
+            const freeBadge = isFree
+                ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> Sesión Gratuita</span>`
+                : '';
+
             const row = document.createElement('div');
             row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-blue-50/5 transition duration-300 group';
 
@@ -9061,6 +9188,7 @@ function renderizarPsicologia() {
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#3B82F6] transition leading-tight">
                                     ${escapeHtml(c.nombre || profileT('common_consultation', 'Consulta'))}
                                 </h4>
+                                ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
                                         ${profesionalAvatar}
@@ -9154,6 +9282,7 @@ function renderizarNutricion() {
             const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
+            const isFree = !!c.es_gratuita;
 
             let btnAction = '';
             if (isAdmin) {
@@ -9187,6 +9316,14 @@ function renderizarNutricion() {
                 const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                 if (!esAlumno) {
                     btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
+                } else if (isFree) {
+                    const hasFreeCredit = userSaldoConsultasGratis >= 1;
+                    const disabledClass = (!hasFreeCredit) ? 'opacity-50 cursor-not-allowed grayscale bg-gray-400' : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:shadow-lg hover:brightness-110 active:scale-95';
+                    const btnText = (!hasFreeCredit) ? '0 BONOS GRATIS' : 'RESERVAR GRATIS (0 €)';
+                    btnAction = `
+                        <button onclick="reservarConsulta('nutricion', ${claseId})" class="${disabledClass} text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform">
+                            ${escapeHtml(btnText)}
+                        </button>`;
                 } else {
                     const saldo = getSaldoConsultaActual('nutricion');
                     const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
@@ -9206,6 +9343,10 @@ function renderizarNutricion() {
                 ? `<img src="${escapeHtml(profesionalFoto)}" alt="" class="w-full h-full object-cover">`
                 : `<div class="w-full h-full bg-purple-50 flex items-center justify-center text-[#8B5CF6] text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
 
+            const freeBadge = isFree
+                ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> Sesión Gratuita</span>`
+                : '';
+
             const row = document.createElement('div');
             row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-purple-50/5 transition duration-300 group';
 
@@ -9222,6 +9363,7 @@ function renderizarNutricion() {
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#8B5CF6] transition leading-tight">
                                     ${escapeHtml(c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'))}
                                 </h4>
+                                ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
                                         ${profesionalAvatar}
@@ -9347,7 +9489,28 @@ async function reservarConsulta(tipo, claseId) {
             });
         }
 
-        if (!isAdmin && !esTrabajador()) {
+        const esGratuita = !!clase?.es_gratuita;
+        if (esGratuita) {
+            if (!isAdmin && !esTrabajador() && userSaldoConsultasGratis < 1) {
+                return Swal.fire({
+                    icon: 'info',
+                    title: 'Bono de Consulta Gratuita agotado',
+                    text: 'Ya has utilizado tu bono de consulta gratuita de bienvenida.',
+                    confirmButtonColor: '#EC4899'
+                });
+            }
+            const confirmRes = await Swal.fire({
+                title: 'Confirmar Consulta Gratuita',
+                html: '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Consulta Gratuita</b> (0 €)?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#EC4899',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Sí, reservar gratis',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirmRes.isConfirmed) return;
+        } else if (!isAdmin && !esTrabajador()) {
             if (getSaldoConsultaActual(tipo) < 1) {
                 mostrarErrorSaldoConsulta({ sinSaldo: true }, tipo);
                 return;
@@ -9358,7 +9521,7 @@ async function reservarConsulta(tipo, claseId) {
             p_tipo: tipo,
             p_clase_id: claseId,
             p_user_id: currentUser.id,
-            p_cobrar_saldo: true
+            p_cobrar_saldo: !esGratuita
         });
 
         if (error) {

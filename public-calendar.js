@@ -627,6 +627,9 @@
         if (item.classType === 'taller') {
             return { disabled: false, stateClass: '', badge: text('available'), hint: text('workshop') };
         }
+        if (item.isFree || String(item.name || '').toLowerCase().includes('introductoria')) {
+            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: '🎁 Gratuita', hint: 'Reservar gratis' };
+        }
         const badge = item.freeSpots === 1
             ? text('spotsOne')
             : (Number.isFinite(item.freeSpots)
