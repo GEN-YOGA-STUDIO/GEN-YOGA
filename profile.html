@@ -2771,6 +2771,18 @@ function tieneAccesoConsultasAdmin() {
     return isAdmin || esTrabajador();
 }
 
+function esHorarioValidoConsulta(c) {
+    if (!c?.fecha_inicio) return false;
+    const d = new Date(c.fecha_inicio);
+    if (Number.isNaN(d.getTime())) return false;
+    const hours = d.getHours();
+    const minutes = d.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    // Excluir cualquier consulta o clase en la franja de 13:30 (810 min) a 14:30 (870 min)
+    if (totalMinutes >= 810 && totalMinutes < 870) return false;
+    return true;
+}
+
 function getConsultaConfig(tipo) {
     return CONSULTA_CONFIG[tipo] || CONSULTA_CONFIG.psicologia;
 }
@@ -8746,12 +8758,14 @@ async function cargarPsicologia() {
     now.setHours(now.getHours() - 2);
     const nowIso = now.toISOString();
 
-    const { data: clases, error: errClases } =
+    const { data: rawClases, error: errClases } =
         await client.from('clases')
             .select('*, profesionales(*)')
             .eq('tipo_clase', 'psicologia')
             .gte('fecha_inicio', nowIso)
             .order('fecha_inicio');
+
+    const clases = (rawClases || []).filter(esHorarioValidoConsulta);
 
     if (errClases) {
         console.error('Error cargando consultas', errClases);
@@ -8811,12 +8825,14 @@ async function cargarNutricion() {
     now.setHours(now.getHours() - 2);
     const nowIso = now.toISOString();
 
-    const { data: clases, error: errClases } =
+    const { data: rawClases, error: errClases } =
         await client.from('clases')
             .select('*, profesionales(*)')
             .eq('tipo_clase', 'nutricion')
             .gte('fecha_inicio', nowIso)
             .order('fecha_inicio');
+
+    const clases = (rawClases || []).filter(esHorarioValidoConsulta);
 
     if (errClases) {
         console.error('Error cargando nutrición', errClases);
@@ -10915,7 +10931,8 @@ async function cargarConsultasAdmin() {
         return;
     }
 
-    const clases = filtrarConsultasParaTrabajador(clasesData || []);
+    const validClases = (clasesData || []).filter(esHorarioValidoConsulta);
+    const clases = filtrarConsultasParaTrabajador(validClases);
 
     if (!clases || clases.length === 0) {
         container.innerHTML = '';
