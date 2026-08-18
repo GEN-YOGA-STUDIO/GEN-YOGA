@@ -113,11 +113,11 @@ assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Ángel Javier' }, '2026
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Ángel Javier' }, '2026-08-05'), true);
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Yanira' }, '2026-08-07'), true);
 
-const expectedConsultationStarts = [570, 630, 690, 750, 810, 1020, 1080, 1140, 1200];
+const expectedConsultationStarts = [570, 630, 690, 750, 1020, 1080, 1140, 1200];
 assert.deepEqual(
   [...calendarApi.consultationStartMinutesFor({ nombre: 'Miriam' }, '2026-08-18')],
   expectedConsultationStarts,
-  'Miriam debe estar disponible los martes de 09:30 a 14:30 y de 17:00 a 21:00',
+  'Miriam debe estar disponible los martes de 09:30 a 13:30 y de 17:00 a 21:00',
 );
 assert.deepEqual(
   [...calendarApi.consultationStartMinutesFor({ nombre: 'Miriam' }, '2026-08-19')],
