@@ -493,6 +493,24 @@
             ? 'Yoga para Todos'
             : databaseName;
 
+        const rawCap = Number(raw?.capacidad_max);
+        const capacity = classType === 'yoga'
+            ? (Number.isFinite(rawCap) && rawCap > 0 && rawCap <= 10 ? rawCap : 10)
+            : Math.max(0, rawCap || 0);
+
+        let finalOccupied = exactAvailability && Number.isFinite(occupied) ? Math.max(0, occupied) : null;
+        let finalFreeSpots = exactAvailability && Number.isFinite(freeSpots) ? Math.max(0, freeSpots) : null;
+        if (classType === 'yoga' && exactAvailability) {
+            if (finalOccupied !== null) {
+                finalFreeSpots = Math.max(0, capacity - finalOccupied);
+            } else if (finalFreeSpots !== null && finalFreeSpots > 10) {
+                finalFreeSpots = 10;
+            }
+        }
+        const complete = exactAvailability
+            ? (raw?.completa === true || (finalFreeSpots !== null && finalFreeSpots <= 0))
+            : null;
+
         return {
             id,
             name,
@@ -501,10 +519,10 @@
             dateKey: madridStart.dateKey,
             startMinutes: madridStart.minutes,
             durationMinutes: Math.max(1, Math.round((end.getTime() - start.getTime()) / 60_000)),
-            capacity: Math.max(0, Number(raw?.capacidad_max) || 0),
-            occupied: exactAvailability && Number.isFinite(occupied) ? Math.max(0, occupied) : null,
-            freeSpots: exactAvailability && Number.isFinite(freeSpots) ? Math.max(0, freeSpots) : null,
-            complete: exactAvailability ? raw?.completa === true : null,
+            capacity,
+            occupied: finalOccupied,
+            freeSpots: finalFreeSpots,
+            complete,
             professor,
             classType,
             classTypeId: safePositiveInteger(raw?.tipo_clase_id),
