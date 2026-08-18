@@ -207,11 +207,16 @@ for (const fileName of actualPages) {
     if (count(markup, pattern) !== 1) errors.push(`${fileName}: debe contener exactamente un ${label}`);
   }
 
-  const canonicalFavicon = /<link\s+rel=["']icon["']\s+type=["']image\/png["']\s+sizes=["']64x64["']\s+href=["']img\/favicon-64\.png\?v=6\.27["']\s*\/?>/gi;
+  const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+  const currentVersionParts = pkg.version.split('.');
+  const currentVersion = `${currentVersionParts[0]}.${currentVersionParts[1]}`;
+  const versionRegexEscaped = currentVersion.replace('.', '\\.');
+
+  const canonicalFavicon = new RegExp(`<link\\s+rel=["']icon["']\\s+type=["']image/png["']\\s+sizes=["']64x64["']\\s+href=["']img/favicon-64\\.png\\?v=${versionRegexEscaped}["']\\s*/?>`, 'gi');
   if (count(markup, canonicalFavicon) !== 1) {
-    errors.push(`${fileName}: debe incluir exactamente el favicon PNG 64x64 de la versión 6.27`);
+    errors.push(`${fileName}: debe incluir exactamente el favicon PNG 64x64 de la versión ${currentVersion}`);
   }
-  const canonicalTouchIcon = /<link\s+rel=["']apple-touch-icon["']\s+sizes=["']180x180["']\s+href=["']img\/apple-touch-icon\.png\?v=6\.27["']\s*\/?>/gi;
+  const canonicalTouchIcon = new RegExp(`<link\\s+rel=["']apple-touch-icon["']\\s+sizes=["']180x180["']\\s+href=["']img/apple-touch-icon\\.png\\?v=${versionRegexEscaped}["']\\s*/?>`, 'gi');
   if (count(markup, canonicalTouchIcon) !== 1) {
     errors.push(`${fileName}: debe incluir exactamente el icono de favoritos móvil 180x180`);
   }
@@ -256,14 +261,15 @@ for (const fileName of actualPages) {
   if (/\bstyle=["'][^"']*\bselect-none\b/i.test(markup)) {
     errors.push(`${fileName}: usa la clase select-none como si fuera una declaración style`);
   }
-  if (!/<meta\s+name=["']application-version["']\s+content=["']6\.27["']\s*\/?>/i.test(markup)) {
-    errors.push(`${fileName}: falta la identidad de compilación 6.27`);
+  const appVersionMeta = new RegExp(`<meta\\s+name=["']application-version["']\\s+content=["']${versionRegexEscaped}["']\\s*/?>`, 'i');
+  if (!appVersionMeta.test(markup)) {
+    errors.push(`${fileName}: falta la identidad de compilación ${currentVersion}`);
   }
   if (/@latest\b/i.test(source)) errors.push(`${fileName}: contiene una dependencia @latest`);
   const staleVisualVersion = [...source.matchAll(/\bv(\d+)\.(\d+)\b/gi)]
-    .find(([, major, minor]) => `${major}.${minor}` !== '6.27');
+    .find(([, major, minor]) => `${major}.${minor}` !== currentVersion);
   if (staleVisualVersion) {
-    errors.push(`${fileName}: contiene una versión visual distinta de 6.27 (${staleVisualVersion[0]})`);
+    errors.push(`${fileName}: contiene una versión visual distinta de ${currentVersion} (${staleVisualVersion[0]})`);
   }
 }
 
