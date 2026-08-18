@@ -5371,7 +5371,7 @@ function renderizarAsistenciasPorClase() {
                     const iniciales = (nombre ? nombre[0] : (email[0] || '?')).toUpperCase();
                     const reservaId = safePositiveInteger(r.id) || 0;
                     const cancelBtn = (isAdmin || esTrabajador())
-                        ? `<button onclick="cancelar(${reservaId})" class="text-gray-300 hover:text-red-500 transition ml-auto relative z-20 p-1 flex-shrink-0" title="Quitar Alumno"><i class="ph-bold ph-trash text-base"></i></button>`
+                        ? `<button onclick="${(tipoNormalizado === 'psicologia' || tipoNormalizado === 'nutricion') ? `cancelarConsulta('${tipoNormalizado}', ${reservaId})` : `cancelar(${reservaId})`}" class="text-gray-300 hover:text-red-500 transition ml-auto relative z-20 p-1 flex-shrink-0" title="Quitar"><i class="ph-bold ph-trash text-base"></i></button>`
                         : '';
 
                     return `
@@ -5399,6 +5399,10 @@ function renderizarAsistenciasPorClase() {
                     </div>`
                 : '';
 
+            const adminDeleteClassBtn = isAdmin
+                ? `<button onclick="${(tipoNormalizado === 'psicologia' || tipoNormalizado === 'nutricion') ? `borrarConsultaAdmin('${tipoNormalizado}', ${safePositiveInteger(c.id) || 0})` : `borrarClase(${safePositiveInteger(c.id) || 0})`}" class="text-gray-300 hover:text-red-500 transition p-1 ml-auto sm:ml-2 flex-shrink-0" title="Eliminar Turno"><i class="ph-bold ph-trash text-lg"></i></button>`
+                : '';
+
             fila.innerHTML = `
                         <div class="flex flex-col gap-4">
                             <div class="flex items-start sm:items-center gap-4">
@@ -5412,6 +5416,7 @@ function renderizarAsistenciasPorClase() {
                                     <h4 class="brand-font text-lg font-bold text-gray-900 leading-tight flex items-center flex-wrap gap-1">
                                         ${escapeHtml(c.nombre || 'Clase')}
                                         ${profHTML}
+                                        ${adminDeleteClassBtn}
                                     </h4>
                                     <div class="flex flex-wrap items-center gap-2 mt-1.5">
                                          <span class="flex items-center gap-1.5 text-xs font-semibold border px-2.5 py-1 rounded-lg shadow-sm ${tipoMeta.colorClass}">
@@ -8783,18 +8788,21 @@ async function cargarPsicologia() {
     }
 
     const claseIds = clases.map(c => c.id);
-    const { data: reservas, error: errReservas } =
-        await client.from('reservas_psicologia')
-            .select('*')
-            .in('clase_id', claseIds);
+    const [reservasRes, perfilesRes] = await Promise.all([
+        client.from('reservas_psicologia').select('*').in('clase_id', claseIds),
+        client.from('profiles').select('id, nombre, apellidos, email, telefono')
+    ]);
 
-    if (errReservas) {
-        console.error('Error cargando reservas de consultas', errReservas);
+    if (reservasRes.error) {
+        console.error('Error cargando reservas de consultas', reservasRes.error);
     }
     document.getElementById('psicologia-empty-state').classList.add('hidden');
 
+    const perfilesMap = {};
+    (perfilesRes.data || []).forEach(p => { perfilesMap[p.id] = p; });
+
     const reservasMap = {};
-    (reservas || []).forEach(r => {
+    (reservasRes.data || []).forEach(r => {
         if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
         reservasMap[r.clase_id].push(r);
     });
@@ -8804,6 +8812,12 @@ async function cargarPsicologia() {
         const confirmadas = resClase.filter(r => r.estado === 'confirmada');
         c.ocupadas = confirmadas.length;
         c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
+        if (confirmadas.length > 0) {
+            const conf = confirmadas[0];
+            c.reservaConfirmada = { ...conf, paciente: perfilesMap[conf.user_id] || {} };
+        } else {
+            c.reservaConfirmada = null;
+        }
     });
 
     allPsicologiaCache = clases;
@@ -8850,18 +8864,21 @@ async function cargarNutricion() {
     }
 
     const claseIds = clases.map(c => c.id);
-    const { data: reservas, error: errReservas } =
-        await client.from('reservas_nutricion')
-            .select('*')
-            .in('clase_id', claseIds);
+    const [reservasRes, perfilesRes] = await Promise.all([
+        client.from('reservas_nutricion').select('*').in('clase_id', claseIds),
+        client.from('profiles').select('id, nombre, apellidos, email, telefono')
+    ]);
 
-    if (errReservas) {
-        console.error('Error cargando reservas de nutrición', errReservas);
+    if (reservasRes.error) {
+        console.error('Error cargando reservas de nutrición', reservasRes.error);
     }
     document.getElementById('nutricion-empty-state').classList.add('hidden');
 
+    const perfilesNutriMap = {};
+    (perfilesRes.data || []).forEach(p => { perfilesNutriMap[p.id] = p; });
+
     const reservasMap = {};
-    (reservas || []).forEach(r => {
+    (reservasRes.data || []).forEach(r => {
         if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
         reservasMap[r.clase_id].push(r);
     });
@@ -8871,6 +8888,12 @@ async function cargarNutricion() {
         const confirmadas = resClase.filter(r => r.estado === 'confirmada');
         c.ocupadas = confirmadas.length;
         c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
+        if (confirmadas.length > 0) {
+            const conf = confirmadas[0];
+            c.reservaConfirmada = { ...conf, paciente: perfilesNutriMap[conf.user_id] || {} };
+        } else {
+            c.reservaConfirmada = null;
+        }
     });
 
     allNutricionCache = clases;
@@ -8949,10 +8972,25 @@ function renderizarPsicologia() {
 
             let btnAction = '';
             if (isAdmin) {
-                btnAction = `
-                    <button onclick="abrirModalAsignarPlazaAdmin('psicologia', ${claseId})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
-                        <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
-                    </button>`;
+                if (c.reservaConfirmada) {
+                    const pac = c.reservaConfirmada.paciente || {};
+                    const pacNombre = `${pac.nombre || ''} ${pac.apellidos || ''}`.trim() || pac.email || 'Paciente';
+                    const resId = safePositiveInteger(c.reservaConfirmada.id) || 0;
+                    btnAction = `
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <span class="text-xs font-bold text-gray-700 bg-sand/20 border border-cocoa/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="${escapeHtml(pac.email || '')}">
+                                <i class="ph-bold ph-user text-blue-600"></i> ${escapeHtml(pacNombre)}
+                            </span>
+                            <button onclick="cancelarConsulta('psicologia', ${resId})" class="text-xs font-bold text-red-600 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition">
+                                Cancelar Cita
+                            </button>
+                        </div>`;
+                } else {
+                    btnAction = `
+                        <button onclick="abrirModalAsignarPlazaAdmin('psicologia', ${claseId})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
+                            <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
+                        </button>`;
+                }
             } else if (reservada) {
                 btnAction = `
                     <button onclick="cancelarConsulta('psicologia', ${reservaId})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
@@ -9095,10 +9133,25 @@ function renderizarNutricion() {
 
             let btnAction = '';
             if (isAdmin) {
-                btnAction = `
-                    <button onclick="abrirModalAsignarPlazaAdmin('nutricion', ${claseId})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
-                        <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
-                    </button>`;
+                if (c.reservaConfirmada) {
+                    const pac = c.reservaConfirmada.paciente || {};
+                    const pacNombre = `${pac.nombre || ''} ${pac.apellidos || ''}`.trim() || pac.email || 'Paciente';
+                    const resId = safePositiveInteger(c.reservaConfirmada.id) || 0;
+                    btnAction = `
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <span class="text-xs font-bold text-gray-700 bg-sand/20 border border-cocoa/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="${escapeHtml(pac.email || '')}">
+                                <i class="ph-bold ph-user text-purple-600"></i> ${escapeHtml(pacNombre)}
+                            </span>
+                            <button onclick="cancelarConsulta('nutricion', ${resId})" class="text-xs font-bold text-red-600 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition">
+                                Cancelar Cita
+                            </button>
+                        </div>`;
+                } else {
+                    btnAction = `
+                        <button onclick="abrirModalAsignarPlazaAdmin('nutricion', ${claseId})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
+                            <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
+                        </button>`;
+                }
             } else if (reservada) {
                 btnAction = `
                     <button onclick="cancelarConsulta('nutricion', ${reservaId})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
@@ -10808,27 +10861,40 @@ async function borrarConsultaAdmin(tipo, claseId) {
     }
 
     if ((reservasActivas || 0) > 0) {
-        Swal.fire({
+        const confirmResult = await Swal.fire({
             icon: 'warning',
-            title: 'Turno con reserva activa',
-            text: 'Cancela primero la reserva asociada antes de eliminar este turno.',
-            confirmButtonColor: config.color
+            title: 'Turno con reserva asignada',
+            text: 'Este hueco tiene una cita confirmada. Si continúas, se cancelará la reserva del paciente y se eliminará el hueco del profesional.',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Sí, cancelar cita y eliminar hueco',
+            cancelButtonText: 'No, mantener'
         });
-        return;
+        if (!confirmResult.isConfirmed) return;
+
+        // Cancelar reservas activas asociadas antes de borrar el hueco
+        const { error: cancelResErr } = await client
+            .from(config.table)
+            .update({ estado: 'cancelada' })
+            .eq('clase_id', idNormalizado);
+        if (cancelResErr) {
+            console.error('Error al cancelar reservas del turno:', cancelResErr);
+        }
+    } else {
+        const result = await Swal.fire({
+            title: '¿Eliminar este turno?',
+            text: 'El horario dejará de estar disponible y esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!result.isConfirmed) return;
     }
-
-    const result = await Swal.fire({
-        title: '¿Eliminar este turno?',
-        text: 'El horario dejará de estar disponible y esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#9ca3af',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    });
-
-    if (!result.isConfirmed) return;
 
     Swal.fire({
         title: 'Eliminando turno...',
