@@ -4296,6 +4296,7 @@ async function cargarHorarios() {
         const confirmadas = resClase.filter(r => r.estado === 'confirmada');
         c.ocupadas = confirmadas.length;
         c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
+        c.capacidad_max = 10;
     });
 
     allClasesCache = clases;
@@ -5332,8 +5333,8 @@ function renderizarAsistenciasPorClase() {
             const listadoReservas = allAsistenciasReservasMap[c.id] || [];
             const totalReservas = listadoReservas.length;
             const tipoMeta = getTipoClaseMeta(c.tipo_clase);
-            const capacidadMax = toSafeNumber(c.capacidad_max) || 1;
             const tipoNormalizado = normalizarTipoClase(c.tipo_clase);
+            const capacidadMax = (tipoNormalizado === 'yoga' || tipoNormalizado === 'taller' || !c.tipo_clase) ? 10 : (toSafeNumber(c.capacidad_max) || 1);
 
             const fila = document.createElement('div');
             fila.className = 'p-5 flex flex-col gap-4';
@@ -5715,7 +5716,7 @@ function renderizarAgendaProfesor() {
                     `;
                 }
             } else {
-                estadoBadge = `<span class="text-xs font-bold text-cocoa/50 bg-sand/20 px-2.5 py-1 rounded-lg">${ocupadas} / ${toSafeNumber(c.capacidad_max) || 1} alumnos</span>`;
+                estadoBadge = `<span class="text-xs font-bold text-cocoa/50 bg-sand/20 px-2.5 py-1 rounded-lg">${ocupadas} / 10 alumnos</span>`;
                 accionBtn = `
                     <button onclick="abrirAlumnosClase(${safePositiveInteger(c.id) || 0})"
                         class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">
