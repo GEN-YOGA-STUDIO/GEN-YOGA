@@ -85,7 +85,7 @@ const [maestros, profile, clases, migration, mergeMigration] = await Promise.all
 ]);
 
 for (const page of [maestros, profile]) {
-  assert.match(page, /teacher-profiles\.js\?v=6\.26/);
+  assert.match(page, /teacher-profiles\.js\?v=6\.27/);
 }
 
 // Check teacher image cutouts and assets

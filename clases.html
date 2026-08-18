@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.26">
+    <meta name="application-version" content="6.27">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.26">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.26">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.27">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.27">
     <title>GEN Yoga | Clases</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-    <script src="i18n.js?v=6.26"></script>
+    <script src="i18n.js?v=6.27"></script>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.26" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.27" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -247,31 +247,33 @@
         .consultation-card {
             overflow: hidden;
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.22);
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
                 0 24px 52px -20px rgba(38, 22, 12, 0.48);
+            backdrop-filter: blur(8px);
+            transition: transform 300ms ease, box-shadow 300ms ease;
         }
 
         .consultation-card--miriam {
             background-color: #744833;
             background-image:
-                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.13), transparent 34%),
-                linear-gradient(135deg, #744833 0%, #4f3025 100%);
+                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.18), transparent 38%),
+                linear-gradient(135deg, #744833 0%, #4a2d1f 100%);
         }
 
         .consultation-card--silvia {
             background-color: #68704a;
             background-image:
-                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.13), transparent 34%),
-                linear-gradient(135deg, #68704a 0%, #41482f 100%);
+                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.18), transparent 38%),
+                linear-gradient(135deg, #68704a 0%, #3e442c 100%);
         }
 
         .consultation-card--isabel {
             background-color: #8f6b2d;
             background-image:
-                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.16), transparent 34%),
-                linear-gradient(135deg, #8f6b2d 0%, #5d431d 100%);
+                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.20), transparent 38%),
+                linear-gradient(135deg, #8f6b2d 0%, #58401a 100%);
         }
 
         .consultation-card:focus-visible {
@@ -280,46 +282,72 @@
         }
 
         .consultation-card__portrait {
-            border: 1px solid rgba(255, 255, 255, 0.24);
-            box-shadow: 0 18px 34px -20px rgba(20, 10, 5, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 16px 36px -12px rgba(15, 8, 4, 0.55);
+            transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .consultation-card:hover .consultation-card__portrait {
+            transform: scale(1.02);
         }
 
         .consultation-card__eyebrow {
             display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
             align-self: flex-start;
             width: fit-content;
-            padding: 0.38rem 0.68rem;
-            border: 1px solid rgba(255, 255, 255, 0.24);
+            padding: 0.35rem 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.28);
             border-radius: 999px;
-            background: rgba(28, 14, 6, 0.2);
+            background: rgba(20, 10, 5, 0.25);
+            backdrop-filter: blur(4px);
             color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
             line-height: 1.25;
+            text-transform: uppercase;
         }
 
         .consultation-card__title {
             color: #ffffff;
-            text-shadow: 0 2px 18px rgba(25, 12, 6, 0.28);
+            text-shadow: 0 2px 20px rgba(15, 8, 4, 0.35);
+            letter-spacing: 0.02em;
         }
 
         .consultation-card__description {
             max-width: 44rem;
-            color: #ffffff;
-            font-weight: 500;
+            color: rgba(255, 255, 255, 0.92);
+            font-weight: 400;
+            line-height: 1.6;
         }
 
         .consultation-card .gy-folder-calendar-link {
-            padding: 0.62rem 0.82rem;
-            border: 1px solid rgba(255, 255, 255, 0.34);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.6rem 1.1rem;
+            border: 1px solid rgba(255, 255, 255, 0.45);
             border-radius: 999px;
-            background: rgba(28, 14, 6, 0.2);
+            background: rgba(20, 10, 5, 0.25);
+            backdrop-filter: blur(6px);
             color: #ffffff;
-            transition: transform 180ms ease, background-color 180ms ease;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+            transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .consultation-card:hover .gy-folder-calendar-link,
         .consultation-card:focus-visible .gy-folder-calendar-link {
-            transform: translateX(2px);
-            background: rgba(28, 14, 6, 0.32);
+            transform: translateX(4px) scale(1.03);
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }
 
         /* Reserve a real white strip below the folders instead of overlaying the help prompt. */
@@ -364,7 +392,7 @@
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
-    <link rel="stylesheet" href="public-calendar.css?v=6.26">
+    <link rel="stylesheet" href="public-calendar.css?v=6.27">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
 
@@ -531,7 +559,7 @@
                     <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M 0 36 L 0 12 Q 0 0 12 0 L 158 0 Q 170 0 170 12 C 170 24 182 36 194 36 L 896 36 L 896 37 L 0 37 Z" fill="#744833" />
-                            <text x="85" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="0.6">MIRIAM</text>
+                            <text x="85" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2">MIRIAM</text>
                         </svg>
                         <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
                         <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
@@ -542,13 +570,13 @@
                         class="folder-body consultation-card consultation-card--miriam flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
                         role="button" tabindex="0" aria-label="Ver consultas disponibles con Miriam">
                         <div class="consultation-card__portrait w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
-                            <img src="img/maestra-miriam-recortada.webp" alt="Miriam - Psicología" class="w-full h-full object-cover">
+                            <img src="img/miriam-psicologia.jpg" alt="Miriam - Psicología" class="w-full h-full object-cover">
                         </div>
                         <div class="consultation-card__copy w-full md:w-[55%] flex flex-col justify-center text-left pointer-events-none">
-                            <span class="consultation-card__eyebrow text-[10px] md:text-xs uppercase tracking-[0.04em] font-bold mb-2">Psicología con Miriam · Salud Mental</span>
+                            <span class="consultation-card__eyebrow">Psicoterapia · Miriam Alfaro</span>
                             <h2 class="consultation-card__title brand-font text-3xl md:text-5xl font-black uppercase tracking-normal mb-3 leading-none">Psicología</h2>
                             <p class="consultation-card__description text-xs md:text-sm lg:text-base leading-relaxed">
-                                Acompañamiento psicoterapéutico individual y terapia de pareja. Un espacio seguro donde trabajar tu bienestar emocional, gestionar la ansiedad y fortalecer tus relaciones desde la escucha y la confianza. Consulta el calendario para ver disponibilidad y reservar tu cita.
+                                Acompañamiento psicoterapéutico individual y de pareja. Un espacio seguro y de confianza donde trabajar tu bienestar emocional, gestionar la ansiedad, reconectar con tu autoestima y fortalecer tus vínculos. Consulta el calendario para ver disponibilidad y reservar tu cita.
                             </p>
                             <span class="gy-folder-calendar-link">Ver disponibilidad</span>
                         </div>
@@ -560,23 +588,24 @@
                     <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M 180 36 L 180 12 Q 180 0 192 0 L 338 0 Q 350 0 350 12 C 350 24 362 36 374 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#68704a" />
-                            <text x="260" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="0.6">SILVIA</text>
+                            <text x="260" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2">SILVIA</text>
                         </svg>
                         <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
                         <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[42%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
                     <div onclick="window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'silvia' })"
                         onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'silvia' }); }"
                         class="folder-body consultation-card consultation-card--silvia flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
                         role="button" tabindex="0" aria-label="Ver consultas disponibles con Silvia">
                         <div class="consultation-card__portrait w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
-                            <img src="img/maestra-silvia-recortada.webp" alt="Silvia - Ayurveda" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                            <img src="img/silvia-ayurveda.jpg" alt="Silvia - Ayurveda" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         </div>
                         <div class="consultation-card__copy w-full md:w-[55%] flex flex-col justify-center text-left pointer-events-none">
-                            <span class="consultation-card__eyebrow text-[10px] md:text-xs uppercase tracking-[0.04em] font-bold mb-2">Ayurveda con Silvia · Equilibrio integral</span>
+                            <span class="consultation-card__eyebrow">Salud Integrativa · Silvia Jaén</span>
                             <h2 class="consultation-card__title brand-font text-3xl md:text-5xl font-black uppercase tracking-normal mb-3 leading-none">Ayurveda</h2>
                             <p class="consultation-card__description text-xs md:text-sm lg:text-base leading-relaxed">
-                                Consulta de Ayurveda personalizada: análisis de tu constitución (doshas), historia clínica completa y recomendaciones de alimentación, rutinas y estilo de vida adaptadas a ti. Bonos de salud integrativa disponibles. Consulta el calendario para ver huecos libres y reservar.
+                                Consulta de Ayurveda personalizada: análisis de tu constitución (doshas), historia clínica completa y recomendaciones de alimentación consciente, estilo de vida, plantas y rutinas adaptadas a ti. Consulta el calendario para ver huecos libres y reservar.
                             </p>
                             <span class="gy-folder-calendar-link">Ver disponibilidad</span>
                         </div>
@@ -588,7 +617,7 @@
                     <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
                         <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M 360 36 L 360 12 Q 360 0 372 0 L 518 0 Q 530 0 530 12 C 530 24 542 36 554 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#8f6b2d" />
-                            <text x="445" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="0.6">ISABEL</text>
+                            <text x="445" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2">ISABEL</text>
                         </svg>
                         <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[22%] h-full cursor-pointer z-30"></div>
                         <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
@@ -599,13 +628,13 @@
                         class="folder-body consultation-card consultation-card--isabel flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
                         role="button" tabindex="0" aria-label="Ver consultas disponibles con Isabel">
                         <div class="consultation-card__portrait w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
-                            <img src="img/isabel-pni.jpg" alt="Isabel - PNI" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                            <img src="img/isabel-pni.jpg" alt="Isabel - Psiconeuroinmunología" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         </div>
                         <div class="consultation-card__copy w-full md:w-[55%] flex flex-col justify-center text-left pointer-events-none">
-                            <span class="consultation-card__eyebrow text-[10px] md:text-xs uppercase tracking-[0.04em] font-bold mb-2">Psicología con Isabel · PNI Clínica</span>
+                            <span class="consultation-card__eyebrow">PNI Clínica · Isabel Rodríguez</span>
                             <h2 class="consultation-card__title brand-font text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-normal mb-3 leading-none">Psiconeuroinmunología</h2>
                             <p class="consultation-card__description text-xs md:text-sm lg:text-base leading-relaxed">
-                                Consulta de Psiconeuroinmunología Clínica (PNI): un enfoque integrador que conecta tu sistema nervioso, inmune y hormonal para restablecer el equilibrio de tu organismo a través de la nutrición, el ejercicio y la gestión emocional. Consulta el calendario para reservar.
+                                Consulta de Psiconeuroinmunología Clínica (PNI): un enfoque integrador que conecta tu sistema nervioso, inmune, hormonal y digestivo para restablecer el equilibrio de tu organismo a través de la nutrición clínica, el ejercicio y la modulación del estrés. Consulta el calendario para reservar.
                             </p>
                             <span class="gy-folder-calendar-link">Ver disponibilidad</span>
                         </div>
@@ -705,7 +734,7 @@
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                 <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">Política de privacidad</a>
-                <span class="opacity-60 text-[10px]">v6.26 | @2026 Gen Yoga</span>
+                <span class="opacity-60 text-[10px]">v6.27 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
@@ -1201,8 +1230,8 @@ window.switchCategoryDeck = function(cat) {
 };
 
 </script>
-    <script src="public-calendar.js?v=6.26"></script>
-    <script src="facilities-carousel.js?v=6.26"></script>
+    <script src="public-calendar.js?v=6.27"></script>
+    <script src="facilities-carousel.js?v=6.27"></script>
     <script>
         window.GENPublicCalendar?.init({ client });
     </script>
