@@ -1313,6 +1313,10 @@ main .sticky.top-24 {
                             class="px-7 py-4 border-b-2 border-sand bg-cocoa/80 flex items-center gap-2 transition hover:bg-cocoa">
                             <i class="ph-bold ph-plus-circle text-sand"></i> Crear Sesiones
                         </button>
+                        <button onclick="switchTab('consultas')" id="tab-consultas"
+                            class="px-7 py-4 border-b-2 border-transparent text-sand/70 hover:text-white hover:bg-cocoa transition flex items-center gap-2">
+                            <i class="ph-bold ph-calendar-check text-sand"></i> Consultas
+                        </button>
                         <button onclick="switchTab('gestion-alumnos')" id="tab-gestion-alumnos"
                             class="px-7 py-4 border-b-2 border-transparent text-sand/70 hover:text-white hover:bg-cocoa transition flex items-center gap-2">
                             <i class="ph-bold ph-list-checks text-sand"></i> Inscribir Alumnos
@@ -5009,6 +5013,7 @@ async function switchTab(tabName) {
 
     const tabs = {
         'crear': { tab: 'tab-crear', view: 'view-horarios' },
+        'consultas': { tab: 'tab-consultas', view: 'view-admin-consultas' },
         'gestion-alumnos': { tab: 'tab-gestion-alumnos', view: 'view-asistencias' },
         'admin-profesores': { tab: 'tab-admin-profesores', view: 'view-admin-profesores' },
         'usuarios': { tab: 'tab-usuarios', view: 'view-usuarios' },
@@ -5028,9 +5033,9 @@ async function switchTab(tabName) {
         }
     });
     // Vistas legacy y nuevas que ahora se muestran dentro de "Crear"
-    ['view-admin-psicologia', 'view-admin-nutricion', 'view-admin-consultas', 'view-admin-talleres'].forEach(id => {
+    ['view-admin-psicologia', 'view-admin-nutricion', 'view-admin-talleres', 'view-inicio', 'view-especiales', 'view-profesores', 'view-psicologia', 'view-nutricion'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
+        if (el && (!active || active.view !== id)) el.classList.add('hidden');
     });
 
     // Activate the selected tab/view
@@ -5055,7 +5060,9 @@ async function switchTab(tabName) {
     }
 
     // Load data based on active tab
-    if (tabName === 'gestion-alumnos') {
+    if (tabName === 'consultas') {
+        await cargarConsultasAdmin();
+    } else if (tabName === 'gestion-alumnos') {
         await cargarAsistenciasPorClase();
     } else if (tabName === 'usuarios') {
         await cargarUsuariosAdmin();
@@ -8437,6 +8444,10 @@ function switchPublicView(viewName) {
     } else if (viewName === 'especiales') {
         cargarClasesEspeciales();
     } else if (viewName === 'psicologia') {
+        if (isAdmin) {
+            switchTab('consultas');
+            return;
+        }
         const savedSubTab = requestedConsultationSubTab || safeGetItem('activeConsultasSubTab', 'psicologia');
         switchConsultasSubTab(savedSubTab === 'nutricion' ? 'nutricion' : 'psicologia');
     } else if (viewName === 'profesores') {
@@ -10389,22 +10400,64 @@ async function abrirModalAsignarConsulta(tipo, claseId) {
     }
 
     const clientes = (perfiles || []).filter(esClienteAsignable);
-    if (clientes.length === 0) {
-        Swal.fire('Sin clientes', 'No hay clientes disponibles para asignar.', 'info');
-        return;
-    }
 
+    let activeAssignMode = 'existente';
     let studentPicker = null;
+
     const result = await Swal.fire({
         title: `Asignar cliente a ${config.label}`,
         html: `
-            <div class="text-left space-y-3">
-                ${crearMarkupBuscadorAlumnosAdmin({
-                    idPrefix: 'swal-cliente-consulta',
-                    fieldLabel: 'Buscar cliente',
-                    listLabel: 'Clientes disponibles'
-                })}
-                <p class="text-xs text-gray-400">Esta asignación de consulta no consume bonos.</p>
+            <div class="text-left space-y-4">
+                <div class="flex rounded-xl bg-cocoa/5 p-1 border border-cocoa/10">
+                    <button type="button" id="swal-tab-existente"
+                        class="flex-1 py-2 rounded-lg text-xs font-bold transition bg-white text-cocoa shadow-sm">
+                        <i class="ph-bold ph-magnifying-glass mr-1"></i> Usuario Registrado
+                    </button>
+                    <button type="button" id="swal-tab-temporal"
+                        class="flex-1 py-2 rounded-lg text-xs font-bold transition text-cocoa/60 hover:text-cocoa">
+                        <i class="ph-bold ph-user-plus mr-1"></i> Nuevo / Temporal
+                    </button>
+                </div>
+
+                <div id="swal-panel-existente" class="space-y-3">
+                    ${crearMarkupBuscadorAlumnosAdmin({
+                        idPrefix: 'swal-cliente-consulta',
+                        fieldLabel: 'Buscar cliente',
+                        listLabel: 'Clientes disponibles'
+                    })}
+                    <p class="text-xs text-gray-400">Esta asignación de consulta no consume bonos.</p>
+                </div>
+
+                <div id="swal-panel-temporal" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-cocoa/60 mb-1">Nombre <span class="text-red-500">*</span></label>
+                        <input type="text" id="swal-temp-nombre" placeholder="Ej: María"
+                            class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-cocoa/60 mb-1">Apellidos</label>
+                        <input type="text" id="swal-temp-apellidos" placeholder="Ej: Gómez López"
+                            class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-cocoa/60 mb-1">Teléfono</label>
+                            <input type="tel" id="swal-temp-telefono" placeholder="Ej: 612 34 56 78"
+                                class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-cocoa/60 mb-1">Email</label>
+                            <input type="email" id="swal-temp-email" placeholder="Ej: maria@ejemplo.com"
+                                class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-cocoa/60 mb-1">Notas / Motivo (opcional)</label>
+                    <input type="text" id="swal-temp-notas" placeholder="Ej: Primera consulta / Seguimiento"
+                        class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none">
+                </div>
             </div>
         `,
         showCancelButton: true,
@@ -10420,14 +10473,63 @@ async function abrirModalAsignarConsulta(tipo, claseId) {
                 entityPlural: 'clientes'
             });
             studentPicker?.focus();
+
+            const tabExistente = document.getElementById('swal-tab-existente');
+            const tabTemporal = document.getElementById('swal-tab-temporal');
+            const panelExistente = document.getElementById('swal-panel-existente');
+            const panelTemporal = document.getElementById('swal-panel-temporal');
+
+            tabExistente?.addEventListener('click', () => {
+                activeAssignMode = 'existente';
+                tabExistente.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition bg-white text-cocoa shadow-sm';
+                tabTemporal.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition text-cocoa/60 hover:text-cocoa';
+                panelExistente?.classList.remove('hidden');
+                panelTemporal?.classList.add('hidden');
+                studentPicker?.focus();
+            });
+
+            tabTemporal?.addEventListener('click', () => {
+                activeAssignMode = 'temporal';
+                tabTemporal.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition bg-white text-cocoa shadow-sm';
+                tabExistente.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition text-cocoa/60 hover:text-cocoa';
+                panelTemporal?.classList.remove('hidden');
+                panelExistente?.classList.add('hidden');
+                document.getElementById('swal-temp-nombre')?.focus();
+            });
         },
-        preConfirm: () => {
-            const clienteId = studentPicker?.getSelectedId();
-            if (!clienteId) {
-                Swal.showValidationMessage('Busca y selecciona un cliente');
-                return false;
+        preConfirm: async () => {
+            if (activeAssignMode === 'existente') {
+                const clienteId = studentPicker?.getSelectedId();
+                if (!clienteId) {
+                    Swal.showValidationMessage('Busca y selecciona un cliente');
+                    return false;
+                }
+                return clienteId;
+            } else {
+                const nombre = (document.getElementById('swal-temp-nombre')?.value || '').trim();
+                const apellidos = (document.getElementById('swal-temp-apellidos')?.value || '').trim();
+                const telefono = (document.getElementById('swal-temp-telefono')?.value || '').trim();
+                const email = (document.getElementById('swal-temp-email')?.value || '').trim();
+
+                if (!nombre) {
+                    Swal.showValidationMessage('Introduce al menos el nombre del paciente');
+                    return false;
+                }
+
+                try {
+                    const { data: newUserId, error: createErr } = await client.rpc('admin_crear_o_obtener_usuario_temporal', {
+                        p_nombre: nombre,
+                        p_apellidos: apellidos,
+                        p_email: email || null,
+                        p_telefono: telefono || null
+                    });
+                    if (createErr) throw createErr;
+                    return newUserId;
+                } catch (err) {
+                    Swal.showValidationMessage(err.message || 'Error al crear usuario temporal');
+                    return false;
+                }
             }
-            return clienteId;
         }
     });
 
@@ -10463,6 +10565,7 @@ async function asignarClienteAConsulta(tipo, claseId, userId) {
             timer: 1500
         });
         await refrescarConsultas(tipo);
+        await cargarConsultasAdmin();
     } finally {
         isReserving = false;
     }
