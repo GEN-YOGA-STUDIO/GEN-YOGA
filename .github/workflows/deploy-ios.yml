@@ -43,10 +43,10 @@ jobs:
           import os
 
           fallback_key = """-----BEGIN PRIVATE KEY-----
-          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgl6OMfUJRhY9aZxhp
-          gHpgG8CTkyFT5noJCegG9MSseaigCgYIKoZIzj0DAQehRANCAASvfzh7wmSLZhA9
-          uTeKh54wgdgz+SkwY9xehFIB6wly3Hhl6zb435jmudLxqQTih8Uud2kMoG1pKiFK
-          Lr6MJ4AZ
+          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgonbOtSNiV1Rq6n+F
+          9tKgeXYK67H0fhbPK0VQ+c2UYBOgCgYIKoZIzj0DAQehRANCAATJgdXtelAwGnl1
+          x5tivbCQNfc6bZGvu4h0myIXdMFUUqtKzthRFfPvXl/ay0f7WLc71e+PLZOh71Xj
+          gxga/ULa
           -----END PRIVATE KEY-----"""
 
           raw_key = os.environ.get("PRIVATE_KEY", "").strip()
@@ -58,8 +58,8 @@ jobs:
           key_to_use = key_to_use.replace("\r\n", "\n").strip() + "\n"
 
           paths = [
-              os.path.expanduser("~/.appstoreconnect/private_keys/AuthKey_9T2974ST9M.p8"),
-              os.path.expanduser("~/.private_keys/AuthKey_9T2974ST9M.p8")
+              os.path.expanduser("~/.appstoreconnect/private_keys/AuthKey_GUZVXW5P4X.p8"),
+              os.path.expanduser("~/.private_keys/AuthKey_GUZVXW5P4X.p8")
           ]
 
           for p in paths:
@@ -67,7 +67,7 @@ jobs:
               with open(p, "w", encoding="utf-8", newline="\n") as f:
                   f.write(key_to_use)
               os.chmod(p, 0o600)
-          print("App Store Connect API key configured successfully")
+          print("Admin App Store Connect API key configured successfully")
           EOF
 
       - name: Build & Archive iOS App
@@ -75,14 +75,14 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          KEY_ID="${APP_STORE_CONNECT_KEY_ID:-9T2974ST9M}"
+          KEY_ID="${APP_STORE_CONNECT_KEY_ID:-GUZVXW5P4X}"
           ISSUER_ID="${APP_STORE_CONNECT_ISSUER_ID:-c8f0f943-872c-4153-b89a-86fb7cc78b8f}"
           TEAM_ID="YLP3L4G7F3"
           KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8"
           
           cd "app ios/ios/App"
           
-          echo "Building and signing archive for Team ID: $TEAM_ID"
+          echo "Building and signing archive for Team ID: $TEAM_ID with Admin Key: $KEY_ID"
           
           xcodebuild \
             -project App.xcodeproj \
@@ -102,7 +102,7 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          KEY_ID="${APP_STORE_CONNECT_KEY_ID:-9T2974ST9M}"
+          KEY_ID="${APP_STORE_CONNECT_KEY_ID:-GUZVXW5P4X}"
           ISSUER_ID="${APP_STORE_CONNECT_ISSUER_ID:-c8f0f943-872c-4153-b89a-86fb7cc78b8f}"
           TEAM_ID="YLP3L4G7F3"
           KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8"
