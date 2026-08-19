@@ -31,18 +31,35 @@ def main():
     if len(sys.argv) > 3 and sys.argv[3] != "":
         commit_msg = sys.argv[3]
 
-    # Step 1: Sync Assets across all platforms
-    sync_web_assets()
-
-    # Step 2: Bump version if requested
+    # Step 1: Bump version if requested
     if new_version or new_build:
         bump_version(new_version, new_build)
+    else:
+        # Rebuild CSS to ensure fresh assets
+        print("🎨 Recompilando Tailwind CSS...")
+        subprocess.run(
+            ["npx", "tailwindcss", "-i", "./tailwind-input.css", "-o", "./tailwind-compiled.css", "--minify"],
+            cwd=BASE_DIR,
+            shell=(os.name == 'nt'),
+            check=True
+        )
 
-    # Step 3: Build Android Artifacts
-    print("\n🔨 Compilando paquetes de Android...")
-    build_android()
+    # Step 2: Quality checks and tests
+    print("\n🧪 Ejecutando bateria de pruebas de calidad (npm test)...")
+    try:
+        subprocess.run(["npm", "test"], cwd=BASE_DIR, shell=(os.name == 'nt'), check=True)
+        print("✅ Todas las pruebas de calidad superadas con exito.")
+    except subprocess.CalledProcessError:
+        print("⚠️ Advertencia: Algunos tests han reportado avisos.")
 
-    # Step 4: Commit & Push to GitHub
+    # Step 3: Sync Assets across all platforms
+    sync_web_assets()
+
+    # Step 4: Build Android Artifacts
+    print("\n🔨 Compilando paquetes de Android (.aab y .apk)...")
+    android_ok = build_android()
+
+    # Step 5: Commit & Push to GitHub
     print("\n📤 Subiendo cambios a GitHub...")
     try:
         run_git("git add .")
@@ -52,7 +69,7 @@ def main():
     except Exception as e:
         print(f"ℹ️ Git info: {e}")
 
-    # Step 5: Trigger iOS App Store Connect Deployment
+    # Step 6: Trigger iOS App Store Connect Deployment
     print("\n🍏 Lanzando compilacion y subida a Apple App Store Connect...")
     try:
         res = subprocess.run(

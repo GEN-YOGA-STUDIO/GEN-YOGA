@@ -14,10 +14,27 @@ OUTPUT_APK = os.path.join(ANDROID_DIR, "app", "build", "outputs", "apk", "releas
 DEST_AAB = os.path.join(BASE_DIR, "app android", "app-release.aab")
 DEST_APK = os.path.join(BASE_DIR, "app android", "app-release.apk")
 
+def configure_java_home():
+    current_java = os.environ.get("JAVA_HOME", "")
+    is_valid = current_java and os.path.exists(os.path.join(current_java, "bin", "java.exe" if os.name == 'nt' else "java"))
+    if not is_valid:
+        candidates = [
+            r"C:\Program Files\Android\Android Studio\jbr",
+            r"C:\Program Files\Java\jdk-25",
+            r"C:\Program Files\Java\latest",
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                os.environ["JAVA_HOME"] = c
+                print(f"☕ Configurado JAVA_HOME automáticamente: {c}")
+                break
+
 def build_android():
     print("=" * 60)
     print("🤖 Compilando Android App Bundle (.aab) y APK...")
     print("=" * 60)
+
+    configure_java_home()
 
     gradle_cmd = os.path.join(ANDROID_DIR, "gradlew.bat" if os.name == 'nt' else "./gradlew")
 

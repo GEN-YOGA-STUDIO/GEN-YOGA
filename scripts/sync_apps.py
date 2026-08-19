@@ -3,6 +3,7 @@ import os
 import shutil
 import re
 import sys
+import subprocess
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -66,47 +67,28 @@ def sync_web_assets():
     print(f"✅ Sincronizacion completada: {copied_count} archivos actualizados en todas las plataformas.")
 
 def bump_version(new_version=None, new_build_number=None):
-    gradle_path = os.path.join(BASE_DIR, "app android", "android", "app", "build.gradle")
-    pbxproj_path = os.path.join(BASE_DIR, "app ios", "ios", "App", "App.xcodeproj", "project.pbxproj")
+    args = ["node", os.path.join(BASE_DIR, "scripts", "bump-version.mjs")]
+    if new_version:
+        args.append(str(new_version))
+    if new_build_number:
+        args.append(str(new_build_number))
+    
+    subprocess.run(args, cwd=BASE_DIR, check=True)
 
-    if not os.path.exists(gradle_path):
-        print("⚠️ No se encontro build.gradle para gestionar versiones.")
-        return
-
-    with open(gradle_path, "r", encoding="utf-8") as f:
-        gradle_content = f.read()
-
-    vc_match = re.search(r'versionCode\s+(\d+)', gradle_content)
-    vn_match = re.search(r'versionName\s+"([^"]+)"', gradle_content)
-
-    current_vc = int(vc_match.group(1)) if vc_match else 60
-    current_vn = vn_match.group(1) if vn_match else "6.42"
-
-    if new_version is None:
-        new_version = current_vn
-    if new_build_number is None:
-        new_build_number = current_vc + 1
-
-    print(f"📌 Actualizando version a: v{new_version} (Build #{new_build_number})")
-
-    gradle_content = re.sub(r'versionCode\s+\d+', f'versionCode {new_build_number}', gradle_content)
-    gradle_content = re.sub(r'versionName\s+"[^"]+"', f'versionName "{new_version}"', gradle_content)
-    with open(gradle_path, "w", encoding="utf-8") as f:
-        f.write(gradle_content)
-
-    if os.path.exists(pbxproj_path):
-        with open(pbxproj_path, "r", encoding="utf-8") as f:
-            pbx_content = f.read()
-        pbx_content = re.sub(r'MARKETING_VERSION = [^;]+;', f'MARKETING_VERSION = {new_version};', pbx_content)
-        pbx_content = re.sub(r'CURRENT_PROJECT_VERSION = \d+;', f'CURRENT_PROJECT_VERSION = {new_build_number};', pbx_content)
-        with open(pbxproj_path, "w", encoding="utf-8") as f:
-            f.write(pbx_content)
-
-    print(f"✅ Version v{new_version} (#{new_build_number}) configurada en Android e iOS.")
+    print("🎨 Recompilando Tailwind CSS...")
+    subprocess.run(
+        ["npx", "tailwindcss", "-i", "./tailwind-input.css", "-o", "./tailwind-compiled.css", "--minify"],
+        cwd=BASE_DIR,
+        shell=(os.name == 'nt'),
+        check=True
+    )
+    print("✅ CSS actualizado y minificado.")
 
 if __name__ == "__main__":
     ver = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] != "" else None
     build = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2] != "" else None
-    sync_web_assets()
+    
     if ver or build:
         bump_version(ver, build)
+    
+    sync_web_assets()
