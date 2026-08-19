@@ -24,8 +24,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'app ios/package-lock.json'
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+      - name: Select Xcode 16 (iOS 18+ SDK)
+        run: |
+          if [ -d "/Applications/Xcode_16.2.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.2.app
+          elif [ -d "/Applications/Xcode_16.1.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.1.app
+          elif [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app
+          elif [ -d "/Applications/Xcode_16.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.app
+          fi
+          xcodebuild -version
 
       - name: Install dependencies & Sync Capacitor
         run: |
@@ -82,7 +92,7 @@ jobs:
           
           cd "app ios/ios/App"
           
-          echo "Building and signing archive for Team ID: $TEAM_ID with Admin Key: $KEY_ID"
+          echo "Building and signing archive with Xcode 16 for Team ID: $TEAM_ID with Admin Key: $KEY_ID"
           
           xcodebuild \
             -project App.xcodeproj \
