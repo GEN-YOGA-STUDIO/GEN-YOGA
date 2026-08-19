@@ -1,0 +1,39 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload iOS App to App Store Connect"
+  lane :release do
+    key_id = ENV["APP_STORE_CONNECT_KEY_ID"] || "9T2974ST9M"
+    issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"] || "c8f0f943-872c-4153-b89a-86fb7cc78b8f"
+    key_content = ENV["APP_STORE_CONNECT_PRIVATE_KEY"]
+
+    api_key = app_store_connect_api_key(
+      key_id: key_id,
+      issuer_id: issuer_id,
+      key_content: key_content,
+      is_key_content_base64: false
+    )
+
+    build_app(
+      project: "ios/App/App.xcodeproj",
+      scheme: "App",
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "GenYoga.ipa",
+      clean: true,
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic"
+      }
+    )
+
+    upload_to_app_store(
+      api_key: api_key,
+      ipa: "./build/GenYoga.ipa",
+      skip_metadata: true,
+      skip_screenshots: true,
+      reject_build_waiting_for_review: false,
+      distribute_external: false
+    )
+  end
+end
