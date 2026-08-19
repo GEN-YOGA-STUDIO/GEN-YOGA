@@ -41,8 +41,11 @@ jobs:
         run: |
           ACTUAL_KEY_ID="${KEY_ID:-9T2974ST9M}"
           mkdir -p ~/.appstoreconnect/private_keys
+          mkdir -p ~/.private_keys
           echo "$PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${ACTUAL_KEY_ID}.p8
+          echo "$PRIVATE_KEY" > ~/.private_keys/AuthKey_${ACTUAL_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ACTUAL_KEY_ID}.p8
+          chmod 600 ~/.private_keys/AuthKey_${ACTUAL_KEY_ID}.p8
 
       - name: Build & Upload to App Store Connect
         env:
@@ -53,8 +56,9 @@ jobs:
           cd "app ios"
           export APP_STORE_CONNECT_KEY_ID="${APP_STORE_CONNECT_KEY_ID:-9T2974ST9M}"
           export APP_STORE_CONNECT_ISSUER_ID="${APP_STORE_CONNECT_ISSUER_ID:-c8f0f943-872c-4153-b89a-86fb7cc78b8f}"
+          
           bundle install || gem install fastlane
-          bundle exec fastlane release || fastlane release
+          fastlane release
 
       - name: Upload IPA Artifact
         if: always()
