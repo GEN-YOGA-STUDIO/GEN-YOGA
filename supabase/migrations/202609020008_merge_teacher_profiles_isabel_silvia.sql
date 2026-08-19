@@ -94,7 +94,7 @@ begin
       where lower(trim(email)) in ('isabel@genyoga.es', 'isabel_profesora@genyoga.studio')
         and id <> v_canon_user_id
     loop
-      update public.reservas set user_id = v_canon_user_id where user_id = v_dup_user_id;
+      update public.reservas_yoga set user_id = v_canon_user_id where user_id = v_dup_user_id;
       delete from public.profiles where id = v_dup_user_id;
     end loop;
   end if;
@@ -200,7 +200,7 @@ begin
       where lower(trim(email)) in ('silvia@genyoga.es', 'silvia_profesora@genyoga.studio')
         and id <> v_canon_user_id
     loop
-      update public.reservas set user_id = v_canon_user_id where user_id = v_dup_user_id;
+      update public.reservas_yoga set user_id = v_canon_user_id where user_id = v_dup_user_id;
       delete from public.profiles where id = v_dup_user_id;
     end loop;
   end if;

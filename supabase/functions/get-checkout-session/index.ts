@@ -11,6 +11,7 @@ import {
   getValidatedCatalog,
   handleOptions,
   isSingleConsultation,
+  isWorkshopPurchase,
   jsonResponse,
   readCorsConfig,
   readProductionConfig,
@@ -51,9 +52,14 @@ serve(async (req) => {
     const purchase = validateCheckoutPurchase(session, catalog)
     const isGuest = purchase.appUserId === 'guest'
     const isGuestConsultation = isGuest && isSingleConsultation(purchase.purchaseType)
+    const isGuestWorkshop = isGuest && isWorkshopPurchase(purchase.purchaseType)
 
     if (isGuest) {
-      if (purchase.purchaseType !== PURCHASE_TYPES.CLASE_SUELTA && !isGuestConsultation) {
+      if (
+        purchase.purchaseType !== PURCHASE_TYPES.CLASE_SUELTA &&
+        !isGuestConsultation &&
+        !isGuestWorkshop
+      ) {
         throw new HttpError(403, 'La compra de invitado no es válida.')
       }
     } else {
@@ -63,12 +69,12 @@ serve(async (req) => {
       }
     }
 
-    // Every authenticated one-off purchase and every guest consultation must
-    // be recorded before success.html renders. The Checkout Session remains the
-    // idempotency boundary shared with the webhook. Guest yoga classes keep
-    // their existing redemption flow and are therefore not fulfilled here.
+    // Every authenticated one-off purchase and every guest consultation or
+    // workshop must be recorded before success.html renders. The Checkout Session
+    // remains the idempotency boundary shared with the webhook. Guest regular
+    // yoga classes keep their existing redemption flow and are fulfilled on class pick.
     const shouldFulfillOnReturn = purchase.purchaseType !== PURCHASE_TYPES.BONO_MENSUAL &&
-      (!isGuest || isGuestConsultation)
+      (!isGuest || isGuestConsultation || isGuestWorkshop)
     if (shouldFulfillOnReturn) {
       const { error: fulfillError } = await supabase.rpc('stripe_fulfill_checkout', {
         p_event_id: `checkout_return:${session.id}`,
@@ -113,12 +119,13 @@ serve(async (req) => {
     // The production v6.17 success page treats every `isGuest` purchase as a
     // yoga class. Keep that page on its generic success state until the v6.18+
     // consultation UI declares support explicitly.
-    const uiIsGuest = isGuest && (!isGuestConsultation || supportsGuestConsultationUi)
+    const uiIsGuest = isGuest && (!isGuestConsultation && !isGuestWorkshop || supportsGuestConsultationUi)
 
     return jsonResponse({
       isGuest: uiIsGuest,
       purchaseIsGuest: isGuest,
       isGuestConsultation,
+      isGuestWorkshop,
       purchaseType: purchase.purchaseType,
       membershipMonth: purchase.membershipMonth,
       email: isGuest ? (session.customer_details?.email || '') : '',

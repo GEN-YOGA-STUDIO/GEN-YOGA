@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.41">
+    <meta name="application-version" content="6.42">
     <meta name="robots" content="noindex,nofollow">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.41">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.41">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.42">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.42">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.41">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.42">
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
@@ -162,7 +162,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v6.41</span>
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v6.42</span>
         </div>
     </div>
 
@@ -250,8 +250,8 @@
                         // Load available classes for booking
                         await cargarClasesDisponiblesInvitado();
                     }
-                } else if (data.isGuest && isGuestConsultationPurchaseType(data.purchaseType)) {
-                    const consultationTitles = {
+                } else if (data.isGuest && (isGuestConsultationPurchaseType(data.purchaseType) || isWorkshopPurchaseType(data.purchaseType))) {
+                    const itemTitles = {
                         'miriam_psico_individual_1a': 'Acompañamiento psicoterapéutico (1ª sesión)',
                         'miriam_psico_individual_sig': 'Acompañamiento psicoterapéutico (siguientes)',
                         'miriam_psico_pareja_1a': 'Terapia de pareja (1ª sesión)',
@@ -260,22 +260,24 @@
                         'silvia_ayurveda_sig': 'Consulta de Ayurveda (seguimiento)',
                         'isabel_pni_1a': 'Consulta de PNI (1ª sesión)',
                         'isabel_pni_sig': 'Consulta de PNI (seguimiento)',
+                        'clase_especial': 'Clase Especial: Yoga & Meditación',
+                        'taller_intro_power_vinyasa': 'Taller: Introducción a Power Vinyasa',
                     };
                     const titleEl = document.getElementById('guest-consultation-title');
                     const msgEl = document.getElementById('guest-consultation-message');
-                    const consultationName = consultationTitles[data.purchaseType] || 'Consulta';
+                    const itemName = itemTitles[data.purchaseType] || 'Reserva';
                     if (titleEl) {
-                        titleEl.textContent = consultationName;
+                        titleEl.textContent = itemName;
                     }
                     const customerName = [data.nombre, data.apellidos].filter(Boolean).join(' ');
                     const idInfo = [customerName, data.phone].filter(Boolean).join(' · ');
                     if (msgEl) {
-                        let text = `Stripe ha confirmado el pago de tu <strong>${escapeHtml(consultationName)}</strong>.`;
+                        let text = `Stripe ha confirmado el pago de tu <strong>${escapeHtml(itemName)}</strong>.`;
                         if (data.email) {
                             text += ` Tu recibo de compra se ha enviado a <strong>${escapeHtml(data.email)}</strong>.`;
                         }
                         if (idInfo) {
-                            text += ` Para el día de la cita podrás identificarte con tus datos (<strong>${escapeHtml(idInfo)}</strong>).`;
+                            text += ` Para el día de la sesión podrás identificarte en el centro con tus datos (<strong>${escapeHtml(idInfo)}</strong>).`;
                         }
                         msgEl.innerHTML = text;
                     }
@@ -293,6 +295,10 @@
                         successMessage.textContent = 'Tu clase suelta ya está registrada como un bono independiente y caducará 60 días naturales después de la compra.';
                     } else if (successMessage && /^pack_(4|6|10)$/.test(data.purchaseType || '')) {
                         successMessage.textContent = 'Tu pack ya está registrado con su propio saldo y caducará 60 días naturales después de la compra.';
+                    } else if (successMessage && data.purchaseType === 'taller_intro_power_vinyasa') {
+                        successMessage.textContent = 'Tu plaza para el Taller de Introducción a Power Vinyasa ya está confirmada y registrada en tu cuenta.';
+                    } else if (successMessage && data.purchaseType === 'clase_especial') {
+                        successMessage.textContent = 'Tu plaza para la Clase Especial de Yoga & Meditación ya está confirmada y registrada en tu cuenta.';
                     }
                     document.getElementById('standard-success').classList.remove('hidden');
                     startCountdown(5);
@@ -343,6 +349,12 @@
 
         function isGuestConsultationPurchaseType(purchaseType) {
             return /^(?:miriam_psico_(?:individual|pareja)_(?:1a|sig)|silvia_ayurveda_(?:1a|sig)|isabel_pni_(?:1a|sig))$/.test(
+                String(purchaseType || '')
+            );
+        }
+
+        function isWorkshopPurchaseType(purchaseType) {
+            return /^(?:clase_especial|taller_intro_power_vinyasa)$/.test(
                 String(purchaseType || '')
             );
         }
