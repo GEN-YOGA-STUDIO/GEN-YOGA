@@ -18,7 +18,7 @@ async function exists(absolutePath) {
 async function collectWebFiles(directory) {
   const results = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if (['.git', 'node_modules', 'supabase', 'scripts'].includes(entry.name)) continue;
+    if (['.git', 'node_modules', 'supabase', 'scripts', 'app android', 'app ios', 'docs', 'ultima version', '.github', 'build', '.gradle'].includes(entry.name)) continue;
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) {
       results.push(...await collectWebFiles(absolute));

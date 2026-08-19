@@ -56,7 +56,7 @@ def main():
     print("\n🍏 Lanzando compilacion y subida a Apple App Store Connect...")
     try:
         res = subprocess.run(
-            ["gh", "workflow", "run", "deploy-ios.yml", "--repo", "jaime312/GEN-YOGA"],
+            ["gh", "workflow", "run", "deploy-ios.yml", "--repo", "jaime312/Q19"],
             capture_output=True,
             text=True
         )
@@ -66,7 +66,7 @@ def main():
         else:
             print(f"⚠️ Info gh CLI: {res.stderr}")
     except FileNotFoundError:
-        print("ℹ️ Puedes disparar la accion de iOS en: https://github.com/jaime312/GEN-YOGA/actions")
+        print("ℹ️ Puedes disparar la accion de iOS en: https://github.com/jaime312/Q19/actions")
 
     print("\n" + "=" * 70)
     print("🎉 ¡PROCESO DE PUBLICACION COMPLETADO!")
@@ -76,7 +76,7 @@ def main():
     print("   🔗 https://play.google.com/console")
     print("\n2. Apple App Store:")
     print("   👉 Sigue el estado de la subida a TestFlight/App Store en:")
-    print("   🔗 https://github.com/jaime312/GEN-YOGA/actions")
+    print("   🔗 https://github.com/jaime312/Q19/actions")
     print("   🔗 https://appstoreconnect.apple.com/apps")
     print("=" * 70)
 

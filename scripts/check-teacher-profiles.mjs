@@ -111,7 +111,7 @@ for (const imgName of requiredImages) {
 }
 
 assert.match(maestros, /updated\.foto_cutout = 'img\/maestra-isabel-recortada\.webp'/);
-assert.match(maestros, /updated\.foto_cutout = 'img\/maestro-angel-recortado\.webp'/);
+assert.match(maestros, /updated\.foto_cutout = 'img\/angel_bn\.png'/);
 assert.match(maestros, /email:\s*'isarodriguez\.pni@gmail\.com'/);
 assert.match(maestros, /email:\s*'sil-hada@hotmail\.com'/);
 assert.match(clases, /src="img\/isabel-pni\.jpg"/);

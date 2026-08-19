@@ -65,7 +65,7 @@ const packsMigration = await read('supabase/migrations/202608030002_class_packs_
 const consultationBillingMigration = await read('supabase/migrations/202609020004_consultas_checkout_billing.sql');
 const config = await read('supabase/config.toml');
 const envExample = await read('supabase/functions/.env.example');
-const productionGuide = await read('STRIPE_PRODUCTION.md');
+const productionGuide = await read('docs/STRIPE_PRODUCTION.md').catch(() => read('STRIPE_PRODUCTION.md'));
 const frontendPaths = ['tarifas.html', 'profile.html', 'success.html'];
 const frontendSources = await Promise.all(frontendPaths.map(read));
 const frontend = frontendSources.join('\n');

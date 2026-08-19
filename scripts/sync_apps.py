@@ -8,14 +8,25 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC_DIR = os.path.join(BASE_DIR, "ultima version")
+SRC_DIR = BASE_DIR
 ANDROID_WWW = os.path.join(BASE_DIR, "app android", "www")
 ANDROID_ASSETS = os.path.join(BASE_DIR, "app android", "android", "app", "src", "main", "assets", "public")
 IOS_WWW = os.path.join(BASE_DIR, "app ios", "www")
 IOS_ASSETS = os.path.join(BASE_DIR, "app ios", "ios", "App", "App", "public")
 
-EXCLUDED_DIRS = {'.git', 'node_modules', 'android', 'ios', 'build', '.gradle', 'app android', 'app ios', 'control de versiones web', '.github', 'scripts'}
-EXCLUDED_EXTS = {'.aab', '.apk', '.zip', '.rar', '.p8', '.keystore', '.jks', '.log'}
+EXCLUDED_DIRS = {
+    '.git', '.github', 'node_modules', 'android', 'ios', 'build', '.gradle',
+    'app android', 'app ios', 'control de versiones web', 'docs', 'ultima version',
+    '.cursor', '.gemini', 'scratch', 'scripts', '.idea', '.temp'
+}
+EXCLUDED_EXTS = {
+    '.aab', '.apk', '.zip', '.rar', '.p8', '.keystore', '.jks', '.log',
+    '.bat', '.cmd', '.ps1', '.sh', '.md'
+}
+EXCLUDED_FILES = {
+    'package.json', 'package-lock.json', 'tailwind.config.js', 'deno.lock',
+    'tailwind-input.css', 'CNAME', '.gitignore'
+}
 
 def sync_web_assets():
     print("=" * 60)
@@ -23,7 +34,6 @@ def sync_web_assets():
     print("=" * 60)
 
     targets = [
-        ("Web Root", BASE_DIR),
         ("Android WWW", ANDROID_WWW),
         ("Android Assets", ANDROID_ASSETS),
         ("iOS WWW", IOS_WWW),
@@ -39,6 +49,8 @@ def sync_web_assets():
         rel_path = os.path.relpath(root, SRC_DIR)
 
         for file in files:
+            if file in EXCLUDED_FILES or file.startswith('.'):
+                continue
             ext = os.path.splitext(file)[1].lower()
             if ext in EXCLUDED_EXTS:
                 continue
@@ -46,11 +58,7 @@ def sync_web_assets():
             src_file = os.path.join(root, file)
 
             for label, target_base in targets:
-                if label == "Web Root":
-                    dst_file = os.path.join(target_base, rel_path, file) if rel_path != "." else os.path.join(target_base, file)
-                else:
-                    dst_file = os.path.join(target_base, rel_path, file) if rel_path != "." else os.path.join(target_base, file)
-
+                dst_file = os.path.join(target_base, rel_path, file) if rel_path != "." else os.path.join(target_base, file)
                 os.makedirs(os.path.dirname(dst_file), exist_ok=True)
                 shutil.copy2(src_file, dst_file)
                 copied_count += 1
