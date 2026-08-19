@@ -47,25 +47,63 @@ jobs:
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ACTUAL_KEY_ID}.p8
           chmod 600 ~/.private_keys/AuthKey_${ACTUAL_KEY_ID}.p8
 
-      - name: Build & Upload to App Store Connect
+      - name: Build & Archive iOS App
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: |
-          cd "app ios"
-          export APP_STORE_CONNECT_KEY_ID="${APP_STORE_CONNECT_KEY_ID:-9T2974ST9M}"
-          export APP_STORE_CONNECT_ISSUER_ID="${APP_STORE_CONNECT_ISSUER_ID:-c8f0f943-872c-4153-b89a-86fb7cc78b8f}"
+          KEY_ID="${APP_STORE_CONNECT_KEY_ID:-9T2974ST9M}"
+          ISSUER_ID="${APP_STORE_CONNECT_ISSUER_ID:-c8f0f943-872c-4153-b89a-86fb7cc78b8f}"
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8"
           
-          bundle install || gem install fastlane
-          fastlane release
+          cd "app ios/ios/App"
+          
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$PWD/build/App.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID" \
+            -authenticationKeyPath "$KEY_PATH" \
+            archive
+
+      - name: Export IPA & Upload to App Store Connect
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          KEY_ID="${APP_STORE_CONNECT_KEY_ID:-9T2974ST9M}"
+          ISSUER_ID="${APP_STORE_CONNECT_ISSUER_ID:-c8f0f943-872c-4153-b89a-86fb7cc78b8f}"
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8"
+          
+          cd "app ios"
+          
+          xcodebuild \
+            -exportArchive \
+            -archivePath "ios/App/build/App.xcarchive" \
+            -exportPath "build/ipa" \
+            -exportOptionsPlist "exportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID" \
+            -authenticationKeyPath "$KEY_PATH"
+          
+          IPA_FILE=$(find build/ipa -name "*.ipa" | head -n 1)
+          echo "Generated IPA: $IPA_FILE"
+          
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_FILE" \
+            --apiKey "$KEY_ID" \
+            --apiIssuer "$ISSUER_ID"
 
       - name: Upload IPA Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: GenYoga-iOS-v6.42
-          path: |
-            app ios/build/*.ipa
-            app ios/ios/App/build/ipa/*.ipa
+          path: app ios/build/ipa/*.ipa
           if-no-files-found: ignore
