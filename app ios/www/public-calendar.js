@@ -80,8 +80,12 @@
             silviaYoga: 'Yoga con Silvia',
             ayurveda: 'Ayurveda',
             special: 'Talleres',
+            filterPractice: 'Filtrar por práctica',
+            filterSpecialist: 'Filtrar por profesional',
+            filterWorkshop: 'Filtrar por taller o evento',
             calendar_mode_classes: 'Clases de Yoga',
-            calendar_mode_consultations: 'Consultas (Psicología / Nutrición)',
+            calendar_mode_consultations: 'Consultas',
+            calendar_mode_workshops: 'Talleres y Clases Especiales',
             calendar_spot_free: 'Disponible',
             calendar_spot_occupied: 'Ocupada',
             calendar_book_consultation: 'Reservar consulta'
@@ -145,8 +149,12 @@
             silviaYoga: 'Yoga with Silvia',
             ayurveda: 'Ayurveda',
             special: 'Workshops',
+            filterPractice: 'Filter by practice',
+            filterSpecialist: 'Filter by specialist',
+            filterWorkshop: 'Filter by workshop or event',
             calendar_mode_classes: 'Yoga Classes',
-            calendar_mode_consultations: 'Consultations (Psychology / Nutrition)',
+            calendar_mode_consultations: 'Consultations',
+            calendar_mode_workshops: 'Workshops & Special Classes',
             calendar_spot_free: 'Available',
             calendar_spot_occupied: 'Occupied',
             calendar_book_consultation: 'Book consultation'
@@ -156,7 +164,7 @@
     const knownTeacherColors = Object.freeze({
         'angel-javier': '#7f9fc0',
         yanira: '#df7fa5',
-        silvia: '#c9a74c',
+        silvia: '#68704a',
         miriam: '#9a83b9',
         isabel: '#8f6b2d'
     });
@@ -586,13 +594,21 @@
     });
 
     function eventColor(item) {
+        if (state.mode === 'consultas' || item.classType === 'psicologia' || item.classType === 'nutricion' || item.classType === 'consulta') {
+            if (item.professor?.slug && knownTeacherColors[item.professor.slug]) return knownTeacherColors[item.professor.slug];
+            if (item.professor?.color) return item.professor.color;
+        }
+        if (state.mode === 'talleres' || item.classType === 'taller' || item.classType === 'especial') {
+            if (defaultStyleColors[item.style]) return defaultStyleColors[item.style];
+            return '#c07238';
+        }
         const byTypeId = item.classTypeId ? state.typeColors.get(`id:${item.classTypeId}`) : '';
         const byStyle = state.typeColors.get(`style:${item.style}`);
         if (byTypeId) return byTypeId;
         if (byStyle) return byStyle;
         if (defaultStyleColors[item.style]) return defaultStyleColors[item.style];
-        if (item.professor.color) return item.professor.color;
-        return knownTeacherColors[item.professor.slug] || '#d96542';
+        if (item.professor?.color) return item.professor.color;
+        return knownTeacherColors[item.professor?.slug] || '#d96542';
     }
 
     function bookingCutoffHours() {
@@ -798,6 +814,54 @@
     }
 
     function renderFilters() {
+        if (state.mode === 'consultas') {
+            const profs = [
+                { slug: '', label: text('all'), color: '' },
+                { slug: 'miriam', label: 'Miriam Alfaro (Psicología)', color: '#9a83b9' },
+                { slug: 'silvia', label: 'Silvia Jaén (Ayurveda)', color: '#68704a' },
+                { slug: 'isabel', label: 'Isabel Rodríguez (PNI)', color: '#8f6b2d' }
+            ];
+            el.styleFilters.innerHTML = profs.map(prof => `
+                <button type="button" class="gy-calendar__filter"
+                    data-calendar-teacher="${escapeHtml(prof.slug)}"
+                    aria-pressed="${state.teacher === prof.slug}"
+                    ${prof.color ? `style="--filter-accent:${prof.color}"` : ''}>
+                    ${escapeHtml(prof.label)}
+                </button>
+            `).join('');
+            const filterLabel = document.querySelector('.gy-calendar__filter-label');
+            if (filterLabel) filterLabel.textContent = text('filterSpecialist');
+            el.styleFilters.setAttribute('aria-label', text('filterSpecialist'));
+            el.clearFilters.hidden = !(state.style || state.teacher);
+            return;
+        }
+
+        if (state.mode === 'talleres') {
+            const styles = [];
+            state.classes.forEach(item => {
+                if (item.style && !styles.includes(item.style)) styles.push(item.style);
+            });
+            if (state.style && !styles.includes(state.style)) styles.unshift(state.style);
+
+            const buttons = [
+                { style: '', label: text('all') },
+                ...styles.map(style => ({ style, label: styleLabel(style, state.classes) }))
+            ];
+            el.styleFilters.innerHTML = buttons.map(button => `
+                <button type="button" class="gy-calendar__filter"
+                    data-calendar-style="${escapeHtml(button.style)}"
+                    aria-pressed="${state.style === button.style}">
+                    ${escapeHtml(button.label)}
+                </button>
+            `).join('');
+            const filterLabel = document.querySelector('.gy-calendar__filter-label');
+            if (filterLabel) filterLabel.textContent = text('filterWorkshop');
+            el.styleFilters.setAttribute('aria-label', text('filterWorkshop'));
+            el.clearFilters.hidden = !(state.style || state.teacher);
+            return;
+        }
+
+        // Mode 'clases'
         const source = state.teacher
             ? state.classes.filter(item => (
                 item.professor.slug === state.teacher
@@ -821,10 +885,9 @@
                 ${escapeHtml(button.label)}
             </button>
         `).join('');
-        el.styleFilters.setAttribute(
-            'aria-label',
-            currentLanguage() === 'en' ? 'Filter by practice' : 'Filtrar por práctica'
-        );
+        const filterLabel = document.querySelector('.gy-calendar__filter-label');
+        if (filterLabel) filterLabel.textContent = text('filterPractice');
+        el.styleFilters.setAttribute('aria-label', text('filterPractice'));
         el.clearFilters.hidden = !(state.style || state.teacher);
     }
 
@@ -845,7 +908,7 @@
                 || String(item.professor.id || '') === state.teacher
             ));
             const teacherName = teacherClass?.professor.displayName
-                || state.teacher.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+                || (state.teacher === 'miriam' ? 'Miriam Alfaro' : (state.teacher === 'silvia' ? 'Silvia Jaén' : (state.teacher === 'isabel' ? 'Isabel Rodríguez' : state.teacher.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()))));
             fragments.push(text('selectedTeacher', { teacher: teacherName }));
         }
         el.selection.textContent = `${fragments.join(' ')}.`;
@@ -865,8 +928,10 @@
         syncStaticCopy();
         const btnClases = document.getElementById('calendar-mode-clases');
         const btnConsultas = document.getElementById('calendar-mode-consultas');
+        const btnTalleres = document.getElementById('calendar-mode-talleres');
         if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
         if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
+        if (btnTalleres) btnTalleres.classList.toggle('active', state.mode === 'talleres');
         el.weekRange.textContent = weekRangeLabel(state.weekStart);
         if (el.prevWeek) {
             const atSeasonStart = state.weekStart <= SEASON_START_WEEK;
@@ -955,7 +1020,7 @@
         return { start: start.toISOString(), end: end.toISOString() };
     }
 
-    async function fetchDirectWeek(weekStart) {
+    async function fetchDirectWeek(weekStart, targetMode) {
         const bounds = broadUtcBounds(weekStart);
         const { data, error } = await state.client
             .from('clases')
@@ -968,10 +1033,15 @@
             .order('fecha_inicio')
             .limit(300);
         if (error) throw error;
-        return (data || [])
+        const mapped = (data || [])
             .map(row => normalizeClassRow(row, false))
             .filter(Boolean)
             .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
+
+        if (targetMode === 'talleres') {
+            return mapped.filter(item => item.classType === 'taller' || item.classType === 'especial');
+        }
+        return mapped.filter(item => item.classType === 'yoga');
     }
 
     async function fetchWeekData(weekStart) {
@@ -1000,7 +1070,11 @@
                 .filter(Boolean)
                 .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
 
-            const dbClases = rawWeekClasses.filter(isCanonicalConsultationClass);
+            // STRICT FILTER: Only consultation classes from DB (psychology / nutrition / consultations)
+            const dbClases = rawWeekClasses.filter(c =>
+                (c.classType === 'psicologia' || c.classType === 'nutricion' || c.classType === 'consulta')
+                && isCanonicalConsultationClass(c)
+            );
 
             if (dbClases.length > 0) {
                 const ids = dbClases.map(c => c.id);
@@ -1108,6 +1182,36 @@
             return { exactAvailability: true, classes: allSlots };
         }
 
+        if (state.mode === 'talleres') {
+            if (state.rpcAvailable !== false) {
+                const { data, error } = await state.client.rpc('get_public_weekly_schedule', {
+                    p_week_start: weekStart
+                });
+
+                if (!error && Array.isArray(data)) {
+                    state.rpcAvailable = true;
+                    return {
+                        exactAvailability: true,
+                        classes: data
+                            .map(row => normalizeClassRow(row, true))
+                            .filter(Boolean)
+                            .filter(c => c.classType === 'taller' || c.classType === 'especial')
+                    };
+                }
+
+                const missingFunction = error?.code === 'PGRST202'
+                    || error?.code === '42883'
+                    || /get_public_weekly_schedule|schema cache/i.test(String(error?.message || ''));
+                if (missingFunction) state.rpcAvailable = false;
+            }
+
+            return {
+                exactAvailability: false,
+                classes: await fetchDirectWeek(weekStart, 'talleres')
+            };
+        }
+
+        // Regular yoga classes mode ('clases')
         if (state.rpcAvailable !== false) {
             const { data, error } = await state.client.rpc('get_public_weekly_schedule', {
                 p_week_start: weekStart
@@ -1117,7 +1221,10 @@
                 state.rpcAvailable = true;
                 return {
                     exactAvailability: true,
-                    classes: data.map(row => normalizeClassRow(row, true)).filter(Boolean)
+                    classes: data
+                        .map(row => normalizeClassRow(row, true))
+                        .filter(Boolean)
+                        .filter(c => c.classType === 'yoga')
                 };
             }
 
@@ -1129,7 +1236,7 @@
 
         return {
             exactAvailability: false,
-            classes: await fetchDirectWeek(weekStart)
+            classes: await fetchDirectWeek(weekStart, 'clases')
         };
     }
 
@@ -1167,6 +1274,10 @@
 
     function parseUrlState() {
         const url = new URL(root.location.href);
+        const modeParam = url.searchParams.get('mode');
+        if (modeParam === 'consultas' || modeParam === 'talleres' || modeParam === 'clases') {
+            state.mode = modeParam;
+        }
         const week = validDateKey(url.searchParams.get('week'));
         const classId = safePositiveInteger(url.searchParams.get('class') || url.searchParams.get('clase'));
         const teacher = normalizeTeacherParam(url.searchParams.get('teacher'));
@@ -1243,6 +1354,11 @@
     function updateUrl(mode) {
         const url = new URL(root.location.href);
         url.hash = CALENDAR_HASH;
+        if (state.mode && state.mode !== 'clases') {
+            url.searchParams.set('mode', state.mode);
+        } else {
+            url.searchParams.delete('mode');
+        }
         url.searchParams.set('week', state.weekStart);
         if (state.style) url.searchParams.set('style', state.style);
         else url.searchParams.delete('style');
@@ -1263,7 +1379,7 @@
 
     function clearCalendarUrl() {
         const url = new URL(root.location.href);
-        ['week', 'style', 'type', 'teacher', 'class', 'clase'].forEach(key => url.searchParams.delete(key));
+        ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase'].forEach(key => url.searchParams.delete(key));
         url.hash = '';
         root.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
     }
@@ -1271,7 +1387,7 @@
     function shouldAutoOpenFromUrl() {
         const url = new URL(root.location.href);
         return url.hash === CALENDAR_HASH
-            || ['week', 'style', 'type', 'teacher', 'class', 'clase'].some(key => url.searchParams.has(key));
+            || ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase'].some(key => url.searchParams.has(key));
     }
 
     function startPolling() {
@@ -1300,7 +1416,7 @@
 
     function applyOpenOptions(options) {
         if (Object.prototype.hasOwnProperty.call(options, 'mode')) {
-            state.mode = options.mode === 'consultas' ? 'consultas' : 'clases';
+            state.mode = (options.mode === 'consultas' || options.mode === 'talleres') ? options.mode : 'clases';
         }
         if (Object.prototype.hasOwnProperty.call(options, 'style')) {
             state.style = canonicalStyle(options.style);
@@ -1345,7 +1461,7 @@
         startPolling();
         await resolveTargetIfNeeded();
         updateUrl(wasOpen ? 'replace' : 'push');
-        root.dispatchEvent(new CustomEvent('genyoga:calendar:open', { detail: { week: state.weekStart } }));
+        root.dispatchEvent(new CustomEvent('genyoga:calendar:open', { detail: { week: state.weekStart, mode: state.mode } }));
         await loadWeek();
         el.panel.scrollTo({ top: 0, behavior: 'auto' });
         el.close.focus();
@@ -1392,9 +1508,9 @@
         const item = state.classes.find(entry => entry.id === safePositiveInteger(classId));
         if (!item || getEventState(item).disabled) return;
 
-        if (item.classType === 'psicologia' || item.classType === 'nutricion') {
+        if (item.classType === 'psicologia' || item.classType === 'nutricion' || item.classType === 'consulta') {
             const params = new URLSearchParams({
-                view: item.classType,
+                view: item.classType === 'psicologia' ? 'psicologia' : (item.classType === 'nutricion' ? 'nutricion' : 'consultas'),
                 clase: String(item.id),
                 from: 'calendario'
             });
@@ -1408,7 +1524,7 @@
             return;
         }
 
-        if (item.classType === 'taller') {
+        if (item.classType === 'taller' || item.classType === 'especial') {
             const params = new URLSearchParams({
                 view: 'especiales',
                 class: String(item.id),
@@ -1456,25 +1572,32 @@
             modeToggle.addEventListener('click', event => {
                 const btn = event.target.closest('[data-calendar-mode]');
                 if (!btn) return;
-                const newMode = btn.dataset.calendarMode === 'consultas' ? 'consultas' : 'clases';
-                if (state.mode !== newMode) {
+                const newMode = btn.dataset.calendarMode;
+                if ((newMode === 'clases' || newMode === 'consultas' || newMode === 'talleres') && state.mode !== newMode) {
                     state.mode = newMode;
                     state.style = '';
                     state.teacher = '';
                     state.classId = null;
                     const btnClases = document.getElementById('calendar-mode-clases');
                     const btnConsultas = document.getElementById('calendar-mode-consultas');
+                    const btnTalleres = document.getElementById('calendar-mode-talleres');
                     if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
                     if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
+                    if (btnTalleres) btnTalleres.classList.toggle('active', state.mode === 'talleres');
                     loadWeek();
                 }
             });
         }
 
         el.styleFilters.addEventListener('click', event => {
-            const button = event.target.closest('[data-calendar-style]');
+            const button = event.target.closest('[data-calendar-style], [data-calendar-teacher]');
             if (!button) return;
-            state.style = canonicalStyle(button.dataset.calendarStyle);
+            if (button.dataset.calendarTeacher !== undefined) {
+                state.teacher = normalizeTeacherParam(button.dataset.calendarTeacher);
+                state.style = '';
+            } else if (button.dataset.calendarStyle !== undefined) {
+                state.style = canonicalStyle(button.dataset.calendarStyle);
+            }
             state.classId = null;
             state.targetResolved = true;
             updateUrl('replace');

@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.50">
+    <meta name="application-version" content="6.51">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.50">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.50">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.51">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.51">
     <title>GEN Yoga | Clases</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-    <script src="i18n.js?v=6.50"></script>
+    <script src="i18n.js?v=6.51"></script>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.50" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.51" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -392,7 +392,7 @@
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
-    <link rel="stylesheet" href="public-calendar.css?v=6.50">
+    <link rel="stylesheet" href="public-calendar.css?v=6.51">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
 
@@ -427,14 +427,18 @@
                 Escoge tus sesiones
             </h1>
 
-            <div class="flex items-center justify-center gap-2 mt-4 mb-1 z-30">
+            <div class="flex flex-wrap items-center justify-center gap-2 mt-4 mb-1 z-30">
                 <button id="btn-cat-yoga" type="button" onclick="switchCategoryDeck('yoga')"
                     class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#795244] text-white border border-[#795244]">
-                    <span>Clases de Yoga</span>
+                    <span data-i18n="btn_cat_yoga">Clases de Yoga</span>
                 </button>
                 <button id="btn-cat-consultas" type="button" onclick="switchCategoryDeck('consultas')"
                     class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30">
-                    <span>Consultas</span>
+                    <span data-i18n="btn_cat_consultas">Consultas</span>
+                </button>
+                <button id="btn-cat-talleres" type="button" onclick="switchCategoryDeck('talleres')"
+                    class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#c07238] border border-[#c07238]/30">
+                    <span data-i18n="btn_cat_talleres">Talleres y Especiales</span>
                 </button>
             </div>
 
@@ -452,10 +456,20 @@
                     class="gy-calendar-launch gy-calendar-launch--consultas hidden" hidden style="display:none"
                     onclick="window.GENPublicCalendar?.open({ mode: 'consultas' })">
                     <span class="gy-calendar-launch__live" aria-hidden="true" style="background:#8f6b2d; box-shadow: 0 0 0 5px rgba(143, 107, 45, 0.15);"></span>
-                    <span>Ver disponibilidad</span>
+                    <span data-i18n="classes_consultas_calendar_btn">Ver disponibilidad</span>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"></path>
                         <path d="M12 8v4l3 3"></path>
+                    </svg>
+                </button>
+                <button id="public-talleres-calendar-launch" type="button"
+                    class="gy-calendar-launch gy-calendar-launch--talleres hidden" hidden style="display:none"
+                    onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })">
+                    <span class="gy-calendar-launch__live" aria-hidden="true" style="background:#c07238; box-shadow: 0 0 0 5px rgba(192, 114, 56, 0.15);"></span>
+                    <span data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path>
+                        <path d="m9 16 2 2 4-4"></path>
                     </svg>
                 </button>
             </div>
@@ -674,6 +688,99 @@
                 </div>
             </div>
 
+            <!-- ==================================== -->
+            <!-- FOLDERS DECK 3: TALLERES & ESPECIALES-->
+            <!-- ==================================== -->
+            <div id="talleres-deck" class="w-full relative transition-all duration-300 hidden">
+                <!-- CARD TALLER 1: Talleres Intensivos -->
+                <div id="card-taller-1" class="folder-card-container">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 0 36 L 0 12 Q 0 0 12 0 L 220 0 Q 232 0 232 12 C 232 24 244 36 256 36 L 896 36 L 896 37 L 0 37 Z" fill="#c07238" />
+                            <text x="116" y="23" fill="#f8f6f2" font-size="9" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">INTENSIVOS</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[28%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[56%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'talleres' }); }"
+                        class="folder-body bg-[#c07238] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        role="button" tabindex="0" aria-label="Ver calendario de talleres intensivos">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-vinyasa.jpg" alt="Talleres Intensivos" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/70 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_taller_int_tagline">Profundización, práctica y autoconocimiento.</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_taller_int_title">Talleres Intensivos</h2>
+                            <p class="text-white/90 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_taller_int_desc">
+                                Espacios monográficos de inmersión y aprendizaje intensivo para profundizar en asana, alineación biomecánica, filosofía y desarrollo consciente.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD TALLER 2: Masterclasses Especiales -->
+                <div id="card-taller-2" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 21;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 240 36 L 240 12 Q 240 0 252 0 L 480 0 Q 492 0 492 12 C 492 24 504 36 516 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#795244" />
+                            <text x="366" y="23" fill="#f8f6f2" font-size="9" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">MASTERCLASSES</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[28%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[56%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'talleres' }); }"
+                        class="folder-body bg-[#795244] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        role="button" tabindex="0" aria-label="Ver calendario de masterclasses especiales">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-para-todos.jpg" alt="Masterclasses Especiales" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/70 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_masterclass_tagline">Experiencias transformadoras con maestros invitados.</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_masterclass_title">Masterclasses Especiales</h2>
+                            <p class="text-white/90 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_masterclass_desc">
+                                Sesiones maestras y masterclasses especiales impartidas por maestros de amplia trayectoria y profesores invitados de referencia nacional e internacional.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD TALLER 3: Salud Integrativa & Bienestar -->
+                <div id="card-taller-3" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 22;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 500 36 L 500 12 Q 500 0 512 0 L 740 0 Q 752 0 752 12 C 752 24 764 36 776 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#68704a" />
+                            <text x="626" y="23" fill="#f8f6f2" font-size="9" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">SALUD & BIENESTAR</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[28%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[56%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'talleres' }); }"
+                        class="folder-body flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        style="background-color: #68704a;"
+                        role="button" tabindex="0" aria-label="Ver calendario de salud y bienestar">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/silvia-ayurveda.jpg" alt="Salud Integrativa" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/70 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_salud_tagline">Cuidado holístico: mente, cuerpo y hábitos conscientes.</span>
+                            <h2 class="brand-font text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_salud_title">Salud & Bienestar</h2>
+                            <p class="text-white/90 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_salud_desc">
+                                Talleres vivenciales de salud integrativa, nutrición consciente, fitoterapia, Ayurveda aplicado y gestión emocional en grupo.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Scroll Indicator (Assist prompt at the very bottom, fades out when reaching Slide 4) -->
@@ -766,7 +873,7 @@
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                 <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">Política de privacidad</a>
-                <span class="opacity-60 text-[10px]">v6.50 | @2026 Gen Yoga</span>
+                <span class="opacity-60 text-[10px]">v6.51 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
@@ -797,7 +904,8 @@
                     
                     <div id="calendar-mode-toggle" class="gy-calendar__mode-bar" role="tablist">
                         <button id="calendar-mode-clases" type="button" class="gy-calendar__mode-btn active" data-calendar-mode="clases" data-calendar-copy="calendar_mode_classes">Clases de Yoga</button>
-                        <button id="calendar-mode-consultas" type="button" class="gy-calendar__mode-btn" data-calendar-mode="consultas" data-calendar-copy="calendar_mode_consultations">Consultas (Psicología / Nutrición)</button>
+                        <button id="calendar-mode-consultas" type="button" class="gy-calendar__mode-btn" data-calendar-mode="consultas" data-calendar-copy="calendar_mode_consultations">Consultas</button>
+                        <button id="calendar-mode-talleres" type="button" class="gy-calendar__mode-btn" data-calendar-mode="talleres" data-calendar-copy="calendar_mode_workshops">Talleres y Clases Especiales</button>
                     </div>
                 </div>
 
@@ -1217,40 +1325,70 @@ window.handleNavClick = function (btn, url) {
 window.switchCategoryDeck = function(cat) {
     const yogaDeck = document.getElementById('folders-deck');
     const consultasDeck = document.getElementById('consultas-deck');
+    const talleresDeck = document.getElementById('talleres-deck');
     const btnYoga = document.getElementById('btn-cat-yoga');
     const btnConsultas = document.getElementById('btn-cat-consultas');
+    const btnTalleres = document.getElementById('btn-cat-talleres');
     const yogaCalendarLaunch = document.getElementById('public-calendar-launch');
     const consultasCalendarLaunch = document.getElementById('public-consultas-calendar-launch');
+    const talleresCalendarLaunch = document.getElementById('public-talleres-calendar-launch');
 
     window.activeCategory = cat;
     window.scrollTo({ top: 0, behavior: 'instant' });
 
     if (cat === 'consultas') {
         if (yogaDeck) yogaDeck.classList.add('hidden');
+        if (talleresDeck) talleresDeck.classList.add('hidden');
         if (consultasDeck) consultasDeck.classList.remove('hidden');
         if (yogaCalendarLaunch) yogaCalendarLaunch.classList.add('hidden');
+        if (talleresCalendarLaunch) talleresCalendarLaunch.classList.add('hidden');
         if (consultasCalendarLaunch) consultasCalendarLaunch.classList.remove('hidden');
-        if (yogaCalendarLaunch) yogaCalendarLaunch.hidden = true;
-        if (consultasCalendarLaunch) consultasCalendarLaunch.hidden = false;
-        if (yogaCalendarLaunch) yogaCalendarLaunch.style.display = 'none';
-        if (consultasCalendarLaunch) consultasCalendarLaunch.style.removeProperty('display');
+        if (yogaCalendarLaunch) { yogaCalendarLaunch.hidden = true; yogaCalendarLaunch.style.display = 'none'; }
+        if (talleresCalendarLaunch) { talleresCalendarLaunch.hidden = true; talleresCalendarLaunch.style.display = 'none'; }
+        if (consultasCalendarLaunch) { consultasCalendarLaunch.hidden = false; consultasCalendarLaunch.style.removeProperty('display'); }
         if (btnYoga) {
             btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#795244] border border-[#795244]/30';
+        }
+        if (btnTalleres) {
+            btnTalleres.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#c07238] border border-[#c07238]/30';
         }
         if (btnConsultas) {
             btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#8f6b2d] text-white border border-[#8f6b2d]';
         }
-    } else {
+    } else if (cat === 'talleres') {
+        if (yogaDeck) yogaDeck.classList.add('hidden');
         if (consultasDeck) consultasDeck.classList.add('hidden');
-        if (yogaDeck) yogaDeck.classList.remove('hidden');
+        if (talleresDeck) talleresDeck.classList.remove('hidden');
+        if (yogaCalendarLaunch) yogaCalendarLaunch.classList.add('hidden');
         if (consultasCalendarLaunch) consultasCalendarLaunch.classList.add('hidden');
-        if (yogaCalendarLaunch) yogaCalendarLaunch.classList.remove('hidden');
-        if (consultasCalendarLaunch) consultasCalendarLaunch.hidden = true;
-        if (yogaCalendarLaunch) yogaCalendarLaunch.hidden = false;
-        if (consultasCalendarLaunch) consultasCalendarLaunch.style.display = 'none';
-        if (yogaCalendarLaunch) yogaCalendarLaunch.style.removeProperty('display');
+        if (talleresCalendarLaunch) talleresCalendarLaunch.classList.remove('hidden');
+        if (yogaCalendarLaunch) { yogaCalendarLaunch.hidden = true; yogaCalendarLaunch.style.display = 'none'; }
+        if (consultasCalendarLaunch) { consultasCalendarLaunch.hidden = true; consultasCalendarLaunch.style.display = 'none'; }
+        if (talleresCalendarLaunch) { talleresCalendarLaunch.hidden = false; talleresCalendarLaunch.style.removeProperty('display'); }
+        if (btnYoga) {
+            btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#795244] border border-[#795244]/30';
+        }
         if (btnConsultas) {
             btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30';
+        }
+        if (btnTalleres) {
+            btnTalleres.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#c07238] text-white border border-[#c07238]';
+        }
+    } else {
+        if (consultasDeck) consultasDeck.classList.add('hidden');
+        if (talleresDeck) talleresDeck.classList.add('hidden');
+        if (yogaDeck) yogaDeck.classList.remove('hidden');
+        if (consultasCalendarLaunch) consultasCalendarLaunch.classList.add('hidden');
+        if (talleresCalendarLaunch) talleresCalendarLaunch.classList.add('hidden');
+        if (yogaCalendarLaunch) yogaCalendarLaunch.classList.remove('hidden');
+        if (consultasCalendarLaunch) { consultasCalendarLaunch.hidden = true; consultasCalendarLaunch.style.display = 'none'; }
+        if (talleresCalendarLaunch) { talleresCalendarLaunch.hidden = true; talleresCalendarLaunch.style.display = 'none'; }
+        if (yogaCalendarLaunch) { yogaCalendarLaunch.hidden = false; yogaCalendarLaunch.style.removeProperty('display'); }
+        if (btnConsultas) {
+            btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30';
+        }
+        if (btnTalleres) {
+            btnTalleres.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#c07238] border border-[#c07238]/30';
         }
         if (btnYoga) {
             btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#795244] text-white border border-[#795244]';
@@ -1262,8 +1400,8 @@ window.switchCategoryDeck = function(cat) {
 };
 
 </script>
-    <script src="public-calendar.js?v=6.50"></script>
-    <script src="facilities-carousel.js?v=6.50"></script>
+    <script src="public-calendar.js?v=6.51"></script>
+    <script src="facilities-carousel.js?v=6.51"></script>
     <script>
         window.GENPublicCalendar?.init({ client });
     </script>
@@ -1282,6 +1420,11 @@ window.switchCategoryDeck = function(cat) {
             const cardSilvia = document.getElementById('card-silvia');
             const cardIsabel = document.getElementById('card-isabel');
             const consultasDeck = document.getElementById('consultas-deck');
+
+            const cardTaller1 = document.getElementById('card-taller-1');
+            const cardTaller2 = document.getElementById('card-taller-2');
+            const cardTaller3 = document.getElementById('card-taller-3');
+            const talleresDeck = document.getElementById('talleres-deck');
             
             const slide4Panel = document.getElementById('slide-4-panel');
             
@@ -1414,37 +1557,9 @@ window.switchCategoryDeck = function(cat) {
 
                 // 2. Folder transitions (Slides 1 to 4: progress [0, 3.3])
                 if (progress <= 3.3) {
-                    if (window.activeCategory !== 'consultas') {
-                        foldersDeck.style.opacity = '1';
-                        foldersDeck.style.transform = 'translateY(0)';
-                        foldersDeck.style.pointerEvents = 'auto';
-
-                        if (consultasDeck) {
-                            consultasDeck.style.opacity = '0';
-                            consultasDeck.style.pointerEvents = 'none';
-                        }
-                        
-                        card1.style.opacity = '1';
-                        card1.style.transform = 'translateY(0)';
-                        
-                        const p2 = Math.max(0, Math.min(1, (progress - 0.25) / 0.65));
-                        card2.style.transform = `translateY(${(1 - p2) * 100}%)`;
-                        card2.style.opacity = p2 > 0.01 ? '1' : '0';
-                        
-                        const p3 = Math.max(0, Math.min(1, (progress - 1.25) / 0.65));
-                        card3.style.transform = `translateY(${(1 - p3) * 100}%)`;
-                        card3.style.opacity = p3 > 0.01 ? '1' : '0';
-
-                        if (card4) {
-                            const p4 = Math.max(0, Math.min(1, (progress - 2.25) / 0.65));
-                            card4.style.transform = `translateY(${(1 - p4) * 100}%)`;
-                            card4.style.opacity = p4 > 0.01 ? '1' : '0';
-                        }
-                    } else {
-                        if (foldersDeck) {
-                            foldersDeck.style.opacity = '0';
-                            foldersDeck.style.pointerEvents = 'none';
-                        }
+                    if (window.activeCategory === 'consultas') {
+                        if (foldersDeck) { foldersDeck.style.opacity = '0'; foldersDeck.style.pointerEvents = 'none'; }
+                        if (talleresDeck) { talleresDeck.style.opacity = '0'; talleresDeck.style.pointerEvents = 'none'; }
 
                         consultasDeck.style.opacity = '1';
                         consultasDeck.style.transform = 'translateY(0)';
@@ -1460,6 +1575,54 @@ window.switchCategoryDeck = function(cat) {
                         const p3 = Math.max(0, Math.min(1, (progress - 1.5) / 0.75));
                         cardIsabel.style.transform = `translateY(${(1 - p3) * 100}%)`;
                         cardIsabel.style.opacity = p3 > 0.01 ? '1' : '0';
+                    } else if (window.activeCategory === 'talleres') {
+                        if (foldersDeck) { foldersDeck.style.opacity = '0'; foldersDeck.style.pointerEvents = 'none'; }
+                        if (consultasDeck) { consultasDeck.style.opacity = '0'; consultasDeck.style.pointerEvents = 'none'; }
+
+                        if (talleresDeck) {
+                            talleresDeck.style.opacity = '1';
+                            talleresDeck.style.transform = 'translateY(0)';
+                            talleresDeck.style.pointerEvents = 'auto';
+                        }
+
+                        if (cardTaller1) {
+                            cardTaller1.style.opacity = '1';
+                            cardTaller1.style.transform = 'translateY(0)';
+                        }
+                        if (cardTaller2) {
+                            const p2 = Math.max(0, Math.min(1, (progress - 0.35) / 0.75));
+                            cardTaller2.style.transform = `translateY(${(1 - p2) * 100}%)`;
+                            cardTaller2.style.opacity = p2 > 0.01 ? '1' : '0';
+                        }
+                        if (cardTaller3) {
+                            const p3 = Math.max(0, Math.min(1, (progress - 1.5) / 0.75));
+                            cardTaller3.style.transform = `translateY(${(1 - p3) * 100}%)`;
+                            cardTaller3.style.opacity = p3 > 0.01 ? '1' : '0';
+                        }
+                    } else {
+                        if (consultasDeck) { consultasDeck.style.opacity = '0'; consultasDeck.style.pointerEvents = 'none'; }
+                        if (talleresDeck) { talleresDeck.style.opacity = '0'; talleresDeck.style.pointerEvents = 'none'; }
+
+                        foldersDeck.style.opacity = '1';
+                        foldersDeck.style.transform = 'translateY(0)';
+                        foldersDeck.style.pointerEvents = 'auto';
+
+                        card1.style.opacity = '1';
+                        card1.style.transform = 'translateY(0)';
+
+                        const p2 = Math.max(0, Math.min(1, (progress - 0.25) / 0.65));
+                        card2.style.transform = `translateY(${(1 - p2) * 100}%)`;
+                        card2.style.opacity = p2 > 0.01 ? '1' : '0';
+
+                        const p3 = Math.max(0, Math.min(1, (progress - 1.25) / 0.65));
+                        card3.style.transform = `translateY(${(1 - p3) * 100}%)`;
+                        card3.style.opacity = p3 > 0.01 ? '1' : '0';
+
+                        if (card4) {
+                            const p4 = Math.max(0, Math.min(1, (progress - 2.25) / 0.65));
+                            card4.style.transform = `translateY(${(1 - p4) * 100}%)`;
+                            card4.style.opacity = p4 > 0.01 ? '1' : '0';
+                        }
                     }
                     
                     headerTitle.style.opacity = '1';
@@ -1467,11 +1630,13 @@ window.switchCategoryDeck = function(cat) {
                 } else {
                     // PUSH TRANSITION: Translate active deck and title upwards as Slide 4 panel rises
                     const pPush = Math.max(0, Math.min(1, (progress - 3.3) / 0.8)); // [3.3, 4.1]
-                    const activeDeck = window.activeCategory === 'consultas' ? consultasDeck : foldersDeck;
+                    const activeDeck = window.activeCategory === 'consultas' ? consultasDeck : (window.activeCategory === 'talleres' ? talleresDeck : foldersDeck);
 
-                    activeDeck.style.opacity = '1';
-                    activeDeck.style.transform = `translateY(-${pPush * 100}vh)`;
-                    activeDeck.style.pointerEvents = 'none';
+                    if (activeDeck) {
+                        activeDeck.style.opacity = '1';
+                        activeDeck.style.transform = `translateY(-${pPush * 100}vh)`;
+                        activeDeck.style.pointerEvents = 'none';
+                    }
                     
                     headerTitle.style.opacity = '1';
                     headerTitle.style.transform = `translateY(-${pPush * 100}vh)`;
