@@ -981,12 +981,11 @@
                 state.client
                     .from('clases')
                     .select(DIRECT_SELECT)
-                    .in('tipo_clase', ['psicologia', 'nutricion'])
                     .eq('activa', true)
                     .gte('fecha_inicio', bounds.start)
                     .lt('fecha_inicio', bounds.end)
                     .order('fecha_inicio')
-                    .limit(300),
+                    .limit(500),
                 state.client
                     .from('profesionales')
                     .select('id, nombre, apellidos, email, color, visible_publico')
@@ -996,11 +995,12 @@
             if (clasesRes.error) throw clasesRes.error;
             if (professionalsRes.error) throw professionalsRes.error;
 
-            const dbClases = (clasesRes.data || [])
+            const rawWeekClasses = (clasesRes.data || [])
                 .map(row => normalizeClassRow(row, false))
                 .filter(Boolean)
-                .filter(isCanonicalConsultationClass)
                 .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
+
+            const dbClases = rawWeekClasses.filter(isCanonicalConsultationClass);
 
             if (dbClases.length > 0) {
                 const ids = dbClases.map(c => c.id);
@@ -1056,38 +1056,49 @@
 
                         if (!existsInDb) {
                             const durationMinutes = consultationDurationMinutesFor(prof);
-                            const startHour = Math.floor(startMinutes / 60);
-                            const startMinute = startMinutes % 60;
-                            const startStr = `${dateKey}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`;
-                            const start = new Date(startStr);
-                            const end = new Date(start.getTime() + durationMinutes * 60_000);
-                            const name = profSlug === 'isabel' ? 'Consulta PNI / Psicología' : (profSlug === 'silvia' ? 'Consulta Ayurveda' : 'Consulta Psicología');
+                            const slotEndMinutes = startMinutes + durationMinutes;
 
-                            generatedSlots.push({
-                                id: ++virtualIdCounter,
-                                name,
-                                start,
-                                end,
-                                dateKey,
-                                startMinutes,
-                                durationMinutes,
-                                capacity: 1,
-                                occupied: 0,
-                                freeSpots: 1,
-                                complete: false,
-                                professor: {
-                                    id: prof.id,
-                                    nombre: prof.nombre || '',
-                                    apellidos: prof.apellidos || '',
-                                    color: profColor,
-                                    slug: profSlug,
-                                    displayName
-                                },
-                                classType: slotType,
-                                classTypeId: null,
-                                style: canonicalStyle(name),
-                                isVirtual: true
+                            const hasTeacherClassOverlap = rawWeekClasses.some(c => {
+                                if (c.professor.id !== prof.id || c.dateKey !== dateKey) return false;
+                                const cStart = c.startMinutes;
+                                const cEnd = c.startMinutes + (c.durationMinutes || 60);
+                                return (startMinutes < cEnd && slotEndMinutes > cStart);
                             });
+
+                            if (!hasTeacherClassOverlap) {
+                                const startHour = Math.floor(startMinutes / 60);
+                                const startMinute = startMinutes % 60;
+                                const startStr = `${dateKey}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`;
+                                const start = new Date(startStr);
+                                const end = new Date(start.getTime() + durationMinutes * 60_000);
+                                const name = profSlug === 'isabel' ? 'Consulta PNI / Psicología' : (profSlug === 'silvia' ? 'Consulta Ayurveda' : 'Consulta Psicología');
+
+                                generatedSlots.push({
+                                    id: ++virtualIdCounter,
+                                    name,
+                                    start,
+                                    end,
+                                    dateKey,
+                                    startMinutes,
+                                    durationMinutes,
+                                    capacity: 1,
+                                    occupied: 0,
+                                    freeSpots: 1,
+                                    complete: false,
+                                    professor: {
+                                        id: prof.id,
+                                        nombre: prof.nombre || '',
+                                        apellidos: prof.apellidos || '',
+                                        color: profColor,
+                                        slug: profSlug,
+                                        displayName
+                                    },
+                                    classType: slotType,
+                                    classTypeId: null,
+                                    style: canonicalStyle(name),
+                                    isVirtual: true
+                                });
+                            }
                         }
                     });
                 }

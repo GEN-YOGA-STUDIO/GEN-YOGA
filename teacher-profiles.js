@@ -15,7 +15,7 @@ La práctica se basa en el ajuste preciso y la correcta alineación del cuerpo. 
 
 ME DEFINE:
 "Dedicación y cuidado"`,
-        miriam: `LUGAR DE NACIMIENTO: Cuenca (España)
+        miriam: `LUGAR DE NACIMIENTO: Albacete (España)
 
 TITULACIONES:
 Graduada en Psicología por la Universidad de Valencia
@@ -143,7 +143,7 @@ WHAT DEFINES ME:
         miriam: Object.freeze({
             nombre: 'Miriam',
             especialidad: 'Psychotherapy, Nutrition & Workshops | consultations,workshops',
-            descripcion: `PLACE OF BIRTH: Cuenca (Spain)
+            descripcion: `PLACE OF BIRTH: Albacete (Spain)
 
 QUALIFICATIONS:
 Degree in Psychology from the University of Valencia
@@ -370,8 +370,14 @@ Mindfulness for adults and children`
                 .replace(/[ \t]+([,.;:])/g, '$1');
         }
 
-        if (key === 'miriam' && /Eye Movement Desensitization and Reprocessing|\*\s*Trastornos de la Conducta Alimentaria/i.test(corrected)) {
-            corrected = descriptions.miriam;
+        if (key === 'miriam') {
+            if (/Eye Movement Desensitization and Reprocessing|\*\s*Trastornos de la Conducta Alimentaria/i.test(corrected)) {
+                corrected = descriptions.miriam;
+            }
+            corrected = corrected.replace(
+                /(?:LUGAR DE NACIMIENTO|PLACE OF BIRTH):\s*Cuenca\s*(?:\(Espa[ñn]a\)|\(Spain\))?/gi,
+                (match) => (/place/i.test(match) ? 'PLACE OF BIRTH: Albacete (Spain)' : 'LUGAR DE NACIMIENTO: Albacete (España)')
+            );
         }
 
         if (
@@ -393,6 +399,37 @@ Mindfulness for adults and children`
         };
     }
 
+    function parseBio(text) {
+        const sections = {
+            lugar: '',
+            titulos: [],
+            sobreMi: [],
+            teAcompano: [],
+            meDefine: ''
+        };
+        if (!text) return sections;
+
+        const normalized = String(text).replace(/\r\n/g, '\n');
+        const parts = normalized.split(/(?:^|\n)\s*(LUGAR DE NACIMIENTO|PLACE OF BIRTH|LOCATION|TITULACIONES|QUALIFICATIONS|TITULACI[OÓ]N|QUALIFICATION|SOBRE M[IÍ]|SOBRE\s+[^\n:]+|ABOUT ME|ABOUT\s+[^\n:]+|TRAYECTORIA|BACKGROUND|TE ACOMPA[NÑ]O|TE ACOMPA[NÑ]A EN|TE ACOMPA[NÑ]A|TE ACOMPA[NÑ]O EN|ACOMPA[NÑ]AMIENTO|[AÁ]MBITOS DE SESI[OÓ]N|I SUPPORT YOU|SHE SUPPORTS YOU IN|SHE SUPPORTS YOU|HE SUPPORTS YOU|AREAS OF SUPPORT|SESSION FOCUS|ME DEFINE|LE DEFINE|NOS DEFINE|WHAT DEFINES ME|WHAT DEFINES HER|WHAT DEFINES HIM):\s*/i);
+
+        for (let i = 1; i < parts.length; i += 2) {
+            const header = parts[i].toUpperCase();
+            const content = parts[i + 1] ? parts[i + 1].trim() : '';
+            if (header.includes('LUGAR') || header.includes('PLACE OF BIRTH') || header.includes('LOCATION')) {
+                sections.lugar = content.replace(/,$/, '').trim();
+            } else if (header.includes('TITULACION') || header.includes('TITULACIÓN') || header.includes('QUALIFICATION')) {
+                sections.titulos = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
+            } else if (header.includes('SOBRE') || header.includes('TRAYECTORIA') || header.includes('ABOUT') || header.includes('BACKGROUND')) {
+                sections.sobreMi = content.split('\n').map(p => p.trim()).filter(Boolean);
+            } else if (header.includes('ACOMPA') || header.includes('SUPPORT') || header.includes('SESI')) {
+                sections.teAcompano = content.split('\n').map(l => l.replace(/^[\s*\-•*]+/g, '').trim()).filter(Boolean);
+            } else if (header.includes('DEFINE')) {
+                sections.meDefine = content.replace(/^["'“”«»]+/g, '').replace(/["'“”«»]+$/g, '').trim();
+            }
+        }
+        return sections;
+    }
+
     const api = Object.freeze({
         descriptions,
         publicSlugs,
@@ -400,7 +437,8 @@ Mindfulness for adults and children`
         getKey,
         getSlug,
         getEnglishProfile,
-        repairLegacyDescription
+        repairLegacyDescription,
+        parseBio
     });
 
     root.GENTeacherProfiles = api;

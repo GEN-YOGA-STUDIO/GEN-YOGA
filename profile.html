@@ -7367,6 +7367,132 @@ function cerrarModalCrearClase() {
     document.getElementById('form-crear-clase').reset();
 }
 
+async function validateClassScheduleOverlap(inserts, options = {}) {
+    if (!inserts || inserts.length === 0) return { valid: true };
+
+    const excludeId = options.excludeId ? Number(options.excludeId) : null;
+
+    // 1. Verificar solapamiento dentro del propio lote a insertar
+    for (let i = 0; i < inserts.length; i++) {
+        const a = inserts[i];
+        const aStart = new Date(a.fecha_inicio).getTime();
+        const aEnd = new Date(a.fecha_fin).getTime();
+        const aType = (a.tipo_clase || 'yoga').toLowerCase();
+        const aIsStudio = aType === 'yoga' || aType === 'taller' || aType === 'especial' || aType === '';
+        const aProfId = String(a.profesor_id || '');
+
+        for (let j = i + 1; j < inserts.length; j++) {
+            const b = inserts[j];
+            const bStart = new Date(b.fecha_inicio).getTime();
+            const bEnd = new Date(b.fecha_fin).getTime();
+            const bType = (b.tipo_clase || 'yoga').toLowerCase();
+            const bIsStudio = bType === 'yoga' || bType === 'taller' || bType === 'especial' || bType === '';
+            const bProfId = String(b.profesor_id || '');
+
+            if (aStart < bEnd && aEnd > bStart) {
+                const formatOpts = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+                const aStartStr = new Date(a.fecha_inicio).toLocaleString('es-ES', formatOpts);
+                const aEndStr = new Date(a.fecha_fin).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                const bStartStr = new Date(b.fecha_inicio).toLocaleString('es-ES', formatOpts);
+                const bEndStr = new Date(b.fecha_fin).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+                if (aProfId && bProfId && aProfId === bProfId) {
+                    return {
+                        valid: false,
+                        reason: 'same_batch_teacher',
+                        message: `<strong>Conflicto en el lote:</strong> El mismo profesor tiene dos sesiones programadas a la misma hora: <strong>"${a.nombre}"</strong> (${aStartStr} - ${aEndStr}) y <strong>"${b.nombre}"</strong> (${bStartStr} - ${bEndStr}).`
+                    };
+                }
+                if (aIsStudio && bIsStudio) {
+                    return {
+                        valid: false,
+                        reason: 'same_batch_studio',
+                        message: `<strong>Conflicto en el lote:</strong> Hay dos clases presenciales de sala programadas a la misma hora: <strong>"${a.nombre}"</strong> (${aStartStr} - ${aEndStr}) y <strong>"${b.nombre}"</strong> (${bStartStr} - ${bEndStr}).`
+                    };
+                }
+            }
+        }
+    }
+
+    // 2. Consultar clases activas existentes en el rango de fechas en Supabase
+    const minStart = inserts.reduce((min, cur) => cur.fecha_inicio < min ? cur.fecha_inicio : min, inserts[0].fecha_inicio);
+    const maxEnd = inserts.reduce((max, cur) => cur.fecha_fin > max ? cur.fecha_fin : max, inserts[0].fecha_fin);
+
+    let query = client
+        .from('clases')
+        .select('id, nombre, fecha_inicio, fecha_fin, duracion_minutos, profesor_id, tipo_clase, activa, profesionales(id, nombre, apellidos)')
+        .eq('activa', true)
+        .gte('fecha_fin', minStart)
+        .lte('fecha_inicio', maxEnd);
+
+    if (excludeId) {
+        query = query.neq('id', excludeId);
+    }
+
+    const { data: existingClasses, error } = await query;
+    if (error) {
+        console.error('Error al comprobar solapamientos existentes:', error);
+        return { valid: true };
+    }
+
+    if (!existingClasses || existingClasses.length === 0) {
+        return { valid: true };
+    }
+
+    for (const newClass of inserts) {
+        const nStart = new Date(newClass.fecha_inicio).getTime();
+        const nEnd = new Date(newClass.fecha_fin).getTime();
+        const nType = (newClass.tipo_clase || 'yoga').toLowerCase();
+        const nIsStudio = nType === 'yoga' || nType === 'taller' || nType === 'especial' || nType === '';
+        const nProfId = String(newClass.profesor_id || '');
+
+        for (const exist of existingClasses) {
+            const eStart = new Date(exist.fecha_inicio).getTime();
+            const eEnd = new Date(exist.fecha_fin).getTime();
+            const eType = (exist.tipo_clase || 'yoga').toLowerCase();
+            const eIsStudio = eType === 'yoga' || eType === 'taller' || eType === 'especial' || eType === '';
+            const eProfId = String(exist.profesor_id || '');
+
+            // Si se solapan los intervalos de tiempo
+            if (nStart < eEnd && nEnd > eStart) {
+                const profName = exist.profesionales
+                    ? `${exist.profesionales.nombre || ''} ${exist.profesionales.apellidos || ''}`.trim()
+                    : 'el profesor/a';
+
+                const formatOpts = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+                const eStartStr = new Date(exist.fecha_inicio).toLocaleString('es-ES', formatOpts);
+                const eEndStr = new Date(exist.fecha_fin).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                const nStartStr = new Date(newClass.fecha_inicio).toLocaleString('es-ES', formatOpts);
+                const nEndStr = new Date(newClass.fecha_fin).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+                // Conflicto A: Mismo profesor (imposible estar en 2 clases/consultas a la vez)
+                if (nProfId && eProfId && nProfId === eProfId) {
+                    return {
+                        valid: false,
+                        reason: 'teacher_conflict',
+                        conflictClass: exist,
+                        newClass: newClass,
+                        message: `<strong>Conflicto de horario del profesor/a:</strong><br>${profName} ya tiene programada la sesión <strong>"${exist.nombre}"</strong> (${eStartStr} - ${eEndStr}) que coincide con <strong>"${newClass.nombre}"</strong> (${nStartStr} - ${nEndStr}).<br><br>Por favor, ajusta la hora para que no se solapen.`
+                    };
+                }
+
+                // Conflicto B: Misma sala/estudio (dos clases de yoga o talleres a la vez en el estudio)
+                if (nIsStudio && eIsStudio) {
+                    return {
+                        valid: false,
+                        reason: 'studio_conflict',
+                        conflictClass: exist,
+                        newClass: newClass,
+                        message: `<strong>Conflicto de sala en el estudio:</strong><br>Ya existe una clase de estudio programada: <strong>"${exist.nombre}"</strong> (con ${profName}, de ${eStartStr} a ${eEndStr}), la cual coincide con <strong>"${newClass.nombre}"</strong> (${nStartStr} - ${nEndStr}).<br><br>Por favor, selecciona una hora libre para la sala.`
+                    };
+                }
+            }
+        }
+    }
+
+    return { valid: true };
+}
+
 document.getElementById('form-crear-clase').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -7491,6 +7617,24 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
             Swal.fire('Día no permitido', 'Las clases regulares solo se pueden programar de Lunes a Viernes. Por favor, selecciona un día laborable.', 'error');
             return;
         }
+    }
+
+    Swal.fire({
+        title: 'Verificando disponibilidad de horario...',
+        didOpen: () => Swal.showLoading()
+    });
+
+    const overlapCheck = await validateClassScheduleOverlap(inserts);
+    if (!overlapCheck.valid) {
+        Swal.close();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Conflicto de horario',
+            html: overlapCheck.message,
+            confirmButtonColor: '#1a4d4f',
+            confirmButtonText: 'Entendido, voy a corregirlo'
+        });
+        return;
     }
 
     Swal.fire({
@@ -8642,6 +8786,9 @@ function switchConsultasSubTab(type) {
 window.switchConsultasSubTab = switchConsultasSubTab;
 
 function parseBio(text) {
+    if (window.GENTeacherProfiles?.parseBio) {
+        return window.GENTeacherProfiles.parseBio(text);
+    }
     const sections = {
         lugar: '',
         titulos: [],
@@ -8651,19 +8798,19 @@ function parseBio(text) {
     };
     if (!text) return sections;
 
-    const normalized = text.replace(/\r\n/g, '\n');
-    const parts = normalized.split(/(?:^|\n)\s*(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TRAYECTORIA|TE ACOMPAÑO|ME DEFINE|PLACE OF BIRTH|QUALIFICATIONS|ABOUT ME|BACKGROUND|I SUPPORT YOU|WHAT DEFINES ME):\s*/i);
+    const normalized = String(text).replace(/\r\n/g, '\n');
+    const parts = normalized.split(/(?:^|\n)\s*(LUGAR DE NACIMIENTO|PLACE OF BIRTH|LOCATION|TITULACIONES|QUALIFICATIONS|TITULACI[OÓ]N|QUALIFICATION|SOBRE M[IÍ]|SOBRE\s+[^\n:]+|ABOUT ME|ABOUT\s+[^\n:]+|TRAYECTORIA|BACKGROUND|TE ACOMPA[NÑ]O|TE ACOMPA[NÑ]A EN|TE ACOMPA[NÑ]A|TE ACOMPA[NÑ]O EN|ACOMPA[NÑ]AMIENTO|[AÁ]MBITOS DE SESI[OÓ]N|I SUPPORT YOU|SHE SUPPORTS YOU IN|SHE SUPPORTS YOU|HE SUPPORTS YOU|AREAS OF SUPPORT|SESSION FOCUS|ME DEFINE|LE DEFINE|NOS DEFINE|WHAT DEFINES ME|WHAT DEFINES HER|WHAT DEFINES HIM):\s*/i);
     
     for (let i = 1; i < parts.length; i += 2) {
         const header = parts[i].toUpperCase();
         const content = parts[i+1] ? parts[i+1].trim() : '';
-        if (header.includes('LUGAR') || header.includes('PLACE OF BIRTH')) {
+        if (header.includes('LUGAR') || header.includes('PLACE OF BIRTH') || header.includes('LOCATION')) {
             sections.lugar = content.replace(/,$/, '').trim();
-        } else if (header.includes('TITULACION') || header.includes('QUALIFICATION')) {
+        } else if (header.includes('TITULACION') || header.includes('TITULACIÓN') || header.includes('QUALIFICATION')) {
             sections.titulos = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
         } else if (header.includes('SOBRE') || header.includes('TRAYECTORIA') || header.includes('ABOUT') || header.includes('BACKGROUND')) {
             sections.sobreMi = content.split('\n').map(p => p.trim()).filter(Boolean);
-        } else if (header.includes('ACOMPA') || header.includes('SUPPORT')) {
+        } else if (header.includes('ACOMPA') || header.includes('SUPPORT') || header.includes('SESI')) {
             sections.teAcompano = content.split('\n').map(l => l.replace(/^[\s*\-•*]+/g, '').trim()).filter(Boolean);
         } else if (header.includes('DEFINE')) {
             sections.meDefine = content.replace(/^["'“”«»]+/g, '').replace(/["'“”«»]+$/g, '').trim();
@@ -10974,6 +11121,29 @@ async function guardarConsultaAdmin(e) {
         });
     }
 
+    Swal.fire({
+        title: 'Verificando disponibilidad...',
+        didOpen: () => Swal.showLoading()
+    });
+
+    const overlapCheck = await validateClassScheduleOverlap(inserts);
+    if (!overlapCheck.valid) {
+        Swal.close();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Conflicto de horario',
+            html: overlapCheck.message,
+            confirmButtonColor: '#1a4d4f',
+            confirmButtonText: 'Entendido, voy a corregirlo'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: repeatCount > 1 ? 'Creando consultas...' : 'Creando consulta...',
+        didOpen: () => Swal.showLoading()
+    });
+
     const { data, error } = await client.from('clases').insert(inserts).select();
 
     Swal.close();
@@ -11722,6 +11892,29 @@ async function guardarTallerAdmin(e) {
             duracion_minutos: duracion
         });
     }
+
+    Swal.fire({
+        title: 'Verificando disponibilidad de la sala...',
+        didOpen: () => Swal.showLoading()
+    });
+
+    const overlapCheck = await validateClassScheduleOverlap(inserts);
+    if (!overlapCheck.valid) {
+        Swal.close();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Conflicto de horario',
+            html: overlapCheck.message,
+            confirmButtonColor: '#1a4d4f',
+            confirmButtonText: 'Entendido, voy a corregirlo'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: repeatCount > 1 ? 'Creando talleres...' : 'Creando taller...',
+        didOpen: () => Swal.showLoading()
+    });
 
     const { data, error } = await client.from('clases').insert(inserts).select();
 

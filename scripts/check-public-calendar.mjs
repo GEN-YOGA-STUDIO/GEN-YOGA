@@ -21,6 +21,7 @@ const [
   consultationAvailabilityMigration,
   effectiveConsultationAvailabilityMigration,
   certificationBuild,
+  overlapMigration,
 ] = await Promise.all([
   read('clases.html'),
   read('public-calendar.js'),
@@ -35,6 +36,7 @@ const [
   read('supabase/migrations/20260817110547_consultation_availability_miriam_isabel.sql'),
   read('supabase/migrations/202609020005_silvia_ayurveda_availability.sql'),
   read('scripts/build-certification.mjs'),
+  read('supabase/migrations/202609020030_enforce_teacher_and_studio_schedule_no_overlap.sql'),
 ]);
 
 for (const id of [
@@ -324,5 +326,14 @@ for (const rpcSignature of [
 assert.match(certificationBuild, /'public-calendar\.css'/);
 assert.match(certificationBuild, /'public-calendar\.js'/);
 assert.match(certificationBuild, /'facilities-carousel\.js'/);
+
+// Check schedule overlap prevention
+assert.match(profilePage, /async function validateClassScheduleOverlap/);
+assert.match(profilePage, /overlapCheck\.valid/);
+assert.match(calendarScript, /hasTeacherClassOverlap/);
+assert.match(overlapMigration, /create or replace function public\.check_clases_schedule_no_overlap/);
+assert.match(overlapMigration, /create trigger trg_check_clases_schedule_no_overlap/);
+assert.match(overlapMigration, /Conflicto de horario/);
+assert.match(overlapMigration, /Conflicto de sala en el estudio/);
 
 console.log('Public weekly calendar checks passed.');

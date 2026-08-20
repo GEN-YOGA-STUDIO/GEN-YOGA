@@ -53,11 +53,22 @@ const repairedAngel = repairLegacyDescription({
 assert.equal(repairedAngel.descripcion, angel);
 assert.equal(repairedAngel.especialidad, 'Yoga para hombres & Yoga para Todos | clases');
 
+const miriam = descriptions.miriam;
+assert.match(miriam, /LUGAR DE NACIMIENTO:\s*Albacete \(Espa[ñn]a\)/i);
+assert.doesNotMatch(miriam, /Cuenca/i);
+
 const repairedSilvia = repairLegacyDescription({
   nombre: 'Silvia',
   descripcion: 'SOBRE MI:\n30 años de práctica personal Y Terapeuta Ayurveda.\nTE ACOMPAÑO:\nsistema nervous'
 });
 assert.equal(repairedSilvia.descripcion, silvia);
+
+const repairedMiriam = repairLegacyDescription({
+  nombre: 'Miriam',
+  descripcion: 'LUGAR DE NACIMIENTO: Cuenca (España)\nTITULACIONES:\nGraduada en Psicología por la Universidad de Valencia'
+});
+assert.match(repairedMiriam.descripcion, /LUGAR DE NACIMIENTO:\s*Albacete \(Espa[ñn]a\)/i);
+assert.doesNotMatch(repairedMiriam.descripcion, /Cuenca/i);
 
 const angelEnglish = getEnglishProfile({ nombre: 'Ángel Javier' });
 assert.match(angelEnglish.descripcion, /La Roda \(Albacete\)/);
@@ -69,12 +80,32 @@ assert.equal(angelEnglish.especialidad, 'Yoga for Men & Yoga for Everyone | clas
 const miriamEnglish = getEnglishProfile({ email: 'miriam_profesora@genyoga.studio' });
 assert.match(miriamEnglish.descripcion, /self-awareness/);
 assert.doesNotMatch(miriamEnglish.descripcion, /autoconcern/);
+assert.match(miriamEnglish.descripcion, /PLACE OF BIRTH:\s*Albacete \(Spain\)/i);
+assert.doesNotMatch(miriamEnglish.descripcion, /Cuenca/i);
 
 const isabelKey = teacherProfiles.getKey({ email: 'isarodriguez.pni@gmail.com' });
 assert.equal(isabelKey, 'isabel', 'isarodriguez.pni@gmail.com debe resolver a la clave isabel');
 
 const silviaKey = teacherProfiles.getKey({ email: 'sil-hada@hotmail.com' });
 assert.equal(silviaKey, 'silvia', 'sil-hada@hotmail.com debe resolver a la clave silvia');
+
+// Verify parseBio accurately parses teacher sections without duplicate content
+const { parseBio } = teacherProfiles;
+const parsedSilvia = parseBio(silvia);
+assert.equal(parsedSilvia.lugar, 'Madrid');
+assert.equal(parsedSilvia.titulos.length, 2, 'Silvia sólo debe tener 2 titulaciones');
+assert.ok(parsedSilvia.titulos[0].includes('AIPYS'), 'Primera titulación de Silvia es AIPYS');
+assert.ok(parsedSilvia.titulos[1].includes('Ayurveda'), 'Segunda titulación de Silvia es Ayurveda');
+assert.ok(parsedSilvia.sobreMi.length > 1, 'Silvia debe tener párrafos de Sobre mí');
+assert.ok(parsedSilvia.teAcompano.length > 5, 'Silvia debe tener ámbitos de sesión');
+assert.doesNotMatch(parsedSilvia.titulos.join('\n'), /Es profesora de Yoga/i, 'Titulaciones de Silvia no debe contener su bio');
+assert.doesNotMatch(parsedSilvia.titulos.join('\n'), /Dolor de espalda/i, 'Titulaciones de Silvia no debe contener ámbitos de sesión');
+
+const parsedMiriam = parseBio(descriptions.miriam);
+assert.equal(parsedMiriam.lugar, 'Albacete (España)');
+assert.equal(parsedMiriam.titulos.length, 10);
+assert.ok(parsedMiriam.sobreMi.length >= 4);
+assert.equal(parsedMiriam.teAcompano.length, 10);
 
 const [maestros, profile, clases, migration, mergeMigration] = await Promise.all([
   readFile(path.join(root, 'maestros.html'), 'utf8'),
