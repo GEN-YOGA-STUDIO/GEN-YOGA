@@ -128,6 +128,7 @@ const requiredImages = [
   'maestra-yanira-recortada.webp',
   'isabel-pni.jpg',
   'clases-hombres.jpg',
+  'clases-para-todos.jpg',
   'profes/isabel-pni.jpg',
   'profes/angel-upavistha.jpg',
   'profes/angel-handstand.jpg',
