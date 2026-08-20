@@ -172,13 +172,17 @@ assert.match(maestros, /identity\.includes\('isabel'\)/);
 assert.doesNotMatch(profile, /function truncateTextProfile/);
 assert.match(profile, /const bioText = parsed\.sobreMi\[0\]/);
 assert.match(profile, /parsed\.titulos\.map\(t => `<p>\$\{escapeHtml\(t\)\}<\/p>`\)/);
-assert.match(profile, /\(\?:\^\|\\n\)\\s\*\(LUGAR DE NACIMIENTO/);
 assert.match(profile, /function getTeacherPhotoFallback/);
 assert.match(profile, /img\/maestro-angel-recortado\.webp/);
 assert.match(profile, /img\/maestra-silvia-recortada\.webp/);
 assert.match(profile, /img\/maestra-miriam-recortada\.webp/);
 assert.match(profile, /img\/maestra-isabel-recortada\.webp/);
 assert.match(profile, /img\/maestra-yanira-recortada\.webp/);
+assert.match(profile, /function generarHuecosConsultasVirtuales/);
+assert.match(profile, /function abrirModalComprarConsultas/);
+assert.match(profile, /function abrirCompraYReservaConsulta/);
+assert.match(profile, /function iniciarCheckoutConsultaStripe/);
+assert.match(profile, /COMPRAR Y RESERVAR/);
 
 for (const expected of [
   'La Roda (Albacete)',

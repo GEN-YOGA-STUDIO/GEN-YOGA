@@ -4,21 +4,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="6.48" />
+    <meta name="application-version" content="6.49" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.48" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.48" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=6.49" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=6.49" />
     <title>Mi perfil | GEN Yoga</title>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.48">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.49">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=6.48"></script>
+    <script src="teacher-profiles.js?v=6.49"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=6.48"></script>
+    <script src="i18n.js?v=6.49"></script>
 
     <style>
 /* INLINED profile.css */
@@ -1759,6 +1759,10 @@ main .sticky.top-24 {
                                 </p>
                             </div>
                             <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
+                                <button onclick="abrirModalComprarConsultas('psicologia')"
+                                    class="flex bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition items-center gap-2">
+                                    <i class="ph-bold ph-shopping-bag text-lg"></i> Comprar Sesión o Bono
+                                </button>
                                 <div class="admin-only">
                                     <button onclick="abrirModalCrearConsulta('psicologia')"
                                         class="flex bg-[#3B82F6] hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
@@ -1836,6 +1840,10 @@ main .sticky.top-24 {
                                 </p>
                             </div>
                             <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
+                                <button onclick="abrirModalComprarConsultas('nutricion')"
+                                    class="flex bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition items-center gap-2">
+                                    <i class="ph-bold ph-shopping-bag text-lg"></i> Comprar Sesión o Bono
+                                </button>
                                 <div class="admin-only">
                                     <button onclick="abrirModalCrearConsulta('nutricion')"
                                         class="flex bg-[#8B5CF6] hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
@@ -2166,7 +2174,7 @@ main .sticky.top-24 {
                     </p>
                     <div
                         class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-            <span>© 2026 GEN Yoga • v6.48. Todos los derechos reservados.</span>
+            <span>© 2026 GEN Yoga • v6.49. Todos los derechos reservados.</span>
                     </div>
                 </div>
             </footer>
@@ -2596,7 +2604,7 @@ main .sticky.top-24 {
 // --- 1. CONFIGURACIÓN ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '6.48';
+const APP_VERSION = '6.49';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 function closePaymentUiBeforeNavigation() {
@@ -3480,6 +3488,21 @@ async function initApp() {
             reservar(pendingClaseId, { automaticPostPayment: true });
         }, 800);
     }
+
+    const pendingConsultationRaw = safeGetItem('pending_consultation_booking', '');
+    if (pendingConsultationRaw) {
+        try {
+            const pendingData = JSON.parse(pendingConsultationRaw);
+            safeRemoveItem('pending_consultation_booking');
+            if (pendingData && pendingData.tipo && pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
+                setTimeout(() => {
+                    abrirConfirmacionReservaVirtual(pendingData.tipo, pendingData.profesor_id, pendingData.fecha, pendingData.hora);
+                }, 1000);
+            }
+        } catch (_) {
+            safeRemoveItem('pending_consultation_booking');
+        }
+    }
 }
 
 async function cargarProfesionalesCache() {
@@ -4120,8 +4143,7 @@ async function abrirConfirmacionReservaVirtual(tipo, profesorId, fecha, hora) {
         const config = getConsultaConfig(tipo);
 
         if (getSaldoConsultaActual(tipo) < 1) {
-            mostrarErrorSaldoConsulta({ sinSaldo: true }, tipo);
-            return;
+            return abrirCompraYReservaConsulta(tipo, { profesor_id: profesorId, fecha_inicio: `${fecha}T${hora}:00`, isVirtual: true });
         }
 
         const result = await Swal.fire({
@@ -9110,6 +9132,362 @@ window.mostrarFuncionEnPruebas = mostrarFuncionEnPruebas;
 // CONSULTAS Y TALLERES
 // =======================================================
 
+function generarHuecosConsultasVirtuales(tipo, dbClases = [], allClases = []) {
+    const consultationSlotStartMinutes = [
+        9 * 60 + 30,
+        10 * 60 + 30,
+        11 * 60 + 30,
+        12 * 60 + 30,
+        17 * 60,
+        18 * 60,
+        19 * 60,
+        20 * 60
+    ];
+    const silviaConsultationSlotStartMinutes = [
+        15 * 60,
+        16 * 60 + 30,
+        18 * 60
+    ];
+    const silviaConsultationAnchorDate = '2026-06-19';
+    const consultationWeekdays = {
+        miriam: [2, 3], // Martes y Miércoles
+        isabel: [2, 4]  // Martes y Jueves
+    };
+
+    const profs = (allProfesionalesCache || []).filter(p => {
+        const nom = `${p.nombre || ''} ${p.email || ''}`.toLowerCase();
+        if (tipo === 'psicologia') {
+            return nom.includes('miriam') || nom.includes('respira') || nom.includes('isabel') || nom.includes('isarodriguez');
+        } else if (tipo === 'nutricion') {
+            return nom.includes('silvia') || nom.includes('sil-hada') || nom.includes('isabel') || nom.includes('isarodriguez') || nom.includes('miriam');
+        }
+        return false;
+    });
+
+    const generated = [];
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setHours(0, 0, 0, 0);
+
+    // Generar para las próximas 4 semanas
+    for (let dayOffset = 0; dayOffset < 28; dayOffset++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + dayOffset);
+        const dateKey = formatDateLocal(d);
+        const weekday = d.getDay() === 0 ? 7 : d.getDay();
+
+        profs.forEach(prof => {
+            const nom = `${prof.nombre || ''} ${prof.email || ''}`.toLowerCase();
+            let slug = 'otro';
+            if (nom.includes('miriam') || nom.includes('respira')) slug = 'miriam';
+            else if (nom.includes('isabel') || nom.includes('isarodriguez')) slug = 'isabel';
+            else if (nom.includes('silvia') || nom.includes('sil-hada')) slug = 'silvia';
+
+            let slotStarts = [];
+            let durationMinutes = 60;
+
+            if (slug === 'miriam' && consultationWeekdays.miriam.includes(weekday)) {
+                slotStarts = consultationSlotStartMinutes;
+                durationMinutes = 60;
+            } else if (slug === 'isabel' && consultationWeekdays.isabel.includes(weekday)) {
+                slotStarts = consultationSlotStartMinutes;
+                durationMinutes = 60;
+            } else if (slug === 'silvia' && weekday === 5 && tipo === 'nutricion') {
+                const anchor = new Date(`${silviaConsultationAnchorDate}T12:00:00Z`);
+                const reqDate = new Date(`${dateKey}T12:00:00Z`);
+                const diffDays = Math.round((reqDate.getTime() - anchor.getTime()) / 86400000);
+                if (diffDays % 14 === 0) {
+                    slotStarts = silviaConsultationSlotStartMinutes;
+                    durationMinutes = 90;
+                }
+            }
+
+            slotStarts.forEach(startMinutes => {
+                const startHour = Math.floor(startMinutes / 60);
+                const startMin = startMinutes % 60;
+                const horaStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+                const isoStart = `${dateKey}T${horaStr}:00`;
+                const dateStart = new Date(isoStart);
+                const dateEnd = new Date(dateStart.getTime() + durationMinutes * 60000);
+
+                if (dateStart < new Date()) return; // Ignorar horarios pasados
+
+                // Comprobar si ya existe en la BD
+                const existsInDb = (dbClases || []).some(c => {
+                    const sameProf = (c.profesor_id === prof.id) || (c.profesionales?.id === prof.id);
+                    if (!sameProf) return false;
+                    const cStart = new Date(c.fecha_inicio);
+                    return Math.abs(cStart.getTime() - dateStart.getTime()) < 60000;
+                });
+
+                if (!existsInDb) {
+                    // Comprobar solapamiento con otras clases del profesor
+                    const hasOverlap = (allClases || []).some(c => {
+                        const sameProf = (c.profesor_id === prof.id) || (c.profesionales?.id === prof.id);
+                        if (!sameProf) return false;
+                        const cStart = new Date(c.fecha_inicio);
+                        const cEnd = new Date(c.fecha_fin || (cStart.getTime() + 60 * 60000));
+                        return (dateStart < cEnd && dateEnd > cStart);
+                    });
+
+                    if (!hasOverlap) {
+                        let nombre = 'Consulta Psicología';
+                        if (slug === 'isabel') nombre = 'Consulta PNI / Nutrición Clínica';
+                        else if (slug === 'silvia') nombre = 'Consulta Ayurveda';
+                        else if (slug === 'miriam' && tipo === 'nutricion') nombre = 'Consulta Alimentación Consciente';
+
+                        generated.push({
+                            id: `virtual-${prof.id}-${dateKey}-${horaStr}`,
+                            nombre,
+                            fecha_inicio: isoStart,
+                            fecha_fin: dateEnd.toISOString(),
+                            duracion_minutos: durationMinutes,
+                            capacidad_max: 1,
+                            ocupadas: 0,
+                            tipo_clase: tipo,
+                            profesionales: prof,
+                            profesor_id: prof.id,
+                            isVirtual: true,
+                            activa: true,
+                            es_gratuita: false
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    return generated;
+}
+
+async function iniciarCheckoutConsultaStripe(lookupKey) {
+    if (!currentUser?.id) {
+        return Swal.fire('Inicia sesión', 'Debes iniciar sesión para realizar la compra.', 'warning');
+    }
+
+    const checkoutAttemptId = beginStripeCheckout();
+    if (checkoutAttemptId === null) return;
+
+    Swal.fire({
+        title: 'Cargando pasarela de pago...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        background: '#fff',
+        color: '#333'
+    });
+
+    try {
+        safeSetItem('stripe_checkout_origin', 'profile');
+        const { data, error } = await client.functions.invoke('create-checkout-session', {
+            body: {
+                lookup_key: lookupKey,
+                user_id: currentUser.id,
+                from: 'profile',
+                app_version: APP_VERSION,
+                checkout_attempt_id: checkoutAttemptId
+            }
+        });
+
+        if (error) {
+            let errorMsg = error.message || 'Error al iniciar la sesión de pago.';
+            try {
+                if (error.context && typeof error.context.json === 'function') {
+                    const errJson = await error.context.json();
+                    if (errJson?.error) errorMsg = errJson.error;
+                }
+            } catch (_) {}
+            throw new Error(errorMsg);
+        }
+
+        if (data && data.url) {
+            const checkoutUrl = getValidatedStripeCheckoutUrl(data.url);
+            closePaymentUiBeforeNavigation();
+            window.location.assign(checkoutUrl);
+        } else {
+            throw new Error('No se recibió la URL de la pasarela de pagos.');
+        }
+    } catch (error) {
+        stripeCheckoutInProgress = false;
+        safeRemoveItem('stripe_checkout_origin');
+        console.error('Error en compra de consulta Stripe:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo iniciar el pago',
+            text: error.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.',
+            confirmButtonColor: '#D27D60'
+        });
+    }
+}
+
+async function abrirModalComprarConsultas(tipo = 'psicologia') {
+    if (!currentUser?.id) {
+        return Swal.fire('Inicia sesión', 'Debes iniciar sesión para adquirir sesiones de consulta.', 'warning');
+    }
+
+    const isPsico = tipo === 'psicologia';
+    let options = [];
+    if (isPsico) {
+        options = [
+            { key: 'miriam_psico_individual_1a', title: 'Miriam · 1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
+            { key: 'miriam_psico_individual_sig', title: 'Miriam · Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
+            { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (95 €)', desc: 'Psiconeuroinmunología Clínica y Nutrición inicial (60 min)', price: 95 },
+            { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Consulta de seguimiento clínico (60 min)', price: 60 },
+            { key: 'miriam_psico_pareja_1a', title: 'Miriam · Terapia de Pareja 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (90 min)', price: 120 }
+        ];
+    } else {
+        options = [
+            { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI / Nutrición Clínica (95 €)', desc: 'Valoración clínica integral y nutrición (60 min)', price: 95 },
+            { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI / Nutrición (60 €)', desc: 'Revisión y evolución (60 min)', price: 60 },
+            { key: 'silvia_ayurveda_1a', title: 'Silvia · 1ª Consulta Ayurveda (65 €)', desc: 'Diagnóstico doshas y nutrición consciente (90 min)', price: 65 },
+            { key: 'silvia_ayurveda_sig', title: 'Silvia · Seguimiento Ayurveda (50 €)', desc: 'Revisión y ajustes (60 min)', price: 50 },
+            { key: 'silvia_ayurveda_bono3', title: 'Silvia · Bono 3 Sesiones Ayurveda (135 €)', desc: 'Bono 3 consultas individuales (Ahorro 15 €)', price: 135 },
+            { key: 'silvia_ayurveda_bono6', title: 'Silvia · Bono 6 Sesiones Ayurveda (240 €)', desc: 'Bono 6 consultas individuales (Ahorro 60 €)', price: 240 }
+        ];
+    }
+
+    const htmlOptions = options.map((opt, idx) => `
+        <label class="flex items-start justify-between gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition ${idx === 0 ? 'border-olive bg-olive/5 shadow-sm' : 'border-cocoa/10 hover:border-cocoa/30'}" onclick="document.querySelectorAll('.consult-opt-label-modal').forEach(l=>l.classList.remove('border-olive','bg-olive/5','shadow-sm')); this.classList.add('border-olive','bg-olive/5','shadow-sm');">
+            <div class="flex items-start gap-3">
+                <input type="radio" name="consult-lookup-general" value="${opt.key}" ${idx === 0 ? 'checked' : ''} class="mt-1 accent-[#8C8658]">
+                <div class="text-left">
+                    <span class="block font-bold text-cocoa text-sm">${escapeHtml(opt.title)}</span>
+                    <span class="block text-xs text-cocoa/60 font-light mt-0.5">${escapeHtml(opt.desc)}</span>
+                </div>
+            </div>
+            <span class="font-bold text-olive text-sm whitespace-nowrap">${opt.price} €</span>
+        </label>
+    `).join('');
+
+    const { isConfirmed } = await Swal.fire({
+        title: isPsico ? 'Comprar Consultas de Psicología' : 'Comprar Consultas de Nutrición',
+        html: `
+            <div class="text-left">
+                <p class="text-xs text-cocoa/60 mb-3">Elige la sesión o bono que deseas adquirir. Las sesiones se añadirán a tu cuenta inmediatamente tras el pago para reservar cuando quieras.</p>
+                <div class="space-y-2.5">
+                    ${htmlOptions}
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Ir a Pagar con Stripe',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#795244',
+        cancelButtonColor: '#9ca3af'
+    });
+
+    if (!isConfirmed) return;
+
+    const selectedKey = document.querySelector('input[name="consult-lookup-general"]:checked')?.value;
+    if (!selectedKey) return;
+
+    await iniciarCheckoutConsultaStripe(selectedKey);
+}
+
+async function abrirCompraYReservaConsulta(tipo, claseOrId) {
+    if (!currentUser?.id) {
+        return Swal.fire('Inicia sesión', 'Debes iniciar sesión para comprar y reservar.', 'warning');
+    }
+
+    const cache = tipo === 'psicologia' ? allPsicologiaCache : allNutricionCache;
+    const clase = (typeof claseOrId === 'object' && claseOrId) ? claseOrId : cache.find(c => String(c.id) === String(claseOrId));
+    if (!clase) return;
+
+    const prof = clase.profesionales || allProfesionalesCache.find(p => p.id === clase.profesor_id) || {};
+    const profName = `${prof.nombre || ''} ${prof.apellidos || ''}`.trim() || 'tu profesional';
+    const profSlug = (prof.nombre || '').toLowerCase();
+    const isMiriam = profSlug.includes('miriam');
+    const isIsabel = profSlug.includes('isabel');
+    const isSilvia = profSlug.includes('silvia');
+
+    let options = [];
+    if (isMiriam) {
+        options = [
+            { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
+            { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
+            { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (90 min)', price: 120 },
+            { key: 'miriam_psico_pareja_sig', title: 'Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (90 min)', price: 100 }
+        ];
+    } else if (isIsabel) {
+        options = [
+            { key: 'isabel_pni_1a', title: '1ª Consulta PNI / Nutrición (95 €)', desc: 'Valoración clínica integral y pautas iniciales (60 min)', price: 95 },
+            { key: 'isabel_pni_sig', title: 'Consulta de Seguimiento PNI (60 €)', desc: 'Evolución clínica y ajustes personalizados (60 min)', price: 60 }
+        ];
+    } else if (isSilvia) {
+        options = [
+            { key: 'silvia_ayurveda_1a', title: '1ª Consulta Ayurveda (65 €)', desc: 'Diagnóstico doshas y estilo de vida (90 min)', price: 65 },
+            { key: 'silvia_ayurveda_sig', title: 'Consulta Seguimiento Ayurveda (50 €)', desc: 'Revisión y evolución de pautas (60 min)', price: 50 },
+            { key: 'silvia_ayurveda_bono3', title: 'Bono 3 Sesiones Ayurveda (135 €)', desc: 'Ahorro 15 € · Validez 6 meses', price: 135 },
+            { key: 'silvia_ayurveda_bono6', title: 'Bono 6 Sesiones Ayurveda (240 €)', desc: 'Ahorro 60 € · Validez 6 meses', price: 240 }
+        ];
+    } else {
+        options = [
+            { key: tipo === 'psicologia' ? 'miriam_psico_individual_1a' : 'silvia_ayurveda_1a', title: `1ª Sesión de ${tipo === 'psicologia' ? 'Psicología' : 'Nutrición'}`, desc: 'Consulta individual', price: 65 }
+        ];
+    }
+
+    const fechaFormat = formatDisplayLongDate(clase.fecha_inicio);
+    const horaFormat = formatDisplayTime(clase.fecha_inicio);
+
+    const htmlOptions = options.map((opt, idx) => `
+        <label class="flex items-start justify-between gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition ${idx === 0 ? 'border-olive bg-olive/5 shadow-sm' : 'border-cocoa/10 hover:border-cocoa/30'}" onclick="document.querySelectorAll('.consult-opt-label-modal').forEach(l=>l.classList.remove('border-olive','bg-olive/5','shadow-sm')); this.classList.add('border-olive','bg-olive/5','shadow-sm');">
+            <div class="flex items-start gap-3">
+                <input type="radio" name="consultation-lookup" value="${opt.key}" ${idx === 0 ? 'checked' : ''} class="mt-1 accent-[#8C8658]">
+                <div class="text-left">
+                    <span class="block font-bold text-cocoa text-sm">${escapeHtml(opt.title)}</span>
+                    <span class="block text-xs text-cocoa/60 font-light mt-0.5">${escapeHtml(opt.desc)}</span>
+                </div>
+            </div>
+            <span class="font-bold text-olive text-sm whitespace-nowrap">${opt.price} €</span>
+        </label>
+    `).join('');
+
+    const profPhoto = getTeacherPhotoFallback(prof);
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Reservar y Comprar Consulta',
+        html: `
+            <div class="text-left">
+                <div class="bg-sand/20 rounded-2xl p-4 mb-4 border border-cocoa/10 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full overflow-hidden border border-cocoa/10 flex-shrink-0">
+                        ${profPhoto ? `<img src="${escapeHtml(profPhoto)}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-olive/10 flex items-center justify-center font-bold text-olive">${escapeHtml(profName.charAt(0))}</div>`}
+                    </div>
+                    <div>
+                        <p class="font-bold text-cocoa text-sm">${escapeHtml(profName)}</p>
+                        <p class="text-xs text-cocoa/70"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fechaFormat)} a las <strong>${horaFormat}</strong></p>
+                    </div>
+                </div>
+                <p class="text-xs font-bold uppercase tracking-wider text-cocoa/50 mb-2">Selecciona el tipo de sesión:</p>
+                <div class="space-y-2.5">
+                    ${htmlOptions}
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Proceder al Pago Seguro',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#795244',
+        cancelButtonColor: '#9ca3af'
+    });
+
+    if (!isConfirmed) return;
+
+    const selectedKey = document.querySelector('input[name="consultation-lookup"]:checked')?.value;
+    if (!selectedKey) return;
+
+    const pendingBooking = {
+        tipo,
+        profesor_id: prof.id || clase.profesor_id,
+        fecha: formatDateLocal(new Date(clase.fecha_inicio)),
+        hora: formatDisplayTime(clase.fecha_inicio),
+        clase_id: clase.id,
+        isVirtual: !!clase.isVirtual
+    };
+    safeSetItem('pending_consultation_booking', JSON.stringify(pendingBooking));
+
+    await iniciarCheckoutConsultaStripe(selectedKey);
+}
+
 async function cargarPsicologia() {
     const container = document.getElementById('psicologia-container');
     if (!container) return;
@@ -9130,57 +9508,53 @@ async function cargarPsicologia() {
             .gte('fecha_inicio', nowIso)
             .order('fecha_inicio');
 
-    const clases = (rawClases || []).filter(esHorarioValidoConsulta);
+    const dbClases = (rawClases || []).filter(esHorarioValidoConsulta);
 
-    if (errClases) {
-        console.error('Error cargando consultas', errClases);
+    if (dbClases.length > 0) {
+        const claseIds = dbClases.map(c => c.id);
+        const [reservasRes, perfilesRes] = await Promise.all([
+            client.from('reservas_psicologia').select('*').in('clase_id', claseIds),
+            client.from('profiles').select('id, nombre, apellidos, email, telefono')
+        ]);
+
+        const perfilesMap = {};
+        (perfilesRes.data || []).forEach(p => { perfilesMap[p.id] = p; });
+
+        const reservasMap = {};
+        (reservasRes.data || []).forEach(r => {
+            if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+            reservasMap[r.clase_id].push(r);
+        });
+
+        dbClases.forEach(c => {
+            const resClase = reservasMap[c.id] || [];
+            const confirmadas = resClase.filter(r => r.estado === 'confirmada');
+            c.ocupadas = confirmadas.length;
+            c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
+            if (confirmadas.length > 0) {
+                const conf = confirmadas[0];
+                c.reservaConfirmada = { ...conf, paciente: perfilesMap[conf.user_id] || {} };
+            } else {
+                c.reservaConfirmada = null;
+            }
+        });
+    }
+
+    // Generar huecos virtuales disponibles para Miriam e Isabel
+    const virtualSlots = generarHuecosConsultasVirtuales('psicologia', dbClases, allClasesCache);
+    const allSlots = [...dbClases, ...virtualSlots];
+    allSlots.sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
+
+    const emptyState = document.getElementById('psicologia-empty-state');
+    if (allSlots.length === 0) {
         container.innerHTML = '';
-        document.getElementById('psicologia-empty-state').classList.remove('hidden');
+        if (emptyState) emptyState.classList.remove('hidden');
         allPsicologiaCache = [];
         return;
     }
 
-    if (!clases || clases.length === 0) {
-        container.innerHTML = '';
-        document.getElementById('psicologia-empty-state').classList.remove('hidden');
-        allPsicologiaCache = [];
-        return;
-    }
-
-    const claseIds = clases.map(c => c.id);
-    const [reservasRes, perfilesRes] = await Promise.all([
-        client.from('reservas_psicologia').select('*').in('clase_id', claseIds),
-        client.from('profiles').select('id, nombre, apellidos, email, telefono')
-    ]);
-
-    if (reservasRes.error) {
-        console.error('Error cargando reservas de consultas', reservasRes.error);
-    }
-    document.getElementById('psicologia-empty-state').classList.add('hidden');
-
-    const perfilesMap = {};
-    (perfilesRes.data || []).forEach(p => { perfilesMap[p.id] = p; });
-
-    const reservasMap = {};
-    (reservasRes.data || []).forEach(r => {
-        if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
-        reservasMap[r.clase_id].push(r);
-    });
-
-    clases.forEach(c => {
-        const resClase = reservasMap[c.id] || [];
-        const confirmadas = resClase.filter(r => r.estado === 'confirmada');
-        c.ocupadas = confirmadas.length;
-        c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
-        if (confirmadas.length > 0) {
-            const conf = confirmadas[0];
-            c.reservaConfirmada = { ...conf, paciente: perfilesMap[conf.user_id] || {} };
-        } else {
-            c.reservaConfirmada = null;
-        }
-    });
-
-    allPsicologiaCache = clases;
+    if (emptyState) emptyState.classList.add('hidden');
+    allPsicologiaCache = allSlots;
     renderizarCalendarioPsicologia();
     renderizarPsicologia();
     refrescarInicioSiActivo();
@@ -9206,57 +9580,53 @@ async function cargarNutricion() {
             .gte('fecha_inicio', nowIso)
             .order('fecha_inicio');
 
-    const clases = (rawClases || []).filter(esHorarioValidoConsulta);
+    const dbClases = (rawClases || []).filter(esHorarioValidoConsulta);
 
-    if (errClases) {
-        console.error('Error cargando nutrición', errClases);
+    if (dbClases.length > 0) {
+        const claseIds = dbClases.map(c => c.id);
+        const [reservasRes, perfilesRes] = await Promise.all([
+            client.from('reservas_nutricion').select('*').in('clase_id', claseIds),
+            client.from('profiles').select('id, nombre, apellidos, email, telefono')
+        ]);
+
+        const perfilesNutriMap = {};
+        (perfilesRes.data || []).forEach(p => { perfilesNutriMap[p.id] = p; });
+
+        const reservasMap = {};
+        (reservasRes.data || []).forEach(r => {
+            if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+            reservasMap[r.clase_id].push(r);
+        });
+
+        dbClases.forEach(c => {
+            const resClase = reservasMap[c.id] || [];
+            const confirmadas = resClase.filter(r => r.estado === 'confirmada');
+            c.ocupadas = confirmadas.length;
+            c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
+            if (confirmadas.length > 0) {
+                const conf = confirmadas[0];
+                c.reservaConfirmada = { ...conf, paciente: perfilesNutriMap[conf.user_id] || {} };
+            } else {
+                c.reservaConfirmada = null;
+            }
+        });
+    }
+
+    // Generar huecos virtuales disponibles para Silvia e Isabel
+    const virtualSlots = generarHuecosConsultasVirtuales('nutricion', dbClases, allClasesCache);
+    const allSlots = [...dbClases, ...virtualSlots];
+    allSlots.sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
+
+    const emptyState = document.getElementById('nutricion-empty-state');
+    if (allSlots.length === 0) {
         container.innerHTML = '';
-        document.getElementById('nutricion-empty-state').classList.remove('hidden');
+        if (emptyState) emptyState.classList.remove('hidden');
         allNutricionCache = [];
         return;
     }
 
-    if (!clases || clases.length === 0) {
-        container.innerHTML = '';
-        document.getElementById('nutricion-empty-state').classList.remove('hidden');
-        allNutricionCache = [];
-        return;
-    }
-
-    const claseIds = clases.map(c => c.id);
-    const [reservasRes, perfilesRes] = await Promise.all([
-        client.from('reservas_nutricion').select('*').in('clase_id', claseIds),
-        client.from('profiles').select('id, nombre, apellidos, email, telefono')
-    ]);
-
-    if (reservasRes.error) {
-        console.error('Error cargando reservas de nutrición', reservasRes.error);
-    }
-    document.getElementById('nutricion-empty-state').classList.add('hidden');
-
-    const perfilesNutriMap = {};
-    (perfilesRes.data || []).forEach(p => { perfilesNutriMap[p.id] = p; });
-
-    const reservasMap = {};
-    (reservasRes.data || []).forEach(r => {
-        if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
-        reservasMap[r.clase_id].push(r);
-    });
-
-    clases.forEach(c => {
-        const resClase = reservasMap[c.id] || [];
-        const confirmadas = resClase.filter(r => r.estado === 'confirmada');
-        c.ocupadas = confirmadas.length;
-        c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
-        if (confirmadas.length > 0) {
-            const conf = confirmadas[0];
-            c.reservaConfirmada = { ...conf, paciente: perfilesNutriMap[conf.user_id] || {} };
-        } else {
-            c.reservaConfirmada = null;
-        }
-    });
-
-    allNutricionCache = clases;
+    if (emptyState) emptyState.classList.add('hidden');
+    allNutricionCache = allSlots;
     renderizarCalendarioNutricion();
     renderizarNutricion();
     refrescarInicioSiActivo();
@@ -9325,7 +9695,7 @@ function renderizarPsicologia() {
 
         grupos[dateKey].forEach(c => {
             const hora = formatDisplayTime(c.fecha_inicio);
-            const claseId = safePositiveInteger(c.id) || 0;
+            const rawId = c.id;
             const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
@@ -9348,7 +9718,7 @@ function renderizarPsicologia() {
                         </div>`;
                 } else {
                     btnAction = `
-                        <button onclick="abrirModalAsignarPlazaAdmin('psicologia', ${claseId})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
+                        <button onclick="abrirModalAsignarPlazaAdmin('psicologia', ${inlineJsString(rawId)})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
                             <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
                         </button>`;
                 }
@@ -9368,21 +9738,26 @@ function renderizarPsicologia() {
                     const disabledClass = (!hasFreeCredit) ? 'opacity-50 cursor-not-allowed grayscale bg-gray-400' : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:shadow-lg hover:brightness-110 active:scale-95';
                     const btnText = (!hasFreeCredit) ? '0 BONOS GRATIS' : 'RESERVAR GRATIS (0 €)';
                     btnAction = `
-                        <button onclick="reservarConsulta('psicologia', ${claseId})" class="${disabledClass} text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform">
+                        <button onclick="reservarConsulta('psicologia', ${inlineJsString(rawId)})" class="${disabledClass} text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform">
                             ${escapeHtml(btnText)}
                         </button>`;
                 } else {
                     const saldo = getSaldoConsultaActual('psicologia');
-                    const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
-                    const btnText = (saldo < 1) ? profileT('profile_zero_sessions', '0 Sesiones') : profileT('profile_book', 'RESERVAR');
-                    btnAction = `
-                        <button onclick="reservarConsulta('psicologia', ${claseId})" class="bg-[#3B82F6] text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
-                            ${escapeHtml(btnText)}
-                        </button>`;
+                    if (saldo >= 1) {
+                        btnAction = `
+                            <button onclick="reservarConsulta('psicologia', ${inlineJsString(rawId)})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95">
+                                RESERVAR CITA
+                            </button>`;
+                    } else {
+                        btnAction = `
+                            <button onclick="abrirCompraYReservaConsulta('psicologia', ${inlineJsString(rawId)})" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
+                                <i class="ph-bold ph-calendar-plus"></i> COMPRAR Y RESERVAR
+                            </button>`;
+                    }
                 }
             }
 
-            const adminTrash = `<button onclick="borrarConsultaAdmin('psicologia', ${claseId})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
+            const adminTrash = (!isAdmin || c.isVirtual) ? '' : `<button onclick="borrarConsultaAdmin('psicologia', ${inlineJsString(rawId)})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
 
             const profesionalName = String(c.profesionales?.nombre || 'Staff GEN');
             const profesionalFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profesionalName);
@@ -9500,7 +9875,7 @@ function renderizarNutricion() {
 
         grupos[dateKey].forEach(c => {
             const hora = formatDisplayTime(c.fecha_inicio);
-            const claseId = safePositiveInteger(c.id) || 0;
+            const rawId = c.id;
             const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
@@ -9523,7 +9898,7 @@ function renderizarNutricion() {
                         </div>`;
                 } else {
                     btnAction = `
-                        <button onclick="abrirModalAsignarPlazaAdmin('nutricion', ${claseId})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
+                        <button onclick="abrirModalAsignarPlazaAdmin('nutricion', ${inlineJsString(rawId)})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
                             <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
                         </button>`;
                 }
@@ -9543,21 +9918,26 @@ function renderizarNutricion() {
                     const disabledClass = (!hasFreeCredit) ? 'opacity-50 cursor-not-allowed grayscale bg-gray-400' : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:shadow-lg hover:brightness-110 active:scale-95';
                     const btnText = (!hasFreeCredit) ? '0 BONOS GRATIS' : 'RESERVAR GRATIS (0 €)';
                     btnAction = `
-                        <button onclick="reservarConsulta('nutricion', ${claseId})" class="${disabledClass} text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform">
+                        <button onclick="reservarConsulta('nutricion', ${inlineJsString(rawId)})" class="${disabledClass} text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform">
                             ${escapeHtml(btnText)}
                         </button>`;
                 } else {
                     const saldo = getSaldoConsultaActual('nutricion');
-                    const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
-                    const btnText = (saldo < 1) ? profileT('profile_zero_sessions', '0 Sesiones') : profileT('profile_book', 'RESERVAR');
-                    btnAction = `
-                        <button onclick="reservarConsulta('nutricion', ${claseId})" class="bg-[#8B5CF6] text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
-                            ${escapeHtml(btnText)}
-                        </button>`;
+                    if (saldo >= 1) {
+                        btnAction = `
+                            <button onclick="reservarConsulta('nutricion', ${inlineJsString(rawId)})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95">
+                                RESERVAR CITA
+                            </button>`;
+                    } else {
+                        btnAction = `
+                            <button onclick="abrirCompraYReservaConsulta('nutricion', ${inlineJsString(rawId)})" class="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
+                                <i class="ph-bold ph-calendar-plus"></i> COMPRAR Y RESERVAR
+                            </button>`;
+                    }
                 }
             }
 
-            const adminTrash = `<button onclick="borrarConsultaAdmin('nutricion', ${claseId})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
+            const adminTrash = (!isAdmin || c.isVirtual) ? '' : `<button onclick="borrarConsultaAdmin('nutricion', ${inlineJsString(rawId)})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
 
             const profesionalName = String(c.profesionales?.nombre || 'Staff GEN');
             const profesionalFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profesionalName);
@@ -9623,8 +10003,15 @@ function mostrarErrorSaldoConsulta(resultado, tipo) {
         Swal.fire({
             icon: 'warning',
             title: `Sin saldo de ${config.label}`,
-            text: `Añade saldo de ${config.label.toLowerCase()} a este cliente antes de reservar.`,
+            text: `No dispones de sesiones activas de ${config.label.toLowerCase()}. Adquiere una consulta o bono para reservar.`,
+            showCancelButton: true,
+            confirmButtonText: 'Comprar Consulta',
+            cancelButtonText: 'Cerrar',
             confirmButtonColor: config.color
+        }).then(res => {
+            if (res.isConfirmed) {
+                abrirModalComprarConsultas(tipo);
+            }
         });
         return;
     }
@@ -9687,11 +10074,9 @@ async function reservarConsulta(tipo, claseId) {
     if (isReserving) return;
 
     try {
-        isReserving = true;
-
         const config = getConsultaConfig(tipo);
         const cache = tipo === 'psicologia' ? allPsicologiaCache : allNutricionCache;
-        const clase = cache.find(c => c.id === claseId);
+        const clase = cache.find(c => String(c.id) === String(claseId));
 
         if (clase?.miReserva) {
             return Swal.fire({
@@ -9734,23 +10119,46 @@ async function reservarConsulta(tipo, claseId) {
             if (!confirmRes.isConfirmed) return;
         } else if (!isAdmin && !esTrabajador()) {
             if (getSaldoConsultaActual(tipo) < 1) {
-                mostrarErrorSaldoConsulta({ sinSaldo: true }, tipo);
-                return;
+                // Usuario sin saldo de consulta: derivar a compra y reserva
+                return abrirCompraYReservaConsulta(tipo, clase);
             }
         }
 
-        const { error } = await client.rpc('reservar_consulta_atomica', {
-            p_tipo: tipo,
-            p_clase_id: claseId,
-            p_user_id: currentUser.id,
-            p_cobrar_saldo: !esGratuita
+        isReserving = true;
+        Swal.fire({
+            title: 'Confirmando cita...',
+            didOpen: () => Swal.showLoading()
         });
 
-        if (error) {
+        let resError = null;
+        if (clase?.isVirtual) {
+            const profId = safePositiveInteger(clase.profesor_id || clase.profesionales?.id);
+            const { error } = await client.rpc('reservar_consulta_virtual', {
+                p_tipo: tipo,
+                p_profesor_id: profId,
+                p_fecha_inicio: new Date(clase.fecha_inicio).toISOString(),
+                p_user_id: currentUser.id,
+                p_cobrar_saldo: !esGratuita
+            });
+            resError = error;
+        } else {
+            const numericClaseId = safePositiveInteger(claseId);
+            const { error } = await client.rpc('reservar_consulta_atomica', {
+                p_tipo: tipo,
+                p_clase_id: numericClaseId,
+                p_user_id: currentUser.id,
+                p_cobrar_saldo: !esGratuita
+            });
+            resError = error;
+        }
+
+        Swal.close();
+
+        if (resError) {
             Swal.fire({
                 icon: 'error',
                 title: 'No se pudo reservar',
-                text: mensajeErrorConsulta(error, tipo, 'reservar'),
+                text: mensajeErrorConsulta(resError, tipo, 'reservar'),
                 confirmButtonColor: config.color
             });
         } else {
@@ -9765,7 +10173,7 @@ async function reservarConsulta(tipo, claseId) {
             await refrescarConsultas(tipo);
         }
     } catch (e) {
-        console.error("Error al reservar consulta:", e);
+        console.error('Error al reservar consulta:', e);
     } finally {
         isReserving = false;
     }
