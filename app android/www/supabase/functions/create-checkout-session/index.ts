@@ -28,7 +28,7 @@ import {
   isWorkshopPurchase,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '6.49'
+const APP_RELEASE = '6.50'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
