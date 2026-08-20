@@ -17,6 +17,7 @@
         'tipo_clase',
         'tipo_clase_id',
         'activa',
+        'es_especial',
         'profesionales!inner(id,nombre,apellidos,color,visible_publico)'
     ].join(',');
 
@@ -499,9 +500,15 @@
 
         const freeSpots = Number(raw?.plazas_libres);
         const occupied = Number(raw?.ocupadas);
-        const classType = String(raw?.tipo_clase || 'yoga').toLowerCase().trim();
+        const rawClassType = String(raw?.tipo_clase || '').toLowerCase().trim();
+        const rawName = String(raw?.nombre || '').trim();
+        const isSpecial = raw?.es_especial === true
+            || rawClassType === 'taller'
+            || rawClassType === 'especial'
+            || /taller|masterclass|especial/i.test(rawName);
+        const classType = isSpecial ? 'taller' : (rawClassType || 'yoga');
         const databaseName = publicClassName(
-            raw?.nombre || (classType === 'taller' ? 'Taller GEN Yoga' : 'Yoga')
+            rawName || (isSpecial ? 'Taller GEN Yoga' : 'Yoga')
         );
         const name = professor.slug === 'angel-javier'
             && canonicalStyle(databaseName) === 'yoga-terapeutico'
@@ -540,6 +547,7 @@
             complete,
             professor,
             classType,
+            isSpecial,
             classTypeId: safePositiveInteger(raw?.tipo_clase_id),
             style: canonicalStyle(name)
         };
@@ -1022,16 +1030,23 @@
 
     async function fetchDirectWeek(weekStart, targetMode) {
         const bounds = broadUtcBounds(weekStart);
-        const { data, error } = await state.client
+        let query = state.client
             .from('clases')
             .select(DIRECT_SELECT)
-            .in('tipo_clase', ['yoga', 'taller'])
             .eq('activa', true)
             .eq('profesionales.visible_publico', true)
             .gte('fecha_inicio', bounds.start)
             .lt('fecha_inicio', bounds.end)
             .order('fecha_inicio')
             .limit(300);
+
+        if (targetMode === 'talleres') {
+            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true');
+        } else if (targetMode === 'clases') {
+            query = query.eq('tipo_clase', 'yoga');
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         const mapped = (data || [])
             .map(row => normalizeClassRow(row, false))
@@ -1039,9 +1054,9 @@
             .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
 
         if (targetMode === 'talleres') {
-            return mapped.filter(item => item.classType === 'taller' || item.classType === 'especial');
+            return mapped.filter(item => item.classType === 'taller' || item.classType === 'especial' || item.isSpecial);
         }
-        return mapped.filter(item => item.classType === 'yoga');
+        return mapped.filter(item => (item.classType === 'yoga' || !item.classType) && !item.isSpecial);
     }
 
     async function fetchWeekData(weekStart) {
@@ -1300,7 +1315,6 @@
             .from('clases')
             .select(DIRECT_SELECT)
             .eq('id', classId)
-            .in('tipo_clase', ['yoga', 'taller'])
             .eq('activa', true)
             .eq('profesionales.visible_publico', true)
             .maybeSingle();
@@ -1313,20 +1327,32 @@
         const seasonTime = new Date(`${SEASON_START_DATE}T00:00:00+02:00`).getTime();
         const start = new Date(Math.max(now, Number.isFinite(seasonTime) ? seasonTime : now));
         const end = new Date(start.getTime() + MAX_DEEP_LINK_DAYS * 24 * 60 * 60 * 1000);
-        const { data, error } = await state.client
+        let query = state.client
             .from('clases')
             .select(DIRECT_SELECT)
-            .in('tipo_clase', ['yoga', 'taller'])
             .eq('activa', true)
             .eq('profesionales.visible_publico', true)
             .gte('fecha_inicio', start.toISOString())
             .lt('fecha_inicio', end.toISOString())
             .order('fecha_inicio')
             .limit(300);
+
+        if (state.mode === 'talleres') {
+            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true');
+        } else if (state.mode === 'clases') {
+            query = query.eq('tipo_clase', 'yoga');
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return (data || [])
             .map(row => normalizeClassRow(row, false))
             .filter(Boolean)
+            .filter(c => {
+                if (state.mode === 'talleres') return c.classType === 'taller' || c.classType === 'especial' || c.isSpecial;
+                if (state.mode === 'clases') return (c.classType === 'yoga' || !c.classType) && !c.isSpecial;
+                return true;
+            })
             .find(classMatchesFilters) || null;
     }
 
@@ -1338,9 +1364,9 @@
                 target = await fetchTargetClass(state.classId);
                 if (!target) state.classId = null;
             }
-            if (!target && !state.explicitWeek && (state.teacher || state.style)) {
+            if (!target && !state.explicitWeek && (state.mode === 'talleres' || state.teacher || state.style)) {
                 target = await findNextMatchingClass();
-                if (target) state.classId = target.id;
+                if (target && (state.classId || state.teacher || state.style)) state.classId = target.id;
             }
             if (target) state.weekStart = mondayFor(target.dateKey);
             if (state.weekStart < SEASON_START_WEEK) state.weekStart = SEASON_START_WEEK;

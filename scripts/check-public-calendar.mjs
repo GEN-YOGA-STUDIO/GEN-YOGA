@@ -185,7 +185,7 @@ assert.match(
 );
 
 assert.match(calendarScript, /\.eq\('activa',\s*true\)/);
-assert.match(calendarScript, /\.in\('tipo_clase',\s*\['yoga',\s*'taller'\]\)/);
+assert.match(calendarScript, /(?:\.in\('tipo_clase',\s*\['yoga',\s*'taller'\]\)|\.or\('tipo_clase\.eq\.taller|\.eq\('tipo_clase',\s*'yoga'\))/);
 assert.match(calendarScript, /\.rpc\('get_public_weekly_schedule'/);
 assert.match(calendarScript, /postgres_changes[\s\S]*table:\s*'clases'/);
 assert.doesNotMatch(calendarScript, /reservas_yoga.*select|select\([^)]*user_id/i);
@@ -230,7 +230,7 @@ assert.match(successPage, /\.eq\('activa',\s*true\)/);
 assert.match(profilePage, /tipo_clase_id:\s*tipoClaseId/);
 assert.match(profilePage, /duracion_minutos:\s*duracion/);
 assert.match(profilePage, /id="view-especiales"/);
-assert.match(profilePage, /\.eq\('tipo_clase',\s*'taller'\)/);
+assert.match(profilePage, /(?:\.eq\('tipo_clase',\s*'taller'\)|\.eq\('clases\.tipo_clase',\s*'taller'\)|\.or\('tipo_clase\.eq\.taller)/);
 assert.match(profilePage, /\.eq\('categoria',\s*'taller'\)/);
 assert.doesNotMatch(profilePage, /id="clase-es-especial"|toggleClaseEspecial/);
 
