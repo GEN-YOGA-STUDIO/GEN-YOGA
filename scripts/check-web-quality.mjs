@@ -411,8 +411,8 @@ if (!mobileHistoryTrigger) errors.push('index.html: falta el acceso móvil a Ver
 
 const historyVideo = homePage.match(/<iframe\b[^>]*\bid=["']history-video["'][^>]*>/i)?.[0] || '';
 for (const [required, label] of [
-  ['src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"', 'URL privada del vídeo de presentación'],
-  ['data-src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk"', 'URL restaurable del vídeo'],
+  ['src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk', 'URL privada del vídeo de presentación'],
+  ['data-src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk', 'URL restaurable del vídeo'],
   ['title="Vídeo de presentación de GEN Yoga"', 'título accesible del vídeo'],
   ['loading="lazy"', 'carga diferida del vídeo'],
   ['allowfullscreen', 'reproducción del vídeo a pantalla completa'],
@@ -420,6 +420,9 @@ for (const [required, label] of [
   if (!historyVideo.includes(required)) errors.push(`index.html: falta ${label}`);
 }
 if (/autoplay/i.test(historyVideo)) errors.push('index.html: el vídeo de presentación no debe reproducirse automáticamente');
+if (/✦\s*Reservar|Reservar clase/i.test(homePage.match(/<!-- BOTÓN DESTACADO MI PERFIL[\s\S]*?<\/button>/)?.[0] || '')) {
+  errors.push('index.html: el botón de Mi perfil no debe incluir subtítulo de Reservar clase');
+}
 const historyVideoIndex = homePage.indexOf('id="history-video"');
 const historyTextIndex = homePage.indexOf('data-i18n="modal_history_sec1_title"');
 if (historyVideoIndex < 0 || historyTextIndex < 0 || historyVideoIndex >= historyTextIndex) {
