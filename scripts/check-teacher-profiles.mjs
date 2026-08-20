@@ -173,6 +173,12 @@ assert.doesNotMatch(profile, /function truncateTextProfile/);
 assert.match(profile, /const bioText = parsed\.sobreMi\[0\]/);
 assert.match(profile, /parsed\.titulos\.map\(t => `<p>\$\{escapeHtml\(t\)\}<\/p>`\)/);
 assert.match(profile, /\(\?:\^\|\\n\)\\s\*\(LUGAR DE NACIMIENTO/);
+assert.match(profile, /function getTeacherPhotoFallback/);
+assert.match(profile, /img\/maestro-angel-recortado\.webp/);
+assert.match(profile, /img\/maestra-silvia-recortada\.webp/);
+assert.match(profile, /img\/maestra-miriam-recortada\.webp/);
+assert.match(profile, /img\/maestra-isabel-recortada\.webp/);
+assert.match(profile, /img\/maestra-yanira-recortada\.webp/);
 
 for (const expected of [
   'La Roda (Albacete)',
