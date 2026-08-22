@@ -1,4 +1,5 @@
--- Mantener el directorio operativo del personal sin una vista SECURITY DEFINER.
+-- Ocultar la función privilegiada del Data API manteniendo la vista pública
+-- como interfaz de solo lectura y con columnas mínimas.
 begin;
 
 set local lock_timeout = '5s';
@@ -40,6 +41,7 @@ grant execute on function private.listar_directorio_perfiles_staff()
 
 drop view if exists public.directorio_perfiles_staff;
 drop function if exists public.listar_directorio_perfiles_staff();
+
 create view public.directorio_perfiles_staff
 with (security_barrier = true, security_invoker = true)
 as

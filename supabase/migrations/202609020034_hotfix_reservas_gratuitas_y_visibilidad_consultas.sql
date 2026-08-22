@@ -385,9 +385,13 @@ create policy profiles_select_self_or_admin
 
 -- El personal necesita un directorio para gestionar citas y grupos, pero no
 -- acceso a la ficha completa (Stripe, notas privadas o datos de borrado).
--- La función privilegiada valida al actor y solo devuelve cinco columnas. La
--- vista se mantiene SECURITY INVOKER para que no eluda permisos por sí misma.
-create or replace function public.listar_directorio_perfiles_staff()
+-- La función privilegiada vive en un esquema no expuesto, valida al actor y
+-- solo devuelve cinco columnas. La vista pública es SECURITY INVOKER.
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+grant usage on schema private to authenticated, service_role;
+
+create or replace function private.listar_directorio_perfiles_staff()
 returns table (
   id uuid,
   email text,
@@ -412,17 +416,18 @@ as $function$
     and not coalesce(profile.account_deletion_pending, false);
 $function$;
 
-revoke all on function public.listar_directorio_perfiles_staff()
+revoke all on function private.listar_directorio_perfiles_staff()
   from public, anon, authenticated;
-grant execute on function public.listar_directorio_perfiles_staff()
+grant execute on function private.listar_directorio_perfiles_staff()
   to authenticated, service_role;
 
 drop view if exists public.directorio_perfiles_staff;
+drop function if exists public.listar_directorio_perfiles_staff();
 create view public.directorio_perfiles_staff
 with (security_barrier = true, security_invoker = true)
 as
 select *
-from public.listar_directorio_perfiles_staff();
+from private.listar_directorio_perfiles_staff();
 
 revoke all on table public.directorio_perfiles_staff
   from public, anon, authenticated;
