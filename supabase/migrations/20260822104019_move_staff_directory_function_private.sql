@@ -6,8 +6,7 @@ set local lock_timeout = '5s';
 set local statement_timeout = '30s';
 
 create schema if not exists private;
-revoke all on schema private from public, anon, authenticated;
-grant usage on schema private to authenticated, service_role;
+revoke all on schema private from public, anon, authenticated, service_role;
 
 create or replace function private.listar_directorio_perfiles_staff()
 returns table (

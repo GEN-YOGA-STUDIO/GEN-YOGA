@@ -388,8 +388,7 @@ create policy profiles_select_self_or_admin
 -- La función privilegiada vive en un esquema no expuesto, valida al actor y
 -- solo devuelve cinco columnas. La vista pública es SECURITY INVOKER.
 create schema if not exists private;
-revoke all on schema private from public, anon, authenticated;
-grant usage on schema private to authenticated, service_role;
+revoke all on schema private from public, anon, authenticated, service_role;
 
 create or replace function private.listar_directorio_perfiles_staff()
 returns table (
