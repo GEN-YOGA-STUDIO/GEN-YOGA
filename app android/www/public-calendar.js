@@ -202,7 +202,6 @@
         open: false,
         client: null,
         mode: 'clases',
-        oferta: '',
         weekStart: '',
         classes: [],
         typeColors: new Map(),
@@ -555,22 +554,6 @@
     }
 
     function classMatchesFilters(item) {
-        if (state.oferta) {
-            const ofKey = state.oferta.toLowerCase().trim();
-            if (['madre_hija', 'compania', '50_anos', '50', 'madre-e-hija', 'madre'].includes(ofKey)) {
-                const profSlug = item.professor?.slug || '';
-                const d = parseDateKey(item.dateKey);
-                const dow = d.getDay(); // 1 = Mon, 3 = Wed, 5 = Fri
-                const startMinutes = item.startMinutes;
-                const isAngelSlot = (dow === 1 || dow === 3) && profSlug === 'angel' && (startMinutes >= 960 && startMinutes <= 990);
-                const isYaniraSlot = (dow === 3 || dow === 5) && profSlug === 'yanira' && (startMinutes >= 465 && startMinutes <= 500);
-                const isExplicitFree = !!item.isFree || String(item.name || '').toLowerCase().includes('madre') || String(item.name || '').toLowerCase().includes('hija') || String(item.name || '').toLowerCase().includes('introductoria');
-                if (!isAngelSlot && !isYaniraSlot && !isExplicitFree) return false;
-            } else if (['yoga', 'bienvenida', 'gratis'].includes(ofKey)) {
-                const isFreeOrIntro = !!item.isFree || String(item.name || '').toLowerCase().includes('introductoria') || String(item.name || '').toLowerCase().includes('gratis') || String(item.name || '').toLowerCase().includes('prueba');
-                if (!isFreeOrIntro) return false;
-            }
-        }
         if (state.style && item.style !== state.style) return false;
         if (state.teacher) {
             const teacherMatch = item.professor.slug === state.teacher
@@ -857,7 +840,7 @@
             const filterLabel = document.querySelector('.gy-calendar__filter-label');
             if (filterLabel) filterLabel.textContent = text('filterSpecialist');
             el.styleFilters.setAttribute('aria-label', text('filterSpecialist'));
-            el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
+            el.clearFilters.hidden = !(state.style || state.teacher);
             return;
         }
 
@@ -882,7 +865,7 @@
             const filterLabel = document.querySelector('.gy-calendar__filter-label');
             if (filterLabel) filterLabel.textContent = text('filterWorkshop');
             el.styleFilters.setAttribute('aria-label', text('filterWorkshop'));
-            el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
+            el.clearFilters.hidden = !(state.style || state.teacher);
             return;
         }
 
@@ -913,22 +896,17 @@
         const filterLabel = document.querySelector('.gy-calendar__filter-label');
         if (filterLabel) filterLabel.textContent = text('filterPractice');
         el.styleFilters.setAttribute('aria-label', text('filterPractice'));
-        el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
+        el.clearFilters.hidden = !(state.style || state.teacher);
     }
 
     function renderSelectionNote() {
-        if (!state.style && !state.teacher && !state.oferta) {
+        if (!state.style && !state.teacher) {
             el.selection.hidden = true;
             el.selection.replaceChildren();
             return;
         }
 
         const fragments = [];
-        if (state.oferta === 'madre_hija') {
-            fragments.push('🎁 Oferta Activa: Yoga Madre e Hija (50 años) · Horarios válidos: Lunes y Miércoles 16:15 (Ángel) y Miércoles y Viernes 08:00 (Yanira)');
-        } else if (state.oferta === 'yoga') {
-            fragments.push('🎁 Bono de Bienvenida Activo: Clases introductorias y gratuitas de Yoga');
-        }
         if (state.style) {
             fragments.push(text('selectedStyle', { style: styleLabel(state.style, state.classes) }));
         }
@@ -941,7 +919,7 @@
                 || (state.teacher === 'miriam' ? 'Miriam Alfaro' : (state.teacher === 'silvia' ? 'Silvia Jaén' : (state.teacher === 'isabel' ? 'Isabel Rodríguez' : state.teacher.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()))));
             fragments.push(text('selectedTeacher', { teacher: teacherName }));
         }
-        el.selection.textContent = `${fragments.join('. ')}.`;
+        el.selection.textContent = `${fragments.join(' ')}.`;
         el.selection.hidden = false;
     }
 
@@ -1315,24 +1293,6 @@
         if (modeParam === 'consultas' || modeParam === 'talleres' || modeParam === 'clases') {
             state.mode = modeParam;
         }
-        const ofertaParam = (url.searchParams.get('oferta') || url.searchParams.get('promo') || url.searchParams.get('filter') || url.searchParams.get('filtro') || '').toLowerCase().trim();
-        if (['madre_hija', 'compania', '50_anos', '50', 'madre-e-hija', 'madre'].includes(ofertaParam)) {
-            state.oferta = 'madre_hija';
-            state.mode = 'clases';
-        } else if (['yoga', 'bienvenida', 'gratis'].includes(ofertaParam)) {
-            state.oferta = 'yoga';
-            state.mode = 'clases';
-        } else if (['pni', 'isabel'].includes(ofertaParam)) {
-            state.mode = 'consultas';
-            state.teacher = 'isabel';
-            state.oferta = '';
-        } else if (['psicologia', 'miriam'].includes(ofertaParam)) {
-            state.mode = 'consultas';
-            state.teacher = 'miriam';
-            state.oferta = '';
-        } else {
-            state.oferta = '';
-        }
         const week = validDateKey(url.searchParams.get('week'));
         const classId = safePositiveInteger(url.searchParams.get('class') || url.searchParams.get('clase'));
         const teacher = normalizeTeacherParam(url.searchParams.get('teacher'));
@@ -1347,7 +1307,7 @@
         state.classId = classId;
         state.teacher = teacher;
         state.style = style;
-        state.targetResolved = !(classId || ((teacher || style || state.oferta) && !week));
+        state.targetResolved = !(classId || ((teacher || style) && !week));
     }
 
     async function fetchTargetClass(classId) {
@@ -1484,26 +1444,6 @@
         if (Object.prototype.hasOwnProperty.call(options, 'mode')) {
             state.mode = (options.mode === 'consultas' || options.mode === 'talleres') ? options.mode : 'clases';
         }
-        if (Object.prototype.hasOwnProperty.call(options, 'oferta')) {
-            const ofKey = String(options.oferta || '').toLowerCase().trim();
-            if (['madre_hija', 'compania', '50_anos', '50', 'madre-e-hija', 'madre'].includes(ofKey)) {
-                state.oferta = 'madre_hija';
-                state.mode = 'clases';
-            } else if (['yoga', 'bienvenida', 'gratis'].includes(ofKey)) {
-                state.oferta = 'yoga';
-                state.mode = 'clases';
-            } else if (['pni', 'isabel'].includes(ofKey)) {
-                state.mode = 'consultas';
-                state.teacher = 'isabel';
-                state.oferta = '';
-            } else if (['psicologia', 'miriam'].includes(ofKey)) {
-                state.mode = 'consultas';
-                state.teacher = 'miriam';
-                state.oferta = '';
-            } else {
-                state.oferta = '';
-            }
-        }
         if (Object.prototype.hasOwnProperty.call(options, 'style')) {
             state.style = canonicalStyle(options.style);
             if (!Object.prototype.hasOwnProperty.call(options, 'teacher')) state.teacher = '';
@@ -1620,17 +1560,6 @@
             return;
         }
 
-        if (item.isFree || state.oferta) {
-            const params = new URLSearchParams({
-                view: 'horarios',
-                clase: String(item.id),
-                oferta: state.oferta || 'yoga',
-                from: 'calendario'
-            });
-            root.location.href = `profile.html?${params.toString()}`;
-            return;
-        }
-
         const params = new URLSearchParams({
             class: String(item.id),
             from: 'calendario'
@@ -1659,7 +1588,6 @@
         el.clearFilters.addEventListener('click', () => {
             state.style = '';
             state.teacher = '';
-            state.oferta = '';
             state.classId = null;
             state.targetResolved = true;
             updateUrl('replace');
