@@ -5228,6 +5228,7 @@ async function switchTab(tabName) {
         'configuracion': { tab: 'tab-configuracion', view: 'view-configuracion' }
     };
     if (!Object.prototype.hasOwnProperty.call(tabs, tabName)) tabName = 'crear';
+    const active = tabs[tabName];
     safeSetItem('activeAdminTab', tabName);
 
     // Hide all views and deactivate all tabs
@@ -5247,7 +5248,6 @@ async function switchTab(tabName) {
     });
 
     // Activate the selected tab/view
-    const active = tabs[tabName];
     if (active) {
         const tEl = document.getElementById(active.tab);
         const vEl = document.getElementById(active.view);
