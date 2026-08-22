@@ -2734,6 +2734,10 @@ let allClasesCache = [];
 let allTalleresCache = [];
 let allPsicologiaCache = [];
 let allNutricionCache = [];
+let userBookingsCache = [];
+let userBookingsLoaded = false;
+let userBookingsOwnerId = null;
+let userBookingsRequestId = 0;
 
 let activePublicView = 'inicio';
 let selectedDate = null; // Clases selected date
@@ -2786,6 +2790,10 @@ function esTrabajador() {
 
 function tieneAccesoConsultasAdmin() {
     return isAdmin || esTrabajador();
+}
+
+function getPerfilesGestionSource() {
+    return isAdmin ? 'profiles' : 'directorio_perfiles_staff';
 }
 
 function esHorarioValidoConsulta(c) {
@@ -3055,6 +3063,10 @@ client?.auth.onAuthStateChange((_event, session) => {
         userConsultationDiscountUsed = false;
         userStripeCustomerId = null;
         userStripeSubscriptionStatus = '';
+        userBookingsCache = [];
+        userBookingsLoaded = false;
+        userBookingsOwnerId = null;
+        userBookingsRequestId += 1;
         initializedUserId = null;
         initAppPromise = null;
         document.body.classList.remove('is-admin');
@@ -3461,6 +3473,7 @@ async function initApp() {
 
     await cargarProfesionalesCache();
     await checkProfile();
+    await cargarMisReservasUsuario();
 
     // Load data from Supabase
     await Promise.all([
@@ -4344,6 +4357,84 @@ function limpiarTodosLosFiltrosClases() {
     renderizarClases();
 }
 
+function normalizarTextoOferta(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function getFechaMadridParts(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Madrid',
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23'
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    const day = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }[values.weekday];
+    const hour = Number(values.hour);
+    const minute = Number(values.minute);
+
+    if (!day || !Number.isInteger(hour) || !Number.isInteger(minute)) return null;
+    return { day, hour, minute };
+}
+
+function esClaseElegibleBonoGratis(clase) {
+    if (!clase) return false;
+    if (clase.es_gratuita === true) return true;
+
+    const nombre = normalizarTextoOferta(clase.nombre);
+    if (['introductoria', 'gratis', 'prueba', 'madre', 'hija'].some(term => nombre.includes(term))) {
+        return true;
+    }
+
+    const profesional = normalizarTextoOferta([
+        clase.profesionales?.nombre,
+        clase.profesionales?.apellidos,
+        clase.profesionales?.email,
+        clase.profesionales_nombre
+    ].filter(Boolean).join(' '));
+    const madrid = getFechaMadridParts(clase.fecha_inicio);
+    if (!madrid) return false;
+
+    const minutos = madrid.hour * 60 + madrid.minute;
+    const angel = (madrid.day === 1 || madrid.day === 3)
+        && minutos >= (16 * 60 + 10)
+        && minutos <= (16 * 60 + 20)
+        && profesional.includes('angel');
+    const yanira = (madrid.day === 3 || madrid.day === 5)
+        && minutos >= (7 * 60 + 55)
+        && minutos <= (8 * 60 + 15)
+        && profesional.includes('yanira');
+
+    return angel || yanira;
+}
+
+async function cargarOcupacionClases(claseIds) {
+    const ids = [...new Set((claseIds || [])
+        .map(safePositiveInteger)
+        .filter(Boolean))];
+    if (ids.length === 0) return new Map();
+
+    const { data, error } = await client.rpc('obtener_ocupacion_clases', {
+        p_clase_ids: ids
+    });
+    if (error) {
+        console.error('Error cargando ocupación agregada:', error);
+        return null;
+    }
+
+    return new Map((data || []).map(row => [
+        String(row.clase_id),
+        toSafeNumber(row.ocupadas)
+    ]));
+}
+
 function actualizarOpcionesFiltrosClases() {
     const selectProfesor = document.getElementById('filtro-profesor');
     const selectTipoYoga = document.getElementById('filtro-tipo-yoga');
@@ -4448,10 +4539,15 @@ async function cargarHorarios() {
 
     // Traer solo reservas de estas clases para optimizar consumo
     const claseIds = clasesValidas.map(c => c.id);
-    const { data: reservas, error: errReservas } =
-        await client.from('reservas_yoga')
-            .select('*')
-            .in('clase_id', claseIds);
+    const [reservasResult, ocupacionMap] = await Promise.all([
+        client.from('reservas_yoga')
+            .select('id, clase_id, user_id, estado')
+            .in('clase_id', claseIds)
+            .eq('estado', 'confirmada'),
+        cargarOcupacionClases(claseIds)
+    ]);
+    const reservas = reservasResult.data || [];
+    const errReservas = reservasResult.error;
 
     if (errReservas) {
         console.error('Error cargando reservas', errReservas);
@@ -4470,10 +4566,13 @@ async function cargarHorarios() {
     clasesValidas.forEach(c => {
         const resClase = reservasMap[c.id] || [];
         const confirmadas = resClase.filter(r => r.estado === 'confirmada');
-        c.ocupadas = confirmadas.length;
+        c.ocupadas = ocupacionMap instanceof Map
+            ? (ocupacionMap.get(String(c.id)) ?? confirmadas.length)
+            : Math.max(confirmadas.length, toSafeNumber(c.capacidad_max) || 1);
         c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
         c.capacidad_max = 10;
     });
+    aplicarReservasPropiasEnClases(clasesValidas, 'yoga');
 
     allClasesCache = clasesValidas;
     actualizarOpcionesFiltrosClases();
@@ -4514,12 +4613,18 @@ async function cargarClasesEspeciales() {
     const visibles = (clases || []).filter(c => (isAdmin || c.profesionales?.visible_publico !== false) && c.activa !== false);
     const ids = visibles.map(c => c.id);
     let reservas = [];
+    let ocupacionMap = new Map();
     if (ids.length > 0) {
-        const reservasResult = await client.from('reservas_yoga')
-            .select('*')
-            .in('clase_id', ids);
+        const [reservasResult, ocupacionResult] = await Promise.all([
+            client.from('reservas_yoga')
+                .select('id, clase_id, user_id, estado')
+                .in('clase_id', ids)
+                .eq('estado', 'confirmada'),
+            cargarOcupacionClases(ids)
+        ]);
         if (!reservasResult.error) reservas = reservasResult.data || [];
         else console.error('Error cargando reservas especiales:', reservasResult.error);
+        ocupacionMap = ocupacionResult;
     }
 
     const reservasMap = {};
@@ -4529,9 +4634,12 @@ async function cargarClasesEspeciales() {
     });
     visibles.forEach(c => {
         const confirmadas = reservasMap[c.id] || [];
-        c.ocupadas = confirmadas.length;
+        c.ocupadas = ocupacionMap instanceof Map
+            ? (ocupacionMap.get(String(c.id)) ?? confirmadas.length)
+            : Math.max(confirmadas.length, toSafeNumber(c.capacidad_max) || 1);
         c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
     });
+    aplicarReservasPropiasEnClases(visibles, 'yoga');
     allTalleresCache = visibles;
 
     if (benefit) {
@@ -4717,7 +4825,7 @@ function renderizarClases() {
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
 
-            const isFree = !!c.es_gratuita;
+            const isFree = esClaseElegibleBonoGratis(c);
             let btnAction = '';
             if (isAdmin) {
                 btnAction = `
@@ -4988,7 +5096,7 @@ async function reservar(claseId, options = {}) {
     const periodoIlimitado = getUnlimitedPeriodForDate(fechaClase);
     const cubiertaPorIlimitado = !!periodoIlimitado;
     const esEspecial = String(clase.tipo_clase || '').toLowerCase() === 'taller';
-    const esGratuita = !!clase.es_gratuita;
+    const esGratuita = esClaseElegibleBonoGratis(clase);
     let mensajeConfirmacion;
 
     if (esGratuita) {
@@ -5102,6 +5210,7 @@ async function reservar(claseId, options = {}) {
             });
             
             await checkProfile();
+            await cargarMisReservasUsuario();
             await cargarHorarios();
             await cargarClasesEspeciales();
             if (isAdmin) await cargarAsistenciasPorClase();
@@ -5207,6 +5316,7 @@ async function cancelar(reservaId) {
             const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
             Toast.fire({ icon: 'info', title: 'Reserva cancelada. Saldo actualizado.' });
             await checkProfile();
+            await cargarMisReservasUsuario();
             await cargarHorarios();
             await cargarClasesEspeciales();
             if (isAdmin) await cargarAsistenciasPorClase();
@@ -5400,7 +5510,7 @@ async function cargarAsistenciasPorClase() {
         return;
     }
 
-    const { data: perfiles, error: errPerfiles } = await client.from('profiles').select('id, nombre, apellidos, fecha_nacimiento, email');
+    const { data: perfiles, error: errPerfiles } = await client.from(getPerfilesGestionSource()).select('id, nombre, apellidos, email');
     if (errPerfiles) {
         console.error(errPerfiles);
         cont.innerHTML = '';
@@ -5748,7 +5858,7 @@ async function cargarMiGrupoProfesor() {
 
         let clientes = allUsersCache;
         if (!clientes || clientes.length === 0) {
-            const { data: users, error: errUsers } = await client.from('profiles').select('*').order('email');
+            const { data: users, error: errUsers } = await client.from(getPerfilesGestionSource()).select('id, nombre, apellidos, email, rol').order('email');
             if (!errUsers && users) {
                 allUsersCache = users;
                 clientes = users;
@@ -6013,7 +6123,7 @@ async function cargarGruposProfesionalesAdmin() {
     // 2. Obtener la lista de usuarios (clientes)
     let clientes = allUsersCache;
     if (!clientes || clientes.length === 0) {
-        const { data: users, error: errUsers } = await client.from('profiles').select('*').order('email');
+        const { data: users, error: errUsers } = await client.from(getPerfilesGestionSource()).select('id, nombre, apellidos, email, rol').order('email');
         if (!errUsers && users) {
             allUsersCache = users;
             clientes = users;
@@ -7877,6 +7987,7 @@ if (client) client.channel('public:db').on('postgres_changes', { event: '*', sch
     }
     if (currentUser) {
         await checkProfile();
+        await cargarMisReservasUsuario();
         await Promise.all([
             cargarHorarios(),
             cargarClasesEspeciales(),
@@ -7898,6 +8009,44 @@ if (client) client.channel('public:db').on('postgres_changes', { event: '*', sch
         }
     }
 }).subscribe();
+
+let refreshReservasAlVolverPromise = null;
+let refreshReservasAlVolverAt = 0;
+
+async function refrescarReservasAlVolver() {
+    if (document.hidden || !currentUser?.id || isAdmin || esTrabajador()) return;
+    if (refreshReservasAlVolverPromise) return refreshReservasAlVolverPromise;
+    if (Date.now() - refreshReservasAlVolverAt < 15000) return;
+
+    refreshReservasAlVolverAt = Date.now();
+    refreshReservasAlVolverPromise = (async () => {
+        await cargarMisReservasUsuario();
+        if (activePublicView === 'horarios') {
+            await cargarHorarios();
+        } else if (activePublicView === 'especiales') {
+            await cargarClasesEspeciales();
+        } else if (activePublicView === 'psicologia') {
+            const subTab = safeGetItem('activeConsultasSubTab', 'psicologia');
+            if (subTab === 'nutricion') await cargarNutricion();
+            else await cargarPsicologia();
+        } else {
+            renderizarCalendarioInicio();
+            renderizarConsolidadoDia();
+            cargarInicioSummary();
+        }
+    })().finally(() => {
+        refreshReservasAlVolverPromise = null;
+    });
+
+    return refreshReservasAlVolverPromise;
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void refrescarReservasAlVolver();
+});
+window.addEventListener('focus', () => {
+    void refrescarReservasAlVolver();
+});
 
 // --- 10. GESTIÓN DE CONFIGURACIÓN ---
 async function cargarConfiguracion() {
@@ -8844,11 +8993,16 @@ function switchPublicView(viewName) {
     if (viewName === 'inicio') {
         renderizarCalendarioInicio();
         renderizarConsolidadoDia();
+        void cargarMisReservasUsuario().then(() => {
+            if (activePublicView !== 'inicio') return;
+            renderizarCalendarioInicio();
+            renderizarConsolidadoDia();
+            cargarInicioSummary();
+        });
     } else if (viewName === 'profesor-calendario') {
         cargarAgendaProfesor();
     } else if (viewName === 'horarios') {
-        renderizarCalendario();
-        renderizarClases();
+        cargarHorarios();
     } else if (viewName === 'especiales') {
         cargarClasesEspeciales();
     } else if (viewName === 'psicologia') {
@@ -9523,9 +9677,15 @@ async function cargarPsicologia() {
 
     if (dbClases.length > 0) {
         const claseIds = dbClases.map(c => c.id);
-        const [reservasRes, perfilesRes] = await Promise.all([
-            client.from('reservas_psicologia').select('*').in('clase_id', claseIds),
-            client.from('profiles').select('id, nombre, apellidos, email, telefono')
+        const [reservasRes, perfilesRes, ocupacionMap] = await Promise.all([
+            client.from('reservas_psicologia')
+                .select('*')
+                .in('clase_id', claseIds)
+                .eq('estado', 'confirmada'),
+            tieneAccesoConsultasAdmin()
+                ? client.from(getPerfilesGestionSource()).select('id, nombre, apellidos, email')
+                : Promise.resolve({ data: [], error: null }),
+            cargarOcupacionClases(claseIds)
         ]);
 
         const perfilesMap = {};
@@ -9540,7 +9700,9 @@ async function cargarPsicologia() {
         dbClases.forEach(c => {
             const resClase = reservasMap[c.id] || [];
             const confirmadas = resClase.filter(r => r.estado === 'confirmada');
-            c.ocupadas = confirmadas.length;
+            c.ocupadas = ocupacionMap instanceof Map
+                ? (ocupacionMap.get(String(c.id)) ?? confirmadas.length)
+                : Math.max(confirmadas.length, toSafeNumber(c.capacidad_max) || 1);
             c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
             if (confirmadas.length > 0) {
                 const conf = confirmadas[0];
@@ -9549,6 +9711,7 @@ async function cargarPsicologia() {
                 c.reservaConfirmada = null;
             }
         });
+        aplicarReservasPropiasEnClases(dbClases, 'psicologia');
     }
 
     // Generar huecos virtuales disponibles para Miriam e Isabel
@@ -9595,9 +9758,15 @@ async function cargarNutricion() {
 
     if (dbClases.length > 0) {
         const claseIds = dbClases.map(c => c.id);
-        const [reservasRes, perfilesRes] = await Promise.all([
-            client.from('reservas_nutricion').select('*').in('clase_id', claseIds),
-            client.from('profiles').select('id, nombre, apellidos, email, telefono')
+        const [reservasRes, perfilesRes, ocupacionMap] = await Promise.all([
+            client.from('reservas_nutricion')
+                .select('*')
+                .in('clase_id', claseIds)
+                .eq('estado', 'confirmada'),
+            tieneAccesoConsultasAdmin()
+                ? client.from(getPerfilesGestionSource()).select('id, nombre, apellidos, email')
+                : Promise.resolve({ data: [], error: null }),
+            cargarOcupacionClases(claseIds)
         ]);
 
         const perfilesNutriMap = {};
@@ -9612,7 +9781,9 @@ async function cargarNutricion() {
         dbClases.forEach(c => {
             const resClase = reservasMap[c.id] || [];
             const confirmadas = resClase.filter(r => r.estado === 'confirmada');
-            c.ocupadas = confirmadas.length;
+            c.ocupadas = ocupacionMap instanceof Map
+                ? (ocupacionMap.get(String(c.id)) ?? confirmadas.length)
+                : Math.max(confirmadas.length, toSafeNumber(c.capacidad_max) || 1);
             c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
             if (confirmadas.length > 0) {
                 const conf = confirmadas[0];
@@ -9621,6 +9792,7 @@ async function cargarNutricion() {
                 c.reservaConfirmada = null;
             }
         });
+        aplicarReservasPropiasEnClases(dbClases, 'nutricion');
     }
 
     // Generar huecos virtuales disponibles para Silvia e Isabel
@@ -10046,6 +10218,8 @@ function mensajeErrorConsulta(error, tipo, accion = 'procesar') {
     if (raw.includes('consultation has no available capacity')) return 'Este horario no tiene plazas configuradas.';
     if (raw.includes('consultation slot is no longer bookable')) return 'Este horario ya ha comenzado o ha caducado.';
     if (raw.includes('consultation cancellation deadline has passed')) return 'Ya ha pasado el plazo permitido para cancelar esta consulta.';
+    if (raw.includes('consultation slot has confirmed booking')) return 'El turno acaba de recibir una reserva. Actualiza la agenda antes de eliminarlo.';
+    if (raw.includes('class has confirmed bookings')) return 'La sesión tiene reservas activas. Cancélalas antes de eliminarla.';
     if (raw.includes('staff may only manage')) return 'Solo puedes gestionar los turnos vinculados a tu ficha profesional.';
     if (raw.includes('consultations can only be booked for client profiles')) return 'Las consultas solo se pueden asignar a perfiles de cliente.';
     if (raw.includes('not allowed') || raw.includes('authentication required')) return 'Tu sesión no permite realizar esta operación.';
@@ -10055,6 +10229,7 @@ function mensajeErrorConsulta(error, tipo, accion = 'procesar') {
 
 async function refrescarConsultas(tipo) {
     await checkProfile();
+    await cargarMisReservasUsuario();
     if (tipo === 'psicologia') {
         await cargarPsicologia();
     } else {
@@ -10387,43 +10562,166 @@ function limpiarFiltroFechaNutricion() {
     renderizarNutricion();
 }
 
+function normalizarReservaUsuario(reserva, tipo) {
+    const clase = Array.isArray(reserva?.clases) ? reserva.clases[0] : reserva?.clases;
+    if (!clase?.id || !clase?.fecha_inicio) return null;
+
+    const fecha = new Date(clase.fecha_inicio);
+    if (Number.isNaN(fecha.getTime())) return null;
+
+    const profesional = Array.isArray(clase.profesionales)
+        ? clase.profesionales[0]
+        : clase.profesionales;
+    const tipoClase = String(clase.tipo_clase || '').toLowerCase();
+    const esTaller = tipo === 'yoga'
+        && (clase.es_especial || tipoClase === 'taller' || tipoClase === 'especial');
+    const profesionalNombre = profesional?.nombre || 'Staff GEN Yoga';
+
+    return {
+        id: clase.id,
+        reservaId: reserva.id,
+        tipo,
+        nombre: clase.nombre || (esTaller ? 'Taller Especial' : profileT('common_class', 'Clase')),
+        fecha,
+        profesional: profesionalNombre,
+        profesionalFoto: getTeacherPhotoFallback(profesional)
+            || getTeacherPhotoFallback(profesionalNombre)
+            || profesional?.foto_url
+            || null,
+        colorClass: esTaller
+            ? 'bg-terracotta/10 text-terracotta border-terracotta/20'
+            : tipo === 'psicologia'
+                ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20'
+                : tipo === 'nutricion'
+                    ? 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20'
+                    : 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20',
+        tipoLabel: esTaller
+            ? 'Taller'
+            : tipo === 'psicologia'
+                ? profileT('common_psychology', 'Psicología')
+                : tipo === 'nutricion'
+                    ? profileT('common_nutrition', 'Nutrición')
+                    : profileT('common_class', 'Clase'),
+        descripcion: clase.descripcion || ''
+    };
+}
+
+async function cargarMisReservasUsuario() {
+    const userId = currentUser?.id;
+    const requestId = ++userBookingsRequestId;
+
+    if (!userId) {
+        userBookingsCache = [];
+        userBookingsLoaded = false;
+        userBookingsOwnerId = null;
+        return [];
+    }
+
+    if (userBookingsOwnerId !== userId) {
+        userBookingsCache = [];
+        userBookingsLoaded = false;
+        userBookingsOwnerId = userId;
+    }
+
+    const bookingSelect = 'id, clase_id, estado, clases(*, profesionales(*))';
+
+    try {
+        const [yoga, psicologia, nutricion] = await Promise.all([
+            client.from('reservas_yoga')
+                .select(bookingSelect)
+                .eq('user_id', userId)
+                .eq('estado', 'confirmada'),
+            client.from('reservas_psicologia')
+                .select(bookingSelect)
+                .eq('user_id', userId)
+                .eq('estado', 'confirmada'),
+            client.from('reservas_nutricion')
+                .select(bookingSelect)
+                .eq('user_id', userId)
+                .eq('estado', 'confirmada')
+        ]);
+
+        const error = yoga.error || psicologia.error || nutricion.error;
+        if (error) throw error;
+
+        const bookings = [
+            ...(yoga.data || []).map(row => normalizarReservaUsuario(row, 'yoga')),
+            ...(psicologia.data || []).map(row => normalizarReservaUsuario(row, 'psicologia')),
+            ...(nutricion.data || []).map(row => normalizarReservaUsuario(row, 'nutricion'))
+        ].filter(Boolean).sort((a, b) => a.fecha - b.fecha);
+
+        if (requestId !== userBookingsRequestId || currentUser?.id !== userId) {
+            return userBookingsCache;
+        }
+
+        userBookingsCache = bookings;
+        userBookingsLoaded = true;
+        aplicarReservasPropiasEnClases(allClasesCache, 'yoga');
+        aplicarReservasPropiasEnClases(allTalleresCache, 'yoga');
+        aplicarReservasPropiasEnClases(allPsicologiaCache, 'psicologia');
+        aplicarReservasPropiasEnClases(allNutricionCache, 'nutricion');
+        return bookings;
+    } catch (error) {
+        console.error('Error cargando reservas propias:', error);
+        if (requestId === userBookingsRequestId && currentUser?.id === userId) {
+            userBookingsLoaded = false;
+        }
+        return userBookingsCache;
+    }
+}
+
+function aplicarReservasPropiasEnClases(clases, tipo) {
+    if (!userBookingsLoaded) return;
+
+    const propias = new Map(
+        userBookingsCache
+            .filter(booking => booking.tipo === tipo)
+            .map(booking => [String(booking.id), booking])
+    );
+
+    (clases || []).forEach(clase => {
+        if (clase.miReserva?.user_id === currentUser?.id) {
+            clase.miReserva = null;
+        }
+        const booking = propias.get(String(clase.id));
+        if (!booking) return;
+
+        clase.miReserva ||= {
+            id: booking.reservaId,
+            clase_id: clase.id,
+            user_id: currentUser?.id,
+            estado: 'confirmada'
+        };
+        clase.ocupadas = Math.max(toSafeNumber(clase.ocupadas), 1);
+    });
+}
+
+function obtenerReservasUsuarioParaMostrar() {
+    if (userBookingsLoaded) {
+        return [...userBookingsCache].sort((a, b) => a.fecha - b.fecha);
+    }
+
+    const cacheSpecs = [
+        [allClasesCache, 'yoga'],
+        [allTalleresCache, 'yoga'],
+        [allPsicologiaCache, 'psicologia'],
+        [allNutricionCache, 'nutricion']
+    ];
+
+    return cacheSpecs.flatMap(([clases, tipo]) =>
+        (clases || [])
+            .filter(clase => clase.miReserva)
+            .map(clase => normalizarReservaUsuario({
+                id: clase.miReserva.id,
+                clases: clase
+            }, tipo))
+            .filter(Boolean)
+    ).sort((a, b) => a.fecha - b.fecha);
+}
+
 function getReservasInicioPorFecha(dateKey) {
-    const bookings = [];
-
-    allClasesCache.forEach(c => {
-        if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
-            bookings.push({
-                tipo: 'yoga',
-                tipoLabel: profileT('common_class', 'Clase'),
-                nombre: c.nombre || profileT('common_class', 'Clase'),
-                fecha: new Date(c.fecha_inicio)
-            });
-        }
-    });
-
-    allPsicologiaCache.forEach(c => {
-        if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
-            bookings.push({
-                tipo: 'psicologia',
-                tipoLabel: profileT('common_psychology', 'Psicología'),
-                nombre: c.nombre || profileT('common_consultation', 'Consulta'),
-                fecha: new Date(c.fecha_inicio)
-            });
-        }
-    });
-
-    allNutricionCache.forEach(c => {
-        if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
-            bookings.push({
-                tipo: 'nutricion',
-                tipoLabel: profileT('common_nutrition', 'Nutrición'),
-                nombre: c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'),
-                fecha: new Date(c.fecha_inicio)
-            });
-        }
-    });
-
-    return bookings.sort((a, b) => a.fecha - b.fecha);
+    return obtenerReservasUsuarioParaMostrar()
+        .filter(booking => formatDateLocal(booking.fecha) === dateKey);
 }
 
 function renderizarCalendarioInicio() {
@@ -10537,63 +10835,11 @@ function refrescarInicioSiActivo() {
     if (activePublicView !== 'inicio') return;
     renderizarCalendarioInicio();
     renderizarConsolidadoDia();
+    cargarInicioSummary();
 }
 
 function cargarInicioSummary() {
-    const bookings = [];
-
-    allClasesCache.forEach(c => {
-        if (c.miReserva) {
-            bookings.push({
-                id: c.id,
-                reservaId: c.miReserva.id,
-                tipo: 'yoga',
-                nombre: c.nombre,
-                fecha: new Date(c.fecha_inicio),
-                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN Yoga',
-                profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                colorClass: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20',
-                tipoLabel: profileT('common_class', 'Clase'),
-                descripcion: c.descripcion || ''
-            });
-        }
-    });
-
-    allPsicologiaCache.forEach(c => {
-        if (c.miReserva) {
-            bookings.push({
-                id: c.id,
-                reservaId: c.miReserva.id,
-                tipo: 'psicologia',
-                nombre: c.nombre || profileT('common_consultation', 'Consulta'),
-                fecha: new Date(c.fecha_inicio),
-                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
-                profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                colorClass: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20',
-                tipoLabel: profileT('common_psychology', 'Psicología'),
-                descripcion: c.descripcion || ''
-            });
-        }
-    });
-
-    allNutricionCache.forEach(c => {
-        if (c.miReserva) {
-            bookings.push({
-                id: c.id,
-                reservaId: c.miReserva.id,
-                tipo: 'nutricion',
-                nombre: c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'),
-                fecha: new Date(c.fecha_inicio),
-                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
-                profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                colorClass: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20',
-                tipoLabel: profileT('common_nutrition', 'Nutrición'),
-                descripcion: c.descripcion || ''
-            });
-        }
-    });
-
-    bookings.sort((a, b) => a.fecha - b.fecha);
+    const bookings = obtenerReservasUsuarioParaMostrar();
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -10707,60 +10953,7 @@ function renderizarConsolidadoDia() {
     const emptyState = document.getElementById('inicio-empty-state');
     if (!container) return;
 
-    const bookings = [];
-
-    allClasesCache.forEach(c => {
-        if (c.miReserva) {
-            bookings.push({
-                id: c.id,
-                reservaId: c.miReserva.id,
-                tipo: 'yoga',
-                nombre: c.nombre,
-                fecha: new Date(c.fecha_inicio),
-                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN Yoga',
-                profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                colorClass: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20',
-                tipoLabel: profileT('common_class', 'Clase'),
-                descripcion: c.descripcion || ''
-            });
-        }
-    });
-
-    allPsicologiaCache.forEach(c => {
-        if (c.miReserva) {
-            bookings.push({
-                id: c.id,
-                reservaId: c.miReserva.id,
-                tipo: 'psicologia',
-                nombre: c.nombre || profileT('common_consultation', 'Consulta'),
-                fecha: new Date(c.fecha_inicio),
-                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
-                profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                colorClass: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20',
-                tipoLabel: profileT('common_psychology', 'Psicología'),
-                descripcion: c.descripcion || ''
-            });
-        }
-    });
-
-    allNutricionCache.forEach(c => {
-        if (c.miReserva) {
-            bookings.push({
-                id: c.id,
-                reservaId: c.miReserva.id,
-                tipo: 'nutricion',
-                nombre: c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'),
-                fecha: new Date(c.fecha_inicio),
-                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
-                profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                colorClass: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20',
-                tipoLabel: profileT('common_nutrition', 'Nutrición'),
-                descripcion: c.descripcion || ''
-            });
-        }
-    });
-
-    bookings.sort((a, b) => a.fecha - b.fecha);
+    const bookings = obtenerReservasUsuarioParaMostrar();
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -11007,7 +11200,7 @@ function crearBuscadorAlumnosAdmin(clientes, config = {}) {
                 label,
                 identifier,
                 selectionText,
-                meta: config.showYogaBalance
+                meta: config.showYogaBalance && isAdmin
                     ? `${identifier} · bonos ind: ${saldo} · ${mensual}`
                     : identifier,
                 optionId: `${idPrefix}-option-${index}`,
@@ -11221,13 +11414,17 @@ async function abrirModalAsignarClaseYoga(claseId) {
     }
 
     let perfiles = [];
-    let queryRes = await client.from('profiles')
-        .select('id, nombre, apellidos, email, rol, bonos, bono_mensual_activo')
+    const profileSource = getPerfilesGestionSource();
+    const profileColumns = isAdmin
+        ? 'id, nombre, apellidos, email, rol, bonos, bono_mensual_activo'
+        : 'id, nombre, apellidos, email, rol';
+    let queryRes = await client.from(profileSource)
+        .select(profileColumns)
         .order('email');
 
-    if (queryRes.error && /bono_mensual_activo/i.test(queryRes.error.message || '')) {
+    if (isAdmin && queryRes.error && /bono_mensual_activo/i.test(queryRes.error.message || '')) {
         console.warn('Falta columna bono_mensual_activo en profiles. Reintentando consulta básica.');
-        queryRes = await client.from('profiles')
+        queryRes = await client.from(profileSource)
             .select('id, nombre, apellidos, email, rol, bonos')
             .order('email');
     }
@@ -11451,7 +11648,7 @@ async function abrirModalAsignarConsulta(tipo, claseId) {
         return;
     }
 
-    const { data: perfiles, error } = await client.from('profiles')
+    const { data: perfiles, error } = await client.from(getPerfilesGestionSource())
         .select('id, nombre, apellidos, email, rol')
         .order('email');
 
@@ -11862,9 +12059,9 @@ async function borrarConsultaAdmin(tipo, claseId) {
         }
     }
 
-    const { count: reservasActivas, error: reservasError } = await client
+    const { data: reservasActivas, error: reservasError } = await client
         .from(config.table)
-        .select('id', { count: 'exact', head: true })
+        .select('id')
         .eq('clase_id', idNormalizado)
         .eq('estado', 'confirmada');
 
@@ -11874,7 +12071,8 @@ async function borrarConsultaAdmin(tipo, claseId) {
         return;
     }
 
-    if ((reservasActivas || 0) > 0) {
+    const debeCancelarReservas = (reservasActivas || []).length > 0;
+    if (debeCancelarReservas) {
         const confirmResult = await Swal.fire({
             icon: 'warning',
             title: 'Turno con reserva asignada',
@@ -11887,14 +12085,6 @@ async function borrarConsultaAdmin(tipo, claseId) {
         });
         if (!confirmResult.isConfirmed) return;
 
-        // Cancelar reservas activas asociadas antes de borrar el hueco
-        const { error: cancelResErr } = await client
-            .from(config.table)
-            .update({ estado: 'cancelada' })
-            .eq('clase_id', idNormalizado);
-        if (cancelResErr) {
-            console.error('Error al cancelar reservas del turno:', cancelResErr);
-        }
     } else {
         const result = await Swal.fire({
             title: '¿Eliminar este turno?',
@@ -11917,17 +12107,13 @@ async function borrarConsultaAdmin(tipo, claseId) {
     });
 
     try {
-        const { data, error } = await client
-            .from('clases')
-            .delete()
-            .eq('id', idNormalizado)
-            .eq('tipo_clase', tipoNormalizado)
-            .select('id');
+        const { error } = await client.rpc('eliminar_turno_consulta_atomico', {
+            p_tipo: tipoNormalizado,
+            p_clase_id: idNormalizado,
+            p_cancelar_reservas: debeCancelarReservas
+        });
 
         if (error) throw error;
-        if (!data || data.length !== 1) {
-            throw new Error('El turno no existe o no tienes permiso para eliminarlo.');
-        }
 
         Swal.fire({
             icon: 'success',
@@ -12026,7 +12212,7 @@ async function cargarConsultasAdmin() {
     const [reservasPsicoRes, reservasNutriRes, perfilesRes] = await Promise.all([
         client.from('reservas_psicologia').select('*').in('clase_id', claseIds),
         client.from('reservas_nutricion').select('*').in('clase_id', claseIds),
-        client.from('profiles').select('id, nombre, apellidos, email')
+        client.from(getPerfilesGestionSource()).select('id, nombre, apellidos, email')
     ]);
 
     const perfilesMap = {};
@@ -12199,7 +12385,7 @@ async function cargarTalleresAdmin() {
 
     const claseIds = clases.map(c => c.id);
     const { data: reservas, error: errRes } = await client.from('reservas_yoga').select('*').in('clase_id', claseIds);
-    const { data: perfiles } = await client.from('profiles').select('id, nombre, apellidos, email');
+    const { data: perfiles } = await client.from(getPerfilesGestionSource()).select('id, nombre, apellidos, email');
 
     const perfilesMap = {};
     (perfiles || []).forEach(p => { perfilesMap[p.id] = p; });
@@ -12292,7 +12478,7 @@ async function cargarTalleresAdmin() {
 async function abrirModalAsignarTaller(claseId) {
     if (!tieneAccesoGestionAlumnos()) return;
 
-    const { data: perfiles, error } = await client.from('profiles')
+    const { data: perfiles, error } = await client.from(getPerfilesGestionSource())
         .select('id, nombre, apellidos, email, rol')
         .order('email');
 

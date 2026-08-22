@@ -635,6 +635,9 @@
             return { disabled: true, stateClass: 'is-past', badge: text('finished'), hint: text('finished') };
         }
         if (item.classType === 'psicologia' || item.classType === 'nutricion') {
+            if (state.availabilityExact !== true) {
+                return { disabled: true, stateClass: 'is-closed', badge: text('checkSpot'), hint: text('checkSpot') };
+            }
             if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
                 return { disabled: true, stateClass: 'is-full gy-calendar__event-badge--occupied', badge: text('calendar_spot_occupied'), hint: text('calendar_spot_occupied') };
             }
@@ -1061,6 +1064,7 @@
 
     async function fetchWeekData(weekStart) {
         if (state.mode === 'consultas') {
+            let exactConsultationAvailability = true;
             const bounds = broadUtcBounds(weekStart);
             const [clasesRes, professionalsRes] = await Promise.all([
                 state.client
@@ -1093,23 +1097,27 @@
 
             if (dbClases.length > 0) {
                 const ids = dbClases.map(c => c.id);
-                const [resPsico, resNutri] = await Promise.all([
-                    state.client.from('reservas_psicologia').select('clase_id,estado').in('clase_id', ids),
-                    state.client.from('reservas_nutricion').select('clase_id,estado').in('clase_id', ids)
-                ]);
-                const mapReservas = {};
-                [...(resPsico.data || []), ...(resNutri.data || [])].forEach(r => {
-                    if (r.estado === 'confirmada') {
-                        mapReservas[r.clase_id] = (mapReservas[r.clase_id] || 0) + 1;
-                    }
+                const occupancyResult = await state.client.rpc('obtener_ocupacion_clases', {
+                    p_clase_ids: ids
                 });
+                if (occupancyResult.error) {
+                    console.warn('No se pudo cargar la ocupación de consultas:', occupancyResult.error);
+                    exactConsultationAvailability = false;
+                } else {
+                    const mapReservas = Object.fromEntries(
+                        (occupancyResult.data || []).map(row => [
+                            String(row.clase_id),
+                            Number(row.ocupadas) || 0
+                        ])
+                    );
 
-                dbClases.forEach(item => {
-                    const occupied = mapReservas[item.id] || 0;
-                    item.occupied = occupied;
-                    item.freeSpots = Math.max(0, item.capacity - occupied);
-                    item.complete = item.freeSpots <= 0;
-                });
+                    dbClases.forEach(item => {
+                        const occupied = mapReservas[String(item.id)] || 0;
+                        item.occupied = occupied;
+                        item.freeSpots = Math.max(0, item.capacity - occupied);
+                        item.complete = item.freeSpots <= 0;
+                    });
+                }
             }
 
             const professionalsData = professionalsRes.data || [];
@@ -1194,7 +1202,7 @@
             });
 
             const allSlots = [...dbClases, ...generatedSlots];
-            return { exactAvailability: true, classes: allSlots };
+            return { exactAvailability: exactConsultationAvailability, classes: allSlots };
         }
 
         if (state.mode === 'talleres') {
