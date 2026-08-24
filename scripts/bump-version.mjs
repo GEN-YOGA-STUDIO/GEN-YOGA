@@ -77,8 +77,8 @@ for (const rel of files) {
   content = content.replace(new RegExp(`\\?v=${currentShort.replace('.', '\\.')}`, 'g'), `?v=${targetShort}`);
   content = content.replace(new RegExp(`content="${currentShort.replace('.', '\\.')}"`, 'g'), `content="${targetShort}"`);
   content = content.replace(new RegExp(`v${currentShort.replace('.', '\\.')}`, 'g'), `v${targetShort}`);
-  content = content.replace(new RegExp(`const APP_VERSION = '${currentShort.replace('.', '\\.')}'`, 'g'), `const APP_VERSION = '${targetShort}'`);
-  content = content.replace(new RegExp(`const APP_RELEASE = '${currentShort.replace('.', '\\.')}'`, 'g'), `const APP_RELEASE = '${targetShort}'`);
+  content = content.replace(/const APP_VERSION = '[^']+'/g, `const APP_VERSION = '${targetShort}'`);
+  content = content.replace(/const APP_RELEASE = '[^']+'/g, `const APP_RELEASE = '${targetShort}'`);
 
   fs.writeFileSync(filePath, content, 'utf8');
   console.log(`✅ Actualizado ${rel}`);

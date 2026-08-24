@@ -604,7 +604,7 @@ grant execute on function public.reservar_consulta_atomica(text, bigint, uuid, b
 
 -- 7. Sembrar las Sesiones Introductorias Gratuitas
 
--- 7.1. Ángel (Domingo 20 de Septiembre de 2026: 10:00 y 12:00)
+-- 7.1. Ángel (Domingo 30 de Agosto de 2026: 10:00 y 12:00)
 with teacher_angel as (
   select id as profesor_id
   from public.profesionales
@@ -626,8 +626,8 @@ insert into public.clases (
 )
 select
   'Sesión Introductoria de Yoga',
-  '2026-09-20 10:00:00+02'::timestamptz,
-  '2026-09-20 11:15:00+02'::timestamptz,
+  '2026-08-30 10:00:00+02'::timestamptz,
+  '2026-08-30 11:15:00+02'::timestamptz,
   75,
   10,
   t.profesor_id,
@@ -638,7 +638,7 @@ from teacher_angel t
 where not exists (
   select 1
   from public.clases existing
-  where existing.fecha_inicio = '2026-09-20 10:00:00+02'::timestamptz
+  where existing.fecha_inicio = '2026-08-30 10:00:00+02'::timestamptz
     and lower(existing.nombre) like '%introductoria%'
 );
 
@@ -663,8 +663,8 @@ insert into public.clases (
 )
 select
   'Sesión Introductoria de Yoga',
-  '2026-09-20 12:00:00+02'::timestamptz,
-  '2026-09-20 13:15:00+02'::timestamptz,
+  '2026-08-30 12:00:00+02'::timestamptz,
+  '2026-08-30 13:15:00+02'::timestamptz,
   75,
   10,
   t.profesor_id,
@@ -675,11 +675,86 @@ from teacher_angel t
 where not exists (
   select 1
   from public.clases existing
-  where existing.fecha_inicio = '2026-09-20 12:00:00+02'::timestamptz
+  where existing.fecha_inicio = '2026-08-30 12:00:00+02'::timestamptz
     and lower(existing.nombre) like '%introductoria%'
 );
 
--- 7.2. Isabel (Jueves 3 y Martes 22 de Septiembre de 2026 a las 11:00)
+-- 7.2. Yanira (Martes 1 y Jueves 3 de Septiembre de 2026 a las 19:00)
+with teacher_yanira as (
+  select id as profesor_id
+  from public.profesionales
+  where lower(coalesce(nombre, '')) like '%yanira%'
+     or lower(coalesce(email, '')) like 'yanira%'
+  order by id
+  limit 1
+)
+insert into public.clases (
+  nombre,
+  fecha_inicio,
+  fecha_fin,
+  duracion_minutos,
+  capacidad_max,
+  profesor_id,
+  tipo_clase,
+  activa,
+  es_gratuita
+)
+select
+  'Sesión Introductoria de Yoga',
+  '2026-09-01 19:00:00+02'::timestamptz,
+  '2026-09-01 20:15:00+02'::timestamptz,
+  75,
+  10,
+  y.profesor_id,
+  'yoga',
+  true,
+  true
+from teacher_yanira y
+where not exists (
+  select 1
+  from public.clases existing
+  where existing.fecha_inicio = '2026-09-01 19:00:00+02'::timestamptz
+    and lower(existing.nombre) like '%introductoria%'
+);
+
+with teacher_yanira as (
+  select id as profesor_id
+  from public.profesionales
+  where lower(coalesce(nombre, '')) like '%yanira%'
+     or lower(coalesce(email, '')) like 'yanira%'
+  order by id
+  limit 1
+)
+insert into public.clases (
+  nombre,
+  fecha_inicio,
+  fecha_fin,
+  duracion_minutos,
+  capacidad_max,
+  profesor_id,
+  tipo_clase,
+  activa,
+  es_gratuita
+)
+select
+  'Sesión Introductoria de Yoga',
+  '2026-09-03 19:00:00+02'::timestamptz,
+  '2026-09-03 20:15:00+02'::timestamptz,
+  75,
+  10,
+  y.profesor_id,
+  'yoga',
+  true,
+  true
+from teacher_yanira y
+where not exists (
+  select 1
+  from public.clases existing
+  where existing.fecha_inicio = '2026-09-03 19:00:00+02'::timestamptz
+    and lower(existing.nombre) like '%introductoria%'
+);
+
+-- 7.3. Isabel (Jueves 3 y Martes 22 de Septiembre de 2026 a las 11:00)
 with teacher_isabel as (
   select id as profesor_id
   from public.profesionales

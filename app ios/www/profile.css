@@ -1,0 +1,279 @@
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('fonts/Ubuntu/Ubuntu-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('fonts/Ubuntu/Ubuntu-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat%20arabic/Montserrat-Arabic%20Regular%20400.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat%20arabic/Montserrat-Arabic%20Bold%20700.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ======================================================= */
+/* 1. ESTILOS BASE Y CONFIGURACIÓN GENERAL                 */
+/* ======================================================= */
+body {
+    font-family: 'Montserrat Arabic', sans-serif;
+    /* Brandbook theme */
+    background-color: #f8f6f2;
+    color: #26160c;
+
+    /* Configuración por defecto (WEB) */
+    cursor: none;
+
+    /* Variables de entorno para el Notch (iOS/Android) */
+    /* En web esto vale 0, en móvil se ajusta automáticamente */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Títulos */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.brand-font {
+    font-family: 'Ubuntu', sans-serif;
+}
+
+/* ======================================================= */
+/* 2. COMPONENTES DE UI (Admin, Paneles, Scrollbar)        */
+/* ======================================================= */
+
+/* Control de Visibilidad Admin */
+.admin-only {
+    display: none !important;
+}
+
+.is-admin .admin-only {
+    display: block !important;
+}
+
+.is-admin .admin-flex {
+    display: flex !important;
+}
+
+/* Animaciones */
+.fade-in {
+    animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scrollbar elegante (Principalmente Web) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #B48A47; /* Golden Ochre */
+    border-radius: 10px;
+    border: 2px solid #B48A47;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #26160C; /* Dark Brown */
+}
+
+/* Efecto Cristal */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* ======================================================= */
+/* 3. CALENDARIO                                           */
+/* ======================================================= */
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.calendar-day:hover:not(.disabled):not(.other-month) {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #D27D60, #8C8658);
+    color: white;
+}
+
+.calendar-day.selected {
+    background: linear-gradient(135deg, #D27D60, #8C8658) !important;
+    color: white !important;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(210, 125, 96, 0.3);
+}
+
+.calendar-day.has-classes::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    background: #8C8658;
+    border-radius: 50%;
+}
+
+.calendar-day.selected.has-classes::after {
+    background: white;
+}
+
+.calendar-day.disabled {
+    color: #E6DCC3;
+    /* Sand */
+    filter: grayscale(1);
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.calendar-day.other-month {
+    color: #E6DCC3;
+    /* Sand */
+    opacity: 0.3;
+}
+
+.calendar-day.today {
+    border: 2px solid #D27D60;
+    font-weight: bold;
+}
+
+/* ======================================================= */
+/* 4. LOGICA DEL CURSOR PERSONALIZADO (WEB)                */
+/* ======================================================= */
+
+.wink-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    font-size: 2rem;
+    line-height: 1;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    transition: transform 0.1s ease-out;
+    user-select: none;
+}
+
+.wink-cursor.clicking {
+    transform: translate(-50%, -50%) scale(0.8) rotate(-10deg);
+}
+
+body.platform-web a,
+body.platform-web button,
+body.platform-web input,
+body.platform-web select,
+body.platform-web textarea,
+body.platform-web .cursor-pointer {
+    cursor: none !important;
+}
+
+
+/* ======================================================= */
+/* 5. ADAPTACIONES MÓVILES (iOS + ANDROID)                 */
+/* ======================================================= */
+
+/* REGLAS COMUNES APP (iOS y Android) */
+body.platform-ios,
+body.platform-android {
+    /* Restaurar cursor nativo (invisible en táctil) */
+    cursor: auto !important;
+}
+
+/* Ocultar cursor personalizado en apps */
+body.platform-ios .wink-cursor,
+body.platform-android .wink-cursor {
+    display: none !important;
+}
+
+/* Restaurar punteros en elementos interactivos para Apps */
+body.platform-ios a,
+body.platform-android a,
+body.platform-ios button,
+body.platform-android button,
+body.platform-ios input,
+body.platform-android input,
+body.platform-ios select,
+body.platform-android select {
+    cursor: auto !important;
+}
+
+/* --- ESPECÍFICO iOS (iPhone/iPad) --- */
+body.platform-ios header {
+    /* Ajuste fino para el Header debajo del Notch */
+    padding-top: 10px;
+}
+
+/* --- ESPECÍFICO ANDROID --- */
+body.platform-android {
+    /* Ajuste opcional para Android si la barra de estado es transparente */
+    padding-top: 5px;
+}
+
+/* ======================================================= */
+/* 6. UTILIDADES DE VISIBILIDAD POR PLATAFORMA             */
+/* ======================================================= */
+
+/* Mostrar SOLO en Web (Ocultar en móviles) */
+body.platform-ios .web-only,
+body.platform-android .web-only {
+    display: none !important;
+}
+
+/* Mostrar SOLO en iOS */
+body:not(.platform-ios) .ios-only {
+    display: none !important;
+}
+
+/* Mostrar SOLO en Android */
+body:not(.platform-android) .android-only {
+    display: none !important;
+}
+
+/* Mostrar en CUALQUIER App Móvil (No Web) */
+body.platform-web .mobile-only {
+    display: none !important;
+}

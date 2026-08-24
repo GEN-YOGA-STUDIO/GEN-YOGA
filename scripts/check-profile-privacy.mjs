@@ -23,11 +23,28 @@ const publicClientFiles = [
 
 for (const relativePath of publicClientFiles) {
   const source = await readFile(path.join(root, relativePath), 'utf8');
+  const privacySource = relativePath.endsWith('profile.html')
+    ? source
+      .replace(/fecha_nacimiento: fechaNacimiento/g, '')
+      .replace(/p_birth_date: result\.value/g, '')
+    : source;
   assert.doesNotMatch(
-    source,
+    privacySource,
     /\b(?:fecha_nacimiento|birth_date|date_of_birth|rango_edad|age_range|edad_min|edad_max|sexo)\b/i,
     `${relativePath} no debe consultar ni renderizar demografía interna de perfiles`,
   );
+}
+
+for (const profilePath of [
+  'profile.html',
+  path.join('app android', 'www', 'profile.html'),
+  path.join('app ios', 'www', 'profile.html'),
+]) {
+  const source = await readFile(path.join(root, profilePath), 'utf8');
+  assert.match(source, /id="reg-fecha-nacimiento"[\s\S]*?autocomplete="bday"[\s\S]*?required/);
+  assert.match(source, /fecha_nacimiento: fechaNacimiento/);
+  assert.match(source, /complete_my_welcome_companion_profile[\s\S]*?p_birth_date: result\.value/);
+  assert.doesNotMatch(source, /\.select\([^)]*fecha_nacimiento/i);
 }
 
 const migration = await readFile(migrationPath, 'utf8');

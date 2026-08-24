@@ -18,7 +18,7 @@ IOS_ASSETS = os.path.join(BASE_DIR, "app ios", "ios", "App", "App", "public")
 EXCLUDED_DIRS = {
     '.git', '.github', 'node_modules', 'android', 'ios', 'build', '.gradle',
     'app android', 'app ios', 'control de versiones web', 'docs', 'ultima version',
-    '.cursor', '.gemini', 'scratch', 'scripts', '.idea', '.temp'
+    '.cursor', '.gemini', 'scratch', 'scripts', '.idea', '.temp', 'app local'
 }
 EXCLUDED_EXTS = {
     '.aab', '.apk', '.zip', '.rar', '.p8', '.keystore', '.jks', '.log',

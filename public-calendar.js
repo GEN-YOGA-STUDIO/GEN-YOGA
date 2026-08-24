@@ -18,6 +18,8 @@
         'tipo_clase_id',
         'activa',
         'es_especial',
+        'es_gratuita',
+        'companion_modality',
         'profesionales!inner(id,nombre,apellidos,color,visible_publico)'
     ].join(',');
 
@@ -77,6 +79,11 @@
             restorative: 'Yoga Restaurativo',
             men: 'Yoga para Hombres',
             everyone: 'Yoga para Todos',
+            companionColleagues: 'Yoga con tus colegas',
+            companionPartner: 'Yoga con tu pareja',
+            companionChild: 'Yoga con tu hijo',
+            companionGrandmother: 'Yoga con tu abuela',
+            companionAll: 'Yoga en compañía',
             therapeutic: 'Yoga terapéutico',
             silviaYoga: 'Yoga con Silvia',
             ayurveda: 'Ayurveda',
@@ -146,6 +153,11 @@
             restorative: 'Restorative Yoga',
             men: 'Yoga for Men',
             everyone: 'Yoga for Everyone',
+            companionColleagues: 'Yoga with your friends',
+            companionPartner: 'Yoga with your partner',
+            companionChild: 'Yoga with your child',
+            companionGrandmother: 'Yoga with your grandmother',
+            companionAll: 'Yoga together',
             therapeutic: 'Therapeutic yoga',
             silviaYoga: 'Yoga with Silvia',
             ayurveda: 'Ayurveda',
@@ -169,6 +181,35 @@
         miriam: '#9a83b9',
         isabel: '#8f6b2d'
     });
+    const companionModalities = Object.freeze({
+        colegas: 'companionColleagues',
+        pareja: 'companionPartner',
+        hijo: 'companionChild',
+        abuela: 'companionGrandmother'
+    });
+
+    function normalizeCompanionModality(value) {
+        const modality = String(value || '').trim().toLowerCase();
+        return Object.prototype.hasOwnProperty.call(companionModalities, modality)
+            ? modality
+            : '';
+    }
+
+    function companionLabel(value) {
+        const modality = normalizeCompanionModality(value);
+        return modality ? text(companionModalities[modality]) : text('companionAll');
+    }
+
+    function canonicalCompanionOffer(value) {
+        const key = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+        const modality = normalizeCompanionModality(key);
+        if (modality) return modality;
+        if ([
+            'compania', 'madre_hija', 'madre', 'madre_e_hija',
+            'yoga', 'bienvenida', 'gratis', 'clases_gratis'
+        ].includes(key)) return 'compania';
+        return '';
+    }
     const consultationSlotStartMinutes = Object.freeze([
         9 * 60 + 30,
         10 * 60 + 30,
@@ -202,6 +243,7 @@
         open: false,
         client: null,
         mode: 'clases',
+        oferta: '',
         weekStart: '',
         classes: [],
         typeColors: new Map(),
@@ -548,12 +590,19 @@
             professor,
             classType,
             isSpecial,
+            isFree: raw?.es_gratuita === true,
+            companionModality: normalizeCompanionModality(raw?.companion_modality),
             classTypeId: safePositiveInteger(raw?.tipo_clase_id),
             style: canonicalStyle(name)
         };
     }
 
     function classMatchesFilters(item) {
+        if (state.oferta) {
+            const ofKey = canonicalCompanionOffer(state.oferta);
+            if (ofKey === 'compania' && !item.companionModality) return false;
+            if (normalizeCompanionModality(ofKey) && item.companionModality !== ofKey) return false;
+        }
         if (state.style && item.style !== state.style) return false;
         if (state.teacher) {
             const teacherMatch = item.professor.slug === state.teacher
@@ -635,9 +684,6 @@
             return { disabled: true, stateClass: 'is-past', badge: text('finished'), hint: text('finished') };
         }
         if (item.classType === 'psicologia' || item.classType === 'nutricion') {
-            if (state.availabilityExact !== true) {
-                return { disabled: true, stateClass: 'is-closed', badge: text('checkSpot'), hint: text('checkSpot') };
-            }
             if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
                 return { disabled: true, stateClass: 'is-full gy-calendar__event-badge--occupied', badge: text('calendar_spot_occupied'), hint: text('calendar_spot_occupied') };
             }
@@ -654,8 +700,8 @@
         if (item.classType === 'taller') {
             return { disabled: false, stateClass: '', badge: text('available'), hint: text('workshop') };
         }
-        if (item.isFree || String(item.name || '').toLowerCase().includes('introductoria')) {
-            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: '🎁 Gratuita', hint: 'Reservar gratis' };
+        if (item.companionModality) {
+            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: companionLabel(item.companionModality), hint: text('buy') };
         }
         const badge = item.freeSpots === 1
             ? text('spotsOne')
@@ -843,7 +889,7 @@
             const filterLabel = document.querySelector('.gy-calendar__filter-label');
             if (filterLabel) filterLabel.textContent = text('filterSpecialist');
             el.styleFilters.setAttribute('aria-label', text('filterSpecialist'));
-            el.clearFilters.hidden = !(state.style || state.teacher);
+            el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
             return;
         }
 
@@ -868,7 +914,7 @@
             const filterLabel = document.querySelector('.gy-calendar__filter-label');
             if (filterLabel) filterLabel.textContent = text('filterWorkshop');
             el.styleFilters.setAttribute('aria-label', text('filterWorkshop'));
-            el.clearFilters.hidden = !(state.style || state.teacher);
+            el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
             return;
         }
 
@@ -899,17 +945,22 @@
         const filterLabel = document.querySelector('.gy-calendar__filter-label');
         if (filterLabel) filterLabel.textContent = text('filterPractice');
         el.styleFilters.setAttribute('aria-label', text('filterPractice'));
-        el.clearFilters.hidden = !(state.style || state.teacher);
+        el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
     }
 
     function renderSelectionNote() {
-        if (!state.style && !state.teacher) {
+        if (!state.style && !state.teacher && !state.oferta) {
             el.selection.hidden = true;
             el.selection.replaceChildren();
             return;
         }
 
         const fragments = [];
+        if (state.oferta === 'compania') {
+            fragments.push(companionLabel(''));
+        } else if (normalizeCompanionModality(state.oferta)) {
+            fragments.push(companionLabel(state.oferta));
+        }
         if (state.style) {
             fragments.push(text('selectedStyle', { style: styleLabel(state.style, state.classes) }));
         }
@@ -922,7 +973,7 @@
                 || (state.teacher === 'miriam' ? 'Miriam Alfaro' : (state.teacher === 'silvia' ? 'Silvia Jaén' : (state.teacher === 'isabel' ? 'Isabel Rodríguez' : state.teacher.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()))));
             fragments.push(text('selectedTeacher', { teacher: teacherName }));
         }
-        el.selection.textContent = `${fragments.join(' ')}.`;
+        el.selection.textContent = `${fragments.join('. ')}.`;
         el.selection.hidden = false;
     }
 
@@ -1064,7 +1115,6 @@
 
     async function fetchWeekData(weekStart) {
         if (state.mode === 'consultas') {
-            let exactConsultationAvailability = true;
             const bounds = broadUtcBounds(weekStart);
             const [clasesRes, professionalsRes] = await Promise.all([
                 state.client
@@ -1097,27 +1147,23 @@
 
             if (dbClases.length > 0) {
                 const ids = dbClases.map(c => c.id);
-                const occupancyResult = await state.client.rpc('obtener_ocupacion_clases', {
-                    p_clase_ids: ids
+                const [resPsico, resNutri] = await Promise.all([
+                    state.client.from('reservas_psicologia').select('clase_id,estado').in('clase_id', ids),
+                    state.client.from('reservas_nutricion').select('clase_id,estado').in('clase_id', ids)
+                ]);
+                const mapReservas = {};
+                [...(resPsico.data || []), ...(resNutri.data || [])].forEach(r => {
+                    if (r.estado === 'confirmada') {
+                        mapReservas[r.clase_id] = (mapReservas[r.clase_id] || 0) + 1;
+                    }
                 });
-                if (occupancyResult.error) {
-                    console.warn('No se pudo cargar la ocupación de consultas:', occupancyResult.error);
-                    exactConsultationAvailability = false;
-                } else {
-                    const mapReservas = Object.fromEntries(
-                        (occupancyResult.data || []).map(row => [
-                            String(row.clase_id),
-                            Number(row.ocupadas) || 0
-                        ])
-                    );
 
-                    dbClases.forEach(item => {
-                        const occupied = mapReservas[String(item.id)] || 0;
-                        item.occupied = occupied;
-                        item.freeSpots = Math.max(0, item.capacity - occupied);
-                        item.complete = item.freeSpots <= 0;
-                    });
-                }
+                dbClases.forEach(item => {
+                    const occupied = mapReservas[item.id] || 0;
+                    item.occupied = occupied;
+                    item.freeSpots = Math.max(0, item.capacity - occupied);
+                    item.complete = item.freeSpots <= 0;
+                });
             }
 
             const professionalsData = professionalsRes.data || [];
@@ -1202,7 +1248,7 @@
             });
 
             const allSlots = [...dbClases, ...generatedSlots];
-            return { exactAvailability: exactConsultationAvailability, classes: allSlots };
+            return { exactAvailability: true, classes: allSlots };
         }
 
         if (state.mode === 'talleres') {
@@ -1301,6 +1347,12 @@
         if (modeParam === 'consultas' || modeParam === 'talleres' || modeParam === 'clases') {
             state.mode = modeParam;
         }
+        const ofertaParam = (url.searchParams.get('oferta') || url.searchParams.get('promo') || url.searchParams.get('filter') || url.searchParams.get('filtro') || '').toLowerCase().trim();
+        const companionOffer = canonicalCompanionOffer(ofertaParam);
+        state.oferta = companionOffer;
+        if (companionOffer) {
+            state.mode = 'clases';
+        }
         const week = validDateKey(url.searchParams.get('week'));
         const classId = safePositiveInteger(url.searchParams.get('class') || url.searchParams.get('clase'));
         const teacher = normalizeTeacherParam(url.searchParams.get('teacher'));
@@ -1313,9 +1365,9 @@
         }
         state.explicitWeek = Boolean(week);
         state.classId = classId;
-        state.teacher = teacher;
-        state.style = style;
-        state.targetResolved = !(classId || ((teacher || style) && !week));
+        state.teacher = state.oferta ? '' : teacher;
+        state.style = state.oferta ? '' : style;
+        state.targetResolved = !(classId || ((teacher || style || state.oferta) && !week));
     }
 
     async function fetchTargetClass(classId) {
@@ -1372,9 +1424,9 @@
                 target = await fetchTargetClass(state.classId);
                 if (!target) state.classId = null;
             }
-            if (!target && !state.explicitWeek && (state.mode === 'talleres' || state.teacher || state.style)) {
+            if (!target && !state.explicitWeek && (state.mode === 'talleres' || state.teacher || state.style || state.oferta)) {
                 target = await findNextMatchingClass();
-                if (target && (state.classId || state.teacher || state.style)) state.classId = target.id;
+                if (target && (state.classId || state.teacher || state.style || state.oferta)) state.classId = target.id;
             }
             if (target) state.weekStart = mondayFor(target.dateKey);
             if (state.weekStart < SEASON_START_WEEK) state.weekStart = SEASON_START_WEEK;
@@ -1393,6 +1445,9 @@
         } else {
             url.searchParams.delete('mode');
         }
+        if (state.oferta) url.searchParams.set('oferta', state.oferta);
+        else url.searchParams.delete('oferta');
+        ['promo', 'filter', 'filtro'].forEach(key => url.searchParams.delete(key));
         url.searchParams.set('week', state.weekStart);
         if (state.style) url.searchParams.set('style', state.style);
         else url.searchParams.delete('style');
@@ -1413,7 +1468,8 @@
 
     function clearCalendarUrl() {
         const url = new URL(root.location.href);
-        ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase'].forEach(key => url.searchParams.delete(key));
+        ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro']
+            .forEach(key => url.searchParams.delete(key));
         url.hash = '';
         root.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
     }
@@ -1421,7 +1477,8 @@
     function shouldAutoOpenFromUrl() {
         const url = new URL(root.location.href);
         return url.hash === CALENDAR_HASH
-            || ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase'].some(key => url.searchParams.has(key));
+            || ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro']
+                .some(key => url.searchParams.has(key));
     }
 
     function startPolling() {
@@ -1451,9 +1508,24 @@
     function applyOpenOptions(options) {
         if (Object.prototype.hasOwnProperty.call(options, 'mode')) {
             state.mode = (options.mode === 'consultas' || options.mode === 'talleres') ? options.mode : 'clases';
+            state.oferta = '';
+        }
+        if (Object.prototype.hasOwnProperty.call(options, 'oferta')) {
+            const ofKey = String(options.oferta || '').toLowerCase().trim();
+            const companionOffer = canonicalCompanionOffer(ofKey);
+            state.oferta = companionOffer;
+            if (companionOffer) {
+                state.mode = 'clases';
+                state.style = '';
+                state.teacher = '';
+            }
+            state.classId = null;
+            state.targetResolved = !state.oferta;
+            state.explicitWeek = false;
         }
         if (Object.prototype.hasOwnProperty.call(options, 'style')) {
             state.style = canonicalStyle(options.style);
+            state.oferta = '';
             if (!Object.prototype.hasOwnProperty.call(options, 'teacher')) state.teacher = '';
             state.classId = null;
             state.targetResolved = !state.style;
@@ -1461,6 +1533,7 @@
         }
         if (Object.prototype.hasOwnProperty.call(options, 'teacher')) {
             state.teacher = normalizeTeacherParam(options.teacher);
+            state.oferta = '';
             state.classId = null;
             state.targetResolved = !state.teacher && !state.style;
             state.explicitWeek = false;
@@ -1568,6 +1641,17 @@
             return;
         }
 
+        if (item.companionModality) {
+            const params = new URLSearchParams({
+                view: 'horarios',
+                clase: String(item.id),
+                oferta: item.companionModality,
+                from: 'calendario'
+            });
+            root.location.href = `profile.html?${params.toString()}`;
+            return;
+        }
+
         const params = new URLSearchParams({
             class: String(item.id),
             from: 'calendario'
@@ -1596,6 +1680,7 @@
         el.clearFilters.addEventListener('click', () => {
             state.style = '';
             state.teacher = '';
+            state.oferta = '';
             state.classId = null;
             state.targetResolved = true;
             updateUrl('replace');
@@ -1611,13 +1696,16 @@
                     state.mode = newMode;
                     state.style = '';
                     state.teacher = '';
+                    state.oferta = '';
                     state.classId = null;
+                    state.targetResolved = true;
                     const btnClases = document.getElementById('calendar-mode-clases');
                     const btnConsultas = document.getElementById('calendar-mode-consultas');
                     const btnTalleres = document.getElementById('calendar-mode-talleres');
                     if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
                     if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
                     if (btnTalleres) btnTalleres.classList.toggle('active', state.mode === 'talleres');
+                    updateUrl('replace');
                     loadWeek();
                 }
             });
@@ -1632,6 +1720,7 @@
             } else if (button.dataset.calendarStyle !== undefined) {
                 state.style = canonicalStyle(button.dataset.calendarStyle);
             }
+            state.oferta = '';
             state.classId = null;
             state.targetResolved = true;
             updateUrl('replace');

@@ -22,6 +22,7 @@ const [
   effectiveConsultationAvailabilityMigration,
   certificationBuild,
   overlapMigration,
+  welcomeMigration,
 ] = await Promise.all([
   read('clases.html'),
   read('public-calendar.js'),
@@ -37,6 +38,7 @@ const [
   read('supabase/migrations/202609020005_silvia_ayurveda_availability.sql'),
   read('scripts/build-certification.mjs'),
   read('supabase/migrations/202609020030_enforce_teacher_and_studio_schedule_no_overlap.sql'),
+  read('supabase/migrations/202609020035_welcome_companion_bonuses_7_2.sql'),
 ]);
 
 for (const id of [
@@ -193,6 +195,11 @@ assert.match(calendarScript, /timeZone:\s*TIME_ZONE/);
 assert.match(calendarScript, /genyoga:calendar:open/);
 assert.match(calendarScript, /genyoga:calendar:close/);
 assert.match(calendarScript, /profile\.html\?\$\{params\.toString\(\)\}/);
+assert.match(calendarScript, /'companion_modality'/);
+assert.match(calendarScript, /companionModality:\s*normalizeCompanionModality/);
+assert.match(calendarScript, /item\.companionModality !== ofKey/);
+assert.doesNotMatch(calendarScript, /Yoga Madre e Hija|50 años/i);
+assert.match(welcomeMigration, /returns table \([\s\S]*?es_gratuita boolean,[\s\S]*?companion_modality text/i);
 
 assert.match(facilitiesScript, /AUTOPLAY_MS\s*=\s*6_500/);
 assert.match(facilitiesScript, /prefers-reduced-motion:\s*reduce/);

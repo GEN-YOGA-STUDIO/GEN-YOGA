@@ -278,7 +278,7 @@ const rateTabs = [...ratesPage.matchAll(
   /<button\b(?=[^>]*\brole=["']tab["'])[^>]*>[\s\S]*?<\/button>/gi,
 )];
 if (rateTabs.length !== 2) {
-  errors.push(`tarifas.html: la versión 7.1 debe mostrar exactamente dos pestañas de tarifas (${rateTabs.length} encontradas)`);
+  errors.push(`tarifas.html: la versión ${currentVersion} debe mostrar exactamente dos pestañas de tarifas (${rateTabs.length} encontradas)`);
 }
 for (const [tabId, expectedLabel] of [
   ['tab-welcome', 'Bono de bienvenida'],
@@ -300,19 +300,19 @@ if (!/Bono de Bienvenida/.test(welcomeSection) || !/href=["']profile\.html#auth[
 const yogaSection = ratesPage.match(
   /<section\b[^>]*\bid=["']section-yoga["'][^>]*>[\s\S]*?<\/section>/i,
 )?.[0] || '';
-const yogaStyles = [...yogaSection.matchAll(/\bdata-yoga-style=["']([^"']+)["']/gi)]
+const companionModalities = [...yogaSection.matchAll(/\bdata-companion-modality=["']([^"']+)["']/gi)]
   .map((match) => match[1]);
-const expectedYogaStyles = ['power-vinyasa', 'yoga-para-hombres', 'yoga-para-todos', 'restaurativa'];
-if (JSON.stringify(yogaStyles) !== JSON.stringify(expectedYogaStyles)) {
-  errors.push(`tarifas.html: Yoga en compañía debe incluir exactamente ${expectedYogaStyles.join(', ')}`);
+const expectedCompanionModalities = ['colegas', 'pareja', 'hijo', 'abuela'];
+if (JSON.stringify(companionModalities) !== JSON.stringify(expectedCompanionModalities)) {
+  errors.push(`tarifas.html: Yoga en compañía debe incluir exactamente ${expectedCompanionModalities.join(', ')}`);
 }
-for (const style of expectedYogaStyles) {
+for (const modality of expectedCompanionModalities) {
   const link = new RegExp(
-    `href=["']clases\\.html\\?mode=clases&amp;style=${style}#calendario-publico["']`,
+    `href=["']clases\\.html\\?mode=clases&amp;oferta=${modality}#calendario-publico["']`,
     'i',
   );
   if (!link.test(yogaSection)) {
-    errors.push(`tarifas.html: la modalidad ${style} no enlaza a su horario filtrado`);
+    errors.push(`tarifas.html: la modalidad ${modality} no enlaza a su horario filtrado`);
   }
 }
 if (!/hasSelectedYogaClass[\s\S]*window\.location\.hash\s*===\s*['"]#section-yoga['"]/.test(ratesPage)) {
