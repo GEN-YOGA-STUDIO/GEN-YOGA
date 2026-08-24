@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="7.8" />
+    <meta name="application-version" content="7.9" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.8" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.8" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.9" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.9" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=7.8">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=7.9">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=7.8"></script>
+    <script src="teacher-profiles.js?v=7.9"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=7.8"></script>
+    <script src="i18n.js?v=7.9"></script>
 
     <style>
 /* INLINED profile.css */
@@ -2239,7 +2239,7 @@ main .sticky.top-24 {
                     </p>
                     <div
                         class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-            <span>© 2026 GEN Yoga • v7.8. Todos los derechos reservados.</span>
+            <span>© 2026 GEN Yoga • v7.9. Todos los derechos reservados.</span>
                     </div>
                 </div>
             </footer>
@@ -2669,7 +2669,7 @@ main .sticky.top-24 {
 // --- 1. CONFIGURACIÓN ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '7.8';
+const APP_VERSION = '7.9';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 function closePaymentUiBeforeNavigation() {
@@ -4581,17 +4581,17 @@ function esClaseElegibleBonoGratis(c) {
     if (!c) return false;
     if (c.es_gratuita === true) return true;
     const nom = String(c.nombre || '').toLowerCase();
-    if (nom.includes('introductoria') || nom.includes('gratis') || nom.includes('prueba') || nom.includes('madre') || nom.includes('hija')) {
+    if (nom.includes('introductor') || nom.includes('bienvenida') || nom.includes('abierta') || nom.includes('gratis') || nom.includes('prueba') || nom.includes('madre') || nom.includes('hija')) {
         return true;
     }
     const profName = (c.profesionales?.nombre || c.profesionales_nombre || '').toLowerCase();
     const d = new Date(c.fecha_inicio);
     if (Number.isNaN(d.getTime())) return false;
-    const dow = d.getDay(); // 1 = Lunes, 3 = Miércoles, 5 = Viernes
+    const dow = d.getDay();
     const hours = d.getHours();
     const minutes = d.getMinutes();
-    const isAngelSlot = (dow === 1 || dow === 3) && (profName.includes('angel') || profName.includes('ángel')) && (hours === 16 && minutes >= 10 && minutes <= 20);
-    const isYaniraSlot = (dow === 3 || dow === 5) && profName.includes('yanira') && (hours === 8 && minutes <= 15);
+    const isAngelSlot = (dow === 1 || dow === 3 || dow === 0) && (profName.includes('angel') || profName.includes('ángel')) && (hours === 10 || hours === 12 || (hours === 16 && minutes >= 10 && minutes <= 20));
+    const isYaniraSlot = (dow === 3 || dow === 5 || dow === 2 || dow === 4) && profName.includes('yanira') && (hours === 8 || hours === 18 || hours === 19 || hours === 20);
     return isAngelSlot || isYaniraSlot;
 }
 
@@ -5257,22 +5257,20 @@ async function reservar(claseId, options = {}) {
     const periodoIlimitado = getUnlimitedPeriodForDate(fechaClase);
     const cubiertaPorIlimitado = !!periodoIlimitado;
     const esEspecial = String(clase.tipo_clase || '').toLowerCase() === 'taller';
-    const esGratuita = !!clase.es_gratuita || (userSaldoClasesGratis >= 1 && esClaseElegibleBonoGratis(clase));
+    
+    // Una clase es de tipo sesión gratuita/introductoria o normal
+    const esSesionGratuita = !!clase.es_gratuita || esClaseElegibleBonoGratis(clase);
+    const tieneBonoGratis = userSaldoClasesGratis >= 1;
     let mensajeConfirmacion;
 
-    if (esGratuita) {
-        if (userSaldoClasesGratis < 1 && !isAdmin) {
-            if (automaticPostPayment) safeRemoveItem('pending_booking_clase_id');
-            await Swal.fire({
-                icon: 'info',
-                title: 'Bono de Clase Gratuita agotado',
-                text: 'Ya has utilizado tu bono de clase gratuita de bienvenida.',
-                confirmButtonColor: '#10B981'
-            });
-            return false;
-        }
+    if (clase.es_gratuita) {
+        // Sesión 100% libre configurada por el estudio (no consume ningún bono)
+        mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión gratuita (0 €)?';
+    } else if (esSesionGratuita && tieneBonoGratis) {
+        // Sesión gratuita reservada con el Bono Gratis de bienvenida
         mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Clase Gratuita / Oferta</b> (0 €)?';
     } else if (esEspecial) {
+        // Clases especiales / Talleres (requieren Bono Ilimitado)
         if (!cubiertaPorIlimitado) {
             if (automaticPostPayment) safeRemoveItem('pending_booking_clase_id');
             await Swal.fire({
@@ -5294,32 +5292,38 @@ async function reservar(claseId, options = {}) {
         }
         mensajeConfirmacion = '¿Quieres usar la <b>clase especial incluida</b> en tu Bono Ilimitado de este mes?';
     } else if (cubiertaPorIlimitado) {
+        // Bono Ilimitado (válido para clases normales y sesiones gratuitas)
         mensajeConfirmacion = '¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?';
+    } else if (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin) {
+        // Pack de clases o bonos normales (válido para clases normales y sesiones gratuitas sin bono gratis)
+        mensajeConfirmacion = esSesionGratuita
+            ? '¿Quieres reservar esta sesión usando 1 clase de tu <b>Pack de Clases o Bono</b>?'
+            : '¿Quieres reservar esta clase usando <b>una clase de tu pack o bono</b>?';
     } else {
-        if (getAvailableClassCreditsForDate(fechaClase) < 1 && !isAdmin) {
-            if (automaticPostPayment) {
-                await Swal.fire({
-                    icon: 'info',
-                    title: 'Compra en proceso de consolidación',
-                    text: 'El pago está confirmado, pero el pack aún no aparece en tu perfil. Recarga en unos segundos; conservaremos la clase pendiente.',
-                    confirmButtonColor: '#8C8658'
-                });
-                return false;
-            }
-            const result = await Swal.fire({
-                icon: 'warning',
-                title: 'Necesitas un pack',
-                html: 'No tienes clases vigentes para esta reserva.<br><br>Elige un pack de <strong>4, 6 o 10 clases</strong>; al volver del pago intentaremos reservar este horario automáticamente.',
-                showCancelButton: true,
-                confirmButtonText: 'Ver packs',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#8C8658',
-                cancelButtonColor: '#9ca3af'
+        // Sin bonos válidos
+        if (automaticPostPayment) {
+            await Swal.fire({
+                icon: 'info',
+                title: 'Compra en proceso de consolidación',
+                text: 'El pago está confirmado, pero el pack aún no aparece en tu perfil. Recarga en unos segundos; conservaremos la clase pendiente.',
+                confirmButtonColor: '#8C8658'
             });
-            if (result.isConfirmed) await abrirCompraPacks(null, claseId);
             return false;
         }
-        mensajeConfirmacion = '¿Quieres reservar esta clase usando <b>una clase de tu pack</b>? Se consumirá primero el pack que caduque antes.';
+        const result = await Swal.fire({
+            icon: 'warning',
+            title: 'Necesitas un bono o pack',
+            html: esSesionGratuita
+                ? 'No dispones de un bono de clase gratuita de bienvenida activo ni de un pack de clases.<br><br>Adquiere un pack de clases para poder reservar esta sesión.'
+                : 'No tienes clases disponibles para esta reserva.<br><br>Elige un pack de <strong>4, 6 o 10 clases</strong> o bono mensual para reservar este horario.',
+            showCancelButton: true,
+            confirmButtonText: 'Ver tarifas y packs',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#8C8658',
+            cancelButtonColor: '#9ca3af'
+        });
+        if (result.isConfirmed) await abrirCompraPacks(null, claseId);
+        return false;
     }
 
     const confirmRes = automaticPostPayment
