@@ -1,50 +1,62 @@
 -- ==============================================================================
 -- Migración 202609020039: Reglas Canónicas de Reserva para Clases de Yoga
--- Regla 1: Si es sesión gratuita/introductoria -> Reservable con Bono Gratis (prioritario)
---          o con Bonos Normales (Bono Ilimitado, Pack de Clases, Bonos estándar).
--- Regla 2: Si no es sesión gratuita (clase regular) -> Reservable ÚNICAMENTE con Bonos Normales.
+-- Incluye DROP FUNCTION explícito para evitar error 42P13 al cambiar nombres de parámetros.
 -- ==============================================================================
 
-begin;
+BEGIN;
 
--- 1. Función para clasificar si una clase es sesión gratuita/introductoria/abierta
-create or replace function public.es_clase_elegible_bono_gratis(
+-- 1. Eliminar versiones previas de las funciones para evitar conflictos de firmas o parámetros
+DROP FUNCTION IF EXISTS public.es_clase_elegible_bono_gratis(text, timestamptz, text, boolean) CASCADE;
+DROP FUNCTION IF EXISTS public.es_clase_elegible_bono_gratis(text, text, timestamptz, boolean) CASCADE;
+DROP FUNCTION IF EXISTS public.es_clase_elegible_bono_gratis(text, timestamptz, text) CASCADE;
+DROP FUNCTION IF EXISTS public.es_clase_elegible_bono_gratis(text) CASCADE;
+DROP FUNCTION IF EXISTS public.es_clase_elegible_bono_gratis CASCADE;
+
+DROP FUNCTION IF EXISTS public.reservar_con_bono(bigint, uuid, boolean) CASCADE;
+DROP FUNCTION IF EXISTS public.reservar_con_bono(bigint, uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.reservar_con_bono(numeric, uuid, boolean) CASCADE;
+DROP FUNCTION IF EXISTS public.reservar_con_bono CASCADE;
+
+-- 2. Crear función clasificadora de clases gratuitas/introductorias
+CREATE OR REPLACE FUNCTION public.es_clase_elegible_bono_gratis(
   p_nombre text,
-  p_fecha_inicio timestamptz default null,
-  p_professional_identity text default '',
-  p_es_gratuita boolean default false
+  p_fecha_inicio timestamptz DEFAULT null,
+  p_identidad_profesional text DEFAULT '',
+  p_es_gratuita boolean DEFAULT false
 )
-returns boolean
-language plpgsql
-immutable
-as $$
-declare
+RETURNS boolean
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
   v_nom text := lower(coalesce(p_nombre, ''));
-begin
-  if p_es_gratuita is true then
-    return true;
-  end if;
+BEGIN
+  -- Si está marcada como gratuita explícitamente en la base de datos
+  IF p_es_gratuita IS TRUE THEN
+    RETURN true;
+  END IF;
 
-  if v_nom ~* 'introductor|bienvenida|abierta|gratis|prueba|madre|hija' then
-    return true;
-  end if;
+  -- Si el nombre contiene palabras clave de sesión gratuita, introductoria o abierta
+  IF v_nom ~* 'introductor|bienvenida|abierta|gratis|prueba|madre|hija' THEN
+    RETURN true;
+  END IF;
 
-  return false;
-end;
+  RETURN false;
+END;
 $$;
 
--- 2. Actualizar reservar_con_bono para aplicar estrictamente la lógica de reservas
-create or replace function public.reservar_con_bono(
+-- 3. Crear función de reserva con bono
+CREATE OR REPLACE FUNCTION public.reservar_con_bono(
   p_clase_id bigint,
   p_user_id uuid,
-  p_use_welcome_companion boolean default false
+  p_use_welcome_companion boolean DEFAULT false
 )
-returns void
-language plpgsql
-security definer
-set search_path = pg_catalog, public
-as $function$
-declare
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
   v_actor_id uuid := auth.uid();
   v_actor_role text;
   v_actor_email text;
@@ -66,135 +78,135 @@ declare
   v_is_special boolean;
   v_is_free boolean;
   v_marked_free boolean;
-  v_professor_id public.clases.profesor_id%type;
+  v_professor_id public.clases.profesor_id%TYPE;
   v_professional_identity text := '';
   v_occupied integer;
   v_booking_limit_hours integer := 12;
   v_use_unlimited boolean := false;
   v_pack_id bigint;
   v_special_count integer := 0;
-begin
-  if v_actor_id is null then
-    raise exception 'Debes iniciar sesión para reservar.' using errcode = '42501';
-  end if;
-  if p_clase_id is null or p_clase_id <= 0 or v_target_id is null then
-    raise exception 'La solicitud de reserva no es válida.' using errcode = '22023';
-  end if;
+BEGIN
+  IF v_actor_id IS NULL THEN
+    RAISE EXCEPTION 'Debes iniciar sesión para reservar.' USING errcode = '42501';
+  END IF;
+  IF p_clase_id IS NULL OR p_clase_id <= 0 OR v_target_id IS NULL THEN
+    RAISE EXCEPTION 'La solicitud de reserva no es válida.' USING errcode = '22023';
+  END IF;
 
   -- Perfil del actor
-  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), ''))
-    into v_actor_role, v_actor_email
-    from public.profiles
-   where id = v_actor_id;
-  if not found then
-    raise exception 'No se encontró el perfil que realiza la reserva.' using errcode = 'P0002';
-  end if;
+  SELECT lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), ''))
+    INTO v_actor_role, v_actor_email
+    FROM public.profiles
+   WHERE id = v_actor_id;
+  IF NOT found THEN
+    RAISE EXCEPTION 'No se encontró el perfil que realiza la reserva.' USING errcode = 'P0002';
+  END IF;
 
-  v_actor_is_staff := v_actor_role in ('admin', 'profesor', 'trabajador', 'profesional');
-  if v_target_id <> v_actor_id and not v_actor_is_staff then
-    raise exception 'No puedes reservar una clase para otra persona.' using errcode = '42501';
-  end if;
+  v_actor_is_staff := v_actor_role IN ('admin', 'profesor', 'trabajador', 'profesional');
+  IF v_target_id <> v_actor_id AND NOT v_actor_is_staff THEN
+    RAISE EXCEPTION 'No puedes reservar una clase para otra persona.' USING errcode = '42501';
+  END IF;
 
   -- Datos de la clase
-  select coalesce(capacidad_max, 0), fecha_inicio, nombre,
+  SELECT coalesce(capacidad_max, 0), fecha_inicio, nombre,
          lower(trim(coalesce(tipo_clase, ''))), coalesce(activa, true),
          profesor_id, coalesce(es_gratuita, false)
-    into v_capacity, v_starts_at, v_class_name, v_class_type, v_class_active,
+    INTO v_capacity, v_starts_at, v_class_name, v_class_type, v_class_active,
          v_professor_id, v_marked_free
-    from public.clases
-   where id = p_clase_id
-   for update;
+    FROM public.clases
+   WHERE id = p_clase_id
+   FOR UPDATE;
 
-  if not found or v_class_type not in ('yoga', 'taller') or not v_class_active then
-    raise exception 'La clase especificada no está disponible.' using errcode = 'P0002';
-  end if;
+  IF NOT found OR v_class_type NOT IN ('yoga', 'taller') OR NOT v_class_active THEN
+    RAISE EXCEPTION 'La clase especificada no está disponible.' USING errcode = 'P0002';
+  END IF;
 
-  if v_professor_id is not null then
-    select lower(concat_ws(' ', coalesce(nombre, ''), coalesce(apellidos, ''), coalesce(email, '')))
-      into v_professional_identity
-      from public.profesionales
-     where id = v_professor_id;
+  IF v_professor_id IS NOT NULL THEN
+    SELECT lower(concat_ws(' ', coalesce(nombre, ''), coalesce(apellidos, ''), coalesce(email, '')))
+      INTO v_professional_identity
+      FROM public.profesionales
+     WHERE id = v_professor_id;
     v_professional_identity := coalesce(v_professional_identity, '');
-  end if;
+  END IF;
 
   v_is_special := v_class_type = 'taller';
-  if v_starts_at is null then
-    raise exception 'La clase no tiene una hora de inicio válida.' using errcode = '22023';
-  end if;
-  if v_capacity <= 0 then
-    raise exception 'La clase no tiene plazas disponibles.' using errcode = 'P0001';
-  end if;
+  IF v_starts_at IS NULL THEN
+    RAISE EXCEPTION 'La clase no tiene una hora de inicio válida.' USING errcode = '22023';
+  END IF;
+  IF v_capacity <= 0 THEN
+    RAISE EXCEPTION 'La clase no tiene plazas disponibles.' USING errcode = 'P0001';
+  END IF;
 
-  if v_target_id <> v_actor_id and v_actor_role <> 'admin'
-    and not exists (
-      select 1
-        from public.profesionales
-       where id = v_professor_id
-         and lower(nullif(trim(email), '')) = v_actor_email
-    ) then
-    raise exception 'Solo puedes gestionar reservas de tus propias clases.' using errcode = '42501';
-  end if;
+  IF v_target_id <> v_actor_id AND v_actor_role <> 'admin'
+    AND NOT EXISTS (
+      SELECT 1
+        FROM public.profesionales
+       WHERE id = v_professor_id
+         AND lower(nullif(trim(email), '')) = v_actor_email
+    ) THEN
+    RAISE EXCEPTION 'Solo puedes gestionar reservas de tus propias clases.' USING errcode = '42501';
+  END IF;
 
   -- Antelación mínima
-  begin
-    select case
-      when trim(coalesce(valor, '')) ~ '^[0-9]{1,3}$'
-        then least(168, greatest(0, trim(valor)::integer))
-      else 12
-    end
-      into v_booking_limit_hours
-      from public.configuracion
-     where clave = 'horas_limite_reserva'
-     limit 1;
-  exception
-    when others then
+  BEGIN
+    SELECT CASE
+      WHEN trim(coalesce(valor, '')) ~ '^[0-9]{1,3}$'
+        THEN least(168, greatest(0, trim(valor)::integer))
+      ELSE 12
+    END
+      INTO v_booking_limit_hours
+      FROM public.configuracion
+     WHERE clave = 'horas_limite_reserva'
+     LIMIT 1;
+  EXCEPTION
+    WHEN others THEN
       v_booking_limit_hours := 12;
-  end;
+  END;
   v_booking_limit_hours := coalesce(v_booking_limit_hours, 12);
 
-  if not v_actor_is_staff
-    and v_starts_at <= now() + make_interval(hours => v_booking_limit_hours) then
-    raise exception 'Las reservas cierran % h antes del inicio. Para esta clase ya ha pasado el plazo.',
-      v_booking_limit_hours using errcode = 'P0001';
-  end if;
+  IF NOT v_actor_is_staff
+    AND v_starts_at <= now() + make_interval(hours => v_booking_limit_hours) THEN
+    RAISE EXCEPTION 'Las reservas cierran % h antes del inicio. Para esta clase ya ha pasado el plazo.',
+      v_booking_limit_hours USING errcode = 'P0001';
+  END IF;
 
-  -- Comprobar si ya existe reserva confirmada
-  if exists (
-    select 1
-      from public.reservas_yoga
-     where clase_id = p_clase_id
-       and user_id = v_target_id
-       and estado = 'confirmada'
-  ) then
-    raise exception 'Ya tienes una reserva confirmada para esta clase.' using errcode = '23505';
-  end if;
+  -- Comprobar reserva previa
+  IF EXISTS (
+    SELECT 1
+      FROM public.reservas_yoga
+     WHERE clase_id = p_clase_id
+       AND user_id = v_target_id
+       AND estado = 'confirmada'
+  ) THEN
+    RAISE EXCEPTION 'Ya tienes una reserva confirmada para esta clase.' USING errcode = '23505';
+  END IF;
 
   -- Comprobar aforo
-  select count(*)::integer
-    into v_occupied
-    from public.reservas_yoga
-   where clase_id = p_clase_id
-     and estado = 'confirmada';
-  if v_occupied >= v_capacity then
-    raise exception 'La clase está completa.' using errcode = 'P0001';
-  end if;
+  SELECT count(*)::integer
+    INTO v_occupied
+    FROM public.reservas_yoga
+   WHERE clase_id = p_clase_id
+     AND estado = 'confirmada';
+  IF v_occupied >= v_capacity THEN
+    RAISE EXCEPTION 'La clase está completa.' USING errcode = 'P0001';
+  END IF;
 
   -- Perfil del alumno
-  select lower(trim(coalesce(rol, ''))), coalesce(bonos, 0),
+  SELECT lower(trim(coalesce(rol, ''))), coalesce(bonos, 0),
          coalesce(saldo_clases_gratis, 0), coalesce(bono_mensual_activo, false),
          bono_mensual_inicio, bono_mensual_fin
-    into v_target_role, v_legacy_credits, v_free_credits, v_unlimited_active,
+    INTO v_target_role, v_legacy_credits, v_free_credits, v_unlimited_active,
          v_membership_start, v_membership_end
-    from public.profiles
-   where id = v_target_id
-   for update;
+    FROM public.profiles
+   WHERE id = v_target_id
+   FOR UPDATE;
 
-  if not found then
-    raise exception 'No se encontró el perfil del alumno.' using errcode = 'P0002';
-  end if;
-  if v_target_role in ('admin', 'profesor', 'trabajador', 'profesional') then
-    raise exception 'Solo los alumnos pueden reservar clases.' using errcode = '42501';
-  end if;
+  IF NOT found THEN
+    RAISE EXCEPTION 'No se encontró el perfil del alumno.' USING errcode = 'P0002';
+  END IF;
+  IF v_target_role IN ('admin', 'profesor', 'trabajador', 'profesional') THEN
+    RAISE EXCEPTION 'Solo los alumnos pueden reservar clases.' USING errcode = '42501';
+  END IF;
 
   -- Determinar si la clase es una sesión gratuita / introductoria / abierta
   v_is_free := public.es_clase_elegible_bono_gratis(
@@ -205,148 +217,148 @@ begin
   );
 
   -- 1. Si la clase es 100% gratuita por configuración del estudio
-  if v_marked_free then
-    insert into public.reservas_yoga (
+  IF v_marked_free THEN
+    INSERT INTO public.reservas_yoga (
       clase_id, user_id, estado, usado_bono_mensual, bono_descontado,
       class_pack_id, saldo_gratis_descontado
-    ) values (
+    ) VALUES (
       p_clase_id, v_target_id, 'confirmada', false, false, null, false
     );
-    return;
-  end if;
+    RETURN;
+  END IF;
 
   -- 2. Si es sesión gratuita/introductoria Y el alumno tiene saldo de bono gratis
-  if v_is_free and v_free_credits >= 1 then
-    update public.profiles
-       set saldo_clases_gratis = saldo_clases_gratis - 1
-     where id = v_target_id
-       and saldo_clases_gratis >= 1;
-    if found then
-      insert into public.reservas_yoga (
+  IF v_is_free AND v_free_credits >= 1 THEN
+    UPDATE public.profiles
+       SET saldo_clases_gratis = saldo_clases_gratis - 1
+     WHERE id = v_target_id
+       AND saldo_clases_gratis >= 1;
+    IF found THEN
+      INSERT INTO public.reservas_yoga (
         clase_id, user_id, estado, usado_bono_mensual, bono_descontado,
         class_pack_id, saldo_gratis_descontado
-      ) values (
+      ) VALUES (
         p_clase_id, v_target_id, 'confirmada', false, false, null, true
       );
-      return;
-    end if;
-  end if;
+      RETURN;
+    END IF;
+  END IF;
 
   -- 3. Si es sesión introductoria y el ADMIN / PERSONAL está asignando al alumno
-  if v_is_free and v_actor_is_staff and v_target_id <> v_actor_id then
-    insert into public.reservas_yoga (
+  IF v_is_free AND v_actor_is_staff AND v_target_id <> v_actor_id THEN
+    INSERT INTO public.reservas_yoga (
       clase_id, user_id, estado, usado_bono_mensual, bono_descontado,
       class_pack_id, saldo_gratis_descontado
-    ) values (
+    ) VALUES (
       p_clase_id, v_target_id, 'confirmada', false, false, null, false
     );
-    return;
-  end if;
+    RETURN;
+  END IF;
 
   -- 4. Bonos Normales: Caso Bono Ilimitado
-  select starts_at, ends_at
-    into v_natural_membership_start, v_natural_membership_end
-    from public.unlimited_membership_periods
-   where user_id = v_target_id
-     and starts_at <= v_starts_at
-     and ends_at > v_starts_at
-   order by starts_at desc
-   limit 1
-   for share;
+  SELECT starts_at, ends_at
+    INTO v_natural_membership_start, v_natural_membership_end
+    FROM public.unlimited_membership_periods
+   WHERE user_id = v_target_id
+     AND starts_at <= v_starts_at
+     AND ends_at > v_starts_at
+   ORDER BY starts_at DESC
+   LIMIT 1
+   FOR SHARE;
 
-  if found then
+  IF found THEN
     v_unlimited_active := true;
     v_membership_start := v_natural_membership_start;
     v_membership_end := v_natural_membership_end;
-  elsif v_unlimited_active then
-    if v_membership_start is null then
-      v_membership_start := date_trunc('month', v_starts_at at time zone 'Europe/Madrid') at time zone 'Europe/Madrid';
-    end if;
-    if v_membership_end is null then
-      v_membership_end := (date_trunc('month', v_starts_at at time zone 'Europe/Madrid') + interval '1 month') at time zone 'Europe/Madrid';
-    end if;
-  end if;
+  ELSIF v_unlimited_active THEN
+    IF v_membership_start IS NULL THEN
+      v_membership_start := date_trunc('month', v_starts_at AT TIME ZONE 'Europe/Madrid') AT TIME ZONE 'Europe/Madrid';
+    END IF;
+    IF v_membership_end IS NULL THEN
+      v_membership_end := (date_trunc('month', v_starts_at AT TIME ZONE 'Europe/Madrid') + interval '1 month') AT TIME ZONE 'Europe/Madrid';
+    END IF;
+  END IF;
 
-  if v_unlimited_active
-    and v_membership_start is not null
-    and v_membership_end is not null
-    and v_starts_at >= v_membership_start
-    and v_starts_at < v_membership_end then
+  IF v_unlimited_active
+    AND v_membership_start IS NOT NULL
+    AND v_membership_end IS NOT NULL
+    AND v_starts_at >= v_membership_start
+    AND v_starts_at < v_membership_end THEN
 
-    if v_is_special then
-      select count(*)::integer
-        into v_special_count
-        from public.reservas_yoga as booking
-        join public.clases as class on class.id = booking.clase_id
-       where booking.user_id = v_target_id
-         and booking.estado = 'confirmada'
-         and coalesce(booking.usado_bono_mensual, false)
-         and lower(trim(coalesce(class.tipo_clase, ''))) = 'taller'
-         and class.fecha_inicio >= v_membership_start
-         and class.fecha_inicio < v_membership_end;
-      if v_special_count >= 1 then
-        raise exception 'Ya has utilizado la clase especial incluida en este mes natural.'
-          using errcode = 'P0001';
-      end if;
-    end if;
+    IF v_is_special THEN
+      SELECT count(*)::integer
+        INTO v_special_count
+        FROM public.reservas_yoga AS booking
+        JOIN public.clases AS class ON class.id = booking.clase_id
+       WHERE booking.user_id = v_target_id
+         AND booking.estado = 'confirmada'
+         AND coalesce(booking.usado_bono_mensual, false)
+         AND lower(trim(coalesce(class.tipo_clase, ''))) = 'taller'
+         AND class.fecha_inicio >= v_membership_start
+         AND class.fecha_inicio < v_membership_end;
+      IF v_special_count >= 1 THEN
+        RAISE EXCEPTION 'Ya has utilizado la clase especial incluida en este mes natural.'
+          USING errcode = 'P0001';
+      END IF;
+    END IF;
 
     v_use_unlimited := true;
-  end if;
+  END IF;
 
   -- 5. Bonos Normales: Packs de Clases o Saldo de Bonos
-  if not v_use_unlimited then
-    if v_is_special then
-      raise exception 'Las clases especiales requieren un Bono Ilimitado activo y disponibilidad mensual.'
-        using errcode = 'P0001';
-    end if;
+  IF NOT v_use_unlimited THEN
+    IF v_is_special THEN
+      RAISE EXCEPTION 'Las clases especiales requieren un Bono Ilimitado activo y disponibilidad mensual.'
+        USING errcode = 'P0001';
+    END IF;
 
-    select id
-      into v_pack_id
-      from public.class_credit_packs
-     where user_id = v_target_id
-       and credits_remaining > 0
-       and expires_at > now()
-       and expires_at >= v_starts_at
-     order by expires_at, purchased_at, id
-     limit 1
-     for update;
+    SELECT id
+      INTO v_pack_id
+      FROM public.class_credit_packs
+     WHERE user_id = v_target_id
+       AND credits_remaining > 0
+       AND expires_at > now()
+       AND expires_at >= v_starts_at
+     ORDER BY expires_at, purchased_at, id
+     LIMIT 1
+     FOR UPDATE;
 
-    if v_pack_id is not null then
-      update public.class_credit_packs
-         set credits_remaining = credits_remaining - 1,
+    IF v_pack_id IS NOT NULL THEN
+      UPDATE public.class_credit_packs
+         SET credits_remaining = credits_remaining - 1,
              updated_at = now()
-       where id = v_pack_id
-         and credits_remaining > 0;
-      if not found then
-        raise exception 'El pack seleccionado ya no tiene clases disponibles.' using errcode = 'P0001';
-      end if;
-    else
-      update public.profiles
-         set bonos = coalesce(bonos, 0) - 1
-       where id = v_target_id
-         and coalesce(bonos, 0) >= 1;
-      if not found then
-        if v_is_free then
-          raise exception 'No dispones de un bono gratuito ni de clases disponibles para esta sesión. Adquiere un pack de clases o bono ilimitado para reservar.' using errcode = 'P0001';
-        else
-          raise exception 'Esta clase regular requiere un bono o pack de clases activo. Adquiere un pack de clases para reservar.' using errcode = 'P0001';
-        end if;
-      end if;
-    end if;
-  end if;
+       WHERE id = v_pack_id
+         AND credits_remaining > 0;
+      IF NOT found THEN
+        RAISE EXCEPTION 'El pack seleccionado ya no tiene clases disponibles.' USING errcode = 'P0001';
+      END IF;
+    ELSE
+      UPDATE public.profiles
+         SET bonos = coalesce(bonos, 0) - 1
+       WHERE id = v_target_id
+         AND coalesce(bonos, 0) >= 1;
+      IF NOT found THEN
+        IF v_is_free THEN
+          RAISE EXCEPTION 'No dispones de un bono gratuito ni de clases disponibles para esta sesión. Adquiere un pack de clases o bono ilimitado para reservar.' USING errcode = 'P0001';
+        ELSE
+          RAISE EXCEPTION 'Esta clase regular requiere un bono o pack de clases activo. Adquiere un pack de clases para reservar.' USING errcode = 'P0001';
+        END IF;
+      END IF;
+    END IF;
+  END IF;
 
   -- Insertar reserva
-  insert into public.reservas_yoga (
+  INSERT INTO public.reservas_yoga (
     clase_id, user_id, estado, usado_bono_mensual, bono_descontado,
     class_pack_id, saldo_gratis_descontado
-  ) values (
+  ) VALUES (
     p_clase_id, v_target_id, 'confirmada', v_use_unlimited,
-    not v_use_unlimited, v_pack_id, false
+    NOT v_use_unlimited, v_pack_id, false
   );
-end;
-$function$;
+END;
+$$;
 
-revoke all on function public.reservar_con_bono(bigint, uuid, boolean) from public;
-grant execute on function public.reservar_con_bono(bigint, uuid, boolean) to anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.reservar_con_bono(bigint, uuid, boolean) FROM public;
+GRANT EXECUTE ON FUNCTION public.reservar_con_bono(bigint, uuid, boolean) TO anon, authenticated, service_role;
 
-commit;
+COMMIT;
