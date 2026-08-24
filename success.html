@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="7.4">
+    <meta name="application-version" content="7.6">
     <meta name="robots" content="noindex,nofollow">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.4">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.4">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.6">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.6">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
     <!-- Sugerencias de rendimiento -->
@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=7.4">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=7.6">
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
@@ -170,7 +170,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v7.4</span>
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v7.6</span>
         </div>
     </div>
 
@@ -478,28 +478,25 @@
                     return;
                 }
 
-                // Fetch only aggregate occupancy. Guest checkout runs without an
-                // authenticated user and must never enumerate reservation rows.
+                // Fetch current bookings to calculate free spots
                 const claseIds = clases.map(c => c.id);
-                const { data: ocupacion, error: errOcupacion } = await client.rpc(
-                    'obtener_ocupacion_clases',
-                    { p_clase_ids: claseIds }
-                );
+                const { data: reservas, error: errRes } = await client
+                    .from('reservas_yoga')
+                    .select('clase_id')
+                    .in('clase_id', claseIds)
+                    .eq('estado', 'confirmada');
 
-                if (errOcupacion) throw errOcupacion;
+                if (errRes) throw errRes;
 
-                const occupancyByClass = new Map((ocupacion || []).map(row => [
-                    String(row.clase_id),
-                    Math.max(0, Number(row.ocupadas) || 0)
-                ]));
+                const bookingsMap = {};
+                (reservas || []).forEach(r => {
+                    bookingsMap[r.clase_id] = (bookingsMap[r.clase_id] || 0) + 1;
+                });
 
                 const options = [{ label: '-- Elige una clase de Yoga --' }];
                 
                 clases.forEach(c => {
-                    // A successful aggregate response omits classes with zero
-                    // bookings. Any RPC error is handled by the outer catch and
-                    // leaves the selector disabled (fail closed).
-                    const ocupadas = occupancyByClass.get(String(c.id)) ?? 0;
+                    const ocupadas = bookingsMap[c.id] || 0;
                     const capacidad = c.capacidad_max || 0;
                     const libres = Math.max(0, capacidad - ocupadas);
                     
