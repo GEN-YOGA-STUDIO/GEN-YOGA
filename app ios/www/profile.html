@@ -2767,6 +2767,18 @@ let initializedUserId = null;
 let initAppPromise = null;
 
 const STAFF_ROLES = ['profesor', 'trabajador', 'profesional'];
+const ADMIN_PROFILE_FIELDS = [
+    'id',
+    'email',
+    'rol',
+    'nombre',
+    'apellidos',
+    'bonos',
+    'bono_mensual_activo',
+    'bono_mensual_fin',
+    'saldo_clases_gratis',
+    'saldo_consultas_gratis'
+].join(', ');
 const SALDOS_CONFIG = {
     yoga: { field: 'bonos', label: 'Clases', icon: 'ph-ticket', color: 'text-olive', badge: 'bg-olive/10 text-olive border-olive/20' },
     psicologia: { field: 'saldo_psicologia', label: 'Psicología', icon: 'ph-brain', color: 'text-[#3B82F6]', badge: 'bg-blue-50 text-[#3B82F6] border-blue-100' },
@@ -6285,7 +6297,10 @@ async function cargarUsuariosAdmin() {
     const staffBody = document.getElementById('staff-table-body');
     if (staffBody) staffBody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400 italic"><i class="ph-duotone ph-spinner animate-spin"></i> Cargando...</td></tr>';
 
-    const { data: users, error } = await client.from('profiles').select('*').order('email');
+    const { data: users, error } = await client
+        .from('profiles')
+        .select(ADMIN_PROFILE_FIELDS)
+        .order('email');
 
     if (error) return Swal.fire('Error Admin', 'Fallo al cargar usuarios.', 'error');
 
@@ -8495,7 +8510,7 @@ async function cargarConfiguracion() {
 
         const { data: users, error } = await client
             .from('profiles')
-            .select('*')
+            .select('id, email, rol, nombre, apellidos')
             .ilike('email', `%${query}%`)
             .limit(5);
 
