@@ -8,7 +8,7 @@ const migrationPath = path.join(
   root,
   'supabase',
   'migrations',
-  '202609020035_move_profile_demographics_private.sql',
+  '20260824090616_move_profile_demographics_private.sql',
 );
 
 const publicClientFiles = [
