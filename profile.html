@@ -1627,16 +1627,33 @@ main .sticky.top-24 {
                                 </select>
                             </div>
 
-                            <!-- Filtro por Disponibilidad (Ocupadas / Huecos) -->
+                            <!-- Filtro por Disponibilidad y Ofertas -->
                             <div class="flex flex-col gap-1.5">
-                                <label for="filtro-disponibilidad" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider" data-i18n="profile_filter_availability">Disponibilidad</label>
+                                <label for="filtro-disponibilidad" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider" data-i18n="profile_filter_availability">Disponibilidad / Oferta</label>
                                 <select id="filtro-disponibilidad" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
                                     <option value="todos" data-i18n="profile_filter_all_classes">Todas las clases</option>
+                                    <option value="oferta_madre_hija">🎁 Yoga Madre e Hija · oferta gratuita</option>
+                                    <option value="gratis">🎁 Todas las sesiones gratuitas</option>
                                     <option value="huecos" data-i18n="profile_filter_free_spots">Con plazas libres</option>
                                     <option value="completas" data-i18n="profile_filter_full_classes">Clases completas</option>
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    <div id="oferta-activa-banner" class="hidden mb-8 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/50 border border-emerald-300/80 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm" aria-live="polite">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                                <i class="ph-fill ph-gift text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <p id="oferta-activa-titulo" class="text-sm font-bold text-emerald-950">Oferta gratuita activa</p>
+                                <p id="oferta-activa-desc" class="text-xs text-emerald-800 leading-relaxed mt-0.5">Mostrando únicamente las clases reservables para esta oferta.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="limpiarFiltroOferta()" class="shrink-0 px-4 py-2 bg-white hover:bg-emerald-800 hover:text-white border border-emerald-300 text-emerald-900 text-xs font-bold rounded-xl transition shadow-xs">
+                            Ver todas las clases
+                        </button>
                     </div>
 
                     <div id="no-bonos-alert"
@@ -3503,9 +3520,12 @@ async function initApp() {
         const savedPublicView = safeGetItem('activePublicView', 'profesor-calendario');
         switchPublicView(savedPublicView);
     } else {
-        const requestedView = new URLSearchParams(window.location.search).get('view');
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestedView = urlParams.get('view');
+        const requestedOffer = urlParams.get('oferta') || urlParams.get('promo');
         const savedPublicView = requestedView || safeGetItem('activePublicView', 'inicio');
-        switchPublicView(savedPublicView);
+        const offerApplied = requestedOffer ? await filtrarPorOferta(requestedOffer) : false;
+        if (!offerApplied) await Promise.resolve(switchPublicView(savedPublicView));
     }
 
     // Auto-reserve after returning from Stripe checkout
@@ -3910,23 +3930,30 @@ function renderSaldosClienteV69() {
     const freeBalancesCard = (userSaldoClasesGratis > 0 || userSaldoConsultasGratis > 0) ? `
         <div class="bg-white/95 p-5 rounded-3xl border border-emerald-200 shadow-md min-w-[280px] flex-1">
             <div class="flex items-center justify-between gap-4 mb-4">
-                <div><span class="block text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Bonos Gratuitos de Bienvenida</span><p class="text-lg font-black text-cocoa mt-1">Sesiones de Prueba</p></div>
+                <div><span class="block text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Bono de Bienvenida Activo</span><p class="text-lg font-black text-cocoa mt-1">Ofertas y Sesiones de Prueba</p></div>
                 <i class="ph-fill ph-gift text-3xl text-emerald-600"></i>
             </div>
-            <p class="text-xs text-cocoa/60 leading-relaxed mb-4">Dispones de bonos introductorios gratuitos otorgados con tu cuenta para probar clases de yoga y consultas especializadas.</p>
-            <div class="space-y-2 mb-4">
+            <p class="text-xs text-cocoa/60 leading-relaxed mb-4">Tus bonos gratuitos están listos para reservar clases de yoga y consultas especializadas.</p>
+            <div class="space-y-3 mb-4">
                 ${userSaldoClasesGratis > 0 ? `
-                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 text-left flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-cocoa">🎁 Bono Clase de Yoga Gratuita</p>
-                        <p class="text-[10px] text-cocoa/55 mt-0.5">Válido para sesiones introductorias marcadas</p>
+                <div class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-left">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <p class="text-xs font-bold text-cocoa">Yoga Madre e Hija · ¡Tu Oferta Gratuita Activa!</p>
+                            <p class="text-[11px] text-cocoa/65 leading-relaxed mt-1">Tienes <strong>${userSaldoClasesGratis} clase${userSaldoClasesGratis === 1 ? '' : 's'} de prueba 100% gratuita${userSaldoClasesGratis === 1 ? '' : 's'}</strong> para venir con tu madre o con tu hija.</p>
+                        </div>
+                        <span class="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">${userSaldoClasesGratis} disp.</span>
                     </div>
-                    <span class="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">${userSaldoClasesGratis} disp.</span>
+                    <p class="text-[10px] text-emerald-800 font-medium mt-2"><strong>Horarios:</strong> Lunes y Miércoles 16:15 (Ángel) · Miércoles y Viernes 08:00–09:00 (Yanira)</p>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <button type="button" onclick="filtrarPorOferta('madre_hija')" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs">Reservar mi Plaza Gratis</button>
+                        <button type="button" onclick="filtrarPorOferta('yoga')" class="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider rounded-xl transition">Ver todas las clases gratis</button>
+                    </div>
                 </div>` : ''}
                 ${userSaldoConsultasGratis > 0 ? `
                 <div class="rounded-2xl border border-pink-100 bg-pink-50/60 p-3 text-left flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-bold text-cocoa">🎁 Bono Consulta Gratuita</p>
+                        <p class="text-xs font-bold text-cocoa">Bono Consulta Gratuita</p>
                         <p class="text-[10px] text-cocoa/55 mt-0.5">Válido para consultas introductorias de PNI y bienestar</p>
                     </div>
                     <span class="text-xs font-black text-pink-700 bg-pink-100 px-2.5 py-1 rounded-full">${userSaldoConsultasGratis} disp.</span>
@@ -4353,6 +4380,63 @@ function aplicarFiltrosClases() {
     renderizarClases();
 }
 
+function actualizarBannerOferta(tipo) {
+    const banner = document.getElementById('oferta-activa-banner');
+    const titulo = document.getElementById('oferta-activa-titulo');
+    const descripcion = document.getElementById('oferta-activa-desc');
+    if (!banner || !titulo || !descripcion) return;
+
+    if (tipo === 'madre_hija') {
+        titulo.textContent = 'Yoga Madre e Hija · oferta gratuita';
+        descripcion.innerHTML = 'Mostrando únicamente plazas reservables: <strong>Lunes y Miércoles 16:15</strong> con Ángel y <strong>Miércoles y Viernes 08:00–09:00</strong> con Yanira.';
+        banner.classList.remove('hidden');
+    } else if (tipo === 'gratis') {
+        titulo.textContent = 'Bono de Bienvenida · sesiones gratuitas';
+        descripcion.textContent = 'Mostrando únicamente sesiones gratuitas con plaza disponible.';
+        banner.classList.remove('hidden');
+    } else {
+        banner.classList.add('hidden');
+    }
+}
+
+function limpiarFiltroOferta() {
+    limpiarTodosLosFiltrosClases();
+}
+
+async function filtrarPorOferta(ofertaKey) {
+    const key = normalizarTextoOferta(ofertaKey).replace(/[\s-]+/g, '_');
+    const ofertasMadreHija = new Set(['madre_hija', 'madre', 'compania']);
+    const ofertasYogaGratis = new Set(['yoga', 'bienvenida', 'gratis', 'clases_gratis']);
+
+    if (ofertasMadreHija.has(key) || ofertasYogaGratis.has(key)) {
+        const tipo = ofertasMadreHija.has(key) ? 'madre_hija' : 'gratis';
+        const selectProfesor = document.getElementById('filtro-profesor');
+        const selectTipoYoga = document.getElementById('filtro-tipo-yoga');
+        const selectHorario = document.getElementById('filtro-horario');
+        const selectDisponibilidad = document.getElementById('filtro-disponibilidad');
+
+        selectedDate = null;
+        if (selectProfesor) selectProfesor.value = 'todos';
+        if (selectTipoYoga) selectTipoYoga.value = 'todos';
+        if (selectHorario) selectHorario.value = 'todos';
+        if (selectDisponibilidad) selectDisponibilidad.value = tipo === 'madre_hija' ? 'oferta_madre_hija' : 'gratis';
+        actualizarBannerOferta(tipo);
+        renderizarCalendario();
+
+        await Promise.resolve(switchPublicView('horarios'));
+
+        if (selectDisponibilidad) selectDisponibilidad.value = tipo === 'madre_hija' ? 'oferta_madre_hija' : 'gratis';
+        actualizarBannerOferta(tipo);
+        renderizarCalendario();
+        renderizarClases();
+        const schedule = document.getElementById('schedule-container') || document.getElementById('view-horarios');
+        if (schedule) schedule.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return true;
+    }
+
+    return false;
+}
+
 function limpiarTodosLosFiltrosClases() {
     selectedDate = null;
     const selectProfesor = document.getElementById('filtro-profesor');
@@ -4365,6 +4449,7 @@ function limpiarTodosLosFiltrosClases() {
     if (selectHorario) selectHorario.value = 'todos';
     if (selectDisponibilidad) selectDisponibilidad.value = 'todos';
 
+    actualizarBannerOferta('');
     renderizarCalendario();
     renderizarClases();
 }
@@ -4405,6 +4490,12 @@ function esClaseElegibleBonoGratis(clase) {
         return true;
     }
 
+    return esClaseOfertaMadreHija(clase);
+}
+
+function esClaseOfertaMadreHija(clase) {
+    if (!clase) return false;
+
     const profesional = normalizarTextoOferta([
         clase.profesionales?.nombre,
         clase.profesionales?.apellidos,
@@ -4425,6 +4516,24 @@ function esClaseElegibleBonoGratis(clase) {
         && profesional.includes('yanira');
 
     return angel || yanira;
+}
+
+function esClaseReservablePorOferta(clase, tipo) {
+    if (!clase || clase.activa !== true) return false;
+    const capacidad = toSafeNumber(clase.capacidad_max);
+    const ocupadas = toSafeNumber(clase.ocupadas);
+    const tienePlaza = !!clase.miReserva || (capacidad > 0 && ocupadas < capacidad);
+    if (!tienePlaza) return false;
+    const horasHastaClase = getHoursUntilClass(clase.fecha_inicio);
+    const dentroDelPlazo = !!clase.miReserva || (
+        horasHastaClase !== null
+        && horasHastaClase > getPolicyHours('horas_limite_reserva')
+    );
+    if (!dentroDelPlazo) return false;
+
+    if (tipo === 'madre_hija') return esClaseOfertaMadreHija(clase);
+    if (tipo === 'gratis') return esClaseElegibleBonoGratis(clase);
+    return false;
 }
 
 async function cargarOcupacionClases(claseIds) {
@@ -4527,6 +4636,7 @@ async function cargarHorarios() {
         await client.from('clases')
             .select('*, profesionales(*)')
             .eq('tipo_clase', 'yoga')
+            .eq('activa', true)
             .gte('fecha_inicio', nowIso)
             .order('fecha_inicio');
 
@@ -4771,12 +4881,23 @@ function renderizarClases() {
 
     if (selectDisponibilidad && selectDisponibilidad.value !== 'todos') {
         const disp = selectDisponibilidad.value;
-        clasesAMostrar = clasesAMostrar.filter(c => {
-            const llena = c.ocupadas >= c.capacidad_max;
-            if (disp === 'huecos') return !llena;
-            if (disp === 'completas') return llena;
-            return true;
-        });
+        if (disp === 'oferta_madre_hija') {
+            actualizarBannerOferta('madre_hija');
+            clasesAMostrar = clasesAMostrar.filter(c => esClaseReservablePorOferta(c, 'madre_hija'));
+        } else if (disp === 'gratis') {
+            actualizarBannerOferta('gratis');
+            clasesAMostrar = clasesAMostrar.filter(c => esClaseReservablePorOferta(c, 'gratis'));
+        } else {
+            actualizarBannerOferta('');
+            clasesAMostrar = clasesAMostrar.filter(c => {
+                const llena = c.ocupadas >= c.capacidad_max;
+                if (disp === 'huecos') return !llena;
+                if (disp === 'completas') return llena;
+                return true;
+            });
+        }
+    } else {
+        actualizarBannerOferta('');
     }
 
     if (clasesAMostrar.length === 0) {
@@ -9017,7 +9138,7 @@ function switchPublicView(viewName) {
     } else if (viewName === 'profesor-calendario') {
         cargarAgendaProfesor();
     } else if (viewName === 'horarios') {
-        cargarHorarios();
+        return cargarHorarios();
     } else if (viewName === 'especiales') {
         cargarClasesEspeciales();
     } else if (viewName === 'psicologia') {
@@ -9032,6 +9153,8 @@ function switchPublicView(viewName) {
     } else if (viewName === 'mis-clases') {
         cargarAsistenciasPorClase();
     }
+
+    return Promise.resolve();
 }
 
 function switchConsultasSubTab(type) {
