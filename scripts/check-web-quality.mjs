@@ -428,7 +428,58 @@ for (const selector of ['gy-calendar-launch', 'gy-folder-calendar-link']) {
   }
 }
 
-const homePage = await readFile(path.join(root, 'index.html'), 'utf8');
+const [homePage, androidHomePage, iosHomePage] = await Promise.all([
+  readFile(path.join(root, 'index.html'), 'utf8'),
+  readFile(path.join(root, 'app android', 'www', 'index.html'), 'utf8'),
+  readFile(path.join(root, 'app ios', 'www', 'index.html'), 'utf8'),
+]);
+for (const [label, source] of [
+  ['index.html', homePage],
+  ['app android/www/index.html', androidHomePage],
+  ['app ios/www/index.html', iosHomePage],
+]) {
+  const whatsappContacts = [...source.matchAll(
+    /<details\b[^>]*class=["'][^"']*\bwhatsapp-contact\b[^"']*["'][^>]*>[\s\S]*?<\/details>/gi,
+  )];
+  if (whatsappContacts.length !== 2) {
+    errors.push(`${label}: debe mostrar WhatsApp una vez en el pie móvil y otra en el pie de escritorio`);
+  }
+  for (const contact of whatsappContacts) {
+    if (!/<summary\b[^>]*aria-label=["']Mostrar teléfono de WhatsApp["'][^>]*>/i.test(contact[0])) {
+      errors.push(`${label}: el icono de WhatsApp debe tener un nombre accesible`);
+    }
+    if (!/<svg\b[^>]*aria-hidden=["']true["']/i.test(contact[0])) {
+      errors.push(`${label}: el SVG de WhatsApp debe ser decorativo`);
+    }
+    if (!/href=["']https:\/\/wa\.me\/34967511449["']/i.test(contact[0])
+        || !/rel=["']noopener noreferrer["']/i.test(contact[0])
+        || !/WhatsApp\s*·\s*\+34 967 511 449/i.test(contact[0])) {
+      errors.push(`${label}: al desplegar WhatsApp debe verse el teléfono oficial y abrir el chat seguro`);
+    }
+  }
+
+  const contactGroups = [...source.matchAll(
+    /<div\b[^>]*class=["'][^"']*\bflex\b[^"']*\bitems-center\b[^"']*["'][^>]*>[\s\S]*?<\/div>/gi,
+  )].map((match) => match[0]).filter((markup) => (
+    markup.includes('whatsapp-contact')
+    && markup.includes('mailto:hola@genyoga.studio')
+    && markup.includes('instagram.com/genyoga.studio')
+  ));
+  if (contactGroups.length !== 2) {
+    errors.push(`${label}: no se localizaron los grupos de contacto móvil y escritorio`);
+  }
+  for (const group of contactGroups) {
+    const whatsappIndex = group.indexOf('whatsapp-contact');
+    const emailIndex = group.indexOf('mailto:hola@genyoga.studio');
+    const instagramIndex = group.indexOf('instagram.com/genyoga.studio');
+    if (!(whatsappIndex < emailIndex && emailIndex < instagramIndex)) {
+      errors.push(`${label}: WhatsApp debe quedar a la izquierda del correo y de Instagram`);
+    }
+  }
+}
+if (androidHomePage !== homePage || iosHomePage !== homePage) {
+  errors.push('Las landing de web, Android e iOS deben conservar el mismo contacto de WhatsApp');
+}
 const translationsScript = await readFile(path.join(root, 'i18n.js'), 'utf8');
 const spanishTranslations = translationsScript.match(
   /\bes\s*:\s*\{([\s\S]*?)\n\s*\},\s*\n\s*en\s*:/,
