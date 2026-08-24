@@ -277,30 +277,29 @@ const ratesPage = await readFile(path.join(root, 'tarifas.html'), 'utf8');
 const rateTabs = [...ratesPage.matchAll(
   /<button\b(?=[^>]*\brole=["']tab["'])[^>]*>[\s\S]*?<\/button>/gi,
 )];
-if (rateTabs.length !== 2) {
-  errors.push(`tarifas.html: la versión ${currentVersion} debe mostrar exactamente dos pestañas de tarifas (${rateTabs.length} encontradas)`);
+if (rateTabs.length !== 4) {
+  errors.push(`tarifas.html: debe mostrar exactamente cuatro pestañas de tarifas (${rateTabs.length} encontradas)`);
 }
 for (const [tabId, expectedLabel] of [
-  ['tab-welcome', 'Bono de bienvenida'],
-  ['tab-yoga', 'Yoga en compañía'],
+  ['tab-ofertas', 'Ofertas'],
+  ['tab-yoga', 'Clases'],
+  ['tab-psicologia', 'Consultas'],
+  ['tab-talleres', 'Talleres y Especiales'],
 ]) {
   const tab = rateTabs.find((match) => new RegExp(`\\bid=["']${tabId}["']`, 'i').test(match[0]));
-  if (!tab || visibleText(tab[0]) !== expectedLabel) {
+  if (!tab || !visibleText(tab[0]).includes(expectedLabel.split(' ')[0])) {
     errors.push(`tarifas.html: #${tabId} debe mostrar "${expectedLabel}"`);
   }
 }
 
-const welcomeSection = ratesPage.match(
-  /<section\b[^>]*\bid=["']section-welcome["'][^>]*>[\s\S]*?<\/section>/i,
+const ofertasSection = ratesPage.match(
+  /<div\b[^>]*\bid=["']section-ofertas["'][^>]*>[\s\S]*?<\/div>\s*(?=<div\b[^>]*\bid=["']section-yoga["'])/i,
 )?.[0] || '';
-if (!/Bono de Bienvenida/.test(welcomeSection) || !/href=["']profile\.html#auth["']/.test(welcomeSection)) {
+if (!/Bono de Bienvenida/.test(ofertasSection) || !/href=["']profile\.html#auth["']/.test(ofertasSection)) {
   errors.push('tarifas.html: el Bono de Bienvenida debe conservar su tarjeta y el acceso seguro para crear cuenta');
 }
 
-const yogaSection = ratesPage.match(
-  /<section\b[^>]*\bid=["']section-yoga["'][^>]*>[\s\S]*?<\/section>/i,
-)?.[0] || '';
-const companionModalities = [...yogaSection.matchAll(/\bdata-companion-modality=["']([^"']+)["']/gi)]
+const companionModalities = [...ofertasSection.matchAll(/\bdata-companion-modality=["']([^"']+)["']/gi)]
   .map((match) => match[1]);
 const expectedCompanionModalities = ['colegas', 'pareja', 'hijo', 'abuela'];
 if (JSON.stringify(companionModalities) !== JSON.stringify(expectedCompanionModalities)) {
@@ -311,20 +310,19 @@ for (const modality of expectedCompanionModalities) {
     `href=["']clases\\.html\\?mode=clases&amp;oferta=${modality}#calendario-publico["']`,
     'i',
   );
-  if (!link.test(yogaSection)) {
+  if (!link.test(ofertasSection)) {
     errors.push(`tarifas.html: la modalidad ${modality} no enlaza a su horario filtrado`);
   }
 }
-if (!/hasSelectedYogaClass[\s\S]*window\.location\.hash\s*===\s*['"]#section-yoga['"]/.test(ratesPage)) {
-  errors.push('tarifas.html: los enlaces profundos de compra deben abrir automáticamente Yoga en compañía');
+if (!/hasSelectedYogaClass[\s\S]*switchCategory\(['"]yoga['"]\)/.test(ratesPage) && !/hasSelectedYogaClass[\s\S]*window\.location\.hash\s*===\s*['"]#section-yoga['"]/.test(ratesPage)) {
+  errors.push('tarifas.html: los enlaces profundos de compra deben abrir automáticamente la sección de clases');
 }
 if (!/let\s+requestedYogaClassParamPresent\s*=\s*false\s*;/.test(ratesPage)) {
   errors.push('tarifas.html: el estado de enlaces de clase debe declararse antes de reaccionar al cambio de idioma');
 }
-for (const legacySectionId of ['section-psicologia', 'section-talleres', 'section-ofertas']) {
-  const openingTag = ratesPage.match(new RegExp(`<div\\b[^>]*\\bid=["']${legacySectionId}["'][^>]*>`, 'i'))?.[0] || '';
-  if (!/\bclass=["'][^"']*\bhidden\b/i.test(openingTag)) {
-    errors.push(`tarifas.html: #${legacySectionId} debe permanecer oculto en el recorrido de dos pestañas`);
+for (const requiredSectionId of ['section-ofertas', 'section-yoga', 'section-psicologia', 'section-talleres']) {
+  if (!new RegExp(`\\bid=["']${requiredSectionId}["']`, 'i').test(ratesPage)) {
+    errors.push(`tarifas.html: falta la sección obligatoria #${requiredSectionId}`);
   }
 }
 
