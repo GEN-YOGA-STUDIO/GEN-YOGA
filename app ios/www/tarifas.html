@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="7.0">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.0">
+    <meta name="application-version" content="7.1">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.1">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.1">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
-    <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
+    <meta name="description" content="Descubre el Bono de Bienvenida, las cuatro modalidades de Yoga en compañía y los bonos de clases de GEN Yoga." />
     
     <!-- Rendimiento, SEO y tarjetas sociales -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -20,17 +20,17 @@
     <meta property="og:locale" content="es_ES" />
     <meta property="og:url" content="https://genyoga.studio/tarifas.html" />
     <meta property="og:title" content="Tarifas y bonos | GEN Yoga" />
-    <meta property="og:description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas de psicología y nutrición, y talleres especiales." />
+    <meta property="og:description" content="Descubre el Bono de Bienvenida, las cuatro modalidades de Yoga en compañía y los bonos de clases de GEN Yoga." />
     <meta property="og:image" content="https://genyoga.studio/img/clases-para-todos.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=7.0">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=7.1">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=7.0"></script>
+    <script src="i18n.js?v=7.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -96,6 +96,7 @@
                 max-width: 100%;
             }
 
+            #section-welcome,
             #section-yoga,
             #section-psicologia,
             #section-talleres,
@@ -119,9 +120,8 @@
                 border-radius: 1.75rem;
             }
 
-            #tab-yoga,
-            #tab-psicologia,
-            #tab-talleres {
+            #tab-welcome,
+            #tab-yoga {
                 flex: 1 1 auto;
                 min-width: 0;
                 padding-left: 1rem;
@@ -209,32 +209,124 @@
                 Tarifas
             </h1>
 
-            <!-- Sub-pestañas de filtrado (Matches layout & colors of Canva screen) -->
-            <div class="flex justify-center gap-3 flex-wrap">
-                <button id="tab-ofertas" onclick="switchCategory('ofertas')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#047857] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5" data-i18n="rates_tab_offers">
-                    🎁 Ofertas
+            <!-- Tarifas v7.1: dos recorridos claros, sin dependencias del panel de perfil -->
+            <div class="flex justify-center gap-3 flex-wrap" role="tablist" aria-label="Tipos de tarifas">
+                <button id="tab-welcome" type="button" role="tab" aria-controls="section-welcome" aria-selected="true"
+                    onclick="switchCategory('welcome')"
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#047857] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5">
+                    <i class="ph-fill ph-gift" aria-hidden="true"></i>
+                    <span data-i18n="rates_tab_welcome">Bono de bienvenida</span>
                 </button>
-                <button id="tab-yoga" onclick="switchCategory('yoga')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_yoga">
-                    Clases
-                </button>
-                <button id="tab-psicologia" onclick="switchCategory('psicologia')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_psy">
-                    Consultas
-                </button>
-                <button id="tab-talleres" onclick="switchCategory('talleres')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_workshops">
-                    Talleres
+                <button id="tab-yoga" type="button" role="tab" aria-controls="section-yoga" aria-selected="false"
+                    onclick="switchCategory('yoga')"
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    <span data-i18n="rates_tab_companion">Yoga en compañía</span>
                 </button>
             </div>
         </div>
 
         <!-- Central Tariff Cards Layout -->
         <div class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-12 mt-4">
+
+            <!-- 1. BONO DE BIENVENIDA -->
+            <section id="section-welcome" role="tabpanel" aria-labelledby="tab-welcome"
+                class="max-w-2xl mx-auto w-full px-4 transition-all duration-500">
+                <article class="tariff-card flex flex-col justify-between bg-white/95 backdrop-blur-md border-2 border-emerald-500/30 shadow-xl relative overflow-hidden ring-2 ring-emerald-500/10">
+                    <div class="absolute top-0 right-0 bg-[#047857] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm" data-i18n="rates_welcome_badge">
+                        ★ 100% Gratuito
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between gap-3 mb-5 pr-20">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner"
+                                style="background-color: rgba(4, 120, 87, 0.1); color: #047857;">
+                                <i class="ph-fill ph-gift text-2xl" aria-hidden="true"></i>
+                            </div>
+                            <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider" data-i18n="rates_welcome_audience"
+                                style="background-color: rgba(4, 120, 87, 0.12); color: #047857; border: 1px solid rgba(4, 120, 87, 0.25);">
+                                Nuevos alumnos
+                            </span>
+                        </div>
+                        <h2 class="text-3xl md:text-4xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_welcome_title">Bono de Bienvenida</h2>
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-4xl font-extrabold text-[#047857]">0 €</span>
+                            <span class="text-xs text-cocoa/60 font-light" data-i18n="rates_welcome_price_note">sin cuota de alta</span>
+                        </div>
+                        <p class="text-sm md:text-base text-cocoa/80 leading-relaxed font-light text-left mb-5" data-i18n="rates_welcome_description">
+                            Crea tu cuenta y recibe una clase de yoga y una sesión introductoria de PNI o Psicología para conocer GEN Yoga sin compromiso.
+                        </p>
+                        <ul class="text-sm text-cocoa/70 space-y-3 mb-6 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_yoga">1 clase de Yoga gratuita</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_consultation">1 sesión introductoria de PNI o Psicología</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_activation">Activación automática al crear una cuenta</span></li>
+                        </ul>
+                    </div>
+                    <div class="mt-4 pt-5 border-t border-cocoa/10 flex flex-col gap-2.5">
+                        <a href="profile.html#auth"
+                            class="block w-full py-3.5 bg-[#047857] hover:bg-[#065f46] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
+                            style="background-color: #047857; color: #ffffff;" data-i18n="rates_welcome_create">
+                            Crear cuenta gratis
+                        </a>
+                        <a href="clases.html?mode=clases#calendario-publico"
+                            class="text-center text-[11px] font-semibold text-[#047857] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current" data-i18n="rates_welcome_view_classes">
+                            Ver clases disponibles →
+                        </a>
+                    </div>
+                </article>
+            </section>
             
-            <!-- 1. CATEGORY: YOGA (CLASES) -->
-            <div id="section-yoga" class="grid sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto gap-6 w-full px-4 items-stretch transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+            <!-- 2. YOGA EN COMPAÑÍA -->
+            <section id="section-yoga" role="tabpanel" aria-labelledby="tab-yoga"
+                class="grid sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto gap-6 w-full px-4 items-stretch transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+                <div class="sm:col-span-2 lg:col-span-3">
+                    <div class="text-center mb-7">
+                        <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-[#795244]/70 mb-2" data-i18n="rates_companion_eyebrow">Práctica compartida · cuatro modalidades</p>
+                        <h2 class="text-3xl md:text-5xl font-serif font-bold text-cocoa" data-i18n="rates_companion_title">Yoga en compañía</h2>
+                        <p class="mt-3 text-sm text-cocoa/70 max-w-2xl mx-auto" data-i18n="rates_companion_description">Elige la práctica que mejor encaje contigo. Todos los bonos de esta sección sirven para las cuatro modalidades regulares.</p>
+                    </div>
+
+                    <div id="yoga-styles" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10" aria-label="Modalidades de Yoga en compañía">
+                        <article data-yoga-style="power-vinyasa" class="overflow-hidden rounded-3xl bg-white border border-[#795244]/20 shadow-md flex flex-col">
+                            <img src="img/clases-vinyasa.jpg" alt="Clase de Power Vinyasa" class="w-full aspect-[4/3] object-cover" decoding="async">
+                            <div class="p-5 flex flex-col flex-1">
+                                <h3 class="text-xl font-serif font-bold text-cocoa" data-i18n="classes_card_vinyasa_title">Power Vinyasa</h3>
+                                <p class="text-xs text-cocoa/65 mt-2 mb-4 flex-1" data-i18n="classes_vinyasa_tagline">Fluidez, energía y fuerza guiadas por la respiración.</p>
+                                <a href="clases.html?mode=clases&amp;style=power-vinyasa#calendario-publico" class="text-xs font-bold uppercase tracking-wider text-[#795244] hover:text-cocoa" data-i18n="rates_view_schedule">Ver horarios →</a>
+                            </div>
+                        </article>
+
+                        <article data-yoga-style="yoga-para-hombres" class="overflow-hidden rounded-3xl bg-white border border-[#e06b53]/25 shadow-md flex flex-col">
+                            <img src="img/clases-hombres.jpg" alt="Clase de Yoga para Hombres" class="w-full aspect-[4/3] object-cover" loading="lazy" decoding="async">
+                            <div class="p-5 flex flex-col flex-1">
+                                <h3 class="text-xl font-serif font-bold text-cocoa" data-i18n="classes_card_hombres_title">Yoga para Hombres</h3>
+                                <p class="text-xs text-cocoa/65 mt-2 mb-4 flex-1" data-i18n="classes_hombres_tagline">Fuerza, movilidad, calma y un espacio propio.</p>
+                                <a href="clases.html?mode=clases&amp;style=yoga-para-hombres#calendario-publico" class="text-xs font-bold uppercase tracking-wider text-[#e06b53] hover:text-cocoa" data-i18n="rates_view_schedule">Ver horarios →</a>
+                            </div>
+                        </article>
+
+                        <article data-yoga-style="yoga-para-todos" class="overflow-hidden rounded-3xl bg-white border border-[#7F9FC0]/30 shadow-md flex flex-col">
+                            <img src="img/clases-para-todos.jpg" alt="Clase de Yoga para Todos" class="w-full aspect-[4/3] object-cover" loading="lazy" decoding="async">
+                            <div class="p-5 flex flex-col flex-1">
+                                <h3 class="text-xl font-serif font-bold text-cocoa" data-i18n="classes_card_para_todos_title">Yoga para Todos</h3>
+                                <p class="text-xs text-cocoa/65 mt-2 mb-4 flex-1" data-i18n="classes_para_todos_tagline">Alineación, consciencia y una práctica adaptada a ti.</p>
+                                <a href="clases.html?mode=clases&amp;style=yoga-para-todos#calendario-publico" class="text-xs font-bold uppercase tracking-wider text-[#597a9a] hover:text-cocoa" data-i18n="rates_view_schedule">Ver horarios →</a>
+                            </div>
+                        </article>
+
+                        <article data-yoga-style="restaurativa" class="overflow-hidden rounded-3xl bg-white border border-[#ee9785]/30 shadow-md flex flex-col">
+                            <img src="img/clases-restaurativa.jpg" alt="Clase de Yoga Restaurativo" class="w-full aspect-[4/3] object-cover" loading="lazy" decoding="async">
+                            <div class="p-5 flex flex-col flex-1">
+                                <h3 class="text-xl font-serif font-bold text-cocoa" data-i18n="classes_card_restaurativo_title">Yoga Restaurativo</h3>
+                                <p class="text-xs text-cocoa/65 mt-2 mb-4 flex-1" data-i18n="classes_restaurativa_tagline">Pausa, descanso profundo y regulación del sistema nervioso.</p>
+                                <a href="clases.html?mode=clases&amp;style=restaurativa#calendario-publico" class="text-xs font-bold uppercase tracking-wider text-[#c66f5d] hover:text-cocoa" data-i18n="rates_view_schedule">Ver horarios →</a>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="text-center mb-1">
+                        <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-[#795244]/70 mb-2" data-i18n="rates_companion_common">Tarifas comunes</p>
+                        <h3 class="text-2xl md:text-3xl font-serif font-bold text-cocoa" data-i18n="rates_companion_choose">Elige tu bono</h3>
+                    </div>
+                </div>
                 <!-- Clase suelta -->
                 <div class="tariff-card flex flex-col justify-between border-suelta">
                     <div>
@@ -348,7 +440,7 @@
                         <a href="profile.html?buy=bono_ilimitado" class="block w-full py-3.5 bg-mensual text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_mensual_btn">Elegir mes</a>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- 2. CATEGORY: CONSULTAS -->
             <div id="section-psicologia" class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
@@ -596,7 +688,7 @@
             </div>
 
             <!-- 4. CATEGORY: OFERTAS & SESIONES GRATUITAS -->
-            <div id="section-ofertas" class="max-w-7xl mx-auto w-full px-4 transition-all duration-500">
+            <div id="section-ofertas" class="max-w-7xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
                     
                     <!-- Oferta 1: Bono de Bienvenida (100% Gratis) -->
@@ -751,7 +843,7 @@
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v7.0 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v7.1 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -759,11 +851,12 @@
     <script>
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '6.25';
+const APP_VERSION = '7.1';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 let selectedYogaClassState = 'idle';
 let selectedYogaClassLoadPromise = Promise.resolve(null);
+let requestedYogaClassParamPresent = false;
 
 function normaliseSelectedClassId(value) {
     const parsed = Number(String(value ?? '').trim());
@@ -1132,65 +1225,51 @@ window.handleNavClick = function (btn, url) {
     <script>
         function switchCategory(category) {
             const tabs = {
-                yoga: document.getElementById('tab-yoga'),
-                psicologia: document.getElementById('tab-psicologia'),
-                talleres: document.getElementById('tab-talleres'),
-                ofertas: document.getElementById('tab-ofertas')
+                welcome: document.getElementById('tab-welcome'),
+                yoga: document.getElementById('tab-yoga')
             };
 
             const sections = {
-                yoga: document.getElementById('section-yoga'),
-                psicologia: document.getElementById('section-psicologia'),
-                talleres: document.getElementById('section-talleres'),
-                ofertas: document.getElementById('section-ofertas')
+                welcome: document.getElementById('section-welcome'),
+                yoga: document.getElementById('section-yoga')
             };
 
             const symbols = {
-                yoga: document.getElementById('symbol-clases'),
-                psicologia: document.getElementById('symbol-consultas'),
-                talleres: document.getElementById('symbol-talleres'),
-                ofertas: document.getElementById('symbol-clases')
+                welcome: document.getElementById('symbol-consultas'),
+                yoga: document.getElementById('symbol-clases')
             };
 
-            // Theme colors for active states: Terracotta/brown, Gold/brown, Olive/green, Emerald/green
             const activeColors = {
-                yoga: '#795244',
-                psicologia: '#8f6b2d',
-                talleres: '#6a6540',
-                ofertas: '#047857'
+                welcome: '#047857',
+                yoga: '#795244'
             };
 
-            // 1. Toggle Tab Active Classes with dynamic color matching
             Object.keys(tabs).forEach(key => {
                 const btn = tabs[key];
                 if (!btn) return;
-                if (key === category) {
-                    btn.style.backgroundColor = activeColors[key];
-                    btn.className = "px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95";
-                } else {
-                    btn.style.backgroundColor = '#c3b89a';
-                    btn.className = "px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95";
-                }
+                const isActive = key === category;
+                btn.style.backgroundColor = isActive ? activeColors[key] : '#c3b89a';
+                btn.setAttribute('aria-selected', String(isActive));
+                btn.tabIndex = isActive ? 0 : -1;
             });
 
-            // 2. Toggle Section Visibilities with clean CSS transition entries
             Object.keys(sections).forEach(key => {
                 const sec = sections[key];
                 if (!sec) return;
                 if (key === category) {
                     sec.classList.remove('hidden');
-                    // Force reflow
+                    sec.setAttribute('aria-hidden', 'false');
                     sec.offsetHeight;
                     sec.style.opacity = '1';
                     sec.style.transform = 'translateY(0)';
                 } else {
+                    sec.setAttribute('aria-hidden', 'true');
                     sec.style.opacity = '0';
                     sec.style.transform = 'translateY(20px)';
                     sec.classList.add('hidden');
                 }
             });
 
-            // 3. Toggle Decorative Symbol Poses
             Object.keys(symbols).forEach(key => {
                 const sym = symbols[key];
                 if (!sym) return;
@@ -1205,12 +1284,14 @@ window.handleNavClick = function (btn, url) {
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const requestedCategory = new URLSearchParams(window.location.search).get('category');
-            if (['yoga', 'psicologia', 'talleres', 'ofertas'].includes(requestedCategory)) {
-                switchCategory(requestedCategory);
-            } else {
-                switchCategory('ofertas');
-            }
+            const params = new URLSearchParams(window.location.search);
+            const requestedCategory = params.get('category');
+            const hasSelectedYogaClass = params.has('class') || params.has('clase');
+            const targetsYoga = requestedCategory === 'yoga'
+                || hasSelectedYogaClass
+                || window.location.hash === '#section-yoga';
+
+            switchCategory(targetsYoga ? 'yoga' : 'welcome');
         });
 
         // --- GUEST STRIPE CHECKOUT INTEGRATION ---

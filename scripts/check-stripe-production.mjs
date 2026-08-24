@@ -6,7 +6,8 @@ import { Script } from 'node:vm';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
 
-const read = (relativePath) => readFile(path.join(root, relativePath), 'utf8');
+const read = async (relativePath) => (await readFile(path.join(root, relativePath), 'utf8'))
+  .replace(/\r\n?/g, '\n');
 
 function requireText(source, expected, label) {
   if (!source.includes(expected)) errors.push(`${label}: falta ${expected}`);
