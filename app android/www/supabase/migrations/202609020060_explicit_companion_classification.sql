@@ -25,8 +25,6 @@ update public.clases as class
    and (
      lower(coalesce(class.nombre, '')) like '%power%'
      or lower(coalesce(class.nombre, '')) like '%vinyasa%'
-     or lower(coalesce(class.estilo_yoga, '')) like '%power%'
-     or lower(coalesce(class.estilo_yoga, '')) like '%vinyasa%'
    );
 
 notify pgrst, 'reload schema';
