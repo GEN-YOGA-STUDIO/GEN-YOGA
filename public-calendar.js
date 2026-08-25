@@ -308,6 +308,7 @@
         rpcAvailable: null,
         targetResolved: true,
         explicitWeek: false,
+        introOnly: false,
         requestSerial: 0,
         lastUpdated: null,
         lastFocus: null,
@@ -667,6 +668,10 @@
             const ofKey = canonicalCompanionOffer(state.oferta);
             if (ofKey === 'compania' && !item.companionModality) return false;
             if (normalizeCompanionModality(ofKey) && item.companionModality !== ofKey) return false;
+        }
+        if (state.introOnly) {
+            const isIntroSession = !!item.isFree || /introductoria/i.test(String(item.name || ''));
+            if (!isIntroSession) return false;
         }
         if (state.teacher) {
             const teacherMatch = item.professor.slug === state.teacher
@@ -1642,6 +1647,8 @@
         if (companionOffer) {
             state.mode = 'clases';
         }
+        const introParam = url.searchParams.get('intro');
+        state.introOnly = introParam === '1' || introParam === 'true';
         const week = validDateKey(url.searchParams.get('week'));
         const classId = safePositiveInteger(url.searchParams.get('class') || url.searchParams.get('clase'));
         const teacher = normalizeTeacherParam(url.searchParams.get('teacher'));
@@ -1656,7 +1663,7 @@
         state.classId = classId;
         state.teacher = state.oferta ? '' : teacher;
         state.style = state.oferta ? '' : style;
-        state.targetResolved = !(classId || ((teacher || style || state.oferta) && !week));
+        state.targetResolved = !(classId || ((teacher || style || state.oferta || state.introOnly) && !week));
     }
 
     async function fetchTargetClass(classId) {
@@ -1736,6 +1743,8 @@
         }
         if (state.oferta) url.searchParams.set('oferta', state.oferta);
         else url.searchParams.delete('oferta');
+        if (state.introOnly) url.searchParams.set('intro', '1');
+        else url.searchParams.delete('intro');
         ['promo', 'filter', 'filtro'].forEach(key => url.searchParams.delete(key));
         url.searchParams.set('week', state.weekStart);
         if (state.style) url.searchParams.set('style', state.style);
@@ -1757,7 +1766,7 @@
 
     function clearCalendarUrl() {
         const url = new URL(root.location.href);
-        ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro']
+        ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro', 'intro']
             .forEach(key => url.searchParams.delete(key));
         url.hash = '';
         root.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
@@ -1766,7 +1775,7 @@
     function shouldAutoOpenFromUrl() {
         const url = new URL(root.location.href);
         return url.hash === CALENDAR_HASH
-            || ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro']
+            || ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro', 'intro']
                 .some(key => url.searchParams.has(key));
     }
 
@@ -1810,6 +1819,16 @@
             }
             state.classId = null;
             state.targetResolved = !state.oferta;
+            state.explicitWeek = false;
+        }
+        if (Object.prototype.hasOwnProperty.call(options, 'intro')) {
+            state.introOnly = Boolean(options.intro);
+            if (state.introOnly) {
+                state.oferta = '';
+                state.style = '';
+            }
+            state.classId = null;
+            state.targetResolved = !state.introOnly;
             state.explicitWeek = false;
         }
         if (Object.prototype.hasOwnProperty.call(options, 'style')) {
