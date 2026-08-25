@@ -232,8 +232,8 @@
         miriam: Object.freeze([2, 3]),
         isabel: Object.freeze([2, 4])
     });
-    const SEASON_START_WEEK = '2026-08-31';
-    const SEASON_START_DATE = '2026-08-31';
+    const SEASON_START_WEEK = '2026-08-24';
+    const SEASON_START_DATE = '2026-08-24';
 
     const DEFAULT_FESTIVOS = new Map([
         ['2026-01-01', 'Año Nuevo'],
@@ -280,7 +280,9 @@
     }
 
     function defaultWeekStart() {
-        const currentMonday = mondayFor(todayKeyMadrid());
+        const today = todayKeyMadrid();
+        if (today <= '2026-08-30') return '2026-08-24';
+        const currentMonday = mondayFor(today);
         return currentMonday < SEASON_START_WEEK ? SEASON_START_WEEK : currentMonday;
     }
 
