@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="7.47" />
+    <meta name="application-version" content="7.49" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.47" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.47" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=7.49" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=7.49" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=7.47">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=7.49">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=7.47"></script>
+    <script src="teacher-profiles.js?v=7.49"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=7.47"></script>
+    <script src="i18n.js?v=7.49"></script>
 
     <style>
 /* INLINED profile.css */
@@ -2277,7 +2277,7 @@ main .sticky.top-24 {
                     </p>
                     <div
                         class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-            <span>© 2026 GEN Yoga • v7.47. Todos los derechos reservados.</span>
+            <span>© 2026 GEN Yoga • v7.49. Todos los derechos reservados.</span>
                     </div>
                 </div>
             </footer>
@@ -2719,7 +2719,7 @@ main .sticky.top-24 {
 // --- 1. CONFIGURACIÓN ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_VERSION = '7.47';
+const APP_VERSION = '7.49';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 function closePaymentUiBeforeNavigation() {
@@ -5631,65 +5631,8 @@ function getAdminProfileReservableLabel(c) {
 }
 
 function getEligibleCompanionModalitiesForClass(clase) {
-    if (!clase) return [];
-    const nombre = String(clase.nombre || '').toLowerCase();
-    const style = String(clase.estilo_yoga || '').toLowerCase();
-    const profName = String(clase.profesionales?.nombre || '').toLowerCase();
-    const d = new Date(clase.fecha_inicio);
-    const day = d.getDay();
-    const hour = d.getHours();
-    const min = d.getMinutes();
-    const modalities = [];
-
-    // Perfil Abuela / Madre:
-    // - Lu / Mi 16:15 (Ángel)
-    // - Mi / Vi 08:00 - 09:00 (Yanira)
-    const isAbuelaAngel = (day === 1 || day === 3) && (hour === 16 && min === 15) && (profName.includes('angel') || profName.includes('ángel'));
-    const isRestaurativoYanira0800 = (day === 3 || day === 5) && (hour === 8 && min === 0);
-
-    if (isAbuelaAngel || isRestaurativoYanira0800) {
-        modalities.push('abuela', 'hijo');
-    }
-
-    // Perfil Pareja:
-    // - Mi / Vi 8:00 - 9:00 (Yanira)
-    // - Lu / Mi 18:00 - 19:15 (Yoga para hombres)
-    // - Ma, Mi, Ju, Vi 9:30 - 10:30 (Vinyasa)
-    const isHombres1800 = (day === 1 || day === 3) && (hour === 18 && min === 0 || nombre.includes('hombre'));
-    const isVinyasa0930 = (day >= 2 && day <= 5) && (hour === 9 && min === 30);
-
-    if (isRestaurativoYanira0800 || isHombres1800 || isVinyasa0930) {
-        modalities.push('pareja');
-    }
-
-    // Perfil Colegas:
-    // - Ma / Ju 19:00 - 20:00 (Power Vinyasa con Yanira)
-    const isColegas1900 = (day === 2 || day === 4) && (hour === 19 && min === 0) && (nombre.includes('vinyasa') || profName.includes('yanira') || nombre.includes('power'));
-    if (isColegas1900) {
-        modalities.push('colegas');
-    }
-
-    // Modalidad explícita si existe
-    const explicit = normalizeCompanionModality(clase.companion_modality);
-    if (explicit && !modalities.includes(explicit)) {
-        modalities.push(explicit);
-    }
-
-    // Respaldo por estilo general estándar
-    const isPowerVinyasa = nombre.includes('power') || nombre.includes('vinyasa') || style.includes('vinyasa') || style.includes('power');
-    const isRestaurativo = nombre.includes('restaurat') || style.includes('restaurat');
-    const isParaTodos = nombre.includes('todos') || nombre.includes('hatha') || style.includes('todos') || style.includes('hatha');
-
-    if (modalities.length === 0) {
-        if (isPowerVinyasa) modalities.push('colegas', 'pareja');
-        if (isRestaurativo || isParaTodos) modalities.push('abuela', 'hijo');
-    }
-
-    if (modalities.length === 0 && String(clase.tipo_clase || '').toLowerCase() === 'yoga') {
-        modalities.push('colegas', 'pareja', 'abuela', 'hijo');
-    }
-
-    return [...new Set(modalities)];
+    const explicit = normalizeCompanionModality(clase?.companion_modality);
+    return explicit ? [explicit] : [];
 }
 
 window.abrirModalReservaYogaCompania = async function(claseId) {
@@ -5727,7 +5670,14 @@ window.abrirModalReservaYogaCompania = async function(claseId) {
     const profe = String(clase.profesionales?.nombre || 'Staff GEN Yoga');
     const nombreClase = String(clase.nombre || 'Clase de Yoga');
 
-    const userModality = userWelcomeCompanionModality || 'colegas';
+    const allowedModalities = getEligibleCompanionModalitiesForClass(clase);
+    if (allowedModalities.length === 0) {
+        await Swal.fire('Clase no disponible', 'Esta clase no está clasificada para Yoga en Compañía.', 'info');
+        return false;
+    }
+    const userModality = allowedModalities.includes(userWelcomeCompanionModality)
+        ? userWelcomeCompanionModality
+        : allowedModalities[0];
 
     const modalHtml = `
         <div class="text-left space-y-4 text-cocoa text-sm">
@@ -5740,36 +5690,36 @@ window.abrirModalReservaYogaCompania = async function(claseId) {
             <div>
                 <label class="block text-xs font-black uppercase tracking-wider text-cocoa/70 mb-2">1. Elige tu modalidad de Yoga en Compañía:</label>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <label class="cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'colegas' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
+                    <label class="${allowedModalities.includes('colegas') ? '' : 'hidden'} cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'colegas' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
                         <div class="flex items-center gap-2">
-                            <input type="radio" name="modalidad_compania" value="colegas" ${userModality === 'colegas' ? 'checked' : ''} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
+                            <input type="radio" name="modalidad_compania" value="colegas" ${userModality === 'colegas' ? 'checked' : ''} ${allowedModalities.includes('colegas') ? '' : 'disabled'} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
                             <span class="font-bold text-xs">👥 Yoga con colegas</span>
                         </div>
                         <p class="text-[10px] text-cocoa/60 mt-1.5 pl-5">Bloquea 3 o 4 huecos (tú + amigos). Martes y Jueves 19:00 (Power Vinyasa).</p>
                         ${userModality === 'colegas' ? '<span class="absolute top-2 right-2 text-[8px] font-extrabold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded-md">✨ Recomendada</span>' : ''}
                     </label>
 
-                    <label class="cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'pareja' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
+                    <label class="${allowedModalities.includes('pareja') ? '' : 'hidden'} cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'pareja' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
                         <div class="flex items-center gap-2">
-                            <input type="radio" name="modalidad_compania" value="pareja" ${userModality === 'pareja' ? 'checked' : ''} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
+                            <input type="radio" name="modalidad_compania" value="pareja" ${userModality === 'pareja' ? 'checked' : ''} ${allowedModalities.includes('pareja') ? '' : 'disabled'} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
                             <span class="font-bold text-xs">❤️ Yoga con tu pareja</span>
                         </div>
                         <p class="text-[10px] text-cocoa/60 mt-1.5 pl-5">Bloquea 2 huecos (tú + pareja). Mi/Vi 8:00, Lu/Mi 18:00 o Ma-Vi 9:30.</p>
                         ${userModality === 'pareja' ? '<span class="absolute top-2 right-2 text-[8px] font-extrabold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded-md">✨ Recomendada</span>' : ''}
                     </label>
 
-                    <label class="cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'abuela' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
+                    <label class="${allowedModalities.includes('abuela') ? '' : 'hidden'} cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'abuela' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
                         <div class="flex items-center gap-2">
-                            <input type="radio" name="modalidad_compania" value="abuela" ${userModality === 'abuela' ? 'checked' : ''} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
+                            <input type="radio" name="modalidad_compania" value="abuela" ${userModality === 'abuela' ? 'checked' : ''} ${allowedModalities.includes('abuela') ? '' : 'disabled'} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
                             <span class="font-bold text-xs">🧘 Madre o abuela</span>
                         </div>
                         <p class="text-[10px] text-cocoa/60 mt-1.5 pl-5">Bloquea 2 huecos (tú + madre/abuela). Lu/Mi 16:15 o Mi/Vi 8:00.</p>
                         ${userModality === 'abuela' ? '<span class="absolute top-2 right-2 text-[8px] font-extrabold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded-md">✨ Recomendada</span>' : ''}
                     </label>
 
-                    <label class="cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'hijo' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
+                    <label class="${allowedModalities.includes('hijo') ? '' : 'hidden'} cursor-pointer border-2 rounded-2xl p-3 flex flex-col justify-between transition relative ${userModality === 'hijo' ? 'border-amber-500 bg-amber-50/40' : 'border-cocoa/15 hover:border-amber-300'}">
                         <div class="flex items-center gap-2">
-                            <input type="radio" name="modalidad_compania" value="hijo" ${userModality === 'hijo' ? 'checked' : ''} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
+                            <input type="radio" name="modalidad_compania" value="hijo" ${userModality === 'hijo' ? 'checked' : ''} ${allowedModalities.includes('hijo') ? '' : 'disabled'} onchange="window.cambiarModalidadCompaniaForm(this.value)" class="text-amber-600 focus:ring-amber-500">
                             <span class="font-bold text-xs">🌟 Yoga con tu hijo</span>
                         </div>
                         <p class="text-[10px] text-cocoa/60 mt-1.5 pl-5">Bloquea 2 huecos (tú + hijo/hija). Clases adaptadas y para todos.</p>
@@ -5795,6 +5745,10 @@ window.abrirModalReservaYogaCompania = async function(claseId) {
         },
         preConfirm: () => {
             const mod = document.querySelector('input[name="modalidad_compania"]:checked')?.value || 'colegas';
+            if (!allowedModalities.includes(mod)) {
+                Swal.showValidationMessage('La modalidad elegida no está disponible para esta clase.');
+                return false;
+            }
             if (mod === 'colegas') {
                 const totalPlazas = parseInt(document.querySelector('input[name="colegas_num_plazas"]:checked')?.value || '3', 10);
                 if (plazasLibres < totalPlazas && !isAdmin) {
@@ -5885,9 +5839,6 @@ window.abrirModalReservaYogaCompania = async function(claseId) {
                 if (!stdError) {
                     bookingSuccess = true;
                     reservationId = stdData?.reserva_id || Date.now();
-                    try {
-                        await client.from('profiles').update({ saldo_yoga_compania: 0 }).eq('id', currentUser.id);
-                    } catch (_) {}
                 } else {
                     lastErrorMessage = stdError.message || lastErrorMessage;
                     console.warn('Fallback reservar_con_bono falló:', stdError);
@@ -8314,41 +8265,6 @@ async function sumarSaldo(userId, tipo, qty) {
     } catch (rpcErr) {
         lastError = rpcErr.message || '';
         console.warn('Excepción en RPC ajustar_saldo_usuario:', rpcErr);
-    }
-
-    // Intento 2: Fallback directo como admin sobre profiles
-    if (!success && isAdmin) {
-        try {
-            const fieldMap = {
-                yoga: 'bonos',
-                bonos: 'bonos',
-                clases_gratis: 'saldo_clases_gratis',
-                consultas_gratis: 'saldo_consultas_gratis',
-                yoga_compania: 'saldo_yoga_compania',
-                psicologia: 'saldo_psicologia',
-                nutricion: 'saldo_nutricion'
-            };
-            const field = fieldMap[tipoNorm] || 'bonos';
-            const userInCache = (allUsersCache || []).find(u => u.id === userId);
-            const currentVal = Number(userInCache ? userInCache[field] : 0) || 0;
-            const newVal = Math.max(0, currentVal + delta);
-
-            const { error: updError } = await client
-                .from('profiles')
-                .update({ [field]: newVal })
-                .eq('id', userId);
-
-            if (!updError) {
-                success = true;
-                if (userInCache) userInCache[field] = newVal;
-            } else {
-                lastError = updError.message || lastError;
-                console.error('Fallo en fallback directo de profiles:', updError);
-            }
-        } catch (dirErr) {
-            lastError = dirErr.message || lastError;
-            console.error('Excepción en fallback directo de profiles:', dirErr);
-        }
     }
 
     if (!success) {
