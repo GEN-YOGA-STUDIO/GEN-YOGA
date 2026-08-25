@@ -125,11 +125,6 @@ as $function$
      and lower(btrim(coalesce(class.tipo_clase, ''))) in ('yoga', 'taller')
      and class.fecha_inicio >= week_bounds.starts_at
      and class.fecha_inicio < week_bounds.ends_at
-     and not exists (
-       select 1 from public.festivos as holiday
-        where holiday.fecha = (class.fecha_inicio at time zone 'Europe/Madrid')::date
-          and holiday.activo is true
-     )
    order by class.fecha_inicio, class.id;
 $function$;
 
