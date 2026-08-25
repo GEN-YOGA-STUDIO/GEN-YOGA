@@ -94,6 +94,7 @@
             calendar_mode_classes: 'Clases de Yoga',
             calendar_mode_consultations: 'Consultas',
             calendar_mode_workshops: 'Talleres y Clases Especiales',
+            calendar_mode_global: 'Global',
             calendar_spot_free: 'Disponible',
             calendar_spot_occupied: 'Ocupada',
             calendar_book_consultation: 'Reservar consulta'
@@ -168,6 +169,7 @@
             calendar_mode_classes: 'Yoga Classes',
             calendar_mode_consultations: 'Consultations',
             calendar_mode_workshops: 'Workshops & Special Classes',
+            calendar_mode_global: 'Global',
             calendar_spot_free: 'Available',
             calendar_spot_occupied: 'Occupied',
             calendar_book_consultation: 'Book consultation'
@@ -599,12 +601,24 @@
     }
 
     function classMatchesFilters(item) {
+        if (state.mode === 'global' && state.style) {
+            if (state.style === 'yoga') {
+                if ((item.classType !== 'yoga' && item.classType) || item.isSpecial) return false;
+            } else if (state.style === 'consultas') {
+                if (item.classType !== 'psicologia' && item.classType !== 'nutricion' && item.classType !== 'consulta') return false;
+            } else if (state.style === 'talleres') {
+                if (item.classType !== 'taller' && item.classType !== 'especial' && !item.isSpecial) return false;
+            } else if (item.style !== state.style) {
+                return false;
+            }
+        } else if (state.style && item.style !== state.style) {
+            return false;
+        }
         if (state.oferta) {
             const ofKey = canonicalCompanionOffer(state.oferta);
             if (ofKey === 'compania' && !item.companionModality) return false;
             if (normalizeCompanionModality(ofKey) && item.companionModality !== ofKey) return false;
         }
-        if (state.style && item.style !== state.style) return false;
         if (state.teacher) {
             const teacherMatch = item.professor.slug === state.teacher
                 || String(item.professor.id || '') === state.teacher;
@@ -780,17 +794,134 @@
         `;
     }
 
+    function categoryMeta(item) {
+        if (item.classType === 'taller' || item.classType === 'especial' || item.isSpecial) {
+            return { type: 'taller', label: text('special', 'Taller') };
+        }
+        if (item.classType === 'psicologia') {
+            return { type: 'psicologia', label: 'Psicología' };
+        }
+        if (item.classType === 'nutricion' || item.classType === 'consulta') {
+            const slug = item.professor?.slug || '';
+            if (slug === 'silvia') return { type: 'nutricion', label: 'Ayurveda' };
+            if (slug === 'isabel') return { type: 'nutricion', label: 'PNI' };
+            return { type: 'nutricion', label: 'Nutrición' };
+        }
+        if (item.isFree || String(item.name || '').toLowerCase().includes('introductoria')) {
+            return { type: 'yoga', label: 'Sesión Intro' };
+        }
+        return { type: 'yoga', label: 'Clase Yoga' };
+    }
+
+    function globalEventCardHtml(item) {
+        const status = getEventState(item);
+        const focused = state.classId === item.id ? ' is-focused' : '';
+        const disabled = status.disabled ? ' disabled' : '';
+        const teacher = item.professor?.displayName || '';
+        const meta = categoryMeta(item);
+
+        const occupied = Number.isFinite(item.occupied) ? Math.max(0, item.occupied) : 0;
+        const capacity = Number.isFinite(item.capacity) && item.capacity > 0 ? item.capacity : 10;
+
+        let spotsClass = 'is-free';
+        let spotsText = `${occupied}/${capacity} plazas`;
+        if (occupied >= capacity && capacity > 0) {
+            spotsClass = 'is-full';
+            spotsText = `${occupied}/${capacity} · Lleno`;
+        } else if (occupied > 0) {
+            spotsClass = 'is-busy';
+            spotsText = `${occupied}/${capacity} plazas`;
+        }
+
+        return `
+            <article class="gy-global-event gy-global-event--${meta.type} ${status.stateClass}${focused}" style="--global-accent:${escapeHtml(eventColor(item))}" data-calendar-event="${item.id}">
+                <button type="button" class="gy-global-event__main" data-calendar-class="${item.id}"${disabled}
+                    aria-label="${escapeHtml(classActionLabel(item, status.hint))}">
+                    <div class="gy-global-event__header">
+                        <span class="gy-global-event__time">${escapeHtml(formatTime(item.start))}–${escapeHtml(formatTime(item.end))}</span>
+                        <span class="gy-global-event__type">${escapeHtml(meta.label)}</span>
+                    </div>
+                    <strong class="gy-global-event__name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</strong>
+                    <div class="gy-global-event__footer">
+                        <span class="gy-global-event__spots ${spotsClass}">
+                            <i class="ph-bold ph-users"></i> ${escapeHtml(spotsText)}
+                        </span>
+                        ${teacher ? `<span class="gy-global-event__teacher" title="${escapeHtml(teacher)}">${escapeHtml(teacher)}</span>` : ''}
+                    </div>
+                </button>
+            </article>
+        `;
+    }
+
+    function globalMobileEventHtml(item) {
+        const status = getEventState(item);
+        const focused = state.classId === item.id ? ' is-focused' : '';
+        const disabled = status.disabled ? ' disabled' : '';
+        const teacher = item.professor?.displayName || '';
+        const meta = categoryMeta(item);
+
+        const occupied = Number.isFinite(item.occupied) ? Math.max(0, item.occupied) : 0;
+        const capacity = Number.isFinite(item.capacity) && item.capacity > 0 ? item.capacity : 10;
+
+        let spotsClass = 'is-free';
+        let spotsText = `${occupied}/${capacity} plazas`;
+        if (occupied >= capacity && capacity > 0) {
+            spotsClass = 'is-full';
+            spotsText = `${occupied}/${capacity} · Lleno`;
+        } else if (occupied > 0) {
+            spotsClass = 'is-busy';
+            spotsText = `${occupied}/${capacity} plazas`;
+        }
+
+        return `
+            <article class="gy-global-event gy-global-event--${meta.type} ${status.stateClass}${focused} mb-2" style="--global-accent:${escapeHtml(eventColor(item))}" data-calendar-event="${item.id}">
+                <button type="button" class="gy-global-event__main p-3" data-calendar-class="${item.id}"${disabled}
+                    aria-label="${escapeHtml(classActionLabel(item, status.hint))}">
+                    <div class="gy-global-event__header">
+                        <span class="gy-global-event__time text-xs">${escapeHtml(formatTime(item.start))}–${escapeHtml(formatTime(item.end))}</span>
+                        <span class="gy-global-event__type">${escapeHtml(meta.label)}</span>
+                    </div>
+                    <strong class="gy-global-event__name text-sm my-1" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</strong>
+                    <div class="gy-global-event__footer">
+                        <span class="gy-global-event__spots ${spotsClass}">
+                            <i class="ph-bold ph-users"></i> ${escapeHtml(spotsText)}
+                        </span>
+                        ${teacher ? `<span class="gy-global-event__teacher text-xs" title="${escapeHtml(teacher)}">${escapeHtml(teacher)}</span>` : ''}
+                    </div>
+                </button>
+            </article>
+        `;
+    }
+
     function displayDayKeys(classes) {
+        if (state.mode === 'global') {
+            return Array.from({ length: 7 }, (_, index) => addDays(state.weekStart, index));
+        }
         const keys = Array.from({ length: WEEK_DAYS_BASE }, (_, index) => addDays(state.weekStart, index));
         const sunday = addDays(state.weekStart, 6);
         if (classes.some(item => item.dateKey === sunday)) keys.push(sunday);
         return keys;
     }
 
+    const GLOBAL_HOURLY_SLOTS = Object.freeze([
+        7 * 60, 8 * 60, 9 * 60, 10 * 60, 11 * 60, 12 * 60,
+        13 * 60, 14 * 60, 15 * 60, 16 * 60, 17 * 60, 18 * 60,
+        19 * 60, 20 * 60, 21 * 60, 22 * 60
+    ]);
+
     function renderTable(classes) {
+        if (el.desktop) {
+            el.desktop.classList.toggle('gy-calendar--global', state.mode === 'global');
+        }
         const days = displayDayKeys(state.classes);
         const today = todayKeyMadrid();
-        const timeRows = [...new Set(classes.map(item => item.startMinutes))].sort((a, b) => a - b);
+        
+        let timeRows = [];
+        if (state.mode === 'global') {
+            timeRows = [...GLOBAL_HOURLY_SLOTS];
+        } else {
+            timeRows = [...new Set(classes.map(item => item.startMinutes))].sort((a, b) => a - b);
+        }
 
         el.tableHead.innerHTML = `
             <tr>
@@ -808,10 +939,20 @@
             <tr>
                 <th scope="row">${escapeHtml(formatMinutes(minutes))}</th>
                 ${days.map(day => {
-                    const events = classes.filter(item => item.dateKey === day && item.startMinutes === minutes);
+                    let events = [];
+                    if (state.mode === 'global') {
+                        const startMin = minutes;
+                        const endMin = minutes + 60;
+                        events = classes.filter(item => item.dateKey === day && item.startMinutes >= startMin && item.startMinutes < endMin);
+                    } else {
+                        events = classes.filter(item => item.dateKey === day && item.startMinutes === minutes);
+                    }
+                    const cardsHtml = state.mode === 'global'
+                        ? events.map(globalEventCardHtml).join('')
+                        : events.map(eventCardHtml).join('');
                     return `
                         <td class="${day === today ? 'is-today' : ''}">
-                            <div class="gy-calendar__cell-stack">${events.map(eventCardHtml).join('')}</div>
+                            <div class="gy-calendar__cell-stack">${cardsHtml}</div>
                         </td>
                     `;
                 }).join('')}
@@ -855,8 +996,9 @@
             'aria-label',
             formatDateKey(state.selectedDay, { weekday: 'long', day: 'numeric', month: 'long' })
         );
+        const renderItem = state.mode === 'global' ? globalMobileEventHtml : mobileEventHtml;
         el.dayAgenda.innerHTML = dayClasses.length
-            ? dayClasses.map(mobileEventHtml).join('')
+            ? dayClasses.map(renderItem).join('')
             : `<div class="gy-calendar__agenda-empty">${escapeHtml(text('noDayClasses'))}</div>`;
     }
 
@@ -915,6 +1057,27 @@
             const filterLabel = document.querySelector('.gy-calendar__filter-label');
             if (filterLabel) filterLabel.textContent = text('filterWorkshop');
             el.styleFilters.setAttribute('aria-label', text('filterWorkshop'));
+            el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
+            return;
+        }
+
+        if (state.mode === 'global') {
+            const types = [
+                { style: '', label: text('all') },
+                { style: 'yoga', label: text('calendar_mode_classes') },
+                { style: 'consultas', label: text('calendar_mode_consultations') },
+                { style: 'talleres', label: text('calendar_mode_workshops') }
+            ];
+            el.styleFilters.innerHTML = types.map(button => `
+                <button type="button" class="gy-calendar__filter"
+                    data-calendar-style="${escapeHtml(button.style)}"
+                    aria-pressed="${state.style === button.style}">
+                    ${escapeHtml(button.label)}
+                </button>
+            `).join('');
+            const filterLabel = document.querySelector('.gy-calendar__filter-label');
+            if (filterLabel) filterLabel.textContent = text('filterPractice');
+            el.styleFilters.setAttribute('aria-label', text('filterPractice'));
             el.clearFilters.hidden = !(state.style || state.teacher || state.oferta);
             return;
         }
@@ -992,9 +1155,11 @@
         const btnClases = document.getElementById('calendar-mode-clases');
         const btnConsultas = document.getElementById('calendar-mode-consultas');
         const btnTalleres = document.getElementById('calendar-mode-talleres');
+        const btnGlobal = document.getElementById('calendar-mode-global');
         if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
         if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
         if (btnTalleres) btnTalleres.classList.toggle('active', state.mode === 'talleres');
+        if (btnGlobal) btnGlobal.classList.toggle('active', state.mode === 'global');
         el.weekRange.textContent = weekRangeLabel(state.weekStart);
         if (el.prevWeek) {
             const atSeasonStart = state.weekStart <= SEASON_START_WEEK;
@@ -1252,6 +1417,53 @@
             return { exactAvailability: true, classes: allSlots };
         }
 
+        if (state.mode === 'global') {
+            const bounds = broadUtcBounds(weekStart);
+            const { data: rawClases, error: errClases } = await state.client
+                .from('clases')
+                .select(DIRECT_SELECT)
+                .eq('activa', true)
+                .gte('fecha_inicio', bounds.start)
+                .lt('fecha_inicio', bounds.end)
+                .order('fecha_inicio')
+                .limit(600);
+
+            if (errClases) throw errClases;
+
+            const weekClasses = (rawClases || [])
+                .map(row => normalizeClassRow(row, false))
+                .filter(Boolean)
+                .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
+
+            const yogaAndTallerIds = weekClasses
+                .filter(c => c.classType === 'yoga' || c.classType === 'taller' || c.classType === 'especial' || c.isSpecial)
+                .map(c => c.id);
+            const psicoIds = weekClasses.filter(c => c.classType === 'psicologia').map(c => c.id);
+            const nutriIds = weekClasses.filter(c => c.classType === 'nutricion' || c.classType === 'consulta').map(c => c.id);
+
+            const [resYoga, resPsico, resNutri] = await Promise.all([
+                yogaAndTallerIds.length ? state.client.from('reservas_yoga').select('clase_id,estado').in('clase_id', yogaAndTallerIds) : { data: [] },
+                psicoIds.length ? state.client.from('reservas_psicologia').select('clase_id,estado').in('clase_id', psicoIds) : { data: [] },
+                nutriIds.length ? state.client.from('reservas_nutricion').select('clase_id,estado').in('clase_id', nutriIds) : { data: [] }
+            ]);
+
+            const mapReservas = {};
+            [...(resYoga.data || []), ...(resPsico.data || []), ...(resNutri.data || [])].forEach(r => {
+                if (r.estado === 'confirmada') {
+                    mapReservas[r.clase_id] = (mapReservas[r.clase_id] || 0) + 1;
+                }
+            });
+
+            weekClasses.forEach(item => {
+                const occupied = mapReservas[item.id] !== undefined ? mapReservas[item.id] : (Number.isFinite(item.occupied) ? item.occupied : 0);
+                item.occupied = occupied;
+                item.freeSpots = Math.max(0, item.capacity - occupied);
+                item.complete = item.capacity > 0 ? (occupied >= item.capacity) : false;
+            });
+
+            return { exactAvailability: true, classes: weekClasses };
+        }
+
         if (state.mode === 'talleres') {
             if (state.rpcAvailable !== false) {
                 const { data, error } = await state.client.rpc('get_public_weekly_schedule', {
@@ -1345,7 +1557,7 @@
     function parseUrlState() {
         const url = new URL(root.location.href);
         const modeParam = url.searchParams.get('mode');
-        if (modeParam === 'consultas' || modeParam === 'talleres' || modeParam === 'clases') {
+        if (modeParam === 'consultas' || modeParam === 'talleres' || modeParam === 'clases' || modeParam === 'global') {
             state.mode = modeParam;
         }
         const ofertaParam = (url.searchParams.get('oferta') || url.searchParams.get('promo') || url.searchParams.get('filter') || url.searchParams.get('filtro') || '').toLowerCase().trim();
@@ -1508,7 +1720,7 @@
 
     function applyOpenOptions(options) {
         if (Object.prototype.hasOwnProperty.call(options, 'mode')) {
-            state.mode = (options.mode === 'consultas' || options.mode === 'talleres') ? options.mode : 'clases';
+            state.mode = (options.mode === 'consultas' || options.mode === 'talleres' || options.mode === 'global') ? options.mode : 'clases';
             state.oferta = '';
         }
         if (Object.prototype.hasOwnProperty.call(options, 'oferta')) {
@@ -1693,7 +1905,7 @@
                 const btn = event.target.closest('[data-calendar-mode]');
                 if (!btn) return;
                 const newMode = btn.dataset.calendarMode;
-                if ((newMode === 'clases' || newMode === 'consultas' || newMode === 'talleres') && state.mode !== newMode) {
+                if ((newMode === 'clases' || newMode === 'consultas' || newMode === 'talleres' || newMode === 'global') && state.mode !== newMode) {
                     state.mode = newMode;
                     state.style = '';
                     state.teacher = '';
@@ -1703,9 +1915,11 @@
                     const btnClases = document.getElementById('calendar-mode-clases');
                     const btnConsultas = document.getElementById('calendar-mode-consultas');
                     const btnTalleres = document.getElementById('calendar-mode-talleres');
+                    const btnGlobal = document.getElementById('calendar-mode-global');
                     if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
                     if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
                     if (btnTalleres) btnTalleres.classList.toggle('active', state.mode === 'talleres');
+                    if (btnGlobal) btnGlobal.classList.toggle('active', state.mode === 'global');
                     updateUrl('replace');
                     loadWeek();
                 }
