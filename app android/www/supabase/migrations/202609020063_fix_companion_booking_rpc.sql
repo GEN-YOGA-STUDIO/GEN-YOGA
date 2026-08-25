@@ -127,11 +127,10 @@ begin
   insert into public.reservas_yoga (
     clase_id, user_id, estado, saldo_gratis_descontado,
     welcome_companion_modality, bono_descontado, usado_bono_mensual,
-    num_plazas_reservadas, acompanantes, notas
+    num_plazas_reservadas, acompanantes
   ) values (
     p_clase_id, v_actor_id, 'confirmada', true,
-    v_modalidad_norm, false, false, v_plazas_requeridas, v_acompanantes,
-    concat('Bono Yoga en Compania ', upper(v_modalidad_norm), ' (', v_plazas_requeridas, ' plazas)')
+    v_modalidad_norm, false, false, v_plazas_requeridas, v_acompanantes
   ) returning id into v_reserva_id;
 
   if v_actor_role <> 'admin' then
