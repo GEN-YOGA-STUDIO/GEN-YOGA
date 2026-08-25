@@ -5816,11 +5816,8 @@ window.abrirModalReservaYogaCompania = async function(claseId) {
             didOpen: () => Swal.showLoading()
         });
 
-        let bookingSuccess = false;
         let reservationId = null;
-        let lastErrorMessage = '';
 
-        // Intento 1: RPC especializada reservar_yoga_compania_multiplaza
         try {
             const { data, error } = await client.rpc('reservar_yoga_compania_multiplaza', {
                 p_clase_id: Number(claseId),
@@ -5829,42 +5826,11 @@ window.abrirModalReservaYogaCompania = async function(claseId) {
                 p_acompanantes: acompanantes || []
             });
 
-            if (!error) {
-                bookingSuccess = true;
-                reservationId = data?.reserva_id;
-            } else {
-                lastErrorMessage = error.message || '';
-                console.warn('RPC reservar_yoga_compania_multiplaza falló, probando fallback:', error);
-            }
+            if (error) throw error;
+            reservationId = data?.reserva_id;
         } catch (rpcErr) {
-            lastErrorMessage = rpcErr.message || '';
             console.warn('Excepción en RPC reservar_yoga_compania_multiplaza:', rpcErr);
-        }
-
-        // Intento 2: Fallback RPC estándar reservar_con_bono
-        if (!bookingSuccess) {
-            try {
-                const { data: stdData, error: stdError } = await client.rpc('reservar_con_bono', {
-                    p_clase_id: Number(claseId),
-                    p_user_id: currentUser.id,
-                    p_use_welcome_companion: true
-                });
-
-                if (!stdError) {
-                    bookingSuccess = true;
-                    reservationId = stdData?.reserva_id || Date.now();
-                } else {
-                    lastErrorMessage = stdError.message || lastErrorMessage;
-                    console.warn('Fallback reservar_con_bono falló:', stdError);
-                }
-            } catch (stdErr) {
-                lastErrorMessage = stdErr.message || lastErrorMessage;
-                console.warn('Excepción en fallback reservar_con_bono:', stdErr);
-            }
-        }
-
-        if (!bookingSuccess) {
-            await Swal.fire('No se pudo reservar', getYogaBookingErrorMessage({ message: lastErrorMessage }), 'error');
+            await Swal.fire('No se pudo reservar', getYogaBookingErrorMessage(rpcErr), 'error');
             return false;
         }
 
