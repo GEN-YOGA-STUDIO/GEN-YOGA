@@ -77,8 +77,7 @@ begin
          v_professor_id, v_is_free, v_professional_identity
     from public.clases as class
     left join public.profesionales as professional on professional.id = class.profesor_id
-   where class.id = p_clase_id
-   for update of class;
+   where class.id = p_clase_id for update;
 
   if not found or v_class_type not in ('yoga', 'taller') or not v_class_active then
     raise exception 'La clase especificada no está disponible.' using errcode = 'P0002';

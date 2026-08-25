@@ -163,12 +163,79 @@ as $function$
     );
 $function$;
 
+-- Materializar también la regla en los horarios futuros para clientes móviles
+-- o pestañas antiguas que todavía solo consulten la columna es_gratuita.
+update public.clases as class
+   set es_gratuita = true,
+       updated_at = now()
+  from public.profesionales as professional
+ where professional.id = class.profesor_id
+   and lower(trim(coalesce(class.tipo_clase, ''))) = 'yoga'
+   and class.activa is true
+   and class.fecha_inicio >= now() - interval '2 hours'
+   and not coalesce(class.es_gratuita, false)
+   and public.es_clase_elegible_bono_gratis(
+     class.nombre,
+     class.fecha_inicio,
+     lower(concat_ws(
+       ' ', professional.nombre, professional.apellidos, professional.email
+     )),
+     class.es_gratuita
+   );
+
 revoke all on function public.es_clase_elegible_bono_gratis(
   text, timestamptz, text, boolean
 ) from public, anon, authenticated;
 
--- Regla de lectura de consultas: propietario, administración o profesional de la cita.
-create or replace function public.puede_ver_reserva_consulta(
+-- Reglas de lectura sin recursión RLS. Las funciones pertenecen al propietario
+-- de la base de datos y solo devuelven decisiones booleanas, nunca datos.
+create or replace function public.es_staff_actual()
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $function$
+  select exists (
+    select 1
+      from public.profiles as profile
+     where profile.id = auth.uid()
+       and lower(trim(coalesce(profile.rol, ''))) in (
+         'admin', 'profesor', 'trabajador', 'profesional'
+       )
+       and coalesce(profile.activo, true)
+       and not coalesce(profile.account_deletion_pending, false)
+  );
+$function$;
+
+revoke all on function public.es_staff_actual()
+  from public, anon, authenticated;
+grant execute on function public.es_staff_actual()
+  to authenticated, service_role;
+
+create or replace function public.es_admin_actual()
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $function$
+  select exists (
+    select 1
+      from public.profiles as profile
+     where profile.id = auth.uid()
+       and lower(trim(coalesce(profile.rol, ''))) = 'admin'
+       and coalesce(profile.activo, true)
+       and not coalesce(profile.account_deletion_pending, false)
+  );
+$function$;
+
+revoke all on function public.es_admin_actual()
+  from public, anon, authenticated;
+grant execute on function public.es_admin_actual()
+  to authenticated, service_role;
+
+create or replace function public.puede_ver_reserva_clase(
   p_user_id uuid,
   p_clase_id bigint
 )
@@ -182,23 +249,26 @@ declare
   v_actor_id uuid := auth.uid();
   v_actor_role text;
   v_actor_email text;
+  v_actor_deletion_pending boolean;
 begin
   if v_actor_id is null then
     return false;
   end if;
 
-  if v_actor_id = p_user_id then
-    return true;
+  select lower(trim(coalesce(profile.rol, ''))),
+         lower(nullif(trim(profile.email), '')),
+         coalesce(profile.account_deletion_pending, false)
+    into v_actor_role, v_actor_email, v_actor_deletion_pending
+    from public.profiles as profile
+   where profile.id = v_actor_id
+     and coalesce(profile.activo, true);
+
+  if not found or v_actor_deletion_pending then
+    return false;
   end if;
 
-  select lower(trim(coalesce(profile.rol, ''))),
-         lower(nullif(trim(profile.email), ''))
-    into v_actor_role, v_actor_email
-    from public.profiles as profile
-   where profile.id = v_actor_id;
-
-  if not found then
-    return false;
+  if v_actor_id = p_user_id then
+    return true;
   end if;
 
   if v_actor_role = 'admin' then
@@ -221,13 +291,155 @@ begin
 end;
 $function$;
 
-revoke all on function public.puede_ver_reserva_consulta(uuid, bigint)
-  from public, anon;
-grant execute on function public.puede_ver_reserva_consulta(uuid, bigint)
+revoke all on function public.puede_ver_reserva_clase(uuid, bigint)
+  from public, anon, authenticated;
+grant execute on function public.puede_ver_reserva_clase(uuid, bigint)
   to authenticated, service_role;
 
+-- Ocupación agregada para mostrar plazas sin revelar UUID, perfiles ni reservas
+-- de otros clientes. La reserva transaccional sigue siendo la autoridad final.
+create or replace function public.obtener_ocupacion_clases(
+  p_clase_ids bigint[]
+)
+returns table (
+  clase_id bigint,
+  ocupadas bigint
+)
+language plpgsql
+stable
+security definer
+set search_path = pg_catalog, public
+as $function$
+declare
+  v_ids bigint[];
+begin
+  if coalesce(cardinality(p_clase_ids), 0) > 1000 then
+    raise exception 'too many class ids' using errcode = '22023';
+  end if;
+
+  select array_agg(distinct requested_id)
+    into v_ids
+    from unnest(coalesce(p_clase_ids, array[]::bigint[])) as requested(requested_id)
+   where requested_id > 0;
+
+  if coalesce(cardinality(v_ids), 0) = 0 then
+    return;
+  end if;
+
+  return query
+  with requested_classes as (
+    select class.id
+      from public.clases as class
+     where class.id = any(v_ids)
+       and class.activa is true
+       and class.fecha_inicio >= now() - interval '2 hours'
+       and lower(trim(coalesce(class.tipo_clase, ''))) in (
+         'yoga', 'taller', 'especial', 'psicologia', 'nutricion'
+       )
+  )
+  select occupancy.class_id, sum(occupancy.confirmed_count)::bigint
+    from (
+      select booking.clase_id as class_id, count(*)::bigint as confirmed_count
+        from public.reservas_yoga as booking
+        join requested_classes as requested on requested.id = booking.clase_id
+       where booking.clase_id = any(v_ids)
+         and booking.estado = 'confirmada'
+       group by booking.clase_id
+      union all
+      select booking.clase_id, count(*)::bigint
+        from public.reservas_psicologia as booking
+        join requested_classes as requested on requested.id = booking.clase_id
+       where booking.clase_id = any(v_ids)
+         and booking.estado = 'confirmada'
+       group by booking.clase_id
+      union all
+      select booking.clase_id, count(*)::bigint
+        from public.reservas_nutricion as booking
+        join requested_classes as requested on requested.id = booking.clase_id
+       where booking.clase_id = any(v_ids)
+         and booking.estado = 'confirmada'
+       group by booking.clase_id
+    ) as occupancy
+   group by occupancy.class_id;
+end;
+$function$;
+
+revoke all on function public.obtener_ocupacion_clases(bigint[])
+  from public, anon, authenticated;
+grant execute on function public.obtener_ocupacion_clases(bigint[])
+  to anon, authenticated, service_role;
+
+alter table public.profiles enable row level security;
+alter table public.reservas_yoga enable row level security;
 alter table public.reservas_psicologia enable row level security;
 alter table public.reservas_nutricion enable row level security;
+
+drop policy if exists pol_profiles_select on public.profiles;
+drop policy if exists profiles_select_self_or_staff on public.profiles;
+drop policy if exists profiles_select_self_or_admin on public.profiles;
+create policy profiles_select_self_or_admin
+  on public.profiles
+  for select
+  to authenticated
+  using (id = (select auth.uid()) or (select public.es_admin_actual()));
+
+-- El personal necesita un directorio para gestionar citas y grupos, pero no
+-- acceso a la ficha completa (Stripe, notas privadas o datos de borrado).
+-- La función privilegiada vive en un esquema no expuesto, valida al actor y
+-- solo devuelve cinco columnas. La vista pública es SECURITY INVOKER.
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated, service_role;
+
+create or replace function private.listar_directorio_perfiles_staff()
+returns table (
+  id uuid,
+  email text,
+  rol text,
+  nombre text,
+  apellidos text
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $function$
+  select
+    profile.id,
+    profile.email,
+    profile.rol,
+    profile.nombre,
+    profile.apellidos
+  from public.profiles as profile
+  where public.es_staff_actual()
+    and coalesce(profile.activo, true)
+    and not coalesce(profile.account_deletion_pending, false);
+$function$;
+
+revoke all on function private.listar_directorio_perfiles_staff()
+  from public, anon, authenticated;
+grant execute on function private.listar_directorio_perfiles_staff()
+  to authenticated, service_role;
+
+drop view if exists public.directorio_perfiles_staff;
+drop function if exists public.listar_directorio_perfiles_staff();
+create view public.directorio_perfiles_staff
+with (security_barrier = true, security_invoker = true)
+as
+select *
+from private.listar_directorio_perfiles_staff();
+
+revoke all on table public.directorio_perfiles_staff
+  from public, anon, authenticated;
+grant select on table public.directorio_perfiles_staff
+  to authenticated, service_role;
+
+drop policy if exists pol_reservas_select on public.reservas_yoga;
+drop policy if exists reservas_yoga_select_autorizado on public.reservas_yoga;
+create policy reservas_yoga_select_autorizado
+  on public.reservas_yoga
+  for select
+  to authenticated
+  using (public.puede_ver_reserva_clase(user_id, clase_id));
 
 drop policy if exists reservas_psicologia_select_autorizado
   on public.reservas_psicologia;
@@ -235,7 +447,7 @@ create policy reservas_psicologia_select_autorizado
   on public.reservas_psicologia
   for select
   to authenticated
-  using (public.puede_ver_reserva_consulta(user_id, clase_id));
+  using (public.puede_ver_reserva_clase(user_id, clase_id));
 
 drop policy if exists reservas_nutricion_select_autorizado
   on public.reservas_nutricion;
@@ -243,21 +455,18 @@ create policy reservas_nutricion_select_autorizado
   on public.reservas_nutricion
   for select
   to authenticated
-  using (public.puede_ver_reserva_consulta(user_id, clase_id));
+  using (public.puede_ver_reserva_clase(user_id, clase_id));
 
+-- Las mutaciones se realizan por RPCs SECURITY DEFINER que validan actor,
+-- objetivo, aforo, saldos y procedencia. El navegador solo necesita SELECT.
+revoke all on table public.profiles from public, anon, authenticated;
+revoke all on table public.reservas_yoga from public, anon, authenticated;
 revoke all on table public.reservas_psicologia from public, anon, authenticated;
 revoke all on table public.reservas_nutricion from public, anon, authenticated;
+grant select on table public.profiles to authenticated;
+grant select on table public.reservas_yoga to authenticated;
 grant select on table public.reservas_psicologia to authenticated;
 grant select on table public.reservas_nutricion to authenticated;
-
--- RLS no protege TRUNCATE ni otros privilegios de mantenimiento.
-revoke insert, update, delete, truncate, references, trigger
-  on table public.reservas_yoga from public, anon, authenticated;
-grant select on table public.reservas_yoga to authenticated;
-
-revoke insert, update, delete, truncate, references, trigger
-  on table public.profiles from public, anon, authenticated;
-grant select on table public.profiles to authenticated;
 
 -- Reserva yoga/taller: la oferta se decide en servidor y el origen del saldo queda registrado.
 create or replace function public.reservar_con_bono(
@@ -273,8 +482,10 @@ declare
   v_actor_id uuid := auth.uid();
   v_actor_role text;
   v_actor_email text;
+  v_actor_deletion_pending boolean;
   v_actor_is_staff boolean;
   v_target_role text;
+  v_target_deletion_pending boolean;
   v_target_id uuid := p_user_id;
   v_legacy_credits integer;
   v_free_credits integer;
@@ -306,12 +517,17 @@ begin
     raise exception 'La solicitud de reserva no es válida.' using errcode = '22023';
   end if;
 
-  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), ''))
-    into v_actor_role, v_actor_email
+  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), '')),
+         coalesce(account_deletion_pending, false)
+    into v_actor_role, v_actor_email, v_actor_deletion_pending
     from public.profiles
-   where id = v_actor_id;
+   where id = v_actor_id
+     and coalesce(activo, true);
   if not found then
     raise exception 'No se encontró el perfil que realiza la reserva.' using errcode = 'P0002';
+  end if;
+  if v_actor_deletion_pending then
+    raise exception 'La cuenta está pendiente de eliminación.' using errcode = '42501';
   end if;
 
   v_actor_is_staff := v_actor_role in ('admin', 'profesor', 'trabajador', 'profesional');
@@ -403,14 +619,19 @@ begin
 
   select lower(trim(coalesce(rol, ''))), coalesce(bonos, 0),
          coalesce(saldo_clases_gratis, 0), coalesce(bono_mensual_activo, false),
-         bono_mensual_inicio, bono_mensual_fin
+         bono_mensual_inicio, bono_mensual_fin,
+         coalesce(account_deletion_pending, false)
     into v_target_role, v_legacy_credits, v_free_credits, v_unlimited_active,
-         v_membership_start, v_membership_end
+         v_membership_start, v_membership_end, v_target_deletion_pending
     from public.profiles
    where id = v_target_id
+     and coalesce(activo, true)
    for update;
   if not found then
     raise exception 'No se encontró el perfil del alumno.' using errcode = 'P0002';
+  end if;
+  if v_target_deletion_pending then
+    raise exception 'La cuenta del alumno está pendiente de eliminación.' using errcode = '42501';
   end if;
   if v_target_role in ('admin', 'profesor', 'trabajador', 'profesional') then
     raise exception 'Solo los alumnos pueden reservar clases.' using errcode = '42501';
@@ -423,20 +644,23 @@ begin
     v_marked_free
   );
 
-  if v_is_free and v_free_credits >= 1 then
+  if v_is_free then
     update public.profiles
        set saldo_clases_gratis = saldo_clases_gratis - 1
      where id = v_target_id
        and saldo_clases_gratis >= 1;
-    if found then
-      insert into public.reservas_yoga (
-        clase_id, user_id, estado, usado_bono_mensual, bono_descontado,
-        class_pack_id, saldo_gratis_descontado
-      ) values (
-        p_clase_id, v_target_id, 'confirmada', false, false, null, true
-      );
-      return;
+    if not found then
+      raise exception 'Ya has utilizado tu bono de clase gratuita o no dispones de saldo gratis suficiente.'
+        using errcode = 'P0001';
     end if;
+
+    insert into public.reservas_yoga (
+      clase_id, user_id, estado, usado_bono_mensual, bono_descontado,
+      class_pack_id, saldo_gratis_descontado
+    ) values (
+      p_clase_id, v_target_id, 'confirmada', false, false, null, true
+    );
+    return;
   end if;
 
   select starts_at, ends_at
@@ -540,6 +764,7 @@ declare
   v_actor_id uuid := auth.uid();
   v_actor_role text;
   v_actor_email text;
+  v_actor_deletion_pending boolean;
   v_actor_is_staff boolean;
   v_actor_is_admin boolean;
   v_target_id uuid;
@@ -561,12 +786,17 @@ begin
     raise exception 'La solicitud de cancelación no es válida.' using errcode = '22023';
   end if;
 
-  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), ''))
-    into v_actor_role, v_actor_email
+  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), '')),
+         coalesce(account_deletion_pending, false)
+    into v_actor_role, v_actor_email, v_actor_deletion_pending
     from public.profiles
-   where id = v_actor_id;
+   where id = v_actor_id
+     and coalesce(activo, true);
   if not found then
     raise exception 'No se encontró el perfil que realiza la cancelación.' using errcode = 'P0002';
+  end if;
+  if v_actor_deletion_pending then
+    raise exception 'La cuenta está pendiente de eliminación.' using errcode = '42501';
   end if;
   v_actor_is_staff := v_actor_role in ('admin', 'profesor', 'trabajador', 'profesional');
   v_actor_is_admin := v_actor_role = 'admin';
@@ -683,9 +913,11 @@ declare
   v_actor_id uuid := auth.uid();
   v_actor_role text;
   v_actor_email text;
+  v_actor_deletion_pending boolean;
   v_actor_is_staff boolean;
   v_target_id uuid := coalesce(p_user_id, auth.uid());
   v_target_role text;
+  v_target_deletion_pending boolean;
   v_class_type text;
   v_class_active boolean;
   v_capacity integer;
@@ -708,12 +940,17 @@ begin
     raise exception 'invalid booking request' using errcode = '22023';
   end if;
 
-  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), ''))
-    into v_actor_role, v_actor_email
+  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), '')),
+         coalesce(account_deletion_pending, false)
+    into v_actor_role, v_actor_email, v_actor_deletion_pending
     from public.profiles
-   where id = v_actor_id;
+   where id = v_actor_id
+     and coalesce(activo, true);
   if not found then
     raise exception 'actor profile not found' using errcode = 'P0002';
+  end if;
+  if v_actor_deletion_pending then
+    raise exception 'account deletion pending' using errcode = '42501';
   end if;
   v_actor_is_staff := v_actor_role in ('admin', 'profesor', 'trabajador', 'profesional');
 
@@ -746,13 +983,18 @@ begin
       using errcode = '42501';
   end if;
 
-  select lower(trim(coalesce(rol, '')))
-    into v_target_role
+  select lower(trim(coalesce(rol, ''))),
+         coalesce(account_deletion_pending, false)
+    into v_target_role, v_target_deletion_pending
     from public.profiles
    where id = v_target_id
+     and coalesce(activo, true)
    for update;
   if not found then
     raise exception 'target profile not found' using errcode = 'P0002';
+  end if;
+  if v_target_deletion_pending then
+    raise exception 'target account deletion pending' using errcode = '42501';
   end if;
   if v_target_role in ('admin', 'profesor', 'trabajador', 'profesional') then
     raise exception 'staff users cannot book consultations' using errcode = '42501';
@@ -900,6 +1142,7 @@ declare
   v_actor_id uuid := auth.uid();
   v_actor_role text;
   v_actor_email text;
+  v_actor_deletion_pending boolean;
   v_actor_is_staff boolean;
   v_target_id uuid;
   v_class_id bigint;
@@ -917,12 +1160,17 @@ begin
     raise exception 'invalid cancellation request' using errcode = '22023';
   end if;
 
-  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), ''))
-    into v_actor_role, v_actor_email
+  select lower(trim(coalesce(rol, ''))), lower(nullif(trim(email), '')),
+         coalesce(account_deletion_pending, false)
+    into v_actor_role, v_actor_email, v_actor_deletion_pending
     from public.profiles
-   where id = v_actor_id;
+   where id = v_actor_id
+     and coalesce(activo, true);
   if not found then
     raise exception 'actor profile not found' using errcode = 'P0002';
+  end if;
+  if v_actor_deletion_pending then
+    raise exception 'account deletion pending' using errcode = '42501';
   end if;
   v_actor_is_staff := v_actor_role in ('admin', 'profesor', 'trabajador', 'profesional');
 
@@ -958,6 +1206,11 @@ begin
      and lower(trim(coalesce(tipo_clase, ''))) = p_tipo;
   if not found then
     raise exception 'consultation slot not found' using errcode = 'P0002';
+  end if;
+
+  if v_starts_at is null or v_starts_at <= now() then
+    raise exception 'consultation already started and cannot be cancelled automatically'
+      using errcode = 'P0001';
   end if;
 
   if v_actor_is_staff and v_actor_role <> 'admin' and not exists (
@@ -1024,6 +1277,156 @@ $function$;
 revoke all on function public.cancelar_consulta_atomica(text, bigint)
   from public, anon;
 grant execute on function public.cancelar_consulta_atomica(text, bigint)
+  to authenticated, service_role;
+
+-- Nunca permitir que ON DELETE CASCADE borre una reserva confirmada sin pasar
+-- por su RPC de cancelación y sin devolver el saldo correspondiente.
+create or replace function public.proteger_borrado_clase_con_reservas()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $function$
+begin
+  if exists (
+    select 1 from public.reservas_yoga
+     where clase_id = old.id and estado = 'confirmada'
+  ) or exists (
+    select 1 from public.reservas_psicologia
+     where clase_id = old.id and estado = 'confirmada'
+  ) or exists (
+    select 1 from public.reservas_nutricion
+     where clase_id = old.id and estado = 'confirmada'
+  ) then
+    raise exception 'class has confirmed bookings; cancel them before deleting the class'
+      using errcode = '23503';
+  end if;
+
+  return old;
+end;
+$function$;
+
+revoke all on function public.proteger_borrado_clase_con_reservas()
+  from public, anon, authenticated;
+
+drop trigger if exists trg_proteger_borrado_clase_con_reservas
+  on public.clases;
+create trigger trg_proteger_borrado_clase_con_reservas
+before delete on public.clases
+for each row
+execute function public.proteger_borrado_clase_con_reservas();
+
+-- La cancelación, el reembolso y el borrado del turno suceden en una sola
+-- transacción y bajo el mismo bloqueo de fila de la clase.
+create or replace function public.eliminar_turno_consulta_atomico(
+  p_tipo text,
+  p_clase_id bigint,
+  p_cancelar_reservas boolean default false
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $function$
+declare
+  v_actor_id uuid := auth.uid();
+  v_actor_role text;
+  v_actor_email text;
+  v_actor_deletion_pending boolean;
+  v_professor_id public.clases.profesor_id%type;
+  v_starts_at timestamptz;
+  v_booking record;
+begin
+  if v_actor_id is null then
+    raise exception 'authentication required' using errcode = '42501';
+  end if;
+  if p_tipo is null or p_tipo not in ('psicologia', 'nutricion')
+    or p_clase_id is null or p_clase_id <= 0 then
+    raise exception 'invalid consultation slot deletion request' using errcode = '22023';
+  end if;
+
+  select lower(trim(coalesce(profile.rol, ''))),
+         lower(nullif(trim(profile.email), '')),
+         coalesce(profile.account_deletion_pending, false)
+    into v_actor_role, v_actor_email, v_actor_deletion_pending
+    from public.profiles as profile
+   where profile.id = v_actor_id
+     and coalesce(profile.activo, true);
+  if not found or v_actor_deletion_pending
+    or v_actor_role not in ('admin', 'profesor', 'trabajador', 'profesional') then
+    raise exception 'staff role required' using errcode = '42501';
+  end if;
+
+  select class.profesor_id, class.fecha_inicio
+    into v_professor_id, v_starts_at
+    from public.clases as class
+   where class.id = p_clase_id
+     and lower(trim(coalesce(class.tipo_clase, ''))) = p_tipo
+   for update;
+  if not found then
+    raise exception 'consultation slot not found' using errcode = 'P0002';
+  end if;
+  if v_starts_at is null or v_starts_at <= now() then
+    raise exception 'historical consultation slots cannot be deleted automatically'
+      using errcode = 'P0001';
+  end if;
+
+  if v_actor_role <> 'admin' and not exists (
+    select 1
+      from public.profesionales as professional
+     where professional.id = v_professor_id
+       and lower(nullif(trim(professional.email), '')) = v_actor_email
+  ) then
+    raise exception 'staff may only manage consultation slots linked to their professional profile'
+      using errcode = '42501';
+  end if;
+
+  if p_tipo = 'psicologia' then
+    if not coalesce(p_cancelar_reservas, false) and exists (
+      select 1 from public.reservas_psicologia
+       where clase_id = p_clase_id and estado = 'confirmada'
+    ) then
+      raise exception 'consultation slot has confirmed booking' using errcode = '23503';
+    end if;
+
+    for v_booking in
+      select id from public.reservas_psicologia
+       where clase_id = p_clase_id and estado = 'confirmada'
+       order by id
+    loop
+      perform public.cancelar_consulta_atomica(p_tipo, v_booking.id);
+    end loop;
+  else
+    if not coalesce(p_cancelar_reservas, false) and exists (
+      select 1 from public.reservas_nutricion
+       where clase_id = p_clase_id and estado = 'confirmada'
+    ) then
+      raise exception 'consultation slot has confirmed booking' using errcode = '23503';
+    end if;
+
+    for v_booking in
+      select id from public.reservas_nutricion
+       where clase_id = p_clase_id and estado = 'confirmada'
+       order by id
+    loop
+      perform public.cancelar_consulta_atomica(p_tipo, v_booking.id);
+    end loop;
+  end if;
+
+  delete from public.clases
+   where id = p_clase_id
+     and lower(trim(coalesce(tipo_clase, ''))) = p_tipo;
+  if not found then
+    raise exception 'consultation slot not found' using errcode = 'P0002';
+  end if;
+
+  return true;
+end;
+$function$;
+
+revoke all on function public.eliminar_turno_consulta_atomico(text, bigint, boolean)
+  from public, anon, authenticated;
+grant execute on function public.eliminar_turno_consulta_atomico(text, bigint, boolean)
   to authenticated, service_role;
 
 notify pgrst, 'reload schema';

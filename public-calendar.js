@@ -1418,50 +1418,77 @@
         }
 
         if (state.mode === 'global') {
+            let yogaAndWorkshops = [];
+            if (state.rpcAvailable !== false) {
+                const { data, error } = await state.client.rpc('get_public_weekly_schedule', {
+                    p_week_start: weekStart
+                });
+                if (!error && Array.isArray(data)) {
+                    state.rpcAvailable = true;
+                    yogaAndWorkshops = data.map(row => normalizeClassRow(row, true)).filter(Boolean);
+                } else {
+                    const missingFunction = error?.code === 'PGRST202'
+                        || error?.code === '42883'
+                        || /get_public_weekly_schedule|schema cache/i.test(String(error?.message || ''));
+                    if (missingFunction) state.rpcAvailable = false;
+                }
+            }
+            if (!yogaAndWorkshops.length) {
+                const [yogaDirect, talleresDirect] = await Promise.all([
+                    fetchDirectWeek(weekStart, 'clases'),
+                    fetchDirectWeek(weekStart, 'talleres')
+                ]);
+                yogaAndWorkshops = [...yogaDirect, ...talleresDirect];
+            }
+
             const bounds = broadUtcBounds(weekStart);
-            const { data: rawClases, error: errClases } = await state.client
+            const { data: rawConsultas } = await state.client
                 .from('clases')
                 .select(DIRECT_SELECT)
                 .eq('activa', true)
                 .gte('fecha_inicio', bounds.start)
                 .lt('fecha_inicio', bounds.end)
                 .order('fecha_inicio')
-                .limit(600);
+                .limit(300);
 
-            if (errClases) throw errClases;
-
-            const weekClasses = (rawClases || [])
+            const consultationClasses = (rawConsultas || [])
                 .map(row => normalizeClassRow(row, false))
                 .filter(Boolean)
-                .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7));
+                .filter(item => item.dateKey >= weekStart && item.dateKey < addDays(weekStart, 7))
+                .filter(c => (c.classType === 'psicologia' || c.classType === 'nutricion' || c.classType === 'consulta') && isCanonicalConsultationClass(c));
 
-            const yogaAndTallerIds = weekClasses
-                .filter(c => c.classType === 'yoga' || c.classType === 'taller' || c.classType === 'especial' || c.isSpecial)
-                .map(c => c.id);
-            const psicoIds = weekClasses.filter(c => c.classType === 'psicologia').map(c => c.id);
-            const nutriIds = weekClasses.filter(c => c.classType === 'nutricion' || c.classType === 'consulta').map(c => c.id);
+            if (consultationClasses.length > 0) {
+                const ids = consultationClasses.map(c => c.id);
+                const [resPsico, resNutri] = await Promise.all([
+                    state.client.from('reservas_psicologia').select('clase_id,estado').in('clase_id', ids),
+                    state.client.from('reservas_nutricion').select('clase_id,estado').in('clase_id', ids)
+                ]);
+                const mapReservas = {};
+                [...(resPsico.data || []), ...(resNutri.data || [])].forEach(r => {
+                    if (r.estado === 'confirmada') {
+                        mapReservas[r.clase_id] = (mapReservas[r.clase_id] || 0) + 1;
+                    }
+                });
 
-            const [resYoga, resPsico, resNutri] = await Promise.all([
-                yogaAndTallerIds.length ? state.client.from('reservas_yoga').select('clase_id,estado').in('clase_id', yogaAndTallerIds) : { data: [] },
-                psicoIds.length ? state.client.from('reservas_psicologia').select('clase_id,estado').in('clase_id', psicoIds) : { data: [] },
-                nutriIds.length ? state.client.from('reservas_nutricion').select('clase_id,estado').in('clase_id', nutriIds) : { data: [] }
-            ]);
+                consultationClasses.forEach(item => {
+                    const occupied = mapReservas[item.id] || 0;
+                    item.occupied = occupied;
+                    item.freeSpots = Math.max(0, item.capacity - occupied);
+                    item.complete = item.capacity > 0 ? (occupied >= item.capacity) : false;
+                });
+            }
 
-            const mapReservas = {};
-            [...(resYoga.data || []), ...(resPsico.data || []), ...(resNutri.data || [])].forEach(r => {
-                if (r.estado === 'confirmada') {
-                    mapReservas[r.clase_id] = (mapReservas[r.clase_id] || 0) + 1;
+            const combined = [...yogaAndWorkshops, ...consultationClasses];
+            const seen = new Set();
+            const uniqueClasses = [];
+            combined.forEach(item => {
+                if (!seen.has(item.id)) {
+                    seen.add(item.id);
+                    uniqueClasses.push(item);
                 }
             });
 
-            weekClasses.forEach(item => {
-                const occupied = mapReservas[item.id] !== undefined ? mapReservas[item.id] : (Number.isFinite(item.occupied) ? item.occupied : 0);
-                item.occupied = occupied;
-                item.freeSpots = Math.max(0, item.capacity - occupied);
-                item.complete = item.capacity > 0 ? (occupied >= item.capacity) : false;
-            });
-
-            return { exactAvailability: true, classes: weekClasses };
+            return { exactAvailability: true, classes: uniqueClasses };
         }
 
         if (state.mode === 'talleres') {
