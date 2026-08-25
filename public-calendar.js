@@ -558,13 +558,14 @@
             : databaseName;
 
         const rawCap = Number(raw?.capacidad_max);
-        const capacity = classType === 'yoga'
-            ? (Number.isFinite(rawCap) && rawCap > 0 && rawCap <= 10 ? rawCap : 10)
+        const isIntro = raw?.es_gratuita === true || String(name || '').toLowerCase().includes('introductoria');
+        const capacity = (classType === 'yoga' || isIntro)
+            ? (Number.isFinite(rawCap) && rawCap > 0 ? rawCap : 10)
             : Math.max(0, rawCap || 0);
 
         let finalOccupied = exactAvailability && Number.isFinite(occupied) ? Math.max(0, occupied) : null;
         let finalFreeSpots = exactAvailability && Number.isFinite(freeSpots) ? Math.max(0, freeSpots) : null;
-        if (classType === 'yoga' && exactAvailability) {
+        if ((classType === 'yoga' || isIntro) && exactAvailability) {
             if (finalOccupied !== null) {
                 finalFreeSpots = Math.max(0, capacity - finalOccupied);
             } else if (finalFreeSpots !== null && finalFreeSpots > 10) {
