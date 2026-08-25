@@ -1859,6 +1859,28 @@
         updateUrl(wasOpen ? 'replace' : 'push');
         root.dispatchEvent(new CustomEvent('genyoga:calendar:open', { detail: { week: state.weekStart, mode: state.mode } }));
         await loadWeek();
+        // If we've opened the calendar for a specific teacher but the current week
+        // doesn't contain any matching classes, try to find the next matching class
+        // and jump to its week. This fixes deep-links where the teacher's sessions
+        // fall outside the initially loaded week (e.g. only on Sunday).
+        if (state.teacher) {
+            try {
+                const visible = filteredClasses();
+                if (!visible || visible.length === 0) {
+                    const target = await findNextMatchingClass();
+                    if (target && target.dateKey) {
+                        state.weekStart = mondayFor(target.dateKey);
+                        state.classId = target.id || state.classId;
+                        state.explicitWeek = true;
+                        state.targetResolved = true;
+                        updateUrl('replace');
+                        await loadWeek();
+                    }
+                }
+            } catch (err) {
+                console.warn('Error resolving teacher deep-link after open:', err?.message || err);
+            }
+        }
         el.panel.scrollTo({ top: 0, behavior: 'auto' });
         el.close.focus();
     }
