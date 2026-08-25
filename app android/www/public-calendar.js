@@ -335,7 +335,7 @@
             .trim();
 
         if (!normalized) return '';
-        if (normalized.includes('power') && normalized.includes('vinyasa')) return 'power-vinyasa';
+        if (normalized.includes('vinyasa')) return 'power-vinyasa';
         if (normalized.includes('restaur') || normalized.includes('suave')) return 'restaurativa';
         if (normalized.includes('hombre')) return 'yoga-para-hombres';
         if (normalized.includes('para todos') || normalized.includes('for everyone')) return 'yoga-para-todos';
@@ -343,7 +343,6 @@
         if (normalized.includes('aryuved') || normalized.includes('ayurved')) return 'ayurveda';
         if (normalized.includes('silvia') && normalized.includes('yoga')) return 'yoga-con-silvia';
         if (normalized.includes('taller') || normalized.includes('especial')) return 'taller';
-        if (normalized.includes('vinyasa')) return 'vinyasa';
         return slugify(normalized);
     }
 
