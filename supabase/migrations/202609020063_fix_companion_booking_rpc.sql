@@ -133,6 +133,20 @@ begin
     v_modalidad_norm, false, false, v_plazas_requeridas, v_acompanantes
   ) returning id into v_reserva_id;
 
+  update public.clases as class
+     set ocupadas = coalesce((
+       select sum(case
+         when jsonb_typeof(coalesce(r.acompanantes, '[]'::jsonb)) = 'array'
+              and jsonb_array_length(coalesce(r.acompanantes, '[]'::jsonb)) > 0
+           then greatest(coalesce(r.num_plazas_reservadas, 1), coalesce(r.num_plazas, 1),
+                         jsonb_array_length(r.acompanantes) + 1)
+         else coalesce(r.num_plazas_reservadas, r.num_plazas, 1)
+       end)::integer
+         from public.reservas_yoga as r
+        where r.clase_id = p_clase_id and r.estado = 'confirmada'
+     ), 0)
+   where class.id = p_clase_id;
+
   if v_actor_role <> 'admin' then
     update public.profiles
        set saldo_yoga_compania = greatest(0, coalesce(saldo_yoga_compania, 0) - 1)
