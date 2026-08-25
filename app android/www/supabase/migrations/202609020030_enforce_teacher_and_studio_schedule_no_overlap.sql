@@ -11,11 +11,23 @@ begin;
 create or replace function public.check_clases_schedule_no_overlap()
 returns trigger
 language plpgsql
-security definer
-as 
+security invoker
+set search_path = pg_catalog, public
+as $function$
 declare
   v_conflict record;
 begin
+  -- Una edición ajena al horario (nombre, aforo, imagen, etc.) no debe
+  -- revalidar ni bloquear solapamientos históricos ya existentes.
+  if tg_op = 'UPDATE'
+     and new.profesor_id is not distinct from old.profesor_id
+     and new.fecha_inicio is not distinct from old.fecha_inicio
+     and new.fecha_fin is not distinct from old.fecha_fin
+     and new.activa is not distinct from old.activa
+     and new.tipo_clase is not distinct from old.tipo_clase then
+    return new;
+  end if;
+
   -- Solo validar si la clase está activa y tiene fechas válidas
   if new.activa = false or new.fecha_inicio is null or new.fecha_fin is null then
     return new;
@@ -72,11 +84,11 @@ begin
 
   return new;
 end;
-;
+$function$;
 
 drop trigger if exists trg_check_clases_schedule_no_overlap on public.clases;
 create trigger trg_check_clases_schedule_no_overlap
-  before insert or update on public.clases
+  before insert or update of profesor_id, fecha_inicio, fecha_fin, activa, tipo_clase on public.clases
   for each row
   execute function public.check_clases_schedule_no_overlap();
 
