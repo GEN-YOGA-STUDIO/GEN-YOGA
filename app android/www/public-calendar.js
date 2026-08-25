@@ -235,6 +235,50 @@
     const SEASON_START_WEEK = '2026-08-31';
     const SEASON_START_DATE = '2026-08-31';
 
+    const DEFAULT_FESTIVOS = new Map([
+        ['2026-01-01', 'Año Nuevo'],
+        ['2026-01-06', 'Epifanía del Señor'],
+        ['2026-04-02', 'Jueves Santo'],
+        ['2026-04-03', 'Viernes Santo'],
+        ['2026-05-01', 'Fiesta del Trabajo'],
+        ['2026-05-31', 'Día de Castilla-La Mancha'],
+        ['2026-06-04', 'Corpus Christi'],
+        ['2026-06-24', 'San Juan'],
+        ['2026-08-15', 'Asunción de la Virgen'],
+        ['2026-09-08', 'Virgen de los Llanos'],
+        ['2026-10-12', 'Fiesta Nacional de España'],
+        ['2026-11-01', 'Todos los Santos'],
+        ['2026-11-02', 'Todos los Santos (trasladado)'],
+        ['2026-12-06', 'Día de la Constitución'],
+        ['2026-12-07', 'Constitución (trasladado)'],
+        ['2026-12-08', 'Inmaculada Concepción'],
+        ['2026-12-25', 'Navidad'],
+        ['2027-01-01', 'Año Nuevo'],
+        ['2027-01-06', 'Epifanía del Señor'],
+        ['2027-03-25', 'Jueves Santo'],
+        ['2027-03-26', 'Viernes Santo'],
+        ['2027-05-01', 'Fiesta del Trabajo'],
+        ['2027-05-27', 'Corpus Christi'],
+        ['2027-05-31', 'Día de Castilla-La Mancha'],
+        ['2027-06-24', 'San Juan'],
+        ['2027-08-15', 'Asunción de la Virgen'],
+        ['2027-09-08', 'Virgen de los Llanos'],
+        ['2027-10-12', 'Fiesta Nacional de España'],
+        ['2027-11-01', 'Todos los Santos'],
+        ['2027-12-06', 'Día de la Constitución'],
+        ['2027-12-08', 'Inmaculada Concepción'],
+        ['2027-12-25', 'Navidad']
+    ]);
+
+    function isFestivoDate(dateKey) {
+        if (!dateKey) return false;
+        const key = String(dateKey).slice(0, 10);
+        if (state.festivosSet && state.festivosSet.size > 0) {
+            return state.festivosSet.has(key);
+        }
+        return DEFAULT_FESTIVOS.has(key);
+    }
+
     function defaultWeekStart() {
         const currentMonday = mondayFor(todayKeyMadrid());
         return currentMonday < SEASON_START_WEEK ? SEASON_START_WEEK : currentMonday;
@@ -250,6 +294,8 @@
         classes: [],
         typeColors: new Map(),
         typeColorsLoaded: false,
+        festivosSet: null,
+        festivosLoaded: false,
         style: '',
         teacher: '',
         classId: null,
@@ -527,7 +573,7 @@
         }
 
         const madridStart = dateKeyPartsInMadrid(start);
-        if (!madridStart || madridStart.dateKey < SEASON_START_DATE) return null;
+        if (!madridStart || madridStart.dateKey < SEASON_START_DATE || isFestivoDate(madridStart.dateKey)) return null;
         const professional = Array.isArray(raw?.profesionales)
             ? raw.profesionales[0]
             : raw?.profesionales;
@@ -1352,7 +1398,7 @@
 
                 for (let dayIdx = 0; dayIdx < 6; dayIdx++) {
                     const dateKey = addDays(weekStart, dayIdx);
-                    if (dateKey < SEASON_START_DATE) continue;
+                    if (dateKey < SEASON_START_DATE || isFestivoDate(dateKey)) continue;
                     const slotStarts = consultationStartMinutesFor(prof, dateKey);
 
                     slotStarts.forEach(startMinutes => {
