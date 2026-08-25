@@ -56,6 +56,8 @@ revoke all on function public.obtener_ocupacion_clases(bigint[])
 grant execute on function public.obtener_ocupacion_clases(bigint[])
   to anon, authenticated, service_role;
 
+drop function if exists public.get_public_weekly_schedule(date);
+
 create or replace function public.get_public_weekly_schedule(p_week_start date default null)
 returns table (
   id bigint,
