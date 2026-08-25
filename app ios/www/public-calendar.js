@@ -233,7 +233,7 @@
         isabel: Object.freeze([2, 4])
     });
     const SEASON_START_WEEK = '2026-08-31';
-    const SEASON_START_DATE = '2026-09-01';
+    const SEASON_START_DATE = '2026-08-31';
 
     function defaultWeekStart() {
         const currentMonday = mondayFor(todayKeyMadrid());
