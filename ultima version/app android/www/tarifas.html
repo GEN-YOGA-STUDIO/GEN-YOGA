@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="application-version" content="9.10">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.10">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.10">
+    <title>Tarifas y Bonos de Clases | GEN Yoga</title>
+    <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
+    
+    <!-- Rendimiento, SEO y tarjetas sociales -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
+    <link rel="canonical" href="https://genyoga.studio/tarifas.html" />
+    <meta name="theme-color" content="#26160C" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GEN Yoga" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:url" content="https://genyoga.studio/tarifas.html" />
+    <meta property="og:title" content="Tarifas y bonos | GEN Yoga" />
+    <meta property="og:description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas de psicología y nutrición, y talleres especiales." />
+    <meta property="og:image" content="https://genyoga.studio/img/clases-para-todos.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <!-- Tailwind and Custom Fonts -->
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.10">
+    
+    <!-- Phosphor Icons & SweetAlert -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
+    <script src="i18n.js?v=9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
+    
+    <style>
+        /* Force Solid plain background (removes the shared dot pattern) */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f6f2 !important;
+            background-image: none !important;
+        }
+
+        /* Presentation Layer - Changed to relative position and auto overflow to allow scrolling on small/short screens */
+        .fixed-viewport {
+            width: 100%;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4.75rem 1.25rem 1.25rem 1.25rem;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        @media (min-width: 768px) {
+            .fixed-viewport {
+                padding: 4rem 4rem 2rem 4rem;
+            }
+        }
+
+        /* Outline Card Styling based on Canva mockups */
+        .tariff-card {
+            background-color: #ffffff;
+            border-width: 1px;
+            border-radius: 2.25rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px -10px rgba(121, 82, 68, 0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .tariff-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -15px rgba(121, 82, 68, 0.12);
+        }
+
+        @media (max-width: 639px) {
+            html, body {
+                overflow-x: hidden;
+            }
+
+            .fixed-viewport {
+                width: 100vw;
+                max-width: 100vw;
+                min-width: 0;
+                padding-top: 4.75rem !important;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .fixed-viewport > * {
+                min-width: 0;
+                max-width: 100%;
+            }
+
+            #section-yoga,
+            #section-psicologia,
+            #section-talleres,
+            #section-ofertas {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                grid-template-columns: minmax(0, 1fr);
+                margin-left: 0;
+                margin-right: 0;
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            .tariff-card {
+                width: calc(100vw - 2rem);
+                max-width: calc(100vw - 2rem);
+                min-width: 0;
+                box-sizing: border-box;
+                padding: 1.5rem;
+                border-radius: 1.75rem;
+            }
+
+            #tab-yoga,
+            #tab-psicologia,
+            #tab-talleres {
+                flex: 1 1 auto;
+                min-width: 0;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
+        /* CSS Color Filters to tint white SVGs/PNGs into solid colors matching theme active colors */
+        .filter-yoga-brown {
+            filter: brightness(0) saturate(100%) invert(34%) sepia(26%) saturate(1004%) hue-rotate(345deg) brightness(93%) contrast(84%) !important;
+        }
+        
+        .filter-psicologia-gold {
+            filter: brightness(0) saturate(100%) invert(42%) sepia(50%) saturate(1142%) hue-rotate(18deg) brightness(91%) contrast(82%) !important;
+        }
+
+        .filter-talleres-olive {
+            filter: brightness(0) saturate(100%) invert(39%) sepia(21%) saturate(913%) hue-rotate(30deg) brightness(96%) contrast(87%) !important;
+        }
+
+        /* Custom styles for Bono Mensual (#795244) */
+        .border-mensual {
+            border-color: #795244 !important;
+        }
+        .text-mensual {
+            color: #795244 !important;
+        }
+        .bg-mensual {
+            background-color: #795244 !important;
+            color: #ffffff !important;
+        }
+        .bg-mensual:hover {
+            background-color: #26160c !important;
+            color: #ffffff !important;
+        }
+
+        /* Custom styles for Clase Suelta (#956857) */
+        .border-suelta {
+            border-color: #956857 !important;
+        }
+        .text-suelta {
+            color: #956857 !important;
+        }
+        .bg-suelta {
+            background-color: #956857 !important;
+            color: #ffffff !important;
+        }
+        .bg-suelta:hover {
+            background-color: #26160c !important;
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans overflow-x-hidden">
+
+    <!-- Fixed Presentation Layer -->
+    <div class="fixed-viewport">
+        
+        <!-- Button completely loose on the left (matches classes.html) -->
+        <!-- Button completely loose on the left (matches classes.html) -->
+        <a href="index.html" id="btn-inicio"
+            class="absolute left-4 md:left-12 top-4 md:top-8 bg-[#a69c6a] border border-[#a69c6a] text-white px-6 py-2.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-md group z-40">
+            <svg class="w-4 h-4 text-current" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.5 12c-3 0.5-9 0.5-13.5 0M9 6c-1.5 2-3.5 4.5-5 6 1.5 1.5 3.5 4 5 6"></path>
+            </svg>
+            <span data-i18n="btn_back_home">Inicio</span>
+        </a>
+
+        <!-- Dynamic Decorative Symbols (Toggled & colored using CSS filters) -->
+        <!-- Clases Symbol (Bottom Left Brown) -->
+        <img id="symbol-clases" src="img/clases.webp" alt="Yoga Clases"
+            class="filter-yoga-brown absolute bottom-6 left-6 w-32 md:w-52 opacity-95 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-0">
+        
+        <!-- Consultas Symbol (Top Right Gold) -->
+        <img id="symbol-consultas" src="img/tarifas.webp" alt="Yoga Consultas"
+            class="filter-psicologia-gold absolute top-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
+
+        <!-- Talleres Symbol (Bottom Right Olive) -->
+        <img id="symbol-talleres" src="img/maestros.webp" alt="Yoga Talleres"
+            class="filter-talleres-olive absolute bottom-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
+
+        <!-- Sticky Header (Title + Tabs Navigation) -->
+        <div class="w-full flex flex-col items-center z-30 select-none pb-4">
+            <h1 class="brand-font font-black text-[#a69c6a] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.15em] text-center mb-6" data-i18n="rates_title">
+                Tarifas
+            </h1>
+
+            <!-- Sub-pestañas de filtrado (4 botones: Ofertas, Clases, Consultas, Talleres y Especiales) -->
+            <div class="flex justify-center gap-3 flex-wrap" role="tablist" aria-label="Tipos de tarifas">
+                <button id="tab-ofertas" type="button" role="tab" aria-controls="section-ofertas" aria-selected="true"
+                    onclick="switchCategory('ofertas')"
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#047857] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5">
+                    <i class="ph-fill ph-gift" aria-hidden="true"></i>
+                    <span data-i18n="rates_tab_offers">Ofertas</span>
+                </button>
+                <button id="tab-yoga" type="button" role="tab" aria-controls="section-yoga" aria-selected="false"
+                    onclick="switchCategory('yoga')"
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    <span data-i18n="rates_tab_yoga">Clases</span>
+                </button>
+                <button id="tab-psicologia" type="button" role="tab" aria-controls="section-psicologia" aria-selected="false"
+                    onclick="switchCategory('psicologia')"
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    <span data-i18n="rates_tab_psy">Consultas</span>
+                </button>
+                <button id="tab-talleres" type="button" role="tab" aria-controls="section-talleres" aria-selected="false"
+                    onclick="switchCategory('talleres')"
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    <span data-i18n="rates_tab_workshops">Talleres y Especiales</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Central Tariff Cards Layout -->
+        <div class="flex-grow w-full max-w-7xl mx-auto flex items-center justify-center relative z-20 pb-12 mt-4">
+            
+            <!-- 1. CATEGORY: OFERTAS (3 Fichas: Bono de Bienvenida, Sesiones Introductorias del Profesorado y Yoga en compañía) -->
+            <div id="section-ofertas" role="tabpanel" aria-labelledby="tab-ofertas"
+                class="max-w-7xl mx-auto w-full px-4 transition-all duration-500">
+                
+                <!-- Fila 1: Ficha 1 (Bono Bienvenida) y Ficha 2 (Sesiones Introductorias por Profesor) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mb-8">
+                    <!-- Ficha 1: Bono de Bienvenida (100% Gratuito) -->
+                    <div class="lg:col-span-5 flex">
+                        <article class="tariff-card flex flex-col justify-between bg-white/95 backdrop-blur-md border-2 border-emerald-500/30 shadow-xl relative overflow-hidden ring-2 ring-emerald-500/10 w-full">
+                            <div class="absolute top-0 right-0 bg-[#047857] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm" data-i18n="rates_welcome_badge">
+                                ★ 100% Gratuito
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between gap-3 mb-5 pr-20">
+                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner"
+                                        style="background-color: rgba(4, 120, 87, 0.1); color: #047857;">
+                                        <i class="ph-fill ph-gift text-2xl"></i>
+                                    </div>
+                                    <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider" data-i18n="rates_welcome_audience"
+                                        style="background-color: rgba(4, 120, 87, 0.12); color: #047857; border: 1px solid rgba(4, 120, 87, 0.25);">
+                                        Nuevos alumnos
+                                    </span>
+                                </div>
+                                <h2 class="text-3xl md:text-4xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_welcome_title">Bono de Bienvenida</h2>
+                                <div class="flex items-baseline gap-2 mb-4">
+                                    <span class="text-4xl font-extrabold text-[#047857]">0 €</span>
+                                    <span class="text-xs text-cocoa/60 font-light" data-i18n="rates_welcome_price_note">sin cuota de alta</span>
+                                </div>
+                                <p class="text-sm md:text-base text-cocoa/80 leading-relaxed font-light text-left mb-5" data-i18n="rates_welcome_description">
+                                    Crea tu cuenta y recibe una clase de Yoga en compañía, asignada según tu edad, y una sesión introductoria de PNI o Psicología para conocer GEN Yoga sin compromiso.
+                                </p>
+                                <ul class="text-sm text-cocoa/70 space-y-3 mb-6 text-left">
+                                    <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_yoga">1 clase gratuita de Yoga en compañía, asignada según tu edad</span></li>
+                                    <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_consultation">1 sesión introductoria de PNI o Psicología</span></li>
+                                    <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_activation">Asignación automática y privada al crear tu cuenta</span></li>
+                                </ul>
+                            </div>
+                            <div class="mt-4 pt-5 border-t border-cocoa/10 flex flex-col gap-2.5">
+                                <a href="profile.html#auth"
+                                    class="block w-full py-3.5 bg-[#047857] hover:bg-[#065f46] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
+                                    style="background-color: #047857; color: #ffffff;" data-i18n="rates_welcome_create">
+                                    Crear cuenta gratis
+                                </a>
+                                <a href="clases.html?mode=clases&amp;oferta=compania#calendario-publico"
+                                    class="text-center text-[11px] font-semibold text-[#047857] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current" data-i18n="rates_welcome_view_classes">
+                                    Ver clases disponibles →
+                                </a>
+                            </div>
+                        </article>
+                    </div>
+
+                    <!-- Ficha 2: Sesiones Introductorias por Profesorado (Edición Especial) -->
+                    <div class="lg:col-span-7 flex">
+                        <article class="tariff-card flex flex-col justify-between bg-white/95 backdrop-blur-md border border-[#8f6b2d]/25 shadow-xl relative overflow-hidden w-full">
+                            <div class="absolute top-0 right-0 bg-[#8f6b2d] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm" data-i18n="rates_intro_badge">
+                                ✨ Edición Especial
+                            </div>
+                            <div>
+                                <div class="text-left mb-5 pr-20">
+                                    <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-[#8f6b2d] mb-1" data-i18n="rates_intro_eyebrow">Conoce a nuestros maestros · Fechas limitadas</p>
+                                    <h2 class="text-2xl md:text-3xl font-serif font-bold text-cocoa" data-i18n="rates_intro_title">Sesiones Introductorias</h2>
+                                    <p class="mt-2 text-xs md:text-sm text-cocoa/75" data-i18n="rates_intro_description">Encuentros y clases introductorias gratuitas para conocer en persona a cada profesional del equipo:</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 text-left">
+                                    <!-- Ángel -->
+                                    <div class="p-3.5 rounded-2xl bg-[#795244]/5 border border-[#795244]/20 flex flex-col justify-between hover:shadow-md transition">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <div class="w-7 h-7 rounded-lg bg-[#795244]/15 text-[#795244] flex items-center justify-center font-bold text-xs">Á</div>
+                                                <div>
+                                                    <span class="text-xs font-bold text-cocoa block" data-i18n="rates_intro_angel_title">Yoga con Ángel Javier</span>
+                                                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">🎁 Gratuita</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-[11px] text-cocoa/70 mb-2" data-i18n="rates_intro_angel_desc">Bases de la práctica, respiración consciente y alineación.</p>
+                                            <div class="mb-3 text-[11px] font-bold text-[#795244] bg-[#795244]/10 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
+                                                <i class="ph-bold ph-calendar-blank text-xs"></i>
+                                                <span>Dom 30 Ago · 10:00h y 12:00h</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="abrirModalSesionesIntroductorias('angel')" class="w-full py-2 bg-[#795244] hover:bg-[#5a3b30] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                                            <span>Ver horarios / Reservar</span>
+                                            <i class="ph-bold ph-arrow-right text-xs"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Yanira -->
+                                    <div class="p-3.5 rounded-2xl bg-[#a69c6a]/10 border border-[#a69c6a]/25 flex flex-col justify-between hover:shadow-md transition">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <div class="w-7 h-7 rounded-lg bg-[#a69c6a]/20 text-[#6a6540] flex items-center justify-center font-bold text-xs">Y</div>
+                                                <div>
+                                                    <span class="text-xs font-bold text-cocoa block" data-i18n="rates_intro_yanira_title">Yoga con Yanira</span>
+                                                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">🎁 Gratuita</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-[11px] text-cocoa/70 mb-2" data-i18n="rates_intro_yanira_desc">Fluidez, movilidad articular y presencia en movimiento.</p>
+                                            <div class="mb-3 text-[11px] font-bold text-[#6a6540] bg-[#a69c6a]/15 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
+                                                <i class="ph-bold ph-calendar-blank text-xs"></i>
+                                                <span>Mar 1 y Jue 3 Sep · 19:00h</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="abrirModalSesionesIntroductorias('yanira')" class="w-full py-2 bg-[#6a6540] hover:bg-[#524e30] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                                            <span>Ver horarios / Reservar</span>
+                                            <i class="ph-bold ph-arrow-right text-xs"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Miriam -->
+                                    <div class="p-3.5 rounded-2xl bg-[#744833]/5 border border-[#744833]/20 flex flex-col justify-between hover:shadow-md transition">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <div class="w-7 h-7 rounded-lg bg-[#744833]/15 text-[#744833] flex items-center justify-center font-bold text-xs">M</div>
+                                                <div>
+                                                    <span class="text-xs font-bold text-cocoa block" data-i18n="rates_intro_miriam_title">Psicología con Miriam</span>
+                                                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">🎁 Gratuita</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-[11px] text-cocoa/70 mb-2" data-i18n="rates_intro_miriam_desc">Acercamiento al bienestar emocional y gestión del estrés.</p>
+                                            <div class="mb-3 text-[11px] font-bold text-[#744833] bg-[#744833]/10 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
+                                                <i class="ph-bold ph-calendar-blank text-xs"></i>
+                                                <span>Mar 1 Sep (20:15) y Mié 2 Sep (11:30)</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="abrirModalSesionesIntroductorias('miriam')" class="w-full py-2 bg-[#744833] hover:bg-[#593625] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                                            <span>Ver horarios / Reservar</span>
+                                            <i class="ph-bold ph-arrow-right text-xs"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Silvia -->
+                                    <div class="p-3.5 rounded-2xl bg-[#68704a]/5 border border-[#68704a]/20 flex flex-col justify-between hover:shadow-md transition">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <div class="w-7 h-7 rounded-lg bg-[#68704a]/15 text-[#68704a] flex items-center justify-center font-bold text-xs">S</div>
+                                                <div>
+                                                    <span class="text-xs font-bold text-cocoa block" data-i18n="rates_intro_silvia_title">Yoga & Ayurveda con Silvia</span>
+                                                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">🎁 Gratuita</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-[11px] text-cocoa/70 mb-2" data-i18n="rates_intro_silvia_desc">Equilibrio de doshas, salud integrativa y autocuidado.</p>
+                                            <div class="mb-3 text-[11px] font-bold text-[#68704a] bg-[#68704a]/10 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
+                                                <i class="ph-bold ph-calendar-blank text-xs"></i>
+                                                <span>Vie 18 y Vie 25 Sep · 11:00h</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="abrirModalSesionesIntroductorias('silvia')" class="w-full py-2 bg-[#68704a] hover:bg-[#4f5637] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                                            <span>Ver horarios / Reservar</span>
+                                            <i class="ph-bold ph-arrow-right text-xs"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Isabel -->
+                                    <div class="p-3.5 rounded-2xl bg-[#ab593d]/5 border border-[#ab593d]/20 flex flex-col justify-between hover:shadow-md transition">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <div class="w-7 h-7 rounded-lg bg-[#ab593d]/15 text-[#ab593d] flex items-center justify-center font-bold text-xs">I</div>
+                                                <div>
+                                                    <span class="text-xs font-bold text-cocoa block" data-i18n="rates_intro_isabel_title">PNI y Nutrición con Isabel</span>
+                                                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">🎁 Gratuita</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-[11px] text-cocoa/70 mb-2" data-i18n="rates_intro_isabel_desc">Salud metabólica, descanso y modulación inflamatoria.</p>
+                                            <div class="mb-3 text-[11px] font-bold text-[#ab593d] bg-[#ab593d]/10 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
+                                                <i class="ph-bold ph-calendar-blank text-xs"></i>
+                                                <span>Jue 3 Sep y Mar 22 Sep · 11:00h</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="abrirModalSesionesIntroductorias('isabel')" class="w-full py-2 bg-[#ab593d] hover:bg-[#8c462e] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                                            <span>Ver horarios / Reservar</span>
+                                            <i class="ph-bold ph-arrow-right text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2 pt-4 border-t border-cocoa/10">
+                                <button type="button" onclick="abrirModalSesionesIntroductorias('todas')"
+                                    class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#73541f] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow hover:shadow-md transform hover:scale-[1.01]"
+                                    data-i18n="rates_intro_view_all">
+                                    Ver todas las sesiones introductorias gratuitas →
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- Fila 2: Ficha 3 (Yoga en Compañía - Ofertas por Perfil) -->
+                <div class="w-full flex">
+                    <article class="tariff-card bg-white/90 rounded-3xl p-6 md:p-8 border border-[#795244]/15 shadow-lg w-full flex flex-col justify-between">
+                        <div>
+                            <div class="text-left mb-6">
+                                <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-[#795244]/70 mb-1" data-i18n="rates_companion_eyebrow">Práctica compartida · cuatro modalidades</p>
+                                <h2 class="text-2xl md:text-4xl font-serif font-bold text-cocoa" data-i18n="rates_companion_title">Yoga en compañía</h2>
+                                <p class="mt-2 text-xs md:text-sm text-cocoa/75" data-i18n="rates_companion_description">Ven con quien tú elijas. Todos los bonos de esta sección sirven para las cuatro modalidades y, al crear tu cuenta, recibirás una clase gratuita de la modalidad que te corresponda según tu edad.</p>
+                            </div>
+
+                            <div id="yoga-styles" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" aria-label="Modalidades de Yoga en compañía">
+                                <article data-companion-modality="colegas" class="overflow-hidden rounded-2xl bg-white border border-[#795244]/20 shadow-sm flex flex-col p-4">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-xl bg-[#795244]/10 flex items-center justify-center text-[#795244]" aria-hidden="true"><i class="ph-fill ph-users-three text-2xl"></i></div>
+                                        <h3 class="text-base font-serif font-bold text-cocoa" data-i18n="rates_companion_colleagues_title">Yoga con colegas</h3>
+                                    </div>
+                                    <p class="text-[11px] text-cocoa/65 mb-3 flex-1" data-i18n="rates_companion_colleagues_tagline">Compartid energía, movimiento y un plan diferente.</p>
+                                    <a href="clases.html?mode=clases&amp;oferta=colegas#calendario-publico" class="text-[11px] font-bold uppercase tracking-wider text-[#795244] hover:text-cocoa flex items-center gap-1" data-i18n="rates_view_schedule">Ver horarios →</a>
+                                </article>
+
+                                <article data-companion-modality="pareja" class="overflow-hidden rounded-2xl bg-white border border-[#e06b53]/25 shadow-sm flex flex-col p-4">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-xl bg-[#e06b53]/10 flex items-center justify-center text-[#e06b53]" aria-hidden="true"><i class="ph-fill ph-heart text-2xl"></i></div>
+                                        <h3 class="text-base font-serif font-bold text-cocoa" data-i18n="rates_companion_partner_title">Yoga con tu pareja</h3>
+                                    </div>
+                                    <p class="text-[11px] text-cocoa/65 mb-3 flex-1" data-i18n="rates_companion_partner_tagline">Respirad, conectad y regalad tiempo a la relación.</p>
+                                    <a href="clases.html?mode=clases&amp;oferta=pareja#calendario-publico" class="text-[11px] font-bold uppercase tracking-wider text-[#e06b53] hover:text-cocoa flex items-center gap-1" data-i18n="rates_view_schedule">Ver horarios →</a>
+                                </article>
+
+                                <article data-companion-modality="hijo" class="overflow-hidden rounded-2xl bg-white border border-[#488799]/25 shadow-sm flex flex-col p-4">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-xl bg-[#488799]/10 flex items-center justify-center text-[#488799]" aria-hidden="true"><i class="ph-fill ph-baby text-2xl"></i></div>
+                                        <h3 class="text-base font-serif font-bold text-cocoa" data-i18n="rates_companion_child_title">Yoga con tu hijo</h3>
+                                    </div>
+                                    <p class="text-[11px] text-cocoa/65 mb-3 flex-1" data-i18n="rates_companion_child_tagline">Jugad, escuchad el cuerpo y cread recuerdos juntos.</p>
+                                    <a href="clases.html?mode=clases&amp;oferta=hijo#calendario-publico" class="text-[11px] font-bold uppercase tracking-wider text-[#488799] hover:text-cocoa flex items-center gap-1" data-i18n="rates_view_schedule">Ver horarios →</a>
+                                </article>
+
+                                <article data-companion-modality="abuela" class="overflow-hidden rounded-2xl bg-white border border-[#c3b89a]/50 shadow-sm flex flex-col p-4">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-xl bg-[#c3b89a]/20 flex items-center justify-center text-[#795244]" aria-hidden="true"><i class="ph-fill ph-hands-clapping text-2xl"></i></div>
+                                        <h3 class="text-base font-serif font-bold text-cocoa" data-i18n="rates_companion_grandmother_title">Yoga con tu abuela</h3>
+                                    </div>
+                                    <p class="text-[11px] text-cocoa/65 mb-3 flex-1" data-i18n="rates_companion_grandmother_tagline">Moveos con calma y compartid bienestar entre generaciones.</p>
+                                    <a href="clases.html?mode=clases&amp;oferta=abuela#calendario-publico" class="text-[11px] font-bold uppercase tracking-wider text-[#795244] hover:text-cocoa flex items-center gap-1" data-i18n="rates_view_schedule">Ver horarios →</a>
+                                </article>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-cocoa/10 flex flex-wrap items-center justify-between gap-3">
+                            <span class="text-xs font-semibold text-cocoa/70">¿Quieres adquirir un bono para estas modalidades?</span>
+                            <button type="button" onclick="switchCategory('yoga')" class="px-5 py-2.5 rounded-xl bg-[#795244] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#26160c] transition shadow">
+                                Ver Bonos de Clases →
+                            </button>
+                        </div>
+                    </article>
+                </div>
+
+            </div>
+            <div id="section-yoga" role="tabpanel" aria-labelledby="tab-yoga" class="grid sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto gap-6 w-full px-4 items-stretch transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+                <!-- Clase suelta -->
+                <div class="tariff-card flex flex-col justify-between border-suelta">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-suelta shadow-inner" style="background-color: rgba(149, 104, 87, 0.05);">
+                            <i class="ph-fill ph-ticket text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_suelta_title">Clase suelta</h3>
+                        <p class="text-[10px] text-suelta mb-6 font-semibold uppercase tracking-wider" data-i18n="rates_suelta_cat">Yoga</p>
+                        <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat1">1 clase de yoga</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat2">Reserva desde tu perfil o recepción</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat3">60 días naturales desde la compra</span></li>
+                        </ul>
+                        <div id="selected-yoga-class-summary"
+                            class="hidden mt-5 rounded-2xl border border-cocoa/10 bg-sand/10 p-4 text-left"
+                            role="status" aria-live="polite" aria-atomic="true">
+                            <p id="selected-yoga-class-label"
+                                class="text-[10px] font-bold uppercase tracking-widest text-suelta"
+                                data-i18n="rates_selected_class_label">Clase seleccionada</p>
+                            <p id="selected-yoga-class-name" class="mt-1 font-bold text-cocoa"></p>
+                            <p id="selected-yoga-class-time" class="mt-1 text-xs text-cocoa/70"></p>
+                            <p id="selected-yoga-class-teacher" class="mt-1 text-xs font-semibold text-cocoa/70"></p>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">15€</div>
+                        <button id="buy-single-class-button" onclick="adquirirClaseSuelta(event)" class="block w-full py-3.5 bg-suelta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]" data-i18n="rates_suelta_btn">Comprar clase</button>
+                    </div>
+                </div>
+
+                <!-- Pack 4 -->
+                <div class="tariff-card flex flex-col justify-between border-suelta">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-suelta shadow-inner" style="background-color: rgba(149, 104, 87, 0.05);">
+                            <i class="ph-fill ph-ticket text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_pack4_title">Pack 4 clases</h3>
+                        <p class="text-[10px] text-suelta mb-6 font-semibold uppercase tracking-wider" data-i18n="rates_pack_cat">Bono flexible</p>
+                        <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_pack_validity">60 días desde la compra</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_pack_regular">Válido para clases no especiales</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_pack_profile">Saldo y caducidad visibles en tu perfil</span></li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">50€</div>
+                        <a href="profile.html?buy=pack_4" class="block w-full py-3.5 bg-suelta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_pack_btn">Comprar pack</a>
+                    </div>
+                </div>
+
+                <!-- Pack 6 -->
+                <div class="tariff-card flex flex-col justify-between border-suelta">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-olive shadow-inner bg-olive/5">
+                            <i class="ph-fill ph-ticket text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_pack6_title">Pack 6 clases</h3>
+                        <p class="text-[10px] text-olive mb-6 font-semibold uppercase tracking-wider" data-i18n="rates_pack_cat">Bono flexible</p>
+                        <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-olive text-lg"></i> <span data-i18n="rates_pack_validity">60 días desde la compra</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-olive text-lg"></i> <span data-i18n="rates_pack_regular">Válido para clases no especiales</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-olive text-lg"></i> <span data-i18n="rates_pack_profile">Saldo y caducidad visibles en tu perfil</span></li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">65€</div>
+                        <a href="profile.html?buy=pack_6" class="block w-full py-3.5 bg-olive text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_pack_btn">Comprar pack</a>
+                    </div>
+                </div>
+
+                <!-- Pack 10 -->
+                <div class="tariff-card flex flex-col justify-between border-mensual">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-mensual shadow-inner bg-mensual/5">
+                            <i class="ph-fill ph-stack text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_pack10_title">Pack 10 clases</h3>
+                        <p class="text-[10px] text-mensual mb-6 font-semibold uppercase tracking-wider" data-i18n="rates_pack_cat">Bono flexible</p>
+                        <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_pack_validity">60 días desde la compra</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_pack_regular">Válido para clases no especiales</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_pack_profile">Saldo y caducidad visibles en tu perfil</span></li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">95€</div>
+                        <a href="profile.html?buy=pack_10" class="block w-full py-3.5 bg-mensual text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_pack_btn">Comprar pack</a>
+                    </div>
+                </div>
+
+                <!-- Bono Ilimitado -->
+                <div class="tariff-card flex flex-col justify-between relative border-mensual sm:col-span-2 lg:col-span-2">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-mensual text-white text-[9px] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-md" data-i18n="rates_mensual_badge">
+                        ★ Ahorra 25%
+                    </div>
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-mensual shadow-md" style="background-color: rgba(121, 82, 68, 0.05);">
+                            <i class="ph-fill ph-infinity text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_mensual_title">Bono Ilimitado</h3>
+                        <p class="text-[10px] text-mensual font-semibold mb-6 uppercase tracking-wider" data-i18n="rates_mensual_cat">Mes natural elegido</p>
+                        <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat1">Todas las clases regulares que quieras</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat2">1 clase especial en el mes elegido</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat3">1 invitado gratis en el mes elegido</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat4">30% en la primera consulta de nutrición o psicología</span></li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">90€<span class="text-xs font-sans font-normal text-cocoa/60" data-i18n="rates_per_month">/mes natural</span></div>
+                        <a href="profile.html?buy=bono_ilimitado" class="block w-full py-3.5 bg-mensual text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_mensual_btn">Elegir mes</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. CATEGORY: CONSULTAS -->
+            
+            <div id="section-psicologia" role="tabpanel" aria-labelledby="tab-psicologia" class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+                <!-- Psicología con Miriam -->
+                <div class="tariff-card flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <i class="ph-fill ph-brain text-2xl text-[#8f6b2d]"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_psy_title">Psicología</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider" data-i18n="rates_psy_cat">Bienestar y salud mental con Miriam</p>
+                        
+                        <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1 hide-scrollbar">
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Acompañamiento psicoterapéutico (1ª sesión)</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">75 € · 50 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('miriam_psico_individual_1a', 'Acompañamiento psicoterapéutico (1ª sesión)', 75)" 
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_psy_buy_btn_75">Comprar 1ª sesión (75 €)</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Acompañamiento psicoterapéutico (siguientes)</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">65 € · 50 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('miriam_psico_individual_sig', 'Acompañamiento psicoterapéutico (siguientes)', 65)" 
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_psy_buy_btn_65">Comprar sesión sucesiva (65 €)</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Terapia de pareja (1ª sesión)</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">120 € · 50 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('miriam_psico_pareja_1a', 'Terapia de pareja (1ª sesión)', 120)" 
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_psy_buy_btn_120">Comprar 1ª sesión pareja (120 €)</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Terapia de pareja (siguientes)</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">100 € · 50 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('miriam_psico_pareja_sig', 'Terapia de pareja (siguientes)', 100)" 
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_psy_buy_btn_100">Comprar sesión pareja sucesiva (100 €)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl text-center" data-i18n="rates_psy_contact_recep">
+                            Sesiones con Miriam
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ayurveda con Silvia -->
+                <div class="tariff-card flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <i class="ph-fill ph-leaf text-2xl text-[#8f6b2d]"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_ayur_title">Ayurveda</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider" data-i18n="rates_ayur_cat">Equilibrio y bienestar integral con Silvia</p>
+                        
+                        <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1 hide-scrollbar">
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Primera consulta</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">80 € · 75-90 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('silvia_ayurveda_1a', 'Consulta de Ayurveda (1ª sesión)', 80)" 
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_ayur_buy_btn_80">Comprar 1ª consulta (80 €)</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Seguimiento</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">60 € · 45-60 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('silvia_ayurveda_sig', 'Consulta de Ayurveda (seguimiento)', 60)" 
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_ayur_buy_btn_60">Comprar seguimiento (60 €)</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Bono Salud Integrativa (3 sesiones)</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">170 € · 3 consultas</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('silvia_ayurveda_bono3', 'Bono Salud Integrativa (3 sesiones)', 170)"
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span>Comprar Bono 3 (170 €)</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs">Bono Salud Integrativa (6 sesiones)</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">280 € · 6 consultas</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('silvia_ayurveda_bono6', 'Bono Salud Integrativa (6 sesiones)', 280)"
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span>Comprar Bono 6 (280 €)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl text-center" data-i18n="rates_ayur_contact_recep">
+                            Sesiones con Silvia
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Psicología con Isabel -->
+                <div class="tariff-card flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <i class="ph-fill ph-heart text-2xl text-[#8f6b2d]"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_pni_title">Salud e Inmune</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider" data-i18n="rates_pni_cat">PNI y salud integral con Isabel</p>
+
+                        <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1 hide-scrollbar">
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs" data-i18n="rates_pni_sub1">Primera consulta PNI</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">80 € · 75-90 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('isabel_pni_1a', 'Consulta de PNI (1ª sesión)', 80)"
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_pni_buy_btn_80">Comprar 1ª consulta (80 €)</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="font-bold text-cocoa text-xs" data-i18n="rates_pni_sub2">Consulta de seguimiento PNI</p>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">60 € · 45-60 min</span>
+                                </div>
+                                <button onclick="iniciarCheckoutConsultaStripe('isabel_pni_sig', 'Consulta de PNI (seguimiento)', 60)"
+                                    class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="ph-bold ph-shopping-bag text-sm"></i> <span data-i18n="rates_pni_buy_btn_60">Comprar seguimiento (60 €)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl text-center" data-i18n="rates_pni_contact_recep">
+                            Consultas con Isabel
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CATEGORY: TALLERES & CLASES ESPECIALES -->
+            
+            <div id="section-talleres" role="tabpanel" aria-labelledby="tab-talleres" class="max-w-4xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                    <!-- 1. Clase Especial: Yoga & Meditación -->
+                    <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 border-[#6a6540]/30 shadow-xl relative overflow-hidden ring-2 ring-[#6a6540]/10">
+                        <div class="absolute top-0 right-0 bg-[#6a6540] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm">
+                            Próxima Clase Especial
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <div class="w-12 h-12 rounded-2xl bg-[#6a6540]/10 flex items-center justify-center text-[#6a6540] shadow-inner">
+                                    <i class="ph-fill ph-sparkle text-2xl"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-[#6a6540] bg-[#6a6540]/10 border border-[#6a6540]/20 px-3 py-1 rounded-full uppercase tracking-wider mr-24">Viernes 18 Sep · 19:00 a 20:15</span>
+                            </div>
+                            <h3 class="text-2xl font-serif text-cocoa font-bold mb-1">Yoga & Meditación</h3>
+                            <div class="flex items-baseline gap-2 mb-3">
+                                <span class="text-3xl font-extrabold text-[#6a6540]">20 €</span>
+                                <span class="text-xs text-cocoa/60 font-light">/ plaza (o con Bono Ilimitado)</span>
+                            </div>
+                            <p class="text-[11px] text-[#6a6540] font-bold uppercase tracking-wider mb-3">Con Yanira · Sesión Temática (75 min)</p>
+                            
+                            <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-4">
+                                Práctica guiada de profundización que combina asana suave con técnicas de pranayama y meditación profunda para calmar el sistema nervioso y restaurar el equilibrio interior.
+                            </p>
+                            <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#6a6540]"></i><span>Grupos reducidos (máximo 10 plazas)</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#6a6540]"></i><span><strong>1 clase al mes incluida</strong> con el Bono Ilimitado</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#6a6540]"></i><span>Disponible para compra suelta o reserva con bono</span></li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
+                            <button onclick="iniciarCheckoutTallerStripe('clase_especial', 'Clase Especial: Yoga & Meditación', '20')"
+                                class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
+                                Reservar Plaza (20 €)
+                            </button>
+                            <a href="clases.html?style=taller#calendario-publico" class="text-center text-[11px] font-semibold text-[#6a6540] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
+                                Ver próximas fechas en horario →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 2. Taller Concreto: Introducción a Power Vinyasa -->
+                    <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 border-[#AB593D]/30 shadow-xl relative overflow-hidden ring-2 ring-[#AB593D]/10">
+                        <div class="absolute top-0 right-0 bg-[#AB593D] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm">
+                            Próximo Taller
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <div class="w-12 h-12 rounded-2xl bg-[#AB593D]/10 flex items-center justify-center text-[#AB593D] shadow-inner">
+                                    <i class="ph-fill ph-fire text-2xl"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-[#AB593D] bg-[#AB593D]/10 border border-[#AB593D]/20 px-3 py-1 rounded-full uppercase tracking-wider mr-16">Sábado 19 Sep · 9:00 a 11:00</span>
+                            </div>
+                            <div class="flex items-baseline justify-between gap-2 mb-1">
+                                <h3 class="text-2xl font-serif text-cocoa font-bold">Introducción a Power Vinyasa</h3>
+                            </div>
+                            <div class="flex items-baseline gap-2 mb-3">
+                                <span class="text-3xl font-extrabold text-[#AB593D]">35 €</span>
+                                <span class="text-xs text-cocoa/60 font-light">/ plaza (120 min)</span>
+                            </div>
+                            <p class="text-[11px] text-[#AB593D] font-bold uppercase tracking-wider mb-3">Con Yanira · 2 Horas de Inmersión</p>
+                            
+                            <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-4">
+                                Inmersión completa de 2 horas (09:00 a 11:00) diseñada para aprender y consolidar los fundamentos de Power Vinyasa: alineación precisa, control del flujo respiratorio y transiciones fluidas.
+                            </p>
+                            <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#AB593D]"></i><span>Máximo 10 alumnos para atención personalizada</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#AB593D]"></i><span>Ajustes manuales y soporte individual</span></li>
+                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-[#AB593D]"></i><span>Material de apoyo e infusiones incluidas</span></li>
+                            </ul>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
+                            <button onclick="iniciarCheckoutTallerStripe('taller_intro_power_vinyasa', 'Taller: Introducción a Power Vinyasa', '35')"
+                                class="block w-full py-3.5 bg-[#AB593D] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
+                                Reservar Plaza (35 €)
+                            </button>
+                            <a href="clases.html?style=taller#calendario-publico" class="text-center text-[11px] font-semibold text-[#AB593D] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
+                                Ver detalles en el calendario →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. CATEGORY: OFERTAS & SESIONES GRATUITAS -->
+            
+        </div>
+
+        <!-- Footer (Matches clases.html layout) -->
+        <footer class="w-full border-t border-[#795244]/15 py-4 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm font-normal text-[#795244] mt-8">
+            <div class="flex items-center gap-2 justify-start">
+                <a href="https://www.google.com/maps/place/GEN+Yoga/@38.9949298,-1.8671035,511m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd665fc18e428caf:0x9efcbd7f5fdb3e1e!8m2!3d38.9949257!4d-1.8645286!16s%2Fg%2F11zd4y51p2?entry=ttu&g_ep=EgoyMDI2MDgwNC4wIKXMDSoASAFQAw%3D%3D"
+                    target="_blank" rel="noopener noreferrer"
+                    class="hover:text-sand flex items-center gap-2 text-xs md:text-sm font-normal tracking-[0.1em] text-[#795244] transition-colors">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                    </svg>
+                    <span data-i18n="footer_address">Calle San Carlos 2, Albacete</span>
+                </a>
+            </div>
+            <div class="flex items-center gap-6 justify-center text-[#795244]">
+                <a href="https://wa.me/34624435679" target="_blank" rel="noopener noreferrer"
+                    class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center"
+                    aria-label="WhatsApp (+34 624 435 679)" title="WhatsApp / Teléfono: +34 624 435 679">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-current" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.07-.12-.23-.19-.48-.31"/>
+                    </svg>
+                </a>
+                <a href="mailto:hola@genyoga.studio" class="hover:opacity-75 transition flex items-center" aria-label="Email">
+                    <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/genyoga.studio" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center">
+                    <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                    </svg>
+                </a>
+            </div>
+            <div class="flex items-center gap-3 text-right text-xs">
+                <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v9.11 | &copy; 2026 Gen Yoga</span>
+            </div>
+        </footer>
+    </div>
+    <script>
+        const APP_VERSION = '9.11';
+        const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
+        const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
+        const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+        let checkoutRequestInProgress = false;
+        let requestedYogaClassParamPresent = false;
+        let selectedYogaClassState = 'idle';
+        let selectedYogaClassData = null;
+
+        function safeSetItem(key, value) {
+            try { sessionStorage.setItem(key, value); } catch (e) { console.warn('Storage error:', e); }
+        }
+        function newCheckoutAttemptId() {
+            try {
+                if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+                    return window.crypto.randomUUID();
+                }
+            } catch (e) {}
+            return null;
+        }
+        function getValidatedStripeCheckoutUrl(rawUrl) {
+            const parsed = new URL(rawUrl, window.location.origin);
+            if (parsed.protocol !== 'https:') throw new Error('Protocolo no seguro.');
+            if (parsed.hostname !== 'checkout.stripe.com') throw new Error('Dominio no permitido.');
+            return parsed.toString();
+        }
+        function closePaymentUiBeforeNavigation() {
+            try { if (typeof Swal !== 'undefined' && Swal.isVisible()) Swal.close(); } catch (e) {}
+        }
+
+        function switchCategory(category) {
+            const tabs = {
+                ofertas: document.getElementById('tab-ofertas'),
+                yoga: document.getElementById('tab-yoga'),
+                psicologia: document.getElementById('tab-psicologia'),
+                talleres: document.getElementById('tab-talleres')
+            };
+
+            const sections = {
+                ofertas: document.getElementById('section-ofertas'),
+                yoga: document.getElementById('section-yoga'),
+                psicologia: document.getElementById('section-psicologia'),
+                talleres: document.getElementById('section-talleres')
+            };
+
+            const symbols = {
+                ofertas: document.getElementById('symbol-clases'),
+                yoga: document.getElementById('symbol-clases'),
+                psicologia: document.getElementById('symbol-consultas'),
+                talleres: document.getElementById('symbol-talleres')
+            };
+
+            const activeColors = {
+                ofertas: '#047857',
+                yoga: '#795244',
+                psicologia: '#8f6b2d',
+                talleres: '#6a6540'
+            };
+
+            const targetKey = tabs[category] ? category : 'ofertas';
+
+            // 1. Toggle Tab Active Classes with dynamic color matching
+            Object.keys(tabs).forEach(key => {
+                const btn = tabs[key];
+                if (!btn) return;
+                const isActive = key === targetKey;
+                btn.style.backgroundColor = isActive ? activeColors[key] : '#c3b89a';
+                btn.setAttribute('aria-selected', String(isActive));
+                btn.tabIndex = isActive ? 0 : -1;
+            });
+
+            // 2. Hide all and reveal active section with animation
+            Object.keys(sections).forEach(key => {
+                const sec = sections[key];
+                if (!sec) return;
+                if (key === targetKey) {
+                    sec.classList.remove('hidden');
+                    sec.setAttribute('aria-hidden', 'false');
+                    sec.offsetHeight; // force reflow
+                    sec.style.opacity = '1';
+                    sec.style.transform = 'translateY(0)';
+                } else {
+                    sec.setAttribute('aria-hidden', 'true');
+                    sec.style.opacity = '0';
+                    sec.style.transform = 'translateY(20px)';
+                    sec.classList.add('hidden');
+                }
+            });
+
+            // 3. Toggle background dynamic decorative symbols
+            Object.keys(symbols).forEach(key => {
+                const sym = symbols[key];
+                if (!sym) return;
+                if (key === targetKey) {
+                    sym.style.opacity = '0.95';
+                    sym.style.transform = 'translateY(0)';
+                } else {
+                    sym.style.opacity = '0';
+                    sym.style.transform = 'translateY(20px)';
+                }
+            });
+        }
+
+        function normaliseSelectedClassId(value) {
+            if (!value) return null;
+            const parsed = parseInt(String(value).trim(), 10);
+            return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+        }
+
+        function getSelectedClassIdFromLocation() {
+            const url = new URL(window.location.href);
+            const candidates = [
+                url.searchParams.get('clase_id'),
+                url.searchParams.get('claseId'),
+                url.searchParams.get('class_id'),
+                url.searchParams.get('clase'),
+                url.searchParams.get('class'),
+                url.searchParams.get('id')
+            ];
+            const hadParameter = candidates.some((value) => value !== null && String(value).trim() !== '');
+
+            for (const candidate of candidates) {
+                const id = normaliseSelectedClassId(candidate);
+                if (id) return { hadParameter, id };
+            }
+
+            return { hadParameter, id: null };
+        }
+
+        function selectedClassTranslation(key, fallback) {
+            const translated = typeof window.t === 'function' ? window.t(key) : '';
+            return translated && translated !== key ? translated : fallback;
+        }
+
+        function getPublicYogaClassName(value) {
+            const original = String(value || '').trim();
+            const normalized = original
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/\s+/g, ' ');
+            if (normalized === 'yoga aryuveda') return 'Yoga Ayurveda';
+            if (normalized === 'yoga (silvia) consultas') return 'Yoga con Silvia';
+            return original;
+        }
+
+        function getSelectedClassTeacherName(clase) {
+            const professional = Array.isArray(clase?.profesionales)
+                ? clase.profesionales[0]
+                : clase?.profesionales;
+            const fullName = `${professional?.nombre || ''} ${professional?.apellidos || ''}`.trim();
+            return fullName || (window.currentLang === 'en' ? 'GEN Yoga teacher' : 'Profesorado GEN Yoga');
+        }
+
+        function formatSelectedClassSchedule(clase) {
+            const start = new Date(clase?.fecha_inicio);
+            const end = new Date(clase?.fecha_fin);
+            if (Number.isNaN(start.getTime())) return '';
+
+            const locale = window.currentLang === 'en' ? 'en-GB' : 'es-ES';
+            const dateText = new Intl.DateTimeFormat(locale, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                timeZone: 'Europe/Madrid'
+            }).format(start);
+            const timeFormatter = new Intl.DateTimeFormat(locale, {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'Europe/Madrid'
+            });
+            const startTime = timeFormatter.format(start);
+            const endTime = Number.isNaN(end.getTime()) ? '' : timeFormatter.format(end);
+            const capitalizedDate = dateText.charAt(0).toUpperCase() + dateText.slice(1);
+
+            return `${capitalizedDate} · ${startTime}${endTime ? `–${endTime}` : ''}`;
+        }
+
+        function renderSelectedYogaClassSummary() {
+            const summary = document.getElementById('selected-yoga-class-summary');
+            const label = document.getElementById('selected-yoga-class-label');
+            const name = document.getElementById('selected-yoga-class-name');
+            const time = document.getElementById('selected-yoga-class-time');
+            const teacher = document.getElementById('selected-yoga-class-teacher');
+            const buyButton = document.getElementById('buy-single-class-button');
+            if (!summary || !label || !name || !time || !teacher) return;
+
+            if (!requestedYogaClassParamPresent || selectedYogaClassState === 'idle') {
+                summary.classList.add('hidden');
+                buyButton?.removeAttribute('aria-describedby');
+                return;
+            }
+
+            summary.classList.remove('hidden');
+            buyButton?.setAttribute('aria-describedby', 'selected-yoga-class-summary');
+            label.textContent = selectedClassTranslation('rates_selected_class_label', 'Clase seleccionada');
+            time.textContent = '';
+            teacher.textContent = '';
+
+            if (selectedYogaClassState === 'loading') {
+                name.textContent = selectedClassTranslation('rates_selected_class_loading', 'Comprobando la clase seleccionada...');
+                return;
+            }
+
+            if (selectedYogaClassState === 'unavailable' || !selectedYogaClassData) {
+                name.textContent = selectedClassTranslation('rates_selected_class_unavailable', 'La clase seleccionada ya no está disponible. Puedes comprar una clase suelta y elegir otro horario.');
+                return;
+            }
+
+            const rawClassName = getPublicYogaClassName(selectedYogaClassData.nombre || 'Clase regular');
+            name.textContent = selectedClassTranslation(rawClassName, rawClassName);
+            time.textContent = formatSelectedClassSchedule(selectedYogaClassData);
+            const teacherName = getSelectedClassTeacherName(selectedYogaClassData);
+            const teacherTemplate = selectedClassTranslation('rates_selected_class_teacher', 'Con {teacher}');
+            teacher.textContent = teacherTemplate.replace('{teacher}', teacherName);
+        }
+
+        window.addEventListener('languageChanged', () => {
+            renderSelectedYogaClassSummary();
+        });
+
+        async function inspectRequestedYogaClass() {
+            const { hadParameter, id } = getSelectedClassIdFromLocation();
+            requestedYogaClassParamPresent = hadParameter;
+            if (!hadParameter) {
+                selectedYogaClassState = 'idle';
+                selectedYogaClassData = null;
+                safeRemoveItem('pending_booking_clase_id');
+                safeRemoveItem('preferred_guest_class_id');
+                renderSelectedYogaClassSummary();
+                return null;
+            }
+
+            if (!id || !supabaseClient) {
+                selectedYogaClassState = 'unavailable';
+                selectedYogaClassData = null;
+                safeRemoveItem('pending_booking_clase_id');
+                safeRemoveItem('preferred_guest_class_id');
+                renderSelectedYogaClassSummary();
+                return null;
+            }
+
+            selectedYogaClassState = 'loading';
+            renderSelectedYogaClassSummary();
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('clases')
+                    .select('id, nombre, fecha_inicio, fecha_fin, tipo_clase, activa, capacidad_max, profesor_id, profesionales(nombre, apellidos)')
+                    .eq('id', id)
+                    .maybeSingle();
+
+                if (error || !data || data.activa === false) {
+                    selectedYogaClassState = 'unavailable';
+                    selectedYogaClassData = null;
+                    safeRemoveItem('pending_booking_clase_id');
+                    safeRemoveItem('preferred_guest_class_id');
+                    renderSelectedYogaClassSummary();
+                    return null;
+                }
+
+                selectedYogaClassState = 'ready';
+                selectedYogaClassData = data;
+                safeSetItem('pending_booking_clase_id', String(id));
+                safeSetItem('preferred_guest_class_id', String(id));
+                renderSelectedYogaClassSummary();
+                return data;
+            } catch (err) {
+                console.warn('Error fetching class details:', err);
+                selectedYogaClassState = 'unavailable';
+                selectedYogaClassData = null;
+                safeRemoveItem('pending_booking_clase_id');
+                safeRemoveItem('preferred_guest_class_id');
+                renderSelectedYogaClassSummary();
+                return null;
+            }
+        }
+
+        async function adquirirClaseSuelta(event) {
+            if (event) event.preventDefault();
+
+            const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
+            const session = sessionRes?.data?.session;
+
+            if (session?.user?.id) {
+                window.location.href = 'profile.html?buy=clase_suelta';
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Clase suelta de Yoga · 15 €',
+                text: '¿Cómo deseas realizar tu compra?',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: '<i class="ph-bold ph-user mr-1.5"></i> Comprar como Invitado (15 €)',
+                denyButtonText: '<i class="ph-bold ph-sign-in mr-1.5"></i> Acceder a mi Perfil',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#956857',
+                denyButtonColor: '#047857',
+                cancelButtonColor: '#9ca3af',
+                background: '#fff',
+                color: '#333',
+                customClass: {
+                    popup: 'rounded-3xl p-6 border border-cocoa/10 shadow-2xl max-w-md',
+                    confirmButton: 'rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider',
+                    denyButton: 'rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider',
+                    cancelButton: 'rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider'
+                }
+            });
+
+            if (result.isDenied) {
+                window.location.href = 'profile.html?buy=clase_suelta';
+                return;
+            }
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            await iniciarFlujoInvitadoClaseSuelta();
+        }
+
+        async function iniciarFlujoInvitadoClaseSuelta(preselectedClassId = null) {
+            let targetClassId = preselectedClassId || getSelectedClassIdFromLocation().id;
+
+            if (!targetClassId) {
+                Swal.fire({
+                    title: 'Cargando clases disponibles...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                const nowIso = new Date().toISOString();
+                let clases = [];
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('clases')
+                        .select('id, nombre, fecha_inicio, fecha_fin, duracion_minutos, capacidad_max, tipo_clase, activa, es_especial, profesionales(id, nombre, apellidos)')
+                        .eq('activa', true)
+                        .gte('fecha_inicio', nowIso)
+                        .order('fecha_inicio', { ascending: true })
+                        .limit(60);
+
+                    if (error) throw error;
+                    clases = data || [];
+                } catch (e) {
+                    console.warn('Fallo consulta detallada de clases, probando fallback:', e);
+                    const fallbackRes = await supabaseClient
+                        .from('clases')
+                        .select('id, nombre, fecha_inicio, tipo_clase, activa, es_especial, capacidad_max')
+                        .eq('activa', true)
+                        .gte('fecha_inicio', nowIso)
+                        .order('fecha_inicio', { ascending: true })
+                        .limit(60);
+                    clases = fallbackRes.data || [];
+                }
+
+                const yogaClasses = (clases || []).filter(c => {
+                    const tipo = (c.tipo_clase || '').toLowerCase();
+                    return tipo !== 'psicologia' && tipo !== 'nutricion' && tipo !== 'consulta';
+                });
+
+                if (yogaClasses.length === 0) {
+                    await Swal.fire({
+                        icon: 'info',
+                        title: 'Horarios de Yoga',
+                        text: 'No hay clases de yoga próximas disponibles en este momento. Puedes consultar el calendario completo.',
+                        confirmButtonText: 'Ver Calendario',
+                        confirmButtonColor: '#956857'
+                    });
+                    window.location.href = 'clases.html?mode=clases#calendario-publico';
+                    return;
+                }
+
+                const optionsHtml = yogaClasses.map(c => {
+                    const d = new Date(c.fecha_inicio);
+                    const fechaStr = !isNaN(d.getTime())
+                        ? d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+                        : '';
+                    const horaStr = !isNaN(d.getTime())
+                        ? d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                        : '';
+                    const prof = c.profesionales ? `${c.profesionales.nombre || ''} ${c.profesionales.apellidos || ''}`.trim() : '';
+                    const nombre = getPublicYogaClassName(c.nombre) || c.nombre || 'Yoga';
+                    const isSpecial = c.es_especial === true || c.tipo_clase === 'especial' || c.tipo_clase === 'taller';
+                    const extraTag = isSpecial ? ' [Taller/Especial]' : '';
+                    return `<option value="${c.id}">${fechaStr} ${horaStr} · ${nombre} ${prof ? '(' + prof + ')' : ''}${extraTag}</option>`;
+                }).join('');
+
+                const { value: selectedId } = await Swal.fire({
+                    title: 'Elige tu clase de Yoga',
+                    html: `
+                        <div class="text-left font-sans">
+                            <p class="text-xs text-cocoa/70 mb-3">Selecciona la sesión a la que deseas asistir con tu clase suelta de 15 €:</p>
+                            <select id="swal-select-clase" class="w-full px-3 py-2.5 border border-cocoa/20 rounded-xl bg-ivory text-cocoa text-sm focus:ring-2 focus:ring-olive outline-none">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Continuar con esta clase',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#956857',
+                    cancelButtonColor: '#9ca3af',
+                    preConfirm: () => {
+                        return document.getElementById('swal-select-clase').value;
+                    }
+                });
+
+                if (!selectedId) return;
+                targetClassId = Number(selectedId);
+            }
+
+            const { data: claseData, error: errClase } = await supabaseClient
+                .from('clases')
+                .select('id, nombre, fecha_inicio, tipo_clase, es_especial, capacidad_max, activa')
+                .eq('id', targetClassId)
+                .single();
+
+            if (errClase || !claseData || !claseData.activa) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Clase no disponible',
+                    text: 'La clase seleccionada ya no está disponible. Por favor, elige otro horario.',
+                    confirmButtonColor: '#956857'
+                });
+                return iniciarFlujoInvitadoClaseSuelta(null);
+            }
+
+            const isSpecialClass = claseData.es_especial === true || claseData.tipo_clase === 'especial' || claseData.tipo_clase === 'taller';
+            if (isSpecialClass) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Clase no reservable con clase suelta',
+                    text: 'Esta sesión es un taller o clase especial y no se puede reservar con clase suelta o bono normal (15 €). Por favor, selecciona una clase regular de yoga.',
+                    confirmButtonColor: '#956857',
+                    confirmButtonText: 'Elegir otra clase'
+                });
+                return iniciarFlujoInvitadoClaseSuelta(null);
+            }
+
+            const { value: guestForm } = await Swal.fire({
+                title: 'Datos del Alumno (Usuario Temporal)',
+                html: `
+                    <div class="space-y-3 text-left font-sans">
+                        <p class="text-xs text-cocoa/70">
+                            Introduce tus datos para registrar tu reserva temporal y enviarte el acceso a la clase:
+                        </p>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-wider text-cocoa/60 block mb-1">Nombre *</label>
+                            <input id="swal-guest-nombre" maxlength="80" class="w-full px-3 py-2 border border-cocoa/20 rounded-xl bg-ivory text-cocoa text-sm outline-none focus:ring-2 focus:ring-olive" placeholder="Ej: Ana" autocomplete="given-name">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-wider text-cocoa/60 block mb-1">Apellidos</label>
+                            <input id="swal-guest-apellidos" maxlength="120" class="w-full px-3 py-2 border border-cocoa/20 rounded-xl bg-ivory text-cocoa text-sm outline-none focus:ring-2 focus:ring-olive" placeholder="Ej: García" autocomplete="family-name">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-wider text-cocoa/60 block mb-1">Teléfono Móvil (9 dígitos)</label>
+                            <input id="swal-guest-telefono" type="tel" maxlength="15" class="w-full px-3 py-2 border border-cocoa/20 rounded-xl bg-ivory text-cocoa text-sm outline-none focus:ring-2 focus:ring-olive" placeholder="Ej: 612 345 678" autocomplete="tel">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '<i class="ph-bold ph-credit-card mr-1.5"></i> Proceder al Pago (15 €)',
+                cancelButtonText: 'Atrás',
+                confirmButtonColor: '#956857',
+                cancelButtonColor: '#9ca3af',
+                preConfirm: () => {
+                    const nombre = document.getElementById('swal-guest-nombre').value.trim();
+                    const apellidos = document.getElementById('swal-guest-apellidos').value.trim();
+                    const rawTel = document.getElementById('swal-guest-telefono').value.trim();
+
+                    if (!nombre || nombre.length < 2) {
+                        Swal.showValidationMessage('Por favor, introduce tu nombre.');
+                        return false;
+                    }
+                    let cleanTel = rawTel.replace(/\D/g, '');
+                    if (rawTel && cleanTel.length !== 9) {
+                        Swal.showValidationMessage('El teléfono móvil debe tener 9 dígitos numéricos.');
+                        return false;
+                    }
+                    return { nombre, apellidos, telefono: cleanTel || null };
+                }
+            });
+
+            if (!guestForm) {
+                return;
+            }
+
+            safeSetItem('pending_booking_clase_id', String(targetClassId));
+            safeSetItem('preferred_guest_class_id', String(targetClassId));
+            safeSetItem('guest_nombre', guestForm.nombre);
+            safeSetItem('guest_apellidos', guestForm.apellidos);
+            if (guestForm.telefono) safeSetItem('guest_telefono', guestForm.telefono);
+
+            await ejecutarPagoStripeInvitado('clase_suelta', 'Clase suelta de Yoga (15 €)', targetClassId, guestForm);
+        }
+
+        async function ejecutarPagoStripeInvitado(lookupKey, title, targetClassId, guestForm) {
+            if (checkoutRequestInProgress) return;
+            checkoutRequestInProgress = true;
+            const checkoutAttemptId = newCheckoutAttemptId();
+
+            Swal.fire({
+                title: 'Conectando con Stripe...',
+                text: `Iniciando pasarela de pago para ${title}...`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                safeSetItem('stripe_checkout_origin', 'tarifas');
+                const { data, error } = await supabaseClient.functions.invoke('create-checkout-session', {
+                    body: {
+                        lookup_key: lookupKey,
+                        user_id: 'guest',
+                        from: 'tarifas',
+                        app_version: APP_VERSION,
+                        checkout_attempt_id: checkoutAttemptId,
+                        target_class_id: targetClassId,
+                        guest_name: `${guestForm.nombre} ${guestForm.apellidos}`.trim()
+                    }
+                });
+
+                if (error) {
+                    let errMsg = error.message || 'Error al iniciar la pasarela de pagos.';
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errJson = await error.context.json();
+                            if (errJson && errJson.error) errMsg = errJson.error;
+                        }
+                    } catch (e) {}
+                    throw new Error(errMsg);
+                }
+
+                if (data && data.url) {
+                    const checkoutUrl = getValidatedStripeCheckoutUrl(data.url);
+                    closePaymentUiBeforeNavigation();
+                    window.location.assign(checkoutUrl);
+                } else {
+                    throw new Error('No se recibió la URL de pago.');
+                }
+            } catch (e) {
+                checkoutRequestInProgress = false;
+                safeRemoveItem('stripe_checkout_origin');
+                console.error("Payment redirection error:", e);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo iniciar el pago',
+                    text: e.message || 'La pasarela de pago no respondió correctamente.',
+                    confirmButtonColor: '#956857'
+                });
+            }
+        }
+
+        async function iniciarCheckoutStripe(lookupKey, title) {
+            if (checkoutRequestInProgress) return;
+
+            const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
+            const session = sessionRes?.data?.session;
+            const userId = session?.user?.id || null;
+
+            if (!userId) {
+                window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                return;
+            }
+
+            checkoutRequestInProgress = true;
+            const checkoutAttemptId = newCheckoutAttemptId();
+
+            Swal.fire({
+                title: 'Conectando con la pasarela...',
+                text: `Iniciando compra de ${title}...`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                safeSetItem('stripe_checkout_origin', 'tarifas');
+                const { data, error } = await supabaseClient.functions.invoke('create-checkout-session', {
+                    body: {
+                        lookup_key: lookupKey,
+                        user_id: userId,
+                        from: 'tarifas',
+                        app_version: APP_VERSION,
+                        checkout_attempt_id: checkoutAttemptId
+                    }
+                });
+
+                if (error) {
+                    let errMsg = error.message || 'Error al iniciar la pasarela de pagos.';
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errJson = await error.context.json();
+                            if (errJson && errJson.error) errMsg = errJson.error;
+                        }
+                    } catch (e) {}
+                    throw new Error(errMsg);
+                }
+
+                if (data && data.url) {
+                    const checkoutUrl = getValidatedStripeCheckoutUrl(data.url);
+                    closePaymentUiBeforeNavigation();
+                    window.location.assign(checkoutUrl);
+                } else {
+                    throw new Error('No se recibió la URL de pago.');
+                }
+            } catch (e) {
+                checkoutRequestInProgress = false;
+                safeRemoveItem('stripe_checkout_origin');
+                console.error("Payment redirection error:", e);
+                Swal.fire('No se pudo iniciar el pago', e.message || 'La pasarela no respondió correctamente.', 'error');
+            }
+        }
+
+        async function iniciarCheckoutConsultaStripe(lookupKey, title, price, isMultiSessionBono = false) {
+            if (checkoutRequestInProgress) return;
+
+            const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
+            const session = sessionRes?.data?.session;
+            let userId = session?.user?.id || null;
+
+            if (!userId) {
+                if (isMultiSessionBono) {
+                    const result = await Swal.fire({
+                        title: 'Cuenta Requerida',
+                        text: 'Para adquirir y gestionar bonos de múltiples sesiones es necesario tener una cuenta registrada.',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Iniciar Sesión / Registrarme',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#795244',
+                        cancelButtonColor: '#d33',
+                        background: '#fff',
+                        color: '#333'
+                    });
+                    if (result.isConfirmed) {
+                        window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    }
+                    return;
+                }
+
+                const result = await Swal.fire({
+                    title: title || 'Comprar Consulta',
+                    text: '¿Quieres comprar esta consulta iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado sin registrarte?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Pagar como Invitado',
+                    denyButtonText: 'Iniciar Sesión',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#795244',
+                    denyButtonColor: '#6a6540',
+                    cancelButtonColor: '#d33',
+                    background: '#fff',
+                    color: '#333'
+                });
+
+                if (result.isConfirmed) {
+                    userId = 'guest';
+                } else if (result.isDenied) {
+                    window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    return;
+                } else {
+                    return;
+                }
+            }
+
+            checkoutRequestInProgress = true;
+            const checkoutAttemptId = newCheckoutAttemptId();
+
+            Swal.fire({
+                title: 'Conectando con la pasarela de pagos...',
+                text: `Iniciando compra de ${title} (${price} €)...`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                safeSetItem('stripe_checkout_origin', 'tarifas');
+                const { data, error } = await supabaseClient.functions.invoke('create-checkout-session', {
+                    body: {
+                        lookup_key: lookupKey,
+                        user_id: userId,
+                        from: 'tarifas',
+                        app_version: APP_VERSION,
+                        checkout_attempt_id: checkoutAttemptId
+                    }
+                });
+
+                if (error) {
+                    let errMsg = error.message;
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errJson = await error.context.json();
+                            if (errJson && errJson.error) errMsg = errJson.error;
+                        }
+                    } catch(e){}
+                    throw new Error(errMsg);
+                }
+
+                if (data && data.url) {
+                    const checkoutUrl = getValidatedStripeCheckoutUrl(data.url);
+                    closePaymentUiBeforeNavigation();
+                    window.location.assign(checkoutUrl);
+                } else {
+                    throw new Error('No se recibió la URL de la pasarela de pagos.');
+                }
+            } catch (e) {
+                checkoutRequestInProgress = false;
+                safeRemoveItem('stripe_checkout_origin');
+                console.error("Payment redirection error:", e);
+                Swal.fire('No se pudo iniciar el pago', e.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.', 'error');
+            }
+        }
+
+        async function iniciarCheckoutTallerStripe(lookupKey, title, price) {
+            if (checkoutRequestInProgress) return;
+
+            const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
+            const session = sessionRes?.data?.session;
+            let userId = session?.user?.id || null;
+
+            if (!userId) {
+                const result = await Swal.fire({
+                    title: title || 'Comprar Plaza de Taller',
+                    text: `¿Quieres reservar y pagar ${title}${price ? ` (${price} €)` : ''} iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Pagar como Invitado',
+                    denyButtonText: 'Iniciar Sesión',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#AB593D',
+                    denyButtonColor: '#6a6540',
+                    cancelButtonColor: '#d33',
+                    background: '#fff',
+                    color: '#333'
+                });
+
+                if (result.isConfirmed) {
+                    userId = 'guest';
+                } else if (result.isDenied) {
+                    window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    return;
+                } else {
+                    return;
+                }
+            }
+
+            checkoutRequestInProgress = true;
+            const checkoutAttemptId = newCheckoutAttemptId();
+
+            Swal.fire({
+                title: 'Conectando con la pasarela de pagos...',
+                text: `Iniciando compra de ${title}${price ? ` (${price} €)` : ''}...`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                safeSetItem('stripe_checkout_origin', 'tarifas');
+                const { data, error } = await supabaseClient.functions.invoke('create-checkout-session', {
+                    body: {
+                        lookup_key: lookupKey,
+                        user_id: userId,
+                        from: 'tarifas',
+                        app_version: APP_VERSION,
+                        checkout_attempt_id: checkoutAttemptId
+                    }
+                });
+
+                if (error) {
+                    let errMsg = error.message;
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errJson = await error.context.json();
+                            if (errJson && errJson.error) errMsg = errJson.error;
+                        }
+                    } catch(e){}
+                    throw new Error(errMsg);
+                }
+
+                if (data && data.url) {
+                    const checkoutUrl = getValidatedStripeCheckoutUrl(data.url);
+                    closePaymentUiBeforeNavigation();
+                    window.location.assign(checkoutUrl);
+                } else {
+                    throw new Error('No se recibió la URL de la pasarela de pagos.');
+                }
+            } catch (e) {
+                checkoutRequestInProgress = false;
+                safeRemoveItem('stripe_checkout_origin');
+                console.error("Payment redirection error:", e);
+                Swal.fire('No se pudo iniciar el pago', e.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.', 'error');
+            }
+        }
+
+        window.abrirModalSesionesIntroductorias = async function(slug = 'todas') {
+            const sesiones = [
+                {
+                    id: 'angel-1',
+                    profesorSlug: 'angel',
+                    profesor: 'Ángel Javier',
+                    disciplina: 'Yoga',
+                    tipo: 'yoga',
+                    titulo: 'Sesión Introductoria de Yoga',
+                    fechaStr: 'Domingo, 30 de agosto de 2026',
+                    horaStr: '10:00 a 11:15 h',
+                    duracion: '75 min',
+                    descripcion: 'Bases de la práctica, respiración consciente y alineación postural.',
+                    color: '#795244',
+                    bgColor: '#79524410',
+                    borderColor: '#79524430',
+                    fechaIso: '2026-08-30T10:00:00+02:00'
+                },
+                {
+                    id: 'angel-2',
+                    profesorSlug: 'angel',
+                    profesor: 'Ángel Javier',
+                    disciplina: 'Yoga',
+                    tipo: 'yoga',
+                    titulo: 'Sesión Introductoria de Yoga',
+                    fechaStr: 'Domingo, 30 de agosto de 2026',
+                    horaStr: '12:00 a 13:15 h',
+                    duracion: '75 min',
+                    descripcion: 'Bases de la práctica, respiración consciente y alineación postural.',
+                    color: '#795244',
+                    bgColor: '#79524410',
+                    borderColor: '#79524430',
+                    fechaIso: '2026-08-30T12:00:00+02:00'
+                },
+                {
+                    id: 'yanira-1',
+                    profesorSlug: 'yanira',
+                    profesor: 'Yanira',
+                    disciplina: 'Yoga',
+                    tipo: 'yoga',
+                    titulo: 'Sesión Introductoria de Yoga',
+                    fechaStr: 'Martes, 1 de septiembre de 2026',
+                    horaStr: '19:00 a 20:15 h',
+                    duracion: '75 min',
+                    descripcion: 'Fluidez, movilidad articular y presencia en movimiento.',
+                    color: '#6a6540',
+                    bgColor: '#a69c6a15',
+                    borderColor: '#a69c6a30',
+                    fechaIso: '2026-09-01T19:00:00+02:00'
+                },
+                {
+                    id: 'yanira-2',
+                    profesorSlug: 'yanira',
+                    profesor: 'Yanira',
+                    disciplina: 'Yoga',
+                    tipo: 'yoga',
+                    titulo: 'Sesión Introductoria de Yoga',
+                    fechaStr: 'Jueves, 3 de septiembre de 2026',
+                    horaStr: '19:00 a 20:15 h',
+                    duracion: '75 min',
+                    descripcion: 'Fluidez, movilidad articular y presencia en movimiento.',
+                    color: '#6a6540',
+                    bgColor: '#a69c6a15',
+                    borderColor: '#a69c6a30',
+                    fechaIso: '2026-09-03T19:00:00+02:00'
+                },
+                {
+                    id: 'miriam-1',
+                    profesorSlug: 'miriam',
+                    profesor: 'Miriam Alfaro',
+                    disciplina: 'Psicología',
+                    tipo: 'psicologia',
+                    titulo: 'Sesión Introductoria de Psicología',
+                    fechaStr: 'Martes, 1 de septiembre de 2026',
+                    horaStr: '20:15 a 21:15 h',
+                    duracion: '60 min',
+                    descripcion: 'Acercamiento al bienestar emocional y gestión del estrés en sesión grupal introductoria.',
+                    color: '#744833',
+                    bgColor: '#74483310',
+                    borderColor: '#74483330',
+                    fechaIso: '2026-09-01T20:15:00+02:00'
+                },
+                {
+                    id: 'miriam-2',
+                    profesorSlug: 'miriam',
+                    profesor: 'Miriam Alfaro',
+                    disciplina: 'Psicología',
+                    tipo: 'psicologia',
+                    titulo: 'Sesión Introductoria de Psicología',
+                    fechaStr: 'Miércoles, 2 de septiembre de 2026',
+                    horaStr: '11:30 a 12:30 h',
+                    duracion: '60 min',
+                    descripcion: 'Acercamiento al bienestar emocional y gestión del estrés en sesión grupal introductoria.',
+                    color: '#744833',
+                    bgColor: '#74483310',
+                    borderColor: '#74483330',
+                    fechaIso: '2026-09-02T11:30:00+02:00'
+                },
+                {
+                    id: 'silvia-1',
+                    profesorSlug: 'silvia',
+                    profesor: 'Silvia Jaén',
+                    disciplina: 'Yoga & Ayurveda',
+                    tipo: 'yoga',
+                    titulo: 'Sesión Introductoria al Yoga y Ayurveda',
+                    fechaStr: 'Viernes, 18 de septiembre de 2026',
+                    horaStr: '11:00 a 12:15 h',
+                    duracion: '75 min',
+                    descripcion: 'Equilibrio de doshas, salud integrativa y autocuidado estacional.',
+                    color: '#68704a',
+                    bgColor: '#68704a10',
+                    borderColor: '#68704a30',
+                    fechaIso: '2026-09-18T11:00:00+02:00'
+                },
+                {
+                    id: 'silvia-2',
+                    profesorSlug: 'silvia',
+                    profesor: 'Silvia Jaén',
+                    disciplina: 'Yoga & Ayurveda',
+                    tipo: 'yoga',
+                    titulo: 'Sesión Introductoria al Yoga y Ayurveda',
+                    fechaStr: 'Viernes, 25 de septiembre de 2026',
+                    horaStr: '11:00 a 12:15 h',
+                    duracion: '75 min',
+                    descripcion: 'Equilibrio de doshas, salud integrativa y autocuidado estacional.',
+                    color: '#68704a',
+                    bgColor: '#68704a10',
+                    borderColor: '#68704a30',
+                    fechaIso: '2026-09-25T11:00:00+02:00'
+                },
+                {
+                    id: 'isabel-1',
+                    profesorSlug: 'isabel',
+                    profesor: 'Isabel Rodríguez',
+                    disciplina: 'PNI & Nutrición',
+                    tipo: 'psicologia',
+                    titulo: 'Sesión Introductoria a la Psiconeuroinmunología',
+                    fechaStr: 'Jueves, 3 de septiembre de 2026',
+                    horaStr: '11:00 a 12:00 h',
+                    duracion: '60 min',
+                    descripcion: 'Salud intestinal, sistema inmune y energía celular.',
+                    color: '#ab593d',
+                    bgColor: '#ab593d10',
+                    borderColor: '#ab593d30',
+                    fechaIso: '2026-09-03T11:00:00+02:00'
+                },
+                {
+                    id: 'isabel-2',
+                    profesorSlug: 'isabel',
+                    profesor: 'Isabel Rodríguez',
+                    disciplina: 'PNI & Nutrición',
+                    tipo: 'psicologia',
+                    titulo: 'Sesión Introductoria a la Psiconeuroinmunología',
+                    fechaStr: 'Martes, 22 de septiembre de 2026',
+                    horaStr: '11:00 a 12:00 h',
+                    duracion: '60 min',
+                    descripcion: 'Salud intestinal, sistema inmune y energía celular.',
+                    color: '#ab593d',
+                    bgColor: '#ab593d10',
+                    borderColor: '#ab593d30',
+                    fechaIso: '2026-09-22T11:00:00+02:00'
+                }
+            ];
+
+            const filtradas = (slug && slug !== 'todas')
+                ? sesiones.filter(s => s.profesorSlug === slug)
+                : sesiones;
+
+            const cardsHtml = filtradas.map(s => {
+                const fechaCorta = s.fechaIso.substring(0, 10);
+                const horaCorta = s.fechaIso.substring(11, 16);
+                const isConsulta = s.profesorSlug === 'isabel' || s.profesorSlug === 'miriam' || s.tipo === 'psicologia' || s.tipo === 'nutricion';
+                const targetView = isConsulta ? 'psicologia' : 'horarios';
+                const subtabParam = (s.profesorSlug === 'isabel' || s.tipo === 'nutricion') ? 'nutricion' : (isConsulta ? 'psicologia' : '');
+                const hrefDest = `profile.html?view=${targetView}&subtab=${encodeURIComponent(subtabParam)}&tipo=${encodeURIComponent(s.tipo || 'yoga')}&fecha=${encodeURIComponent(fechaCorta)}&hora=${encodeURIComponent(horaCorta)}&teacher=${encodeURIComponent(s.profesorSlug)}&intro=true&oferta=gratis&prompt=register`;
+
+                return `
+                    <div class="bg-white border-2 rounded-2xl p-4 text-left shadow-sm transition hover:shadow-md flex flex-col justify-between gap-3" style="border-color: ${s.borderColor}; background: linear-gradient(to bottom, #ffffff, ${s.bgColor});">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full" style="background-color: ${s.color}; color: #ffffff;">
+                                    ${s.disciplina}
+                                </span>
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                    🎁 100% Gratuita
+                                </span>
+                            </div>
+                            <h4 class="text-base font-serif font-bold text-gray-900 leading-snug">${s.titulo}</h4>
+                            <p class="text-xs font-bold mt-1 text-gray-700 flex items-center gap-1.5">
+                                <i class="ph-bold ph-user-circle" style="color: ${s.color};"></i> ${s.profesor}
+                            </p>
+                            
+                            <div class="mt-2.5 p-2.5 bg-white/95 rounded-xl border border-gray-100 flex flex-col gap-1">
+                                <div class="flex items-center gap-2 text-xs font-bold text-gray-900">
+                                    <i class="ph-bold ph-calendar-check text-base text-olive"></i>
+                                    <span>${s.fechaStr}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-gray-600 pl-6">
+                                    <i class="ph-bold ph-clock"></i>
+                                    <span class="font-bold text-gray-800">${s.horaStr}</span> (${s.duracion})
+                                </div>
+                            </div>
+                            
+                            <p class="text-[11px] text-gray-500 mt-2 italic leading-relaxed">${s.descripcion}</p>
+                        </div>
+                        
+                        <a href="${hrefDest}"
+                            class="w-full py-3 text-white text-center text-xs font-bold uppercase tracking-wider rounded-xl transition shadow hover:shadow-lg flex items-center justify-center gap-2"
+                            style="background-color: ${s.color};">
+                            <span>Reservar plaza gratis</span>
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </a>
+                    </div>
+                `;
+            }).join('');
+
+            const titleModal = (slug && slug !== 'todas')
+                ? `Sesiones Introductorias: ${filtradas[0]?.profesor || ''}`
+                : 'Sesiones Introductorias Gratuitas';
+
+            Swal.fire({
+                title: `<div class="brand-font text-2xl font-bold text-cocoa pt-2">${titleModal}</div>`,
+                html: `
+                    <div class="text-left mb-4">
+                        <p class="text-xs text-cocoa/75 text-center">Conoce nuestro espacio y practica en persona con nuestros maestros sin ningún coste ni compromiso:</p>
+                    </div>
+                    <div class="grid grid-cols-1 ${filtradas.length > 1 ? 'md:grid-cols-2' : ''} gap-3.5 max-h-[70vh] overflow-y-auto pr-1">
+                        ${cardsHtml}
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCloseButton: true,
+                width: filtradas.length === 1 ? '480px' : '760px',
+                customClass: {
+                    popup: 'rounded-3xl p-4 md:p-6'
+                }
+            });
+        };
+
+        // Initialize view routing on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const hasSelectedYogaClass = Boolean(await inspectRequestedYogaClass());
+            const urlParams = new URLSearchParams(window.location.search);
+            const catParam = urlParams.get('cat') || urlParams.get('category') || urlParams.get('categoria');
+
+            if (catParam === 'yoga' || catParam === 'clases' || window.location.hash === '#section-yoga' || hasSelectedYogaClass) {
+                switchCategory('yoga');
+            } else if (catParam === 'psicologia' || catParam === 'consultas' || window.location.hash === '#section-psicologia') {
+                switchCategory('psicologia');
+            } else if (catParam === 'talleres' || catParam === 'especiales' || window.location.hash === '#section-talleres') {
+                switchCategory('talleres');
+            } else {
+                switchCategory('ofertas');
+            }
+        });
+    </script>
+</body>
+</html>

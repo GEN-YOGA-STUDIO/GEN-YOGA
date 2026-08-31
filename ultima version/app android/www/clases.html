@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="application-version" content="9.10">
+    <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.10">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.10">
+    <title>GEN Yoga | Clases</title>
+
+    <!-- Rendimiento, SEO y tarjetas sociales -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
+    <link rel="canonical" href="https://genyoga.studio/clases.html" />
+    <meta name="theme-color" content="#26160C" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GEN Yoga" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:url" content="https://genyoga.studio/clases.html" />
+    <meta property="og:title" content="Clases de yoga en Albacete | GEN Yoga" />
+    <meta property="og:description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva." />
+    <meta property="og:image" content="https://genyoga.studio/img/clases-para-todos.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
+    <script src="i18n.js?v=9.10"></script>
+    
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.10" />
+    <style>
+        /* Reset and Lock Viewports for Fixed Presentation */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            background-color: #f8f6f2;
+        }
+
+        /* Hide Scrollbars */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Fixed Presentation Layer (Holds title, navigation, cards deck) */
+        .fixed-viewport {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4.75rem 1.25rem 1.25rem 1.25rem;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        @media (min-width: 768px) {
+            .fixed-viewport {
+                padding: 4rem 4rem 2rem 4rem;
+            }
+        }
+
+        /* Folders Deck Container Height (Yoga, Consultas & Talleres) */
+        #folders-deck,
+        #consultas-deck,
+        #talleres-deck {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+
+        @media (min-width: 768px) {
+            #folders-deck,
+            #consultas-deck,
+            #talleres-deck {
+                height: 480px;
+            }
+        }
+
+        /* Height-based media queries to prevent clipping on short screen heights (laptops) */
+        @media (max-height: 820px) and (min-width: 768px) {
+            .fixed-viewport {
+                padding: 2rem 2.5rem 1rem 2.5rem !important;
+            }
+            #sticky-header {
+                padding-bottom: 0.5rem !important;
+            }
+            #header-title {
+                font-size: 2.75rem !important;
+            }
+            #folders-deck,
+            #consultas-deck,
+            #talleres-deck {
+                height: 400px !important;
+            }
+            .folder-card-container {
+                display: flex;
+                flex-direction: column;
+            }
+            .folder-card-container > div:first-child {
+                flex: 0 0 36px;
+            }
+            .folder-body {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+                padding: 1.5rem !important;
+                gap: 1.5rem !important;
+            }
+            .folder-body > div:first-child {
+                height: auto !important;
+                min-height: 0;
+                align-self: stretch;
+                aspect-ratio: auto !important;
+            }
+            #slide-4-panel {
+                padding-top: 70px !important;
+                padding-bottom: 12px !important;
+            }
+            #slide-4-panel h2 {
+                font-size: 2.75rem !important;
+            }
+            #slide-4-panel p {
+                font-size: 1rem !important;
+                margin-top: 0.5rem !important;
+            }
+        }
+
+        @media (max-height: 680px) and (min-width: 768px) {
+            .fixed-viewport {
+                padding: 1.25rem 2rem 0.5rem 2rem !important;
+            }
+            #sticky-header {
+                padding-bottom: 0.25rem !important;
+            }
+            #header-title {
+                font-size: 2.25rem !important;
+            }
+            #folders-deck,
+            #consultas-deck,
+            #talleres-deck {
+                height: 340px !important;
+            }
+            #classes-stage {
+                margin-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
+            }
+            .folder-body {
+                padding: 1.25rem !important;
+                gap: 1rem !important;
+            }
+            .folder-body h2 {
+                font-size: 1.85rem !important;
+                line-height: 1.1 !important;
+                margin-bottom: 0.35rem !important;
+            }
+            .folder-body p {
+                font-size: 0.825rem !important;
+                line-height: 1.45 !important;
+            }
+            #scroll-assist {
+                flex-basis: 2.5rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .fixed-viewport {
+                padding: 4.75rem 1rem 1rem 1rem !important;
+            }
+            #sticky-header {
+                padding-bottom: 0.25rem !important;
+            }
+            #header-title {
+                font-size: 1.85rem !important;
+                line-height: 1.15 !important;
+                margin-bottom: 0.25rem !important;
+            }
+            #folders-deck,
+            #consultas-deck,
+            #talleres-deck {
+                height: 410px !important;
+            }
+            .folder-card-container {
+                display: flex;
+                flex-direction: column;
+            }
+            .folder-card-container > div:first-child {
+                flex: 0 0 24px;
+            }
+            .folder-body {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+                padding: 1.15rem !important;
+                gap: 0.75rem !important;
+            }
+            .folder-body > div:first-child {
+                height: 120px !important;
+                min-height: 120px;
+                flex: none;
+            }
+            .folder-body span {
+                font-size: 0.68rem !important;
+            }
+            .folder-body h2 {
+                font-size: 1.65rem !important;
+                line-height: 1.1 !important;
+                margin-bottom: 0.25rem !important;
+            }
+            .folder-body p {
+                font-size: 0.78rem !important;
+                line-height: 1.35 !important;
+            }
+        }
+
+        /* Folder Card Container styling (strictly absolute to overlap cards) */
+        .folder-card-container {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            max-width: 56rem; /* 4xl */
+            margin: auto;
+            transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+            pointer-events: none;
+        }
+
+        .folder-card-container.is-active,
+        .folder-card-container[style*="opacity: 1"] {
+            pointer-events: auto;
+        }
+
+        /* Folder Body (static, no hover scaling) */
+        .folder-body {
+            position: relative;
+            border-radius: 1.5rem;
+            border-top-left-radius: 0;
+            width: 100%;
+            box-shadow: 0 20px 45px -15px rgba(38, 22, 12, 0.15);
+            z-index: 20;
+        }
+
+        /* Consultation cards use owned CSS instead of generated arbitrary-color
+           utilities. This keeps the text legible even when Tailwind is cached or
+           rebuilt without one of the custom background classes. */
+        .consultation-card {
+            overflow: hidden;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 24px 52px -20px rgba(38, 22, 12, 0.48);
+            backdrop-filter: blur(8px);
+            transition: transform 300ms ease, box-shadow 300ms ease;
+        }
+
+        .consultation-card--miriam {
+            background-color: #744833;
+            background-image:
+                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.18), transparent 38%),
+                linear-gradient(135deg, #744833 0%, #4a2d1f 100%);
+        }
+
+        .consultation-card--silvia {
+            background-color: #68704a;
+            background-image:
+                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.18), transparent 38%),
+                linear-gradient(135deg, #68704a 0%, #3e442c 100%);
+        }
+
+        .consultation-card--isabel {
+            background-color: #8f6b2d;
+            background-image:
+                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.20), transparent 38%),
+                linear-gradient(135deg, #8f6b2d 0%, #58401a 100%);
+        }
+
+        .consultation-card:focus-visible {
+            outline: 3px solid #ffffff;
+            outline-offset: 4px;
+        }
+
+        .consultation-card__portrait {
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 16px 36px -12px rgba(15, 8, 4, 0.55);
+            transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .consultation-card:hover .consultation-card__portrait {
+            transform: scale(1.02);
+        }
+
+        .consultation-card__eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            align-self: flex-start;
+            width: fit-content;
+            padding: 0.35rem 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 999px;
+            background: rgba(20, 10, 5, 0.25);
+            backdrop-filter: blur(4px);
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            line-height: 1.25;
+            text-transform: uppercase;
+        }
+
+        .consultation-card__title {
+            color: #ffffff;
+            text-shadow: 0 2px 20px rgba(15, 8, 4, 0.35);
+            letter-spacing: 0.02em;
+        }
+
+        .consultation-card__description {
+            max-width: 44rem;
+            color: rgba(255, 255, 255, 0.92);
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .consultation-card .gy-folder-calendar-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.6rem 1.1rem;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 999px;
+            background: rgba(20, 10, 5, 0.25);
+            backdrop-filter: blur(6px);
+            color: #ffffff;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+            transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .consultation-card:hover .gy-folder-calendar-link,
+        .consultation-card:focus-visible .gy-folder-calendar-link {
+            transform: translateX(4px) scale(1.03);
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Reserve a real white strip below the folders instead of overlaying the help prompt. */
+        #scroll-assist {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            transform: none;
+            flex: 0 0 3.5rem;
+            align-self: center;
+            justify-content: center;
+            width: max-content;
+        }
+
+        /* Slide Dots styles (Discreet minimal dots) */
+        .slide-dot {
+            background-color: transparent;
+            border-color: currentColor;
+            opacity: 0.25;
+            transform: scale(0.75);
+            width: 8px;
+            height: 8px;
+            transition: all 0.3s ease;
+        }
+        .slide-dot.active {
+            background-color: currentColor;
+            opacity: 0.85;
+            transform: scale(1.15);
+        }
+
+        /* Pulse Animation for indicators */
+        @keyframes soft-pulse {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(6px) scale(1.05);
+            }
+        }
+
+        .scroll-indicator-anim {
+            animation: soft-pulse 2.2s infinite ease-in-out;
+        }
+    </style>
+    <link rel="stylesheet" href="public-calendar.css?v=9.10">
+</head>
+<body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
+
+    <!-- Backgrounds (Fades in/out behind the cards) -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div id="bg-cream" class="absolute inset-0 bg-[#f8f6f2] transition-opacity duration-300"></div>
+    </div>
+
+    <!-- Floating Dot Navigation on the Right (Minimalistic) -->
+    <div id="slide-dots" class="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4 text-[#795244] transition-colors duration-500">
+        <button onclick="scrollToSlide(0)" class="slide-dot rounded-full border-2 border-current transition-all duration-300 active" aria-label="Slide 1"></button>
+        <button onclick="scrollToSlide(1)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 2"></button>
+        <button onclick="scrollToSlide(2)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 3"></button>
+        <button onclick="scrollToSlide(3)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 4"></button>
+        <button onclick="scrollToSlide(4)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 5"></button>
+    </div>
+
+    <!-- Fixed Presentation Layer (Viewport containing Title and Folders Deck) -->
+    <div class="fixed-viewport">
+        <!-- Button completely loose on the left (absolute positioning matching Canva spacing) -->
+        <button id="btn-inicio" onclick="handleNavClick(this, 'index.html')"
+            class="absolute left-4 md:left-12 top-4 md:top-8 bg-[#795244] border border-[#795244] text-[#f8f6f2] px-5 py-2 md:px-6 md:py-2.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2 shadow-md group z-40">
+            <svg class="w-4 h-4 text-current" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.5 12c-3 0.5-9 0.5-13.5 0M9 6c-1.5 2-3.5 4.5-5 6 1.5 1.5 3.5 4 5 6"></path>
+            </svg>
+            <span data-i18n="btn_back_home">Inicio</span>
+        </button>
+
+        <!-- Sticky Header (Title only, centered, with generous bottom padding to prevent overlap) -->
+        <div id="sticky-header" class="w-full flex flex-col items-center z-30 select-none pb-3 md:pb-6">
+            <h1 id="header-title" class="brand-font font-black text-[#795244] text-2xl sm:text-3xl md:text-6xl lg:text-7xl uppercase tracking-[0.035em] text-center transition-opacity duration-300" data-i18n="classes_title">
+                Escoge tus sesiones
+            </h1>
+
+            <div class="flex flex-wrap items-center justify-center gap-2 mt-4 mb-1 z-30">
+                <button id="btn-cat-yoga" type="button" onclick="switchCategoryDeck('yoga')"
+                    class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#795244] text-white border border-[#795244]">
+                    <span data-i18n="btn_cat_yoga">Clases de Yoga</span>
+                </button>
+                <button id="btn-cat-consultas" type="button" onclick="switchCategoryDeck('consultas')"
+                    class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30">
+                    <span data-i18n="btn_cat_consultas">Consultas</span>
+                </button>
+                <button id="btn-cat-talleres" type="button" onclick="switchCategoryDeck('talleres')"
+                    class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#c07238] border border-[#c07238]/30">
+                    <span data-i18n="btn_cat_talleres">Talleres y Especiales</span>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-3 mt-3 md:mt-4">
+                <button id="public-calendar-launch" type="button"
+                    class="gy-calendar-launch"
+                    onclick="window.GENPublicCalendar?.open({ mode: 'clases' })">
+                    <span class="gy-calendar-launch__live" aria-hidden="true"></span>
+                    <span data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 3v3M19 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"></path>
+                    </svg>
+                </button>
+                <button id="public-consultas-calendar-launch" type="button"
+                    class="gy-calendar-launch gy-calendar-launch--consultas hidden" hidden style="display:none"
+                    onclick="window.GENPublicCalendar?.open({ mode: 'consultas' })">
+                    <span class="gy-calendar-launch__live" aria-hidden="true" style="background:#8f6b2d; box-shadow: 0 0 0 5px rgba(143, 107, 45, 0.15);"></span>
+                    <span data-i18n="classes_consultas_calendar_btn">Ver disponibilidad</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"></path>
+                        <path d="M12 8v4l3 3"></path>
+                    </svg>
+                </button>
+                <button id="public-talleres-calendar-launch" type="button"
+                    class="gy-calendar-launch gy-calendar-launch--talleres hidden" hidden style="display:none"
+                    onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })">
+                    <span class="gy-calendar-launch__live" aria-hidden="true" style="background:#c07238; box-shadow: 0 0 0 5px rgba(192, 114, 56, 0.15);"></span>
+                    <span data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path>
+                        <path d="m9 16 2 2 4-4"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Active Viewport Content Area -->
+        <div id="classes-stage" class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-8 md:pb-12 mt-4 md:mt-8">
+            
+            <!-- ==================================== -->
+            <!-- FOLDERS DECK 1: YOGA CLASSES        -->
+            <!-- ==================================== -->
+            <div id="folders-deck" class="w-full relative transition-all duration-300">
+                
+                <!-- CARD 1 (Power Vinyasa) -->
+                <div id="card-1" class="folder-card-container">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 0 36 L 0 12 Q 0 0 12 0 L 180 0 Q 192 0 192 12 C 192 24 204 36 216 36 L 896 36 L 896 37 L 0 37 Z" fill="#7a5246" />
+                            <text x="96" y="23" fill="#f8f6f2" font-size="9" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5" data-i18n="classes_tab_vinyasa">POWER VINYASA</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[24%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[48%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(3)" class="absolute left-[72%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'vinyasa' })"
+                        class="folder-body bg-[#7a5246] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-vinyasa.jpg" alt="Power Vinyasa" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_vinyasa_tagline">¿Listx para fluir con energía y fuerza?</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_vinyasa_title">Power Vinyasa</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_vinyasa_desc">
+                                Una práctica dinámica, fluida y vigorosa donde cada respiración guía el movimiento. Conecta posturas continuas (vinyasas) que desarrollan fuerza muscular, equilibrio, resistencia y concentración mientras tu cuerpo se mueve al ritmo de tu propia energía.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2 (Yoga para Hombres) -->
+                <div id="card-2" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 21;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 216 36 L 216 12 Q 216 0 228 0 L 396 0 Q 408 0 408 12 C 408 24 420 36 432 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#ae5947" />
+                            <text x="312" y="23" fill="#f8f6f2" font-size="9.5" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.8" data-i18n="classes_tab_hombres">HOMBRES</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[24%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[48%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(3)" class="absolute left-[72%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'yoga-para-hombres' })"
+                        class="folder-body bg-[#ae5947] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-hombres.jpg" alt="Yoga para Hombres" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_hombres_tagline">Fuerza, calma y espacio propio.</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_hombres_title">Yoga para Hombres</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_hombres_desc">
+                                Un espacio pensado para fortalecer cuerpo y mente sin presiones ni comparaciones. Diseñado teniendo en cuenta la anatomía y movilidad masculina: libera sobrecargas, trabaja la flexibilidad, la resistencia y la respiración consciente en un ambiente directo y cercano.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3 (Yoga para Todos) -->
+                <div id="card-3" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 22;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 432 36 L 432 12 Q 432 0 444 0 L 612 0 Q 624 0 624 12 C 624 24 636 36 648 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#e06b53" />
+                            <text x="528" y="23" fill="#f8f6f2" font-size="9.5" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.8" data-i18n="classes_tab_para_todos">PARA TODOS</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[24%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[48%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(3)" class="absolute left-[72%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'yoga-para-todos' })"
+                        class="folder-body bg-[#e06b53] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-para-todos.jpg" alt="Yoga para Todos" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_para_todos_tagline">Alineación, consciencia y práctica a tu medida.</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_para_todos_title">Yoga para Todos</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_para_todos_desc">
+                                Una sesión equilibrada, accesible y adaptada a cualquier condición física o nivel de experiencia. Basada en el ajuste postural y la alineación precisa, enseña a escuchar el cuerpo, ganar movilidad progresiva y sentir los beneficios profundos de cada asana sin forzar.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 4 (Yoga Restaurativo) -->
+                <div id="card-4" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 23;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 648 36 L 648 12 Q 648 0 660 0 L 884 0 Q 896 0 896 12 L 896 37 L 0 37 L 0 36 Z" fill="#ee9785" />
+                            <text x="765" y="23" fill="#f8f6f2" font-size="9.5" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.8" data-i18n="classes_tab_restaurativo">RESTAURATIVO</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[24%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[48%] top-0 w-[24%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(3)" class="absolute left-[72%] top-0 w-[28%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'restaurativa' })"
+                        class="folder-body bg-[#ee9785] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-restaurativa.jpg" alt="Yoga Restaurativo" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/60 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_restaurativa_tagline">Suelta el día, calma tu sistema nervioso.</span>
+                            <h2 class="brand-font text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_restaurativo_title">Yoga Restaurativo</h2>
+                            <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_restaurativa_desc">
+                                Una práctica suave, pausada y consciente orientada al descanso profundo y la regeneración. Mediante posturas sostenidas con apoyos y respiración guiada, ayuda a liberar la fatiga acumulada, regular el sistema nervioso y restaurar la vitalidad física y mental.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================================== -->
+            <!-- FOLDERS DECK 2: CONSULTAS            -->
+            <!-- ==================================== -->
+            <div id="consultas-deck" class="w-full relative transition-all duration-300 hidden">
+                <!-- CARD MIRIAM (Psicología) -->
+                <div id="card-miriam" class="folder-card-container is-active" style="opacity: 1; pointer-events: auto;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 0 36 L 0 12 Q 0 0 12 0 L 260 0 Q 272 0 272 12 C 272 24 284 36 296 36 L 896 36 L 896 37 L 0 37 Z" fill="#744833" />
+                            <text x="136" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">MIRIAM · PSICOLOGÍA</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[33.3%] top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[66.6%] top-0 w-[33.4%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'miriam' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'miriam' }); }"
+                        class="folder-body consultation-card consultation-card--miriam flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        role="button" tabindex="0" aria-label="Ver consultas disponibles con Miriam">
+                        <div class="consultation-card__portrait w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/miriam-psicologia.jpg" alt="Miriam - Psicología" class="w-full h-full object-cover">
+                        </div>
+                        <div class="consultation-card__copy w-full md:w-[55%] flex flex-col justify-center text-left pointer-events-none">
+                            <span class="consultation-card__eyebrow">Psicoterapia · Miriam Alfaro</span>
+                            <h2 class="consultation-card__title brand-font text-3xl md:text-5xl font-black uppercase tracking-normal mb-3 leading-none">Psicología</h2>
+                            <p class="consultation-card__description text-xs md:text-sm lg:text-base leading-relaxed">
+                                Acompañamiento psicoterapéutico individual y de pareja. Un espacio seguro y de confianza donde trabajar tu bienestar emocional, gestionar la ansiedad, reconectar con tu autoestima y fortalecer tus vínculos. Consulta el calendario para ver disponibilidad y reservar tu cita.
+                            </p>
+                            <span class="gy-folder-calendar-link">Ver disponibilidad</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD SILVIA (Ayurveda) -->
+                <div id="card-silvia" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 21; pointer-events: none;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 296 36 L 296 12 Q 296 0 308 0 L 560 0 Q 572 0 572 12 C 572 24 584 36 596 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#68704a" />
+                            <text x="434" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">SILVIA · AYURVEDA</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[33.3%] top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[66.6%] top-0 w-[33.4%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'silvia' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'silvia' }); }"
+                        class="folder-body consultation-card consultation-card--silvia flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        role="button" tabindex="0" aria-label="Ver consultas disponibles con Silvia">
+                        <div class="consultation-card__portrait w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/silvia-ayurveda.jpg" alt="Silvia - Ayurveda" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="consultation-card__copy w-full md:w-[55%] flex flex-col justify-center text-left pointer-events-none">
+                            <span class="consultation-card__eyebrow">Salud Integrativa · Silvia Jaén</span>
+                            <h2 class="consultation-card__title brand-font text-3xl md:text-5xl font-black uppercase tracking-normal mb-3 leading-none">Ayurveda</h2>
+                            <p class="consultation-card__description text-xs md:text-sm lg:text-base leading-relaxed">
+                                Consulta de Ayurveda personalizada: análisis de tu constitución (doshas), historia clínica completa y recomendaciones de alimentación consciente, estilo de vida, plantas y rutinas adaptadas a ti. Consultas en viernes alternos. Consulta el calendario para ver huecos libres y reservar.
+                            </p>
+                            <span class="gy-folder-calendar-link">Ver disponibilidad</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD ISABEL (PNI / Psicología) -->
+                <div id="card-isabel" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 22; pointer-events: none;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 596 36 L 596 12 Q 596 0 608 0 L 884 0 Q 896 0 896 12 L 896 37 L 0 37 L 0 36 Z" fill="#8f6b2d" />
+                            <text x="746" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">ISABEL · PNI</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[33.3%] top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[66.6%] top-0 w-[33.4%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'isabel' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'consultas', teacher: 'isabel' }); }"
+                        class="folder-body consultation-card consultation-card--isabel flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        role="button" tabindex="0" aria-label="Ver consultas disponibles con Isabel">
+                        <div class="consultation-card__portrait w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/isabel-pni.jpg" alt="Isabel - Psiconeuroinmunología" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="consultation-card__copy w-full md:w-[55%] flex flex-col justify-center text-left pointer-events-none">
+                            <span class="consultation-card__eyebrow">PNI Clínica · Isabel Rodríguez</span>
+                            <h2 class="consultation-card__title brand-font text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-normal mb-3 leading-none">Psiconeuroinmunología</h2>
+                            <p class="consultation-card__description text-xs md:text-sm lg:text-base leading-relaxed">
+                                Consulta de Psiconeuroinmunología Clínica (PNI): un enfoque integrador que conecta tu sistema nervioso, inmune, hormonal y digestivo para restablecer el equilibrio de tu organismo a través de la nutrición clínica, el ejercicio y la modulación del estrés. Consulta el calendario para reservar.
+                            </p>
+                            <span class="gy-folder-calendar-link">Ver disponibilidad</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================================== -->
+            <!-- FOLDERS DECK 3: TALLERES & ESPECIALES-->
+            <!-- ==================================== -->
+            <div id="talleres-deck" class="w-full relative transition-all duration-300 hidden">
+                <!-- CARD TALLER 1: Talleres Intensivos -->
+                <div id="card-taller-1" class="folder-card-container is-active" style="opacity: 1; pointer-events: auto;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 0 36 L 0 12 Q 0 0 12 0 L 260 0 Q 272 0 272 12 C 272 24 284 36 296 36 L 896 36 L 896 37 L 0 37 Z" fill="#c07238" />
+                            <text x="136" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">INTENSIVOS</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[33.3%] top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[66.6%] top-0 w-[33.4%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'talleres' }); }"
+                        class="folder-body bg-[#c07238] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        role="button" tabindex="0" aria-label="Ver calendario de talleres intensivos">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-vinyasa.jpg" alt="Talleres Intensivos" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/70 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_taller_int_tagline">Profundización, práctica y autoconocimiento.</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_taller_int_title">Talleres Intensivos</h2>
+                            <p class="text-white/90 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_taller_int_desc">
+                                Espacios monográficos de inmersión y aprendizaje intensivo para profundizar en asana, alineación biomecánica, filosofía y desarrollo consciente.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD TALLER 2: Masterclasses Especiales -->
+                <div id="card-taller-2" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 21; pointer-events: none;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 296 36 L 296 12 Q 296 0 308 0 L 560 0 Q 572 0 572 12 C 572 24 584 36 596 36 L 896 36 L 896 37 L 0 37 L 0 36 Z" fill="#795244" />
+                            <text x="434" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">MASTERCLASSES</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[33.3%] top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[66.6%] top-0 w-[33.4%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'talleres' }); }"
+                        class="folder-body bg-[#795244] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        role="button" tabindex="0" aria-label="Ver calendario de masterclasses especiales">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/clases-para-todos.jpg" alt="Masterclasses Especiales" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/70 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_masterclass_tagline">Experiencias transformadoras con maestros invitados.</span>
+                            <h2 class="brand-font text-3xl md:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_masterclass_title">Masterclasses Especiales</h2>
+                            <p class="text-white/90 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_masterclass_desc">
+                                Sesiones maestras y masterclasses especiales impartidas por maestros de amplia trayectoria y profesores invitados de referencia nacional e internacional.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD TALLER 3: Salud Integrativa & Bienestar -->
+                <div id="card-taller-3" class="folder-card-container" style="transform: translateY(105%); opacity: 0; z-index: 22; pointer-events: none;">
+                    <div class="relative w-full h-[18px] md:h-[36px] overflow-hidden select-none">
+                        <svg viewBox="0 0 896 36" class="w-full h-full block" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 596 36 L 596 12 Q 596 0 608 0 L 884 0 Q 896 0 896 12 L 896 37 L 0 37 L 0 36 Z" fill="#68704a" />
+                            <text x="746" y="23" fill="#f8f6f2" font-size="10" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1.5">SALUD & BIENESTAR</text>
+                        </svg>
+                        <div onclick="scrollToSlide(0)" class="absolute left-0 top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(1)" class="absolute left-[33.3%] top-0 w-[33.3%] h-full cursor-pointer z-30"></div>
+                        <div onclick="scrollToSlide(2)" class="absolute left-[66.6%] top-0 w-[33.4%] h-full cursor-pointer z-30"></div>
+                    </div>
+                    <div onclick="window.GENPublicCalendar?.open({ mode: 'talleres' })"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.GENPublicCalendar?.open({ mode: 'talleres' }); }"
+                        class="folder-body flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
+                        style="background-color: #68704a;"
+                        role="button" tabindex="0" aria-label="Ver calendario de salud y bienestar">
+                        <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
+                            <img src="img/silvia-ayurveda.jpg" alt="Salud Integrativa" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
+                            <span class="text-white/70 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_salud_tagline">Cuidado holístico: mente, cuerpo y hábitos conscientes.</span>
+                            <h2 class="brand-font text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-wide mb-3 leading-none" data-i18n="classes_card_salud_title">Salud & Bienestar</h2>
+                            <p class="text-white/90 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_salud_desc">
+                                Talleres vivenciales de salud integrativa, nutrición consciente, fitoterapia, Ayurveda aplicado y gestión emocional en grupo.
+                            </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_talleres_calendar_btn">Ver calendario de talleres</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Scroll Indicator (Assist prompt at the very bottom, fades out when reaching Slide 4) -->
+        <div id="scroll-assist" onclick="scrollNext()" class="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 opacity-60 hover:opacity-100 select-none z-30" style="color: #795244;">
+            <span id="scroll-assist-text" class="text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em]" data-i18n="classes_scroll_prompt">Ver más clases</span>
+            <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path>
+            </svg>
+        </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SLIDE 4: FULL-SCREEN PARALLAX REACHOUT PANEL -->
+    <!-- ============================================ -->
+    <div id="slide-4-panel" class="fixed inset-0 w-full h-[100dvh] bg-[#795244] text-[#f8f6f2] flex flex-col justify-between p-6 md:p-16 z-20 transform translate-y-full transition-transform duration-700 ease-out box-border overflow-hidden select-none">
+        
+        <!-- Background Ambient Glow Behind CTA -->
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(248,246,242,0.08)_0%,_transparent_70%)] pointer-events-none"></div>
+
+        <!-- Central Parallax Experience (3-Column Layout: Left Image, Center CTA, Right Staggered Images) -->
+        <div class="flex-grow w-full max-w-6xl mx-auto flex items-center justify-center relative z-10 py-2 md:py-4">
+            <div class="w-full flex items-center justify-between gap-6 md:gap-12">
+                
+                <!-- Left Column (Featured Mat/Studio Image) -->
+                <div id="cta-left-img" class="hidden md:block w-1/4 max-w-[220px] aspect-[3/4] overflow-hidden rounded-3xl shadow-2xl border border-white/10 opacity-0 transform translate-y-[120px] transition-all duration-500 bg-white/5">
+                    <img src="img/clases-hombres.jpg" alt="Estudio GEN Yoga" loading="lazy" decoding="async" class="w-full h-full object-cover brightness-95">
+                </div>
+
+                <!-- Center Content Column (Direct Message + High Conversion Button) -->
+                <div class="w-full md:w-1/2 flex flex-col items-center text-center px-2">
+                    <span class="text-white/60 text-xs md:text-sm uppercase tracking-[0.25em] font-extrabold mb-3 md:mb-4" data-i18n="classes_cta_tagline">
+                        Tu práctica empieza aquí
+                    </span>
+                    <h2 class="brand-font text-3xl md:text-6xl font-black uppercase tracking-tight text-white leading-tight mb-4 md:mb-6" data-i18n="classes_cta_title">
+                        ¿No sabes por <br>dónde empezar?
+                    </h2>
+                    <p class="text-white/80 text-sm md:text-lg font-light leading-relaxed max-w-lg mb-8 md:mb-10" data-i18n="classes_cta_desc">
+                        Ven a probar tu primera sesión sin compromiso. Te acompañamos a elegir el estilo y ritmo que mejor conecte con tu energía.
+                    </p>
+                    <div id="cta-btn-wrapper" class="opacity-0 transform scale-90 transition-all duration-500">
+                        <a href="profile.html?view=horarios"
+                            class="inline-block px-8 py-3.5 bg-[#795244] border-2 border-white text-white font-extrabold rounded-full text-xs md:text-sm uppercase tracking-widest hover:bg-white hover:text-[#795244] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl text-center"
+                            data-i18n="classes_cta_btn">
+                            Reservar mi primera clase
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Column (Stacked Images: Arms & Bowls) -->
+                <div id="cta-right-imgs" class="hidden md:flex w-1/4 flex-col gap-4 max-w-[190px] opacity-0 transform translate-y-[120px] transition-all duration-500">
+                    <div class="aspect-square overflow-hidden rounded-2xl shadow-lg border border-white/10 bg-white/5">
+                        <img src="img/clases-restaurativa.jpg" alt="Yoga Restaurativo" loading="lazy" decoding="async" class="w-full h-full object-cover brightness-90 opacity-90">
+                    </div>
+                    <div class="aspect-square overflow-hidden rounded-2xl shadow-lg border border-white/10 bg-white/5">
+                        <img src="img/clases-vinyasa.jpg" alt="Power Vinyasa" loading="lazy" decoding="async" class="w-full h-full object-cover brightness-95 opacity-90">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Unified Footer (Matches index.html exactly in size and style, fades in dynamically) -->
+        <div id="cta-footer" class="w-full border-t border-white/20 pt-3 pb-1.5 px-6 md:px-12 grid grid-cols-3 items-center gap-3 text-sm font-normal tracking-[0.2em] opacity-0 transition-opacity duration-500">
+            <div class="flex items-center gap-2 justify-start">
+                <a href="https://www.google.com/maps/place/GEN+Yoga/@38.9949298,-1.8671035,511m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd665fc18e428caf:0x9efcbd7f5fdb3e1e!8m2!3d38.9949257!4d-1.8645286!16s%2Fg%2F11zd4y51p2?entry=ttu&g_ep=EgoyMDI2MDgwNC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer"
+                   class="hover:text-sand flex items-center gap-2 text-sm md:text-base font-normal tracking-[0.1em] text-white transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
+                    </svg>
+                    <span data-i18n="footer_address">Calle San Carlos 2, Albacete</span>
+                </a>
+            </div>
+            <div class="flex items-center gap-6 justify-center text-white">
+                <a href="https://wa.me/34624435679" target="_blank" rel="noopener noreferrer"
+                    class="hover:text-sand transition-colors duration-300 transform hover:scale-110 flex items-center"
+                    aria-label="WhatsApp (+34 624 435 679)" title="WhatsApp / Teléfono: +34 624 435 679">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-current" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.07-.12-.23-.19-.48-.31"/>
+                    </svg>
+                </a>
+                <a href="mailto:hola@genyoga.studio" class="hover:text-sand transition flex items-center" aria-label="Email">
+                    <svg class="w-6 h-6 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/genyoga.studio" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:text-sand transition-colors duration-300 transform hover:scale-110 flex items-center">
+                    <svg class="w-6 h-6 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                    </svg>
+                </a>
+            </div>
+            <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
+                <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">Política de privacidad</a>
+                <span class="opacity-60 text-[10px]">v9.11 | @2026 Gen Yoga</span>
+            </div>
+        </div>
+    </div>
+    <section id="public-calendar-panel" class="gy-calendar" role="dialog" aria-modal="true"
+        aria-labelledby="public-calendar-title" aria-hidden="true" hidden>
+        <div class="gy-calendar__decor gy-calendar__decor--one" aria-hidden="true"></div>
+        <div class="gy-calendar__decor gy-calendar__decor--two" aria-hidden="true"></div>
+
+        <div class="gy-calendar__shell">
+            <header class="gy-calendar__hero">
+                <div class="gy-calendar__topbar">
+                    <button id="public-calendar-close" type="button" class="gy-calendar__back">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m15 18-6-6 6-6"></path>
+                        </svg>
+                        <span data-calendar-copy="back">Clases</span>
+                    </button>
+                    <span class="gy-calendar__live">
+                        <span aria-hidden="true"></span>
+                        <span data-calendar-copy="live">Horario conectado en directo</span>
+                    </span>
+                </div>
+
+                <div class="gy-calendar__heading">
+                    <p class="gy-calendar__eyebrow">GEN YOGA · ALBACETE</p>
+                    <h2 id="public-calendar-title"><span data-calendar-copy="schedule">Horario</span><em data-calendar-copy="weekly"> semanal</em></h2>
+                    <p data-calendar-copy="intro">Elige tu momento. Cada cambio realizado en el estudio aparece aquí automáticamente.</p>
+                    
+                    <div id="calendar-mode-toggle" class="gy-calendar__mode-bar" role="tablist">
+                        <button id="calendar-mode-global" type="button" class="gy-calendar__mode-btn" data-calendar-mode="todo" data-calendar-copy="calendar_mode_all">Calendario Global</button>
+                        <button id="calendar-mode-clases" type="button" class="gy-calendar__mode-btn active" data-calendar-mode="clases" data-calendar-copy="calendar_mode_classes">Clases de Yoga</button>
+                        <button id="calendar-mode-consultas" type="button" class="gy-calendar__mode-btn" data-calendar-mode="consultas" data-calendar-copy="calendar_mode_consultations">Consultas</button>
+                        <button id="calendar-mode-talleres" type="button" class="gy-calendar__mode-btn" data-calendar-mode="talleres" data-calendar-copy="calendar_mode_workshops">Talleres y Clases Especiales</button>
+                    </div>
+                </div>
+
+                <div class="gy-calendar__controls" aria-label="Navegación por semanas">
+                    <button id="calendar-prev-week" type="button" class="gy-calendar__nav-button" aria-label="Semana anterior">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <button id="calendar-today" type="button" class="gy-calendar__today" data-calendar-copy="today">Hoy</button>
+                    <div class="gy-calendar__range">
+                        <span id="calendar-week-kicker" data-calendar-copy="weekOf">Semana del</span>
+                        <strong id="calendar-week-range" aria-live="polite"></strong>
+                    </div>
+                    <button id="calendar-next-week" type="button" class="gy-calendar__nav-button" aria-label="Semana siguiente">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="gy-calendar__content">
+                <div class="gy-calendar__filter-row">
+                    <div>
+                        <p class="gy-calendar__filter-label" data-calendar-copy="filter">Filtrar por práctica</p>
+                        <div id="calendar-style-filters" class="gy-calendar__filters" role="group" aria-label="Filtrar por práctica"></div>
+                    </div>
+                    <button id="calendar-clear-filters" type="button" class="gy-calendar__clear" hidden>
+                        <span data-calendar-copy="clear">Quitar filtros</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                    </button>
+                </div>
+
+                <div id="calendar-selection-note" class="gy-calendar__selection" hidden></div>
+                <div id="calendar-status" class="gy-calendar__status" role="status" aria-live="polite"></div>
+
+                <div id="calendar-skeleton" class="gy-calendar__skeleton" aria-hidden="true" hidden>
+                    <span></span><span></span><span></span><span></span>
+                </div>
+
+                <div id="calendar-error" class="gy-calendar__message" hidden>
+                    <div class="gy-calendar__message-icon" aria-hidden="true">!</div>
+                    <h3 data-calendar-copy="errorTitle">No hemos podido cargar el horario</h3>
+                    <p data-calendar-copy="errorText">Comprueba tu conexión y vuelve a intentarlo.</p>
+                    <button id="calendar-retry" type="button" data-calendar-copy="retry">Reintentar</button>
+                </div>
+
+                <div id="calendar-empty" class="gy-calendar__message" hidden>
+                    <div class="gy-calendar__lotus" aria-hidden="true">✦</div>
+                    <h3 data-calendar-copy="emptyTitle">Esta semana respira un poco más despacio</h3>
+                    <p id="calendar-empty-copy" data-calendar-copy="emptyText">No hay clases publicadas para esta selección.</p>
+                    <button id="calendar-empty-next" type="button" data-calendar-copy="nextWeek">Ver semana siguiente</button>
+                </div>
+
+                <div id="calendar-desktop" class="gy-calendar__table-wrap" hidden>
+                    <table class="gy-calendar__table">
+                        <caption class="sr-only" data-calendar-copy="caption">Horario semanal público de GEN Yoga</caption>
+                        <thead id="calendar-table-head"></thead>
+                        <tbody id="calendar-table-body"></tbody>
+                    </table>
+                </div>
+
+                <div id="calendar-mobile" class="gy-calendar__mobile" hidden>
+                    <div id="calendar-day-tabs" class="gy-calendar__day-tabs" role="tablist" aria-label="Días de la semana"></div>
+                    <div id="calendar-day-agenda" class="gy-calendar__agenda" role="tabpanel"></div>
+                </div>
+
+                <div class="gy-calendar__footer-note">
+                    <span><i aria-hidden="true"></i><span data-calendar-copy="updated">Datos actualizados desde el estudio</span></span>
+                    <span data-calendar-copy="timezone">Horario de Albacete · Europe/Madrid</span>
+                </div>
+
+                <section id="facilities-gallery" class="gy-facilities" aria-labelledby="facilities-title">
+                    <div class="gy-facilities__header">
+                        <div class="gy-facilities__heading">
+                            <p class="gy-facilities__eyebrow" data-calendar-copy="facilitiesEyebrow">El espacio</p>
+                            <h3 id="facilities-title" data-calendar-copy="facilitiesTitle">Instalaciones</h3>
+                            <p data-calendar-copy="facilitiesIntro">Luz, calma y todo lo necesario para que llegues, respires y solo tengas que estar.</p>
+                        </div>
+
+                        <div class="gy-facilities__controls">
+                            <button id="facilities-prev" type="button" class="gy-facilities__control"
+                                aria-controls="facilities-viewport" aria-label="Foto anterior">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m15 18-6-6 6-6"></path>
+                                </svg>
+                            </button>
+                            <button id="facilities-toggle" type="button" class="gy-facilities__control gy-facilities__control--toggle"
+                                aria-controls="facilities-viewport" data-paused="false" aria-label="Pausar carrusel">
+                                <svg class="gy-facilities__pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9 5v14M15 5v14"></path>
+                                </svg>
+                                <svg class="gy-facilities__play-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m8 5 11 7-11 7Z"></path>
+                                </svg>
+                                <span data-facilities-toggle-copy>Pausar</span>
+                            </button>
+                            <button id="facilities-next" type="button" class="gy-facilities__control"
+                                aria-controls="facilities-viewport" aria-label="Foto siguiente">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m9 18 6-6-6-6"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="facilities-carousel" class="gy-facilities__carousel" role="region"
+                        aria-roledescription="carousel" aria-label="Galería de instalaciones">
+                        <div id="facilities-viewport" class="gy-facilities__viewport" tabindex="0">
+                            <div id="facilities-track" class="gy-facilities__track">
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0375-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0375-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0375-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0375-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Sala principal de GEN Yoga con suelo de madera, grandes ventanales y luz natural">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">01</span>
+                                    <figcaption data-calendar-copy="facilityOne">Sala de práctica</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0373-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0373-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0373-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0373-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Vista panorámica de la sala y la zona de recepción de GEN Yoga">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">02</span>
+                                    <figcaption data-calendar-copy="facilityTwo">Luz y amplitud</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0364-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0364-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0364-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0364-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Estanterías con esterillas, mantas y material de práctica junto a un ventanal">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">03</span>
+                                    <figcaption data-calendar-copy="facilityThree">Todo preparado</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0406-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0406-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0406-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0406-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Zona de espera de GEN Yoga con dos sillas de madera y una mesa redonda">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">04</span>
+                                    <figcaption data-calendar-copy="facilityFour">Un rincón para llegar</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <picture>
+                                        <source media="(max-width: 767px)" type="image/webp" srcset="img/espacio/gen-yoga-0405-mobile.webp">
+                                        <source media="(max-width: 767px)" srcset="img/espacio/gen-yoga-0405-mobile.jpg">
+                                        <source type="image/webp" srcset="img/espacio/gen-yoga-0405-desktop.webp">
+                                        <img src="img/espacio/gen-yoga-0405-desktop.jpg" width="1600" height="1100"
+                                            loading="lazy" decoding="async"
+                                            alt="Espacio de consulta de GEN Yoga con escritorio, sillas y luz cálida">
+                                    </picture>
+                                    <span class="gy-facilities__number" aria-hidden="true">05</span>
+                                    <figcaption data-calendar-copy="facilityFive">Atención cercana</figcaption>
+                                </figure>
+                            </div>
+                        </div>
+
+                        <div class="gy-facilities__footer">
+                            <div id="facilities-dots" class="gy-facilities__dots" role="group" aria-label="Elegir fotografía"></div>
+                            <p class="gy-facilities__counter" aria-hidden="true">
+                                <span id="facilities-current">01</span>
+                                <i></i>
+                                <span>05</span>
+                            </p>
+                        </div>
+                        <p id="facilities-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </section>
+
+    <!-- Scroll height spacers (to allow native scroll physics, 6 sections in total) -->
+    <div id="scroll-height-provider" class="w-full relative z-5 pointer-events-none">
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+        <div class="scroll-spacer" style="height: 100dvh;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+// INLINED app.js
+// script.js
+
+// --- CONFIGURACIÓN SUPABASE ---
+const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
+const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
+const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+let lastCancelVal = '24';
+let lastReservaVal = '12';
+
+function normalisePolicyHours(value, fallback) {
+    const parsed = Number(String(value));
+    return Number.isInteger(parsed) && parsed >= 0 && parsed <= 168 ? String(parsed) : fallback;
+}
+
+function updatePolicyText() {
+    const cancelTextEl = document.getElementById('cancelacion-horas-text');
+    if (cancelTextEl) {
+        const bookingLimitTxt = (window.t('policy_booking_limit') || 'Las reservas cierran <b>{res} h</b> antes del inicio.').replace('{res}', lastReservaVal);
+        const cancelLimitTxt = (window.t('policy_cancel_limit') || 'Puedes cancelar y recuperar el bono mientras falten más de <b>{can} h</b>. Al llegar a ese límite, la cancelación se bloquea y el bono no se devuelve.').replace('{can}', lastCancelVal);
+        cancelTextEl.innerHTML = `${bookingLimitTxt}<br>${cancelLimitTxt}`;
+    }
+}
+
+window.addEventListener('languageChanged', updatePolicyText);
+
+async function loadPublicBookingPolicies() {
+    if (!client) return;
+    try {
+        const { data, error } = await client
+            .from('configuracion')
+            .select('clave, valor')
+            .in('clave', [
+                'horas_limite_cancelacion',
+                'horas_limite_reserva'
+            ]);
+        if (error) throw error;
+
+        lastCancelVal = normalisePolicyHours(
+            data?.find(c => c.clave === 'horas_limite_cancelacion')?.valor,
+            '24'
+        );
+        lastReservaVal = normalisePolicyHours(
+            data?.find(c => c.clave === 'horas_limite_reserva')?.valor,
+            '12'
+        );
+        updatePolicyText();
+    } catch (err) {
+        console.error('Error cargando las políticas de reserva:', err);
+        updatePolicyText();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Platform detection (simplificado)
+    const ua = navigator.userAgent.toLowerCase();
+    const isIOS = /ipad|iphone|ipod/.test(ua) && !window.MSStream;
+    const isAndroid = /android/.test(ua);
+    document.body.classList.add(isIOS ? 'platform-ios' : (isAndroid ? 'platform-android' : 'platform-web'));
+
+    if (!isIOS && !isAndroid) {
+        const parallaxBg = document.getElementById('parallax-bg');
+
+        document.addEventListener('mousemove', (e) => {
+            if (parallaxBg) {
+                const x = (e.clientX / window.innerWidth - 0.5) * 40;
+                const y = (e.clientY / window.innerHeight - 0.5) * 40;
+                parallaxBg.style.transform = `translate(${x}px, ${y}px)`;
+            }
+        });
+    }
+
+
+    // Mostrar siempre los valores seguros y sustituirlos por los guardados en
+    // cuanto estén disponibles.
+    updatePolicyText();
+    loadPublicBookingPolicies();
+});
+
+if (client) {
+    client
+        .channel('public:booking-policies')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'configuracion'
+            },
+            loadPublicBookingPolicies
+        )
+        .subscribe();
+}
+
+// 2. SISTEMA DE MODALES
+const modalOverlay = document.getElementById('modal-overlay');
+const modalContents = document.querySelectorAll('.modal-content');
+
+window.openModal = function (modalId) {
+    if (!modalOverlay) return;
+    modalContents.forEach(el => el.classList.add('hidden'));
+    const target = document.getElementById(`modal-${modalId}`);
+    if (target) {
+        target.classList.remove('hidden');
+        modalOverlay.classList.remove('hidden');
+        setTimeout(() => modalOverlay.classList.remove('opacity-0'), 10);
+        history.pushState({ modalOpen: true }, "", `#${modalId}`);
+    }
+}
+
+window.closeModal = function () {
+    if (!modalOverlay) return;
+    modalOverlay.classList.add('opacity-0');
+    setTimeout(() => {
+        modalOverlay.classList.add('hidden');
+        modalContents.forEach(el => el.classList.add('hidden'));
+    }, 300);
+    if (window.location.hash) history.replaceState(null, "", " ");
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalOverlay) closeModal();
+});
+
+window.addEventListener('popstate', () => {
+    if (modalOverlay && !modalOverlay.classList.contains('hidden')) {
+        modalOverlay.classList.add('opacity-0');
+        setTimeout(() => {
+            modalOverlay.classList.add('hidden');
+            modalContents.forEach(el => el.classList.add('hidden'));
+        }, 300);
+    }
+});
+
+if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+}
+
+
+
+// 4. HOVER IMAGES (solo escritorio)
+window.showHoverImage = function (side, imgName) {
+    const container = document.getElementById('center-hover-image-container');
+    const symbolsContent = document.getElementById('central-symbols');
+    const symbolsParent = document.getElementById('symbols-container');
+    
+    if (container && symbolsContent) {
+        const images = container.querySelectorAll('img');
+        images.forEach(img => img.classList.add('hidden'));
+
+        // Show specific image
+        const targetImg = document.getElementById(`img-${imgName}`);
+        if (targetImg) {
+            targetImg.classList.remove('hidden');
+        }
+
+        // Add active class to image container to trigger animation
+        container.classList.add('active');
+        
+        if (symbolsParent) {
+            symbolsParent.classList.add('hover-active');
+        }
+        
+        // Fade out symbols
+        symbolsContent.classList.remove('opacity-100', 'scale-100');
+        symbolsContent.classList.add('opacity-0', 'scale-95');
+    }
+}
+
+window.hideHoverImage = function (side) {
+    const container = document.getElementById('center-hover-image-container');
+    const symbolsContent = document.getElementById('central-symbols');
+    const symbolsParent = document.getElementById('symbols-container');
+    
+    if (container && symbolsContent) {
+        container.classList.remove('active');
+        
+        const images = container.querySelectorAll('img');
+        images.forEach(img => img.classList.add('hidden'));
+        
+        if (symbolsParent) {
+            symbolsParent.classList.remove('hover-active');
+        }
+        
+        symbolsContent.classList.remove('opacity-0', 'scale-95');
+        symbolsContent.classList.add('opacity-100', 'scale-100');
+    }
+}
+
+// 4.5. FEEDBACK DE NAVEGACIÓN
+window.handleNavClick = function (btn, url) {
+    // Añadir feedback visual
+    if (btn.classList.contains('btn-nav-mobile')) {
+        // En móvil, forzamos que se quede pulsado y cambiamos fondo
+        btn.classList.add('scale-95', 'bg-white/40', 'border-white/60');
+    } else {
+        // En escritorio, bajamos opacidad y escalamos el texto
+        const span = btn.querySelector('.nav-link-strike');
+        if (span) {
+            span.style.transition = 'all 0.3s ease';
+            span.style.opacity = '0.5';
+            span.style.transform = 'scale(0.95)';
+        } else {
+            // Feedback genérico para otros botones (como Reservar)
+            btn.style.transition = 'all 0.2s ease';
+            btn.style.opacity = '0.6';
+            btn.style.transform = 'scale(0.95)';
+        }
+    }
+    
+    // Retardo pequeño para asegurar que se percibe el feedback antes de navegar
+    setTimeout(() => {
+        location.href = url;
+    }, 150);
+}
+
+window.switchCategoryDeck = function(cat) {
+    const yogaDeck = document.getElementById('folders-deck');
+    const consultasDeck = document.getElementById('consultas-deck');
+    const talleresDeck = document.getElementById('talleres-deck');
+    const btnYoga = document.getElementById('btn-cat-yoga');
+    const btnConsultas = document.getElementById('btn-cat-consultas');
+    const btnTalleres = document.getElementById('btn-cat-talleres');
+    const yogaCalendarLaunch = document.getElementById('public-calendar-launch');
+    const consultasCalendarLaunch = document.getElementById('public-consultas-calendar-launch');
+    const talleresCalendarLaunch = document.getElementById('public-talleres-calendar-launch');
+
+    window.activeCategory = cat;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    if (cat === 'consultas') {
+        if (yogaDeck) yogaDeck.classList.add('hidden');
+        if (talleresDeck) talleresDeck.classList.add('hidden');
+        if (consultasDeck) consultasDeck.classList.remove('hidden');
+        if (yogaCalendarLaunch) yogaCalendarLaunch.classList.add('hidden');
+        if (talleresCalendarLaunch) talleresCalendarLaunch.classList.add('hidden');
+        if (consultasCalendarLaunch) consultasCalendarLaunch.classList.remove('hidden');
+        if (yogaCalendarLaunch) { yogaCalendarLaunch.hidden = true; yogaCalendarLaunch.style.display = 'none'; }
+        if (talleresCalendarLaunch) { talleresCalendarLaunch.hidden = true; talleresCalendarLaunch.style.display = 'none'; }
+        if (consultasCalendarLaunch) { consultasCalendarLaunch.hidden = false; consultasCalendarLaunch.style.removeProperty('display'); }
+        if (btnYoga) {
+            btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#795244] border border-[#795244]/30';
+        }
+        if (btnTalleres) {
+            btnTalleres.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#c07238] border border-[#c07238]/30';
+        }
+        if (btnConsultas) {
+            btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#8f6b2d] text-white border border-[#8f6b2d]';
+        }
+    } else if (cat === 'talleres') {
+        if (yogaDeck) yogaDeck.classList.add('hidden');
+        if (consultasDeck) consultasDeck.classList.add('hidden');
+        if (talleresDeck) talleresDeck.classList.remove('hidden');
+        if (yogaCalendarLaunch) yogaCalendarLaunch.classList.add('hidden');
+        if (consultasCalendarLaunch) consultasCalendarLaunch.classList.add('hidden');
+        if (talleresCalendarLaunch) talleresCalendarLaunch.classList.remove('hidden');
+        if (yogaCalendarLaunch) { yogaCalendarLaunch.hidden = true; yogaCalendarLaunch.style.display = 'none'; }
+        if (consultasCalendarLaunch) { consultasCalendarLaunch.hidden = true; consultasCalendarLaunch.style.display = 'none'; }
+        if (talleresCalendarLaunch) { talleresCalendarLaunch.hidden = false; talleresCalendarLaunch.style.removeProperty('display'); }
+        if (btnYoga) {
+            btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#795244] border border-[#795244]/30';
+        }
+        if (btnConsultas) {
+            btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30';
+        }
+        if (btnTalleres) {
+            btnTalleres.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#c07238] text-white border border-[#c07238]';
+        }
+    } else {
+        if (consultasDeck) consultasDeck.classList.add('hidden');
+        if (talleresDeck) talleresDeck.classList.add('hidden');
+        if (yogaDeck) yogaDeck.classList.remove('hidden');
+        if (consultasCalendarLaunch) consultasCalendarLaunch.classList.add('hidden');
+        if (talleresCalendarLaunch) talleresCalendarLaunch.classList.add('hidden');
+        if (yogaCalendarLaunch) yogaCalendarLaunch.classList.remove('hidden');
+        if (consultasCalendarLaunch) { consultasCalendarLaunch.hidden = true; consultasCalendarLaunch.style.display = 'none'; }
+        if (talleresCalendarLaunch) { talleresCalendarLaunch.hidden = true; talleresCalendarLaunch.style.display = 'none'; }
+        if (yogaCalendarLaunch) { yogaCalendarLaunch.hidden = false; yogaCalendarLaunch.style.removeProperty('display'); }
+        if (btnConsultas) {
+            btnConsultas.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#8f6b2d] border border-[#8f6b2d]/30';
+        }
+        if (btnTalleres) {
+            btnTalleres.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-sm bg-white/80 hover:bg-white text-[#c07238] border border-[#c07238]/30';
+        }
+        if (btnYoga) {
+            btnYoga.className = 'px-5 py-2 rounded-full font-bold text-xs uppercase tracking-normal transition-all duration-300 shadow-md bg-[#795244] text-white border border-[#795244]';
+        }
+    }
+
+    // Force the scroll handler to run so card positions/opacity are initialized
+    requestAnimationFrame(() => window.dispatchEvent(new Event('scroll')));
+};
+
+</script>
+    <script src="public-calendar.js?v=9.10"></script>
+    <script src="facilities-carousel.js?v=9.10"></script>
+    <script>
+        window.GENPublicCalendar?.init({ client });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dots = document.querySelectorAll('.slide-dot');
+            const dotsContainer = document.getElementById('slide-dots');
+            
+            const card1 = document.getElementById('card-1');
+            const card2 = document.getElementById('card-2');
+            const card3 = document.getElementById('card-3');
+            const card4 = document.getElementById('card-4');
+            const foldersDeck = document.getElementById('folders-deck');
+            
+            const cardMiriam = document.getElementById('card-miriam');
+            const cardSilvia = document.getElementById('card-silvia');
+            const cardIsabel = document.getElementById('card-isabel');
+            const consultasDeck = document.getElementById('consultas-deck');
+
+            const cardTaller1 = document.getElementById('card-taller-1');
+            const cardTaller2 = document.getElementById('card-taller-2');
+            const cardTaller3 = document.getElementById('card-taller-3');
+            const talleresDeck = document.getElementById('talleres-deck');
+            
+            const slide4Panel = document.getElementById('slide-4-panel');
+            
+            const ctaLeftImg = document.getElementById('cta-left-img');
+            const ctaRightImgs = document.getElementById('cta-right-imgs');
+            const ctaBtnWrapper = document.getElementById('cta-btn-wrapper');
+            const ctaFooter = document.getElementById('cta-footer');
+            
+            const bgCream = document.getElementById('bg-cream');
+            const stickyHeader = document.getElementById('sticky-header');
+            const headerTitle = document.getElementById('header-title');
+            const btnInicio = document.getElementById('btn-inicio');
+            
+            const scrollAssist = document.getElementById('scroll-assist');
+            const scrollAssistText = document.getElementById('scroll-assist-text');
+            const scrollAssistArrow = document.getElementById('scroll-assist-arrow');
+
+            // Scroll positions mapped dynamically for 3-card vs 4-card decks
+            const getSlideScrollPositions = () => {
+                if (window.activeCategory === 'consultas' || window.activeCategory === 'talleres') {
+                    return [0, 1.3, 2.4, 4.2];
+                }
+                return [0, 1.0, 2.0, 3.0, 4.2];
+            };
+
+            function updateCardPointerEvents(card, opacity) {
+                if (!card) return;
+                if (opacity > 0.05) {
+                    card.style.pointerEvents = 'auto';
+                    card.classList.add('is-active');
+                } else {
+                    card.style.pointerEvents = 'none';
+                    card.classList.remove('is-active');
+                }
+            }
+
+            // Scroll helper (normal continuous scroll target)
+            window.scrollToSlide = function(index) {
+                const height = window.innerHeight;
+                const positions = getSlideScrollPositions();
+                const targetPos = positions[index] !== undefined ? positions[index] : index;
+                window.scrollTo({ top: targetPos * height, behavior: 'smooth' });
+            };
+
+            window.scrollNext = function() {
+                const height = window.innerHeight;
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const currentPos = scrollTop / height;
+                const positions = getSlideScrollPositions();
+                
+                // Find next slide position index
+                let nextIndex = -1;
+                for (let i = 0; i < positions.length; i++) {
+                    if (positions[i] > currentPos + 0.1) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+                if (nextIndex >= 0 && nextIndex < positions.length) {
+                    scrollToSlide(nextIndex);
+                }
+            };
+
+            // Keyboard navigation (Arrow keys, Space and Page Up/Down)
+            window.addEventListener('keydown', (e) => {
+                if (document.body.classList.contains('gy-calendar-open')) return;
+                if (e.target instanceof Element && e.target.closest('input, textarea, select, button, a, [contenteditable="true"]')) return;
+                if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+                    e.preventDefault();
+                    scrollNext();
+                } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                    e.preventDefault();
+                    const height = window.innerHeight;
+                    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                    const currentPos = scrollTop / height;
+                    const positions = getSlideScrollPositions();
+                    
+                    let prevIndex = 0;
+                    for (let i = positions.length - 1; i >= 0; i--) {
+                        if (positions[i] < currentPos - 0.1) {
+                            prevIndex = i;
+                            break;
+                        }
+                    }
+                    scrollToSlide(prevIndex);
+                }
+            });
+
+            // Touch gesture support for mobile / touchpads
+            let touchStartY = 0;
+            let touchStartX = 0;
+            let isTouching = false;
+
+            window.addEventListener('touchstart', (e) => {
+                if (document.body.classList.contains('gy-calendar-open')) return;
+                if (e.touches && e.touches.length > 0) {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX;
+                    isTouching = true;
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!isTouching || document.body.classList.contains('gy-calendar-open')) return;
+                if (e.target instanceof Element && e.target.closest('#public-calendar-panel, #booking-modal, .modal-content, .gy-calendar__shell, input, select, textarea')) return;
+                if (e.touches && e.touches.length > 0) {
+                    const deltaY = touchStartY - e.touches[0].clientY;
+                    const deltaX = touchStartX - e.touches[0].clientX;
+                    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+                        window.scrollBy({ top: deltaY, behavior: 'auto' });
+                        touchStartY = e.touches[0].clientY;
+                    }
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', () => {
+                isTouching = false;
+            }, { passive: true });
+
+            // Scroll calculations and morphing transitions linked directly to window scroll
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const height = window.innerHeight;
+                
+                // Progress tracks the fractional slide index [0, 4.5]
+                const progress = Math.max(0, Math.min(5, scrollTop / height));
+                
+                // Determine active index for slide dots highlighting
+                let activeIndex = 0;
+                if (progress < 0.6) activeIndex = 0;
+                else if (progress < 1.6) activeIndex = 1;
+                else if (progress < 2.6) activeIndex = 2; 
+                else if (progress < 3.5) activeIndex = 3;
+                else activeIndex = 4;
+                
+                // 1. Sync dots active state and text colors
+                dots.forEach((dot, idx) => {
+                    if (idx === activeIndex) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+
+                if (activeIndex >= 4) {
+                    dotsContainer.style.color = '#ffffff';
+                } else {
+                    dotsContainer.style.color = '#795244';
+                }
+
+                // 2. Folder transitions (Slides 1 to 4: progress [0, 3.3])
+                if (progress <= 3.3) {
+                    if (window.activeCategory === 'consultas') {
+                        if (foldersDeck) { foldersDeck.style.opacity = '0'; foldersDeck.style.pointerEvents = 'none'; }
+                        if (talleresDeck) { talleresDeck.style.opacity = '0'; talleresDeck.style.pointerEvents = 'none'; }
+
+                        consultasDeck.style.opacity = '1';
+                        consultasDeck.style.transform = 'translateY(0)';
+                        consultasDeck.style.pointerEvents = 'auto';
+
+                        cardMiriam.style.opacity = '1';
+                        cardMiriam.style.transform = 'translateY(0)';
+
+                        const p2 = Math.max(0, Math.min(1, (progress - 0.35) / 0.85));
+                        cardSilvia.style.transform = `translateY(${(1 - p2) * 100}%)`;
+                        cardSilvia.style.opacity = p2 > 0.01 ? '1' : '0';
+
+                        const p3 = Math.max(0, Math.min(1, (progress - 1.45) / 0.85));
+                        cardIsabel.style.transform = `translateY(${(1 - p3) * 100}%)`;
+                        cardIsabel.style.opacity = p3 > 0.01 ? '1' : '0';
+
+                        updateCardPointerEvents(cardMiriam, 1);
+                        updateCardPointerEvents(cardSilvia, p2);
+                        updateCardPointerEvents(cardIsabel, p3);
+                    } else if (window.activeCategory === 'talleres') {
+                        if (foldersDeck) { foldersDeck.style.opacity = '0'; foldersDeck.style.pointerEvents = 'none'; }
+                        if (consultasDeck) { consultasDeck.style.opacity = '0'; consultasDeck.style.pointerEvents = 'none'; }
+
+                        if (talleresDeck) {
+                            talleresDeck.style.opacity = '1';
+                            talleresDeck.style.transform = 'translateY(0)';
+                            talleresDeck.style.pointerEvents = 'auto';
+                        }
+
+                        if (cardTaller1) {
+                            cardTaller1.style.opacity = '1';
+                            cardTaller1.style.transform = 'translateY(0)';
+                        }
+                        const p2 = Math.max(0, Math.min(1, (progress - 0.35) / 0.85));
+                        if (cardTaller2) {
+                            cardTaller2.style.transform = `translateY(${(1 - p2) * 100}%)`;
+                            cardTaller2.style.opacity = p2 > 0.01 ? '1' : '0';
+                        }
+                        const p3 = Math.max(0, Math.min(1, (progress - 1.45) / 0.85));
+                        if (cardTaller3) {
+                            cardTaller3.style.transform = `translateY(${(1 - p3) * 100}%)`;
+                            cardTaller3.style.opacity = p3 > 0.01 ? '1' : '0';
+                        }
+
+                        updateCardPointerEvents(cardTaller1, 1);
+                        updateCardPointerEvents(cardTaller2, p2);
+                        updateCardPointerEvents(cardTaller3, p3);
+                    } else {
+                        if (consultasDeck) { consultasDeck.style.opacity = '0'; consultasDeck.style.pointerEvents = 'none'; }
+                        if (talleresDeck) { talleresDeck.style.opacity = '0'; talleresDeck.style.pointerEvents = 'none'; }
+
+                        foldersDeck.style.opacity = '1';
+                        foldersDeck.style.transform = 'translateY(0)';
+                        foldersDeck.style.pointerEvents = 'auto';
+
+                        card1.style.opacity = '1';
+                        card1.style.transform = 'translateY(0)';
+
+                        const p2 = Math.max(0, Math.min(1, (progress - 0.25) / 0.65));
+                        card2.style.transform = `translateY(${(1 - p2) * 100}%)`;
+                        card2.style.opacity = p2 > 0.01 ? '1' : '0';
+
+                        const p3 = Math.max(0, Math.min(1, (progress - 1.25) / 0.65));
+                        card3.style.transform = `translateY(${(1 - p3) * 100}%)`;
+                        card3.style.opacity = p3 > 0.01 ? '1' : '0';
+
+                        let p4 = 0;
+                        if (card4) {
+                            p4 = Math.max(0, Math.min(1, (progress - 2.25) / 0.65));
+                            card4.style.transform = `translateY(${(1 - p4) * 100}%)`;
+                            card4.style.opacity = p4 > 0.01 ? '1' : '0';
+                        }
+
+                        updateCardPointerEvents(card1, 1);
+                        updateCardPointerEvents(card2, p2);
+                        updateCardPointerEvents(card3, p3);
+                        updateCardPointerEvents(card4, p4);
+                    }
+                    
+                    headerTitle.style.opacity = '1';
+                    headerTitle.style.transform = 'translateY(0)';
+                } else {
+                    // PUSH TRANSITION: Translate active deck and title upwards as Slide 4 panel rises
+                    const pPush = Math.max(0, Math.min(1, (progress - 3.3) / 0.8)); // [3.3, 4.1]
+                    const activeDeck = window.activeCategory === 'consultas' ? consultasDeck : (window.activeCategory === 'talleres' ? talleresDeck : foldersDeck);
+
+                    if (activeDeck) {
+                        activeDeck.style.opacity = '1';
+                        activeDeck.style.transform = `translateY(-${pPush * 100}vh)`;
+                        activeDeck.style.pointerEvents = 'none';
+                    }
+                    
+                    headerTitle.style.opacity = '1';
+                    headerTitle.style.transform = `translateY(-${pPush * 100}vh)`;
+                }
+
+                // 3. Slide 4 Panel rising transition (progress [3.3, 4.1])
+                if (progress >= 3.3) {
+                    const p4Panel = Math.max(0, Math.min(1, (progress - 3.3) / 0.8));
+                    slide4Panel.style.transform = `translateY(${(1 - p4Panel) * 100}%)`;
+                    
+                    // Button theme swap (cream bg, brown text) as soon as Slide 4 rises halfway
+                    if (progress >= 3.7) {
+                        btnInicio.style.backgroundColor = '#f8f6f2';
+                        btnInicio.style.borderColor = '#f8f6f2';
+                        btnInicio.style.color = '#795244';
+                    } else {
+                        btnInicio.style.backgroundColor = '#795244';
+                        btnInicio.style.borderColor = '#795244';
+                        btnInicio.style.color = '#f8f6f2';
+                    }
+                } else {
+                    slide4Panel.style.transform = 'translateY(100%)';
+                    btnInicio.style.backgroundColor = '#795244';
+                    btnInicio.style.borderColor = '#795244';
+                    btnInicio.style.color = '#f8f6f2';
+                }
+
+                // 4. Parallax sliding entrance of images, button, and footer on scroll (progress [3.3, 4.2])
+                if (progress >= 3.3) {
+                    const pCTA = Math.max(0, Math.min(1, (progress - 3.3) / 0.8));
+                    
+                    // Left Image slides up
+                    if (ctaLeftImg) {
+                        ctaLeftImg.style.transform = `translateY(${(1 - pCTA) * 120}px)`;
+                        ctaLeftImg.style.opacity = `${pCTA}`;
+                    }
+                    
+                    // Right Images slide up
+                    if (ctaRightImgs) {
+                        ctaRightImgs.style.transform = `translateY(${(1 - pCTA) * 120}px)`;
+                        ctaRightImgs.style.opacity = `${pCTA}`;
+                    }
+                    
+                    // CTA Booking Button fades & scales in
+                    if (ctaBtnWrapper) {
+                        ctaBtnWrapper.style.transform = `scale(${0.9 + 0.1 * pCTA})`;
+                        ctaBtnWrapper.style.opacity = `${pCTA}`;
+                        ctaBtnWrapper.style.pointerEvents = pCTA > 0.1 ? 'auto' : 'none';
+                    }
+                    
+                    // Footer fades in & enables pointer clicks
+                    if (ctaFooter) {
+                        ctaFooter.style.opacity = `${pCTA}`;
+                        ctaFooter.style.pointerEvents = pCTA > 0.05 ? 'auto' : 'none';
+                    }
+                } else {
+                    if (ctaLeftImg) {
+                        ctaLeftImg.style.transform = 'translateY(120px)';
+                        ctaLeftImg.style.opacity = '0';
+                    }
+                    if (ctaRightImgs) {
+                        ctaRightImgs.style.transform = 'translateY(120px)';
+                        ctaRightImgs.style.opacity = '0';
+                    }
+                    if (ctaBtnWrapper) {
+                        ctaBtnWrapper.style.transform = 'scale(0.9)';
+                        ctaBtnWrapper.style.opacity = '0';
+                        ctaBtnWrapper.style.pointerEvents = 'none';
+                    }
+                    if (ctaFooter) {
+                        ctaFooter.style.opacity = '0';
+                        ctaFooter.style.pointerEvents = 'none';
+                    }
+                }
+
+                // 5. Scroll Assist Indicator styling and label updates (fades out early at progress 3.4)
+                if (progress >= 3.4) {
+                    scrollAssist.style.opacity = '0';
+                    scrollAssist.style.pointerEvents = 'none';
+                } else {
+                    scrollAssist.style.opacity = '0.6';
+                    scrollAssist.style.pointerEvents = 'auto';
+                    scrollAssist.style.color = '#795244';
+
+                    // Text labels
+                    if (progress < 2.5) {
+                        scrollAssistText.textContent = 'Ver más clases';
+                    } else {
+                        scrollAssistText.textContent = '¿Tienes dudas?';
+                    }
+                }
+            });
+
+            // Adjust layout triggers on load
+            window.dispatchEvent(new Event('scroll'));
+        });
+    </script>
+</body>
+</html>
