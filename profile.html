@@ -7186,7 +7186,7 @@
                     ? ocupacionMap[c.id]
                     : confirmadas.length;
                 c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
-                c.capacidad_max = toSafeNumber(c.capacidad_max) || 10;
+                c.capacidad_max = Number(c.capacidad_max) || 10;
                 c.es_gratuita = esClaseElegibleBonoGratis(c);
             });
 
@@ -12742,19 +12742,20 @@
                 });
             }
 
-            // Actualizar en base de datos
-            const { error: updateErr } = await client.from('clases').update({
-                nombre,
-                tipo_clase_id: tipoClaseId,
-                fecha_inicio: fechaInicio.toISOString(),
-                fecha_fin: fechaFin.toISOString(),
-                duracion_minutos: duracion,
-                capacidad_max: capacidad,
-                profesor_id: profesorId,
-                es_gratuita: esGratuita,
-                companion_modality: companionModality,
-                descripcion
-            }).eq('id', cid);
+            // Actualizar en base de datos mediante RPC
+            const { error: updateErr } = await client.rpc('admin_actualizar_clase_simple', {
+                p_clase_id: cid,
+                p_nombre: nombre,
+                p_tipo_clase_id: tipoClaseId,
+                p_fecha_inicio: fechaInicio.toISOString(),
+                p_fecha_fin: fechaFin.toISOString(),
+                p_duracion_minutos: duracion,
+                p_capacidad_max: capacidad,
+                p_profesor_id: profesorId,
+                p_es_gratuita: esGratuita,
+                p_companion_modality: companionModality,
+                p_descripcion: descripcion
+            });
 
             Swal.close();
 
