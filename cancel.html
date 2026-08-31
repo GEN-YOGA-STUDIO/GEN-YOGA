@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="application-version" content="9.12">
+    <meta name="theme-color" content="#26160C">
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.12">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.12">
+    <title>Reserva Cancelada - GEN Yoga</title>
+    
+    <!-- Sugerencias de rendimiento -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.12">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        .brand-font {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden relative flex items-center justify-center p-4 selection:bg-mutedgold selection:text-cocoa">
+    
+    <!-- Background Gradient: Matches profile page -->
+    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"></div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/30 text-center flex flex-col items-center">
+        
+        <!-- Icon -->
+        <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner animate-pulse">
+            <i class="ph-fill ph-warning-circle text-5xl"></i>
+        </div>
+        
+        <!-- Title -->
+        <h1 class="brand-font text-3xl font-black text-cocoa mb-3">Pago Cancelado</h1>
+        
+        <!-- Message -->
+        <p class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+            Parece que el proceso de pago ha sido cancelado y no se ha realizado ningún cargo. No te preocupes, puedes volver a intentarlo cuando estés listo.
+        </p>
+
+        <!-- Redirect Message -->
+        <div class="bg-amber-50/60 border border-amber-500/10 px-4 py-2.5 rounded-xl text-amber-800 text-xs font-semibold flex items-center gap-2 mb-8">
+            <i class="ph-bold ph-spinner text-sm animate-spin"></i>
+            <span id="redirect-message">Redirigiéndote a tarifas en <span id="countdown-dynamic">5</span> segundos...</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col gap-3 w-full">
+            <a id="btn-primary" href="tarifas.html" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+                Volver a Tarifas
+            </a>
+            <a id="btn-secondary" href="profile.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm">
+                Ir a mi Perfil
+            </a>
+        </div>
+        
+        <!-- Footer logo -->
+        <div class="mt-8 opacity-60 flex flex-col items-center gap-1.5 text-xs text-cocoa">
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v9.8</span>
+            <a href="politica-privacidad.html" class="hover:underline transition text-[11px] text-cocoa/70">Política de privacidad</a>
+        </div>
+    </div>
+
+    <!-- Script to redirect -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            let storedCheckoutOrigin = '';
+            try {
+                storedCheckoutOrigin = localStorage.getItem('stripe_checkout_origin') || '';
+                localStorage.removeItem('pending_booking_clase_id');
+                localStorage.removeItem('stripe_checkout_origin');
+            } catch (error) {
+                console.warn('No se pudo limpiar el estado local del checkout:', error);
+            }
+            const from = urlParams.get('from') || storedCheckoutOrigin || 'tarifas';
+            
+            const btnPrimary = document.getElementById('btn-primary');
+            const btnSecondary = document.getElementById('btn-secondary');
+            const redirectMessage = document.getElementById('redirect-message');
+
+            const setRedirectMessage = (destination) => {
+                if (!redirectMessage) return;
+                const countdown = document.createElement('span');
+                countdown.id = 'countdown-dynamic';
+                countdown.textContent = '5';
+                redirectMessage.replaceChildren(
+                    document.createTextNode(`Redirigiéndote a ${destination} en `),
+                    countdown,
+                    document.createTextNode(' segundos...')
+                );
+            };
+            
+            let redirectUrl = 'tarifas.html';
+            
+            if (from === 'profile') {
+                redirectUrl = 'profile.html';
+                if (btnPrimary) {
+                    btnPrimary.href = 'profile.html';
+                    btnPrimary.textContent = 'Volver a mi Perfil';
+                }
+                if (btnSecondary) {
+                    btnSecondary.href = 'tarifas.html';
+                    btnSecondary.textContent = 'Ver Tarifas';
+                }
+                setRedirectMessage('tu perfil');
+            } else {
+                if (btnPrimary) {
+                    btnPrimary.href = 'tarifas.html';
+                    btnPrimary.textContent = 'Volver a Tarifas';
+                }
+                if (btnSecondary) {
+                    btnSecondary.href = 'profile.html';
+                    btnSecondary.textContent = 'Ir a mi Perfil';
+                }
+                setRedirectMessage('tarifas');
+            }
+
+            // Countdown timer redirect
+            let seconds = 5;
+            const dynamicCountdownEl = document.getElementById('countdown-dynamic');
+            
+            const interval = setInterval(() => {
+                seconds--;
+                if (dynamicCountdownEl) dynamicCountdownEl.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
