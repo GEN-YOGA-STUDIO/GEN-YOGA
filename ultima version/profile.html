@@ -11129,371 +11129,140 @@
         }
 
         async function abrirCrearClienteMostrador() {
-            if (!isAdmin && !esTrabajador()) return;
+    if (!isAdmin && !esTrabajador()) return;
 
-            const { value: formValues } = await Swal.fire({
-                title: 'Crear cliente de mostrador',
-                html: `
-            <div class="space-y-3 text-left font-sans">
-                <p class="text-xs text-cocoa/60 leading-relaxed">
+    const { value: formValues } = await Swal.fire({
+        title: 'Crear cliente de mostrador',
+        html: `
+            <div class='space-y-3 text-left font-sans'>
+                <p class='text-xs text-cocoa/60 leading-relaxed'>
                     Crea un perfil interno para personas que reservan y pagan desde el mostrador. No tendrá contraseña ni acceso online.
                 </p>
                 <div>
-                    <label class="text-[11px] font-bold uppercase text-cocoa/60 block mb-1">Nombre *</label>
-                    <input id="swal-kiosk-nombre" maxlength="80" autocomplete="off" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive" placeholder="Nombre">
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Nombre *</label>
+                    <input id='swal-kiosk-nombre' maxlength='80' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Nombre'>
                 </div>
                 <div>
-                    <label class="text-[11px] font-bold uppercase text-cocoa/60 block mb-1">Apellidos</label>
-                    <input id="swal-kiosk-apellidos" maxlength="120" autocomplete="off" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive" placeholder="Apellidos">
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Apellidos</label>
+                    <input id='swal-kiosk-apellidos' maxlength='120' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Apellidos'>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class='grid grid-cols-1 sm:grid-cols-2 gap-2'>
                     <div>
-                        <label class="text-[11px] font-bold uppercase text-cocoa/60 block mb-1">Correo electrónico</label>
-                        <input id="swal-kiosk-email" type="email" maxlength="254" autocomplete="off" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive" placeholder="correo@ejemplo.com">
+                        <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Correo electrónico</label>
+                        <input id='swal-kiosk-email' type='email' maxlength='254' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='correo@ejemplo.com'>
                     </div>
                     <div>
-                        <label class="text-[11px] font-bold uppercase text-cocoa/60 block mb-1">Teléfono móvil</label>
-                        <input id="swal-kiosk-telefono" type="tel" maxlength="15" autocomplete="off" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive" placeholder="612345678">
+                        <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Teléfono móvil</label>
+                        <input id='swal-kiosk-telefono' type='tel' maxlength='15' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='612345678'>
                     </div>
                 </div>
                 <div>
-                    <label class="text-[11px] font-bold uppercase text-cocoa/60 block mb-1">Clases sueltas iniciales</label>
-                    <input id="swal-kiosk-bonos" type="number" min="0" max="10000" step="1" inputmode="numeric" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive" value="0">
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Clases sueltas iniciales</label>
+                    <input id='swal-kiosk-bonos' type='number' min='0' max='10000' step='1' inputmode='numeric' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' value='0'>
                 </div>
                 <div>
-                    <label class="text-[11px] font-bold uppercase text-cocoa/60 block mb-1">Notas / Anotaciones</label>
-                    <textarea id="swal-kiosk-notas" maxlength="1000" rows="2" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive" placeholder="Anotaciones sobre el paciente..."></textarea>
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Notas / Anotaciones</label>
+                    <textarea id='swal-kiosk-notas' maxlength='1000' rows='2' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Anotaciones sobre el paciente...'></textarea>
                 </div>
             </div>
         `,
-                showCancelButton: true,
-                confirmButtonText: 'Crear cliente',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#26160C',
-                focusConfirm: false,
-                preConfirm: () => {
-                    const nombre = document.getElementById('swal-kiosk-nombre').value.trim();
-                    const apellidos = document.getElementById('swal-kiosk-apellidos').value.trim();
-                    const email = document.getElementById('swal-kiosk-email').value.trim();
-                    const telefono = document.getElementById('swal-kiosk-telefono').value.trim();
-                    const bonosRaw = document.getElementById('swal-kiosk-bonos').value.trim();
-                    const notas = document.getElementById('swal-kiosk-notas').value.trim();
-                    const bonos = Number(bonosRaw);
+        showCancelButton: true,
+        confirmButtonText: 'Crear cliente',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#26160C',
+        focusConfirm: false,
+        preConfirm: () => {
+            const nombre = document.getElementById('swal-kiosk-nombre').value.trim();
+            const apellidos = document.getElementById('swal-kiosk-apellidos').value.trim();
+            const email = document.getElementById('swal-kiosk-email').value.trim();
+            const telefono = document.getElementById('swal-kiosk-telefono').value.trim();
+            const bonosRaw = document.getElementById('swal-kiosk-bonos').value.trim();
+            const notas = document.getElementById('swal-kiosk-notas').value.trim();
+            const bonos = Number(bonosRaw);
 
-                    if (!nombre) {
-                        Swal.showValidationMessage('El nombre es obligatorio');
-                        return false;
-                    }
-                    if (!Number.isSafeInteger(bonos) || bonos < 0 || bonos > 10000) {
-                        Swal.showValidationMessage('Las clases iniciales deben ser un número válido entre 0 y 10000');
-                        return false;
-                    }
-
-                    return { nombre, apellidos, email, telefono, bonos, notas };
-                }
-            });
-
-            if (!formValues) return;
-
-            if (typeof window.crypto?.randomUUID !== 'function') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Navegador no compatible',
-                    text: 'Actualiza el navegador para crear clientes de mostrador de forma segura.',
-                    confirmButtonColor: '#E1654E'
-                });
-                return;
+            if (!nombre) {
+                Swal.showValidationMessage('El nombre es obligatorio');
+                return false;
+            }
+            if (!Number.isSafeInteger(bonos) || bonos < 0 || bonos > 10000) {
+                Swal.showValidationMessage('Las clases iniciales deben ser un número válido entre 0 y 10000');
+                return false;
             }
 
-            const payload = {
-                nombre: formValues.nombre,
-                apellidos: formValues.apellidos,
-                email: formValues.email,
-                telefono: formValues.telefono,
-                bonos: formValues.bonos,
-                notas: formValues.notas,
-                idempotencyKey: window.crypto.randomUUID()
-            };
-
-            Swal.fire({
-                title: 'Creando cliente...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            let result;
-            try {
-                result = await crearPerfilMostradorEnServidor(payload);
-            } catch (invokeError) {
-                console.error('Error al crear cliente de mostrador:', invokeError);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No se pudo crear',
-                    text: 'No se pudo conectar con el servidor. Comprueba la conexión e inténtalo de nuevo.',
-                    confirmButtonColor: '#E1654E'
-                });
-                return;
-            }
-
-            if (result.error) {
-                const message = await obtenerMensajeErrorFuncion(result.error, result.data);
-                console.error('Error al crear cliente de mostrador:', result.error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No se pudo crear',
-                    text: message,
-                    confirmButtonColor: '#E1654E'
-                });
-                return;
-            }
-
-            try {
-                await cargarUsuariosAdmin();
-            } catch (listError) {
-                console.warn('No se pudo refrescar la lista de usuarios:', listError);
-            }
-
-            const createdProfile = result.data?.profile || payload;
-            const nombreCompleto = `${createdProfile.nombre || ''} ${createdProfile.apellidos || ''}`.trim();
-            Swal.fire({
-                icon: 'success',
-                title: 'Cliente creado',
-                text: `${nombreCompleto || 'El cliente'} ya aparece en la gestión de bonos con sus datos y notas guardadas.`,
-                confirmButtonColor: '#9B7B37'
-            });
+            return { nombre, apellidos, email, telefono, bonos, notas };
         }
-        // El modal de carga nunca debe quedarse colgado: si la respuesta del servidor
-        // se pierde después de crear el perfil, se avisa y se refresca la lista.
-        const KIOSK_TIMEOUT_MS = 25000;
-        let result;
-        try {
-            result = await Promise.race([
-                crearPerfilMostradorEnServidor(payload),
-                new Promise(resolve => setTimeout(() => resolve({ timedOut: true }), KIOSK_TIMEOUT_MS))
-            ]);
-        } catch (invokeError) {
-            console.error('Error al crear cliente de mostrador:', invokeError);
-            Swal.fire({
-                icon: 'error',
-                title: 'No se pudo crear',
-                text: 'No se pudo conectar con el servidor. Comprueba la conexión e inténtalo de nuevo.',
-                confirmButtonColor: '#E1654E'
-            });
-            return;
-        }
+    });
 
-        if (result.timedOut) {
-            // El servidor puede haber terminado el alta aunque la respuesta no haya llegado.
-            try { await cargarUsuariosAdmin(); } catch (_) { /* el aviso siguiente informa igualmente */ }
-            Swal.fire({
-                icon: 'info',
-                title: 'La creación está tardando',
-                text: 'El servidor sigue procesando el alta. Revisa la lista de gestión de bonos; si el cliente no aparece en unos segundos, vuelve a crearlo.',
-                confirmButtonColor: '#9B7B37'
-            });
-            return;
-        }
+    if (!formValues) return;
 
-        if (result.error) {
-            const message = await obtenerMensajeErrorFuncion(result.error, result.data);
-            console.error('Error al crear cliente de mostrador:', result.error);
-            Swal.fire({
-                icon: 'error',
-                title: 'No se pudo crear',
-                text: message,
-                confirmButtonColor: '#E1654E'
-            });
-            return;
-        }
-
-        try {
-            await cargarUsuariosAdmin();
-        } catch (listError) {
-            console.warn('No se pudo refrescar la lista de usuarios:', listError);
-        }
-        const createdProfile = result.data?.profile || payload;
-        const nombreCompleto = `${createdProfile.nombre || ''} ${createdProfile.apellidos || ''}`.trim();
+    if (typeof window.crypto?.randomUUID !== 'function') {
         Swal.fire({
-            icon: 'success',
-            title: result.data?.created === false ? 'Cliente ya creado' : 'Cliente creado',
-            text: `${nombreCompleto || 'El cliente'} ya aparece en gestión de bonos como perfil sin acceso online.`,
-            confirmButtonColor: '#9B7B37'
+            icon: 'error',
+            title: 'Navegador no compatible',
+            text: 'Actualiza el navegador para crear clientes de mostrador de forma segura.',
+            confirmButtonColor: '#E1654E'
         });
+        return;
+    }
 
+    const payload = {
+        nombre: formValues.nombre,
+        apellidos: formValues.apellidos,
+        email: formValues.email,
+        telefono: formValues.telefono,
+        bonos: formValues.bonos,
+        notas: formValues.notas,
+        idempotencyKey: window.crypto.randomUUID()
+    };
 
-        function getSaldoConfig(tipo) {
-            return SALDOS_CONFIG[tipo] || SALDOS_CONFIG.yoga;
-        }
+    Swal.fire({
+        title: 'Creando cliente...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
 
+    let result;
+    try {
+        result = await crearPerfilMostradorEnServidor(payload);
+    } catch (invokeError) {
+        console.error('Error al crear cliente de mostrador:', invokeError);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo crear',
+            text: 'No se pudo conectar con el servidor. Comprueba la conexión e inténtalo de nuevo.',
+            confirmButtonColor: '#E1654E'
+        });
+        return;
+    }
 
-        function renderSaldoBadgeAdmin(u) {
-            const userId = inlineJsString(u.id);
+    if (result.error) {
+        const message = await obtenerMensajeErrorFuncion(result.error, result.data);
+        console.error('Error al crear cliente de mostrador:', result.error);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo crear',
+            text: message,
+            confirmButtonColor: '#E1654E'
+        });
+        return;
+    }
 
-            // 1. Clases Sueltas
-            const indValue = toSafeNumber(u.bonos);
-            const indClass = indValue > 0 ? 'text-cocoa font-black text-xs' : 'text-cocoa/40 font-bold text-xs';
-            const indHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-sand/20 border border-cocoa/15 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Clases sueltas / packs de yoga">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-cocoa/70 uppercase tracking-tight">
-                <i class="ph-bold ph-ticket text-olive"></i> Sueltas
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'yoga', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-cocoa/20 text-cocoa/70 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${indClass}">${indValue}</span>
-                <button onclick="sumarSaldo(${userId}, 'yoga', 1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-cocoa text-white hover:bg-black transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
+    try {
+        await cargarUsuariosAdmin();
+    } catch (listError) {
+        console.warn('No se pudo refrescar la lista de usuarios:', listError);
+    }
 
-            // 2. Bono Bienvenida (Sesión Introductoria Gratuita)
-            const freeClassVal = toSafeNumber(u.saldo_clases_gratis) > 0 ? toSafeNumber(u.saldo_clases_gratis) : 1;
-            const freeClassClass = freeClassVal > 0 ? 'text-emerald-800 font-black text-xs' : 'text-emerald-900/30 font-bold text-xs';
-            const freeClassHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Bono de bienvenida / sesión introductoria gratuita">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-emerald-800 uppercase tracking-tight">
-                <i class="ph-bold ph-sparkle text-emerald-600"></i> Bienvenida
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'clases_gratis', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-emerald-300 text-emerald-800 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${freeClassClass}">${freeClassVal}</span>
-                <button onclick="sumarSaldo(${userId}, 'clases_gratis', 1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-emerald-700 text-white hover:bg-emerald-800 transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
-
-            // 3. Yoga en Compañía (Colegas, Pareja, Madre e Hija, Abuela y Nieta)
-            const companionVal = toSafeNumber(u.saldo_yoga_compania) > 0 ? toSafeNumber(u.saldo_yoga_compania) : 1;
-            const companionClass = companionVal > 0 ? 'text-amber-900 font-black text-xs' : 'text-amber-900/30 font-bold text-xs';
-            const companionHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-amber-50/90 border border-amber-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Bono de Yoga en Compañía">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-amber-900 uppercase tracking-tight">
-                <i class="ph-bold ph-users-three text-amber-700"></i> Compañía
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'yoga_compania', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-amber-300 text-amber-900 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${companionClass}">${companionVal}</span>
-                <button onclick="sumarSaldo(${userId}, 'yoga_compania', 1)" style="background-color: #b48a47 !important; color: #ffffff !important;" class="w-5 h-5 flex items-center justify-center rounded-md bg-[#b48a47] text-white hover:bg-[#967236] transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
-
-            // 4. Consulta Gratis
-            const freeConsVal = toSafeNumber(u.saldo_consultas_gratis) > 0 ? toSafeNumber(u.saldo_consultas_gratis) : 1;
-            const freeConsClass = freeConsVal > 0 ? 'text-pink-900 font-black text-xs' : 'text-pink-900/30 font-bold text-xs';
-            const freeConsHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-pink-50/80 border border-pink-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Bono de consulta gratuita de bienvenida">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-pink-800 uppercase tracking-tight">
-                <i class="ph-bold ph-gift text-pink-600"></i> Consulta
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'consultas_gratis', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-pink-300 text-pink-800 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${freeConsClass}">${freeConsVal}</span>
-                <button onclick="sumarSaldo(${userId}, 'consultas_gratis', 1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-pink-600 text-white hover:bg-pink-700 transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
-
-            // 5. Mes Ilimitado
-            let mensualHtml = '';
-            if (u.bono_mensual_activo) {
-                const fechaFin = u.bono_mensual_fin ? new Date(u.bono_mensual_fin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
-                mensualHtml = `
-            <div class="inline-flex items-center gap-1.5 bg-emerald-100 border border-emerald-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Membresía ilimitada activa hasta ${escapeHtml(fechaFin)}">
-                <span class="flex items-center gap-1 text-[10px] font-bold text-emerald-900 uppercase tracking-tight">
-                    <i class="ph-bold ph-infinity text-emerald-700"></i> Ilimitado: <span class="font-normal font-mono text-[9px] ml-0.5">${escapeHtml(fechaFin)}</span>
-                </span>
-                <button onclick="cambiarBonoMensual(${userId}, false)" class="ml-1 text-[9px] font-bold text-red-600 hover:text-red-800 bg-white/80 hover:bg-white px-1.5 py-0.5 rounded-md border border-red-200 transition" title="Desactivar mes ilimitado">
-                    Desactivar
-                </button>
-            </div>`;
-            } else {
-                mensualHtml = `
-            <button onclick="cambiarBonoMensual(${userId}, true)" class="inline-flex items-center gap-1 bg-sand/15 hover:bg-emerald-50 border border-cocoa/15 hover:border-emerald-300 rounded-xl px-2 py-1 text-xs text-cocoa/60 hover:text-emerald-800 transition shadow-2xs group" title="Activar mes ilimitado de clases">
-                <i class="ph-bold ph-infinity text-cocoa/40 group-hover:text-emerald-600"></i>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Activar Ilimitado</span>
-            </button>`;
-            }
-
-            // 6. Descuento 50% Promo (GEN YOGA)
-            let promo50Html = '';
-            if (u.descuento_promo_50_activo) {
-                promo50Html = `
-            <div class="inline-flex items-center gap-1 bg-amber-100 border border-amber-400 rounded-xl px-2 py-1 text-xs shadow-2xs font-black text-amber-950" title="Código Promocional GEN YOGA activo: 50% de descuento en 1ª reserva">
-                <i class="ph-bold ph-tag text-amber-700"></i>
-                <span class="text-[10px] uppercase tracking-tight">50% DTO</span>
-            </div>`;
-            }
-
-            // Saldo Psicología / Nutrición adicionales (si existen)
-            const psicoVal = toSafeNumber(u.saldo_psicologia);
-            let psicoHtml = '';
-            if (psicoVal > 0) {
-                psicoHtml = `
-            <div class="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 rounded-xl px-2 py-1 text-xs shadow-2xs">
-                <span class="text-[10px] font-bold text-blue-800 uppercase tracking-tight">Psico:</span>
-                <span class="text-blue-700 font-black text-xs">${psicoVal}</span>
-            </div>`;
-            }
-
-            const nutriVal = toSafeNumber(u.saldo_nutricion);
-            let nutriHtml = '';
-            if (nutriVal > 0) {
-                nutriHtml = `
-            <div class="inline-flex items-center gap-1 bg-purple-50 border border-purple-200 rounded-xl px-2 py-1 text-xs shadow-2xs">
-                <span class="text-[10px] font-bold text-purple-800 uppercase tracking-tight">Nutri:</span>
-                <span class="text-purple-700 font-black text-xs">${nutriVal}</span>
-            </div>`;
-            }
-
-            return `<div class="flex flex-wrap items-center gap-1.5">${indHtml}${freeClassHtml}${companionHtml}${freeConsHtml}${mensualHtml}${promo50Html}${psicoHtml}${nutriHtml}</div>`;
-        }
-
-        function renderActionsAdmin(u) {
-            const userId = inlineJsString(u.id);
-
-            let consultationDiscountButton = '';
-            if (u.bono_mensual_activo) {
-                consultationDiscountButton = `
-            <button onclick="aplicarDescuentoPrimeraConsulta(${userId})" class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition flex items-center gap-1 shadow-2xs shrink-0" title="Registrar el 30% incluido en la primera consulta">
-                <i class="ph-bold ph-percent"></i> 30% consulta
-            </button>`;
-            }
-
-            let promoButton = '';
-            if (u.descuento_promo_50_activo) {
-                promoButton = `
-            <button onclick="adminTogglePromo50(${userId}, false)" class="px-2 py-1 text-[10px] font-bold uppercase tracking-tight rounded-xl border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 transition flex items-center gap-1 shadow-2xs shrink-0" title="Quitar 50% de descuento promocional">
-                <i class="ph-bold ph-tag"></i> 50% activo
-            </button>`;
-            } else {
-                promoButton = `
-            <button onclick="adminTogglePromo50(${userId}, true)" class="px-2 py-1 text-[10px] font-bold uppercase tracking-tight rounded-xl border border-cocoa/15 text-cocoa/60 hover:text-amber-900 hover:bg-amber-50 hover:border-amber-300 transition flex items-center gap-1 shadow-2xs shrink-0" title="Activar 50% de descuento promocional (GEN YOGA)">
-                <i class="ph-bold ph-tag"></i> +50% Promo
-            </button>`;
-            }
-
-            const bonosModalButton = `
-        <button onclick="abrirGestionBonosUsuario(${userId})" class="w-8 h-8 flex items-center justify-center rounded-xl border border-cocoa/15 text-cocoa/70 hover:text-cocoa hover:bg-sand/20 transition shadow-2xs shrink-0" title="Gestión avanzada de bonos y saldos">
-            <i class="ph-bold ph-sliders-horizontal text-sm"></i>
-        </button>`;
-
-            const editUserButton = `
-        <button onclick="abrirEditarUsuarioAdmin(${userId})" class="w-8 h-8 flex items-center justify-center rounded-xl border border-cocoa/15 text-cocoa/70 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition shadow-2xs shrink-0" title="Editar datos del usuario (Nombre, Teléfono, Fecha Nacimiento)">
-            <i class="ph-bold ph-pencil-simple text-sm"></i>
-        </button>`;
-
-            const deleteUserButton = `
-        <button onclick="borrarUsuario(${userId})" class="w-8 h-8 flex items-center justify-center rounded-xl border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition shadow-2xs shrink-0" title="Eliminar Usuario">
-            <i class="ph-bold ph-trash text-sm"></i>
-        </button>`;
-
-            return `
-        <div class="flex items-center justify-end gap-1.5 flex-wrap">
-            ${consultationDiscountButton}
-            ${promoButton}
-            ${bonosModalButton}
-            ${editUserButton}
-            ${deleteUserButton}
-        </div>`;
-        }
-
-        async function adminTogglePromo50(userId, active) {
+    const createdProfile = result.data?.profile || payload;
+    const nombreCompleto = `${createdProfile.nombre || '\} ${createdProfile.apellidos || '\}`.trim();
+    Swal.fire({
+        icon: 'success',
+        title: 'Cliente creado',
+        text: `${nombreCompleto || 'El cliente'} ya aparece en la gestión de bonos con sus datos y notas guardadas.`,
+        confirmButtonColor: '#9B7B37'
+    });
+}
+async function adminTogglePromo50(userId, active) {
             if (!isAdmin) return;
             const actionText = active ? 'activar' : 'desactivar';
             const res = await Swal.fire({
