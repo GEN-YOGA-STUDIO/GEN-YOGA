@@ -91,7 +91,21 @@ serve(async (req) => {
     }
 
     const classStartsAt = String(selectedClass.fecha_inicio)
-    const { data: naturalMonth, error: naturalMonthError } = await supabase
+    const classDate = new Date(classStartsAt)
+    let classMonthDate = ''
+    try {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit'
+      }).formatToParts(classDate)
+      const year = parts.find((p) => p.type === 'year')?.value
+      const month = parts.find((p) => p.type === 'month')?.value
+      if (year && month) classMonthDate = `${year}-${month}-01`
+    } catch (_) {
+      classMonthDate = `${classDate.getFullYear()}-${String(classDate.getMonth() + 1).padStart(2, '0')}-01`
+    }
+
+    let naturalMonth: { starts_at: string; ends_at: string } | null = null
+    const { data: monthByRange, error: rangeError } = await supabase
       .from('unlimited_membership_periods')
       .select('starts_at, ends_at')
       .eq('user_id', owner!.id)
@@ -100,7 +114,21 @@ serve(async (req) => {
       .order('starts_at', { ascending: false })
       .limit(1)
       .maybeSingle()
-    if (naturalMonthError) throw new Error('No se pudo comprobar el mes natural del Bono Ilimitado.')
+
+    if (rangeError) throw new Error('No se pudo comprobar el mes natural del Bono Ilimitado.')
+    naturalMonth = monthByRange
+
+    if (!naturalMonth && classMonthDate) {
+      const { data: monthByMonth, error: monthError } = await supabase
+        .from('unlimited_membership_periods')
+        .select('starts_at, ends_at')
+        .eq('user_id', owner!.id)
+        .eq('membership_month', classMonthDate)
+        .maybeSingle()
+      if (!monthError && monthByMonth) {
+        naturalMonth = monthByMonth
+      }
+    }
 
     let membershipStart = naturalMonth?.starts_at || null
     let membershipEnd = naturalMonth?.ends_at || null

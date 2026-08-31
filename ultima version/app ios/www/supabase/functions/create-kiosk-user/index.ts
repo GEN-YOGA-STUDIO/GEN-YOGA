@@ -300,7 +300,14 @@ serve(async (req) => {
       120,
       false,
     );
-    const bonos = normalizeBonuses(body.bonos);
+    const fechaNacimiento = typeof body.fecha_nacimiento === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.fecha_nacimiento.trim())
+      ? body.fecha_nacimiento.trim()
+      : null;
+    const telefono = typeof body.telefono === "string" && body.telefono.trim()
+      ? body.telefono.trim().replace(/[^0-9+]/g, "")
+      : null;
+    const notas = typeof body.notas === "string" ? body.notas.trim() : "";
+    const bonos = 0;
     const idempotencyKey = typeof body.idempotency_key === "string"
       ? body.idempotency_key.trim()
       : "";
@@ -311,16 +318,20 @@ serve(async (req) => {
       );
     }
 
+    const providedEmail = typeof body.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())
+      ? body.email.trim().toLowerCase()
+      : null;
+
     const operationSeed = `gen-yoga:kiosk:${actor.id}:${idempotencyKey}`;
     const fingerprint = await sha256Hex(operationSeed);
-    const internalEmail = `mostrador+${
+    const internalEmail = providedEmail || `mostrador+${
       fingerprint.slice(0, 32)
     }@genyoga.studio`;
 
     const { data: existingProfile, error: existingProfileError } =
       await supabase
         .from("profiles")
-        .select("id, email, nombre, apellidos, rol, bonos")
+        .select("id, email, nombre, apellidos, fecha_nacimiento, telefono, notas, rol, bonos")
         .eq("email", internalEmail)
         .maybeSingle();
 
@@ -347,6 +358,9 @@ serve(async (req) => {
       user_metadata: {
         nombre,
         apellidos,
+        fecha_nacimiento: fechaNacimiento,
+        telefono,
+        notas,
         kiosk: true,
         actor_id: actor.id,
       },
@@ -356,7 +370,7 @@ serve(async (req) => {
       // Reintentar si ya fue creado concurrentemente
       const { data: concurrentProfile } = await supabase
         .from("profiles")
-        .select("id, email, nombre, apellidos, rol, bonos")
+        .select("id, email, nombre, apellidos, fecha_nacimiento, telefono, notas, rol, bonos")
         .eq("email", internalEmail)
         .maybeSingle();
       if (concurrentProfile) {
@@ -379,13 +393,16 @@ serve(async (req) => {
         email: internalEmail,
         nombre,
         apellidos,
+        fecha_nacimiento: fechaNacimiento,
+        telefono,
+        notas,
         rol: "cliente",
-        bonos,
+        bonos: 0,
         saldo_clases_gratis: 1,
         saldo_consultas_gratis: 1,
         saldo_yoga_compania: 1,
       })
-      .select("id, email, nombre, apellidos, rol, bonos")
+      .select("id, email, nombre, apellidos, fecha_nacimiento, telefono, notas, rol, bonos")
       .single();
 
     if (profileError || !createdProfile) {

@@ -2029,21 +2029,21 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span>Días de práctica:</span>
+                                        <span id="sticky-days-title-text">Días de práctica:</span>
                                     </div>
                                     <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="scrollDiasRapidos(-160)"
-                                            class="w-7 h-7 rounded-full bg-sand/30 hover:bg-sand/60 text-cocoa flex items-center justify-center transition cursor-pointer shadow-2xs"
-                                            title="Ver días anteriores">
-                                            <i class="ph-bold ph-caret-left text-xs"></i>
+                                        <button type="button" onclick="scrollDiasRapidos(-1)"
+                                            class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                            title="Ver días / mes anterior" aria-label="Ver días o mes anterior">
+                                            <i class="ph-bold ph-caret-left text-sm"></i>
                                         </button>
-                                        <button type="button" onclick="scrollDiasRapidos(160)"
-                                            class="w-7 h-7 rounded-full bg-sand/30 hover:bg-sand/60 text-cocoa flex items-center justify-center transition cursor-pointer shadow-2xs"
-                                            title="Ver días siguientes">
-                                            <i class="ph-bold ph-caret-right text-xs"></i>
+                                        <button type="button" onclick="scrollDiasRapidos(1)"
+                                            class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                            title="Ver días / mes siguiente" aria-label="Ver días o mes siguiente">
+                                            <i class="ph-bold ph-caret-right text-sm"></i>
                                         </button>
                                         <button type="button" onclick="limpiarFiltroFecha()" id="btn-ver-todas-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1">
+                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1.5 cursor-pointer">
                                             <i class="ph-bold ph-squares-four"></i> Ver todas las clases
                                         </button>
                                     </div>
@@ -2051,7 +2051,7 @@
                                 <div
                                     class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
                                     <div id="sticky-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full"
+                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
                                         style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
                                         <!-- Generado dinámicamente -->
                                     </div>
@@ -5640,19 +5640,45 @@
         }
 
         function getUnlimitedPeriodForDate(value) {
-            const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
+            const dateObj = value instanceof Date ? value : new Date(value);
+            const timestamp = dateObj.getTime();
             if (!Number.isFinite(timestamp)) return null;
+
+            // Extraer mes natural 'YYYY-MM' en la zona horaria oficial del centro (Europe/Madrid)
+            let classYearMonth = '';
+            try {
+                const parts = new Intl.DateTimeFormat('en-GB', {
+                    timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit'
+                }).formatToParts(dateObj);
+                const year = parts.find(part => part.type === 'year')?.value;
+                const month = parts.find(part => part.type === 'month')?.value;
+                if (year && month) classYearMonth = `${year}-${month}`;
+            } catch (_) {
+                const y = dateObj.getFullYear();
+                const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                classYearMonth = `${y}-${m}`;
+            }
+
             const naturalMonth = userUnlimitedPeriods.find(period => {
+                const periodMonthStr = String(period.membership_month || '').slice(0, 7);
+                if (classYearMonth && periodMonthStr === classYearMonth) {
+                    return true;
+                }
                 const start = Date.parse(period.starts_at);
                 const end = Date.parse(period.ends_at);
-                return Number.isFinite(start) && Number.isFinite(end) && timestamp >= start && timestamp < end;
+                if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
+                // Si end cae a las 00:00:00 del último día, extenderlo hasta el final del día
+                const inclusiveEnd = end + (end % 86400000 === 0 ? 86400000 : 0);
+                return timestamp >= start && timestamp < inclusiveEnd;
             });
             if (naturalMonth) return naturalMonth;
+
             const legacyStart = Date.parse(userLegacyUnlimitedStart);
             const legacyEnd = Date.parse(userLegacyUnlimitedEnd);
             if (userLegacyUnlimitedActive) {
                 if (Number.isFinite(legacyStart) && Number.isFinite(legacyEnd)) {
-                    if (timestamp >= legacyStart && timestamp < legacyEnd) {
+                    const inclusiveLegacyEnd = legacyEnd + (legacyEnd % 86400000 === 0 ? 86400000 : 0);
+                    if (timestamp >= legacyStart && timestamp < inclusiveLegacyEnd) {
                         return {
                             membership_month: null,
                             starts_at: userLegacyUnlimitedStart,
@@ -5684,9 +5710,10 @@
             if (!period?.starts_at || !period?.ends_at) return false;
             const periodStart = Date.parse(period.starts_at);
             const periodEnd = Date.parse(period.ends_at);
+            const inclusivePeriodEnd = periodEnd + (periodEnd % 86400000 === 0 ? 86400000 : 0);
             return userUnlimitedSpecialReservations.some(reservation => {
                 const startsAt = Date.parse(reservation.clases?.fecha_inicio);
-                return Number.isFinite(startsAt) && startsAt >= periodStart && startsAt < periodEnd;
+                return Number.isFinite(startsAt) && startsAt >= periodStart && startsAt < inclusivePeriodEnd;
             });
         }
 
@@ -6833,16 +6860,95 @@
             renderizarClases();
         }
 
-        function scrollDiasRapidos(delta) {
+        function inicializarEventosBarraDias() {
             const list = document.getElementById('sticky-days-list');
-            if (list) {
-                list.scrollBy({ left: delta, behavior: 'smooth' });
+            if (!list || list.dataset.eventsAttached === 'true') return;
+            list.dataset.eventsAttached = 'true';
+
+            // Scroll con rueda de ratón vertical -> horizontal
+            list.addEventListener('wheel', (e) => {
+                if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && list.scrollWidth > list.clientWidth) {
+                    e.preventDefault();
+                    list.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
+
+            // Drag to scroll con ratón en escritorio
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            let hasDragged = false;
+
+            list.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                isDown = true;
+                hasDragged = false;
+                list.classList.add('cursor-grabbing');
+                list.classList.remove('cursor-grab');
+                startX = e.pageX - list.offsetLeft;
+                scrollLeft = list.scrollLeft;
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDown) {
+                    isDown = false;
+                    list.classList.remove('cursor-grabbing');
+                    list.classList.add('cursor-grab');
+                }
+            });
+
+            list.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                const x = e.pageX - list.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                if (Math.abs(walk) > 4) {
+                    hasDragged = true;
+                }
+                list.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        function scrollDiasRapidos(direction) {
+            const list = document.getElementById('sticky-days-list');
+            if (!list) return;
+
+            // Paso dinámico adaptado al ancho del contenedor
+            const step = Math.max(220, Math.round(list.clientWidth * 0.75));
+            const currentScroll = list.scrollLeft;
+            const maxScroll = Math.max(0, list.scrollWidth - list.clientWidth);
+
+            if (direction > 0) {
+                // Hacia la derecha (días siguientes)
+                if (maxScroll > 15 && currentScroll < maxScroll - 20) {
+                    try {
+                        list.scrollBy({ left: step, behavior: 'smooth' });
+                    } catch (e) {
+                        list.scrollLeft += step;
+                    }
+                } else {
+                    // Si ya está al final del scroll del mes actual, avanzar al siguiente mes
+                    cambiarMes(1);
+                }
+            } else {
+                // Hacia la izquierda (días anteriores)
+                if (currentScroll > 20) {
+                    try {
+                        list.scrollBy({ left: -step, behavior: 'smooth' });
+                    } catch (e) {
+                        list.scrollLeft -= step;
+                    }
+                } else {
+                    // Si ya está al inicio, retroceder al mes anterior
+                    cambiarMes(-1);
+                }
             }
         }
 
         function renderizarBarraDiasRapidos() {
             const bar = document.getElementById('sticky-days-list');
             if (!bar) return;
+
+            inicializarEventosBarraDias();
 
             const showHiddenProfesionales = isAdmin;
             const fechasConClases = new Map();
@@ -6851,6 +6957,14 @@
 
             const targetYear = currentCalendarMonth.getFullYear();
             const targetMonth = currentCalendarMonth.getMonth();
+
+            const monthFallback = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
+
+            const titleEl = document.getElementById('sticky-days-title-text');
+            if (titleEl) {
+                titleEl.innerHTML = `Días de práctica: <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
+            }
 
             allClasesCache.forEach(c => {
                 if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false) {
@@ -6865,7 +6979,14 @@
 
             const dKeys = Array.from(fechasConClases.keys()).sort();
             if (dKeys.length === 0) {
-                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay clases programadas para este mes</span>';
+                bar.innerHTML = `
+                    <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
+                        <span class="italic">No hay más clases restantes en ${monthNames[targetMonth]}.</span>
+                        <button type="button" onclick="cambiarMes(1)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                            Ver ${monthNames[(targetMonth + 1) % 12]} <i class="ph-bold ph-caret-right"></i>
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
@@ -11010,103 +11131,112 @@
         }
 
         async function crearPerfilMostradorEnServidor(payload) {
+            // 1. RPC
             try {
                 const { data: rpcData, error: rpcError } = await client.rpc('admin_crear_cliente_mostrador', {
                     p_nombre: payload.nombre,
                     p_apellidos: payload.apellidos || '',
-                    p_bonos: Number(payload.bonos || 0),
-                    p_email: payload.email || null,
+                    p_fecha_nacimiento: payload.fecha_nacimiento || null,
                     p_telefono: payload.telefono || null,
+                    p_email: payload.email || null,
                     p_notas: payload.notas || null
                 });
                 if (!rpcError && rpcData) {
-                    if (rpcData.profile?.id) {
-                        await asegurarSaldoInicialCliente(rpcData.profile.id, Number(payload.bonos || 0));
+                    if (rpcData.profile?.id || rpcData.id) {
+                        const newId = rpcData.profile?.id || rpcData.id;
+                        await asegurarSaldoInicialCliente(newId, 0);
                     }
                     return { data: { success: true, created: true, profile: rpcData.profile || rpcData }, error: null };
                 }
                 if (rpcError) {
                     console.warn('Fallo en RPC admin_crear_cliente_mostrador:', rpcError);
-                    return { data: null, error: rpcError };
                 }
             } catch (rpcEx) {
                 console.warn('Excepción en RPC admin_crear_cliente_mostrador:', rpcEx);
-                return { data: null, error: rpcEx };
             }
-        }
 
-        // 2. Método Directo Garantizado (Crea usuario en Auth + trigger crea perfil sin desloguear al admin)
-        try {
-            const cleanId = (typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : ('kiosk_' + Date.now() + '_' + Math.random().toString(36).slice(2))).replace(/-/g, '').slice(0, 16);
-            const internalEmail = `mostrador+${cleanId}@genyoga.studio`;
-            const internalPassword = (typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : ('Pwd!' + Date.now())) + 'Aa1!';
+            // 2. Método Directo Garantizado (Crea usuario en Auth + trigger crea perfil sin desloguear al admin)
+            try {
+                const cleanId = (typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : ('kiosk_' + Date.now() + '_' + Math.random().toString(36).slice(2))).replace(/-/g, '').slice(0, 16);
+                const internalEmail = payload.email || `mostrador+${cleanId}@genyoga.studio`;
+                const internalPassword = (typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : ('Pwd!' + Date.now())) + 'Aa1!';
 
-            const kioskClient = window.supabase?.createClient
-                ? window.supabase.createClient(SUPA_URL, SUPA_KEY, {
-                    auth: {
-                        persistSession: false,
-                        autoRefreshToken: false,
-                        detectSessionInUrl: false
-                    }
-                })
-                : null;
-
-            if (kioskClient) {
-                const { data: signUpData, error: signUpError } = await kioskClient.auth.signUp({
-                    email: internalEmail,
-                    password: internalPassword,
-                    options: {
-                        data: {
-                            nombre: payload.nombre,
-                            apellidos: payload.apellidos || '',
-                            auth_method: 'kiosk'
+                const kioskClient = window.supabase?.createClient
+                    ? window.supabase.createClient(SUPA_URL, SUPA_KEY, {
+                        auth: {
+                            persistSession: false,
+                            autoRefreshToken: false,
+                            detectSessionInUrl: false
                         }
-                    }
-                });
+                    })
+                    : null;
 
-                if (!signUpError && signUpData?.user?.id) {
-                    const newUserId = signUpData.user.id;
-                    const initialBonos = Number(payload.bonos || 0);
-
-                    // Esperar a que el perfil exista en DB y aplicar los saldos iniciales (con reintentos)
-                    await asegurarSaldoInicialCliente(newUserId, initialBonos);
-
-                    return {
-                        data: {
-                            success: true,
-                            created: true,
-                            profile: {
-                                id: newUserId,
-                                email: internalEmail,
+                if (kioskClient) {
+                    const { data: signUpData, error: signUpError } = await kioskClient.auth.signUp({
+                        email: internalEmail,
+                        password: internalPassword,
+                        options: {
+                            data: {
                                 nombre: payload.nombre,
                                 apellidos: payload.apellidos || '',
-                                rol: 'cliente',
-                                bonos: initialBonos,
-                                saldo_clases_gratis: 1,
-                                saldo_yoga_compania: 1,
-                                saldo_consultas_gratis: 1
+                                fecha_nacimiento: payload.fecha_nacimiento || null,
+                                telefono: payload.telefono || null,
+                                notas: payload.notas || null,
+                                auth_method: 'kiosk'
                             }
-                        },
-                        error: null
-                    };
-                }
-                if (signUpError) {
-                    console.warn('Fallo en signUp directo de mostrador:', signUpError);
-                }
-            }
-        } catch (directEx) {
-            console.warn('Excepcion en alta directa mostrador:', directEx);
-        }
+                        }
+                    });
 
-        // 3. Fallback: Edge Function create-kiosk-user
-        return client.functions.invoke('create-kiosk-user', {
-            body: {
-                nombre: payload.nombre,
-                apellidos: payload.apellidos,
-                bonos: payload.bonos,
-                idempotency_key: payload.idempotencyKey
+                    if (!signUpError && signUpData?.user?.id) {
+                        const newUserId = signUpData.user.id;
+
+                        // Esperar a que el perfil exista en DB y aplicar los saldos iniciales (con reintentos)
+                        await asegurarSaldoInicialCliente(newUserId, 0);
+
+                        return {
+                            data: {
+                                success: true,
+                                created: true,
+                                profile: {
+                                    id: newUserId,
+                                    email: internalEmail,
+                                    nombre: payload.nombre,
+                                    apellidos: payload.apellidos || '',
+                                    fecha_nacimiento: payload.fecha_nacimiento || null,
+                                    telefono: payload.telefono || null,
+                                    notas: payload.notas || null,
+                                    rol: 'cliente',
+                                    bonos: 0,
+                                    saldo_clases_gratis: 1,
+                                    saldo_yoga_compania: 1,
+                                    saldo_consultas_gratis: 1
+                                }
+                            },
+                            error: null
+                        };
+                    }
+                    if (signUpError) {
+                        console.warn('Fallo en signUp directo de mostrador:', signUpError);
+                    }
+                }
+            } catch (directEx) {
+                console.warn('Excepcion en alta directa mostrador:', directEx);
             }
-        });
+
+            // 3. Fallback: Edge Function create-kiosk-user
+            return client.functions.invoke('create-kiosk-user', {
+                body: {
+                    nombre: payload.nombre,
+                    apellidos: payload.apellidos,
+                    fecha_nacimiento: payload.fecha_nacimiento,
+                    telefono: payload.telefono,
+                    email: payload.email,
+                    notas: payload.notas,
+                    bonos: 0,
+                    idempotency_key: payload.idempotencyKey
+                }
+            });
+        }
 
 
         async function obtenerMensajeErrorFuncion(error, data, fallbackMessage = 'No se pudo crear el cliente de mostrador.') {
@@ -11136,7 +11266,7 @@
         html: `
             <div class='space-y-3 text-left font-sans'>
                 <p class='text-xs text-cocoa/60 leading-relaxed'>
-                    Crea un perfil interno para personas que reservan y pagan desde el mostrador. No tendrá contraseña ni acceso online.
+                    Crea la ficha del cliente con todos sus datos y notas. Los bonos o clases se pueden gestionar posteriormente desde la tabla.
                 </p>
                 <div>
                     <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Nombre *</label>
@@ -11148,8 +11278,8 @@
                 </div>
                 <div class='grid grid-cols-1 sm:grid-cols-2 gap-2'>
                     <div>
-                        <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Correo electrónico</label>
-                        <input id='swal-kiosk-email' type='email' maxlength='254' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='correo@ejemplo.com'>
+                        <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Fecha de nacimiento</label>
+                        <input id='swal-kiosk-fecha-nac' type='date' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive'>
                     </div>
                     <div>
                         <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Teléfono móvil</label>
@@ -11157,12 +11287,12 @@
                     </div>
                 </div>
                 <div>
-                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Clases sueltas iniciales</label>
-                    <input id='swal-kiosk-bonos' type='number' min='0' max='10000' step='1' inputmode='numeric' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' value='0'>
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Correo electrónico</label>
+                    <input id='swal-kiosk-email' type='email' maxlength='254' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='correo@ejemplo.com'>
                 </div>
                 <div>
                     <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Notas / Anotaciones</label>
-                    <textarea id='swal-kiosk-notas' maxlength='1000' rows='2' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Anotaciones sobre el paciente...'></textarea>
+                    <textarea id='swal-kiosk-notas' maxlength='1000' rows='2' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Anotaciones, historial o preferencias del alumno...'></textarea>
                 </div>
             </div>
         `,
@@ -11174,22 +11304,22 @@
         preConfirm: () => {
             const nombre = document.getElementById('swal-kiosk-nombre').value.trim();
             const apellidos = document.getElementById('swal-kiosk-apellidos').value.trim();
+            const fechaNac = document.getElementById('swal-kiosk-fecha-nac').value || null;
             const email = document.getElementById('swal-kiosk-email').value.trim();
-            const telefono = document.getElementById('swal-kiosk-telefono').value.trim();
-            const bonosRaw = document.getElementById('swal-kiosk-bonos').value.trim();
+            const telefonoRaw = document.getElementById('swal-kiosk-telefono').value.trim();
             const notas = document.getElementById('swal-kiosk-notas').value.trim();
-            const bonos = Number(bonosRaw);
 
             if (!nombre) {
                 Swal.showValidationMessage('El nombre es obligatorio');
                 return false;
             }
-            if (!Number.isSafeInteger(bonos) || bonos < 0 || bonos > 10000) {
-                Swal.showValidationMessage('Las clases iniciales deben ser un número válido entre 0 y 10000');
-                return false;
+
+            let cleanTel = null;
+            if (telefonoRaw) {
+                cleanTel = telefonoRaw.replace(/\D/g, '');
             }
 
-            return { nombre, apellidos, email, telefono, bonos, notas };
+            return { nombre, apellidos, fechaNac, email, telefono: cleanTel, notas };
         }
     });
 
@@ -11208,10 +11338,11 @@
     const payload = {
         nombre: formValues.nombre,
         apellidos: formValues.apellidos,
-        email: formValues.email,
-        telefono: formValues.telefono,
-        bonos: formValues.bonos,
-        notas: formValues.notas,
+        fecha_nacimiento: formValues.fechaNac || null,
+        email: formValues.email || null,
+        telefono: formValues.telefono || null,
+        bonos: 0,
+        notas: formValues.notas || null,
         idempotencyKey: window.crypto.randomUUID()
     };
 
@@ -11254,7 +11385,7 @@
     }
 
     const createdProfile = result.data?.profile || payload;
-    const nombreCompleto = `${createdProfile.nombre || '\} ${createdProfile.apellidos || '\}`.trim();
+    const nombreCompleto = `${createdProfile.nombre || ''} ${createdProfile.apellidos || ''}`.trim();
     Swal.fire({
         icon: 'success',
         title: 'Cliente creado',
@@ -11337,6 +11468,74 @@ async function adminTogglePromo50(userId, active) {
             renderUsersTable(allUsersCache);
         }
 
+        function renderSaldoBadgeAdmin(u) {
+            const badges = [];
+            const bonos = toSafeNumber(u.bonos);
+            const bienvenida = toSafeNumber(u.saldo_clases_gratis) > 0 ? toSafeNumber(u.saldo_clases_gratis) : 1;
+            const compania = toSafeNumber(u.saldo_yoga_compania) > 0 ? toSafeNumber(u.saldo_yoga_compania) : 1;
+            const consultas = toSafeNumber(u.saldo_consultas_gratis) > 0 ? toSafeNumber(u.saldo_consultas_gratis) : 1;
+            const ilimitado = !!u.bono_mensual_activo;
+
+            if (ilimitado) {
+                badges.push('<span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-emerald-300 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-infinity"></i> Mes Ilimitado</span>');
+            }
+
+            if (bonos > 0) {
+                badges.push(`<span class="bg-olive/15 text-olive text-[10px] font-bold px-2 py-0.5 rounded-md border border-olive/30 flex items-center gap-1"><i class="ph-bold ph-ticket"></i> ${bonos} clase${bonos > 1 ? 's' : ''}</span>`);
+            }
+
+            if (bienvenida > 0) {
+                badges.push(`<span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><i class="ph-bold ph-sparkle"></i> ${bienvenida} Bienvenida</span>`);
+            }
+
+            if (compania > 0) {
+                badges.push(`<span class="bg-amber-50 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1"><i class="ph-bold ph-users-three text-amber-700"></i> ${compania} Yoga Compañía</span>`);
+            }
+
+            if (consultas > 0) {
+                badges.push(`<span class="bg-pink-50 text-pink-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-pink-200 flex items-center gap-1"><i class="ph-bold ph-gift"></i> ${consultas} Consulta</span>`);
+            }
+
+            if (u.descuento_promo_50_activo) {
+                badges.push('<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1"><i class="ph-bold ph-tag"></i> 50% DTO</span>');
+            }
+
+            if (badges.length === 0) {
+                return '<span class="text-gray-400 text-xs italic">Sin bonos activos</span>';
+            }
+
+            return `<div class="flex flex-wrap gap-1.5">${badges.join('')}</div>`;
+        }
+
+        function renderActionsAdmin(u) {
+            const isPromoActive = !!u.descuento_promo_50_activo;
+            const uId = escapeHtml(String(u.id || ''));
+            return `
+                <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                    <button type="button" onclick="abrirGestionBonosUsuario('${uId}')"
+                        class="px-2.5 py-1.5 bg-olive text-white hover:bg-black rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                        title="Gestionar Bonos y Saldos">
+                        <i class="ph-bold ph-wallet"></i> Bonos
+                    </button>
+                    <button type="button" onclick="abrirEditarUsuarioAdmin('${uId}')"
+                        class="px-2.5 py-1.5 bg-sand/30 hover:bg-sand/60 text-cocoa rounded-lg text-xs font-bold border border-cocoa/15 transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                        title="Editar Datos del Cliente">
+                        <i class="ph-bold ph-pencil-simple"></i> Editar
+                    </button>
+                    <button type="button" onclick="adminTogglePromo50('${uId}', ${!isPromoActive})"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg border ${isPromoActive ? 'bg-amber-50 text-amber-700 border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:text-amber-600'} transition shadow-2xs cursor-pointer"
+                        title="${isPromoActive ? 'Desactivar 50% DTO' : 'Activar 50% DTO'}">
+                        <i class="ph-bold ph-tag text-xs"></i>
+                    </button>
+                    <button type="button" onclick="borrarUsuario('${uId}')"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition shadow-2xs cursor-pointer"
+                        title="Eliminar Usuario">
+                        <i class="ph-bold ph-trash text-xs"></i>
+                    </button>
+                </div>
+            `;
+        }
+
         function renderUsersTable(users) {
             const tbody = document.getElementById('users-table-body');
             const noRes = document.getElementById('no-users-found');
@@ -11370,23 +11569,23 @@ async function adminTogglePromo50(userId, active) {
                 }
 
                 let contactInfo = '';
-                if (contact.isMostrador) {
-                    contactInfo = '<span class="text-[10px] text-olive font-semibold">Mostrador</span>';
-                } else if (contact.isTemporal) {
-                    contactInfo = '<span class="text-[10px] text-amber-600 font-semibold">Temporal Stripe</span>';
-                } else {
-                    const parts = [];
-                    if (contact.cleanTel) {
-                        parts.push(`<a href="tel:${escapeHtml(contact.cleanTel)}" class="text-gray-700 font-semibold hover:text-olive">📱 ${escapeHtml(contact.cleanTel)}</a>`);
-                    }
-                    if (contact.realEmail) {
-                        parts.push(`<a href="mailto:${escapeHtml(contact.realEmail)}" class="text-gray-400 hover:text-gray-700 truncate max-w-[170px]" title="${escapeHtml(contact.realEmail)}">✉️ ${escapeHtml(contact.realEmail)}</a>`);
-                    }
-                    if (parts.length === 0) {
+                const parts = [];
+                if (contact.cleanTel) {
+                    parts.push(`<a href="tel:${escapeHtml(contact.cleanTel)}" class="text-gray-700 font-semibold hover:text-olive">📱 ${escapeHtml(contact.cleanTel)}</a>`);
+                }
+                if (contact.realEmail) {
+                    parts.push(`<a href="mailto:${escapeHtml(contact.realEmail)}" class="text-gray-400 hover:text-gray-700 truncate max-w-[170px]" title="${escapeHtml(contact.realEmail)}">✉️ ${escapeHtml(contact.realEmail)}</a>`);
+                }
+                if (parts.length === 0) {
+                    if (contact.isMostrador) {
+                        parts.push('<span class="text-[10px] text-olive font-semibold">Mostrador</span>');
+                    } else if (contact.isTemporal) {
+                        parts.push('<span class="text-[10px] text-amber-600 font-semibold">Temporal Stripe</span>');
+                    } else {
                         parts.push('<span class="text-[10px] text-gray-400 italic">Sin contacto</span>');
                     }
-                    contactInfo = `<div class="flex flex-col text-[10px] gap-0.5">${parts.join('')}</div>`;
                 }
+                contactInfo = `<div class="flex flex-col text-[10px] gap-0.5">${parts.join('')}</div>`;
 
                 // NUEVO: Generar badge visual si el usuario tiene notas registradas
                 let notasHtml = '';
@@ -11646,8 +11845,8 @@ async function adminTogglePromo50(userId, active) {
                 const { error } = await client.rpc('admin_configurar_bono_mensual', {
                     p_user_id: userId,
                     p_activo: true,
-                    p_inicio: new Date(formValues.inicio).toISOString(),
-                    p_fin: new Date(formValues.fin).toISOString()
+                    p_inicio: new Date(formValues.inicio + 'T00:00:00').toISOString(),
+                    p_fin: new Date(formValues.fin + 'T23:59:59.999').toISOString()
                 });
 
                 Swal.close();
@@ -14328,6 +14527,8 @@ async function adminTogglePromo50(userId, active) {
             const apellidosActual = u.apellidos || '';
             const telefonoActual = u.telefono || '';
             const fechaNacActual = u.fecha_nacimiento || '';
+            const emailActual = u.email || '';
+            const notasActual = u.notas || '';
             const rolActual = (u.rol || 'alumno').toLowerCase().trim();
 
             const { value: formValues } = await Swal.fire({
@@ -14335,20 +14536,30 @@ async function adminTogglePromo50(userId, active) {
                 html: `
             <div class="flex flex-col gap-3 text-left font-sans">
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Nombre</label>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Nombre *</label>
                     <input id="swal-admin-nombre" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(nombreActual)}" placeholder="Nombre">
                 </div>
                 <div>
                     <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Apellidos</label>
                     <input id="swal-admin-apellidos" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(apellidosActual)}" placeholder="Apellidos">
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Teléfono Móvil (9 dígitos)</label>
-                    <input id="swal-admin-telefono" type="tel" maxlength="15" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="Ej: 612 345 678" value="${escapeHtml(telefonoActual)}">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Teléfono Móvil</label>
+                        <input id="swal-admin-telefono" type="tel" maxlength="15" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="Ej: 612 345 678" value="${escapeHtml(telefonoActual)}">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Fecha de Nacimiento</label>
+                        <input id="swal-admin-fecha-nac" type="date" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(fechaNacActual)}">
+                    </div>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Fecha de Nacimiento</label>
-                    <input id="swal-admin-fecha-nac" type="date" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(fechaNacActual)}">
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Correo Electrónico</label>
+                    <input id="swal-admin-email" type="email" maxlength="254" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="correo@ejemplo.com" value="${escapeHtml(emailActual)}">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Notas / Anotaciones</label>
+                    <textarea id="swal-admin-notas" rows="3" maxlength="1000" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="Anotaciones, historial o preferencias del alumno...">${escapeHtml(notasActual)}</textarea>
                 </div>
                 ${isAdmin ? `
                 <div>
@@ -14373,7 +14584,14 @@ async function adminTogglePromo50(userId, active) {
                     const apellidos = (document.getElementById('swal-admin-apellidos')?.value || '').trim();
                     const telefonoRaw = (document.getElementById('swal-admin-telefono')?.value || '').trim();
                     const fechaNac = document.getElementById('swal-admin-fecha-nac')?.value || null;
+                    const email = (document.getElementById('swal-admin-email')?.value || '').trim();
+                    const notas = (document.getElementById('swal-admin-notas')?.value || '').trim();
                     const rol = document.getElementById('swal-admin-rol')?.value || rolActual;
+
+                    if (!nombre) {
+                        Swal.showValidationMessage('El nombre es obligatorio');
+                        return false;
+                    }
 
                     let cleanTel = null;
                     if (telefonoRaw) {
@@ -14384,7 +14602,7 @@ async function adminTogglePromo50(userId, active) {
                         }
                     }
 
-                    return { nombre, apellidos, telefono: cleanTel, fechaNac, rol };
+                    return { nombre, apellidos, telefono: cleanTel, fechaNac, email, notas, rol };
                 }
             });
 
@@ -14406,7 +14624,9 @@ async function adminTogglePromo50(userId, active) {
                         p_apellidos: formValues.apellidos,
                         p_telefono: formValues.telefono,
                         p_fecha_nacimiento: formValues.fechaNac || null,
-                        p_rol: formValues.rol
+                        p_rol: formValues.rol,
+                        p_email: formValues.email || null,
+                        p_notas: formValues.notas !== undefined ? formValues.notas : null
                     });
                     if (!error) saved = true;
                     else errorMsg = error.message;
@@ -14426,6 +14646,8 @@ async function adminTogglePromo50(userId, active) {
                                 apellidos: formValues.apellidos,
                                 telefono: formValues.telefono || allUsersCache[idx].telefono,
                                 fecha_nacimiento: formValues.fechaNac || allUsersCache[idx].fecha_nacimiento,
+                                email: formValues.email || allUsersCache[idx].email,
+                                notas: formValues.notas !== undefined ? formValues.notas : allUsersCache[idx].notas,
                                 rol: formValues.rol || allUsersCache[idx].rol
                             };
                         }
@@ -14436,7 +14658,9 @@ async function adminTogglePromo50(userId, active) {
                             nombre: formValues.nombre,
                             apellidos: formValues.apellidos,
                             telefono: formValues.telefono || allAsistenciasPerfilesMap[userId].telefono,
-                            fecha_nacimiento: formValues.fechaNac || allAsistenciasPerfilesMap[userId].fecha_nacimiento
+                            fecha_nacimiento: formValues.fechaNac || allAsistenciasPerfilesMap[userId].fecha_nacimiento,
+                            email: formValues.email || allAsistenciasPerfilesMap[userId].email,
+                            notas: formValues.notas !== undefined ? formValues.notas : allAsistenciasPerfilesMap[userId].notas
                         };
                     }
 

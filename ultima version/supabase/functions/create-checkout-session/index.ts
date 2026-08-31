@@ -156,8 +156,8 @@ serve(async (req) => {
       if (profile.account_deletion_pending) {
         throw new HttpError(409, 'La cuenta se está eliminando y no puede iniciar nuevos pagos.')
       }
-      if (isPromo && (!profile.descuento_promo_50_activo || profile.codigo_promo_usado)) {
-        throw new HttpError(400, 'No tienes activo el descuento del 50% de bienvenida o ya ha sido utilizado.')
+      if (isPromo && profile.codigo_promo_usado) {
+        throw new HttpError(400, 'Ya has utilizado la promoción del 50% de descuento en tu 1ª clase.')
       }
 
       if (membershipMonth) {
@@ -239,11 +239,28 @@ serve(async (req) => {
       }
       lineItems = [{ price: workshopPrice.id, quantity: 1 }]
     } else if (getPromoDetails(purchaseType)) {
-      const promoPrice = await resolvePromoPrice(stripe, purchaseType)
-      if (!promoPrice) {
-        throw new Error(`No se pudo resolver el precio del producto promocional ${purchaseType}.`)
+      const details = getPromoDetails(purchaseType)!
+      let promoPrice: Stripe.Price | null = null
+      try {
+        promoPrice = await resolvePromoPrice(stripe, purchaseType)
+      } catch (err) {
+        console.warn('resolvePromoPrice warning:', err)
       }
-      lineItems = [{ price: promoPrice.id, quantity: 1 }]
+
+      if (promoPrice) {
+        lineItems = [{ price: promoPrice.id, quantity: 1 }]
+      } else {
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: details.amount || 750,
+              product: details.productId,
+            },
+            quantity: 1,
+          },
+        ]
+      }
     } else {
       throw new HttpError(400, 'Precio no configurado para el producto seleccionado.')
     }
@@ -285,7 +302,31 @@ serve(async (req) => {
       membershipMonth || 'no_month',
       checkoutAttemptId,
     ].join(':')
-    const session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
+    let session: Stripe.Checkout.Session
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
+    } catch (createErr) {
+      const details = getPromoDetails(purchaseType)
+      if (isPromo && details) {
+        console.warn('Reintentando creación de sesión promo con product_data fallback:', createErr)
+        sessionParams.line_items = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: details.amount || 750,
+              product_data: {
+                name: details.name,
+                metadata: { lookup_key: lookupKey, product_id: details.productId },
+              },
+            },
+            quantity: 1,
+          },
+        ]
+        session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey: `${idempotencyKey}:fallback` })
+      } else {
+        throw createErr
+      }
+    }
     if (!session.livemode) {
       throw new Error('Stripe no devolvió una sesión LIVE válida.')
     }

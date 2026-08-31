@@ -159,6 +159,7 @@ export type PromoDetails = {
 export const PROMO_CATALOG: Partial<Record<PurchaseType, PromoDetails>> = {
   [PURCHASE_TYPES.PROMO_50_CLASE]: {
     name: '1ª Clase con 50% Dto. (Promo GEN YOGA)',
+    amount: 750,
     productId: PROMO_PRODUCT_IDS.PROMO_50_CLASE,
     guestAllowed: false,
   },
@@ -750,31 +751,35 @@ export async function resolvePromoPrice(
   const details = getPromoDetails(purchaseType)
   if (!details) return null
 
-  const params: Stripe.PriceListParams = {
-    active: true,
-    currency: 'eur',
-    type: 'one_time',
-    product: details.productId,
-    limit: 20,
-  }
-  const prices = await stripe.prices.list(params)
-  const matchingPrice = prices.data.find((price: Stripe.Price) => {
-    if (!price.livemode || !price.active || price.currency.toLowerCase() !== 'eur' || price.type !== 'one_time' || price.recurring) {
-      return false
+  try {
+    const params: Stripe.PriceListParams = {
+      active: true,
+      currency: 'eur',
+      type: 'one_time',
+      product: details.productId,
+      limit: 20,
     }
-    if (stripeObjectId(price.product) !== details.productId) return false
-    if (details.amount !== undefined && price.unit_amount !== details.amount) return false
-    return true
-  }) || prices.data[0] || null
+    const prices = await stripe.prices.list(params)
+    const matchingPrice = prices.data.find((price: Stripe.Price) => {
+      if (!price.livemode || !price.active || price.currency.toLowerCase() !== 'eur' || price.type !== 'one_time' || price.recurring) {
+        return false
+      }
+      if (stripeObjectId(price.product) !== details.productId) return false
+      if (details.amount !== undefined && price.unit_amount !== details.amount) return false
+      return true
+    }) || prices.data[0] || null
 
-  if (!matchingPrice) {
+    if (matchingPrice) return matchingPrice
+
     const allProductPrices = await stripe.prices.list({ product: details.productId, active: true, limit: 10 })
     if (allProductPrices.data.length > 0) {
       return allProductPrices.data[0]
     }
-    throw new Error(`El producto promocional ${details.productId} no tiene un Price LIVE activo en Stripe.`)
+  } catch (err) {
+    console.warn(`Error al consultar precios para el producto promocional ${details.productId}:`, err)
   }
-  return matchingPrice
+
+  return null
 }
 
 export function assertValidPromoPrice(
