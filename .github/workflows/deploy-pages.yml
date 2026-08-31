@@ -1,0 +1,63 @@
+name: Deploy Web to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare Clean Web Artifact
+        run: |
+          mkdir -p _site
+          
+          # Si existe 'ultima version', usar como fuente
+          if [ -d "ultima version" ]; then
+            echo "📦 Copiando archivos desde 'ultima version'..."
+            cp "ultima version"/*.html _site/ 2>/dev/null || true
+            cp "ultima version"/*.js _site/ 2>/dev/null || true
+            cp "ultima version"/*.css _site/ 2>/dev/null || true
+            cp "ultima version"/CNAME _site/ 2>/dev/null || true
+            if [ -d "ultima version/img" ]; then cp -r "ultima version/img" _site/; fi
+            if [ -d "ultima version/fonts" ]; then cp -r "ultima version/fonts" _site/; fi
+          else
+            # Copiar archivos raíz si no hay 'ultima version'
+            cp *.html _site/ 2>/dev/null || true
+            cp *.js _site/ 2>/dev/null || true
+            cp *.css _site/ 2>/dev/null || true
+            cp CNAME _site/ 2>/dev/null || true
+            if [ -d "img" ]; then cp -r img _site/; fi
+            if [ -d "fonts" ]; then cp -r fonts _site/; fi
+          fi
+          
+          echo "✅ Tamaño total del artefacto web limpio:"
+          du -sh _site/
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

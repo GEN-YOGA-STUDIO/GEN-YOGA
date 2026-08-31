@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.12" />
+    <meta name="application-version" content="9.9" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.12" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.12" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.9" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.9" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.12">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.9">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.12"></script>
+    <script src="teacher-profiles.js?v=9.9"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.12"></script>
+    <script src="i18n.js?v=9.9"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -2029,21 +2029,21 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span>Días de práctica:</span>
+                                        <span id="sticky-days-title-text">Días de práctica:</span>
                                     </div>
                                     <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="scrollDiasRapidos(-160)"
-                                            class="w-7 h-7 rounded-full bg-sand/30 hover:bg-sand/60 text-cocoa flex items-center justify-center transition cursor-pointer shadow-2xs"
-                                            title="Ver días anteriores">
-                                            <i class="ph-bold ph-caret-left text-xs"></i>
+                                        <button type="button" onclick="scrollDiasRapidos(-1)"
+                                            class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                            title="Ver días / mes anterior" aria-label="Ver días o mes anterior">
+                                            <i class="ph-bold ph-caret-left text-sm"></i>
                                         </button>
-                                        <button type="button" onclick="scrollDiasRapidos(160)"
-                                            class="w-7 h-7 rounded-full bg-sand/30 hover:bg-sand/60 text-cocoa flex items-center justify-center transition cursor-pointer shadow-2xs"
-                                            title="Ver días siguientes">
-                                            <i class="ph-bold ph-caret-right text-xs"></i>
+                                        <button type="button" onclick="scrollDiasRapidos(1)"
+                                            class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                            title="Ver días / mes siguiente" aria-label="Ver días o mes siguiente">
+                                            <i class="ph-bold ph-caret-right text-sm"></i>
                                         </button>
                                         <button type="button" onclick="limpiarFiltroFecha()" id="btn-ver-todas-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1">
+                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1.5 cursor-pointer">
                                             <i class="ph-bold ph-squares-four"></i> Ver todas las clases
                                         </button>
                                     </div>
@@ -2051,7 +2051,7 @@
                                 <div
                                     class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
                                     <div id="sticky-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full"
+                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
                                         style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
                                         <!-- Generado dinámicamente -->
                                     </div>
@@ -3409,7 +3409,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.8. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.9. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4149,7 +4149,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.12';
+        const APP_VERSION = '9.9';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -5640,19 +5640,45 @@
         }
 
         function getUnlimitedPeriodForDate(value) {
-            const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
+            const dateObj = value instanceof Date ? value : new Date(value);
+            const timestamp = dateObj.getTime();
             if (!Number.isFinite(timestamp)) return null;
+
+            // Extraer mes natural 'YYYY-MM' en la zona horaria oficial del centro (Europe/Madrid)
+            let classYearMonth = '';
+            try {
+                const parts = new Intl.DateTimeFormat('en-GB', {
+                    timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit'
+                }).formatToParts(dateObj);
+                const year = parts.find(part => part.type === 'year')?.value;
+                const month = parts.find(part => part.type === 'month')?.value;
+                if (year && month) classYearMonth = `${year}-${month}`;
+            } catch (_) {
+                const y = dateObj.getFullYear();
+                const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                classYearMonth = `${y}-${m}`;
+            }
+
             const naturalMonth = userUnlimitedPeriods.find(period => {
+                const periodMonthStr = String(period.membership_month || '').slice(0, 7);
+                if (classYearMonth && periodMonthStr === classYearMonth) {
+                    return true;
+                }
                 const start = Date.parse(period.starts_at);
                 const end = Date.parse(period.ends_at);
-                return Number.isFinite(start) && Number.isFinite(end) && timestamp >= start && timestamp < end;
+                if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
+                // Si end cae a las 00:00:00 del último día, extenderlo hasta el final del día
+                const inclusiveEnd = end + (end % 86400000 === 0 ? 86400000 : 0);
+                return timestamp >= start && timestamp < inclusiveEnd;
             });
             if (naturalMonth) return naturalMonth;
+
             const legacyStart = Date.parse(userLegacyUnlimitedStart);
             const legacyEnd = Date.parse(userLegacyUnlimitedEnd);
             if (userLegacyUnlimitedActive) {
                 if (Number.isFinite(legacyStart) && Number.isFinite(legacyEnd)) {
-                    if (timestamp >= legacyStart && timestamp < legacyEnd) {
+                    const inclusiveLegacyEnd = legacyEnd + (legacyEnd % 86400000 === 0 ? 86400000 : 0);
+                    if (timestamp >= legacyStart && timestamp < inclusiveLegacyEnd) {
                         return {
                             membership_month: null,
                             starts_at: userLegacyUnlimitedStart,
@@ -5684,9 +5710,10 @@
             if (!period?.starts_at || !period?.ends_at) return false;
             const periodStart = Date.parse(period.starts_at);
             const periodEnd = Date.parse(period.ends_at);
+            const inclusivePeriodEnd = periodEnd + (periodEnd % 86400000 === 0 ? 86400000 : 0);
             return userUnlimitedSpecialReservations.some(reservation => {
                 const startsAt = Date.parse(reservation.clases?.fecha_inicio);
-                return Number.isFinite(startsAt) && startsAt >= periodStart && startsAt < periodEnd;
+                return Number.isFinite(startsAt) && startsAt >= periodStart && startsAt < inclusivePeriodEnd;
             });
         }
 
@@ -6473,10 +6500,25 @@
 
             safeRemoveItem('pending_intro_booking');
 
-            // Asegurar que las clases de yoga estén cargadas
-            if (!allClasesCache || allClasesCache.length === 0) {
+            // Asegurar que las clases de yoga estén cargadas para el mes objetivo
+            if (fechaParam) {
+                const [y, m] = fechaParam.split('-').map(Number);
+                if (y && m) {
+                    currentCalendarMonth = new Date(y, m - 1, 1);
+                    try { await cargarHorarios(currentCalendarMonth); } catch (_) { }
+                }
+            } else if (claseIdParam && (!allClasesCache || !allClasesCache.some(c => safePositiveInteger(c.id) === claseIdParam))) {
                 try {
-                    await cargarHorarios();
+                    const { data: dClase } = await client.from('clases').select('*, profesionales(*)').eq('id', claseIdParam).maybeSingle();
+                    if (dClase && dClase.fecha_inicio) {
+                        const d = new Date(dClase.fecha_inicio);
+                        currentCalendarMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+                        await cargarHorarios(currentCalendarMonth);
+                    }
+                } catch (_) { }
+            } else if (!allClasesCache || allClasesCache.length === 0) {
+                try {
+                    await cargarHorarios(currentCalendarMonth);
                 } catch (_) { }
             }
 
@@ -6780,16 +6822,25 @@
             return div;
         }
 
-        function cambiarMes(delta) {
+        async function cambiarMes(delta) {
             currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + delta);
-            renderizarCalendario();
+            selectedDate = null;
+            await cargarHorarios(currentCalendarMonth);
         }
 
         function filtrarPorFecha(dateKey) {
             selectedDate = dateKey;
             if (dateKey) {
                 const [y, m] = dateKey.split('-').map(Number);
-                currentCalendarMonth = new Date(y, m - 1, 1);
+                const targetM = new Date(y, m - 1, 1);
+                if (currentCalendarMonth.getFullYear() !== targetM.getFullYear() || currentCalendarMonth.getMonth() !== targetM.getMonth()) {
+                    currentCalendarMonth = targetM;
+                    cargarHorarios(currentCalendarMonth).then(() => {
+                        renderizarCalendario();
+                        renderizarClases();
+                    });
+                    return;
+                }
             }
             renderizarCalendario();
             renderizarClases();
@@ -6809,10 +6860,87 @@
             renderizarClases();
         }
 
-        function scrollDiasRapidos(delta) {
+        function inicializarEventosBarraDias() {
             const list = document.getElementById('sticky-days-list');
-            if (list) {
-                list.scrollBy({ left: delta, behavior: 'smooth' });
+            if (!list || list.dataset.eventsAttached === 'true') return;
+            list.dataset.eventsAttached = 'true';
+
+            // Scroll con rueda de ratón vertical -> horizontal
+            list.addEventListener('wheel', (e) => {
+                if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && list.scrollWidth > list.clientWidth) {
+                    e.preventDefault();
+                    list.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
+
+            // Drag to scroll con ratón en escritorio
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            let hasDragged = false;
+
+            list.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                isDown = true;
+                hasDragged = false;
+                list.classList.add('cursor-grabbing');
+                list.classList.remove('cursor-grab');
+                startX = e.pageX - list.offsetLeft;
+                scrollLeft = list.scrollLeft;
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDown) {
+                    isDown = false;
+                    list.classList.remove('cursor-grabbing');
+                    list.classList.add('cursor-grab');
+                }
+            });
+
+            list.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                const x = e.pageX - list.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                if (Math.abs(walk) > 4) {
+                    hasDragged = true;
+                }
+                list.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        function scrollDiasRapidos(direction) {
+            const list = document.getElementById('sticky-days-list');
+            if (!list) return;
+
+            // Paso dinámico adaptado al ancho del contenedor
+            const step = Math.max(220, Math.round(list.clientWidth * 0.75));
+            const currentScroll = list.scrollLeft;
+            const maxScroll = Math.max(0, list.scrollWidth - list.clientWidth);
+
+            if (direction > 0) {
+                // Hacia la derecha (días siguientes)
+                if (maxScroll > 15 && currentScroll < maxScroll - 20) {
+                    try {
+                        list.scrollBy({ left: step, behavior: 'smooth' });
+                    } catch (e) {
+                        list.scrollLeft += step;
+                    }
+                } else {
+                    // Si ya está al final del scroll del mes actual, avanzar al siguiente mes
+                    cambiarMes(1);
+                }
+            } else {
+                // Hacia la izquierda (días anteriores)
+                if (currentScroll > 20) {
+                    try {
+                        list.scrollBy({ left: -step, behavior: 'smooth' });
+                    } catch (e) {
+                        list.scrollLeft -= step;
+                    }
+                } else {
+                    // Si ya está al inicio, retroceder al mes anterior
+                    cambiarMes(-1);
+                }
             }
         }
 
@@ -6820,17 +6948,30 @@
             const bar = document.getElementById('sticky-days-list');
             if (!bar) return;
 
+            inicializarEventosBarraDias();
+
             const showHiddenProfesionales = isAdmin;
             const fechasConClases = new Map();
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
+
+            const targetYear = currentCalendarMonth.getFullYear();
+            const targetMonth = currentCalendarMonth.getMonth();
+
+            const monthFallback = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
+
+            const titleEl = document.getElementById('sticky-days-title-text');
+            if (titleEl) {
+                titleEl.innerHTML = `Días de práctica: <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
+            }
 
             allClasesCache.forEach(c => {
                 if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false) {
                     return;
                 }
                 const fechaObj = new Date(c.fecha_inicio);
-                if (fechaObj >= hoy) {
+                if (fechaObj.getFullYear() === targetYear && fechaObj.getMonth() === targetMonth && fechaObj >= hoy) {
                     const dKey = formatDateLocal(fechaObj);
                     fechasConClases.set(dKey, (fechasConClases.get(dKey) || 0) + 1);
                 }
@@ -6838,14 +6979,23 @@
 
             const dKeys = Array.from(fechasConClases.keys()).sort();
             if (dKeys.length === 0) {
-                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay clases programadas</span>';
+                bar.innerHTML = `
+                    <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
+                        <span class="italic">No hay más clases restantes en ${monthNames[targetMonth]}.</span>
+                        <button type="button" onclick="cambiarMes(1)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                            Ver ${monthNames[(targetMonth + 1) % 12]} <i class="ph-bold ph-caret-right"></i>
+                        </button>
+                    </div>
+                `;
                 return;
             }
+
+            const totalClasesMes = Array.from(fechasConClases.values()).reduce((a, b) => a + b, 0);
 
             let html = `
         <button type="button" onclick="limpiarFiltroFecha()" 
             class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${!selectedDate ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${allClasesCache.length})
+            <i class="ph-bold ph-squares-four"></i> Todas (${totalClasesMes})
         </button>
     `;
 
@@ -7118,42 +7268,56 @@
         }
 
         // --- 5. HORARIOS (CLASES) ---
-        async function cargarHorarios() {
+        async function cargarHorarios(targetMonth = currentCalendarMonth) {
             const container = document.getElementById('schedule-container');
-            container.innerHTML = `
-    <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-      <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
-      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">${escapeHtml(profileT('profile_loading_classes', 'Cargando clases...'))}</span>
-    </div>`;
+            const emptyState = document.getElementById('empty-state');
+            if (container) {
+                container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+          <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
+          <span class="text-xs uppercase tracking-widest font-bold text-gray-500">${escapeHtml(profileT('profile_loading_classes', 'Cargando clases...'))}</span>
+        </div>`;
+            }
 
-            // Solo traer clases futuras (desde hoy - 2 horas para permitir ver la actual)
+            const tDate = targetMonth instanceof Date && !isNaN(targetMonth) ? targetMonth : new Date();
+            const year = tDate.getFullYear();
+            const month = tDate.getMonth();
+            const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
+            const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
             const now = new Date();
             now.setHours(now.getHours() - 2);
-            const nowIso = now.toISOString();
+            const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month;
+            const startQuery = isCurrentMonth ? now : startOfMonth;
 
             const { data: clases, error: errClases } =
                 await client.from('clases')
                     .select('*, profesionales(*)')
                     .eq('tipo_clase', 'yoga')
-                    .gte('fecha_inicio', nowIso)
+                    .gte('fecha_inicio', startQuery.toISOString())
+                    .lte('fecha_inicio', endOfMonth.toISOString())
                     .order('fecha_inicio');
 
             if (errClases) {
                 console.error('Error cargando clases', errClases);
-                container.innerHTML = '';
-                document.getElementById('empty-state').classList.remove('hidden');
+                if (container) container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
                 allClasesCache = [];
                 actualizarOpcionesFiltrosClases();
+                renderizarCalendario();
+                renderizarBarraDiasRapidos();
                 return;
             }
 
             const clasesValidas = (clases || []).filter(c => esClaseValidaYoga(c) && !c.es_especial && c.tipo_clase !== 'taller' && c.tipo_clase !== 'especial');
 
             if (clasesValidas.length === 0) {
-                container.innerHTML = '';
-                document.getElementById('empty-state').classList.remove('hidden');
+                if (container) container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
                 allClasesCache = [];
                 actualizarOpcionesFiltrosClases();
+                renderizarCalendario();
+                renderizarBarraDiasRapidos();
                 return;
             }
 
@@ -7167,7 +7331,7 @@
             if (errReservas) {
                 console.error('Error cargando reservas', errReservas);
             }
-            document.getElementById('empty-state').classList.add('hidden');
+            if (emptyState) emptyState.classList.add('hidden');
 
             // Map por clase_id => [reservas]
             const reservasMap = {};
@@ -7185,8 +7349,8 @@
                 c.ocupadas = (ocupacionMap && ocupacionMap[c.id] != null)
                     ? ocupacionMap[c.id]
                     : confirmadas.length;
-                c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
-                c.capacidad_max = Number(c.capacidad_max) || 10;
+                c.miReserva = (currentUser && confirmadas.find(r => r.user_id === currentUser.id)) || null;
+                c.capacidad_max = 10;
                 c.es_gratuita = esClaseElegibleBonoGratis(c);
             });
 
@@ -7437,12 +7601,17 @@
             renderizarMisClasesReservadas();
             renderizarBarraDiasRapidos();
             const container = document.getElementById('schedule-container');
+            if (!container) return;
 
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
 
+            const targetYear = currentCalendarMonth.getFullYear();
+            const targetMonth = currentCalendarMonth.getMonth();
+
             let clasesAMostrar = allClasesCache.filter(c => {
                 const fechaClase = new Date(c.fecha_inicio);
+                if (fechaClase.getFullYear() !== targetYear || fechaClase.getMonth() !== targetMonth) return false;
                 fechaClase.setHours(0, 0, 0, 0);
                 return fechaClase >= hoy;
             });
@@ -9001,7 +9170,7 @@
                     const totalReservas = listadoReservas.length;
                     const tipoMeta = getTipoClaseMeta(c.tipo_clase);
                     const tipoNormalizado = normalizarTipoClase(c.tipo_clase);
-                    const capacidadMax = toSafeNumber(c.capacidad_max) || 10;
+                    const capacidadMax = (tipoNormalizado === 'yoga' || tipoNormalizado === 'taller' || !c.tipo_clase) ? 10 : (toSafeNumber(c.capacidad_max) || 1);
 
                     const fila = document.createElement('div');
                     fila.className = 'p-5 flex flex-col gap-4';
@@ -10962,30 +11131,34 @@
         }
 
         async function crearPerfilMostradorEnServidor(payload) {
-            // 1. Intentar RPC directa y atómica en PostgreSQL si la migración está aplicada
+            // 1. RPC
             try {
                 const { data: rpcData, error: rpcError } = await client.rpc('admin_crear_cliente_mostrador', {
                     p_nombre: payload.nombre,
                     p_apellidos: payload.apellidos || '',
-                    p_bonos: Number(payload.bonos || 0)
+                    p_fecha_nacimiento: payload.fecha_nacimiento || null,
+                    p_telefono: payload.telefono || null,
+                    p_email: payload.email || null,
+                    p_notas: payload.notas || null
                 });
                 if (!rpcError && rpcData) {
-                    if (rpcData.id) {
-                        await asegurarSaldoInicialCliente(rpcData.id, Number(payload.bonos || 0));
+                    if (rpcData.profile?.id || rpcData.id) {
+                        const newId = rpcData.profile?.id || rpcData.id;
+                        await asegurarSaldoInicialCliente(newId, 0);
                     }
-                    return { data: { success: true, created: true, profile: rpcData }, error: null };
+                    return { data: { success: true, created: true, profile: rpcData.profile || rpcData }, error: null };
                 }
                 if (rpcError) {
-                    console.warn('RPC admin_crear_cliente_mostrador fallo, usando alta directa:', rpcError);
+                    console.warn('Fallo en RPC admin_crear_cliente_mostrador:', rpcError);
                 }
             } catch (rpcEx) {
-                console.warn('Excepcion en RPC admin_crear_cliente_mostrador:', rpcEx);
+                console.warn('Excepción en RPC admin_crear_cliente_mostrador:', rpcEx);
             }
 
             // 2. Método Directo Garantizado (Crea usuario en Auth + trigger crea perfil sin desloguear al admin)
             try {
                 const cleanId = (typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : ('kiosk_' + Date.now() + '_' + Math.random().toString(36).slice(2))).replace(/-/g, '').slice(0, 16);
-                const internalEmail = `mostrador+${cleanId}@genyoga.studio`;
+                const internalEmail = payload.email || `mostrador+${cleanId}@genyoga.studio`;
                 const internalPassword = (typeof window.crypto?.randomUUID === 'function' ? window.crypto.randomUUID() : ('Pwd!' + Date.now())) + 'Aa1!';
 
                 const kioskClient = window.supabase?.createClient
@@ -11006,6 +11179,9 @@
                             data: {
                                 nombre: payload.nombre,
                                 apellidos: payload.apellidos || '',
+                                fecha_nacimiento: payload.fecha_nacimiento || null,
+                                telefono: payload.telefono || null,
+                                notas: payload.notas || null,
                                 auth_method: 'kiosk'
                             }
                         }
@@ -11013,10 +11189,9 @@
 
                     if (!signUpError && signUpData?.user?.id) {
                         const newUserId = signUpData.user.id;
-                        const initialBonos = Number(payload.bonos || 0);
 
                         // Esperar a que el perfil exista en DB y aplicar los saldos iniciales (con reintentos)
-                        await asegurarSaldoInicialCliente(newUserId, initialBonos);
+                        await asegurarSaldoInicialCliente(newUserId, 0);
 
                         return {
                             data: {
@@ -11027,8 +11202,11 @@
                                     email: internalEmail,
                                     nombre: payload.nombre,
                                     apellidos: payload.apellidos || '',
+                                    fecha_nacimiento: payload.fecha_nacimiento || null,
+                                    telefono: payload.telefono || null,
+                                    notas: payload.notas || null,
                                     rol: 'cliente',
-                                    bonos: initialBonos,
+                                    bonos: 0,
                                     saldo_clases_gratis: 1,
                                     saldo_yoga_compania: 1,
                                     saldo_consultas_gratis: 1
@@ -11050,11 +11228,16 @@
                 body: {
                     nombre: payload.nombre,
                     apellidos: payload.apellidos,
-                    bonos: payload.bonos,
+                    fecha_nacimiento: payload.fecha_nacimiento,
+                    telefono: payload.telefono,
+                    email: payload.email,
+                    notas: payload.notas,
+                    bonos: 0,
                     idempotency_key: payload.idempotencyKey
                 }
             });
         }
+
 
         async function obtenerMensajeErrorFuncion(error, data, fallbackMessage = 'No se pudo crear el cliente de mostrador.') {
             if (typeof data?.error === 'string' && data.error.trim()) return data.error.trim();
@@ -11076,310 +11259,141 @@
         }
 
         async function abrirCrearClienteMostrador() {
-            if (!isAdmin && !esTrabajador()) return;
+    if (!isAdmin && !esTrabajador()) return;
 
-            const { value: formValues } = await Swal.fire({
-                title: 'Crear cliente de mostrador',
-                html: `
-            <div class="space-y-4 text-left">
-                <p class="text-xs text-gray-500 leading-relaxed">
-                    Crea un perfil interno para personas que reservan y pagan desde el mostrador. No tendrá contraseña ni acceso online.
+    const { value: formValues } = await Swal.fire({
+        title: 'Crear cliente de mostrador',
+        html: `
+            <div class='space-y-3 text-left font-sans'>
+                <p class='text-xs text-cocoa/60 leading-relaxed'>
+                    Crea la ficha del cliente con todos sus datos y notas. Los bonos o clases se pueden gestionar posteriormente desde la tabla.
                 </p>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre</label>
-                    <input id="swal-kiosk-nombre" maxlength="80" autocomplete="off" class="w-full px-3 py-2 border rounded-lg outline-none" placeholder="Nombre">
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Nombre *</label>
+                    <input id='swal-kiosk-nombre' maxlength='80' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Nombre'>
                 </div>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Apellidos</label>
-                    <input id="swal-kiosk-apellidos" maxlength="120" autocomplete="off" class="w-full px-3 py-2 border rounded-lg outline-none" placeholder="Apellidos">
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Apellidos</label>
+                    <input id='swal-kiosk-apellidos' maxlength='120' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Apellidos'>
+                </div>
+                <div class='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                    <div>
+                        <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Fecha de nacimiento</label>
+                        <input id='swal-kiosk-fecha-nac' type='date' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive'>
+                    </div>
+                    <div>
+                        <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Teléfono móvil</label>
+                        <input id='swal-kiosk-telefono' type='tel' maxlength='15' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='612345678'>
+                    </div>
                 </div>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Clases sueltas iniciales</label>
-                    <input id="swal-kiosk-bonos" type="number" min="0" max="10000" step="1" inputmode="numeric" class="w-full px-3 py-2 border rounded-lg outline-none" value="0">
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Correo electrónico</label>
+                    <input id='swal-kiosk-email' type='email' maxlength='254' autocomplete='off' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='correo@ejemplo.com'>
+                </div>
+                <div>
+                    <label class='text-[11px] font-bold uppercase text-cocoa/60 block mb-1'>Notas / Anotaciones</label>
+                    <textarea id='swal-kiosk-notas' maxlength='1000' rows='2' class='w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl outline-none focus:ring-2 focus:ring-olive' placeholder='Anotaciones, historial o preferencias del alumno...'></textarea>
                 </div>
             </div>
         `,
-                showCancelButton: true,
-                confirmButtonText: 'Crear cliente',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#26160C',
-                focusConfirm: false,
-                preConfirm: () => {
-                    const nombre = document.getElementById('swal-kiosk-nombre').value.trim();
-                    const apellidos = document.getElementById('swal-kiosk-apellidos').value.trim();
-                    const bonosRaw = document.getElementById('swal-kiosk-bonos').value.trim();
-                    const bonos = Number(bonosRaw);
+        showCancelButton: true,
+        confirmButtonText: 'Crear cliente',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#26160C',
+        focusConfirm: false,
+        preConfirm: () => {
+            const nombre = document.getElementById('swal-kiosk-nombre').value.trim();
+            const apellidos = document.getElementById('swal-kiosk-apellidos').value.trim();
+            const fechaNac = document.getElementById('swal-kiosk-fecha-nac').value || null;
+            const email = document.getElementById('swal-kiosk-email').value.trim();
+            const telefonoRaw = document.getElementById('swal-kiosk-telefono').value.trim();
+            const notas = document.getElementById('swal-kiosk-notas').value.trim();
 
-                    if (!nombre) {
-                        Swal.showValidationMessage('El nombre es obligatorio');
-                        return false;
-                    }
-                    if (!Number.isSafeInteger(bonos) || bonos < 0 || bonos > 10000) {
-                        Swal.showValidationMessage('Las clases iniciales deben ser un entero entre 0 y 10000');
-                        return false;
-                    }
-
-                    return { nombre, apellidos, bonos };
-                }
-            });
-
-            if (!formValues) return;
-
-            if (typeof window.crypto?.randomUUID !== 'function') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Navegador no compatible',
-                    text: 'Actualiza el navegador para crear clientes de mostrador de forma segura.',
-                    confirmButtonColor: '#E1654E'
-                });
-                return;
+            if (!nombre) {
+                Swal.showValidationMessage('El nombre es obligatorio');
+                return false;
             }
 
-            const payload = {
-                nombre: formValues.nombre,
-                apellidos: formValues.apellidos,
-                bonos: formValues.bonos,
-                idempotencyKey: window.crypto.randomUUID()
-            };
-
-            Swal.fire({
-                title: 'Creando cliente...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            // El modal de carga nunca debe quedarse colgado: si la respuesta del servidor
-            // se pierde después de crear el perfil, se avisa y se refresca la lista.
-            const KIOSK_TIMEOUT_MS = 25000;
-            let result;
-            try {
-                result = await Promise.race([
-                    crearPerfilMostradorEnServidor(payload),
-                    new Promise(resolve => setTimeout(() => resolve({ timedOut: true }), KIOSK_TIMEOUT_MS))
-                ]);
-            } catch (invokeError) {
-                console.error('Error al crear cliente de mostrador:', invokeError);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No se pudo crear',
-                    text: 'No se pudo conectar con el servidor. Comprueba la conexión e inténtalo de nuevo.',
-                    confirmButtonColor: '#E1654E'
-                });
-                return;
+            let cleanTel = null;
+            if (telefonoRaw) {
+                cleanTel = telefonoRaw.replace(/\D/g, '');
             }
 
-            if (result.timedOut) {
-                // El servidor puede haber terminado el alta aunque la respuesta no haya llegado.
-                try { await cargarUsuariosAdmin(); } catch (_) { /* el aviso siguiente informa igualmente */ }
-                Swal.fire({
-                    icon: 'info',
-                    title: 'La creación está tardando',
-                    text: 'El servidor sigue procesando el alta. Revisa la lista de gestión de bonos; si el cliente no aparece en unos segundos, vuelve a crearlo.',
-                    confirmButtonColor: '#9B7B37'
-                });
-                return;
-            }
-
-            if (result.error) {
-                const message = await obtenerMensajeErrorFuncion(result.error, result.data);
-                console.error('Error al crear cliente de mostrador:', result.error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No se pudo crear',
-                    text: message,
-                    confirmButtonColor: '#E1654E'
-                });
-                return;
-            }
-
-            try {
-                await cargarUsuariosAdmin();
-            } catch (listError) {
-                console.warn('No se pudo refrescar la lista de usuarios:', listError);
-            }
-            const createdProfile = result.data?.profile || payload;
-            const nombreCompleto = `${createdProfile.nombre || ''} ${createdProfile.apellidos || ''}`.trim();
-            Swal.fire({
-                icon: 'success',
-                title: result.data?.created === false ? 'Cliente ya creado' : 'Cliente creado',
-                text: `${nombreCompleto || 'El cliente'} ya aparece en gestión de bonos como perfil sin acceso online.`,
-                confirmButtonColor: '#9B7B37'
-            });
+            return { nombre, apellidos, fechaNac, email, telefono: cleanTel, notas };
         }
+    });
 
-        function getSaldoConfig(tipo) {
-            return SALDOS_CONFIG[tipo] || SALDOS_CONFIG.yoga;
-        }
+    if (!formValues) return;
 
+    if (typeof window.crypto?.randomUUID !== 'function') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Navegador no compatible',
+            text: 'Actualiza el navegador para crear clientes de mostrador de forma segura.',
+            confirmButtonColor: '#E1654E'
+        });
+        return;
+    }
 
-        function renderSaldoBadgeAdmin(u) {
-            const userId = inlineJsString(u.id);
+    const payload = {
+        nombre: formValues.nombre,
+        apellidos: formValues.apellidos,
+        fecha_nacimiento: formValues.fechaNac || null,
+        email: formValues.email || null,
+        telefono: formValues.telefono || null,
+        bonos: 0,
+        notas: formValues.notas || null,
+        idempotencyKey: window.crypto.randomUUID()
+    };
 
-            // 1. Clases Sueltas
-            const indValue = toSafeNumber(u.bonos);
-            const indClass = indValue > 0 ? 'text-cocoa font-black text-xs' : 'text-cocoa/40 font-bold text-xs';
-            const indHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-sand/20 border border-cocoa/15 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Clases sueltas / packs de yoga">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-cocoa/70 uppercase tracking-tight">
-                <i class="ph-bold ph-ticket text-olive"></i> Sueltas
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'yoga', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-cocoa/20 text-cocoa/70 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${indClass}">${indValue}</span>
-                <button onclick="sumarSaldo(${userId}, 'yoga', 1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-cocoa text-white hover:bg-black transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
+    Swal.fire({
+        title: 'Creando cliente...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
 
-            // 2. Bono Bienvenida (Sesión Introductoria Gratuita)
-            const freeClassVal = toSafeNumber(u.saldo_clases_gratis) > 0 ? toSafeNumber(u.saldo_clases_gratis) : 1;
-            const freeClassClass = freeClassVal > 0 ? 'text-emerald-800 font-black text-xs' : 'text-emerald-900/30 font-bold text-xs';
-            const freeClassHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Bono de bienvenida / sesión introductoria gratuita">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-emerald-800 uppercase tracking-tight">
-                <i class="ph-bold ph-sparkle text-emerald-600"></i> Bienvenida
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'clases_gratis', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-emerald-300 text-emerald-800 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${freeClassClass}">${freeClassVal}</span>
-                <button onclick="sumarSaldo(${userId}, 'clases_gratis', 1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-emerald-700 text-white hover:bg-emerald-800 transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
+    let result;
+    try {
+        result = await crearPerfilMostradorEnServidor(payload);
+    } catch (invokeError) {
+        console.error('Error al crear cliente de mostrador:', invokeError);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo crear',
+            text: 'No se pudo conectar con el servidor. Comprueba la conexión e inténtalo de nuevo.',
+            confirmButtonColor: '#E1654E'
+        });
+        return;
+    }
 
-            // 3. Yoga en Compañía (Colegas, Pareja, Madre e Hija, Abuela y Nieta)
-            const companionVal = toSafeNumber(u.saldo_yoga_compania) > 0 ? toSafeNumber(u.saldo_yoga_compania) : 1;
-            const companionClass = companionVal > 0 ? 'text-amber-900 font-black text-xs' : 'text-amber-900/30 font-bold text-xs';
-            const companionHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-amber-50/90 border border-amber-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Bono de Yoga en Compañía">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-amber-900 uppercase tracking-tight">
-                <i class="ph-bold ph-users-three text-amber-700"></i> Compañía
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'yoga_compania', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-amber-300 text-amber-900 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${companionClass}">${companionVal}</span>
-                <button onclick="sumarSaldo(${userId}, 'yoga_compania', 1)" style="background-color: #b48a47 !important; color: #ffffff !important;" class="w-5 h-5 flex items-center justify-center rounded-md bg-[#b48a47] text-white hover:bg-[#967236] transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
+    if (result.error) {
+        const message = await obtenerMensajeErrorFuncion(result.error, result.data);
+        console.error('Error al crear cliente de mostrador:', result.error);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo crear',
+            text: message,
+            confirmButtonColor: '#E1654E'
+        });
+        return;
+    }
 
-            // 4. Consulta Gratis
-            const freeConsVal = toSafeNumber(u.saldo_consultas_gratis) > 0 ? toSafeNumber(u.saldo_consultas_gratis) : 1;
-            const freeConsClass = freeConsVal > 0 ? 'text-pink-900 font-black text-xs' : 'text-pink-900/30 font-bold text-xs';
-            const freeConsHtml = `
-        <div class="inline-flex items-center gap-1.5 bg-pink-50/80 border border-pink-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Bono de consulta gratuita de bienvenida">
-            <span class="flex items-center gap-1 text-[10px] font-bold text-pink-800 uppercase tracking-tight">
-                <i class="ph-bold ph-gift text-pink-600"></i> Consulta
-            </span>
-            <div class="flex items-center gap-1 ml-0.5">
-                <button onclick="sumarSaldo(${userId}, 'consultas_gratis', -1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-white border border-pink-300 text-pink-800 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition font-black text-[10px]" title="Restar 1">-</button>
-                <span class="w-5 text-center ${freeConsClass}">${freeConsVal}</span>
-                <button onclick="sumarSaldo(${userId}, 'consultas_gratis', 1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-pink-600 text-white hover:bg-pink-700 transition font-black text-[10px]" title="Sumar 1">+</button>
-            </div>
-        </div>`;
+    try {
+        await cargarUsuariosAdmin();
+    } catch (listError) {
+        console.warn('No se pudo refrescar la lista de usuarios:', listError);
+    }
 
-            // 5. Mes Ilimitado
-            let mensualHtml = '';
-            if (u.bono_mensual_activo) {
-                const fechaFin = u.bono_mensual_fin ? new Date(u.bono_mensual_fin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
-                mensualHtml = `
-            <div class="inline-flex items-center gap-1.5 bg-emerald-100 border border-emerald-300 rounded-xl px-2 py-1 text-xs shadow-2xs" title="Membresía ilimitada activa hasta ${escapeHtml(fechaFin)}">
-                <span class="flex items-center gap-1 text-[10px] font-bold text-emerald-900 uppercase tracking-tight">
-                    <i class="ph-bold ph-infinity text-emerald-700"></i> Ilimitado: <span class="font-normal font-mono text-[9px] ml-0.5">${escapeHtml(fechaFin)}</span>
-                </span>
-                <button onclick="cambiarBonoMensual(${userId}, false)" class="ml-1 text-[9px] font-bold text-red-600 hover:text-red-800 bg-white/80 hover:bg-white px-1.5 py-0.5 rounded-md border border-red-200 transition" title="Desactivar mes ilimitado">
-                    Desactivar
-                </button>
-            </div>`;
-            } else {
-                mensualHtml = `
-            <button onclick="cambiarBonoMensual(${userId}, true)" class="inline-flex items-center gap-1 bg-sand/15 hover:bg-emerald-50 border border-cocoa/15 hover:border-emerald-300 rounded-xl px-2 py-1 text-xs text-cocoa/60 hover:text-emerald-800 transition shadow-2xs group" title="Activar mes ilimitado de clases">
-                <i class="ph-bold ph-infinity text-cocoa/40 group-hover:text-emerald-600"></i>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Activar Ilimitado</span>
-            </button>`;
-            }
-
-            // 6. Descuento 50% Promo (GEN YOGA)
-            let promo50Html = '';
-            if (u.descuento_promo_50_activo) {
-                promo50Html = `
-            <div class="inline-flex items-center gap-1 bg-amber-100 border border-amber-400 rounded-xl px-2 py-1 text-xs shadow-2xs font-black text-amber-950" title="Código Promocional GEN YOGA activo: 50% de descuento en 1ª reserva">
-                <i class="ph-bold ph-tag text-amber-700"></i>
-                <span class="text-[10px] uppercase tracking-tight">50% DTO</span>
-            </div>`;
-            }
-
-            // Saldo Psicología / Nutrición adicionales (si existen)
-            const psicoVal = toSafeNumber(u.saldo_psicologia);
-            let psicoHtml = '';
-            if (psicoVal > 0) {
-                psicoHtml = `
-            <div class="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 rounded-xl px-2 py-1 text-xs shadow-2xs">
-                <span class="text-[10px] font-bold text-blue-800 uppercase tracking-tight">Psico:</span>
-                <span class="text-blue-700 font-black text-xs">${psicoVal}</span>
-            </div>`;
-            }
-
-            const nutriVal = toSafeNumber(u.saldo_nutricion);
-            let nutriHtml = '';
-            if (nutriVal > 0) {
-                nutriHtml = `
-            <div class="inline-flex items-center gap-1 bg-purple-50 border border-purple-200 rounded-xl px-2 py-1 text-xs shadow-2xs">
-                <span class="text-[10px] font-bold text-purple-800 uppercase tracking-tight">Nutri:</span>
-                <span class="text-purple-700 font-black text-xs">${nutriVal}</span>
-            </div>`;
-            }
-
-            return `<div class="flex flex-wrap items-center gap-1.5">${indHtml}${freeClassHtml}${companionHtml}${freeConsHtml}${mensualHtml}${promo50Html}${psicoHtml}${nutriHtml}</div>`;
-        }
-
-        function renderActionsAdmin(u) {
-            const userId = inlineJsString(u.id);
-
-            let consultationDiscountButton = '';
-            if (u.bono_mensual_activo) {
-                consultationDiscountButton = `
-            <button onclick="aplicarDescuentoPrimeraConsulta(${userId})" class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-tight rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition flex items-center gap-1 shadow-2xs shrink-0" title="Registrar el 30% incluido en la primera consulta">
-                <i class="ph-bold ph-percent"></i> 30% consulta
-            </button>`;
-            }
-
-            let promoButton = '';
-            if (u.descuento_promo_50_activo) {
-                promoButton = `
-            <button onclick="adminTogglePromo50(${userId}, false)" class="px-2 py-1 text-[10px] font-bold uppercase tracking-tight rounded-xl border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 transition flex items-center gap-1 shadow-2xs shrink-0" title="Quitar 50% de descuento promocional">
-                <i class="ph-bold ph-tag"></i> 50% activo
-            </button>`;
-            } else {
-                promoButton = `
-            <button onclick="adminTogglePromo50(${userId}, true)" class="px-2 py-1 text-[10px] font-bold uppercase tracking-tight rounded-xl border border-cocoa/15 text-cocoa/60 hover:text-amber-900 hover:bg-amber-50 hover:border-amber-300 transition flex items-center gap-1 shadow-2xs shrink-0" title="Activar 50% de descuento promocional (GEN YOGA)">
-                <i class="ph-bold ph-tag"></i> +50% Promo
-            </button>`;
-            }
-
-            const bonosModalButton = `
-        <button onclick="abrirGestionBonosUsuario(${userId})" class="w-8 h-8 flex items-center justify-center rounded-xl border border-cocoa/15 text-cocoa/70 hover:text-cocoa hover:bg-sand/20 transition shadow-2xs shrink-0" title="Gestión avanzada de bonos y saldos">
-            <i class="ph-bold ph-sliders-horizontal text-sm"></i>
-        </button>`;
-
-            const editUserButton = `
-        <button onclick="abrirEditarUsuarioAdmin(${userId})" class="w-8 h-8 flex items-center justify-center rounded-xl border border-cocoa/15 text-cocoa/70 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition shadow-2xs shrink-0" title="Editar datos del usuario (Nombre, Teléfono, Fecha Nacimiento)">
-            <i class="ph-bold ph-pencil-simple text-sm"></i>
-        </button>`;
-
-            const deleteUserButton = `
-        <button onclick="borrarUsuario(${userId})" class="w-8 h-8 flex items-center justify-center rounded-xl border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition shadow-2xs shrink-0" title="Eliminar Usuario">
-            <i class="ph-bold ph-trash text-sm"></i>
-        </button>`;
-
-            return `
-        <div class="flex items-center justify-end gap-1.5 flex-wrap">
-            ${consultationDiscountButton}
-            ${promoButton}
-            ${bonosModalButton}
-            ${editUserButton}
-            ${deleteUserButton}
-        </div>`;
-        }
-
-        async function adminTogglePromo50(userId, active) {
+    const createdProfile = result.data?.profile || payload;
+    const nombreCompleto = `${createdProfile.nombre || ''} ${createdProfile.apellidos || ''}`.trim();
+    Swal.fire({
+        icon: 'success',
+        title: 'Cliente creado',
+        text: `${nombreCompleto || 'El cliente'} ya aparece en la gestión de bonos con sus datos y notas guardadas.`,
+        confirmButtonColor: '#9B7B37'
+    });
+}
+async function adminTogglePromo50(userId, active) {
             if (!isAdmin) return;
             const actionText = active ? 'activar' : 'desactivar';
             const res = await Swal.fire({
@@ -11454,6 +11468,74 @@
             renderUsersTable(allUsersCache);
         }
 
+        function renderSaldoBadgeAdmin(u) {
+            const badges = [];
+            const bonos = toSafeNumber(u.bonos);
+            const bienvenida = toSafeNumber(u.saldo_clases_gratis) > 0 ? toSafeNumber(u.saldo_clases_gratis) : 1;
+            const compania = toSafeNumber(u.saldo_yoga_compania) > 0 ? toSafeNumber(u.saldo_yoga_compania) : 1;
+            const consultas = toSafeNumber(u.saldo_consultas_gratis) > 0 ? toSafeNumber(u.saldo_consultas_gratis) : 1;
+            const ilimitado = !!u.bono_mensual_activo;
+
+            if (ilimitado) {
+                badges.push('<span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-emerald-300 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-infinity"></i> Mes Ilimitado</span>');
+            }
+
+            if (bonos > 0) {
+                badges.push(`<span class="bg-olive/15 text-olive text-[10px] font-bold px-2 py-0.5 rounded-md border border-olive/30 flex items-center gap-1"><i class="ph-bold ph-ticket"></i> ${bonos} clase${bonos > 1 ? 's' : ''}</span>`);
+            }
+
+            if (bienvenida > 0) {
+                badges.push(`<span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><i class="ph-bold ph-sparkle"></i> ${bienvenida} Bienvenida</span>`);
+            }
+
+            if (compania > 0) {
+                badges.push(`<span class="bg-amber-50 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1"><i class="ph-bold ph-users-three text-amber-700"></i> ${compania} Yoga Compañía</span>`);
+            }
+
+            if (consultas > 0) {
+                badges.push(`<span class="bg-pink-50 text-pink-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-pink-200 flex items-center gap-1"><i class="ph-bold ph-gift"></i> ${consultas} Consulta</span>`);
+            }
+
+            if (u.descuento_promo_50_activo) {
+                badges.push('<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1"><i class="ph-bold ph-tag"></i> 50% DTO</span>');
+            }
+
+            if (badges.length === 0) {
+                return '<span class="text-gray-400 text-xs italic">Sin bonos activos</span>';
+            }
+
+            return `<div class="flex flex-wrap gap-1.5">${badges.join('')}</div>`;
+        }
+
+        function renderActionsAdmin(u) {
+            const isPromoActive = !!u.descuento_promo_50_activo;
+            const uId = escapeHtml(String(u.id || ''));
+            return `
+                <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                    <button type="button" onclick="abrirGestionBonosUsuario('${uId}')"
+                        class="px-2.5 py-1.5 bg-olive text-white hover:bg-black rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                        title="Gestionar Bonos y Saldos">
+                        <i class="ph-bold ph-wallet"></i> Bonos
+                    </button>
+                    <button type="button" onclick="abrirEditarUsuarioAdmin('${uId}')"
+                        class="px-2.5 py-1.5 bg-sand/30 hover:bg-sand/60 text-cocoa rounded-lg text-xs font-bold border border-cocoa/15 transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                        title="Editar Datos del Cliente">
+                        <i class="ph-bold ph-pencil-simple"></i> Editar
+                    </button>
+                    <button type="button" onclick="adminTogglePromo50('${uId}', ${!isPromoActive})"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg border ${isPromoActive ? 'bg-amber-50 text-amber-700 border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:text-amber-600'} transition shadow-2xs cursor-pointer"
+                        title="${isPromoActive ? 'Desactivar 50% DTO' : 'Activar 50% DTO'}">
+                        <i class="ph-bold ph-tag text-xs"></i>
+                    </button>
+                    <button type="button" onclick="borrarUsuario('${uId}')"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition shadow-2xs cursor-pointer"
+                        title="Eliminar Usuario">
+                        <i class="ph-bold ph-trash text-xs"></i>
+                    </button>
+                </div>
+            `;
+        }
+
         function renderUsersTable(users) {
             const tbody = document.getElementById('users-table-body');
             const noRes = document.getElementById('no-users-found');
@@ -11487,22 +11569,28 @@
                 }
 
                 let contactInfo = '';
-                if (contact.isMostrador) {
-                    contactInfo = '<span class="text-[10px] text-olive font-semibold">Mostrador</span>';
-                } else if (contact.isTemporal) {
-                    contactInfo = '<span class="text-[10px] text-amber-600 font-semibold">Temporal Stripe</span>';
-                } else {
-                    const parts = [];
-                    if (contact.cleanTel) {
-                        parts.push(`<a href="tel:${escapeHtml(contact.cleanTel)}" class="text-gray-700 font-semibold hover:text-olive">📱 ${escapeHtml(contact.cleanTel)}</a>`);
-                    }
-                    if (contact.realEmail) {
-                        parts.push(`<a href="mailto:${escapeHtml(contact.realEmail)}" class="text-gray-400 hover:text-gray-700 truncate max-w-[170px]" title="${escapeHtml(contact.realEmail)}">✉️ ${escapeHtml(contact.realEmail)}</a>`);
-                    }
-                    if (parts.length === 0) {
+                const parts = [];
+                if (contact.cleanTel) {
+                    parts.push(`<a href="tel:${escapeHtml(contact.cleanTel)}" class="text-gray-700 font-semibold hover:text-olive">📱 ${escapeHtml(contact.cleanTel)}</a>`);
+                }
+                if (contact.realEmail) {
+                    parts.push(`<a href="mailto:${escapeHtml(contact.realEmail)}" class="text-gray-400 hover:text-gray-700 truncate max-w-[170px]" title="${escapeHtml(contact.realEmail)}">✉️ ${escapeHtml(contact.realEmail)}</a>`);
+                }
+                if (parts.length === 0) {
+                    if (contact.isMostrador) {
+                        parts.push('<span class="text-[10px] text-olive font-semibold">Mostrador</span>');
+                    } else if (contact.isTemporal) {
+                        parts.push('<span class="text-[10px] text-amber-600 font-semibold">Temporal Stripe</span>');
+                    } else {
                         parts.push('<span class="text-[10px] text-gray-400 italic">Sin contacto</span>');
                     }
-                    contactInfo = `<div class="flex flex-col text-[10px] gap-0.5">${parts.join('')}</div>`;
+                }
+                contactInfo = `<div class="flex flex-col text-[10px] gap-0.5">${parts.join('')}</div>`;
+
+                // NUEVO: Generar badge visual si el usuario tiene notas registradas
+                let notasHtml = '';
+                if (u.notas && String(u.notas).trim() !== '') {
+                    notasHtml = `<div class="text-[10px] text-amber-900 bg-amber-50/90 border border-amber-300/60 px-2 py-0.5 rounded-md mt-1 truncate max-w-[220px]" title="Notas: ${escapeHtml(u.notas)}">📝 ${escapeHtml(u.notas)}</div>`;
                 }
 
                 row.innerHTML = `
@@ -11517,6 +11605,7 @@
                                     ${contact.edadStr ? `<span class="text-[9px] font-bold text-cocoa/40">(${escapeHtml(contact.edadStr)})</span>` : ''}
                                 </div>
                                 ${contactInfo}
+                                ${notasHtml}
                             </div>
                         </div>
                     </td>
@@ -11531,7 +11620,6 @@
                 tbody.appendChild(row);
             });
         }
-
         function renderStaffTable(users) {
             const tbody = document.getElementById('staff-table-body');
             const noRes = document.getElementById('no-staff-found');
@@ -11757,8 +11845,8 @@
                 const { error } = await client.rpc('admin_configurar_bono_mensual', {
                     p_user_id: userId,
                     p_activo: true,
-                    p_inicio: new Date(formValues.inicio).toISOString(),
-                    p_fin: new Date(formValues.fin).toISOString()
+                    p_inicio: new Date(formValues.inicio + 'T00:00:00').toISOString(),
+                    p_fin: new Date(formValues.fin + 'T23:59:59.999').toISOString()
                 });
 
                 Swal.close();
@@ -12742,20 +12830,19 @@
                 });
             }
 
-            // Actualizar en base de datos mediante RPC
-            const { error: updateErr } = await client.rpc('admin_actualizar_clase_simple', {
-                p_clase_id: cid,
-                p_nombre: nombre,
-                p_tipo_clase_id: tipoClaseId,
-                p_fecha_inicio: fechaInicio.toISOString(),
-                p_fecha_fin: fechaFin.toISOString(),
-                p_duracion_minutos: duracion,
-                p_capacidad_max: capacidad,
-                p_profesor_id: profesorId,
-                p_es_gratuita: esGratuita,
-                p_companion_modality: companionModality,
-                p_descripcion: descripcion
-            });
+            // Actualizar en base de datos
+            const { error: updateErr } = await client.from('clases').update({
+                nombre,
+                tipo_clase_id: tipoClaseId,
+                fecha_inicio: fechaInicio.toISOString(),
+                fecha_fin: fechaFin.toISOString(),
+                duracion_minutos: duracion,
+                capacidad_max: capacidad,
+                profesor_id: profesorId,
+                es_gratuita: esGratuita,
+                companion_modality: companionModality,
+                descripcion
+            }).eq('id', cid);
 
             Swal.close();
 
@@ -14440,6 +14527,8 @@
             const apellidosActual = u.apellidos || '';
             const telefonoActual = u.telefono || '';
             const fechaNacActual = u.fecha_nacimiento || '';
+            const emailActual = u.email || '';
+            const notasActual = u.notas || '';
             const rolActual = (u.rol || 'alumno').toLowerCase().trim();
 
             const { value: formValues } = await Swal.fire({
@@ -14447,20 +14536,30 @@
                 html: `
             <div class="flex flex-col gap-3 text-left font-sans">
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Nombre</label>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Nombre *</label>
                     <input id="swal-admin-nombre" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(nombreActual)}" placeholder="Nombre">
                 </div>
                 <div>
                     <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Apellidos</label>
                     <input id="swal-admin-apellidos" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(apellidosActual)}" placeholder="Apellidos">
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Teléfono Móvil (9 dígitos)</label>
-                    <input id="swal-admin-telefono" type="tel" maxlength="15" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="Ej: 612 345 678" value="${escapeHtml(telefonoActual)}">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Teléfono Móvil</label>
+                        <input id="swal-admin-telefono" type="tel" maxlength="15" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="Ej: 612 345 678" value="${escapeHtml(telefonoActual)}">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Fecha de Nacimiento</label>
+                        <input id="swal-admin-fecha-nac" type="date" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(fechaNacActual)}">
+                    </div>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Fecha de Nacimiento</label>
-                    <input id="swal-admin-fecha-nac" type="date" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(fechaNacActual)}">
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Correo Electrónico</label>
+                    <input id="swal-admin-email" type="email" maxlength="254" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="correo@ejemplo.com" value="${escapeHtml(emailActual)}">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Notas / Anotaciones</label>
+                    <textarea id="swal-admin-notas" rows="3" maxlength="1000" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="Anotaciones, historial o preferencias del alumno...">${escapeHtml(notasActual)}</textarea>
                 </div>
                 ${isAdmin ? `
                 <div>
@@ -14485,7 +14584,14 @@
                     const apellidos = (document.getElementById('swal-admin-apellidos')?.value || '').trim();
                     const telefonoRaw = (document.getElementById('swal-admin-telefono')?.value || '').trim();
                     const fechaNac = document.getElementById('swal-admin-fecha-nac')?.value || null;
+                    const email = (document.getElementById('swal-admin-email')?.value || '').trim();
+                    const notas = (document.getElementById('swal-admin-notas')?.value || '').trim();
                     const rol = document.getElementById('swal-admin-rol')?.value || rolActual;
+
+                    if (!nombre) {
+                        Swal.showValidationMessage('El nombre es obligatorio');
+                        return false;
+                    }
 
                     let cleanTel = null;
                     if (telefonoRaw) {
@@ -14496,7 +14602,7 @@
                         }
                     }
 
-                    return { nombre, apellidos, telefono: cleanTel, fechaNac, rol };
+                    return { nombre, apellidos, telefono: cleanTel, fechaNac, email, notas, rol };
                 }
             });
 
@@ -14518,7 +14624,9 @@
                         p_apellidos: formValues.apellidos,
                         p_telefono: formValues.telefono,
                         p_fecha_nacimiento: formValues.fechaNac || null,
-                        p_rol: formValues.rol
+                        p_rol: formValues.rol,
+                        p_email: formValues.email || null,
+                        p_notas: formValues.notas !== undefined ? formValues.notas : null
                     });
                     if (!error) saved = true;
                     else errorMsg = error.message;
@@ -14538,6 +14646,8 @@
                                 apellidos: formValues.apellidos,
                                 telefono: formValues.telefono || allUsersCache[idx].telefono,
                                 fecha_nacimiento: formValues.fechaNac || allUsersCache[idx].fecha_nacimiento,
+                                email: formValues.email || allUsersCache[idx].email,
+                                notas: formValues.notas !== undefined ? formValues.notas : allUsersCache[idx].notas,
                                 rol: formValues.rol || allUsersCache[idx].rol
                             };
                         }
@@ -14548,7 +14658,9 @@
                             nombre: formValues.nombre,
                             apellidos: formValues.apellidos,
                             telefono: formValues.telefono || allAsistenciasPerfilesMap[userId].telefono,
-                            fecha_nacimiento: formValues.fechaNac || allAsistenciasPerfilesMap[userId].fecha_nacimiento
+                            fecha_nacimiento: formValues.fechaNac || allAsistenciasPerfilesMap[userId].fecha_nacimiento,
+                            email: formValues.email || allAsistenciasPerfilesMap[userId].email,
+                            notas: formValues.notas !== undefined ? formValues.notas : allAsistenciasPerfilesMap[userId].notas
                         };
                     }
 
@@ -14999,7 +15111,7 @@
         // CONSULTAS Y TALLERES
         // =======================================================
 
-        function generarHuecosConsultasVirtuales(tipo, dbClases = [], allClases = []) {
+        function generarHuecosConsultasVirtuales(tipo, dbClases = [], allClases = [], targetMonth = currentCalendarMonthPsicologia) {
             if (tipo === 'nutricion') {
                 return [];
             }
@@ -15035,9 +15147,13 @@
             });
 
             const generated = [];
+            const tDate = targetMonth instanceof Date && !isNaN(targetMonth) ? targetMonth : new Date();
+            const year = tDate.getFullYear();
+            const month = tDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
             const today = new Date();
-            const startDate = new Date(today);
-            startDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
 
             // Colección exhaustiva de todos los eventos existentes de la BD (Yoga, Consultas y Talleres)
             const allExistingEvents = [
@@ -15047,10 +15163,10 @@
                 ...(typeof allTalleresCache !== 'undefined' ? allTalleresCache : [])
             ];
 
-            // Generar para las próximas 4 semanas
-            for (let dayOffset = 0; dayOffset < 28; dayOffset++) {
-                const d = new Date(startDate);
-                d.setDate(startDate.getDate() + dayOffset);
+            // Generar para los días del mes objetivo
+            for (let day = 1; day <= daysInMonth; day++) {
+                const d = new Date(year, month, day);
+                if (d < today) continue;
                 const dateKey = formatDateLocal(d);
                 const weekday = d.getDay() === 0 ? 7 : d.getDay();
 
@@ -15395,24 +15511,34 @@
             }
         }
 
-        async function cargarPsicologia() {
+        async function cargarPsicologia(targetMonth = currentCalendarMonthPsicologia) {
             const container = document.getElementById('psicologia-container');
-            if (!container) return;
-            container.innerHTML = `
-    <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-      <i class="ph-duotone ph-spinner animate-spin text-4xl text-[#3B82F6]"></i>
-      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">${escapeHtml(profileT('profile_loading_consultations', 'Cargando consultas...'))}</span>
-    </div>`;
+            const emptyState = document.getElementById('psicologia-empty-state');
+            if (container) {
+                container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+          <i class="ph-duotone ph-spinner animate-spin text-4xl text-[#3B82F6]"></i>
+          <span class="text-xs uppercase tracking-widest font-bold text-gray-500">${escapeHtml(profileT('profile_loading_consultations', 'Cargando consultas...'))}</span>
+        </div>`;
+            }
+
+            const tDate = targetMonth instanceof Date && !isNaN(targetMonth) ? targetMonth : new Date();
+            const year = tDate.getFullYear();
+            const month = tDate.getMonth();
+            const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
+            const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
             const now = new Date();
             now.setHours(now.getHours() - 2);
-            const nowIso = now.toISOString();
+            const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month;
+            const startQuery = isCurrentMonth ? now : startOfMonth;
 
             const { data: rawClases, error: errClases } =
                 await client.from('clases')
                     .select('*, profesionales(*)')
                     .eq('tipo_clase', 'psicologia')
-                    .gte('fecha_inicio', nowIso)
+                    .gte('fecha_inicio', startQuery.toISOString())
+                    .lte('fecha_inicio', endOfMonth.toISOString())
                     .order('fecha_inicio');
 
             const dbClases = (rawClases || []).filter(esHorarioValidoConsulta);
@@ -15440,7 +15566,7 @@
                     c.ocupadas = (ocupacionPsicoMap && ocupacionPsicoMap[c.id] != null)
                         ? ocupacionPsicoMap[c.id]
                         : confirmadas.length;
-                    c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
+                    c.miReserva = (currentUser && confirmadas.find(r => r.user_id === currentUser.id)) || null;
                     if (!c.miReserva && userBookingsCache && userBookingsCache.length > 0) {
                         const found = userBookingsCache.find(b => b.tipo === 'psicologia' && String(b.id) === String(c.id));
                         if (found) {
@@ -15462,32 +15588,36 @@
                 userBookingsCache.filter(b => b.tipo === 'psicologia').forEach(b => {
                     const exists = dbClases.some(c => String(c.id) === String(b.id));
                     if (!exists) {
-                        dbClases.push({
-                            id: b.id,
-                            nombre: b.nombre,
-                            fecha_inicio: b.fecha instanceof Date ? b.fecha.toISOString() : b.fecha,
-                            tipo_clase: 'psicologia',
-                            duracion_minutos: 60,
-                            capacidad_max: 1,
-                            ocupadas: 1,
-                            miReserva: { id: b.reservaId, user_id: currentUser?.id, clase_id: b.id, estado: 'confirmada' },
-                            profesionales: { nombre: b.profesional, foto_url: b.profesionalFoto },
-                            descripcion: b.descripcion || ''
-                        });
+                        const bDate = b.fecha instanceof Date ? b.fecha : new Date(b.fecha);
+                        if (bDate.getFullYear() === year && bDate.getMonth() === month) {
+                            dbClases.push({
+                                id: b.id,
+                                nombre: b.nombre,
+                                fecha_inicio: b.fecha instanceof Date ? b.fecha.toISOString() : b.fecha,
+                                tipo_clase: 'psicologia',
+                                duracion_minutos: 60,
+                                capacidad_max: 1,
+                                ocupadas: 1,
+                                miReserva: { id: b.reservaId, user_id: currentUser?.id, clase_id: b.id, estado: 'confirmada' },
+                                profesionales: { nombre: b.profesional, foto_url: b.profesionalFoto },
+                                descripcion: b.descripcion || ''
+                            });
+                        }
                     }
                 });
             }
 
-            // Generar huecos virtuales disponibles para Miriam e Isabel
-            const virtualSlots = generarHuecosConsultasVirtuales('psicologia', dbClases, allClasesCache);
+            // Generar huecos virtuales disponibles para Miriam e Isabel para este mes
+            const virtualSlots = generarHuecosConsultasVirtuales('psicologia', dbClases, allClasesCache, tDate);
             const allSlots = [...dbClases, ...virtualSlots];
             allSlots.sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
 
-            const emptyState = document.getElementById('psicologia-empty-state');
             if (allSlots.length === 0) {
-                container.innerHTML = '';
+                if (container) container.innerHTML = '';
                 if (emptyState) emptyState.classList.remove('hidden');
                 allPsicologiaCache = [];
+                renderizarCalendarioPsicologia();
+                renderizarBarraDiasConsultas('psicologia');
                 return;
             }
 
@@ -15510,8 +15640,12 @@
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
 
+            const targetYear = currentCalendarMonthPsicologia.getFullYear();
+            const targetMonth = currentCalendarMonthPsicologia.getMonth();
+
             let clasesAMostrar = allPsicologiaCache.filter(c => {
                 const fechaClase = new Date(c.fecha_inicio);
+                if (fechaClase.getFullYear() !== targetYear || fechaClase.getMonth() !== targetMonth) return false;
                 fechaClase.setHours(0, 0, 0, 0);
                 return fechaClase >= hoy;
             });
@@ -16270,16 +16404,26 @@
             }
         }
 
-        function cambiarMesPsicologia(delta) {
+        async function cambiarMesPsicologia(delta) {
             currentCalendarMonthPsicologia.setMonth(currentCalendarMonthPsicologia.getMonth() + delta);
-            renderizarCalendarioPsicologia();
+            selectedDatePsicologia = null;
+            await cargarPsicologia(currentCalendarMonthPsicologia);
         }
 
         function filtrarPorFechaPsicologia(dateKey) {
             selectedDatePsicologia = dateKey;
             if (dateKey) {
                 const [y, m] = dateKey.split('-').map(Number);
-                currentCalendarMonthPsicologia = new Date(y, m - 1, 1);
+                const targetM = new Date(y, m - 1, 1);
+                if (currentCalendarMonthPsicologia.getFullYear() !== targetM.getFullYear() || currentCalendarMonthPsicologia.getMonth() !== targetM.getMonth()) {
+                    currentCalendarMonthPsicologia = targetM;
+                    cargarPsicologia(currentCalendarMonthPsicologia).then(() => {
+                        renderizarCalendarioPsicologia();
+                        renderizarBarraDiasConsultas('psicologia');
+                        renderizarPsicologia();
+                    });
+                    return;
+                }
             }
             renderizarCalendarioPsicologia();
             renderizarBarraDiasConsultas('psicologia');
@@ -16405,9 +16549,12 @@
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
 
+            const targetYear = (tipo === 'psicologia' ? currentCalendarMonthPsicologia : currentCalendarMonthNutricion).getFullYear();
+            const targetMonth = (tipo === 'psicologia' ? currentCalendarMonthPsicologia : currentCalendarMonthNutricion).getMonth();
+
             cache.forEach(c => {
                 const fechaObj = new Date(c.fecha_inicio);
-                if (fechaObj >= hoy) {
+                if (fechaObj.getFullYear() === targetYear && fechaObj.getMonth() === targetMonth && fechaObj >= hoy) {
                     const dKey = formatDateLocal(fechaObj);
                     fechasConSesiones.set(dKey, (fechasConSesiones.get(dKey) || 0) + 1);
                 }
@@ -16415,9 +16562,11 @@
 
             const dKeys = Array.from(fechasConSesiones.keys()).sort();
             if (dKeys.length === 0) {
-                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas programadas</span>';
+                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas programadas para este mes</span>';
                 return;
             }
+
+            const totalConsultasMes = Array.from(fechasConSesiones.values()).reduce((a, b) => a + b, 0);
 
             const cleanFn = tipo === 'psicologia' ? 'limpiarFiltroFechaPsicologia()' : 'limpiarFiltroFechaNutricion()';
             const filterFn = tipo === 'psicologia' ? 'filtrarPorFechaPsicologia' : 'filtrarPorFechaNutricion';
@@ -16426,7 +16575,7 @@
             let html = `
         <button type="button" onclick="${cleanFn}" 
             class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${!selected ? 'bg-cocoa text-white shadow-xs' : 'bg-white/80 text-cocoa hover:bg-white border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${cache.length})
+            <i class="ph-bold ph-squares-four"></i> Todas (${totalConsultasMes})
         </button>
     `;
 
