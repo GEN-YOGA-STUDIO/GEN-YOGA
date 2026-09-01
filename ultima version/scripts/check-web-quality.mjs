@@ -697,6 +697,9 @@ for (const requiredFrontendText of [
   "rawValue === ''",
   'policySaveInProgress',
   'El bono reservado no se devuelve.',
+  'function getSaldoConfig(',
+  'function abrirGestionBonosUsuario(',
+  'function sumarSaldoYRecargarModal(',
 ]) {
   if (!profile.includes(requiredFrontendText)) {
     errors.push(`profile.html: falta la regla ${requiredFrontendText}`);

@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.20" />
+    <meta name="application-version" content="9.21" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.20" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.20" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.21" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.21" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.20">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.21">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.20"></script>
+    <script src="teacher-profiles.js?v=9.21"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.20"></script>
+    <script src="i18n.js?v=9.21"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -3592,7 +3592,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.20. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.21. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4333,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.20';
+        const APP_VERSION = '9.21';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4631,6 +4631,10 @@
             psicologia: { table: 'reservas_psicologia', saldoField: 'saldo_psicologia', label: 'Psicología', color: '#3B82F6' },
             nutricion: { table: 'reservas_nutricion', saldoField: 'saldo_nutricion', label: 'Nutrición', color: '#8B5CF6' }
         };
+
+        function getSaldoConfig(tipo) {
+            return SALDOS_CONFIG[tipo] || SALDOS_CONFIG.yoga;
+        }
 
         function toSafeNumber(value) {
             const n = Number(value);
@@ -12290,12 +12294,14 @@ async function adminTogglePromo50(userId, active) {
                     Swal.close();
                     if (error) {
                         Swal.fire('Error', 'No se pudo activar el mes: ' + error.message, 'error');
+                        return false;
                     } else {
                         Swal.fire({ icon: 'success', title: 'Mes Ilimitado asignado', showConfirmButton: false, timer: 1200 });
                         if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
                         if (typeof checkProfile === 'function') checkProfile();
+                        return true;
                     }
-                    return;
+                    return true;
                 }
 
                 // Generar opciones de meses naturales (los 12 meses siguientes)
@@ -12336,7 +12342,7 @@ async function adminTogglePromo50(userId, active) {
                     }
                 });
 
-                if (!mesSeleccionado) return;
+                if (!mesSeleccionado) return false;
 
                 Swal.fire({ title: 'Asignando mes...', didOpen: () => Swal.showLoading() });
 
@@ -12365,10 +12371,12 @@ async function adminTogglePromo50(userId, active) {
 
                 if (error) {
                     Swal.fire('Error', 'No se pudo asignar el mes: ' + error.message, 'error');
+                    return false;
                 } else {
                     Swal.fire({ icon: 'success', title: 'Mes Ilimitado asignado', showConfirmButton: false, timer: 1200 });
                     if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
                     if (typeof checkProfile === 'function') checkProfile();
+                    return true;
                 }
             } else {
                 const res = await Swal.fire({
@@ -12404,11 +12412,15 @@ async function adminTogglePromo50(userId, active) {
 
                     if (error) {
                         Swal.fire('Error', 'No se pudo desactivar el bono: ' + error.message, 'error');
+                        return false;
                     } else {
                         Swal.fire({ icon: 'success', title: 'Bono desactivado', showConfirmButton: false, timer: 1200 });
                         if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
                         if (typeof checkProfile === 'function') checkProfile();
+                        return true;
                     }
+                } else {
+                    return false;
                 }
             }
         }
@@ -12859,11 +12871,11 @@ async function adminTogglePromo50(userId, active) {
             renderStaffTable(staff);
         }
 
-        async function sumarSaldo(userId, tipo, qty) {
+        async function sumarSaldo(userId, tipo, qty, showToast = true) {
             const config = getSaldoConfig(tipo);
             const delta = Number(qty);
-            if (!Number.isSafeInteger(delta) || delta === 0) return;
-            const { error } = await client.rpc('ajustar_saldo_usuario', {
+            if (!Number.isSafeInteger(delta) || delta === 0) return { success: false };
+            const { data, error } = await client.rpc('ajustar_saldo_usuario', {
                 p_user_id: userId,
                 p_tipo: tipo,
                 p_delta: delta
@@ -12872,18 +12884,32 @@ async function adminTogglePromo50(userId, active) {
             if (error) {
                 const msg = error.message || `No se pudo modificar el saldo de ${config.label}.`;
                 const dbDesfasada = /invalid balance adjustment|function public\.ajustar_saldo_usuario|does not exist|schema cache/i.test(msg);
-                Swal.fire(
+                await Swal.fire(
                     'No se pudo actualizar el saldo',
                     dbDesfasada
-                        ? `${msg}\n\nLa base de datos aún no admite este tipo de bono. Ejecuta la migración 202609020045_reparar_bonos_yoga_en_compania.sql en el SQL Editor de Supabase y vuelve a intentarlo.`
+                        ? `${msg}\n\nLa base de datos aún no admite este tipo de bono. Ejecuta la migración 202609020080_fix_ajustar_saldo_bonos_staff_v921.sql en el SQL Editor de Supabase y vuelve a intentarlo.`
                         : msg,
                     'error'
                 );
+                return { success: false, error };
             }
             else {
-                const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 1000 });
-                Toast.fire({ icon: 'success', title: 'Saldo actualizado' });
+                const userInCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
+                if (userInCache) {
+                    if (tipo === 'yoga') userInCache.bonos = data;
+                    else if (tipo === 'clases_gratis' || tipo === 'bienvenida') userInCache.saldo_clases_gratis = data;
+                    else if (tipo === 'yoga_compania') userInCache.saldo_yoga_compania = data;
+                    else if (tipo === 'consultas_gratis') userInCache.saldo_consultas_gratis = data;
+                    else if (tipo === 'psicologia') userInCache.saldo_psicologia = data;
+                    else if (tipo === 'nutricion') userInCache.saldo_nutricion = data;
+                }
+
+                if (showToast) {
+                    const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 1000 });
+                    Toast.fire({ icon: 'success', title: 'Saldo actualizado' });
+                }
                 cargarUsuariosAdmin();
+                return { success: true, newBalance: data };
             }
         }
 
@@ -14955,14 +14981,27 @@ async function adminTogglePromo50(userId, active) {
 
         async function abrirGestionBonosUsuario(userId) {
             if (!isAdmin && !esTrabajador()) return;
-            const u = (allUsersCache || []).find(x => String(x.id) === String(userId)) || {};
+
+            // Consultar datos frescos del perfil del usuario
+            let u = (allUsersCache || []).find(x => String(x.id) === String(userId)) || {};
+            try {
+                const { data: freshUser } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
+                if (freshUser) {
+                    u = { ...u, ...freshUser };
+                    const cacheIdx = (allUsersCache || []).findIndex(x => String(x.id) === String(userId));
+                    if (cacheIdx !== -1) allUsersCache[cacheIdx] = u;
+                }
+            } catch (err) {
+                console.warn('Error leyendo perfil fresco para gestión de bonos:', err);
+            }
+
             const nombre = `${u.nombre || ''} ${u.apellidos || ''}`.trim() || u.email || 'Cliente';
             const email = u.email || '';
 
             const bonosActual = toSafeNumber(u.bonos);
-            const bienvenidaActual = toSafeNumber(u.saldo_clases_gratis) > 0 ? toSafeNumber(u.saldo_clases_gratis) : 1;
-            const companiaActual = toSafeNumber(u.saldo_yoga_compania) > 0 ? toSafeNumber(u.saldo_yoga_compania) : 1;
-            const consultaActual = toSafeNumber(u.saldo_consultas_gratis) > 0 ? toSafeNumber(u.saldo_consultas_gratis) : 1;
+            const bienvenidaActual = toSafeNumber(u.saldo_clases_gratis);
+            const companiaActual = toSafeNumber(u.saldo_yoga_compania);
+            const consultaActual = toSafeNumber(u.saldo_consultas_gratis);
 
             // Consultar meses ilimitados del usuario
             let userMonths = [];
@@ -14991,7 +15030,7 @@ async function adminTogglePromo50(userId, active) {
                     return `
                         <span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-lg text-xs font-bold shadow-2xs">
                             <i class="ph-bold ph-calendar-check text-emerald-700"></i> ${mesLabel}
-                            <button type="button" onclick="cambiarBonoMensualYRecargarModal('${userId}', false, '${mesVal}')" class="hover:text-red-600 transition ml-0.5 text-xs" title="Retirar este mes">✕</button>
+                            <button type="button" onclick="cambiarBonoMensualYRecargarModal('${userId}', false, '${mesVal}')" class="hover:text-red-600 transition ml-0.5 text-xs cursor-pointer" title="Retirar este mes">✕</button>
                         </span>
                     `;
                 }).join(' ');
@@ -15016,13 +15055,13 @@ async function adminTogglePromo50(userId, active) {
                         <i class="ph-bold ph-ticket text-olive text-lg"></i>
                         <div>
                             <p class="text-xs font-bold text-cocoa">1. Clases Sueltas</p>
-                            <p class="text-[10px] text-cocoa/60">Saldo: <strong class="text-olive font-black">${bonosActual}</strong></p>
+                            <p class="text-[10px] text-cocoa/60">Saldo: <strong id="modal-saldo-yoga" class="text-olive font-black">${bonosActual}</strong></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', -1)" class="w-8 h-8 rounded-lg border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition">-1</button>
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 1)" class="w-8 h-8 rounded-lg bg-gray-900 text-white hover:bg-black font-bold text-xs transition">+1</button>
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 5)" class="px-2 h-8 rounded-lg bg-olive text-white hover:bg-black font-bold text-[10px] transition">+5</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', -1, this)" class="w-8 h-8 rounded-lg border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 1, this)" class="w-8 h-8 rounded-lg bg-gray-900 text-white hover:bg-black font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 5, this)" class="px-2 h-8 rounded-lg bg-olive text-white hover:bg-black font-bold text-[10px] transition cursor-pointer active:scale-95">+5</button>
                     </div>
                 </div>
 
@@ -15032,12 +15071,12 @@ async function adminTogglePromo50(userId, active) {
                         <i class="ph-bold ph-sparkle text-emerald-700 text-lg"></i>
                         <div>
                             <p class="text-xs font-bold text-cocoa">2. Bono Bienvenida</p>
-                            <p class="text-[10px] text-emerald-800">Saldo: <strong class="text-emerald-700 font-black">${bienvenidaActual}</strong></p>
+                            <p class="text-[10px] text-emerald-800">Saldo: <strong id="modal-saldo-clases_gratis" class="text-emerald-700 font-black">${bienvenidaActual}</strong></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', -1)" class="w-8 h-8 rounded-lg border border-emerald-200 text-emerald-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition">-1</button>
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', 1)" class="w-8 h-8 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 font-bold text-xs transition">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', -1, this)" class="w-8 h-8 rounded-lg border border-emerald-200 text-emerald-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', 1, this)" class="w-8 h-8 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
                     </div>
                 </div>
 
@@ -15047,12 +15086,12 @@ async function adminTogglePromo50(userId, active) {
                         <i class="ph-bold ph-users-three text-amber-700 text-lg"></i>
                         <div>
                             <p class="text-xs font-bold text-cocoa">3. Yoga en Compañía</p>
-                            <p class="text-[10px] text-amber-900">Saldo: <strong class="text-amber-800 font-black">${companiaActual}</strong></p>
+                            <p class="text-[10px] text-amber-900">Saldo: <strong id="modal-saldo-yoga_compania" class="text-amber-800 font-black">${companiaActual}</strong></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'yoga_compania', -1)" class="w-8 h-8 rounded-lg border border-amber-300 text-amber-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition" style="border-color: #fcd34d !important; color: #92400e !important;">-1</button>
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'yoga_compania', 1)" class="w-8 h-8 rounded-lg font-bold text-xs transition shadow-sm hover:brightness-95" style="background-color: #d97706 !important; color: #ffffff !important;">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga_compania', -1, this)" class="w-8 h-8 rounded-lg border border-amber-300 text-amber-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95" style="border-color: #fcd34d !important; color: #92400e !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga_compania', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition shadow-sm hover:brightness-95 cursor-pointer active:scale-95" style="background-color: #d97706 !important; color: #ffffff !important;">+1</button>
                     </div>
                 </div>
 
@@ -15062,12 +15101,12 @@ async function adminTogglePromo50(userId, active) {
                         <i class="ph-bold ph-gift text-pink-600 text-lg"></i>
                         <div>
                             <p class="text-xs font-bold text-cocoa">4. Consulta Gratis</p>
-                            <p class="text-[10px] text-pink-800">Saldo: <strong class="text-pink-700 font-black">${consultaActual}</strong></p>
+                            <p class="text-[10px] text-pink-800">Saldo: <strong id="modal-saldo-consultas_gratis" class="text-pink-700 font-black">${consultaActual}</strong></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', -1)" class="w-8 h-8 rounded-lg border border-pink-200 text-pink-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition">-1</button>
-                        <button onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', 1)" class="w-8 h-8 rounded-lg bg-pink-600 text-white hover:bg-pink-700 font-bold text-xs transition">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', -1, this)" class="w-8 h-8 rounded-lg border border-pink-200 text-pink-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', 1, this)" class="w-8 h-8 rounded-lg bg-pink-600 text-white hover:bg-pink-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
                     </div>
                 </div>
 
@@ -15081,7 +15120,7 @@ async function adminTogglePromo50(userId, active) {
                                 <p class="text-[10px] ${ilimitadoActivo ? 'text-emerald-700 font-bold' : 'text-gray-500'}">Meses naturales contratados</p>
                             </div>
                         </div>
-                        <button onclick="cambiarBonoMensualYRecargarModal('${userId}', true)" class="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition flex items-center gap-1 shadow-2xs">
+                        <button type="button" onclick="cambiarBonoMensualYRecargarModal('${userId}', true)" class="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition flex items-center gap-1 shadow-2xs cursor-pointer">
                             <i class="ph-bold ph-plus"></i> Asignar Mes
                         </button>
                     </div>
@@ -15097,15 +15136,43 @@ async function adminTogglePromo50(userId, active) {
             });
         }
 
-        async function sumarSaldoYRecargarModal(userId, tipo, delta) {
-            await sumarSaldo(userId, tipo, delta);
-            setTimeout(() => abrirGestionBonosUsuario(userId), 300);
+        async function sumarSaldoYRecargarModal(userId, tipo, delta, btn) {
+            const saldoEl = document.getElementById(`modal-saldo-${tipo}`);
+            if (saldoEl) saldoEl.style.opacity = '0.4';
+            if (btn) btn.disabled = true;
+            try {
+                const res = await sumarSaldo(userId, tipo, delta, false);
+                if (res && res.success) {
+                    if (saldoEl) {
+                        saldoEl.textContent = res.newBalance;
+                        saldoEl.style.opacity = '1';
+                    }
+                } else {
+                    if (saldoEl) saldoEl.style.opacity = '1';
+                }
+            } catch (err) {
+                console.error('Error al actualizar saldo en modal:', err);
+                if (saldoEl) saldoEl.style.opacity = '1';
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         async function cambiarBonoMensualYRecargarModal(userId, activar, mesDirecto = null) {
-            await cambiarBonoMensual(userId, activar, mesDirecto);
-            setTimeout(() => abrirGestionBonosUsuario(userId), 300);
+            const ok = await cambiarBonoMensual(userId, activar, mesDirecto);
+            if (ok !== false) {
+                setTimeout(() => abrirGestionBonosUsuario(userId), 600);
+            } else {
+                await abrirGestionBonosUsuario(userId);
+            }
         }
+
+        window.abrirGestionBonosUsuario = abrirGestionBonosUsuario;
+        window.sumarSaldoYRecargarModal = sumarSaldoYRecargarModal;
+        window.cambiarBonoMensualYRecargarModal = cambiarBonoMensualYRecargarModal;
+        window.sumarSaldo = sumarSaldo;
+        window.cambiarBonoMensual = cambiarBonoMensual;
+        window.getSaldoConfig = getSaldoConfig;
 
         async function abrirEditarUsuarioAdmin(userId) {
             if (!isAdmin && !esTrabajador()) return;
