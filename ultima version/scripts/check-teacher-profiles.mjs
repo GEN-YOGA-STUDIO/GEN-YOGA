@@ -89,6 +89,9 @@ assert.equal(isabelKey, 'isabel', 'isarodriguez.pni@gmail.com debe resolver a la
 const silviaKey = teacherProfiles.getKey({ email: 'sil-hada@hotmail.com' });
 assert.equal(silviaKey, 'silvia', 'sil-hada@hotmail.com debe resolver a la clave silvia');
 
+const angelKey = teacherProfiles.getKey({ email: 'angeljavier.yoga@gmail.com' });
+assert.equal(angelKey, 'angel', 'angeljavier.yoga@gmail.com debe resolver a la clave angel');
+
 // Verify parseBio accurately parses teacher sections without duplicate content
 const { parseBio } = teacherProfiles;
 const parsedSilvia = parseBio(silvia);
@@ -150,9 +153,11 @@ assert.match(maestros, /updated\.foto_cutout = 'img\/maestra-yanira-recortada\.w
 assert.doesNotMatch(maestros, /filter:\s*grayscale\(1\)/);
 assert.match(maestros, /email:\s*'isarodriguez\.pni@gmail\.com'/);
 assert.match(maestros, /email:\s*'sil-hada@hotmail\.com'/);
+assert.match(maestros, /email:\s*'angeljavier\.yoga@gmail\.com'/);
 assert.match(clases, /src="img\/isabel-pni\.jpg"/);
 assert.match(profile, /isarodriguez\.pni@gmail\.com/);
 assert.match(profile, /sil-hada@hotmail\.com/);
+assert.match(profile, /angeljavier\.yoga@gmail\.com/);
 
 assert.doesNotMatch(maestros, /summarizeModalText|summarizeModalItems|moreAreas|moreQualifications/);
 assert.doesNotMatch(maestros, /\+\$\{remaining\}|visible\.join\(['"] · ['"]\)/);

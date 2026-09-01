@@ -422,14 +422,14 @@ const translations = {
         "alert_cancel": "Cancelar",
         "alert_yes_cancel": "Sí, cancelar",
         "alert_yes_reserve": "Sí, reservar",
-        "alert_no_credits": "Compra un bono extra",
-        "alert_no_credits_desc": "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos disponibles. Compra un bono extra por 15€ para reservar.",
+        "alert_no_credits": "Necesitas un bono o pack",
+        "alert_no_credits_desc": "No dispones de un bono activo para esta clase. Elige un pack de clases o bono ilimitado para reservar.",
         "alert_class_too_close": "Las reservas cierran {hours} h antes del inicio. Para esta clase ya ha pasado el plazo.",
         "alert_cancel_too_close": "Ya no puedes cancelar: faltan {hours} h o menos para la clase. El bono reservado no se devuelve.",
         "alert_confirm_reservation": "Confirmar Reserva",
-        "alert_reserve_mensual": "¿Quieres reservar esta clase usando tu <b>Bono Mensual</b>?",
-        "alert_reserve_semana_limit": "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>uno de tus bonos</b>?",
-        "alert_reserve_mes_limit": "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>uno de tus bonos</b>?",
+        "alert_reserve_mensual": "¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?",
+        "alert_reserve_semana_limit": "¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?",
+        "alert_reserve_mes_limit": "Tu Bono Ilimitado te da acceso a todas las clases normales que quieras durante el mes natural.",
         "alert_reserve_suelta": "¿Quieres reservar esta clase usando <b>uno de tus bonos</b>?",
         "alert_booking_confirmed": "¡Clase Reservada!",
         "alert_booking_confirmed_desc": "Tu esterilla te espera. Namasté. 🙏",
@@ -867,14 +867,14 @@ const translations = {
         "alert_cancel": "Cancel",
         "alert_yes_cancel": "Yes, cancel",
         "alert_yes_reserve": "Yes, book",
-        "alert_no_credits": "Buy an extra credit",
-        "alert_no_credits_desc": "You have reached your monthly class limits (or it is inactive) and you do not have any class credits left. Buy an extra credit for 15€ to book.",
+        "alert_no_credits": "You need a pass or pack",
+        "alert_no_credits_desc": "You do not have an active pass for this class. Choose a class pack or unlimited pass to book.",
         "alert_class_too_close": "Bookings close {hours} hours before the start. The deadline for this class has passed.",
         "alert_cancel_too_close": "You can no longer cancel: the class starts in {hours} hours or less. The reserved credit is not refunded.",
         "alert_confirm_reservation": "Confirm Booking",
-        "alert_reserve_mensual": "Do you want to book this class using your <b>Monthly Plan</b>?",
-        "alert_reserve_semana_limit": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>one of your class credits</b>?",
-        "alert_reserve_mes_limit": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>one of your class credits</b>?",
+        "alert_reserve_mensual": "Do you want to book this class using your <b>Unlimited Pass</b>?",
+        "alert_reserve_semana_limit": "Do you want to book this class using your <b>Unlimited Pass</b>?",
+        "alert_reserve_mes_limit": "Your Unlimited Pass gives you access to all the regular classes you want during the natural month.",
         "alert_reserve_suelta": "Do you want to book this class using <b>one of your class credits</b>?",
         "alert_booking_confirmed": "Class Booked!",
         "alert_booking_confirmed_desc": "Your yoga mat awaits you. Namaste. 🙏",
@@ -1060,9 +1060,9 @@ const alertTranslations = {
     "Cancelar": "Cancel",
     "Entendido": "Understood",
     "Compra un bono extra": "Buy an extra credit",
-    "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos disponibles. Compra un bono extra por 15€ para reservar.": "You have reached your monthly class limits (or it is inactive) and you do not have any class credits left. Buy an extra credit for 15€ to book.",
-    "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>uno de tus bonos</b>?": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>one of your class credits</b>?",
-    "Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>uno de tus bonos</b>?": "You have exhausted the <b>8 classes</b> of your monthly plan for this period. Do you want to book using <b>one of your class credits</b>?",
+    "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos disponibles. Compra un bono extra por 15€ para reservar.": "You do not have an active pass or class credit left. Choose a class pack or unlimited pass to book.",
+    "¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?": "Do you want to book this class with your <b>Unlimited Pass</b>?",
+    "¿Quieres reservar esta clase usando tu <b>Bono Ilimitado</b>?": "Do you want to book this class with your <b>Unlimited Pass</b>?",
     "¿Quieres reservar esta clase usando <b>uno de tus bonos</b>?": "Do you want to book this class using <b>one of your class credits</b>?"
 };
 
@@ -1079,12 +1079,8 @@ function translateText(text) {
         return `Cancellations are not allowed within less than ${hours} hours from the class.`;
     }
     // Check dynamic monthly plan info
-    if (trimmed.includes("¿Quieres reservar esta clase usando tu <b>Bono Mensual</b>?")) {
-        const matchW = trimmed.match(/semana:\s*(\d+)\/2/);
-        const matchM = trimmed.match(/mes:\s*(\d+)\/8/);
-        const wCount = matchW ? matchW[1] : '0';
-        const mCount = matchM ? matchM[1] : '0';
-        return `Do you want to book this class using your <b>Monthly Plan</b>?<br><span class="text-xs text-gray-500">(Bookings this week: ${wCount}/2, this month: ${mCount}/8)</span>`;
+    if (trimmed.includes("Bono Ilimitado") || trimmed.includes("Bono Mensual")) {
+        return "Do you want to book this class with your <b>Unlimited Pass</b>?";
     }
     let newText = text;
     for (const key in alertTranslations) {
