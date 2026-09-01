@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.25" />
+    <meta name="application-version" content="9.26" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.25" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.25" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.26" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.26" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.25">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.26">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.25"></script>
+    <script src="teacher-profiles.js?v=9.26"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.25"></script>
+    <script src="i18n.js?v=9.26"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -3592,7 +3592,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.25. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.26. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4333,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.25';
+        const APP_VERSION = '9.26';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4889,46 +4889,48 @@
             const c = clase || {};
             const tipoNorm = normalizarTipoClase(c.tipo_clase || r.tipo_clase);
             const esConsulta = tipoNorm === 'psicologia' || tipoNorm === 'nutricion';
+            const badgeClass = 'inline-flex items-center gap-1 text-[9px] font-bold text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b] px-1.5 py-0.5 rounded shadow-2xs';
+            const renderPagoBadge = (label, title) => `<span class="${badgeClass}" title="${title}"><i class="ph-bold ph-ticket text-xs"></i> Pagado con: ${label}</span>`;
 
             if (esConsulta) {
                 if (r.saldo_gratis_descontado) {
-                    return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded shadow-2xs" title="1ª Consulta Promocional Gratuita"><i class="ph-bold ph-gift text-xs"></i> 1ª Consulta Gratis</span>`;
+                    return renderPagoBadge('Consulta Gratuita', 'Pagado con: Consulta Gratuita');
                 }
-                return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-olive bg-olive/10 border border-olive/20 px-1.5 py-0.5 rounded shadow-2xs" title="Reserva con Bono / Consulta"><i class="ph-bold ph-ticket text-xs"></i> Bono Consulta</span>`;
+                return renderPagoBadge('Bono Consulta', 'Pagado con: Bono Consulta');
             }
 
             // 1. Bono Ilimitado (mes natural o suscripción)
             if (r.usado_bono_mensual) {
-                return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded shadow-2xs" title="Reservado con Bono Mensual Ilimitado"><i class="ph-bold ph-infinity text-xs"></i> Bono Ilimitado</span>`;
+                return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Ilimitado');
             }
 
             // 2. Bono Promocional Gratuito (Bienvenida)
             if (r.saldo_gratis_descontado || r.welcome_companion_modality === 'bienvenida') {
-                return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded shadow-2xs" title="Reservado con Bono Promocional Gratuito"><i class="ph-bold ph-gift text-xs"></i> Bono Gratuito</span>`;
+                return renderPagoBadge('Bono Gratuito', 'Pagado con: Bono Gratuito');
             }
 
             // 3. Yoga en Compañía (0 €)
             if (r.welcome_companion_modality === 'compania') {
-                return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded shadow-2xs" title="Reservado con Bono Yoga en Compañía"><i class="ph-bold ph-users-three text-xs"></i> Yoga en Compañía</span>`;
+                return renderPagoBadge('Yoga en Compañía', 'Pagado con: Yoga en Compañía');
             }
 
             // 4. Pase de Invitado
             if (r.beneficio_invitado_de) {
-                return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded shadow-2xs" title="Pase de invitado Bono Ilimitado"><i class="ph-bold ph-user-circle-plus text-xs"></i> Pase Invitado</span>`;
+                return renderPagoBadge('Pase Invitado', 'Pagado con: Pase Invitado');
             }
 
-            // 5. Bono Normal (pack de clases o saldo de clases)
+            // 5. Clase suelta (pack de clases o saldo de clases)
             if (r.bono_descontado || r.class_pack_id) {
-                return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-olive bg-olive/10 border border-olive/20 px-1.5 py-0.5 rounded shadow-2xs" title="Reservado con Bono Normal (Pack de clases)"><i class="ph-bold ph-ticket text-xs"></i> Bono Normal</span>`;
+                return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta');
             }
 
             // 6. Clase Gratuita abierta del estudio
             if (c.precio === 0 || c.es_gratis) {
-                return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded shadow-2xs" title="Clase Gratuita / Puertas Abiertas"><i class="ph-bold ph-sparkle text-xs"></i> Clase Gratuita</span>`;
+                return renderPagoBadge('Clase Gratuita', 'Pagado con: Clase Gratuita');
             }
 
             // Fallback por defecto
-            return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-olive bg-olive/10 border border-olive/20 px-1.5 py-0.5 rounded shadow-2xs" title="Reservado con Bono Normal"><i class="ph-bold ph-ticket text-xs"></i> Bono Normal</span>`;
+            return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta');
         }
 
         async function mostrarBonosAlumnoPopup(userId) {
