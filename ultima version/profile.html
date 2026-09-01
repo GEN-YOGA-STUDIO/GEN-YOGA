@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.37" />
+    <meta name="application-version" content="9.39" />
     <meta name="robots" content="noindex,nofollow" />
     <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.35" />
     <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.35" />
@@ -4333,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.37';
+        const APP_VERSION = '9.39';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -8642,6 +8642,22 @@
 
             try {
                 isReserving = true;
+                let companionName = '';
+                if (useCompanion === true) {
+                    const companionResult = await Swal.fire({
+                        title: '¿Con quién vienes?',
+                        input: 'text',
+                        inputLabel: 'Indica el nombre de tu acompañante',
+                        inputPlaceholder: 'Nombre y apellidos',
+                        inputValidator: value => !String(value || '').trim() ? 'Es necesario indicar el acompañante.' : undefined,
+                        showCancelButton: true,
+                        confirmButtonText: 'Continuar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#8C8658'
+                    });
+                    if (!companionResult.isConfirmed) return false;
+                    companionName = String(companionResult.value || '').trim();
+                }
 
                 const btn = document.activeElement;
                 if (btn && btn.tagName === 'BUTTON') {
@@ -8655,7 +8671,9 @@
                 let { error } = await client.rpc(bookingFunction, {
                     p_clase_id: claseId,
                     p_user_id: currentUser.id,
-                    ...(bookingFunction === 'reservar_con_bono' ? { p_use_welcome_companion: false } : {})
+                    ...(bookingFunction === 'reservar_con_bono'
+                        ? { p_use_welcome_companion: false }
+                        : { p_nombre_acompanante: companionName })
                 });
 
                 // Fallback automático para firmas de 2 parámetros si la función previa no tuviese el 3er argumento
@@ -9905,6 +9923,9 @@
                                                 ${contactHtml}
                                             </div>
                                             <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
+                                            ${String(r.tipo_reserva || '').toLowerCase() === 'compania'
+                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante pendiente')}</div>`
+                                                : ''}
                                         </div>
                                         ${cancelBtn}
                                     </div>`;
@@ -12245,7 +12266,7 @@ async function adminTogglePromo50(userId, active) {
         function renderSaldoBadgeAdmin(u) {
             const badges = [];
             const bonos = toSafeNumber(u.bonos);
-            const bienvenida = toSafeNumber(u.saldo_clases_gratis) > 0 ? toSafeNumber(u.saldo_clases_gratis) : 1;
+            const bienvenida = toSafeNumber(u.saldo_clases_gratis);
             const compania = toSafeNumber(u.saldo_yoga_compania);
             const consultas = toSafeNumber(u.saldo_consultas_gratis) > 0 ? toSafeNumber(u.saldo_consultas_gratis) : 1;
             const ilimitado = !!u.bono_mensual_activo;
