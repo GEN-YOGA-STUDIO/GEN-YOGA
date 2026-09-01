@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.39" />
+    <meta name="application-version" content="9.40" />
     <meta name="robots" content="noindex,nofollow" />
     <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.35" />
     <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.35" />
@@ -4333,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.39';
+        const APP_VERSION = '9.40';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4929,12 +4929,11 @@
             }
 
             // 6. Clase Gratuita abierta del estudio
-            if (c.precio === 0 || c.es_gratis) {
+            if (c.precio === 0 || c.es_gratis || c.es_gratuita) {
                 return renderPagoBadge('Clase Gratuita', 'Pagado con: Clase Gratuita');
             }
 
-            // Fallback por defecto
-            return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta');
+            return renderPagoBadge('Clase Gratuita', 'Reserva sin bono ni método de pago');
         }
 
         async function mostrarBonosAlumnoPopup(userId) {
@@ -7555,35 +7554,7 @@
             if (!c) return false;
             const tipo = String(c.tipo_clase || 'yoga').toLowerCase().trim();
             if (tipo === 'taller' || tipo === 'especial') return false;
-
-            // Reconocimiento determinista de las únicas 10 sesiones gratuitas oficiales:
-            const dStr = c.fecha_inicio ? formatDateLocal(new Date(c.fecha_inicio)) : '';
-            const hStr = c.fecha_inicio ? formatDisplayTime(c.fecha_inicio) : '';
-            const profName = String(c.profesionales?.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            const profSlug = String(c.profesionales?.slug || '').toLowerCase();
-
-            // 1. Ángel Javier: Domingo 30 Ago 2026 a las 10:00 y 12:00 (Yoga)
-            if (dStr === '2026-08-30' && (hStr.startsWith('10:00') || hStr.startsWith('12:00')) && (profName.includes('angel') || profSlug.includes('angel'))) {
-                return true;
-            }
-            // 2. Yanira: Martes 1 Sep 19:00 y Jueves 3 Sep 19:00 (Yoga)
-            if ((dStr === '2026-09-01' || dStr === '2026-09-03') && hStr.startsWith('19:00') && (profName.includes('yanira') || profSlug.includes('yanira'))) {
-                return true;
-            }
-            // 3. Miriam: Martes 1 Sep 20:15 y Miércoles 2 Sep 11:30 (Psicología)
-            if (((dStr === '2026-09-01' && hStr.startsWith('20:15')) || (dStr === '2026-09-02' && hStr.startsWith('11:30'))) && (profName.includes('miriam') || profSlug.includes('miriam') || tipo === 'psicologia')) {
-                return true;
-            }
-            // 4. Silvia: Viernes 18 Sep 11:00 y Viernes 25 Sep 11:00 (Yoga & Ayurveda)
-            if ((dStr === '2026-09-18' || dStr === '2026-09-25') && hStr.startsWith('11:00') && (profName.includes('silvia') || profSlug.includes('silvia'))) {
-                return true;
-            }
-            // 5. Isabel: Jueves 3 Sep 11:00 y Martes 22 Sep 11:00 (PNI y Nutrición)
-            if ((dStr === '2026-09-03' || dStr === '2026-09-22') && hStr.startsWith('11:00') && (profName.includes('isabel') || profSlug.includes('isabel') || tipo === 'nutricion')) {
-                return true;
-            }
-
-            return false;
+            return c.es_gratuita === true || c.es_gratis === true || Number(c.precio) === 0;
         }
 
         function actualizarOpcionesFiltrosClases() {
