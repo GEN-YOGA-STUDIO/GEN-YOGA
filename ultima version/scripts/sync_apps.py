@@ -31,7 +31,7 @@ EXCLUDED_FILES = {
 
 def sync_web_assets():
     print("=" * 60)
-    print("🔄 Sincronizando recursos web entre Web, Android e iOS...")
+    print("🔄 Sincronizando recursos web entre Web, Android, iOS y Raiz del Repositorio...")
     print("=" * 60)
 
     targets = [
@@ -40,6 +40,11 @@ def sync_web_assets():
         ("iOS WWW", IOS_WWW),
         ("iOS Assets", IOS_ASSETS)
     ]
+
+    is_subfolder = os.path.basename(BASE_DIR) == "ultima version"
+    parent_root = os.path.dirname(BASE_DIR) if is_subfolder else None
+    if is_subfolder and parent_root:
+        targets.append(("Repo Root", parent_root))
 
     for label, target_path in targets:
         os.makedirs(target_path, exist_ok=True)
@@ -69,7 +74,23 @@ def sync_web_assets():
                 shutil.copy2(src_file, dst_file)
                 copied_count += 1
 
-    print(f"✅ Sincronizacion completada: {copied_count} archivos actualizados en todas las plataformas.")
+    # Sincronizar archivos raiz criticos explicitos hacia la raiz del repositorio
+    if is_subfolder and parent_root:
+        for f in ['package.json', 'package-lock.json', 'tailwind.config.js', 'tailwind-input.css', 'CNAME', '.nojekyll']:
+            sf = os.path.join(BASE_DIR, f)
+            df = os.path.join(parent_root, f)
+            if os.path.exists(sf):
+                shutil.copy2(sf, df)
+                copied_count += 1
+        src_wf = os.path.join(BASE_DIR, ".github", "workflows")
+        dst_wf = os.path.join(parent_root, ".github", "workflows")
+        if os.path.exists(src_wf):
+            os.makedirs(dst_wf, exist_ok=True)
+            for wf in os.listdir(src_wf):
+                shutil.copy2(os.path.join(src_wf, wf), os.path.join(dst_wf, wf))
+                copied_count += 1
+
+    print(f"✅ Sincronizacion completada: {copied_count} archivos actualizados en todas las plataformas y raiz.")
 
 def bump_version(new_version=None, new_build_number=None):
     args = ["node", os.path.join(BASE_DIR, "scripts", "bump-version.mjs")]

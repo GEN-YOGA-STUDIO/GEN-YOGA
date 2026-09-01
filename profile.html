@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.13" />
+    <meta name="application-version" content="9.19" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.13" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.13" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.19" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.19" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.13">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.19">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.13"></script>
+    <script src="teacher-profiles.js?v=9.19"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.13"></script>
+    <script src="i18n.js?v=9.19"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -114,6 +114,75 @@
         /* ======================================================= */
         /* 2. COMPONENTES DE UI (Admin, Paneles, Scrollbar)        */
         /* ======================================================= */
+
+        /* ======================================================= */
+        /* Barra compacta de Filtros de Asistencias (1 Sola Línea)  */
+        /* ======================================================= */
+        #asistencias-filtros-container {
+            padding: 4px 8px !important;
+            margin-bottom: 8px !important;
+            overflow-x: auto !important;
+        }
+
+        .asistencias-filtros-grid {
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            gap: 6px !important;
+            align-items: center !important;
+            width: 100% !important;
+            min-width: 520px !important;
+        }
+
+        .asistencias-filtro-item {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1px !important;
+            min-width: 0 !important;
+        }
+
+        .asistencias-filtro-label {
+            font-size: 9px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.04em !important;
+            color: rgba(38, 22, 12, 0.65) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            padding: 0 2px !important;
+            margin: 0 !important;
+        }
+
+        .asistencias-filtro-select {
+            width: 100% !important;
+            height: 26px !important;
+            min-height: 26px !important;
+            max-height: 26px !important;
+            padding: 1px 4px !important;
+            font-size: 11px !important;
+            line-height: 1.15 !important;
+            color: #26160c !important;
+            font-weight: 500 !important;
+            background-color: #f8f6f2 !important;
+            border: 1px solid rgba(38, 22, 12, 0.18) !important;
+            border-radius: 7px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            cursor: pointer !important;
+            box-sizing: border-box !important;
+            outline: none !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+        .asistencias-filtro-select:focus {
+            border-color: #9b7b37 !important;
+            box-shadow: 0 0 0 1px rgba(155, 123, 55, 0.3) !important;
+        }
 
         /* Control de Visibilidad Admin */
         .admin-only,
@@ -2407,10 +2476,6 @@
 
                 <div id="view-asistencias" class="hidden fade-in">
                     <div class="mb-2 pb-2 border-b border-cocoa/10">
-                        <span
-                            class="inline-block py-0.5 px-2 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[9px] uppercase mb-1 border border-cocoa/20">
-                            Inscribir Alumnos
-                        </span>
                         <h2 class="text-lg sm:text-xl brand-font font-bold text-cocoa">Inscripción y Asistencias</h2>
                     </div>
 
@@ -2452,78 +2517,88 @@
                         </div>
                     </div>
 
-                    <!-- FILTROS DE ASISTENCIAS (Profesor, Tipo, Horario, Disponibilidad) -->
+                    <!-- FILTROS DE ASISTENCIAS (Sesión, Profesor, Yoga, Horario, Plazas) - Compacto 1 Línea -->
                     <div id="asistencias-filtros-container"
-                        class="bg-white/90 backdrop-blur-md rounded-2xl p-3 mb-3.5 border border-cocoa/15 shadow-2xs">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
+                        class="bg-white/95 backdrop-blur-md rounded-xl border border-cocoa/15 shadow-2xs">
+                        <div class="asistencias-filtros-grid">
                             <!-- 1. Filtro por Tipo de Sesión -->
-                            <div class="flex flex-col gap-1">
+                            <div class="asistencias-filtro-item">
                                 <label for="filtro-asistencias-tipo-sesion"
-                                    class="text-[11px] font-bold text-cocoa/70 uppercase tracking-wider flex items-center gap-1">
-                                    <i class="ph-bold ph-cards text-olive"></i> Tipo de Sesión
+                                    class="asistencias-filtro-label"
+                                    title="Tipo de Sesión">
+                                    <i class="ph-bold ph-cards text-olive text-[11px] shrink-0"></i>
+                                    <span class="truncate">Tipo</span>
                                 </label>
                                 <select id="filtro-asistencias-tipo-sesion" onchange="aplicarFiltrosAsistencias()"
-                                    class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2 text-xs text-cocoa font-medium focus:outline-none focus:border-olive focus:ring-1 focus:ring-olive/30 transition">
+                                    class="asistencias-filtro-select">
                                     <option value="todos">Todas las sesiones</option>
                                     <option value="clases">🧘 Clases de Yoga</option>
-                                    <option value="consultas">🩺 Consultas (Psicología / Nutrición)</option>
-                                    <option value="talleres">✨ Talleres y Especiales</option>
+                                    <option value="consultas">🩺 Consultas</option>
+                                    <option value="talleres">✨ Talleres</option>
                                 </select>
                             </div>
 
                             <!-- 2. Filtro por Profesor / Especialista -->
-                            <div class="flex flex-col gap-1">
+                            <div class="asistencias-filtro-item">
                                 <label for="filtro-asistencias-profesor"
-                                    class="text-[11px] font-bold text-cocoa/70 uppercase tracking-wider flex items-center gap-1">
-                                    <i class="ph-bold ph-user text-olive"></i> Profesor
+                                    class="asistencias-filtro-label"
+                                    title="Profesor o Especialista">
+                                    <i class="ph-bold ph-user text-olive text-[11px] shrink-0"></i>
+                                    <span class="truncate">Profesor</span>
                                 </label>
                                 <select id="filtro-asistencias-profesor" onchange="aplicarFiltrosAsistencias()"
-                                    class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2 text-xs text-cocoa font-medium focus:outline-none focus:border-olive focus:ring-1 focus:ring-olive/30 transition">
+                                    class="asistencias-filtro-select">
                                     <option value="todos">Todos los profesores</option>
                                 </select>
                             </div>
 
                             <!-- 3. Filtro por Tipo de Yoga / Estilo -->
-                            <div class="flex flex-col gap-1">
+                            <div class="asistencias-filtro-item">
                                 <label for="filtro-asistencias-tipo-yoga"
-                                    class="text-[11px] font-bold text-cocoa/70 uppercase tracking-wider flex items-center gap-1">
-                                    <i class="ph-bold ph-sparkle text-olive"></i> Tipo de Yoga
+                                    class="asistencias-filtro-label"
+                                    title="Tipo de Yoga o Estilo">
+                                    <i class="ph-bold ph-sparkle text-olive text-[11px] shrink-0"></i>
+                                    <span class="truncate">Estilo / Yoga</span>
                                 </label>
                                 <select id="filtro-asistencias-tipo-yoga" onchange="aplicarFiltrosAsistencias()"
-                                    class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2 text-xs text-cocoa font-medium focus:outline-none focus:border-olive focus:ring-1 focus:ring-olive/30 transition">
+                                    class="asistencias-filtro-select">
                                     <option value="todos">Todos los tipos</option>
                                 </select>
                             </div>
 
                             <!-- 4. Filtro por Horario -->
-                            <div class="flex flex-col gap-1">
+                            <div class="asistencias-filtro-item">
                                 <label for="filtro-asistencias-horario"
-                                    class="text-[11px] font-bold text-cocoa/70 uppercase tracking-wider flex items-center gap-1">
-                                    <i class="ph-bold ph-clock text-olive"></i> Horario
+                                    class="asistencias-filtro-label"
+                                    title="Franja Horaria">
+                                    <i class="ph-bold ph-clock text-olive text-[11px] shrink-0"></i>
+                                    <span class="truncate">Horario</span>
                                 </label>
                                 <select id="filtro-asistencias-horario" onchange="aplicarFiltrosAsistencias()"
-                                    class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2 text-xs text-cocoa font-medium focus:outline-none focus:border-olive focus:ring-1 focus:ring-olive/30 transition">
+                                    class="asistencias-filtro-select">
                                     <option value="todos">Cualquier hora</option>
-                                    <option value="manana">Mañana (07:00 - 12:00)</option>
-                                    <option value="mediodia">Mediodía (12:00 - 16:00)</option>
-                                    <option value="tarde">Tarde (16:00 - 20:00)</option>
-                                    <option value="noche">Noche (20:00 - 23:00)</option>
+                                    <option value="manana">Mañana (07-12h)</option>
+                                    <option value="mediodia">Mediodía (12-16h)</option>
+                                    <option value="tarde">Tarde (16-20h)</option>
+                                    <option value="noche">Noche (20-23h)</option>
                                 </select>
                             </div>
 
                             <!-- 5. Filtro por Disponibilidad -->
-                            <div class="flex flex-col gap-1">
+                            <div class="asistencias-filtro-item">
                                 <label for="filtro-asistencias-disponibilidad"
-                                    class="text-[11px] font-bold text-cocoa/70 uppercase tracking-wider flex items-center gap-1">
-                                    <i class="ph-bold ph-users-three text-olive"></i> Disponibilidad
+                                    class="asistencias-filtro-label"
+                                    title="Disponibilidad y Plazas">
+                                    <i class="ph-bold ph-users-three text-olive text-[11px] shrink-0"></i>
+                                    <span class="truncate">Plazas</span>
                                 </label>
                                 <select id="filtro-asistencias-disponibilidad" onchange="aplicarFiltrosAsistencias()"
-                                    class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2 text-xs text-cocoa font-medium focus:outline-none focus:border-olive focus:ring-1 focus:ring-olive/30 transition">
-                                    <option value="todos">Todas las sesiones</option>
-                                    <option value="con_alumnos">👥 Con alumnos inscritos (>0)</option>
-                                    <option value="huecos">🟢 Con plazas libres</option>
-                                    <option value="completas">🔴 Sesiones completas</option>
-                                    <option value="vacias">⚪ Sin alumnos aún (0)</option>
+                                    class="asistencias-filtro-select">
+                                    <option value="todos">Todas las plazas</option>
+                                    <option value="con_alumnos">👥 Con inscritos (&gt;0)</option>
+                                    <option value="huecos">🟢 Plazas libres</option>
+                                    <option value="completas">🔴 Completas</option>
+                                    <option value="vacias">⚪ Sin inscritos (0)</option>
                                 </select>
                             </div>
                         </div>
@@ -3401,10 +3476,6 @@
                     <div
                         class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 pb-6 border-b border-cocoa/10">
                         <div>
-                            <span
-                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
-                                Crear Sesiones
-                            </span>
                             <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Administración de
                                 Consultas</h2>
                             <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Crea, programa y
@@ -3430,6 +3501,45 @@
                         <button id="consulta-filter-ocupadas" onclick="filtrarConsultasAdmin('ocupadas')"
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Solo
                             reservadas</button>
+                    </div>
+
+                    <!-- BARRA SUPERIOR DESPLAZABLE DE DÍAS (CALENDARIO DE CONSULTAS) -->
+                    <div id="admin-consultas-days-bar-container"
+                        class="sticky top-20 z-20 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-3 shadow-md mb-6 max-w-full overflow-hidden box-border">
+                        <div class="flex items-center justify-between gap-2 mb-2 px-1">
+                            <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
+                                <div
+                                    class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
+                                    <i class="ph-bold ph-calendar-blank text-sm"></i>
+                                </div>
+                                <span id="admin-consultas-days-title-text">Días con consultas:</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="scrollConsultasAdminDias(-1)"
+                                    class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                    title="Ver días anteriores" aria-label="Ver días anteriores">
+                                    <i class="ph-bold ph-caret-left text-sm"></i>
+                                </button>
+                                <button type="button" onclick="scrollConsultasAdminDias(1)"
+                                    class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                    title="Ver días siguientes" aria-label="Ver días siguientes">
+                                    <i class="ph-bold ph-caret-right text-sm"></i>
+                                </button>
+                                <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()"
+                                    id="btn-ver-todas-consultas-fechas"
+                                    class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
+                                    <i class="ph-bold ph-squares-four"></i> Todas las fechas
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                            <div id="admin-consultas-days-list"
+                                class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                <!-- Generado dinámicamente -->
+                            </div>
+                        </div>
                     </div>
 
                     <div id="admin-consultas-container" class="space-y-6"></div>
@@ -3482,7 +3592,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.13. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.19. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -3799,9 +3909,8 @@
                         <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Nombre /
                             Tipo de Clase</label>
                         <select id="editar-clase-tipo-select" name="editar-clase-tipo-select" aria-label="Tipo de clase"
-                            required
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
-                            <option value="" disabled selected>Cargando tipos...</option>
+                            <option value="custom" selected>Cargando tipos...</option>
                         </select>
                     </div>
                     <div>
@@ -3833,11 +3942,13 @@
                         <select id="editar-clase-duracion" name="editar-clase-duracion"
                             aria-label="Duración de la clase en minutos" required
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                            <option value="30">30 minutos</option>
                             <option value="45">45 minutos</option>
                             <option value="50">50 minutos</option>
                             <option value="60">60 minutos</option>
                             <option value="75">75 minutos</option>
                             <option value="90">90 minutos</option>
+                            <option value="120">120 minutos</option>
                         </select>
                     </div>
                     <div>
@@ -4222,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.13';
+        const APP_VERSION = '9.19';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4286,7 +4397,7 @@
                 cats = [...new Set([...cats, 'consultas', 'psicologia', 'nutricion', 'talleres'])];
             } else if (email === 'sil-hada@hotmail.com' || email === 'silvia@genyoga.es' || (email.includes('silvia') && email.includes('genyoga')) || email.includes('sil-hada') || nombre.includes('silvia')) {
                 cats = [...new Set([...cats, 'clases', 'consultas', 'nutricion'])];
-            } else if (email === 'angel@genyoga.es' || (email.includes('angel') && email.includes('genyoga')) || nombre.includes('angel') || nombre.includes('ángel')) {
+            } else if (email === 'angeljavier.yoga@gmail.com' || email === 'angel@genyoga.es' || (email.includes('angel') && email.includes('genyoga')) || nombre.includes('angel') || nombre.includes('ángel')) {
                 cats = [...new Set([...cats, 'clases'])];
             }
 
@@ -4320,7 +4431,9 @@
         const KNOWN_PROFESSORES_MAP = {
             'sil-hada@hotmail.com': 1,
             'miriam_profesora@genyoga.studio': 10,
+            'angeljavier.yoga@gmail.com': 13,
             'angel_profesor@genyoga.studio': 13,
+            'angel@genyoga.es': 13,
             'yaniumana35@gmail.com': 14,
             'yyaniumana35@gmail.com': 14,
             'isarodriguez.pni@gmail.com': 28,
@@ -4480,7 +4593,10 @@
         let selectedDateNutricion = null;
         let selectedDateProfesor = null;
         let selectedAsistenciaClaseId = 'todas';
-        let selectedAsistenciaFecha = null;
+        let selectedAsistenciaFecha = null; // Se inicializa dinámicamente al día actual al entrar
+        let mostrarDiasPasadosAsistencias = false;
+        let selectedAdminConsultaFecha = null; // Fecha seleccionada en barra de consultas admin
+        let mostrarDiasPasadosConsultasAdmin = false;
 
         let currentCalendarMonth = new Date(); // Clases calendar month
         let currentCalendarMonthInicio = new Date();
@@ -4532,14 +4648,8 @@
 
         function esHorarioValidoConsulta(c) {
             if (!c?.fecha_inicio) return false;
-            const d = new Date(c.fecha_inicio);
-            if (Number.isNaN(d.getTime())) return false;
-            const hours = d.getHours();
-            const minutes = d.getMinutes();
-            const totalMinutes = hours * 60 + minutes;
-            // Excluir cualquier consulta o clase en la franja de 13:30 (810 min) a 14:30 (870 min)
-            if (totalMinutes >= 810 && totalMinutes < 870) return false;
-            return true;
+            const d = safeParseDate(c.fecha_inicio);
+            return !!d && !Number.isNaN(d.getTime());
         }
 
         function esClaseValidaYoga(c) {
@@ -7094,6 +7204,10 @@
             }
 
             const totalClasesMes = Array.from(fechasConClases.values()).reduce((a, b) => a + b, 0);
+            const hoyKey = formatDateLocal(new Date());
+            if (!selectedDate && fechasConClases.has(hoyKey)) {
+                selectedDate = hoyKey;
+            }
 
             let html = `
         <button type="button" onclick="limpiarFiltroFecha()" 
@@ -7112,15 +7226,22 @@
                 const mesNombre = mesesCorta[m - 1];
                 const numClases = fechasConClases.get(dKey) || 0;
                 const isSelected = selectedDate === dKey;
+                const isToday = dKey === hoyKey;
 
                 const btnClass = isSelected
                     ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs';
+                    : (isToday
+                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
+                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+
+                const topLabel = isToday
+                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
+                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
 
                 html += `
             <button type="button" onclick="filtrarPorFechaYScroll('${dKey}')" 
                 class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] cursor-pointer ${btnClass}">
-                <span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>
+                ${topLabel}
                 <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
                 <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numClases} clase${numClases > 1 ? 's' : ''}</span>
             </button>
@@ -8608,6 +8729,9 @@
             if (tabName === 'consultas') {
                 await cargarConsultasAdmin();
             } else if (tabName === 'gestion-alumnos') {
+                selectedAsistenciaFecha = formatDateLocal(new Date());
+                selectedAsistenciaClaseId = 'todas';
+                mostrarDiasPasadosAsistencias = false;
                 await cargarAsistenciasPorClase();
             } else if (tabName === 'usuarios') {
                 await cargarUsuariosAdmin();
@@ -8677,6 +8801,8 @@
             if (type === 'clases') {
                 await cargarHorarios();
             } else if (type === 'consultas') {
+                selectedAdminConsultaFecha = formatDateLocal(new Date());
+                mostrarDiasPasadosConsultasAdmin = false;
                 await cargarConsultasAdmin();
             } else if (type === 'talleres') {
                 await cargarTalleresAdmin();
@@ -8756,7 +8882,12 @@
             return ids;
         }
 
-        async function cargarTodasLasClasesConProfesionales() {
+        async function cargarTodasLasClasesConProfesionales(options = {}) {
+            const { force = false, desdeFecha = null } = options;
+            if (!force && window.allSesionesCache && window.allSesionesCache.length > 0) {
+                return window.allSesionesCache;
+            }
+
             if (!allProfesionalesCache || allProfesionalesCache.length === 0) {
                 await cargarProfesionalesCache();
             }
@@ -8765,34 +8896,63 @@
                 if (p?.id != null) profMap[String(p.id)] = p;
             });
 
-            let rawClases = [];
-            try {
-                const { data, error } = await client
-                    .from('clases')
-                    .select('*, profesionales(*)')
-                    .order('fecha_inicio', { ascending: true });
-                if (!error && Array.isArray(data) && data.length > 0) {
-                    rawClases = data;
-                }
-            } catch (e) {
-                console.warn('Fallo select con join, usando fallback sin join:', e);
-            }
+            // Ventana móvil: por defecto desde hace 45 días para incluir todo el ciclo reciente y futuro completo
+            const fechaLimiteInicio = desdeFecha || new Date(Date.now() - 45 * 24 * 60 * 60 * 1000);
+            const isoInicio = fechaLimiteInicio.toISOString();
 
-            if (!rawClases || rawClases.length === 0) {
+            let allClases = [];
+            let page = 0;
+            const pageSize = 1000;
+            let hasMore = true;
+
+            while (hasMore) {
                 try {
+                    const fromIdx = page * pageSize;
+                    const toIdx = (page + 1) * pageSize - 1;
                     const { data, error } = await client
                         .from('clases')
-                        .select('*')
-                        .order('fecha_inicio', { ascending: true });
-                    if (!error && Array.isArray(data)) {
-                        rawClases = data;
+                        .select('*, profesionales(*)')
+                        .gte('fecha_inicio', isoInicio)
+                        .order('fecha_inicio', { ascending: true })
+                        .range(fromIdx, toIdx);
+
+                    if (error) throw error;
+                    if (Array.isArray(data) && data.length > 0) {
+                        allClases.push(...data);
+                        if (data.length < pageSize) {
+                            hasMore = false;
+                        } else {
+                            page++;
+                        }
+                    } else {
+                        hasMore = false;
                     }
-                } catch (e2) {
-                    console.error('Error cargando clases directas:', e2);
+                } catch (e) {
+                    console.warn(`Error cargando lote ${page} de sesiones con join:`, e);
+                    try {
+                        const fromIdx = page * pageSize;
+                        const toIdx = (page + 1) * pageSize - 1;
+                        const { data: rawFallback, error: errFallback } = await client
+                            .from('clases')
+                            .select('*')
+                            .gte('fecha_inicio', isoInicio)
+                            .order('fecha_inicio', { ascending: true })
+                            .range(fromIdx, toIdx);
+                        if (!errFallback && Array.isArray(rawFallback)) {
+                            allClases.push(...rawFallback);
+                            if (rawFallback.length < pageSize) hasMore = false;
+                            else page++;
+                        } else {
+                            hasMore = false;
+                        }
+                    } catch (e2) {
+                        console.error('Fallo definitivo en lote de clases:', e2);
+                        hasMore = false;
+                    }
                 }
             }
 
-            return (rawClases || []).map(c => {
+            const normalizadas = (allClases || []).map(c => {
                 let profObj = c.profesionales;
                 if (Array.isArray(profObj)) {
                     profObj = profObj[0] || null;
@@ -8805,6 +8965,9 @@
                     profesionales: profObj
                 };
             });
+
+            window.allSesionesCache = normalizadas;
+            return normalizadas;
         }
 
         function esClaseDelProfesionalActual(clase) {
@@ -9135,6 +9298,13 @@
                 await cargarPerfilProfesionalActual(currentUserProfile);
             }
 
+            if (!mostrarDiasPasadosAsistencias && selectedAsistenciaFecha !== 'todas') {
+                const hoyKeyActual = formatDateLocal(new Date());
+                if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKeyActual) {
+                    selectedAsistenciaFecha = hoyKeyActual;
+                }
+            }
+
             cont.innerHTML = `
         <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
             <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
@@ -9226,6 +9396,14 @@
             }
         }
 
+        function toggleDiasPasadosAsistencias() {
+            mostrarDiasPasadosAsistencias = !mostrarDiasPasadosAsistencias;
+            renderizarBarraDiasAsistencias();
+            if (selectedAsistenciaFecha === 'todas') {
+                renderizarAsistenciasPorClase();
+            }
+        }
+
         function filtrarAsistenciaPorFecha(dateKey) {
             selectedAsistenciaFecha = dateKey;
             selectedAsistenciaClaseId = 'todas';
@@ -9234,7 +9412,7 @@
         }
 
         function limpiarFiltroFechaAsistencias() {
-            selectedAsistenciaFecha = null;
+            selectedAsistenciaFecha = 'todas';
             selectedAsistenciaClaseId = 'todas';
             renderizarBarraDiasAsistencias();
             renderizarAsistenciasPorClase();
@@ -9246,6 +9424,10 @@
                 const foundClase = (allAsistenciasClaseCache || []).find(c => String(c.id) === String(claseId));
                 if (foundClase) {
                     selectedAsistenciaFecha = formatDateLocal(foundClase.fecha_inicio);
+                    const hoyKey = formatDateLocal(new Date());
+                    if (selectedAsistenciaFecha < hoyKey) {
+                        mostrarDiasPasadosAsistencias = true;
+                    }
                 }
             }
             renderizarBarraDiasAsistencias();
@@ -9256,6 +9438,7 @@
             const bar = document.getElementById('asistencias-days-list');
             if (!bar) return;
 
+            const hoyKey = formatDateLocal(new Date());
             let clases = (allAsistenciasClaseCache || []).filter(filtrarClaseSegunFiltrosAsistencias);
             const fechasConSesiones = new Map();
 
@@ -9266,18 +9449,61 @@
                 }
             });
 
-            const dKeys = Array.from(fechasConSesiones.keys()).sort();
-            if (dKeys.length === 0) {
+            const allDKeys = Array.from(fechasConSesiones.keys()).sort();
+            if (allDKeys.length === 0) {
                 bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay sesiones que coincidan con los filtros</span>';
                 return;
             }
 
+            const pastKeys = allDKeys.filter(k => k < hoyKey);
+            const currentAndFutureKeys = allDKeys.filter(k => k >= hoyKey);
+
+            // Si no estamos en modo explícito de ver días pasados, bajo ningún concepto seleccionar un día pasado
+            if (!mostrarDiasPasadosAsistencias) {
+                if (selectedAsistenciaFecha !== 'todas') {
+                    if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKey || !fechasConSesiones.has(selectedAsistenciaFecha)) {
+                        if (fechasConSesiones.has(hoyKey)) {
+                            selectedAsistenciaFecha = hoyKey;
+                        } else {
+                            const prox = currentAndFutureKeys[0];
+                            selectedAsistenciaFecha = prox || hoyKey;
+                        }
+                    }
+                }
+            } else {
+                if (!selectedAsistenciaFecha || (!fechasConSesiones.has(selectedAsistenciaFecha) && selectedAsistenciaFecha !== 'todas')) {
+                    if (fechasConSesiones.has(hoyKey)) {
+                        selectedAsistenciaFecha = hoyKey;
+                    } else {
+                        const prox = allDKeys.find(k => k >= hoyKey);
+                        selectedAsistenciaFecha = prox || allDKeys[allDKeys.length - 1] || hoyKey;
+                    }
+                }
+            }
+
+            // Por defecto, mostrar días desde HOY en adelante (no mostrar días pasados al entrar)
+            let dKeys = mostrarDiasPasadosAsistencias ? allDKeys : currentAndFutureKeys;
+            if (dKeys.length === 0 && !mostrarDiasPasadosAsistencias) {
+                dKeys = fechasConSesiones.has(hoyKey) ? [hoyKey] : (allDKeys.length > 0 ? [allDKeys[allDKeys.length - 1]] : [hoyKey]);
+            }
+
+            const isTodasActive = selectedAsistenciaFecha === 'todas';
             let html = `
         <button type="button" onclick="limpiarFiltroFechaAsistencias()" 
-            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${!selectedAsistenciaFecha ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
+            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
             <i class="ph-bold ph-squares-four"></i> Todas (${clases.length})
         </button>
     `;
+
+            if (pastKeys.length > 0) {
+                html += `
+        <button type="button" onclick="toggleDiasPasadosAsistencias()" 
+            class="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${mostrarDiasPasadosAsistencias ? 'bg-cocoa/80 text-white shadow-xs' : 'bg-sand/15 text-cocoa/70 hover:bg-sand/30 border border-cocoa/10'}"
+            title="${mostrarDiasPasadosAsistencias ? 'Ocultar sesiones de días pasados' : 'Ver sesiones de días anteriores'}">
+            <i class="ph-bold ph-clock-counter-clockwise"></i> ${mostrarDiasPasadosAsistencias ? 'Ocultar pasadas' : 'Anteriores (' + pastKeys.length + ')'}
+        </button>
+    `;
+            }
 
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -9289,15 +9515,22 @@
                 const mesNombre = mesesCorta[m - 1];
                 const numSesiones = fechasConSesiones.get(dKey) || 0;
                 const isSelected = selectedAsistenciaFecha === dKey;
+                const isToday = dKey === hoyKey;
 
                 const btnClass = isSelected
                     ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs';
+                    : (isToday
+                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
+                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+
+                const topLabel = isToday
+                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
+                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
 
                 html += `
             <button type="button" onclick="filtrarAsistenciaPorFecha('${dKey}')" 
-                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4rem] cursor-pointer ${btnClass}">
-                <span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>
+                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
+                ${topLabel}
                 <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
                 <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
             </button>
@@ -9319,10 +9552,25 @@
             const empty = document.getElementById('asistencias-empty');
             if (!cont || !empty) return;
 
+            const hoyKey = formatDateLocal(new Date());
             let clasesFuturas = (allAsistenciasClaseCache || []).filter(filtrarClaseSegunFiltrosAsistencias);
-            if (selectedAsistenciaFecha) {
-                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAsistenciaFecha);
+
+            // Si no estamos en modo ver días pasados, asegurar que la fecha activa no sea un día pasado
+            if (!mostrarDiasPasadosAsistencias && selectedAsistenciaFecha !== 'todas') {
+                if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKey) {
+                    selectedAsistenciaFecha = hoyKey;
+                }
             }
+
+            if (selectedAsistenciaFecha && selectedAsistenciaFecha !== 'todas') {
+                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAsistenciaFecha);
+            } else if (!selectedAsistenciaFecha) {
+                selectedAsistenciaFecha = hoyKey;
+                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === hoyKey);
+            } else if (selectedAsistenciaFecha === 'todas' && !mostrarDiasPasadosAsistencias) {
+                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) >= hoyKey);
+            }
+
             if (selectedAsistenciaClaseId !== 'todas') {
                 clasesFuturas = clasesFuturas.filter(c => String(c.id) === String(selectedAsistenciaClaseId));
             }
@@ -9789,7 +10037,14 @@
                 }));
 
                 allProfesorAgendaCache = clasesProfesor;
-                selectedDateProfesor = null;
+                const hoyKeyProf = formatDateLocal(new Date());
+                const tieneHoyProf = clasesProfesor.some(c => formatDateLocal(c.fecha_inicio) === hoyKeyProf);
+                if (tieneHoyProf) {
+                    selectedDateProfesor = hoyKeyProf;
+                } else {
+                    const proxProf = clasesProfesor.find(c => formatDateLocal(c.fecha_inicio) >= hoyKeyProf);
+                    selectedDateProfesor = proxProf ? formatDateLocal(proxProf.fecha_inicio) : null;
+                }
                 renderizarCalendarioProfesor();
                 renderizarAgendaProfesor();
                 void cargarMiGrupoProfesor();
@@ -12867,6 +13122,8 @@ async function adminTogglePromo50(userId, active) {
             if (form) form.reset();
         }
 
+        let currentEditingClass = null;
+
         async function abrirModalEditarClase(claseId) {
             if (!claseId) return;
             const cid = safePositiveInteger(claseId);
@@ -12884,6 +13141,7 @@ async function adminTogglePromo50(userId, active) {
                 }
                 clase = data;
             }
+            currentEditingClass = clase;
 
             const modal = document.getElementById('modal-editar-clase');
             if (!modal) return;
@@ -12893,7 +13151,7 @@ async function adminTogglePromo50(userId, active) {
 
             // Cargar tipos de clases
             const selectTipo = document.getElementById('editar-clase-tipo-select');
-            selectTipo.innerHTML = '<option value="" disabled selected>Cargando tipos...</option>';
+            selectTipo.innerHTML = '<option value="custom" selected>Cargando tipos...</option>';
 
             const { data: tipos } = await client.from('tipos_clases')
                 .select('*')
@@ -12906,7 +13164,7 @@ async function adminTogglePromo50(userId, active) {
             if (tipos && tipos.length > 0) {
                 tipos.forEach(t => {
                     const opt = document.createElement('option');
-                    opt.value = t.id;
+                    opt.value = String(t.id);
                     opt.text = t.nombre;
                     opt.dataset.duracion = t.duracion_predeterminada;
                     if (clase.tipo_clase_id && Number(clase.tipo_clase_id) === Number(t.id)) {
@@ -12921,7 +13179,7 @@ async function adminTogglePromo50(userId, active) {
 
                 if (!matchTipo) {
                     const customOpt = document.createElement('option');
-                    customOpt.value = clase.tipo_clase_id || '';
+                    customOpt.value = clase.tipo_clase_id ? String(clase.tipo_clase_id) : 'custom';
                     customOpt.text = clase.nombre || 'Clase personalizada';
                     customOpt.selected = true;
                     selectTipo.insertBefore(customOpt, selectTipo.firstChild);
@@ -12929,13 +13187,13 @@ async function adminTogglePromo50(userId, active) {
 
                 selectTipo.onchange = (e) => {
                     const opt = selectTipo.options[selectTipo.selectedIndex];
-                    if (opt.dataset.duracion) {
-                        document.getElementById('editar-clase-duracion').value = opt.dataset.duracion;
+                    if (opt && opt.dataset && opt.dataset.duracion) {
+                        document.getElementById('editar-clase-duracion').value = String(opt.dataset.duracion);
                     }
                 };
             } else {
                 const customOpt = document.createElement('option');
-                customOpt.value = '';
+                customOpt.value = clase.tipo_clase_id ? String(clase.tipo_clase_id) : 'custom';
                 customOpt.text = clase.nombre || 'Yoga';
                 customOpt.selected = true;
                 selectTipo.appendChild(customOpt);
@@ -12945,19 +13203,25 @@ async function adminTogglePromo50(userId, active) {
             const selectProfesor = document.getElementById('editar-clase-profesor-id');
             selectProfesor.innerHTML = '<option value="" disabled>Selecciona un profesional</option>';
 
+            if (!allProfesionalesCache || allProfesionalesCache.length === 0) {
+                await cargarProfesionalesCache();
+            }
+
+            let matchProfesor = false;
             if (allProfesionalesCache && allProfesionalesCache.length > 0) {
                 const clasesProfs = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('clases'));
                 const clasesIds = new Set(clasesProfs.map(p => p.id));
 
                 clasesProfs.forEach(p => {
                     const option = document.createElement('option');
-                    option.value = p.id;
+                    option.value = String(p.id);
                     const fullNom = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || p.email || 'Profesional';
                     const esp = p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '';
                     const oculto = p.visible_publico === false ? ' · Oculto' : '';
                     option.textContent = `${fullNom}${esp}${oculto}`;
                     if (Number(clase.profesor_id) === Number(p.id)) {
                         option.selected = true;
+                        matchProfesor = true;
                     }
                     selectProfesor.appendChild(option);
                 });
@@ -12968,18 +13232,28 @@ async function adminTogglePromo50(userId, active) {
                     optgroup.label = 'Otros Profesionales y Profesores';
                     others.forEach(p => {
                         const opt = document.createElement('option');
-                        opt.value = p.id;
+                        opt.value = String(p.id);
                         const fullNom = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || p.email || 'Profesional';
                         const esp = p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '';
                         const oculto = p.visible_publico === false ? ' · Oculto' : '';
                         opt.textContent = `${fullNom}${esp}${oculto}`;
                         if (Number(clase.profesor_id) === Number(p.id)) {
                             opt.selected = true;
+                            matchProfesor = true;
                         }
                         optgroup.appendChild(opt);
                     });
                     selectProfesor.appendChild(optgroup);
                 }
+            }
+
+            if (!matchProfesor && clase.profesor_id) {
+                const customProfOpt = document.createElement('option');
+                customProfOpt.value = String(clase.profesor_id);
+                const profName = clase.profesionales?.nombre ? `${clase.profesionales.nombre} ${clase.profesionales.apellidos || ''}`.trim() : 'Profesional asignado';
+                customProfOpt.textContent = profName;
+                customProfOpt.selected = true;
+                selectProfesor.appendChild(customProfOpt);
             }
 
             // Fecha y Hora
@@ -12994,17 +13268,24 @@ async function adminTogglePromo50(userId, active) {
                 flatpickr(fechaInput, {
                     locale: 'es',
                     dateFormat: 'Y-m-d',
-                    defaultDate: dateStr,
-                    disable: [
-                        function (date) {
-                            return (date.getDay() === 0 || date.getDay() === 6);
-                        }
-                    ]
+                    defaultDate: dateStr
                 });
             }
 
             document.getElementById('editar-clase-hora-inicio').value = timeStr;
-            document.getElementById('editar-clase-duracion').value = String(clase.duracion_minutos || 50);
+
+            // Duración predeterminada o personalizada
+            const duracionVal = String(clase.duracion_minutos || 50);
+            const durSelect = document.getElementById('editar-clase-duracion');
+            let durFound = Array.from(durSelect.options).some(o => o.value === duracionVal);
+            if (!durFound) {
+                const customDurOpt = document.createElement('option');
+                customDurOpt.value = duracionVal;
+                customDurOpt.text = `${duracionVal} minutos`;
+                durSelect.appendChild(customDurOpt);
+            }
+            durSelect.value = duracionVal;
+
             document.getElementById('editar-clase-capacidad').value = String(clase.capacidad_max || 10);
             document.getElementById('editar-clase-descripcion').value = clase.descripcion || '';
 
@@ -13033,12 +13314,14 @@ async function adminTogglePromo50(userId, active) {
             }
 
             const selectTipo = document.getElementById('editar-clase-tipo-select');
-            const tipoClaseId = safePositiveInteger(selectTipo.value) || null;
-            const nombre = selectTipo.options[selectTipo.selectedIndex]?.text || 'Yoga';
+            const selectedOpt = selectTipo ? selectTipo.options[selectTipo.selectedIndex] : null;
+            const rawTipoVal = selectTipo ? selectTipo.value : '';
+            const tipoClaseId = (rawTipoVal && rawTipoVal !== 'custom') ? (safePositiveInteger(rawTipoVal) || null) : (safePositiveInteger(currentEditingClass?.tipo_clase_id) || null);
+            const nombre = (selectedOpt?.text || currentEditingClass?.nombre || 'Yoga').trim();
 
             const fecha = document.getElementById('editar-clase-fecha').value;
             const horaInicio = document.getElementById('editar-clase-hora-inicio').value;
-            const profesorId = safePositiveInteger(document.getElementById('editar-clase-profesor-id').value);
+            const profesorId = safePositiveInteger(document.getElementById('editar-clase-profesor-id').value) || safePositiveInteger(currentEditingClass?.profesor_id);
             const duracion = parseInt(document.getElementById('editar-clase-duracion').value, 10) || 50;
             const capacidad = parseInt(document.getElementById('editar-clase-capacidad').value, 10) || 10;
             const descripcion = (document.getElementById('editar-clase-descripcion').value || '').trim() || null;
@@ -13121,6 +13404,9 @@ async function adminTogglePromo50(userId, active) {
 
             await cargarHorarios();
             if (typeof cargarTalleres === 'function') cargarTalleres();
+            if (isAdmin || esTrabajador()) {
+                if (typeof cargarAsistenciasPorClase === 'function') cargarAsistenciasPorClase();
+            }
         }
 
         async function validateClassScheduleOverlap(inserts, options = {}) {
@@ -13504,8 +13790,9 @@ async function adminTogglePromo50(userId, active) {
                 });
             }
 
+            await cargarTodasLasClasesConProfesionales({ force: true });
             await cargarHorarios();
-            if (isAdmin) await cargarAsistenciasPorClase();
+            if (isAdmin || esTrabajador()) await cargarAsistenciasPorClase();
         });
 
         document.getElementById('modal-crear-clase').addEventListener('click', (e) => {
@@ -13560,6 +13847,7 @@ async function adminTogglePromo50(userId, active) {
                     showConfirmButton: false
                 });
 
+                await cargarTodasLasClasesConProfesionales({ force: true });
                 await cargarHorarios();
                 if (isAdmin || esTrabajador()) await cargarAsistenciasPorClase();
             }
@@ -15128,6 +15416,9 @@ async function adminTogglePromo50(userId, active) {
             } else if (viewName === 'profesores') {
                 renderProfesoresPublic();
             } else if (viewName === 'mis-clases') {
+                selectedAsistenciaFecha = formatDateLocal(new Date());
+                selectedAsistenciaClaseId = 'todas';
+                mostrarDiasPasadosAsistencias = false;
                 cargarAsistenciasPorClase();
             }
         }
@@ -15411,142 +15702,9 @@ async function adminTogglePromo50(userId, active) {
         // =======================================================
 
         function generarHuecosConsultasVirtuales(tipo, dbClases = [], allClases = [], targetMonth = currentCalendarMonthPsicologia) {
-            if (tipo === 'nutricion') {
-                return [];
-            }
-            const consultationSlotStartMinutes = [
-                9 * 60 + 30,
-                10 * 60 + 30,
-                11 * 60 + 30,
-                12 * 60 + 30,
-                17 * 60,
-                18 * 60,
-                19 * 60,
-                20 * 60
-            ];
-            const silviaConsultationSlotStartMinutes = [
-                15 * 60,
-                16 * 60 + 30,
-                18 * 60
-            ];
-            const silviaConsultationAnchorDate = '2026-06-19';
-            const consultationWeekdays = {
-                miriam: [2, 3], // Martes y Miércoles
-                isabel: [2, 4]  // Martes y Jueves
-            };
-
-            const profs = (allProfesionalesCache || []).filter(p => {
-                const nom = `${p.nombre || ''} ${p.email || ''}`.toLowerCase();
-                if (tipo === 'psicologia') {
-                    return nom.includes('miriam') || nom.includes('respira') || nom.includes('isabel') || nom.includes('isarodriguez');
-                } else if (tipo === 'nutricion') {
-                    return nom.includes('silvia') || nom.includes('sil-hada') || nom.includes('isabel') || nom.includes('isarodriguez') || nom.includes('miriam');
-                }
-                return false;
-            });
-
-            const generated = [];
-            const tDate = targetMonth instanceof Date && !isNaN(targetMonth) ? targetMonth : new Date();
-            const year = tDate.getFullYear();
-            const month = tDate.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            // Colección exhaustiva de todos los eventos existentes de la BD (Yoga, Consultas y Talleres)
-            const allExistingEvents = [
-                ...(dbClases || []),
-                ...(allClases || []),
-                ...(typeof allClasesCache !== 'undefined' ? allClasesCache : []),
-                ...(typeof allTalleresCache !== 'undefined' ? allTalleresCache : [])
-            ];
-
-            // Generar para los días del mes objetivo
-            for (let day = 1; day <= daysInMonth; day++) {
-                const d = new Date(year, month, day);
-                if (d < today) continue;
-                const dateKey = formatDateLocal(d);
-                const weekday = d.getDay() === 0 ? 7 : d.getDay();
-
-                profs.forEach(prof => {
-                    const nom = `${prof.nombre || ''} ${prof.email || ''}`.toLowerCase();
-                    const profFirstName = (prof.nombre || '').toLowerCase().trim().split(' ')[0];
-                    let slug = 'otro';
-                    if (nom.includes('miriam') || nom.includes('respira')) slug = 'miriam';
-                    else if (nom.includes('isabel') || nom.includes('isarodriguez')) slug = 'isabel';
-                    else if (nom.includes('silvia') || nom.includes('sil-hada')) slug = 'silvia';
-
-                    let slotStarts = [];
-                    let durationMinutes = 60;
-
-                    if (slug === 'miriam' && consultationWeekdays.miriam.includes(weekday)) {
-                        slotStarts = consultationSlotStartMinutes;
-                        durationMinutes = 60;
-                    } else if (slug === 'isabel' && consultationWeekdays.isabel.includes(weekday)) {
-                        slotStarts = consultationSlotStartMinutes;
-                        durationMinutes = 60;
-                    } else if (slug === 'silvia' && weekday === 5 && tipo === 'nutricion') {
-                        const anchor = new Date(`${silviaConsultationAnchorDate}T12:00:00Z`);
-                        const reqDate = new Date(`${dateKey}T12:00:00Z`);
-                        const diffDays = Math.round((reqDate.getTime() - anchor.getTime()) / 86400000);
-                        if (diffDays % 14 === 0) {
-                            slotStarts = silviaConsultationSlotStartMinutes;
-                            durationMinutes = 90;
-                        }
-                    }
-
-                    slotStarts.forEach(startMinutes => {
-                        const startHour = Math.floor(startMinutes / 60);
-                        const startMin = startMinutes % 60;
-                        const horaStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-                        const isoStart = `${dateKey}T${horaStr}:00`;
-                        const dateStart = new Date(isoStart);
-                        const dateEnd = new Date(dateStart.getTime() + durationMinutes * 60000);
-
-                        if (dateStart < new Date()) return; // Ignorar horarios pasados
-                        if (dateKey < '2026-09-01') return; // En agosto solo hay sesiones de Ángel (30 de agosto)
-
-                        // Comprobar solapamiento exhaustivo con CUALQUIER evento de este profesional
-                        const hasOverlap = allExistingEvents.some(c => {
-                            const cProfNom = `${c.profesionales?.nombre || ''} ${c.profesionales?.email || ''}`.toLowerCase();
-                            const sameProf = (c.profesor_id && String(c.profesor_id) === String(prof.id)) ||
-                                (c.profesionales?.id && String(c.profesionales.id) === String(prof.id)) ||
-                                (profFirstName && cProfNom.includes(profFirstName));
-                            if (!sameProf) return false;
-                            const cStart = new Date(c.fecha_inicio);
-                            const dur = toSafeNumber(c.duracion_minutos) || 60;
-                            const cEnd = c.fecha_fin ? new Date(c.fecha_fin) : new Date(cStart.getTime() + dur * 60000);
-                            return (dateStart < cEnd && dateEnd > cStart);
-                        });
-
-                        if (!hasOverlap) {
-                            let nombre = 'Consulta Psicología';
-                            if (slug === 'isabel') nombre = 'Consulta PNI / Psicología';
-                            else if (slug === 'silvia') nombre = 'Consulta Ayurveda';
-                            else if (slug === 'miriam' && tipo === 'nutricion') nombre = 'Consulta Alimentación Consciente';
-
-                            generated.push({
-                                id: `virtual-${prof.id}-${dateKey}-${horaStr}`,
-                                nombre,
-                                fecha_inicio: isoStart,
-                                fecha_fin: dateEnd.toISOString(),
-                                duracion_minutos: durationMinutes,
-                                capacidad_max: 1,
-                                ocupadas: 0,
-                                tipo_clase: tipo,
-                                profesionales: prof,
-                                profesor_id: prof.id,
-                                isVirtual: true,
-                                activa: true,
-                                es_gratuita: false
-                            });
-                        }
-                    });
-                });
-            }
-
-            return generated;
+            // El calendario y las reservas operan con criterio único: solo se muestran las consultas reales
+            // creadas y activas en la base de datos (clases). Al eliminarse en administración, desaparecen definitivamente.
+            return [];
         }
 
         async function iniciarCheckoutConsultaStripe(lookupKey) {
@@ -16866,14 +17024,21 @@ async function adminTogglePromo50(userId, active) {
             }
 
             const totalConsultasMes = Array.from(fechasConSesiones.values()).reduce((a, b) => a + b, 0);
+            const hoyKey = formatDateLocal(new Date());
+            if (!selected && fechasConSesiones.has(hoyKey)) {
+                if (tipo === 'psicologia') selectedDatePsicologia = hoyKey;
+                else selectedDateNutricion = hoyKey;
+            }
 
             const cleanFn = tipo === 'psicologia' ? 'limpiarFiltroFechaPsicologia()' : 'limpiarFiltroFechaNutricion()';
             const filterFn = tipo === 'psicologia' ? 'filtrarPorFechaPsicologia' : 'filtrarPorFechaNutricion';
             const activeColor = tipo === 'psicologia' ? 'bg-[#3B82F6] ring-[#3B82F6]/40 border-[#3B82F6]' : 'bg-[#8B5CF6] ring-[#8B5CF6]/40 border-[#8B5CF6]';
 
+            const curSelected = tipo === 'psicologia' ? selectedDatePsicologia : selectedDateNutricion;
+
             let html = `
         <button type="button" onclick="${cleanFn}" 
-            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${!selected ? 'bg-cocoa text-white shadow-xs' : 'bg-white/80 text-cocoa hover:bg-white border border-cocoa/10'}">
+            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${!curSelected ? 'bg-cocoa text-white shadow-xs' : 'bg-white/80 text-cocoa hover:bg-white border border-cocoa/10'}">
             <i class="ph-bold ph-squares-four"></i> Todas (${totalConsultasMes})
         </button>
     `;
@@ -16887,16 +17052,23 @@ async function adminTogglePromo50(userId, active) {
                 const diaSemana = diasSemanaCorta[fecha.getDay()];
                 const mesNombre = mesesCorta[m - 1];
                 const numSesiones = fechasConSesiones.get(dKey) || 0;
-                const isSelected = selected === dKey;
+                const isSelected = curSelected === dKey;
+                const isToday = dKey === hoyKey;
 
                 const btnClass = isSelected
                     ? `${activeColor} text-white shadow-sm ring-2`
-                    : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs';
+                    : (isToday
+                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
+                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+
+                const topLabel = isToday
+                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
+                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
 
                 html += `
             <button type="button" onclick="${filterFn}('${dKey}')" 
                 class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] cursor-pointer ${btnClass}">
-                <span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>
+                ${topLabel}
                 <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
                 <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numSesiones} cita${numSesiones > 1 ? 's' : ''}</span>
             </button>
@@ -17627,10 +17799,8 @@ async function adminTogglePromo50(userId, active) {
         }
 
         function filtrarConsultasParaTrabajador(clases) {
-            if (isAdmin || !esTrabajador() || !currentUser?.email) return clases || [];
-
-            const email = currentUser.email.toLowerCase();
-            return (clases || []).filter(c => (c.profesionales?.email || '').toLowerCase() === email);
+            if (isAdmin || !esTrabajador()) return clases || [];
+            return (clases || []).filter(esClaseDelProfesionalActual);
         }
 
         // --- ASIGNACIÓN MANUAL (ADMIN/TRABAJADOR) ---
@@ -18578,12 +18748,19 @@ async function adminTogglePromo50(userId, active) {
                     showConfirmButton: false,
                     timer: 2000
                 });
+                if (inserts && inserts[0] && inserts[0].fecha_inicio) {
+                    selectedAdminConsultaFecha = formatDateLocal(inserts[0].fecha_inicio);
+                }
+                await cargarTodasLasClasesConProfesionales({ force: true });
                 if (tipo === 'psicologia') {
                     await cargarPsicologia();
                 } else {
                     await cargarNutricion();
                 }
                 await cargarConsultasAdmin();
+                if (isAdmin || esTrabajador()) {
+                    if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
+                }
             }
         }
 
@@ -18639,7 +18816,7 @@ async function adminTogglePromo50(userId, active) {
                 const confirmResult = await Swal.fire({
                     icon: 'warning',
                     title: 'Turno con reserva asignada',
-                    text: 'Este hueco tiene una cita confirmada. Si continúas, se cancelará la reserva del paciente y se eliminará el hueco del profesional.',
+                    text: 'Este hueco tiene una cita confirmada. Si continúas, se cancelará la reserva del paciente, se le devolverá su bono o saldo y se eliminará el turno.',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#9ca3af',
@@ -18647,19 +18824,10 @@ async function adminTogglePromo50(userId, active) {
                     cancelButtonText: 'No, mantener'
                 });
                 if (!confirmResult.isConfirmed) return;
-
-                // Cancelar reservas activas asociadas antes de borrar el hueco
-                const { error: cancelResErr } = await client
-                    .from(config.table)
-                    .update({ estado: 'cancelada' })
-                    .eq('clase_id', idNormalizado);
-                if (cancelResErr) {
-                    console.error('Error al cancelar reservas del turno:', cancelResErr);
-                }
             } else {
                 const result = await Swal.fire({
                     title: '¿Eliminar este turno?',
-                    text: 'El horario dejará de estar disponible y esta acción no se puede deshacer.',
+                    text: 'El horario dejará de estar disponible tanto en administración como en el calendario público.',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
@@ -18672,37 +18840,49 @@ async function adminTogglePromo50(userId, active) {
             }
 
             Swal.fire({
-                title: 'Eliminando turno...',
+                title: 'Eliminando turno y sincronizando calendarios...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
 
             try {
-                const { data, error } = await client
-                    .from('clases')
-                    .delete()
-                    .eq('id', idNormalizado)
-                    .eq('tipo_clase', tipoNormalizado)
-                    .select('id');
+                let devueltos = 0;
+                let { data: rpcData, error: rpcErr } = await client.rpc('admin_eliminar_clase', { p_clase_id: idNormalizado });
+                if (rpcErr && (rpcErr.code === 'PGRST202' || rpcErr.code === '42883')) {
+                    // Fallback directo
+                    await client.from(config.table).update({ estado: 'cancelada' }).eq('clase_id', idNormalizado);
+                    const { error: delErr } = await client.from('clases').delete().eq('id', idNormalizado);
+                    if (delErr) throw delErr;
+                } else if (rpcErr) {
+                    throw rpcErr;
+                } else {
+                    devueltos = rpcData?.alumnos_reembolsados || (typeof rpcData === 'number' ? rpcData : 0);
+                }
 
-                if (error) throw error;
-                if (!data || data.length !== 1) {
-                    throw new Error('El turno no existe o no tienes permiso para eliminarlo.');
+                let msg = 'El turno de consulta ha sido eliminado.';
+                if (devueltos > 0) {
+                    msg += ` Se ha cancelado la reserva y devuelto el saldo al alumno.`;
                 }
 
                 Swal.fire({
                     icon: 'success',
                     title: 'Turno eliminado',
+                    text: msg,
                     showConfirmButton: false,
                     timer: 1500
                 });
 
+                await cargarTodasLasClasesConProfesionales({ force: true });
                 if (tipoNormalizado === 'psicologia') {
                     await cargarPsicologia();
                 } else {
                     await cargarNutricion();
                 }
                 await cargarConsultasAdmin();
+                await cargarHorarios();
+                if (isAdmin || esTrabajador()) {
+                    if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
+                }
             } catch (error) {
                 console.error('Error al eliminar consulta:', error);
                 Swal.fire('Error', error.message || 'No se pudo eliminar el turno.', 'error');
@@ -18760,36 +18940,26 @@ async function adminTogglePromo50(userId, active) {
       <span class="text-xs uppercase tracking-widest font-bold text-gray-400">Cargando consultas...</span>
     </div>`;
 
-            const now = new Date();
-            now.setHours(now.getHours() - 2);
+            // Fuente única compartida de la base de datos (public.clases)
+            const todasLasSesiones = await cargarTodasLasClasesConProfesionales();
 
-            const { data: clasesData, error: errClases } = await client.from('clases')
-                .select('*, profesionales(*)')
-                .in('tipo_clase', ['psicologia', 'nutricion'])
-                .gte('fecha_inicio', now.toISOString())
-                .order('fecha_inicio');
+            // Filtrar consultas de psicología y nutrición válidas
+            let consultas = (todasLasSesiones || []).filter(c => {
+                const tipo = normalizarTipoClase(c.tipo_clase);
+                return tipo === 'psicologia' || tipo === 'nutricion';
+            });
 
-            if (errClases) {
-                console.error(errClases);
-                container.innerHTML = '';
-                if (emptyState) emptyState.classList.remove('hidden');
-                return;
+            // Si es trabajador/profesor, aplicar filtro unificado de autorización
+            if (!isAdmin && esTrabajador()) {
+                consultas = consultas.filter(esClaseDelProfesionalActual);
             }
 
-            const validClases = (clasesData || []).filter(esHorarioValidoConsulta);
+            consultas.sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
 
-            // Generar huecos virtuales disponibles para Psicología y Nutrición con prevención total de solapamientos
-            const virtualPsico = generarHuecosConsultasVirtuales('psicologia', validClases.filter(c => c.tipo_clase === 'psicologia'), allClasesCache);
-            const virtualNutri = generarHuecosConsultasVirtuales('nutricion', validClases.filter(c => c.tipo_clase === 'nutricion'), allClasesCache);
-
-            const allSlots = [...validClases, ...virtualPsico, ...virtualNutri];
-            allSlots.sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
-
-            const clases = filtrarConsultasParaTrabajador(allSlots);
-
-            if (!clases || clases.length === 0) {
+            if (!consultas || consultas.length === 0) {
                 container.innerHTML = '';
                 if (emptyState) emptyState.classList.remove('hidden');
+                window.allConsultasAdminCache = [];
                 return;
             }
 
@@ -18819,19 +18989,45 @@ async function adminTogglePromo50(userId, active) {
             });
 
             // Guardar en variables globales/window para renderizar con filtros
-            window.allConsultasAdminCache = clases;
+            window.allConsultasAdminCache = consultas;
             window.allConsultasAdminReservasMap = reservasMap;
             window.allConsultasAdminPerfilesMap = perfilesMap;
 
+            renderizarBarraDiasConsultasAdmin();
             renderizarConsultasAdmin();
         }
 
-        function renderizarConsultasAdmin() {
-            const container = document.getElementById('admin-consultas-container');
-            const emptyState = document.getElementById('admin-consultas-empty');
-            if (!container || !window.allConsultasAdminCache) return;
+        function scrollConsultasAdminDias(direction) {
+            const list = document.getElementById('admin-consultas-days-list');
+            if (!list) return;
+            const step = Math.max(220, Math.round(list.clientWidth * 0.75));
+            list.scrollBy({ left: direction * step, behavior: 'smooth' });
+        }
 
-            container.innerHTML = '';
+        function filtrarConsultaAdminPorFecha(dateKey) {
+            selectedAdminConsultaFecha = dateKey;
+            renderizarBarraDiasConsultasAdmin();
+            renderizarConsultasAdmin();
+        }
+
+        function limpiarFiltroFechaConsultasAdmin() {
+            selectedAdminConsultaFecha = 'todas';
+            renderizarBarraDiasConsultasAdmin();
+            renderizarConsultasAdmin();
+        }
+
+        function toggleDiasPasadosConsultasAdmin() {
+            mostrarDiasPasadosConsultasAdmin = !mostrarDiasPasadosConsultasAdmin;
+            renderizarBarraDiasConsultasAdmin();
+            renderizarConsultasAdmin();
+        }
+
+        function renderizarBarraDiasConsultasAdmin() {
+            const bar = document.getElementById('admin-consultas-days-list');
+            const titleEl = document.getElementById('admin-consultas-days-title-text');
+            if (!bar || !window.allConsultasAdminCache) return;
+
+            const hoyKey = formatDateLocal(new Date());
 
             const filtradas = window.allConsultasAdminCache.filter(c => {
                 const reservas = window.allConsultasAdminReservasMap[c.id] || [];
@@ -18847,152 +19043,357 @@ async function adminTogglePromo50(userId, active) {
                 return true;
             });
 
+            const fechasConConsultas = new Map();
+            filtradas.forEach(c => {
+                const dKey = formatDateLocal(c.fecha_inicio);
+                if (dKey) {
+                    fechasConConsultas.set(dKey, (fechasConConsultas.get(dKey) || 0) + 1);
+                }
+            });
+
+            const allDKeys = Array.from(fechasConConsultas.keys()).sort();
+            if (allDKeys.length === 0) {
+                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas que coincidan con los filtros</span>';
+                if (titleEl) titleEl.textContent = 'Días con consultas:';
+                return;
+            }
+
+            const pastKeys = allDKeys.filter(k => k < hoyKey);
+            const currentAndFutureKeys = allDKeys.filter(k => k >= hoyKey);
+
+            // Si el usuario no está en modo explícito de ver pasadas, bajo ningún concepto seleccionar un día pasado
+            if (!mostrarDiasPasadosConsultasAdmin) {
+                if (selectedAdminConsultaFecha !== 'todas') {
+                    if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha < hoyKey || !fechasConConsultas.has(selectedAdminConsultaFecha)) {
+                        if (fechasConConsultas.has(hoyKey)) {
+                            selectedAdminConsultaFecha = hoyKey;
+                        } else {
+                            const prox = currentAndFutureKeys[0];
+                            selectedAdminConsultaFecha = prox || hoyKey;
+                        }
+                    }
+                }
+            } else {
+                if (!selectedAdminConsultaFecha || (!fechasConConsultas.has(selectedAdminConsultaFecha) && selectedAdminConsultaFecha !== 'todas')) {
+                    if (fechasConConsultas.has(hoyKey)) {
+                        selectedAdminConsultaFecha = hoyKey;
+                    } else {
+                        const prox = allDKeys.find(k => k >= hoyKey);
+                        selectedAdminConsultaFecha = prox || allDKeys[allDKeys.length - 1] || hoyKey;
+                    }
+                }
+            }
+
+            // Días a renderizar en la barra: por defecto desde HOY en adelante
+            let dKeys = mostrarDiasPasadosConsultasAdmin ? allDKeys : currentAndFutureKeys;
+            if (dKeys.length === 0 && !mostrarDiasPasadosConsultasAdmin) {
+                dKeys = fechasConConsultas.has(hoyKey) ? [hoyKey] : (allDKeys.length > 0 ? [allDKeys[allDKeys.length - 1]] : [hoyKey]);
+            }
+
+            if (titleEl) {
+                let txtFiltro = selectedAdminConsultaFecha === 'todas' ? 'Todas las fechas' : '';
+                if (selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas') {
+                    const [y, m, d] = selectedAdminConsultaFecha.split('-').map(Number);
+                    const dObj = new Date(y, m - 1, d);
+                    txtFiltro = `${formatDisplayWeekday(dObj)}, ${d} de ${formatDisplayMonth(dObj)}`;
+                }
+                titleEl.innerHTML = `Días con consultas ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
+            }
+
+            const isTodasActive = selectedAdminConsultaFecha === 'todas';
+            let html = `
+        <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()" 
+            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
+            <i class="ph-bold ph-squares-four"></i> Todas (${filtradas.length})
+        </button>
+    `;
+
+            if (pastKeys.length > 0) {
+                html += `
+        <button type="button" onclick="toggleDiasPasadosConsultasAdmin()" 
+            class="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${mostrarDiasPasadosConsultasAdmin ? 'bg-cocoa/80 text-white shadow-xs' : 'bg-sand/15 text-cocoa/70 hover:bg-sand/30 border border-cocoa/10'}"
+            title="${mostrarDiasPasadosConsultasAdmin ? 'Ocultar consultas de fechas pasadas' : 'Ver consultas de fechas anteriores'}">
+            <i class="ph-bold ph-clock-counter-clockwise"></i> ${mostrarDiasPasadosConsultasAdmin ? 'Ocultar pasadas' : 'Anteriores (' + pastKeys.length + ')'}
+        </button>
+    `;
+            }
+
+            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            dKeys.forEach(dKey => {
+                const [y, m, d] = dKey.split('-').map(Number);
+                const fecha = new Date(y, m - 1, d);
+                const diaSemana = diasSemanaCorta[fecha.getDay()];
+                const mesNombre = mesesCorta[m - 1];
+                const numConsultas = fechasConConsultas.get(dKey) || 0;
+                const isSelected = selectedAdminConsultaFecha === dKey;
+                const isToday = dKey === hoyKey;
+
+                const btnClass = isSelected
+                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
+                    : (isToday
+                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
+                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+
+                const topLabel = isToday
+                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
+                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+
+                html += `
+            <button type="button" onclick="filtrarConsultaAdminPorFecha('${dKey}')" 
+                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
+                ${topLabel}
+                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
+                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numConsultas} turno${numConsultas > 1 ? 's' : ''}</span>
+            </button>
+        `;
+            });
+
+            bar.innerHTML = html;
+
+            setTimeout(() => {
+                const activeBtn = bar.querySelector('.bg-olive');
+                if (activeBtn) {
+                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }, 50);
+        }
+
+        function renderizarConsultasAdmin() {
+            const container = document.getElementById('admin-consultas-container');
+            const emptyState = document.getElementById('admin-consultas-empty');
+            if (!container || !window.allConsultasAdminCache) return;
+
+            container.innerHTML = '';
+
+            const hoyKey = formatDateLocal(new Date());
+
+            if (!mostrarDiasPasadosConsultasAdmin && selectedAdminConsultaFecha !== 'todas') {
+                if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha < hoyKey) {
+                    selectedAdminConsultaFecha = hoyKey;
+                }
+            }
+
+            let filtradas = window.allConsultasAdminCache.filter(c => {
+                const reservas = window.allConsultasAdminReservasMap[c.id] || [];
+                const capacidad = Math.max(1, toSafeNumber(c.capacidad_max) || 1);
+                const ocupadas = reservas.length;
+                const estaLleno = ocupadas >= capacidad;
+
+                if (filtroConsultasActual === 'todas') return true;
+                if (filtroConsultasActual === 'psicologia') return c.tipo_clase === 'psicologia';
+                if (filtroConsultasActual === 'nutricion') return c.tipo_clase === 'nutricion';
+                if (filtroConsultasActual === 'disponibles') return !estaLleno;
+                if (filtroConsultasActual === 'ocupadas') return ocupadas > 0;
+                return true;
+            });
+
+            // Filtrar según el día seleccionado en la barra horizontal de días
+            if (selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas') {
+                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAdminConsultaFecha);
+            } else if (!selectedAdminConsultaFecha) {
+                selectedAdminConsultaFecha = hoyKey;
+                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) === hoyKey);
+            } else if (selectedAdminConsultaFecha === 'todas' && !mostrarDiasPasadosConsultasAdmin) {
+                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) >= hoyKey);
+            }
+
             if (filtradas.length === 0) {
-                if (emptyState) emptyState.classList.remove('hidden');
+                if (emptyState) {
+                    emptyState.classList.remove('hidden');
+                    const emptyMsg = emptyState.querySelector('p');
+                    if (emptyMsg) {
+                        emptyMsg.textContent = selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas'
+                            ? 'No hay consultas programadas para este día.'
+                            : 'No hay consultas registradas que coincidan con los filtros.';
+                    }
+                }
                 return;
             }
 
             if (emptyState) emptyState.classList.add('hidden');
 
+            // Agrupar por fecha para consistencia absoluta con Inscribir Alumnos
+            const gruposPorFecha = {};
             filtradas.forEach(c => {
-                const hora = formatDisplayTime(c.fecha_inicio);
-                const fecha = formatDisplayLongDate(c.fecha_inicio);
-                const profName = String(c.profesionales?.nombre || 'Staff GEN');
-                const rawId = c.id;
-                const claseId = safePositiveInteger(c.id) || 0;
-                const tipoConsulta = c.tipo_clase === 'nutricion' ? 'nutricion' : 'psicologia';
+                const dKey = formatDateLocal(c.fecha_inicio) || 'sin-fecha';
+                if (!gruposPorFecha[dKey]) gruposPorFecha[dKey] = [];
+                gruposPorFecha[dKey].push(c);
+            });
 
-                const reservas = window.allConsultasAdminReservasMap[c.id] || [];
-                const capacidad = Math.max(1, toSafeNumber(c.capacidad_max) || 1);
-                const ocupadas = reservas.length;
-                const tieneHueco = ocupadas < capacidad;
+            const allDateKeys = Object.keys(gruposPorFecha).sort();
+            allDateKeys.forEach(dateKey => {
+                const clasesDelDia = gruposPorFecha[dateKey];
+                let diaTitulo = dateKey;
+                if (dateKey !== 'sin-fecha') {
+                    const [y, m, d] = dateKey.split('-').map(Number);
+                    const dateObj = new Date(y, m - 1, d);
+                    const diaNombre = formatDisplayWeekday(dateObj);
+                    const mes = formatDisplayMonth(dateObj);
+                    diaTitulo = `${diaNombre}, ${d} de ${mes}`;
+                }
 
-                let alumnoHTML = '';
+                const seccionDia = document.createElement('div');
+                seccionDia.className = 'space-y-4 mb-6';
 
-                if (reservas.length > 0) {
-                    const filasAlumnos = reservas.map(reserva => {
-                        const perfil = window.allConsultasAdminPerfilesMap[reserva.user_id] || {};
-                        const contact = obtenerDatosContactoPerfil(perfil);
-                        const reservaId = safePositiveInteger(reserva.id) || 0;
+                const headerDia = document.createElement('div');
+                headerDia.className = 'flex items-center justify-between py-2 border-b border-cocoa/10 sticky top-0 bg-ivory/95 backdrop-blur z-10';
+                headerDia.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-olive"></span>
+                        <h4 class="text-sm md:text-base font-bold text-cocoa capitalize">${escapeHtml(diaTitulo)}</h4>
+                    </div>
+                    <span class="text-xs font-bold text-cocoa/60 bg-cocoa/5 border border-cocoa/10 px-2.5 py-0.5 rounded-full">${clasesDelDia.length} ${clasesDelDia.length === 1 ? 'turno' : 'turnos'}</span>
+                `;
+                seccionDia.appendChild(headerDia);
 
-                        let contactDetails = '';
-                        if (contact.cleanTel) {
-                            contactDetails += `
-                        <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap">
-                            <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
-                                <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
-                            </a>
-                            ${contact.waUrl ? `
-                            <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="Abrir WhatsApp">
-                                <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
-                            </a>` : ''}
-                        </div>`;
-                        }
-                        if (contact.realEmail) {
-                            contactDetails += `
-                        <div class="flex items-center gap-1 text-xs text-gray-500 truncate mt-0.5">
-                            <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
-                                <i class="ph-bold ph-envelope text-gray-400"></i> ${escapeHtml(contact.realEmail)}
-                            </a>
-                        </div>`;
-                        }
-                        if (!contact.cleanTel && !contact.realEmail) {
-                            contactDetails = `<span class="text-xs text-gray-400 italic">Sin datos de contacto</span>`;
-                        }
+                const listaCards = document.createElement('div');
+                listaCards.className = 'space-y-4';
 
-                        return `
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-sand/10 border border-cocoa/10 rounded-2xl gap-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-full flex items-center justify-center bg-cocoa/10 text-cocoa font-bold text-sm shrink-0">
-                                ${contact.inicial === '📱' ? '<i class="ph-bold ph-device-mobile"></i>' : escapeHtml(contact.inicial)}
-                            </div>
-                            <div class="flex flex-col min-w-0">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-sm font-bold text-gray-900 truncate">${escapeHtml(contact.nombreCompleto)}</span>
-                                    ${contact.edadStr ? `<span class="text-[10px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded">${escapeHtml(contact.edadStr)}</span>` : ''}
+                clasesDelDia.forEach(c => {
+                    const hora = formatDisplayTime(c.fecha_inicio);
+                    const fecha = formatDisplayLongDate(c.fecha_inicio);
+                    const profName = String(c.profesionales?.nombre || 'Staff GEN');
+                    const rawId = c.id;
+                    const claseId = safePositiveInteger(c.id) || 0;
+                    const tipoConsulta = c.tipo_clase === 'nutricion' ? 'nutricion' : 'psicologia';
+
+                    const reservas = window.allConsultasAdminReservasMap[c.id] || [];
+                    const capacidad = Math.max(1, toSafeNumber(c.capacidad_max) || 1);
+                    const ocupadas = reservas.length;
+                    const tieneHueco = ocupadas < capacidad;
+
+                    let alumnoHTML = '';
+
+                    if (reservas.length > 0) {
+                        const filasAlumnos = reservas.map(reserva => {
+                            const perfil = window.allConsultasAdminPerfilesMap[reserva.user_id] || {};
+                            const contact = obtenerDatosContactoPerfil(perfil);
+                            const reservaId = safePositiveInteger(reserva.id) || 0;
+
+                            let contactDetails = '';
+                            if (contact.cleanTel) {
+                                contactDetails += `
+                            <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap">
+                                <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
+                                    <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
+                                </a>
+                                ${contact.waUrl ? `
+                                <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="Abrir WhatsApp">
+                                    <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
+                                </a>` : ''}
+                            </div>`;
+                            }
+                            if (contact.realEmail) {
+                                contactDetails += `
+                            <div class="flex items-center gap-1 text-xs text-gray-500 truncate mt-0.5">
+                                <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
+                                    <i class="ph-bold ph-envelope text-gray-400"></i> ${escapeHtml(contact.realEmail)}
+                                </a>
+                            </div>`;
+                            }
+                            if (!contact.cleanTel && !contact.realEmail) {
+                                contactDetails = `<span class="text-xs text-gray-400 italic">Sin datos de contacto</span>`;
+                            }
+
+                            return `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-sand/10 border border-cocoa/10 rounded-2xl gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center bg-cocoa/10 text-cocoa font-bold text-sm shrink-0">
+                                    ${contact.inicial === '📱' ? '<i class="ph-bold ph-device-mobile"></i>' : escapeHtml(contact.inicial)}
                                 </div>
-                                <div class="mt-0.5 flex flex-col gap-0.5">
-                                    ${contactDetails}
+                                <div class="flex flex-col min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-sm font-bold text-gray-900 truncate">${escapeHtml(contact.nombreCompleto)}</span>
+                                        ${contact.edadStr ? `<span class="text-[10px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded">${escapeHtml(contact.edadStr)}</span>` : ''}
+                                    </div>
+                                    <div class="mt-0.5 flex flex-col gap-0.5">
+                                        ${contactDetails}
+                                    </div>
                                 </div>
                             </div>
+                            <button onclick="cancelarConsulta(${inlineJsString(tipoConsulta)}, ${reservaId})" class="text-xs font-bold text-red-500 hover:underline shrink-0 self-end sm:self-center">
+                                Cancelar Reserva
+                            </button>
+                        </div>`;
+                        }).join('');
+
+                        const botonAsignarMas = tieneHueco ? `
+                    <div class="px-4 py-2.5 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-xs text-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <span class="font-medium text-cocoa/60"><i class="ph-bold ph-user-plus text-olive mr-1"></i> Plazas disponibles: ${capacidad - ocupadas} de ${capacidad}</span>
+                        <button onclick="abrirModalAsignarConsulta(${inlineJsString(tipoConsulta)}, ${inlineJsString(rawId)})" class="inline-flex items-center justify-center gap-1.5 bg-cocoa hover:bg-black text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
+                            <i class="ph-bold ph-user-plus"></i> + Asignar cliente
+                        </button>
+                    </div>` : '';
+
+                        alumnoHTML = `
+                    <div class="mt-4 space-y-2">
+                        ${filasAlumnos}
+                        ${botonAsignarMas}
+                    </div>`;
+                    } else {
+                        alumnoHTML = `
+                    <div class="mt-4 px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-sm text-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-calendar-blank"></i>
+                            <span>Hueco disponible (${capacidad > 1 ? `0 / ${capacidad} plazas` : 'sin reservar'})</span>
                         </div>
-                        <button onclick="cancelarConsulta(${inlineJsString(tipoConsulta)}, ${reservaId})" class="text-xs font-bold text-red-500 hover:underline shrink-0 self-end sm:self-center">
-                            Cancelar Reserva
+                        <button onclick="abrirModalAsignarConsulta(${inlineJsString(tipoConsulta)}, ${inlineJsString(rawId)})" class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
+                            <i class="ph-bold ph-user-plus"></i> Asignar cliente
                         </button>
                     </div>`;
-                    }).join('');
+                    }
 
-                    const botonAsignarMas = tieneHueco ? `
-                <div class="px-4 py-2.5 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-xs text-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <span class="font-medium text-cocoa/60"><i class="ph-bold ph-user-plus text-olive mr-1"></i> Plazas disponibles: ${capacidad - ocupadas} de ${capacidad}</span>
-                    <button onclick="abrirModalAsignarConsulta(${inlineJsString(tipoConsulta)}, ${inlineJsString(rawId)})" class="inline-flex items-center justify-center gap-1.5 bg-cocoa hover:bg-black text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
-                        <i class="ph-bold ph-user-plus"></i> + Asignar cliente
+                    const tagColor = c.tipo_clase === 'psicologia'
+                        ? 'text-blue-600 bg-blue-50 border-blue-100'
+                        : 'text-purple-600 bg-purple-50 border-purple-100';
+                    const tagLabel = c.tipo_clase === 'psicologia' ? 'Psicología' : 'Nutrición';
+
+                    let badgeEstado = '';
+                    if (capacidad > 1) {
+                        badgeEstado = ocupadas >= capacidad
+                            ? `<span class="text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-md">Completa (${ocupadas}/${capacidad})</span>`
+                            : (ocupadas > 0
+                                ? `<span class="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md">${ocupadas} / ${capacidad} plazas</span>`
+                                : `<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md">Disponible (${capacidad} plazas)</span>`);
+                    } else {
+                        badgeEstado = ocupadas > 0
+                            ? '<span class="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md">Confirmada</span>'
+                            : '<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md">Disponible</span>';
+                    }
+
+                    const adminTrash = c.isVirtual ? '' : `
+                <div class="flex gap-2">
+                    <button onclick="borrarConsultaAdmin(${inlineJsString(tipoConsulta)}, ${claseId})" class="text-gray-300 hover:text-red-500 p-2 rounded-lg transition" title="Eliminar Turno">
+                        <i class="ph-bold ph-trash text-lg"></i>
                     </button>
-                </div>` : '';
-
-                    alumnoHTML = `
-                <div class="mt-4 space-y-2">
-                    ${filasAlumnos}
-                    ${botonAsignarMas}
                 </div>`;
-                } else {
-                    alumnoHTML = `
-                <div class="mt-4 px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-sm text-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <i class="ph-bold ph-calendar-blank"></i>
-                        <span>Hueco disponible (${capacidad > 1 ? `0 / ${capacidad} plazas` : 'sin reservar'})</span>
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-3xl border border-gray-100 p-6 shadow-sm';
+                    card.innerHTML = `
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide border ${tagColor}">${tagLabel}</span>
+                            <span class="text-xs font-bold text-gray-400">${toSafeNumber(c.duracion_minutos)} min</span>
+                            ${badgeEstado}
+                        </div>
+                        <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || 'Consulta Individual')}</h3>
+                        <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fecha)} - ${escapeHtml(hora)}</p>
+                        <p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-user-circle"></i> Profesional: ${escapeHtml(profName)}</p>
+                        ${c.descripcion ? `<p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-info"></i> Notas: ${escapeHtml(c.descripcion)}</p>` : ''}
                     </div>
-                    <button onclick="abrirModalAsignarConsulta(${inlineJsString(tipoConsulta)}, ${inlineJsString(rawId)})" class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
-                        <i class="ph-bold ph-user-plus"></i> Asignar cliente
-                    </button>
-                </div>`;
-                }
-
-                const tagColor = c.tipo_clase === 'psicologia'
-                    ? 'text-blue-600 bg-blue-50 border-blue-100'
-                    : 'text-purple-600 bg-purple-50 border-purple-100';
-                const tagLabel = c.tipo_clase === 'psicologia' ? 'Psicología' : 'Nutrición';
-
-                let badgeEstado = '';
-                if (capacidad > 1) {
-                    badgeEstado = ocupadas >= capacidad
-                        ? `<span class="text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-md">Completa (${ocupadas}/${capacidad})</span>`
-                        : (ocupadas > 0
-                            ? `<span class="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md">${ocupadas} / ${capacidad} plazas</span>`
-                            : `<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md">Disponible (${capacidad} plazas)</span>`);
-                } else {
-                    badgeEstado = ocupadas > 0
-                        ? '<span class="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-md">Confirmada</span>'
-                        : '<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md">Disponible</span>';
-                }
-
-                const adminTrash = c.isVirtual ? '' : `
-            <div class="flex gap-2">
-                <button onclick="borrarConsultaAdmin(${inlineJsString(tipoConsulta)}, ${claseId})" class="text-gray-300 hover:text-red-500 p-2 rounded-lg transition" title="Eliminar Turno">
-                    <i class="ph-bold ph-trash text-lg"></i>
-                </button>
-            </div>`;
-
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-3xl border border-gray-100 p-6 shadow-sm';
-                card.innerHTML = `
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide border ${tagColor}">${tagLabel}</span>
-                        <span class="text-xs font-bold text-gray-400">${toSafeNumber(c.duracion_minutos)} min</span>
-                        ${badgeEstado}
-                    </div>
-                    <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || 'Consulta Individual')}</h3>
-                    <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fecha)} - ${escapeHtml(hora)}</p>
-                    <p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-user-circle"></i> Profesional: ${escapeHtml(profName)}</p>
-                    ${c.descripcion ? `<p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-info"></i> Notas: ${escapeHtml(c.descripcion)}</p>` : ''}
+                    ${adminTrash}
                 </div>
-                ${adminTrash}
-            </div>
-            ${alumnoHTML}
-        `;
-                container.appendChild(card);
+                ${alumnoHTML}
+            `;
+                    listaCards.appendChild(card);
+                });
+
+                seccionDia.appendChild(listaCards);
+                container.appendChild(seccionDia);
             });
         }
 
@@ -19010,6 +19411,7 @@ async function adminTogglePromo50(userId, active) {
                 }
             });
 
+            renderizarBarraDiasConsultasAdmin();
             renderizarConsultasAdmin();
         }
 
@@ -19457,8 +19859,12 @@ async function adminTogglePromo50(userId, active) {
                     showConfirmButton: false,
                     timer: 2000
                 });
+                await cargarTodasLasClasesConProfesionales({ force: true });
                 await cargarTalleresAdmin();
                 await cargarClasesEspeciales();
+                if (isAdmin || esTrabajador()) {
+                    if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
+                }
             }
         }
 
@@ -19503,8 +19909,12 @@ async function adminTogglePromo50(userId, active) {
                     Swal.fire('Error', error.message, 'error');
                 } else {
                     Swal.fire({ icon: 'success', title: 'Taller eliminado', showConfirmButton: false, timer: 1500 });
+                    await cargarTodasLasClasesConProfesionales({ force: true });
                     await cargarTalleresAdmin();
                     await cargarClasesEspeciales();
+                    if (isAdmin || esTrabajador()) {
+                        if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
+                    }
                 }
             }
         }

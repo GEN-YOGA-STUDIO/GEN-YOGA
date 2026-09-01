@@ -1359,7 +1359,10 @@
                 }
             });
 
-            const allSlots = [...dbClases, ...generatedSlots];
+            // Todas las consultas en el horario público y de alumnos provienen de la base de datos real (dbClases),
+            // con el mismo criterio canónico que las clases de Yoga y Talleres: al eliminarse en el panel de administración,
+            // desaparecen de inmediato y de forma definitiva de la vista pública.
+            const allSlots = dbClases;
             return { exactAvailability: true, classes: allSlots };
         }
 
