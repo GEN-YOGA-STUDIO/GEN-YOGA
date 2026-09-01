@@ -11989,6 +11989,43 @@
             return String(error?.message || fallbackMessage);
         }
 
+        async function confirmarNotaClienteMostrador(result, payload) {
+            const createdProfile = result?.data?.profile || result?.data;
+            const userId = createdProfile?.id;
+            const requestedNotes = String(payload?.notas || '').trim();
+            if (!userId || !requestedNotes) return result;
+
+            const { data: updatedProfile, error: updateError } = await client.rpc('admin_actualizar_perfil_usuario', {
+                p_user_id: userId,
+                p_nombre: createdProfile.nombre || payload.nombre,
+                p_apellidos: createdProfile.apellidos || payload.apellidos || '',
+                p_telefono: createdProfile.telefono || payload.telefono || null,
+                p_fecha_nacimiento: createdProfile.fecha_nacimiento || payload.fecha_nacimiento || null,
+                p_rol: createdProfile.rol || 'cliente',
+                p_email: createdProfile.email || payload.email || null,
+                p_notas: requestedNotes
+            });
+            if (updateError) return { data: null, error: updateError };
+
+            const { data: verifiedProfile, error: verifyError } = await client
+                .from('profiles')
+                .select('id, nombre, apellidos, email, telefono, fecha_nacimiento, notas, rol')
+                .eq('id', userId)
+                .single();
+            if (verifyError) return { data: null, error: verifyError };
+            if (String(verifiedProfile?.notas || '').trim() !== requestedNotes) {
+                return { data: null, error: { message: 'La nota no se confirmó en el perfil creado.' } };
+            }
+
+            return {
+                ...result,
+                data: {
+                    ...result.data,
+                    profile: { ...createdProfile, ...updatedProfile, ...verifiedProfile, notas: requestedNotes }
+                }
+            };
+        }
+
         async function abrirCrearClienteMostrador() {
     if (!isAdmin && !esTrabajador()) return;
 
@@ -12109,8 +12146,28 @@
         return;
     }
 
+    result = await confirmarNotaClienteMostrador(result, payload);
+    if (result.error) {
+        const message = await obtenerMensajeErrorFuncion(result.error, result.data);
+        Swal.fire({
+            icon: 'error',
+            title: 'Nota no guardada',
+            text: message,
+            confirmButtonColor: '#E1654E'
+        });
+        return;
+    }
+
     try {
         await cargarUsuariosAdmin();
+        const confirmedProfile = result.data?.profile;
+        if (confirmedProfile?.id && confirmedProfile.notas) {
+            const cachedIndex = allUsersCache.findIndex(user => String(user.id) === String(confirmedProfile.id));
+            if (cachedIndex >= 0) {
+                allUsersCache[cachedIndex] = { ...allUsersCache[cachedIndex], ...confirmedProfile };
+                renderUsersTable(allUsersCache.filter(user => !['admin', ...STAFF_ROLES].includes((user.rol || '').toLowerCase().trim())));
+            }
+        }
     } catch (listError) {
         console.warn('No se pudo refrescar la lista de usuarios:', listError);
     }
