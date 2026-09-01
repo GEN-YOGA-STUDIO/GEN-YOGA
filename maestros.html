@@ -3,10 +3,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="application-version" content="9.32" />
+        <meta name="application-version" content="9.33" />
         <meta name="description" content="Conoce al equipo de profesionales de yoga, psicología, nutrición y talleres de GEN Yoga." />
-        <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.32" />
-        <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.32" />
+        <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.33" />
+        <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.33" />
         <title>GEN Yoga | Maestros</title>
         <!-- Rendimiento, SEO y tarjetas sociales -->
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -24,7 +24,7 @@
         <meta name="twitter:card" content="summary_large_image" />
         <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-        <script src="teacher-profiles.js?v=9.32"></script>
+        <script src="teacher-profiles.js?v=9.33"></script>
 
         <style>
             :root {
@@ -958,14 +958,14 @@
             }
         </style>
 
-        <script src="i18n.js?v=9.32"></script>
+        <script src="i18n.js?v=9.33"></script>
         <script>
         function escapeHtmlPublic(str) {
             if (!str) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
         </script>
-        <link rel="stylesheet" href="tailwind-compiled.css?v=9.32" />
+        <link rel="stylesheet" href="tailwind-compiled.css?v=9.33" />
     </head>
     <body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
 
@@ -1035,7 +1035,7 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span class="opacity-60 text-[10px]">v9.32</span>
+                <span class="opacity-60 text-[10px]">v9.33</span>
             </div>
         </footer>
 
@@ -1265,10 +1265,14 @@
 
             if (!links) return '';
 
-            const navLabel = `${t('teachers_class_links_label')} ${teacherName}`;
+            const areConsultations = classes.every(clase => clase.isConsultation);
+            const linksLabel = areConsultations
+                ? (window.currentLang === 'en' ? 'Upcoming consultations' : 'Próximas consultas')
+                : t('teachers_upcoming_classes');
+            const navLabel = `${linksLabel} ${teacherName}`;
             return `
                 <nav class="teacher-class-links${contextClass}" aria-label="${escapeHtmlPublic(navLabel)}">
-                    <p class="teacher-class-links__label">${escapeHtmlPublic(t('teachers_upcoming_classes'))}</p>
+                    <p class="teacher-class-links__label">${escapeHtmlPublic(linksLabel)}</p>
                     <ul class="teacher-class-links__list">
                         ${links}
                     </ul>
@@ -1284,8 +1288,8 @@
                 const nowIso = new Date().toISOString();
                 const { data: classes, error } = await client
                     .from('clases')
-                    .select('id,nombre,fecha_inicio,profesor_id,profesionales!inner(visible_publico)')
-                    .in('tipo_clase', ['yoga', 'taller'])
+                    .select('id,nombre,fecha_inicio,profesor_id,tipo_clase,profesionales!inner(visible_publico)')
+                    .in('tipo_clase', ['yoga', 'taller', 'psicologia', 'nutricion', 'consulta'])
                     .eq('activa', true)
                     .eq('profesionales.visible_publico', true)
                     .gte('fecha_inicio', nowIso)
@@ -1317,7 +1321,8 @@
                             nombre: String(clase.nombre || ''),
                             fecha_inicio: clase.fecha_inicio,
                             profesor_id: clase.profesor_id,
-                            styleSlug
+                            styleSlug,
+                            isConsultation: ['psicologia', 'nutricion', 'consulta'].includes(String(clase?.tipo_clase || '').toLowerCase().trim())
                         });
                     }
                 });
