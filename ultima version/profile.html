@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.21" />
+    <meta name="application-version" content="9.22" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.21" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.21" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.22" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.22" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.21">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.22">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.21"></script>
+    <script src="teacher-profiles.js?v=9.22"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.21"></script>
+    <script src="i18n.js?v=9.22"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -3592,7 +3592,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.21. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.22. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4333,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.21';
+        const APP_VERSION = '9.22';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -15270,7 +15270,7 @@ async function adminTogglePromo50(userId, active) {
                 let saved = false;
                 let errorMsg = '';
 
-                // 1. Intentar RPC de admin
+                // 1. Intentar RPC de admin completo (8 parámetros)
                 try {
                     const { data, error } = await client.rpc('admin_actualizar_perfil_usuario', {
                         p_user_id: userId,
@@ -15282,10 +15282,31 @@ async function adminTogglePromo50(userId, active) {
                         p_email: formValues.email || null,
                         p_notas: formValues.notas !== undefined ? formValues.notas : null
                     });
-                    if (!error) saved = true;
-                    else errorMsg = error.message;
+                    if (!error) {
+                        saved = true;
+                    } else {
+                        errorMsg = error.message || '';
+                        // Si la RPC de 8 argumentos no existe en la base de datos o en schema cache, probar fallback de 6
+                        if (/schema cache|does not exist|function public\.admin_actualizar_perfil_usuario/i.test(errorMsg)) {
+                            console.warn('RPC de 8 argumentos no encontrada en schema cache, intentando fallback de 6 argumentos...');
+                            const fallback6 = await client.rpc('admin_actualizar_perfil_usuario', {
+                                p_user_id: userId,
+                                p_nombre: formValues.nombre,
+                                p_apellidos: formValues.apellidos,
+                                p_telefono: formValues.telefono,
+                                p_fecha_nacimiento: formValues.fechaNac || null,
+                                p_rol: formValues.rol
+                            });
+                            if (!fallback6.error) {
+                                saved = true;
+                                errorMsg = '';
+                            } else {
+                                errorMsg = fallback6.error.message || errorMsg;
+                            }
+                        }
+                    }
                 } catch (rpcEx) {
-                    errorMsg = rpcEx.message;
+                    errorMsg = rpcEx.message || '';
                 }
 
                 // Las escrituras directas a profiles están revocadas: solo la RPC atómica es válida.
@@ -15328,7 +15349,14 @@ async function adminTogglePromo50(userId, active) {
                         timer: 2000
                     });
                 } else {
-                    Swal.fire('No se pudo guardar', errorMsg || 'Error al actualizar el perfil.', 'error');
+                    const dbDesfasada = /schema cache|does not exist|function public\.admin_actualizar_perfil_usuario/i.test(errorMsg);
+                    Swal.fire(
+                        'No se pudo guardar',
+                        dbDesfasada
+                            ? `${errorMsg}\n\nLa base de datos aún no tiene actualizados los permisos o argumentos de la función. Ejecuta la migración 202609020081_reparar_admin_actualizar_perfil_usuario_v922.sql en el SQL Editor de Supabase y vuelve a intentarlo.`
+                            : (errorMsg || 'Error al actualizar el perfil.'),
+                        'error'
+                    );
                 }
             }
         }
