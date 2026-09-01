@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.36" />
+    <meta name="application-version" content="9.37" />
     <meta name="robots" content="noindex,nofollow" />
     <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.35" />
     <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.35" />
@@ -4333,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.36';
+        const APP_VERSION = '9.37';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4567,7 +4567,7 @@
         let userSaldoPsicologia = 0;
         let userSaldoNutricion = 0;
         let userSaldoClasesGratis = 1;
-        let userSaldoYogaCompania = 1;
+        let userSaldoYogaCompania = 0;
         let userSaldoConsultasGratis = 1;
         let userBonoMensualActivo = false;
         let userBonoMensualInicio = null;
@@ -4892,8 +4892,9 @@
             const badgeClass = 'inline-flex items-center gap-1 text-[9px] font-bold text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b] px-1.5 py-0.5 rounded shadow-2xs';
             const renderPagoBadge = (label, title) => `<span class="${badgeClass}" title="${title}"><i class="ph-bold ph-ticket text-xs"></i> Pagado con: ${label}</span>`;
 
-            const modalidadCompania = normalizarModalidadCompania(String(r.welcome_companion_modality || c.companion_modality || '').toLowerCase().trim());
-            const esReservaCompania = Boolean(modalidadCompania) || (r.welcome_companion_modality && !['bienvenida', 'gratis'].includes(String(r.welcome_companion_modality).toLowerCase().trim()));
+            const modalidadReserva = String(r.welcome_companion_modality || '').toLowerCase().trim();
+            const esReservaCompania = String(r.tipo_reserva || '').toLowerCase().trim() === 'compania'
+                || (!!modalidadReserva && !['bienvenida', 'gratis'].includes(modalidadReserva));
 
             if (esConsulta) {
                 if (r.saldo_gratis_descontado) {
@@ -6548,10 +6549,6 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // Asignar 1 por defecto obligatoriamente a todo cliente nuevo
-                if (data.saldo_yoga_compania === undefined || data.saldo_yoga_compania === null) {
-                    userSaldoYogaCompania = 1;
-                }
                 if (data.saldo_clases_gratis === undefined || data.saldo_clases_gratis === null) {
                     userSaldoClasesGratis = 1;
                 }
@@ -6559,20 +6556,6 @@
                     userSaldoConsultasGratis = 1;
                 }
 
-                // Autoconsolidación: si un cliente no tiene reservas previas de Yoga en Compañía y su saldo está a 0, restaurar su bono obligatorio de bienvenida
-                if (!['admin', ...STAFF_ROLES].includes((data.rol || '').toLowerCase().trim()) && userSaldoYogaCompania <= 0) {
-                    try {
-                        const { count } = await client.from('reservas_yoga')
-                            .select('id', { count: 'exact', head: true })
-                            .eq('user_id', currentUser.id)
-                            .not('welcome_companion_modality', 'is', null)
-                            .eq('estado', 'confirmada');
-                        if (!count || count === 0) {
-                            userSaldoYogaCompania = 1;
-                            client.rpc('asegurar_saldos_bienvenida_usuario').catch(() => {});
-                        }
-                    } catch (_) {}
-                }
                 userLegacyUnlimitedActive = !!data.bono_mensual_activo;
                 userLegacyUnlimitedStart = data.bono_mensual_inicio;
                 userLegacyUnlimitedEnd = data.bono_mensual_fin;
@@ -9238,7 +9221,7 @@
                                     if (rIds.length > 0) {
                                         const { data: rawYoga } = await client
                                             .from('reservas_yoga')
-                                            .select('id, usado_bono_mensual, bono_descontado, saldo_gratis_descontado, welcome_companion_modality, class_pack_id, beneficio_invitado_de')
+                                            .select('id, usado_bono_mensual, bono_descontado, saldo_gratis_descontado, welcome_companion_modality, tipo_reserva, class_pack_id, beneficio_invitado_de')
                                             .in('id', rIds);
                                         if (rawYoga && rawYoga.length > 0) {
                                             const yogaMap = new Map(rawYoga.map(y => [y.id, y]));
@@ -17503,7 +17486,7 @@ async function adminTogglePromo50(userId, active) {
             try {
                 const [resYoga, resPsico, resNutri] = await Promise.all([
                     client.from('reservas_yoga')
-                        .select('id, clase_id, estado, bono_descontado, usado_bono_mensual, clases(*, profesionales(*))')
+                        .select('id, clase_id, estado, bono_descontado, usado_bono_mensual, welcome_companion_modality, tipo_reserva, clases(*, profesionales(*))')
                         .eq('user_id', currentUser.id)
                         .eq('estado', 'confirmada'),
                     client.from('reservas_psicologia')
