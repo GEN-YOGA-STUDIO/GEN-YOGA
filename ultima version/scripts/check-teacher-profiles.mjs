@@ -12,11 +12,14 @@ const { descriptions, getEnglishProfile, repairLegacyDescription } = teacherProf
 const angel = descriptions.angel;
 const silvia = descriptions.silvia;
 
-assert.match(angel, /LUGAR DE NACIMIENTO: La Roda \(Albacete\)/);
+assert.match(angel, /Los últimos 6 años me dedico al estudio y la práctica de Yoga/);
 assert.doesNotMatch(angel, /\bNinguna\b/i);
-assert.match(angel, /TITULACIONES:\nBaso mi aprendizaje/);
-assert.match(angel, /Además, estoy cursando una mentoría para la certificación como profesor de yoga Iyengar\./);
+assert.match(angel, /TITULACIONES:\nMi formación es constante y está basada en el autoestudio y la práctica/);
+assert.match(angel, /ÁMBITOS DE SESIÓN:\nLa práctica se basa en el ajuste preciso y la correcta alineación del cuerpo/);
+assert.doesNotMatch(angel, /\bmentoría\b/i);
 assert.doesNotMatch(angel, /\bseptiembre\b/i);
+assert.doesNotMatch(angel, /LUGAR DE NACIMIENTO/);
+assert.doesNotMatch(angel, /ME DEFINE/);
 
 for (const invalidCopy of [
   /personal Y/,
@@ -71,10 +74,13 @@ assert.match(repairedMiriam.descripcion, /LUGAR DE NACIMIENTO:\s*Albacete \(Espa
 assert.doesNotMatch(repairedMiriam.descripcion, /Cuenca/i);
 
 const angelEnglish = getEnglishProfile({ nombre: 'Ángel Javier' });
-assert.match(angelEnglish.descripcion, /La Roda \(Albacete\)/);
+assert.match(angelEnglish.descripcion, /ABOUT ME:\nFor the past 6 years/);
 assert.doesNotMatch(angelEnglish.descripcion, /\bNone\b/);
 assert.doesNotMatch(angelEnglish.descripcion, /\bSeptember\b/);
-assert.match(angelEnglish.descripcion, /I SUPPORT YOU:/);
+assert.doesNotMatch(angelEnglish.descripcion, /\bmentorship\b/i);
+assert.match(angelEnglish.descripcion, /SESSION FOCUS:/);
+assert.doesNotMatch(angelEnglish.descripcion, /PLACE OF BIRTH/);
+assert.doesNotMatch(angelEnglish.descripcion, /WHAT DEFINES ME/);
 assert.equal(angelEnglish.especialidad, 'Yoga for Men & Yoga for Everyone | classes');
 
 const miriamEnglish = getEnglishProfile({ email: 'miriam_profesora@genyoga.studio' });
@@ -109,6 +115,16 @@ assert.equal(parsedMiriam.lugar, 'Albacete (España)');
 assert.equal(parsedMiriam.titulos.length, 10);
 assert.ok(parsedMiriam.sobreMi.length >= 4);
 assert.equal(parsedMiriam.teAcompano.length, 10);
+
+const parsedAngel = parseBio(descriptions.angel);
+assert.equal(parsedAngel.lugar, '');
+assert.equal(parsedAngel.titulos.length, 1);
+assert.ok(parsedAngel.titulos[0].includes('autoestudio'));
+assert.equal(parsedAngel.sobreMi.length, 2);
+assert.ok(parsedAngel.sobreMi[0].includes('últimos 6 años'));
+assert.equal(parsedAngel.teAcompano.length, 1);
+assert.ok(parsedAngel.teAcompano[0].includes('ajuste preciso'));
+assert.equal(parsedAngel.meDefine, '');
 
 const [maestros, profile, clases, migration, mergeMigration] = await Promise.all([
   readFile(path.join(root, 'maestros.html'), 'utf8'),
