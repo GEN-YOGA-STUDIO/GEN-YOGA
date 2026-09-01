@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.17" />
+    <meta name="application-version" content="9.18" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.17" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.17" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.18" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.18" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.17">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.18">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.17"></script>
+    <script src="teacher-profiles.js?v=9.18"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.17"></script>
+    <script src="i18n.js?v=9.18"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -3497,10 +3497,6 @@
                     <div
                         class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 pb-6 border-b border-cocoa/10">
                         <div>
-                            <span
-                                class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
-                                Crear Sesiones
-                            </span>
                             <h2 class="text-xl md:text-2xl brand-font font-bold text-cocoa mb-2">Administración de
                                 Consultas</h2>
                             <p class="text-cocoa/60 font-light text-sm max-w-2xl leading-relaxed">Crea, programa y
@@ -3526,6 +3522,45 @@
                         <button id="consulta-filter-ocupadas" onclick="filtrarConsultasAdmin('ocupadas')"
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Solo
                             reservadas</button>
+                    </div>
+
+                    <!-- BARRA SUPERIOR DESPLAZABLE DE DÍAS (CALENDARIO DE CONSULTAS) -->
+                    <div id="admin-consultas-days-bar-container"
+                        class="sticky top-20 z-20 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-3 shadow-md mb-6 max-w-full overflow-hidden box-border">
+                        <div class="flex items-center justify-between gap-2 mb-2 px-1">
+                            <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
+                                <div
+                                    class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
+                                    <i class="ph-bold ph-calendar-blank text-sm"></i>
+                                </div>
+                                <span id="admin-consultas-days-title-text">Días con consultas:</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="scrollConsultasAdminDias(-1)"
+                                    class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                    title="Ver días anteriores" aria-label="Ver días anteriores">
+                                    <i class="ph-bold ph-caret-left text-sm"></i>
+                                </button>
+                                <button type="button" onclick="scrollConsultasAdminDias(1)"
+                                    class="w-8 h-8 rounded-full bg-white hover:bg-olive hover:text-white border border-cocoa/15 text-cocoa flex items-center justify-center transition cursor-pointer shadow-xs active:scale-90"
+                                    title="Ver días siguientes" aria-label="Ver días siguientes">
+                                    <i class="ph-bold ph-caret-right text-sm"></i>
+                                </button>
+                                <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()"
+                                    id="btn-ver-todas-consultas-fechas"
+                                    class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
+                                    <i class="ph-bold ph-squares-four"></i> Todas las fechas
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                            <div id="admin-consultas-days-list"
+                                class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                <!-- Generado dinámicamente -->
+                            </div>
+                        </div>
                     </div>
 
                     <div id="admin-consultas-container" class="space-y-6"></div>
@@ -3578,7 +3613,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.17. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.18. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4319,7 +4354,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.17';
+        const APP_VERSION = '9.18';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4581,6 +4616,8 @@
         let selectedAsistenciaClaseId = 'todas';
         let selectedAsistenciaFecha = null; // Se inicializa dinámicamente al día actual al entrar
         let mostrarDiasPasadosAsistencias = false;
+        let selectedAdminConsultaFecha = null; // Fecha seleccionada en barra de consultas admin
+        let mostrarDiasPasadosConsultasAdmin = false;
 
         let currentCalendarMonth = new Date(); // Clases calendar month
         let currentCalendarMonthInicio = new Date();
@@ -8774,6 +8811,8 @@
             if (type === 'clases') {
                 await cargarHorarios();
             } else if (type === 'consultas') {
+                selectedAdminConsultaFecha = formatDateLocal(new Date());
+                mostrarDiasPasadosConsultasAdmin = false;
                 await cargarConsultasAdmin();
             } else if (type === 'talleres') {
                 await cargarTalleresAdmin();
@@ -18680,6 +18719,9 @@ async function adminTogglePromo50(userId, active) {
                     showConfirmButton: false,
                     timer: 2000
                 });
+                if (inserts && inserts[0] && inserts[0].fecha_inicio) {
+                    selectedAdminConsultaFecha = formatDateLocal(inserts[0].fecha_inicio);
+                }
                 await cargarTodasLasClasesConProfesionales({ force: true });
                 if (tipo === 'psicologia') {
                     await cargarPsicologia();
@@ -18922,15 +18964,41 @@ async function adminTogglePromo50(userId, active) {
             window.allConsultasAdminReservasMap = reservasMap;
             window.allConsultasAdminPerfilesMap = perfilesMap;
 
+            renderizarBarraDiasConsultasAdmin();
             renderizarConsultasAdmin();
         }
 
-        function renderizarConsultasAdmin() {
-            const container = document.getElementById('admin-consultas-container');
-            const emptyState = document.getElementById('admin-consultas-empty');
-            if (!container || !window.allConsultasAdminCache) return;
+        function scrollConsultasAdminDias(direction) {
+            const list = document.getElementById('admin-consultas-days-list');
+            if (!list) return;
+            const step = Math.max(220, Math.round(list.clientWidth * 0.75));
+            list.scrollBy({ left: direction * step, behavior: 'smooth' });
+        }
 
-            container.innerHTML = '';
+        function filtrarConsultaAdminPorFecha(dateKey) {
+            selectedAdminConsultaFecha = dateKey;
+            renderizarBarraDiasConsultasAdmin();
+            renderizarConsultasAdmin();
+        }
+
+        function limpiarFiltroFechaConsultasAdmin() {
+            selectedAdminConsultaFecha = 'todas';
+            renderizarBarraDiasConsultasAdmin();
+            renderizarConsultasAdmin();
+        }
+
+        function toggleDiasPasadosConsultasAdmin() {
+            mostrarDiasPasadosConsultasAdmin = !mostrarDiasPasadosConsultasAdmin;
+            renderizarBarraDiasConsultasAdmin();
+            renderizarConsultasAdmin();
+        }
+
+        function renderizarBarraDiasConsultasAdmin() {
+            const bar = document.getElementById('admin-consultas-days-list');
+            const titleEl = document.getElementById('admin-consultas-days-title-text');
+            if (!bar || !window.allConsultasAdminCache) return;
+
+            const hoyKey = formatDateLocal(new Date());
 
             const filtradas = window.allConsultasAdminCache.filter(c => {
                 const reservas = window.allConsultasAdminReservasMap[c.id] || [];
@@ -18946,14 +19014,160 @@ async function adminTogglePromo50(userId, active) {
                 return true;
             });
 
+            const fechasConConsultas = new Map();
+            filtradas.forEach(c => {
+                const dKey = formatDateLocal(c.fecha_inicio);
+                if (dKey) {
+                    fechasConConsultas.set(dKey, (fechasConConsultas.get(dKey) || 0) + 1);
+                }
+            });
+
+            const allDKeys = Array.from(fechasConConsultas.keys()).sort();
+            if (allDKeys.length === 0) {
+                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas que coincidan con los filtros</span>';
+                if (titleEl) titleEl.textContent = 'Días con consultas:';
+                return;
+            }
+
+            // Si no hay fecha seleccionada o la fecha ya no existe entre las disponibles, seleccionar HOY o la próxima
+            if (!selectedAdminConsultaFecha || (!fechasConConsultas.has(selectedAdminConsultaFecha) && selectedAdminConsultaFecha !== 'todas')) {
+                if (fechasConConsultas.has(hoyKey)) {
+                    selectedAdminConsultaFecha = hoyKey;
+                } else {
+                    const prox = allDKeys.find(k => k >= hoyKey);
+                    selectedAdminConsultaFecha = prox || allDKeys[0] || hoyKey;
+                }
+            }
+
+            const pastKeys = allDKeys.filter(k => k < hoyKey);
+            const currentAndFutureKeys = allDKeys.filter(k => k >= hoyKey);
+
+            // Si la fecha seleccionada es un día pasado, asegurar que se muestren los días pasados en la barra
+            if (selectedAdminConsultaFecha && selectedAdminConsultaFecha < hoyKey) {
+                mostrarDiasPasadosConsultasAdmin = true;
+            }
+
+            // Días a renderizar en la barra: por defecto desde HOY en adelante
+            let dKeys = mostrarDiasPasadosConsultasAdmin ? allDKeys : (currentAndFutureKeys.length > 0 ? currentAndFutureKeys : allDKeys);
+
+            if (titleEl) {
+                let txtFiltro = selectedAdminConsultaFecha === 'todas' ? 'Todas las fechas' : '';
+                if (selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas') {
+                    const [y, m, d] = selectedAdminConsultaFecha.split('-').map(Number);
+                    const dObj = new Date(y, m - 1, d);
+                    txtFiltro = `${formatDisplayWeekday(dObj)}, ${d} de ${formatDisplayMonth(dObj)}`;
+                }
+                titleEl.innerHTML = `Días con consultas ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
+            }
+
+            const isTodasActive = selectedAdminConsultaFecha === 'todas';
+            let html = `
+        <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()" 
+            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
+            <i class="ph-bold ph-squares-four"></i> Todas (${filtradas.length})
+        </button>
+    `;
+
+            if (pastKeys.length > 0) {
+                html += `
+        <button type="button" onclick="toggleDiasPasadosConsultasAdmin()" 
+            class="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${mostrarDiasPasadosConsultasAdmin ? 'bg-cocoa/80 text-white shadow-xs' : 'bg-sand/15 text-cocoa/70 hover:bg-sand/30 border border-cocoa/10'}"
+            title="${mostrarDiasPasadosConsultasAdmin ? 'Ocultar consultas de fechas pasadas' : 'Ver consultas de fechas anteriores'}">
+            <i class="ph-bold ph-clock-counter-clockwise"></i> ${mostrarDiasPasadosConsultasAdmin ? 'Ocultar pasadas' : 'Anteriores (' + pastKeys.length + ')'}
+        </button>
+    `;
+            }
+
+            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            dKeys.forEach(dKey => {
+                const [y, m, d] = dKey.split('-').map(Number);
+                const fecha = new Date(y, m - 1, d);
+                const diaSemana = diasSemanaCorta[fecha.getDay()];
+                const mesNombre = mesesCorta[m - 1];
+                const numConsultas = fechasConConsultas.get(dKey) || 0;
+                const isSelected = selectedAdminConsultaFecha === dKey;
+                const isToday = dKey === hoyKey;
+
+                const btnClass = isSelected
+                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
+                    : (isToday
+                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
+                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+
+                const topLabel = isToday
+                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
+                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+
+                html += `
+            <button type="button" onclick="filtrarConsultaAdminPorFecha('${dKey}')" 
+                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
+                ${topLabel}
+                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
+                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numConsultas} turno${numConsultas > 1 ? 's' : ''}</span>
+            </button>
+        `;
+            });
+
+            bar.innerHTML = html;
+
+            setTimeout(() => {
+                const activeBtn = bar.querySelector('.bg-olive');
+                if (activeBtn) {
+                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }, 50);
+        }
+
+        function renderizarConsultasAdmin() {
+            const container = document.getElementById('admin-consultas-container');
+            const emptyState = document.getElementById('admin-consultas-empty');
+            if (!container || !window.allConsultasAdminCache) return;
+
+            container.innerHTML = '';
+
+            const hoyKey = formatDateLocal(new Date());
+
+            let filtradas = window.allConsultasAdminCache.filter(c => {
+                const reservas = window.allConsultasAdminReservasMap[c.id] || [];
+                const capacidad = Math.max(1, toSafeNumber(c.capacidad_max) || 1);
+                const ocupadas = reservas.length;
+                const estaLleno = ocupadas >= capacidad;
+
+                if (filtroConsultasActual === 'todas') return true;
+                if (filtroConsultasActual === 'psicologia') return c.tipo_clase === 'psicologia';
+                if (filtroConsultasActual === 'nutricion') return c.tipo_clase === 'nutricion';
+                if (filtroConsultasActual === 'disponibles') return !estaLleno;
+                if (filtroConsultasActual === 'ocupadas') return ocupadas > 0;
+                return true;
+            });
+
+            // Filtrar según el día seleccionado en la barra horizontal de días
+            if (selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas') {
+                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAdminConsultaFecha);
+            } else if (!selectedAdminConsultaFecha) {
+                selectedAdminConsultaFecha = hoyKey;
+                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) === hoyKey);
+            } else if (selectedAdminConsultaFecha === 'todas' && !mostrarDiasPasadosConsultasAdmin) {
+                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) >= hoyKey);
+            }
+
             if (filtradas.length === 0) {
-                if (emptyState) emptyState.classList.remove('hidden');
+                if (emptyState) {
+                    emptyState.classList.remove('hidden');
+                    const emptyMsg = emptyState.querySelector('p');
+                    if (emptyMsg) {
+                        emptyMsg.textContent = selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas'
+                            ? 'No hay consultas programadas para este día.'
+                            : 'No hay consultas registradas que coincidan con los filtros.';
+                    }
+                }
                 return;
             }
 
             if (emptyState) emptyState.classList.add('hidden');
 
-            const hoyKey = formatDateLocal(new Date());
             // Agrupar por fecha para consistencia absoluta con Inscribir Alumnos
             const gruposPorFecha = {};
             filtradas.forEach(c => {
@@ -18963,25 +19177,7 @@ async function adminTogglePromo50(userId, active) {
             });
 
             const allDateKeys = Object.keys(gruposPorFecha).sort();
-            const pastDateKeys = allDateKeys.filter(k => k !== 'sin-fecha' && k < hoyKey);
-            const currentAndFutureDateKeys = allDateKeys.filter(k => k === 'sin-fecha' || k >= hoyKey);
-
-            // Por defecto mostrar solo desde HOY en adelante para no mostrar consultas de días pasados al entrar
-            let dateKeysOrdenadas = window.mostrarConsultasPasadasAdmin ? allDateKeys : (currentAndFutureDateKeys.length > 0 ? currentAndFutureDateKeys : allDateKeys);
-
-            if (pastDateKeys.length > 0) {
-                const barPasadas = document.createElement('div');
-                barPasadas.className = 'flex items-center justify-between pb-3 mb-4 border-b border-cocoa/10 text-xs';
-                barPasadas.innerHTML = `
-                    <span class="text-cocoa/60 font-semibold">${currentAndFutureDateKeys.length} ${currentAndFutureDateKeys.length === 1 ? 'día con turnos activos' : 'días con turnos activos'} (desde hoy)</span>
-                    <button type="button" onclick="window.mostrarConsultasPasadasAdmin = !window.mostrarConsultasPasadasAdmin; renderizarConsultasAdmin();" class="font-bold text-olive hover:text-cocoa transition underline cursor-pointer flex items-center gap-1">
-                        <i class="ph-bold ph-clock-counter-clockwise"></i> ${window.mostrarConsultasPasadasAdmin ? 'Ocultar consultas pasadas' : 'Ver consultas pasadas (' + pastDateKeys.length + ' días)'}
-                    </button>
-                `;
-                container.appendChild(barPasadas);
-            }
-
-            dateKeysOrdenadas.forEach(dateKey => {
+            allDateKeys.forEach(dateKey => {
                 const clasesDelDia = gruposPorFecha[dateKey];
                 let diaTitulo = dateKey;
                 if (dateKey !== 'sin-fecha') {
@@ -19169,6 +19365,7 @@ async function adminTogglePromo50(userId, active) {
                 }
             });
 
+            renderizarBarraDiasConsultasAdmin();
             renderizarConsultasAdmin();
         }
 
