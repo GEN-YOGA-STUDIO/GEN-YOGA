@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.52" />
+    <meta name="application-version" content="10.0" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.52" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.52" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=10.0" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=10.0" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.52">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=10.0">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.52"></script>
+    <script src="teacher-profiles.js?v=10.0"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.52"></script>
+    <script src="i18n.js?v=10.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -3584,7 +3584,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.52. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v10.0. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4325,7 +4325,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.52';
+        const APP_VERSION = '10.0';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4558,9 +4558,10 @@
         let userUnlimitedSpecialReservations = [];
         let userSaldoPsicologia = 0;
         let userSaldoNutricion = 0;
-        let userSaldoClasesGratis = 1;
+        let userSaldoClasesGratis = 0;
         let userSaldoYogaCompania = 0;
-        let userSaldoConsultasGratis = 1;
+        let userSaldoConsultasGratis = 0;
+        let userOfertasCanjeadasCache = [];
         let userBonoMensualActivo = false;
         let userBonoMensualInicio = null;
         let userBonoMensualFin = null;
@@ -5090,11 +5091,16 @@
             }
         }
 
-        // Comprobar si un visitante nuevo llega desde el calendario para registrarse o con reserva pendiente
+        // Comprobar si un visitante nuevo llega desde el calendario para registrarse o con reserva pendiente u oferta para canjear
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            const hasIntent = params.get('clase') || params.get('fecha') || params.get('hora') || params.get('teacher') || params.get('profesor') || params.get('intro') === 'true' || params.get('oferta');
-            if (hasIntent) {
+            const canjearOpt = params.get('canjear') || (params.get('action') === 'canjear' ? (params.get('oferta') || params.get('promo')) : null);
+            if (canjearOpt) {
+                safeSetItem('pending_offer_redemption', canjearOpt.toLowerCase().trim());
+            }
+
+            const hasIntent = params.get('clase') || params.get('fecha') || params.get('hora') || params.get('teacher') || params.get('profesor') || params.get('intro') === 'true' || params.get('oferta') || canjearOpt;
+            if (hasIntent && !canjearOpt) {
                 const pendingData = {
                     clase: params.get('clase'),
                     fecha: params.get('fecha'),
@@ -6393,67 +6399,106 @@
         </div>`;
             }).join('') : '<p class="text-xs text-cocoa/45 py-3">Aún no has comprado ningún mes ilimitado.</p>';
 
-            const freeBalancesCard = (userSaldoClasesGratis > 0 || userSaldoYogaCompania > 0 || userSaldoConsultasGratis > 0) ? `
-        <div class="bg-white/95 p-5 rounded-3xl border border-emerald-200 shadow-md min-w-[280px] flex-1">
-            <div class="flex items-center justify-between gap-4 mb-4">
-                <div><span class="block text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Bonos Promocionales Activos</span><p class="text-lg font-black text-cocoa mt-1">Ofertas y Sesiones de Prueba</p></div>
-                <i class="ph-fill ph-gift text-3xl text-emerald-600"></i>
+            const yaCanjeoBienvenida = userOfertasCanjeadasCache.includes('bienvenida') || !!(currentProfileFields?.oferta_bienvenida_canjeada) || (userSaldoClasesGratis > 0);
+            const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
+            const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
+
+            const freeBalancesCard = `
+        <div class="bg-white/95 p-5 rounded-3xl border border-emerald-200/80 shadow-md min-w-[280px] flex-1">
+            <div class="flex items-center justify-between gap-4 mb-3">
+                <div>
+                    <span class="block text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Promociones y Ofertas</span>
+                    <p class="text-lg font-black text-cocoa mt-0.5">Canje de Bonos y Sesiones Gratuitas</p>
+                </div>
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-xs">
+                    <i class="ph-fill ph-gift text-2xl"></i>
+                </div>
             </div>
-            <p class="text-xs text-cocoa/60 leading-relaxed mb-4">Dispones de bonos gratuitos otorgados con tu cuenta para reservar clases de yoga, sesiones de yoga en compañía y consultas de valoración.</p>
-            <div class="space-y-3 mb-4">
-                ${userSaldoClasesGratis > 0 ? `
-                <div class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-left">
-                    <div class="flex items-start justify-between gap-2">
+            <p class="text-xs text-cocoa/70 leading-relaxed mb-4">Haz clic en cada oferta para canjearla y sumarla a tu cuenta. Cada promoción es válida para un único canje por alumno.</p>
+            
+            <div class="space-y-3 mb-2">
+                <!-- 1. Bono de Bienvenida -->
+                <div class="rounded-2xl border ${yaCanjeoBienvenida ? 'border-emerald-200 bg-emerald-50/40' : 'border-emerald-400 bg-emerald-50/80 ring-1 ring-emerald-300'} p-3.5 text-left transition shadow-xs">
+                    <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-xs font-bold text-cocoa">✨ Bono Gratuito de Bienvenida</p>
-                            <p class="text-[10px] text-emerald-800 font-medium mt-0.5">Válido para tu primera sesión introductoria o clase regular de Yoga (0 €)</p>
+                            <div class="flex items-center gap-1.5 mb-0.5">
+                                ${yaCanjeoBienvenida 
+                                    ? '<span class="text-[9px] font-bold uppercase tracking-wider bg-white text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">✅ Oferta Canjeada (1/1)</span>'
+                                    : '<span class="text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-2xs animate-pulse">🎁 Oferta Disponible</span>'}
+                            </div>
+                            <p class="text-xs font-bold text-cocoa mt-1">✨ Bono de Bienvenida (1 Clase Gratis · 0 €)</p>
+                            <p class="text-[11px] text-cocoa/70 mt-0.5">Válido para tu sesión introductoria o primera clase de Yoga regular.</p>
                         </div>
-                        <span class="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">${userSaldoClasesGratis} disp.</span>
+                        ${yaCanjeoBienvenida 
+                            ? `<span class="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">${userSaldoClasesGratis} disp.</span>`
+                            : `<button type="button" onclick="canjearOfertaPromocional('bienvenida')" class="shrink-0 px-3.5 py-2 bg-[#047857] hover:bg-[#065f46] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg active:scale-95 flex items-center gap-1 cursor-pointer">
+                                <i class="ph-bold ph-sparkle"></i> Canjear
+                               </button>`}
                     </div>
-                    <div class="mt-3 flex flex-wrap gap-2">
+                    ${yaCanjeoBienvenida && userSaldoClasesGratis > 0 ? `
+                    <div class="mt-2.5 pt-2 border-t border-emerald-100 flex flex-wrap gap-2">
                         <button type="button" onclick="filtrarPorOferta('yoga')" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs">
                             Reservar Clase Bienvenida Gratis
                         </button>
-                    </div>
-                </div>` : ''}
-                ${userSaldoYogaCompania > 0 ? `
-                <div class="rounded-2xl border border-amber-300 bg-amber-50/80 p-3.5 text-left">
-                    <div class="flex items-start justify-between gap-2">
+                    </div>` : ''}
+                </div>
+
+                <!-- 2. Yoga en Compañía -->
+                <div class="rounded-2xl border ${yaCanjeoCompania ? 'border-amber-200 bg-amber-50/40' : 'border-amber-400 bg-amber-50/80 ring-1 ring-amber-300'} p-3.5 text-left transition shadow-xs">
+                    <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-xs font-bold text-cocoa">🧑‍🤝‍🧑 Bono Yoga en Compañía (0 €)</p>
-                            <p class="text-[10px] text-amber-900 font-medium mt-0.5">Válido para sesiones de Yoga en Compañía (Colegas, Pareja, Madre e Hija, Abuela y Nieta)</p>
+                            <div class="flex items-center gap-1.5 mb-0.5">
+                                ${yaCanjeoCompania 
+                                    ? '<span class="text-[9px] font-bold uppercase tracking-wider bg-white text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full">✅ Oferta Canjeada (1/1)</span>'
+                                    : '<span class="text-[9px] font-black uppercase tracking-wider bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs animate-pulse">🎁 Oferta Disponible</span>'}
+                            </div>
+                            <p class="text-xs font-bold text-cocoa mt-1">🧑‍🤝‍🧑 Bono Yoga en Compañía (2 Plazas · 0 €)</p>
+                            <p class="text-[11px] text-cocoa/70 mt-0.5">Sesión para 2 personas (Madre/Hija, Abuela/Nieta, Pareja, Colegas).</p>
                         </div>
-                        <span class="text-xs font-black text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full shrink-0">${userSaldoYogaCompania} disp.</span>
+                        ${yaCanjeoCompania 
+                            ? `<span class="text-xs font-black text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full shrink-0">${userSaldoYogaCompania} disp.</span>`
+                            : `<button type="button" onclick="canjearOfertaPromocional('compania')" class="shrink-0 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg active:scale-95 flex items-center gap-1 cursor-pointer">
+                                <i class="ph-bold ph-users-three"></i> Canjear
+                               </button>`}
                     </div>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onclick="filtrarPorOferta('yoga')" class="btn-yoga-compania px-4 py-2 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer" style="background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #ca8a04 100%) !important; color: #ffffff !important; border: 1px solid #f59e0b !important;">
+                    ${yaCanjeoCompania && userSaldoYogaCompania > 0 ? `
+                    <div class="mt-2.5 pt-2 border-t border-amber-100 flex flex-wrap gap-2">
+                        <button type="button" onclick="filtrarPorOferta('yoga')" class="btn-yoga-compania px-4 py-1.5 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer" style="background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #ca8a04 100%) !important; color: #ffffff !important; border: 1px solid #f59e0b !important;">
                             Reservar Yoga en Compañía
                         </button>
-                        <button type="button" onclick="filtrarPorOferta('madre_hija')" class="px-3 py-1.5 bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 text-[10px] font-bold uppercase tracking-wider rounded-xl transition">
-                            Ver grupo Madre e Hija
-                        </button>
-                    </div>
-                </div>` : ''}
-                ${userSaldoConsultasGratis > 0 ? `
-                <div class="rounded-2xl border border-pink-200 bg-pink-50/70 p-3.5 text-left">
-                    <div class="flex items-start justify-between gap-2">
+                    </div>` : ''}
+                </div>
+
+                <!-- 3. Consulta Gratuita -->
+                <div class="rounded-2xl border ${yaCanjeoConsultas ? 'border-pink-200 bg-pink-50/40' : 'border-pink-300 bg-pink-50/80 ring-1 ring-pink-200'} p-3.5 text-left transition shadow-xs">
+                    <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-xs font-bold text-cocoa">🎁 Bono Consulta Gratuita (PNI / Psicología)</p>
-                            <p class="text-[10px] text-pink-800 font-medium mt-0.5">Válido para consultas introductorias con Isabel o Miriam</p>
+                            <div class="flex items-center gap-1.5 mb-0.5">
+                                ${yaCanjeoConsultas 
+                                    ? '<span class="text-[9px] font-bold uppercase tracking-wider bg-white text-pink-900 border border-pink-200 px-2 py-0.5 rounded-full">✅ Oferta Canjeada (1/1)</span>'
+                                    : '<span class="text-[9px] font-black uppercase tracking-wider bg-pink-600 text-white px-2 py-0.5 rounded-full shadow-2xs animate-pulse">🎁 Oferta Disponible</span>'}
+                            </div>
+                            <p class="text-xs font-bold text-cocoa mt-1">🩺 Consulta de Valoración (PNI / Psicología · 0 €)</p>
+                            <p class="text-[11px] text-cocoa/70 mt-0.5">Sesión individual introductoria para conocer a Isabel o Miriam.</p>
                         </div>
-                        <span class="text-xs font-black text-pink-700 bg-pink-100 px-2.5 py-1 rounded-full shrink-0">${userSaldoConsultasGratis} disp.</span>
+                        ${yaCanjeoConsultas 
+                            ? `<span class="text-xs font-black text-pink-700 bg-pink-100 px-2.5 py-1 rounded-full shrink-0">${userSaldoConsultasGratis} disp.</span>`
+                            : `<button type="button" onclick="canjearOfertaPromocional('consultas')" class="shrink-0 px-3.5 py-2 bg-pink-700 hover:bg-pink-800 text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg active:scale-95 flex items-center gap-1 cursor-pointer">
+                                <i class="ph-bold ph-heart"></i> Canjear
+                               </button>`}
                     </div>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onclick="filtrarPorOferta('pni')" class="px-3.5 py-1.5 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs">
-                            Reservar PNI Gratis (Isabel)
+                    ${yaCanjeoConsultas && userSaldoConsultasGratis > 0 ? `
+                    <div class="mt-2.5 pt-2 border-t border-pink-100 flex flex-wrap gap-2">
+                        <button type="button" onclick="filtrarPorOferta('pni')" class="px-3 py-1.5 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs">
+                            Reservar PNI (Isabel)
                         </button>
-                        <button type="button" onclick="filtrarPorOferta('psicologia')" class="px-3.5 py-1.5 bg-[#b45c47] hover:bg-[#8f4735] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs">
-                            Reservar Psicología Gratis (Miriam)
+                        <button type="button" onclick="filtrarPorOferta('psicologia')" class="px-3 py-1.5 bg-[#b45c47] hover:bg-[#8f4735] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs">
+                            Reservar Psicología (Miriam)
                         </button>
-                    </div>
-                </div>` : ''}
+                    </div>` : ''}
+                </div>
             </div>
-        </div>` : '';
+        </div>`;
 
             const hasPromo50Active = !!(currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo);
             const singleClassBtnHtml = hasPromo50Active
@@ -6490,8 +6535,9 @@
         }
 
         async function checkProfile() {
-            // Las primeras variantes incluyen datos de identidad, saldos gratuitos y Customer persistente de Stripe.
+            // Las primeras variantes incluyen datos de identidad, saldos gratuitos, estados de canje y Customer de Stripe.
             const profileSelectVariants = [
+                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status, oferta_bienvenida_canjeada, oferta_compania_canjeada, oferta_consultas_canjeada',
                 'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
                 'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
                 'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
@@ -6514,7 +6560,7 @@
                 error = result.error;
                 if (!error) break;
 
-                const missingOptionalColumn = /saldo_clases_gratis|saldo_yoga_compania|saldo_consultas_gratis|saldo_psicologia|saldo_nutricion|bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin|stripe_customer_id|stripe_subscription_status/i
+                const missingOptionalColumn = /saldo_clases_gratis|saldo_yoga_compania|saldo_consultas_gratis|saldo_psicologia|saldo_nutricion|bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin|stripe_customer_id|stripe_subscription_status|oferta_bienvenida_canjeada|oferta_compania_canjeada|oferta_consultas_canjeada/i
                     .test(error.message || '');
                 if (!missingOptionalColumn) break;
             }
@@ -6539,11 +6585,21 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                if (data.saldo_clases_gratis === undefined || data.saldo_clases_gratis === null) {
-                    userSaldoClasesGratis = 1;
+                // v10.0: Cargar ofertas promocionales canjeadas por este usuario
+                try {
+                    const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
+                    userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
+                } catch (eOf) {
+                    userOfertasCanjeadasCache = [];
                 }
-                if (data.saldo_consultas_gratis === undefined || data.saldo_consultas_gratis === null) {
-                    userSaldoConsultasGratis = 1;
+                if (data.oferta_bienvenida_canjeada && !userOfertasCanjeadasCache.includes('bienvenida')) {
+                    userOfertasCanjeadasCache.push('bienvenida');
+                }
+                if (data.oferta_compania_canjeada && !userOfertasCanjeadasCache.includes('compania')) {
+                    userOfertasCanjeadasCache.push('compania');
+                }
+                if (data.oferta_consultas_canjeada && !userOfertasCanjeadasCache.includes('consultas')) {
+                    userOfertasCanjeadasCache.push('consultas');
                 }
 
                 userLegacyUnlimitedActive = !!data.bono_mensual_activo;
@@ -6680,6 +6736,18 @@
             } else if (buyParam === 'bono_ilimitado' || buyParam === 'bono_mensual') {
                 window.history.replaceState({}, document.title, window.location.pathname);
                 comprarBonoMensual();
+            }
+
+            // Comprobar si el usuario llega con una oferta para canjear (v10.0)
+            const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
+            const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
+            if (canjearParam) {
+                safeRemoveItem('pending_offer_redemption');
+                const cleanUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, cleanUrl);
+                setTimeout(() => {
+                    canjearOfertaPromocional(canjearParam);
+                }, 500);
             }
 
             await procesarReservaPendiente();
@@ -12325,31 +12393,8 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // 1. Asignar 1 Bono de Yoga en Compañía (exactamente como hace el botón +1)
-                        if (toSafeNumber(pCheck.saldo_yoga_compania) < 1) {
-                            await client.rpc('ajustar_saldo_usuario', {
-                                p_user_id: userId,
-                                p_tipo: 'yoga_compania',
-                                p_delta: 1
-                            });
-                        }
-                        // 2. Asignar 1 Bono de Bienvenida si estuviera a 0
-                        if (toSafeNumber(pCheck.saldo_clases_gratis) < 1) {
-                            await client.rpc('ajustar_saldo_usuario', {
-                                p_user_id: userId,
-                                p_tipo: 'clases_gratis',
-                                p_delta: 1
-                            });
-                        }
-                        // 3. Asignar 1 Consulta Gratis si estuviera a 0
-                        if (toSafeNumber(pCheck.saldo_consultas_gratis) < 1) {
-                            await client.rpc('ajustar_saldo_usuario', {
-                                p_user_id: userId,
-                                p_tipo: 'consultas_gratis',
-                                p_delta: 1
-                            });
-                        }
-                        // 4. Asignar clases iniciales si > 0
+                        // v10.0: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
                                 p_user_id: userId,
@@ -15678,6 +15723,118 @@ async function adminTogglePromo50(userId, active) {
             const input = document.getElementById('swal-codigo-promo');
             const val = input ? input.value : '';
             ejecutarCanjeCodigo(val);
+        }
+
+        async function canjearOfertaPromocional(tipo) {
+            if (!currentUser) {
+                safeSetItem('pending_offer_redemption', tipo);
+                abrirAuthModal();
+                return;
+            }
+
+            const tipoNorm = String(tipo || '').toLowerCase().trim();
+            const titulos = {
+                bienvenida: 'Bono de Bienvenida (1 Clase Gratis)',
+                compania: 'Bono Yoga en Compañía (2 Plazas)',
+                consultas: 'Consulta Gratuita (PNI / Psicología)'
+            };
+            const tit = titulos[tipoNorm] || 'Oferta Promocional';
+
+            // Comprobar si en caché ya figura como canjeada
+            if (userOfertasCanjeadasCache && userOfertasCanjeadasCache.includes(tipoNorm)) {
+                return Swal.fire({
+                    icon: 'info',
+                    title: 'Oferta ya canjeada',
+                    text: `Ya has canjeado tu ${tit} anteriormente. Cada oferta promocional solo se puede disfrutar 1 vez por alumno.`,
+                    confirmButtonColor: '#8C8658'
+                });
+            }
+
+            const confirmRes = await Swal.fire({
+                title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">🎁 Canjear Oferta</div>`,
+                html: `
+                    <div class="text-left space-y-2.5 p-1 text-xs text-cocoa/85">
+                        <p>¿Deseas canjear tu <strong>${escapeHtml(tit)}</strong> (0 €)?</p>
+                        <p class="text-cocoa/60 text-[11px]">Se añadirá inmediatamente a tu saldo para que puedas reservar tu plaza. Recuerda que esta oferta solo se puede canjear 1 única vez.</p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, canjear ahora',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#047857',
+                cancelButtonColor: '#9ca3af'
+            });
+            if (!confirmRes.isConfirmed) return;
+
+            try {
+                Swal.fire({
+                    title: 'Canjeando oferta...',
+                    html: '<div class="p-2"><i class="ph-duotone ph-spinner animate-spin text-3xl text-emerald-600"></i></div>',
+                    showConfirmButton: false,
+                    allowOutsideClick: false
+                });
+
+                const { data, error } = await client.rpc('canjear_oferta_promocional', { p_oferta: tipoNorm });
+
+                if (error) {
+                    return Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo canjear',
+                        text: error.message || 'Ocurrió un error al canjear la oferta.',
+                        confirmButtonColor: '#D27D60'
+                    });
+                }
+
+                if (!data || !data.success) {
+                    if (data?.already_claimed) {
+                        if (!userOfertasCanjeadasCache.includes(tipoNorm)) userOfertasCanjeadasCache.push(tipoNorm);
+                        renderSaldosClienteV69();
+                        return Swal.fire({
+                            icon: 'info',
+                            title: 'Oferta ya canjeada',
+                            text: data.message || 'Ya has canjeado esta oferta anteriormente. Cada promoción solo puede disfrutarse 1 vez por cuenta.',
+                            confirmButtonColor: '#8C8658'
+                        });
+                    }
+                    return Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo canjear',
+                        text: data?.message || 'No fue posible aplicar la promoción.',
+                        confirmButtonColor: '#D27D60'
+                    });
+                }
+
+                playYogaSound();
+                if (!userOfertasCanjeadasCache.includes(data.tipo)) {
+                    userOfertasCanjeadasCache.push(data.tipo);
+                }
+
+                await checkProfile();
+                renderSaldosClienteV69();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Oferta Canjeada!',
+                    html: `
+                        <div class="text-left space-y-2 p-1 text-xs text-cocoa/85">
+                            <p class="text-emerald-800 font-bold text-sm">🎉 ¡Promoción añadida a tu saldo!</p>
+                            <p>${escapeHtml(data.message || 'Tu nuevo saldo ya está disponible en tu perfil.')}</p>
+                            <p class="text-[11px] text-cocoa/60 pt-1 border-t border-cocoa/10">Ya puedes usar este bono en el horario semanal para confirmar tu reserva.</p>
+                        </div>
+                    `,
+                    confirmButtonColor: '#047857',
+                    confirmButtonText: '¡Entendido!'
+                });
+            } catch (err) {
+                console.error('Error al canjear oferta:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Ocurrió un error inesperado al procesar el canjeo.',
+                    confirmButtonColor: '#D27D60'
+                });
+            }
         }
 
         async function abrirEditarPerfil() {

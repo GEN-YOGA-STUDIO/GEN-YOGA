@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="9.52">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.52">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.52">
+    <meta name="application-version" content="10.0">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=10.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=10.0">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,12 +25,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.52">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=10.0">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=9.52"></script>
+    <script src="i18n.js?v=10.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -272,14 +272,14 @@
                                 <ul class="text-sm text-cocoa/70 space-y-3 mb-6 text-left">
                                     <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_yoga">1 clase gratuita de Yoga en compañía, asignada según tu edad</span></li>
                                     <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_consultation">1 sesión introductoria de PNI o Psicología</span></li>
-                                    <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_activation">Asignación automática y privada al crear tu cuenta</span></li>
+                                    <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#047857]" aria-hidden="true"></i><span data-i18n="rates_welcome_activation">Canjea tu bono fácilmente desde tu cuenta</span></li>
                                 </ul>
                             </div>
                             <div class="mt-4 pt-5 border-t border-cocoa/10 flex flex-col gap-2.5">
-                                <a href="profile.html#auth"
+                                <a href="profile.html?action=canjear&amp;oferta=bienvenida"
                                     class="block w-full py-3.5 bg-[#047857] hover:bg-[#065f46] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
                                     style="background-color: #047857; color: #ffffff;" data-i18n="rates_welcome_create">
-                                    Crear cuenta gratis
+                                    Canjear Bono de Bienvenida (0 €)
                                 </a>
                                 <a href="clases.html?mode=clases&amp;oferta=compania#calendario-publico"
                                     class="text-center text-[11px] font-semibold text-[#047857] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current" data-i18n="rates_welcome_view_classes">
@@ -414,11 +414,15 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="mt-2 pt-4 border-t border-cocoa/10">
+                            <div class="mt-2 pt-4 border-t border-cocoa/10 flex flex-col sm:flex-row gap-2">
+                                <a href="profile.html?action=canjear&amp;oferta=consultas"
+                                    class="flex-1 py-3 bg-[#b45c47] hover:bg-[#8f4735] text-white text-center text-xs font-bold uppercase tracking-wider rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                                    <i class="ph-bold ph-gift"></i> Canjear Consulta Gratuita (0 €)
+                                </a>
                                 <button type="button" onclick="abrirModalSesionesIntroductorias('todas')"
-                                    class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#73541f] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow hover:shadow-md transform hover:scale-[1.01]"
+                                    class="flex-1 py-3 bg-[#8f6b2d] hover:bg-[#73541f] text-white text-center text-xs font-bold uppercase tracking-wider rounded-xl transition shadow hover:shadow-md cursor-pointer"
                                     data-i18n="rates_intro_view_all">
-                                    Ver todas las sesiones introductorias gratuitas →
+                                    Ver sesiones introductorias →
                                 </button>
                             </div>
                         </article>
@@ -475,10 +479,15 @@
                         </div>
 
                         <div class="pt-4 border-t border-cocoa/10 flex flex-wrap items-center justify-between gap-3">
-                            <span class="text-xs font-semibold text-cocoa/70">¿Quieres adquirir un bono para estas modalidades?</span>
-                            <button type="button" onclick="switchCategory('yoga')" class="px-5 py-2.5 rounded-xl bg-[#795244] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#26160c] transition shadow">
-                                Ver Bonos de Clases →
-                            </button>
+                            <span class="text-xs font-semibold text-cocoa/70">¿Quieres canjear tu bono de Yoga en compañía o ver opciones?</span>
+                            <div class="flex flex-wrap gap-2">
+                                <a href="profile.html?action=canjear&amp;oferta=compania" class="px-5 py-2.5 rounded-xl bg-[#d97706] hover:bg-[#b45309] text-white text-xs font-bold uppercase tracking-wider transition shadow flex items-center gap-1.5 cursor-pointer">
+                                    <i class="ph-bold ph-gift"></i> Canjear Bono Yoga en Compañía (0 €)
+                                </a>
+                                <button type="button" onclick="switchCategory('yoga')" class="px-5 py-2.5 rounded-xl bg-[#795244] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#26160c] transition shadow">
+                                    Ver Bonos de Clases →
+                                </button>
+                            </div>
                         </div>
                     </article>
                 </div>
@@ -888,12 +897,12 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v9.52 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v10.0 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '9.52';
+        const APP_VERSION = '10.0';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
