@@ -36,13 +36,18 @@
         abuela: 'abuela',
         abuelas: 'abuela',
         abuelo: 'abuela',
-        compania_abuela: 'abuela'
+        compania_abuela: 'abuela',
+        madre: 'madre',
+        madre_hija: 'madre',
+        'madre-hija': 'madre',
+        '50_anos': 'madre'
     };
     const COMPANION_MODALITY_LABELS = {
         colegas: 'Yoga con colegas',
         pareja: 'Yoga con tu pareja',
-        hijo: 'Yoga con tu hijo',
-        abuela: 'Yoga con tu abuela'
+        hijo: 'Yoga con tu hijo/a',
+        abuela: 'Yoga con tu abuela/nieta',
+        madre: 'Yoga con tu Madre/Hija'
     };
     function normalizeCompanionModality(value) {
         return COMPANION_MODALITY_MAP[String(value || '').toLowerCase().trim()] || '';
@@ -605,8 +610,11 @@
         if (state.oferta) {
             const ofKey = state.oferta.toLowerCase().trim();
             if (COMPANION_MODALITY_LABELS[ofKey]) {
-                // Modalidad de Yoga en Compañía: SOLO clases de esa modalidad
-                if (item.companionModality !== ofKey) return false;
+                if (ofKey === 'abuela' || ofKey === 'madre') {
+                    if (item.companionModality !== 'abuela' && item.companionModality !== 'madre') return false;
+                } else if (item.companionModality !== ofKey) {
+                    return false;
+                }
             } else if (['yoga', 'bienvenida', 'gratis', 'intro', 'introductoria'].includes(ofKey)) {
                 if (!item.isFree) return false;
             }
