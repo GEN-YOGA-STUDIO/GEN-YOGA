@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="10.16" />
+    <meta name="application-version" content="10.17" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=10.16" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=10.16" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=10.17" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=10.17" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=10.16">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=10.17">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=10.16"></script>
+    <script src="teacher-profiles.js?v=10.17"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=10.16"></script>
+    <script src="i18n.js?v=10.17"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -2434,130 +2434,172 @@
                 </div>
 
                 <div id="view-asistencias" class="hidden fade-in">
-                    <div class="mb-2 pb-2 border-b border-cocoa/10">
+                    <div class="mb-4 pb-2 border-b border-cocoa/10">
                         <h2 class="text-lg sm:text-xl brand-font font-bold text-cocoa">Inscripción y Asistencias</h2>
                     </div>
 
-                    <!-- BARRA HORIZONTAL DE DÍAS PARA FILTRAR ASISTENCIAS -->
-                    <div id="asistencias-days-bar-container"
-                        class="sticky top-20 z-30 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-2.5 shadow-md mb-3 max-w-full overflow-hidden box-border">
-                        <div class="flex items-center justify-between gap-2 mb-2 px-1">
-                            <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
-                                <div class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
-                                    <i class="ph-bold ph-calendar-blank text-sm"></i>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <div class="lg:col-span-8">
+                            <!-- BARRA HORIZONTAL DE DÍAS PARA FILTRAR ASISTENCIAS -->
+                            <div id="asistencias-days-bar-container"
+                                class="sticky top-20 z-30 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-2.5 shadow-md mb-3 max-w-full overflow-hidden box-border">
+                                <div class="flex items-center justify-between gap-2 mb-2 px-1">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
+                                        <div class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
+                                            <i class="ph-bold ph-calendar-blank text-sm"></i>
+                                        </div>
+                                        <span>Días con sesiones:</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" onclick="limpiarFiltroFechaAsistencias()"
+                                            id="btn-ver-todas-asistencias-fechas"
+                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
+                                            <i class="ph-bold ph-squares-four"></i> Ver todas las fechas
+                                        </button>
+                                    </div>
                                 </div>
-                                <span>Días con sesiones:</span>
+                                <div
+                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                    <div id="asistencias-days-list"
+                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full"
+                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                        <!-- Se generará dinámicamente -->
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="limpiarFiltroFechaAsistencias()"
-                                    id="btn-ver-todas-asistencias-fechas"
-                                    class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
-                                    <i class="ph-bold ph-squares-four"></i> Ver todas las fechas
-                                </button>
+
+                            <!-- FILTROS DE ASISTENCIAS (Sesión, Profesor, Yoga, Horario, Plazas) - Compacto 1 Línea -->
+                            <div id="asistencias-filtros-container"
+                                class="bg-white/95 backdrop-blur-md rounded-xl border border-cocoa/15 shadow-2xs">
+                                <div class="asistencias-filtros-grid">
+                                    <!-- 1. Filtro por Tipo de Sesión -->
+                                    <div class="asistencias-filtro-item">
+                                        <label for="filtro-asistencias-tipo-sesion"
+                                            class="asistencias-filtro-label"
+                                            title="Tipo de Sesión">
+                                            <i class="ph-bold ph-cards text-olive text-[11px] shrink-0"></i>
+                                            <span class="truncate">Tipo</span>
+                                        </label>
+                                        <select id="filtro-asistencias-tipo-sesion" onchange="aplicarFiltrosAsistencias()"
+                                            class="asistencias-filtro-select">
+                                            <option value="todos">Todas las sesiones</option>
+                                            <option value="clases">🧘 Clases de Yoga</option>
+                                            <option value="consultas">🩺 Consultas</option>
+                                            <option value="talleres">✨ Talleres</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 2. Filtro por Profesor / Especialista -->
+                                    <div class="asistencias-filtro-item">
+                                        <label for="filtro-asistencias-profesor"
+                                            class="asistencias-filtro-label"
+                                            title="Profesor o Especialista">
+                                            <i class="ph-bold ph-user text-olive text-[11px] shrink-0"></i>
+                                            <span class="truncate">Profesor</span>
+                                        </label>
+                                        <select id="filtro-asistencias-profesor" onchange="aplicarFiltrosAsistencias()"
+                                            class="asistencias-filtro-select">
+                                            <option value="todos">Todos los profesores</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 3. Filtro por Tipo de Yoga / Estilo -->
+                                    <div class="asistencias-filtro-item">
+                                        <label for="filtro-asistencias-tipo-yoga"
+                                            class="asistencias-filtro-label"
+                                            title="Tipo de Yoga o Estilo">
+                                            <i class="ph-bold ph-sparkle text-olive text-[11px] shrink-0"></i>
+                                            <span class="truncate">Estilo / Yoga</span>
+                                        </label>
+                                        <select id="filtro-asistencias-tipo-yoga" onchange="aplicarFiltrosAsistencias()"
+                                            class="asistencias-filtro-select">
+                                            <option value="todos">Todos los tipos</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 4. Filtro por Horario -->
+                                    <div class="asistencias-filtro-item">
+                                        <label for="filtro-asistencias-horario"
+                                            class="asistencias-filtro-label"
+                                            title="Franja Horaria">
+                                            <i class="ph-bold ph-clock text-olive text-[11px] shrink-0"></i>
+                                            <span class="truncate">Horario</span>
+                                        </label>
+                                        <select id="filtro-asistencias-horario" onchange="aplicarFiltrosAsistencias()"
+                                            class="asistencias-filtro-select">
+                                            <option value="todos">Cualquier hora</option>
+                                            <option value="manana">Mañana (07-12h)</option>
+                                            <option value="mediodia">Mediodía (12-16h)</option>
+                                            <option value="tarde">Tarde (16-20h)</option>
+                                            <option value="noche">Noche (20-23h)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 5. Filtro por Disponibilidad -->
+                                    <div class="asistencias-filtro-item">
+                                        <label for="filtro-asistencias-disponibilidad"
+                                            class="asistencias-filtro-label"
+                                            title="Disponibilidad y Plazas">
+                                            <i class="ph-bold ph-users-three text-olive text-[11px] shrink-0"></i>
+                                            <span class="truncate">Plazas</span>
+                                        </label>
+                                        <select id="filtro-asistencias-disponibilidad" onchange="aplicarFiltrosAsistencias()"
+                                            class="asistencias-filtro-select">
+                                            <option value="todos">Todas las plazas</option>
+                                            <option value="con_alumnos">👥 Con inscritos (&gt;0)</option>
+                                            <option value="huecos">🟢 Plazas libres</option>
+                                            <option value="completas">🔴 Completas</option>
+                                            <option value="vacias">⚪ Sin inscritos (0)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="asistencias-container" class="space-y-6"></div>
+                            <div id="asistencias-empty"
+                                class="hidden bg-white/60 rounded-2xl p-12 text-center border border-cocoa/10 mt-4">
+                                <i class="ph-duotone ph-users text-5xl text-cocoa/30 mb-4"></i>
+                                <p class="text-cocoa/60 font-medium">No hay clases registradas o reservas aún en esta fecha.</p>
                             </div>
                         </div>
-                        <div
-                            class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                            <div id="asistencias-days-list"
-                                class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full"
-                                style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                <!-- Se generará dinámicamente -->
+
+                        <!-- Columna derecha: Calendario cuadrado de asistencias -->
+                        <div class="lg:col-span-4">
+                            <div class="sticky top-24">
+                                <div class="profile-calendar-card bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
+                                    <div class="flex items-center justify-between mb-6">
+                                        <button type="button" onclick="cambiarMesAsistencias(-1)" aria-label="Mes anterior"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60 cursor-pointer">
+                                            <i class="ph-bold ph-caret-left text-lg"></i>
+                                        </button>
+                                        <div class="text-center">
+                                            <h3 id="asistencias-calendar-month-year" class="brand-font text-xl font-bold text-cocoa"></h3>
+                                            <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5" data-i18n="profile_select_day">Selecciona un día</p>
+                                        </div>
+                                        <button type="button" onclick="cambiarMesAsistencias(1)" aria-label="Mes siguiente"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60 cursor-pointer">
+                                            <i class="ph-bold ph-caret-right text-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-2">
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
+                                    </div>
+                                    <div id="asistencias-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                                    <div class="mt-6 pt-4 border-t border-cocoa/10">
+                                        <button type="button" onclick="limpiarFiltroFechaAsistencias()"
+                                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-olive hover:text-cocoa hover:bg-olive/10 border border-olive/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                                            <i class="ph-bold ph-squares-four"></i> Ver todas las sesiones
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- FILTROS DE ASISTENCIAS (Sesión, Profesor, Yoga, Horario, Plazas) - Compacto 1 Línea -->
-                    <div id="asistencias-filtros-container"
-                        class="bg-white/95 backdrop-blur-md rounded-xl border border-cocoa/15 shadow-2xs">
-                        <div class="asistencias-filtros-grid">
-                            <!-- 1. Filtro por Tipo de Sesión -->
-                            <div class="asistencias-filtro-item">
-                                <label for="filtro-asistencias-tipo-sesion"
-                                    class="asistencias-filtro-label"
-                                    title="Tipo de Sesión">
-                                    <i class="ph-bold ph-cards text-olive text-[11px] shrink-0"></i>
-                                    <span class="truncate">Tipo</span>
-                                </label>
-                                <select id="filtro-asistencias-tipo-sesion" onchange="aplicarFiltrosAsistencias()"
-                                    class="asistencias-filtro-select">
-                                    <option value="todos">Todas las sesiones</option>
-                                    <option value="clases">🧘 Clases de Yoga</option>
-                                    <option value="consultas">🩺 Consultas</option>
-                                    <option value="talleres">✨ Talleres</option>
-                                </select>
-                            </div>
-
-                            <!-- 2. Filtro por Profesor / Especialista -->
-                            <div class="asistencias-filtro-item">
-                                <label for="filtro-asistencias-profesor"
-                                    class="asistencias-filtro-label"
-                                    title="Profesor o Especialista">
-                                    <i class="ph-bold ph-user text-olive text-[11px] shrink-0"></i>
-                                    <span class="truncate">Profesor</span>
-                                </label>
-                                <select id="filtro-asistencias-profesor" onchange="aplicarFiltrosAsistencias()"
-                                    class="asistencias-filtro-select">
-                                    <option value="todos">Todos los profesores</option>
-                                </select>
-                            </div>
-
-                            <!-- 3. Filtro por Tipo de Yoga / Estilo -->
-                            <div class="asistencias-filtro-item">
-                                <label for="filtro-asistencias-tipo-yoga"
-                                    class="asistencias-filtro-label"
-                                    title="Tipo de Yoga o Estilo">
-                                    <i class="ph-bold ph-sparkle text-olive text-[11px] shrink-0"></i>
-                                    <span class="truncate">Estilo / Yoga</span>
-                                </label>
-                                <select id="filtro-asistencias-tipo-yoga" onchange="aplicarFiltrosAsistencias()"
-                                    class="asistencias-filtro-select">
-                                    <option value="todos">Todos los tipos</option>
-                                </select>
-                            </div>
-
-                            <!-- 4. Filtro por Horario -->
-                            <div class="asistencias-filtro-item">
-                                <label for="filtro-asistencias-horario"
-                                    class="asistencias-filtro-label"
-                                    title="Franja Horaria">
-                                    <i class="ph-bold ph-clock text-olive text-[11px] shrink-0"></i>
-                                    <span class="truncate">Horario</span>
-                                </label>
-                                <select id="filtro-asistencias-horario" onchange="aplicarFiltrosAsistencias()"
-                                    class="asistencias-filtro-select">
-                                    <option value="todos">Cualquier hora</option>
-                                    <option value="manana">Mañana (07-12h)</option>
-                                    <option value="mediodia">Mediodía (12-16h)</option>
-                                    <option value="tarde">Tarde (16-20h)</option>
-                                    <option value="noche">Noche (20-23h)</option>
-                                </select>
-                            </div>
-
-                            <!-- 5. Filtro por Disponibilidad -->
-                            <div class="asistencias-filtro-item">
-                                <label for="filtro-asistencias-disponibilidad"
-                                    class="asistencias-filtro-label"
-                                    title="Disponibilidad y Plazas">
-                                    <i class="ph-bold ph-users-three text-olive text-[11px] shrink-0"></i>
-                                    <span class="truncate">Plazas</span>
-                                </label>
-                                <select id="filtro-asistencias-disponibilidad" onchange="aplicarFiltrosAsistencias()"
-                                    class="asistencias-filtro-select">
-                                    <option value="todos">Todas las plazas</option>
-                                    <option value="con_alumnos">👥 Con inscritos (&gt;0)</option>
-                                    <option value="huecos">🟢 Plazas libres</option>
-                                    <option value="completas">🔴 Completas</option>
-                                    <option value="vacias">⚪ Sin inscritos (0)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="asistencias-container" class="space-y-6"></div>
-                    <div id="asistencias-empty"
-                        class="hidden bg-white/60 rounded-2xl p-12 text-center border border-cocoa/10 mt-4">
-                        <i class="ph-duotone ph-users text-5xl text-cocoa/30 mb-4"></i>
-                        <p class="text-cocoa/60 font-medium">No hay clases registradas o reservas aún en esta fecha.</p>
                     </div>
                 </div>
 
@@ -3623,7 +3665,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v10.16. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v10.17. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -3930,9 +3972,9 @@
                 class="sticky top-0 bg-gradient-to-r from-cocoa to-olive text-white p-6 rounded-t-3xl flex justify-between items-center z-10">
                 <div>
                     <h3 class="brand-font text-2xl font-bold flex items-center gap-2">
-                        <i class="ph-bold ph-pencil-simple"></i> Editar Clase
+                        <i class="ph-bold ph-pencil-simple"></i> <span id="editar-clase-modal-title">Editar Clase</span>
                     </h3>
-                    <p class="text-white/80 text-sm mt-1">Modifica los datos de la sesión sin perder las reservas de los
+                    <p id="editar-clase-modal-subtitle" class="text-white/80 text-sm mt-1">Modifica los datos de la sesión sin perder las reservas de los
                         alumnos</p>
                 </div>
                 <button type="button" onclick="cerrarModalEditarClase()" aria-label="Cerrar edición de clase"
@@ -3943,7 +3985,7 @@
                 <input type="hidden" id="editar-clase-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
-                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Nombre /
+                        <label id="editar-clase-tipo-label" class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Nombre /
                             Tipo de Clase</label>
                         <select id="editar-clase-tipo-select" name="editar-clase-tipo-select" aria-label="Tipo de clase"
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
@@ -3997,7 +4039,7 @@
                     </div>
 
                     <!-- Modalidad y Acceso a la Clase (Selector de Regular / Introductoria / Yoga en Compañía) -->
-                    <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3">
+                    <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3">
                         <div class="flex items-center justify-between">
                             <label
                                 class="text-xs font-black text-cocoa uppercase tracking-wider flex items-center gap-1.5">
@@ -4377,7 +4419,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '10.16';
+        const APP_VERSION = '10.17';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -6614,7 +6656,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v10.16: Cargar ofertas promocionales canjeadas por este usuario
+                // v10.17: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -6765,7 +6807,7 @@
                 comprarBonoMensual();
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v10.16)
+            // Comprobar si el usuario llega con una oferta para canjear (v10.17)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -9997,6 +10039,7 @@
             filtroAsistenciaDisponibilidad = document.getElementById('filtro-asistencias-disponibilidad')?.value || 'todos';
 
             renderizarBarraDiasAsistencias();
+            renderizarCalendarioAsistencias();
             renderizarAsistenciasPorClase();
         }
 
@@ -10154,7 +10197,93 @@
 
             poblarFiltrosAsistencias();
             renderizarBarraDiasAsistencias();
+            renderizarCalendarioAsistencias();
             renderizarAsistenciasPorClase();
+        }
+
+        let currentAsistenciasMonth = new Date();
+
+        function cambiarMesAsistencias(delta) {
+            currentAsistenciasMonth = new Date(currentAsistenciasMonth.getFullYear(), currentAsistenciasMonth.getMonth() + delta, 1);
+            renderizarCalendarioAsistencias();
+        }
+
+        function renderizarCalendarioAsistencias() {
+            const grid = document.getElementById('asistencias-calendar-grid');
+            const monthYearEl = document.getElementById('asistencias-calendar-month-year');
+            if (!grid || !monthYearEl) return;
+
+            const year = currentAsistenciasMonth.getFullYear();
+            const month = currentAsistenciasMonth.getMonth();
+
+            const monthFallback = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
+            monthYearEl.textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const daysInMonth = lastDay.getDate();
+
+            grid.innerHTML = '';
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const hoyKey = formatDateLocal(new Date());
+
+            let clasesFiltradas = (allAsistenciasClaseCache || []).filter(filtrarClaseSegunFiltrosAsistencias);
+            const fechasConSesiones = new Set();
+            clasesFiltradas.forEach(c => {
+                const dKey = formatDateLocal(c.fecha_inicio);
+                if (dKey) fechasConSesiones.add(dKey);
+            });
+
+            // Días del mes anterior
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                const day = prevMonthDays - i;
+                const div = document.createElement('div');
+                div.className = 'calendar-day other-month rounded-lg text-sm font-medium text-cocoa bg-white/40 border border-white/10';
+                div.textContent = day;
+                grid.appendChild(div);
+            }
+
+            // Días del mes actual
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateKey = formatDateLocal(dateObj);
+                const isToday = dateKey === hoyKey;
+                const isPast = dateKey < hoyKey;
+                const hasSesiones = fechasConSesiones.has(dateKey);
+                const isSelected = selectedAsistenciaFecha === dateKey;
+
+                const div = document.createElement('div');
+                div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 transition cursor-pointer';
+                div.textContent = day;
+
+                if (isToday) div.classList.add('today');
+                if (hasSesiones) div.classList.add('has-classes');
+                if (isSelected) div.classList.add('selected');
+
+                div.onclick = () => {
+                    if (isPast && !mostrarDiasPasadosAsistencias) {
+                        mostrarDiasPasadosAsistencias = true;
+                    }
+                    filtrarAsistenciaPorFecha(dateKey);
+                };
+
+                grid.appendChild(div);
+            }
+
+            // Días del mes siguiente
+            const totalCells = grid.children.length;
+            const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let day = 1; day <= remainingCells; day++) {
+                const div = document.createElement('div');
+                div.className = 'calendar-day other-month rounded-lg text-sm font-medium text-cocoa bg-white/40 border border-white/10';
+                div.textContent = day;
+                grid.appendChild(div);
+            }
         }
 
         function scrollAsistenciasDias(delta) {
@@ -10167,6 +10296,7 @@
         function toggleDiasPasadosAsistencias() {
             mostrarDiasPasadosAsistencias = !mostrarDiasPasadosAsistencias;
             renderizarBarraDiasAsistencias();
+            renderizarCalendarioAsistencias();
             if (selectedAsistenciaFecha === 'todas') {
                 renderizarAsistenciasPorClase();
             }
@@ -10175,7 +10305,14 @@
         function filtrarAsistenciaPorFecha(dateKey) {
             selectedAsistenciaFecha = dateKey;
             selectedAsistenciaClaseId = 'todas';
+            if (dateKey && dateKey !== 'todas') {
+                const parts = dateKey.split('-').map(Number);
+                if (parts.length >= 2 && parts[0] && parts[1]) {
+                    currentAsistenciasMonth = new Date(parts[0], parts[1] - 1, 1);
+                }
+            }
             renderizarBarraDiasAsistencias();
+            renderizarCalendarioAsistencias();
             renderizarAsistenciasPorClase();
         }
 
@@ -10183,6 +10320,7 @@
             selectedAsistenciaFecha = 'todas';
             selectedAsistenciaClaseId = 'todas';
             renderizarBarraDiasAsistencias();
+            renderizarCalendarioAsistencias();
             renderizarAsistenciasPorClase();
         }
 
@@ -10196,9 +10334,14 @@
                     if (selectedAsistenciaFecha < hoyKey) {
                         mostrarDiasPasadosAsistencias = true;
                     }
+                    const parts = selectedAsistenciaFecha.split('-').map(Number);
+                    if (parts.length >= 2 && parts[0] && parts[1]) {
+                        currentAsistenciasMonth = new Date(parts[0], parts[1] - 1, 1);
+                    }
                 }
             }
             renderizarBarraDiasAsistencias();
+            renderizarCalendarioAsistencias();
             renderizarAsistenciasPorClase();
         }
 
@@ -10644,8 +10787,8 @@
                     </div>`
                         : '';
 
-                    const adminEditClassBtn = (isAdmin && (tipoNormalizado === 'yoga' || tipoNormalizado === 'taller'))
-                        ? `<button onclick="abrirModalEditarClase(${safePositiveInteger(c.id) || 0})" class="text-gray-300 hover:text-blue-600 transition p-1 ml-auto sm:ml-2 flex-shrink-0" title="Editar Clase"><i class="ph-bold ph-pencil-simple text-lg"></i></button>`
+                    const adminEditClassBtn = isAdmin
+                        ? `<button onclick="abrirModalEditarClase(${safePositiveInteger(c.id) || 0})" class="text-gray-300 hover:text-blue-600 transition p-1 ml-auto sm:ml-2 flex-shrink-0" title="Editar Sesión / Turno"><i class="ph-bold ph-pencil-simple text-lg"></i></button>`
                         : '';
 
                     const adminDeleteClassBtn = isAdmin
@@ -12419,7 +12562,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v10.16: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v10.17: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
@@ -14085,10 +14228,16 @@ async function adminTogglePromo50(userId, active) {
             if (!clase) {
                 clase = (allTalleresCache || []).find(c => safePositiveInteger(c.id) === cid);
             }
+            if (!clase && window.allConsultasAdminCache) {
+                clase = (window.allConsultasAdminCache || []).find(c => safePositiveInteger(c.id) === cid);
+            }
+            if (!clase && typeof allAsistenciasClaseCache !== 'undefined' && allAsistenciasClaseCache) {
+                clase = (allAsistenciasClaseCache || []).find(c => safePositiveInteger(c.id) === cid);
+            }
             if (!clase) {
                 const { data, error } = await client.from('clases').select('*, profesionales(*)').eq('id', cid).single();
                 if (error || !data) {
-                    return Swal.fire('Error', 'No se pudo cargar la clase a editar.', 'error');
+                    return Swal.fire('Error', 'No se pudo cargar la clase o consulta a editar.', 'error');
                 }
                 clase = data;
             }
@@ -14100,54 +14249,101 @@ async function adminTogglePromo50(userId, active) {
 
             document.getElementById('editar-clase-id').value = cid;
 
-            // Cargar tipos de clases
+            const tipoNorm = normalizarTipoClase(clase.tipo_clase);
+            const isConsulta = tipoNorm === 'psicologia' || tipoNorm === 'nutricion';
+
+            const modalTitleEl = document.getElementById('editar-clase-modal-title');
+            const modalSubEl = document.getElementById('editar-clase-modal-subtitle');
+            const tipoLabelEl = document.getElementById('editar-clase-tipo-label');
+            const modCardEl = document.getElementById('editar-clase-modalidad-card');
+
+            if (modalTitleEl) modalTitleEl.textContent = isConsulta ? 'Editar Consulta / Turno' : 'Editar Clase';
+            if (modalSubEl) modalSubEl.textContent = isConsulta
+                ? 'Modifica la fecha, hora o detalles de la consulta sin perder las reservas de los alumnos'
+                : 'Modifica los datos de la sesión sin perder las reservas de los alumnos';
+            if (tipoLabelEl) tipoLabelEl.textContent = isConsulta ? 'Tipo de Consulta / Nombre' : 'Nombre / Tipo de Clase';
+
+            if (modCardEl) {
+                if (isConsulta) {
+                    modCardEl.classList.add('hidden');
+                } else {
+                    modCardEl.classList.remove('hidden');
+                }
+            }
+
+            // Cargar tipos de clases / consultas
             const selectTipo = document.getElementById('editar-clase-tipo-select');
             selectTipo.innerHTML = '<option value="custom" selected>Cargando tipos...</option>';
 
-            const { data: tipos } = await client.from('tipos_clases')
-                .select('*')
-                .eq('activo', true)
-                .eq('categoria', 'yoga')
-                .order('orden');
-
-            selectTipo.innerHTML = '';
-            let matchTipo = false;
-            if (tipos && tipos.length > 0) {
-                tipos.forEach(t => {
+            if (isConsulta) {
+                selectTipo.innerHTML = '';
+                const opcionesConsulta = [
+                    'Consulta Ayurveda',
+                    'Consulta Nutrición',
+                    'Consulta Psicología',
+                    'Consulta PNI / Nutrición',
+                    'Consulta PNI / Psicología',
+                    'Consulta Psiconutrición',
+                    'Consulta Individual'
+                ];
+                if (clase.nombre && !opcionesConsulta.some(o => o.toLowerCase() === (clase.nombre || '').toLowerCase())) {
+                    opcionesConsulta.unshift(clase.nombre);
+                }
+                opcionesConsulta.forEach(nom => {
                     const opt = document.createElement('option');
-                    opt.value = String(t.id);
-                    opt.text = t.nombre;
-                    opt.dataset.duracion = t.duracion_predeterminada;
-                    if (clase.tipo_clase_id && Number(clase.tipo_clase_id) === Number(t.id)) {
+                    opt.value = 'custom';
+                    opt.text = nom;
+                    if ((clase.nombre || '').toLowerCase().trim() === nom.toLowerCase().trim()) {
                         opt.selected = true;
-                        matchTipo = true;
-                    } else if (!matchTipo && (clase.nombre || '').toLowerCase().trim() === (t.nombre || '').toLowerCase().trim()) {
-                        opt.selected = true;
-                        matchTipo = true;
                     }
                     selectTipo.appendChild(opt);
                 });
+            } else {
+                const { data: tipos } = await client.from('tipos_clases')
+                    .select('*')
+                    .eq('activo', true)
+                    .eq('categoria', tipoNorm === 'taller' ? 'taller' : 'yoga')
+                    .order('orden');
 
-                if (!matchTipo) {
+                selectTipo.innerHTML = '';
+                let matchTipo = false;
+                if (tipos && tipos.length > 0) {
+                    tipos.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = String(t.id);
+                        opt.text = t.nombre;
+                        opt.dataset.duracion = t.duracion_predeterminada;
+                        if (clase.tipo_clase_id && Number(clase.tipo_clase_id) === Number(t.id)) {
+                            opt.selected = true;
+                            matchTipo = true;
+                        } else if (!matchTipo && (clase.nombre || '').toLowerCase().trim() === (t.nombre || '').toLowerCase().trim()) {
+                            opt.selected = true;
+                            matchTipo = true;
+                        }
+                        selectTipo.appendChild(opt);
+                    });
+
+                    if (!matchTipo) {
+                        const customOpt = document.createElement('option');
+                        customOpt.value = clase.tipo_clase_id ? String(clase.tipo_clase_id) : 'custom';
+                        customOpt.text = clase.nombre || 'Clase personalizada';
+                        customOpt.selected = true;
+                        selectTipo.insertBefore(customOpt, selectTipo.firstChild);
+                    }
+
+                    selectTipo.onchange = (e) => {
+                        const opt = selectTipo.options[selectTipo.selectedIndex];
+                        if (opt && opt.dataset && opt.dataset.duracion) {
+                            document.getElementById('editar-clase-duracion').value = String(opt.dataset.duracion);
+                        }
+                    };
+                } else {
                     const customOpt = document.createElement('option');
                     customOpt.value = clase.tipo_clase_id ? String(clase.tipo_clase_id) : 'custom';
-                    customOpt.text = clase.nombre || 'Clase personalizada';
+                    customOpt.text = clase.nombre || 'Yoga';
                     customOpt.selected = true;
-                    selectTipo.insertBefore(customOpt, selectTipo.firstChild);
+                    selectTipo.appendChild(customOpt);
                 }
-
-                selectTipo.onchange = (e) => {
-                    const opt = selectTipo.options[selectTipo.selectedIndex];
-                    if (opt && opt.dataset && opt.dataset.duracion) {
-                        document.getElementById('editar-clase-duracion').value = String(opt.dataset.duracion);
-                    }
-                };
-            } else {
-                const customOpt = document.createElement('option');
-                customOpt.value = clase.tipo_clase_id ? String(clase.tipo_clase_id) : 'custom';
-                customOpt.text = clase.nombre || 'Yoga';
-                customOpt.selected = true;
-                selectTipo.appendChild(customOpt);
             }
 
             // Profesionales
@@ -14160,41 +14356,90 @@ async function adminTogglePromo50(userId, active) {
 
             let matchProfesor = false;
             if (allProfesionalesCache && allProfesionalesCache.length > 0) {
-                const clasesProfs = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('clases'));
-                const clasesIds = new Set(clasesProfs.map(p => p.id));
+                if (isConsulta) {
+                    const consultaProfs = allProfesionalesCache.filter(p => {
+                        const cats = getEspecialidadCategorias(p);
+                        const esp = (p.especialidad || '').toLowerCase();
+                        const nom = (p.nombre || '').toLowerCase();
+                        return cats.includes('nutricion') || cats.includes('psicologia') || cats.includes('consultas') ||
+                            esp.includes('ayurved') || esp.includes('nutri') || esp.includes('psico') ||
+                            nom.includes('silvia') || nom.includes('miriam') || nom.includes('isabel');
+                    });
+                    const cIds = new Set(consultaProfs.map(p => p.id));
+                    const otherProfs = allProfesionalesCache.filter(p => !cIds.has(p.id));
 
-                clasesProfs.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = String(p.id);
-                    const fullNom = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || p.email || 'Profesional';
-                    const esp = p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '';
-                    const oculto = p.visible_publico === false ? ' · Oculto' : '';
-                    option.textContent = `${fullNom}${esp}${oculto}`;
-                    if (Number(clase.profesor_id) === Number(p.id)) {
-                        option.selected = true;
-                        matchProfesor = true;
-                    }
-                    selectProfesor.appendChild(option);
-                });
-
-                const others = allProfesionalesCache.filter(p => !clasesIds.has(p.id));
-                if (others.length > 0) {
-                    const optgroup = document.createElement('optgroup');
-                    optgroup.label = 'Otros Profesionales y Profesores';
-                    others.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = String(p.id);
+                    const grpConsulta = document.createElement('optgroup');
+                    grpConsulta.label = 'Especialistas de Consultas';
+                    consultaProfs.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = String(p.id);
                         const fullNom = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || p.email || 'Profesional';
                         const esp = p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '';
                         const oculto = p.visible_publico === false ? ' · Oculto' : '';
-                        opt.textContent = `${fullNom}${esp}${oculto}`;
+                        option.textContent = `${fullNom}${esp}${oculto}`;
                         if (Number(clase.profesor_id) === Number(p.id)) {
-                            opt.selected = true;
+                            option.selected = true;
                             matchProfesor = true;
                         }
-                        optgroup.appendChild(opt);
+                        grpConsulta.appendChild(option);
                     });
-                    selectProfesor.appendChild(optgroup);
+                    selectProfesor.appendChild(grpConsulta);
+
+                    if (otherProfs.length > 0) {
+                        const grpOthers = document.createElement('optgroup');
+                        grpOthers.label = 'Otros Profesionales';
+                        otherProfs.forEach(p => {
+                            const option = document.createElement('option');
+                            option.value = String(p.id);
+                            const fullNom = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || p.email || 'Profesional';
+                            const esp = p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '';
+                            const oculto = p.visible_publico === false ? ' · Oculto' : '';
+                            option.textContent = `${fullNom}${esp}${oculto}`;
+                            if (Number(clase.profesor_id) === Number(p.id)) {
+                                option.selected = true;
+                                matchProfesor = true;
+                            }
+                            grpOthers.appendChild(option);
+                        });
+                        selectProfesor.appendChild(grpOthers);
+                    }
+                } else {
+                    const clasesProfs = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('clases'));
+                    const clasesIds = new Set(clasesProfs.map(p => p.id));
+
+                    clasesProfs.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = String(p.id);
+                        const fullNom = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || p.email || 'Profesional';
+                        const esp = p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '';
+                        const oculto = p.visible_publico === false ? ' · Oculto' : '';
+                        option.textContent = `${fullNom}${esp}${oculto}`;
+                        if (Number(clase.profesor_id) === Number(p.id)) {
+                            option.selected = true;
+                            matchProfesor = true;
+                        }
+                        selectProfesor.appendChild(option);
+                    });
+
+                    const others = allProfesionalesCache.filter(p => !clasesIds.has(p.id));
+                    if (others.length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = 'Otros Profesionales y Profesores';
+                        others.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = String(p.id);
+                            const fullNom = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || p.email || 'Profesional';
+                            const esp = p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '';
+                            const oculto = p.visible_publico === false ? ' · Oculto' : '';
+                            opt.textContent = `${fullNom}${esp}${oculto}`;
+                            if (Number(clase.profesor_id) === Number(p.id)) {
+                                opt.selected = true;
+                                matchProfesor = true;
+                            }
+                            optgroup.appendChild(opt);
+                        });
+                        selectProfesor.appendChild(optgroup);
+                    }
                 }
             }
 
@@ -14226,7 +14471,7 @@ async function adminTogglePromo50(userId, active) {
             document.getElementById('editar-clase-hora-inicio').value = timeStr;
 
             // Duración predeterminada o personalizada
-            const duracionVal = String(clase.duracion_minutos || 50);
+            const duracionVal = String(clase.duracion_minutos || (isConsulta ? 60 : 50));
             const durSelect = document.getElementById('editar-clase-duracion');
             let durFound = Array.from(durSelect.options).some(o => o.value === duracionVal);
             if (!durFound) {
@@ -14237,7 +14482,7 @@ async function adminTogglePromo50(userId, active) {
             }
             durSelect.value = duracionVal;
 
-            document.getElementById('editar-clase-capacidad').value = String(clase.capacidad_max || 10);
+            document.getElementById('editar-clase-capacidad').value = String(clase.capacidad_max || (isConsulta ? 1 : 10));
             document.getElementById('editar-clase-descripcion').value = clase.descripcion || '';
 
             // Modalidad de Acceso
@@ -14264,17 +14509,22 @@ async function adminTogglePromo50(userId, active) {
                 return Swal.fire('Error', 'ID de clase no válido.', 'error');
             }
 
+            const tipoNorm = normalizarTipoClase(currentEditingClass?.tipo_clase);
+            const isConsulta = tipoNorm === 'psicologia' || tipoNorm === 'nutricion';
+
             const selectTipo = document.getElementById('editar-clase-tipo-select');
             const selectedOpt = selectTipo ? selectTipo.options[selectTipo.selectedIndex] : null;
             const rawTipoVal = selectTipo ? selectTipo.value : '';
-            const tipoClaseId = (rawTipoVal && rawTipoVal !== 'custom') ? (safePositiveInteger(rawTipoVal) || null) : (safePositiveInteger(currentEditingClass?.tipo_clase_id) || null);
-            const nombre = (selectedOpt?.text || currentEditingClass?.nombre || 'Yoga').trim();
+            const tipoClaseId = (!isConsulta && rawTipoVal && rawTipoVal !== 'custom')
+                ? (safePositiveInteger(rawTipoVal) || null)
+                : (isConsulta ? null : (safePositiveInteger(currentEditingClass?.tipo_clase_id) || null));
+            const nombre = (selectedOpt?.text || currentEditingClass?.nombre || (isConsulta ? 'Consulta Individual' : 'Yoga')).trim();
 
             const fecha = document.getElementById('editar-clase-fecha').value;
             const horaInicio = document.getElementById('editar-clase-hora-inicio').value;
             const profesorId = safePositiveInteger(document.getElementById('editar-clase-profesor-id').value) || safePositiveInteger(currentEditingClass?.profesor_id);
-            const duracion = parseInt(document.getElementById('editar-clase-duracion').value, 10) || 50;
-            const capacidad = parseInt(document.getElementById('editar-clase-capacidad').value, 10) || 10;
+            const duracion = parseInt(document.getElementById('editar-clase-duracion').value, 10) || (isConsulta ? 60 : 50);
+            const capacidad = parseInt(document.getElementById('editar-clase-capacidad').value, 10) || (isConsulta ? 1 : 10);
             const descripcion = (document.getElementById('editar-clase-descripcion').value || '').trim() || null;
 
             if (!fecha || !horaInicio || !profesorId) {
@@ -14282,17 +14532,19 @@ async function adminTogglePromo50(userId, active) {
             }
 
             const accesoTipo = document.querySelector('input[name="editar-clase-acceso-tipo"]:checked')?.value || 'regular';
-            const esGratuita = accesoTipo === 'introductoria';
-            const companionModality = accesoTipo === 'companion'
+            const esGratuita = !isConsulta && accesoTipo === 'introductoria';
+            const companionModality = (!isConsulta && accesoTipo === 'companion')
                 ? (document.querySelector('input[name="editar-clase-companion-subtipo"]:checked')?.value || 'colegas')
                 : null;
 
             const fechaInicio = new Date(`${fecha}T${horaInicio}`);
             const fechaFin = new Date(fechaInicio.getTime() + duracion * 60000);
 
+            const claseTipoReal = currentEditingClass?.tipo_clase || (isConsulta ? 'nutricion' : 'yoga');
+
             // Validar conflicto de horario excluyendo la propia clase que estamos editando
             const inserts = [{
-                tipo_clase: 'yoga',
+                tipo_clase: claseTipoReal,
                 activa: true,
                 tipo_clase_id: tipoClaseId,
                 nombre,
@@ -14322,24 +14574,34 @@ async function adminTogglePromo50(userId, active) {
                 });
             }
 
-            // Actualizar en base de datos
-            const { error: updateErr } = await client.from('clases').update({
+            const updatePayload = {
                 nombre,
-                tipo_clase_id: tipoClaseId,
                 fecha_inicio: fechaInicio.toISOString(),
                 fecha_fin: fechaFin.toISOString(),
                 duracion_minutos: duracion,
                 capacidad_max: capacidad,
                 profesor_id: profesorId,
-                es_gratuita: esGratuita,
-                companion_modality: companionModality,
                 descripcion
-            }).eq('id', cid);
+            };
+
+            if (isConsulta) {
+                updatePayload.tipo_clase = claseTipoReal;
+                updatePayload.es_gratuita = false;
+                updatePayload.companion_modality = null;
+                updatePayload.tipo_clase_id = null;
+            } else {
+                updatePayload.tipo_clase_id = tipoClaseId;
+                updatePayload.es_gratuita = esGratuita;
+                updatePayload.companion_modality = companionModality;
+            }
+
+            // Actualizar en base de datos
+            const { error: updateErr } = await client.from('clases').update(updatePayload).eq('id', cid);
 
             Swal.close();
 
             if (updateErr) {
-                console.error('Error al actualizar la clase:', updateErr);
+                console.error('Error al actualizar la sesión:', updateErr);
                 return Swal.fire('Error', 'No se pudo guardar la modificación: ' + (updateErr.message || ''), 'error');
             }
 
@@ -14347,17 +14609,33 @@ async function adminTogglePromo50(userId, active) {
 
             await Swal.fire({
                 icon: 'success',
-                title: 'Clase actualizada',
+                title: isConsulta ? 'Consulta actualizada' : 'Clase actualizada',
                 text: 'Los cambios se han guardado correctamente.',
                 timer: 2000,
                 showConfirmButton: false
             });
 
+            // Actualizar la fecha y mes activos para situar la vista en el nuevo día
+            selectedAsistenciaFecha = fecha;
+            currentAsistenciasMonth = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            if (typeof selectedAdminConsultaFecha !== 'undefined') {
+                selectedAdminConsultaFecha = fecha;
+            }
+            if (typeof currentConsultasAdminMonth !== 'undefined') {
+                currentConsultasAdminMonth = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+            }
+
+            await cargarTodasLasClasesConProfesionales({ force: true });
             await cargarHorarios();
             if (typeof cargarTalleres === 'function') cargarTalleres();
+            if (typeof cargarConsultasAdmin === 'function') await cargarConsultasAdmin();
+            if (typeof cargarNutricion === 'function') await cargarNutricion();
+            if (typeof cargarPsicologia === 'function') await cargarPsicologia();
             if (isAdmin || esTrabajador()) {
-                if (typeof cargarAsistenciasPorClase === 'function') cargarAsistenciasPorClase();
+                if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
             }
+            if (typeof renderizarBarraDiasAsistencias === 'function') renderizarBarraDiasAsistencias();
+            if (typeof renderizarCalendarioAsistencias === 'function') renderizarCalendarioAsistencias();
         }
 
         async function validateClassScheduleOverlap(inserts, options = {}) {
@@ -20647,7 +20925,10 @@ async function adminTogglePromo50(userId, active) {
                     }
 
                     const adminTrash = c.isVirtual ? '' : `
-                <div class="flex gap-2">
+                <div class="flex gap-1 items-center">
+                    <button onclick="abrirModalEditarClase(${claseId})" class="text-gray-300 hover:text-blue-600 p-2 rounded-lg transition" title="Editar Turno de Consulta">
+                        <i class="ph-bold ph-pencil-simple text-lg"></i>
+                    </button>
                     <button onclick="borrarConsultaAdmin(${inlineJsString(tipoConsulta)}, ${claseId})" class="text-gray-300 hover:text-red-500 p-2 rounded-lg transition" title="Eliminar Turno">
                         <i class="ph-bold ph-trash text-lg"></i>
                     </button>
@@ -20979,7 +21260,10 @@ async function adminTogglePromo50(userId, active) {
                     <p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-user-circle"></i> Instructor: ${escapeHtml(profName)}</p>
                     ${c.descripcion ? `<p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-info"></i> Notas: ${escapeHtml(c.descripcion)}</p>` : ''}
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-1 items-center">
+                    <button onclick="abrirModalEditarClase(${claseId})" class="text-gray-300 hover:text-blue-600 p-2 rounded-lg transition" title="Editar Taller">
+                        <i class="ph-bold ph-pencil-simple text-lg"></i>
+                    </button>
                     <button onclick="borrarTallerAdmin(${claseId})" class="text-gray-300 hover:text-red-500 p-2 rounded-lg transition" title="Eliminar Taller">
                         <i class="ph-bold ph-trash text-lg"></i>
                     </button>
