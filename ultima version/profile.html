@@ -7617,7 +7617,9 @@
             const tipo = String(c.tipo_clase || 'yoga').toLowerCase().trim();
             if (tipo === 'taller' || tipo === 'especial') return false;
             if (c.companion_modality || normalizarModalidadCompania(c.companion_modality) || normalizarModalidadCompania(c.nombre)) return false;
-            return c.es_gratuita === true || c.es_gratis === true || Number(c.precio) === 0;
+            if (c.es_gratuita === true || c.es_gratis === true) return true;
+            const raw = String(c.nombre || '').toLowerCase();
+            return /introductor|bienvenida|prueba|clase abierta/.test(raw);
         }
 
         function actualizarOpcionesFiltrosClases() {
@@ -8228,19 +8230,26 @@
                                 </button>`;
                             }
                         } else if (isFree) {
-                            // ÚNICAMENTE para las sesiones gratuitas designadas (Bono Bienvenida en Verde)
-                            const btnText = (!hasFreeCredit)
-                                ? '0 BONOS BIENVENIDA'
-                                : 'RESERVAR GRATIS (0 €)';
-                            if (!hasFreeCredit) {
+                            // Sesión gratuita/introductoria designada (Bono Bienvenida en Verde)
+                            const classDate = new Date(c.fecha_inicio);
+                            const membershipCoversClass = !!getUnlimitedPeriodForDate(classDate);
+                            const hasRegularCredits = getAvailableClassCreditsForDate(classDate) >= 1;
+
+                            if (hasFreeCredit) {
                                 btnAction = `
-                                <button disabled class="opacity-60 cursor-not-allowed grayscale bg-gray-400 text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-sm flex items-center gap-1.5">
-                                    <i class="ph-bold ph-sparkle"></i> ${escapeHtml(btnText)}
+                                <button onclick="reservar(${claseId})" class="btn-bienvenida-verde text-[11px] font-black px-6 py-2.5 rounded-full shadow-md flex items-center gap-1.5 cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important; color: #ffffff !important; border: 1px solid #10b981 !important; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;">
+                                    <i class="ph-bold ph-sparkle text-sm"></i> RESERVAR GRATIS (0 €)
+                                </button>`;
+                            } else if (membershipCoversClass || hasRegularCredits) {
+                                const btnText = membershipCoversClass ? 'RESERVAR (ILIMITADO)' : 'RESERVAR (1 BONO)';
+                                btnAction = `
+                                <button onclick="reservar(${claseId})" class="btn-reserva-terracotta text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-md cursor-pointer" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%) !important; color: #ffffff !important; border: 1px solid #D27D60 !important; box-shadow: 0 4px 14px rgba(210, 125, 96, 0.35) !important;">
+                                    ${escapeHtml(btnText)}
                                 </button>`;
                             } else {
                                 btnAction = `
-                                <button onclick="reservar(${claseId})" class="btn-bienvenida-verde text-[11px] font-black px-6 py-2.5 rounded-full shadow-md flex items-center gap-1.5 cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important; color: #ffffff !important; border: 1px solid #10b981 !important; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;">
-                                    <i class="ph-bold ph-sparkle text-sm"></i> ${escapeHtml(btnText)}
+                                <button onclick="reservar(${claseId})" class="opacity-80 hover:opacity-100 bg-emerald-800/80 text-white text-[11px] font-bold px-5 py-2.5 rounded-full shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                    <i class="ph-bold ph-sparkle"></i> VER TARIFAS
                                 </button>`;
                             }
                         } else {
@@ -8525,9 +8534,10 @@
             const esCompania = Boolean(modalityCompania);
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = userSaldoYogaCompania >= 1;
+            const esSesionGratuita = esClaseElegibleBonoGratis(clase) || clase.es_gratuita === true || /introductor|bienvenida|prueba|clase abierta/i.test(clase.nombre || '');
 
             // Si es sesión de compañía, NUNCA puede usarse el bono individual de bienvenida
-            const canUseFree = !esCompania && !esEspecial && (esSesionGratuita && (tieneBonoBienvenida || !!clase.es_gratuita));
+            const canUseFree = !esCompania && !esEspecial && esSesionGratuita && tieneBonoBienvenida;
             const canUseCompanion = esCompania && !esEspecial && (tieneBonoCompania || isAdmin || esTrabajador());
             const canUseUnlimited = !esCompania && cubiertaPorIlimitado && !esEspecial;
             const canUsePacks = !esCompania && !esEspecial && (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
@@ -8870,6 +8880,10 @@
                     return false;
                 } else {
                     playYogaSound();
+                    if (canUseFree) {
+                        userSaldoClasesGratis = Math.max(0, userSaldoClasesGratis - 1);
+                        if (currentProfileFields) currentProfileFields.saldo_clases_gratis = userSaldoClasesGratis;
+                    }
                     const profName = clase?.profesionales?.nombre || 'GEN Yoga';
                     const dateStr = `${formatDisplayWeekday(clase.fecha_inicio)} ${new Date(clase.fecha_inicio).getDate()} de ${formatDisplayMonth(clase.fecha_inicio)}`;
                     const horaStr = formatDisplayTime(clase.fecha_inicio);
