@@ -9881,6 +9881,217 @@
             }, 50);
         }
 
+        function agruparReservasAsistencias(listadoReservas) {
+            const companionGroups = new Map();
+            const guestOrphans = [];
+            const standalone = [];
+
+            // 1. Localizar titulares de Yoga en Compañía
+            (listadoReservas || []).forEach(r => {
+                const esInvitado = Boolean(r.beneficio_invitado_de || r.parent_reserva_id);
+                const esCompania = (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.nombre_acompanante || r.welcome_companion_modality);
+                if (!esInvitado && esCompania) {
+                    const key = String(r.id || r.reserva_id || r.user_id);
+                    let mod = r.welcome_companion_modality || '';
+                    if (!mod && r.nombre_acompanante) {
+                        const nacLower = String(r.nombre_acompanante).toLowerCase();
+                        if (nacLower.includes('pareja')) mod = 'pareja';
+                        else if (nacLower.includes('colega') || nacLower.includes('amig')) mod = 'colegas';
+                        else if (nacLower.includes('hijo') || nacLower.includes('hija')) mod = 'hijo';
+                        else if (nacLower.includes('abuela') || nacLower.includes('abuelo')) mod = 'abuela';
+                    }
+                    companionGroups.set(key, {
+                        key,
+                        titular: r,
+                        userId: String(r.user_id),
+                        reservaId: String(r.id || r.reserva_id),
+                        items: [r],
+                        modalidad: mod || 'pareja'
+                    });
+                }
+            });
+
+            // 2. Asociar acompañantes / invitados con su titular
+            (listadoReservas || []).forEach(r => {
+                const esInvitado = Boolean(r.beneficio_invitado_de || r.parent_reserva_id);
+                const esCompania = (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.nombre_acompanante || r.welcome_companion_modality);
+                if (!esInvitado && esCompania) return; // ya procesado como titular
+
+                let assignedGroup = null;
+                if (r.parent_reserva_id) {
+                    for (const grp of companionGroups.values()) {
+                        if (grp.reservaId === String(r.parent_reserva_id) || grp.key === String(r.parent_reserva_id)) {
+                            assignedGroup = grp;
+                            break;
+                        }
+                    }
+                }
+                if (!assignedGroup && r.beneficio_invitado_de) {
+                    for (const grp of companionGroups.values()) {
+                        if (grp.userId === String(r.beneficio_invitado_de)) {
+                            assignedGroup = grp;
+                            break;
+                        }
+                    }
+                }
+                if (!assignedGroup && (esInvitado || esCompania || (r.apellidos && r.apellidos.toLowerCase().includes(' de ')))) {
+                    if (companionGroups.size === 1) {
+                        assignedGroup = companionGroups.values().next().value;
+                    }
+                }
+
+                if (assignedGroup) {
+                    assignedGroup.items.push(r);
+                } else if (esInvitado || esCompania) {
+                    guestOrphans.push(r);
+                } else {
+                    standalone.push(r);
+                }
+            });
+
+            if (guestOrphans.length > 0) {
+                if (companionGroups.size === 1) {
+                    const onlyGrp = companionGroups.values().next().value;
+                    guestOrphans.forEach(g => onlyGrp.items.push(g));
+                } else {
+                    guestOrphans.forEach(g => standalone.push(g));
+                }
+            }
+
+            return {
+                groups: Array.from(companionGroups.values()),
+                standalone
+            };
+        }
+
+        function renderizarTarjetaAlumnoIndividual(r, c, tipoNormalizado, isAdmin, isAgendaProfesor = false, esMiembroGrupo = false, esTitular = false) {
+            const perfil = allAsistenciasPerfilesMap[r.user_id] || {};
+            const contact = obtenerDatosContactoPerfil(perfil);
+            const reservaId = safePositiveInteger(r.id || r.reserva_id) || 0;
+            const cancelBtn = (isAdmin && !isAgendaProfesor)
+                ? `<button onclick="${(tipoNormalizado === 'psicologia' || tipoNormalizado === 'nutricion') ? `cancelarConsulta('${tipoNormalizado}', ${reservaId})` : `cancelar(${reservaId})`}" class="text-gray-300 hover:text-red-500 transition ml-auto relative z-20 p-1 flex-shrink-0" title="Quitar reserva"><i class="ph-bold ph-trash text-base"></i></button>`
+                : '';
+
+            let tagsHtml = '';
+            if (esMiembroGrupo) {
+                if (esTitular) {
+                    tagsHtml += '<span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5"><i class="ph-bold ph-crown-simple text-amber-700"></i> Titular</span>';
+                } else {
+                    tagsHtml += '<span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5"><i class="ph-bold ph-link text-amber-700"></i> Acompañante</span>';
+                }
+            }
+            if (contact.isMostrador) {
+                tagsHtml += '<span class="text-[9px] font-bold text-olive bg-olive/10 border border-olive/20 px-1.5 py-0.5 rounded">Mostrador</span>';
+            } else if (contact.isTemporal && !esMiembroGrupo) {
+                tagsHtml += '<span class="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Temporal</span>';
+            }
+            if (contact.edadStr) {
+                tagsHtml += `<span class="text-[9px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded">${escapeHtml(contact.edadStr)}</span>`;
+            }
+
+            let contactHtml = '';
+            if (contact.cleanTel) {
+                contactHtml += `
+            <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap">
+                <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
+                    <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
+                </a>
+                ${contact.waUrl ? `
+                <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="Abrir chat de WhatsApp">
+                    <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
+                </a>` : ''}
+            </div>`;
+            }
+            if (contact.realEmail) {
+                contactHtml += `
+            <div class="flex items-center gap-1 text-[11px] text-gray-500 truncate mt-0.5">
+                <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
+                    <i class="ph-bold ph-envelope text-gray-400"></i> <span class="truncate">${escapeHtml(contact.realEmail)}</span>
+                </a>
+            </div>`;
+            }
+            if (!contact.cleanTel && !contact.realEmail) {
+                contactHtml = `<span class="text-[10px] text-gray-400 italic">Sin datos de contacto</span>`;
+            }
+
+            const cardBorderBg = esMiembroGrupo
+                ? 'bg-white border-2 border-amber-300/90 rounded-2xl shadow-2xs hover:shadow-xs hover:border-amber-400'
+                : (isAgendaProfesor ? 'bg-white/90 border border-cocoa/10 rounded-2xl shadow-2xs hover:shadow-xs' : 'bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gold-300');
+
+            const avatarBg = esMiembroGrupo
+                ? 'bg-amber-100 text-amber-900 border-amber-300/80'
+                : (isAgendaProfesor ? 'bg-sand/30 text-cocoa border-cocoa/10 shadow-2xs' : 'bg-gray-100 text-gray-700 border-gray-200 shadow-sm');
+
+            return `
+            <div class="flex items-start gap-3 p-3.5 ${cardBorderBg} transition group relative overflow-hidden">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center ${avatarBg} font-bold text-sm border group-hover:scale-105 transition relative z-10 flex-shrink-0 mt-0.5">
+                    ${contact.inicial === '📱' ? '<i class="ph-bold ph-device-mobile"></i>' : escapeHtml(contact.inicial)}
+                </div>
+                <div class="flex flex-col z-10 flex-grow min-w-0 overflow-hidden">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-sm font-bold text-gray-900 truncate cursor-pointer hover:text-olive hover:underline transition" title="${escapeHtml(contact.nombreCompleto)}" onclick="onClickNombreAlumno('${escapeHtml(String(r.user_id))}', event)">${escapeHtml(contact.nombreCompleto)}</span>
+                        ${tagsHtml}
+                    </div>
+                    <div class="mt-1 flex flex-col gap-0.5">
+                        ${contactHtml}
+                    </div>
+                    <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
+                    ${(!r.beneficio_invitado_de && !r.parent_reserva_id && (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante))
+                        ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
+                        : ''}
+                </div>
+                ${cancelBtn}
+            </div>`;
+        }
+
+        function renderizarListaAlumnosConectados(listadoReservas, c, tipoNormalizado, isAdmin, isAgendaProfesor = false) {
+            const { groups, standalone } = agruparReservasAsistencias(listadoReservas);
+            let html = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">';
+
+            // 1. Grupos de Yoga en Compañía (conectados visualmente)
+            groups.forEach(grp => {
+                const modRaw = String(grp.modalidad || c.companion_modality || 'pareja').toLowerCase();
+                let modLabel = 'Pareja';
+                if (modRaw.includes('colega') || modRaw.includes('amig')) modLabel = 'Colegas';
+                else if (modRaw.includes('hijo') || modRaw.includes('hija')) modLabel = 'Hijo/a';
+                else if (modRaw.includes('abuela') || modRaw.includes('abuelo')) modLabel = 'Abuela/Nieta';
+
+                html += `
+                <div class="col-span-full p-4 bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-amber-50/80 rounded-2xl border-2 border-amber-300 shadow-2xs relative">
+                    <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-amber-200/80">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm shadow-2xs">
+                                <i class="ph-bold ph-users-three"></i>
+                            </span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-bold text-amber-950">Grupo Yoga en Compañía</span>
+                                <span class="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    ${escapeHtml(modLabel)}
+                                </span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-white border border-amber-300 px-3 py-1 rounded-full shadow-2xs">
+                            <i class="ph-bold ph-link text-amber-700"></i> Vienen juntos (${grp.items.length} personas)
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        ${grp.items.map(r => {
+                            const esTitular = (!r.beneficio_invitado_de && !r.parent_reserva_id);
+                            return renderizarTarjetaAlumnoIndividual(r, c, tipoNormalizado, isAdmin, isAgendaProfesor, true, esTitular);
+                        }).join('')}
+                    </div>
+                </div>`;
+            });
+
+            // 2. Alumnos individuales
+            standalone.forEach(r => {
+                html += renderizarTarjetaAlumnoIndividual(r, c, tipoNormalizado, isAdmin, isAgendaProfesor, false, false);
+            });
+
+            html += '</div>';
+            return html;
+        }
+
         function renderizarAsistenciasPorClase() {
             const cont = document.getElementById('asistencias-container');
             const empty = document.getElementById('asistencias-empty');
@@ -9986,73 +10197,7 @@
                                 <span>Sin alumnos apuntados todavía.</span>
                             </div>`;
                     } else {
-                        alumnosHTML = `
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                                ${listadoReservas.map(r => {
-                            const perfil = allAsistenciasPerfilesMap[r.user_id] || {};
-                            const contact = obtenerDatosContactoPerfil(perfil);
-                            const reservaId = safePositiveInteger(r.id) || 0;
-                            const cancelBtn = isAdmin
-                                ? `<button onclick="${(tipoNormalizado === 'psicologia' || tipoNormalizado === 'nutricion') ? `cancelarConsulta('${tipoNormalizado}', ${reservaId})` : `cancelar(${reservaId})`}" class="text-gray-300 hover:text-red-500 transition ml-auto relative z-20 p-1 flex-shrink-0" title="Quitar reserva"><i class="ph-bold ph-trash text-base"></i></button>`
-                                : '';
-
-                            let tagsHtml = '';
-                            if (contact.isMostrador) {
-                                tagsHtml += '<span class="text-[9px] font-bold text-olive bg-olive/10 border border-olive/20 px-1.5 py-0.5 rounded">Mostrador</span>';
-                            } else if (contact.isTemporal) {
-                                tagsHtml += '<span class="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Temporal</span>';
-                            }
-                            if (contact.edadStr) {
-                                tagsHtml += `<span class="text-[9px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded">${escapeHtml(contact.edadStr)}</span>`;
-                            }
-
-                            let contactHtml = '';
-                            if (contact.cleanTel) {
-                                contactHtml += `
-                            <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap">
-                                <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
-                                    <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
-                                </a>
-                                ${contact.waUrl ? `
-                                <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="Abrir chat de WhatsApp">
-                                    <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
-                                </a>` : ''}
-                            </div>`;
-                            }
-                            if (contact.realEmail) {
-                                contactHtml += `
-                            <div class="flex items-center gap-1 text-[11px] text-gray-500 truncate mt-0.5">
-                                <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
-                                    <i class="ph-bold ph-envelope text-gray-400"></i> <span class="truncate">${escapeHtml(contact.realEmail)}</span>
-                                </a>
-                            </div>`;
-                            }
-                            if (!contact.cleanTel && !contact.realEmail) {
-                                contactHtml = `<span class="text-[10px] text-gray-400 italic">Sin datos de contacto</span>`;
-                            }
-
-                            return `
-                                    <div class="flex items-start gap-3 p-3.5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gold-300 transition group relative overflow-hidden">
-                                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-700 font-bold text-sm border border-gray-200 shadow-sm group-hover:scale-105 transition relative z-10 flex-shrink-0 mt-0.5">
-                                            ${contact.inicial === '📱' ? '<i class="ph-bold ph-device-mobile"></i>' : escapeHtml(contact.inicial)}
-                                        </div>
-                                        <div class="flex flex-col z-10 flex-grow min-w-0 overflow-hidden">
-                                            <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="text-sm font-bold text-gray-900 truncate cursor-pointer hover:text-olive hover:underline transition" title="${escapeHtml(contact.nombreCompleto)}" onclick="onClickNombreAlumno('${escapeHtml(String(r.user_id))}', event)">${escapeHtml(contact.nombreCompleto)}</span>
-                                                ${tagsHtml}
-                                            </div>
-                                            <div class="mt-1 flex flex-col gap-0.5">
-                                                ${contactHtml}
-                                            </div>
-                                            <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
-                                            ${(!r.beneficio_invitado_de && !r.parent_reserva_id && (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante))
-                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
-                                                : ''}
-                                        </div>
-                                        ${cancelBtn}
-                                    </div>`;
-                        }).join('')}
-                            </div>`;
+                        alumnosHTML = renderizarListaAlumnosConectados(listadoReservas, c, tipoNormalizado, isAdmin, false);
                     }
 
                     const asignarBtn = isAdmin && totalReservas < capacidadMax
@@ -10719,67 +10864,7 @@
                             <span class="text-[11px] font-bold uppercase tracking-wider text-cocoa/70 flex items-center gap-1.5">
                                 <i class="ph-bold ph-users text-olive"></i> ${esConsulta ? 'Paciente asignado' : `Alumnos inscritos (${ocupadas})`}:
                             </span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                            ${listadoReservas.map(r => {
-                            const perfil = allAsistenciasPerfilesMap[r.user_id] || {};
-                            const contact = obtenerDatosContactoPerfil(perfil);
-                            let tagsHtml = '';
-                            if (contact.isMostrador) {
-                                tagsHtml += '<span class="text-[9px] font-bold text-olive bg-olive/10 border border-olive/20 px-1.5 py-0.5 rounded">Mostrador</span>';
-                            } else if (contact.isTemporal) {
-                                tagsHtml += '<span class="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">Temporal</span>';
-                            }
-                            if (contact.edadStr) {
-                                tagsHtml += `<span class="text-[9px] font-medium text-cocoa/50 bg-cocoa/5 border border-cocoa/10 px-1.5 py-0.5 rounded">${escapeHtml(contact.edadStr)}</span>`;
-                            }
-
-                            let contactHtml = '';
-                            if (contact.cleanTel) {
-                                contactHtml += `
-                                        <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap mt-0.5">
-                                            <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
-                                                <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
-                                            </a>
-                                            ${contact.waUrl ? `
-                                            <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="Abrir chat de WhatsApp">
-                                                <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
-                                            </a>` : ''}
-                                        </div>`;
-                            }
-                            if (contact.realEmail) {
-                                contactHtml += `
-                                        <div class="flex items-center gap-1 text-[11px] text-gray-500 truncate mt-0.5">
-                                            <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
-                                                <i class="ph-bold ph-envelope text-gray-400"></i> <span class="truncate">${escapeHtml(contact.realEmail)}</span>
-                                            </a>
-                                        </div>`;
-                            }
-                            if (!contact.cleanTel && !contact.realEmail) {
-                                contactHtml = `<span class="text-[10px] text-gray-400 italic">Sin datos de contacto</span>`;
-                            }
-
-                            return `
-                                    <div class="flex items-start gap-2.5 p-3 bg-white/90 border border-cocoa/10 rounded-2xl shadow-2xs hover:shadow-xs transition group relative overflow-hidden">
-                                        <div class="w-9 h-9 rounded-full flex items-center justify-center bg-sand/30 text-cocoa font-bold text-xs border border-cocoa/10 shadow-2xs flex-shrink-0 mt-0.5">
-                                            ${contact.inicial === '📱' ? '<i class="ph-bold ph-device-mobile"></i>' : escapeHtml(contact.inicial)}
-                                        </div>
-                                        <div class="flex flex-col z-10 flex-grow min-w-0 overflow-hidden">
-                                            <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="text-xs sm:text-sm font-bold text-cocoa truncate cursor-pointer hover:text-olive hover:underline transition" title="${escapeHtml(contact.nombreCompleto)}" onclick="onClickNombreAlumno('${escapeHtml(String(r.user_id))}', event)">${escapeHtml(contact.nombreCompleto)}</span>
-                                                ${tagsHtml}
-                                            </div>
-                                            <div class="mt-0.5 flex flex-col gap-0.5">
-                                                ${contactHtml}
-                                            </div>
-                                            <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
-                                            ${(!r.beneficio_invitado_de && !r.parent_reserva_id && (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante))
-                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
-                                                : ''}
-                                        </div>
-                                    </div>`;
-                        }).join('')}
-                        </div>
+                        ${renderizarListaAlumnosConectados(listadoReservas, c, 'yoga', false, true)}
                     </div>`;
                     }
 
