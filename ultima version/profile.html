@@ -4910,7 +4910,10 @@
 
             // 2. Yoga en Compañía: cualquier modalidad de compañía debe aparecer con ese nombre, nunca como clase suelta.
             if (esReservaCompania) {
-                return renderPagoBadge('Yoga en Compañía', 'Pagado con: Yoga en Compañía');
+                if (r.beneficio_invitado_de || r.parent_reserva_id) {
+                    return renderPagoBadge('Invitado (Yoga en Compañía)', 'Invitado/a con Bono de Yoga en Compañía');
+                }
+                return renderPagoBadge('Yoga en Compañía', 'Pagado con: Bono de Yoga en Compañía');
             }
 
             // 3. Bono Promocional Gratuito (Bienvenida)
@@ -7942,6 +7945,9 @@
                                             <p class="text-xs ${isCompanion ? 'text-amber-800' : 'text-olive'} font-bold mt-0.5 capitalize">
                                                 <i class="ph-bold ph-calendar mr-0.5"></i> ${escapeHtml(diaNombre)} ${diaNumero} ${mes} · ${escapeHtml(hora)}
                                             </p>
+                                            ${(isCompanion && c.miReserva?.nombre_acompanante)
+                                                ? `<p class="text-[11px] text-amber-900 font-semibold mt-0.5 truncate"><i class="ph-bold ph-users-three mr-0.5"></i> Con: ${escapeHtml(c.miReserva.nombre_acompanante)}</p>`
+                                                : ''}
                                         </div>
                                     </div>
                                 </div>
@@ -10046,8 +10052,8 @@
                                                 ${contactHtml}
                                             </div>
                                             <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
-                                            ${String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante
-                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>${r.num_plazas && r.num_plazas > 1 ? `(${r.num_plazas} plazas) ` : ''}Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
+                                            ${(!r.beneficio_invitado_de && !r.parent_reserva_id && (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante))
+                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
                                                 : ''}
                                         </div>
                                         ${cancelBtn}
@@ -10774,8 +10780,8 @@
                                                 ${contactHtml}
                                             </div>
                                             <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
-                                            ${String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante
-                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>${r.num_plazas && r.num_plazas > 1 ? `(${r.num_plazas} plazas) ` : ''}Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
+                                            ${(!r.beneficio_invitado_de && !r.parent_reserva_id && (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante))
+                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
                                                 : ''}
                                         </div>
                                     </div>`;
