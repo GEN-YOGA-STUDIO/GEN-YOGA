@@ -4916,9 +4916,9 @@
                 return renderPagoBadge('Yoga en Compañía', 'Pagado con: Bono de Yoga en Compañía');
             }
 
-            // 3. Bono Promocional Gratuito (Bienvenida)
-            if (r.saldo_gratis_descontado || r.welcome_companion_modality === 'bienvenida') {
-                return renderPagoBadge('Bono Gratuito', 'Pagado con: Bono Gratuito');
+            // 3. Bono de Bienvenida (0 €)
+            if (r.saldo_gratis_descontado || r.welcome_companion_modality === 'bienvenida' || r.tipo_reserva === 'bienvenida') {
+                return renderPagoBadge('Bono de Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)');
             }
 
             // 4. Pase de Invitado
@@ -4931,12 +4931,8 @@
                 return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta');
             }
 
-            // 6. Clase Gratuita abierta del estudio
-            if (c.precio === 0 || c.es_gratis || c.es_gratuita) {
-                return renderPagoBadge('Clase Gratuita', 'Pagado con: Clase Gratuita');
-            }
-
-            return renderPagoBadge('Clase Gratuita', 'Reserva sin bono ni método de pago');
+            // Fallback: Bono de Bienvenida
+            return renderPagoBadge('Bono de Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)');
         }
 
         async function mostrarBonosAlumnoPopup(userId) {
@@ -8708,12 +8704,9 @@
 
             let mensajeConfirmacion;
 
-            if (clase.es_gratuita) {
-                // Sesión 100% libre configurada por el estudio (no consume ningún bono)
-                mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión gratuita (0 €)?';
-            } else if (canUseFree) {
+            if (canUseFree) {
                 // Sesión reservada con el Bono de Bienvenida
-                mensajeConfirmacion = '¿Quieres reservar tu plaza para esta clase con tu <b>Bono de Bienvenida / Sesión Gratuita</b> (0 €)?';
+                mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Bienvenida (0 €)</b>?';
             } else if (esEspecial) {
                 // Clases especiales / Talleres (requieren Bono Ilimitado)
                 if (!cubiertaPorIlimitado) {
