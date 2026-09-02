@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.50" />
+    <meta name="application-version" content="9.51" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.50" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.50" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.51" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.51" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.50">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.51">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.50"></script>
+    <script src="teacher-profiles.js?v=9.51"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.50"></script>
+    <script src="i18n.js?v=9.51"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -3584,7 +3584,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.50. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.51. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4325,7 +4325,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.50';
+        const APP_VERSION = '9.51';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -7979,8 +7979,7 @@
                 } else if (full) {
                     action = '<span class="px-4 py-2 rounded-full bg-gray-100 text-gray-400 text-xs font-bold">COMPLETA</span>';
                 } else {
-                    const available = membershipCoversClass && !isSpecialBenefitUsedForPeriod(membershipPeriod);
-                    action = `<button onclick="reservar(${claseId})" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-terracotta to-golden text-white text-xs font-bold shadow-md hover:shadow-lg transition">${available ? 'RESERVAR ESPECIAL' : 'VER CONDICIONES'}</button>`;
+                    action = `<button onclick="reservar(${claseId})" class="btn-reserva-terracotta text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-md cursor-pointer" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%) !important; color: #ffffff !important; border: 1px solid #D27D60 !important; box-shadow: 0 4px 14px rgba(210, 125, 96, 0.35) !important;">RESERVAR</button>`;
                 }
                 const teacher = String(c.profesionales?.nombre || 'Equipo GEN Yoga');
                 return `
@@ -8308,70 +8307,12 @@
                         const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                         if (!esAlumno) {
                             btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
-                        } else if (isCompanion) {
-                            // Clase de Yoga en Compañía (Dorado / Ámbar garantizado - requiere saldo_yoga_compania)
-                            const hasCompanion = userSaldoYogaCompania >= 1;
-                            const btnText = !hasCompanion
-                                ? '0 BONOS COMPAÑÍA'
-                                : 'RESERVAR YOGA EN COMPAÑÍA (0 €)';
-                            if (!hasCompanion) {
-                                btnAction = `
-                                <button disabled class="opacity-60 cursor-not-allowed grayscale bg-gray-400 text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-sm flex items-center gap-1.5">
-                                    <i class="ph-bold ph-users-three"></i> ${escapeHtml(btnText)}
-                                </button>`;
-                            } else {
-                                btnAction = `
-                                <button onclick="reservar(${claseId})" class="btn-yoga-compania text-[11px] font-black px-6 py-2.5 rounded-full shadow-md flex items-center gap-1.5 cursor-pointer" style="background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #ca8a04 100%) !important; color: #ffffff !important; border: 1px solid #f59e0b !important; box-shadow: 0 4px 14px rgba(217, 119, 6, 0.45) !important;">
-                                    <i class="ph-bold ph-users-three text-sm"></i> ${escapeHtml(btnText)}
-                                </button>`;
-                            }
-                        } else if (isFree) {
-                            // Sesión gratuita/introductoria designada (Bono Bienvenida en Verde)
-                            const classDate = new Date(c.fecha_inicio);
-                            const membershipCoversClass = !!getUnlimitedPeriodForDate(classDate);
-                            const hasRegularCredits = getAvailableClassCreditsForDate(classDate) >= 1;
-
-                            if (hasFreeCredit) {
-                                btnAction = `
-                                <button onclick="reservar(${claseId})" class="btn-bienvenida-verde text-[11px] font-black px-6 py-2.5 rounded-full shadow-md flex items-center gap-1.5 cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important; color: #ffffff !important; border: 1px solid #10b981 !important; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;">
-                                    <i class="ph-bold ph-sparkle text-sm"></i> RESERVAR GRATIS (0 €)
-                                </button>`;
-                            } else if (membershipCoversClass || hasRegularCredits) {
-                                const btnText = membershipCoversClass ? 'RESERVAR (ILIMITADO)' : 'RESERVAR (1 BONO)';
-                                btnAction = `
-                                <button onclick="reservar(${claseId})" class="btn-reserva-terracotta text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-md cursor-pointer" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%) !important; color: #ffffff !important; border: 1px solid #D27D60 !important; box-shadow: 0 4px 14px rgba(210, 125, 96, 0.35) !important;">
-                                    ${escapeHtml(btnText)}
-                                </button>`;
-                            } else {
-                                btnAction = `
-                                <button onclick="reservar(${claseId})" class="opacity-80 hover:opacity-100 bg-emerald-800/80 text-white text-[11px] font-bold px-5 py-2.5 rounded-full shadow-sm flex items-center gap-1.5 cursor-pointer">
-                                    <i class="ph-bold ph-sparkle"></i> VER TARIFAS
-                                </button>`;
-                            }
                         } else {
-                            // Clases regulares (Packs, Bonos o Membresía)
-                            const classDate = new Date(c.fecha_inicio);
-                            const membershipCoversClass = !!getUnlimitedPeriodForDate(classDate);
-                            const canBook = getAvailableClassCreditsForDate(classDate) >= 1 || membershipCoversClass;
-                            const btnText = (!canBook)
-                                ? 'VER PACKS'
-                                : (membershipCoversClass ? 'RESERVAR (ILIMITADO)' : profileT('profile_book', 'RESERVAR'));
-
                             btnAction = `
                                 <button onclick="reservar(${claseId})" class="btn-reserva-terracotta text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-md cursor-pointer" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%) !important; color: #ffffff !important; border: 1px solid #D27D60 !important; box-shadow: 0 4px 14px rgba(210, 125, 96, 0.35) !important;">
-                                    ${escapeHtml(btnText)}
+                                    RESERVAR
                                 </button>`;
                         }
-                    }
-
-                    const classDateForGuest = new Date(c.fecha_inicio);
-                    const guestMembershipPeriod = getUnlimitedPeriodForDate(classDateForGuest);
-                    const guestBenefitCoversClass = !!(
-                        !isAdmin && !STAFF_ROLES.includes(currentUserRole) && !llena && !isFree &&
-                        guestMembershipPeriod && !isGuestBenefitUsedForPeriod(guestMembershipPeriod)
-                    );
-                    if (guestBenefitCoversClass) {
-                        btnAction = `<div class="flex flex-wrap justify-end gap-2">${btnAction}<button onclick="invitarAClase(${claseId})" class="flex items-center gap-1 text-[10px] font-bold text-emerald-700 border border-emerald-200 bg-emerald-50 px-3 py-2 rounded-full hover:bg-emerald-100 transition"><i class="ph-bold ph-user-plus"></i> INVITADO GRATIS</button></div>`;
                     }
 
                     const adminEdit = `<button onclick="abrirModalEditarClase(${claseId})" class="admin-only text-cocoa/30 hover:text-blue-600 transition ml-1 p-1 rounded-lg hover:bg-blue-50" title="Editar Clase"><i class="ph-bold ph-pencil-simple text-base"></i></button>`;
@@ -8631,34 +8572,103 @@
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = userSaldoYogaCompania >= 1;
             const esSesionGratuita = esClaseElegibleBonoGratis(clase) || clase.es_gratuita === true || /introductor|bienvenida|prueba|clase abierta/i.test(clase.nombre || '');
-
-            // Si es sesión de compañía, NUNCA puede usarse el bono individual de bienvenida
-            const canUseFree = !esCompania && !esEspecial && esSesionGratuita && tieneBonoBienvenida;
+            const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
+            const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
+            const canBookNormal = hasRegularCredits || canUseUnlimited;
             const canUseCompanion = esCompania && !esEspecial && (tieneBonoCompania || isAdmin || esTrabajador());
-            const canUseUnlimited = !esCompania && cubiertaPorIlimitado && !esEspecial;
-            const canUsePacks = !esCompania && !esEspecial && (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
 
+            const guestMembershipPeriod = getUnlimitedPeriodForDate(fechaClase);
+            const guestBenefitCoversClass = !!(
+                !isAdmin && !STAFF_ROLES.includes(currentUserRole) && !esEspecial && !esCompania &&
+                guestMembershipPeriod && !isGuestBenefitUsedForPeriod(guestMembershipPeriod)
+            );
+
+            let modoCompania = false;
+            let forceRegular = false;
+
+            // 1. CASO YOGA EN COMPAÑÍA: Opciones post-clic
             if (esCompania) {
-                if (!canUseCompanion) {
+                if (canUseCompanion && canBookNormal) {
+                    const selRes = await Swal.fire({
+                        title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">Opciones de Reserva</div>`,
+                        html: `
+                            <div class="text-left space-y-3 p-1">
+                                <p class="text-xs text-cocoa/80">Esta sesión es de <strong>${escapeHtml(COMPANION_MODALITY_LABELS[modalityCompania] || 'Yoga en Compañía')}</strong>. Selecciona cómo deseas reservar:</p>
+                                
+                                <label class="flex items-start gap-3 p-3 rounded-2xl border-2 border-amber-400 bg-amber-50/80 cursor-pointer hover:bg-amber-100 transition shadow-2xs">
+                                    <input type="radio" name="swal-tipo-reserva-compania" value="compania" checked class="mt-1 accent-amber-600">
+                                    <div>
+                                        <span class="font-bold text-xs text-amber-950 block">🤝 Yoga en Compañía (0 € · 2 plazas)</span>
+                                        <span class="text-[11px] text-amber-800 block">Reserva compartida para ti y tu acompañante con tu Bono de Yoga en Compañía.</span>
+                                    </div>
+                                </label>
+
+                                <label class="flex items-start gap-3 p-3 rounded-2xl border border-cocoa/20 bg-white cursor-pointer hover:bg-sand/20 transition shadow-2xs">
+                                    <input type="radio" name="swal-tipo-reserva-compania" value="normal" class="mt-1 accent-cocoa">
+                                    <div>
+                                        <span class="font-bold text-xs text-cocoa block">🧘 Reserva Individual (1 plaza)</span>
+                                        <span class="text-[11px] text-cocoa/70 block">Asistir individualmente usando tu ${canUseUnlimited ? 'Bono Ilimitado' : 'bono habitual de clase'}.</span>
+                                    </div>
+                                </label>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Continuar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#D27D60',
+                        cancelButtonColor: '#9ca3af',
+                        preConfirm: () => {
+                            return document.querySelector('input[name="swal-tipo-reserva-compania"]:checked')?.value || 'compania';
+                        }
+                    });
+                    if (!selRes.isConfirmed) return false;
+                    if (selRes.value === 'compania') {
+                        modoCompania = true;
+                    } else {
+                        forceRegular = true;
+                    }
+                } else if (canUseCompanion && !canBookNormal) {
+                    modoCompania = true;
+                } else if (!canUseCompanion && canBookNormal) {
+                    const infoRes = await Swal.fire({
+                        title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">Reserva Individual</div>`,
+                        html: `
+                            <div class="text-left space-y-2.5 p-1 text-xs text-cocoa/85">
+                                <p>Esta sesión es de <strong>${escapeHtml(COMPANION_MODALITY_LABELS[modalityCompania] || 'Yoga en Compañía')}</strong>.</p>
+                                <p>No dispones de un Bono de Yoga en Compañía, pero puedes confirmar tu <strong>plaza individual</strong> con tu ${canUseUnlimited ? 'Bono Ilimitado' : 'bono de clase'}.</p>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: canUseUnlimited ? 'Reservar con Bono Ilimitado' : 'Reservar con 1 bono',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#D27D60',
+                        cancelButtonColor: '#9ca3af'
+                    });
+                    if (!infoRes.isConfirmed) return false;
+                    forceRegular = true;
+                } else {
                     await Swal.fire({
                         icon: 'warning',
-                        title: 'Bono de Yoga en Compañía requerido',
+                        title: 'Necesitas un bono de clase',
                         html: `
                             <div class="text-left space-y-2 p-1 text-xs text-cocoa/85">
-                                <p>Esta sesión corresponde a <strong>${escapeHtml(COMPANION_MODALITY_LABELS[modalityCompania] || 'Yoga en Compañía')}</strong> y requiere un <b>Bono de Yoga en Compañía</b>.</p>
-                                <p class="text-cocoa/70">Al darte de alta dispones de un bono gratuito según tu grupo de edad, o puedes consultar las opciones disponibles en la sección de tarifas.</p>
+                                <p>Esta sesión corresponde a <strong>${escapeHtml(COMPANION_MODALITY_LABELS[modalityCompania] || 'Yoga en Compañía')}</strong>.</p>
+                                <p class="text-cocoa/70">Para asistir en compañía necesitas un Bono de Yoga en Compañía, o puedes adquirir un pack de clases para asistir de forma individual.</p>
                             </div>
                         `,
                         showCancelButton: true,
                         confirmButtonText: 'Ver tarifas y bonos',
                         cancelButtonText: 'Cerrar',
-                        confirmButtonColor: '#8C8658'
+                        confirmButtonColor: '#D27D60'
                     }).then(res => {
                         if (res.isConfirmed) window.location.href = 'tarifas.html?cat=yoga';
                     });
                     return false;
                 }
+            }
 
+            // Ejecución de reserva en compañía si fue elegida
+            if (modoCompania) {
                 const plazasLibres = Math.max(0, (clase.capacidad_max || 10) - (clase.ocupadas || 0));
                 let companionData = null;
 
@@ -8794,16 +8804,6 @@
                         error = fallback3.error;
                     }
 
-                    // Fallback para versión histórica de reservar_con_bono con flag de bienvenida
-                    if (error && /schema cache|does not exist|function public\.reservar_con_bono_compania/i.test(error.message || '')) {
-                        const fallbackBono = await client.rpc('reservar_con_bono', {
-                            p_clase_id: claseId,
-                            p_user_id: currentUser.id,
-                            p_use_welcome_companion: true
-                        });
-                        error = fallbackBono.error;
-                    }
-
                     if (error) {
                         Swal.fire({
                             icon: 'error',
@@ -8861,43 +8861,88 @@
                 }
             }
 
-            let mensajeConfirmacion;
+            // 2. CASO SESIÓN GRATUITA / INTRODUCTORIA: Elección entre Bono Bienvenida y Bono Normal
+            if (!esCompania && esSesionGratuita && tieneBonoBienvenida && canBookNormal) {
+                const selFreeRes = await Swal.fire({
+                    title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">Opciones de Reserva</div>`,
+                    html: `
+                        <div class="text-left space-y-3 p-1">
+                            <p class="text-xs text-cocoa/80">Esta sesión es una <strong>Clase Introductoria / Gratuita</strong>. Selecciona qué saldo prefieres utilizar:</p>
 
-            if (canUseFree) {
-                // Sesión reservada con el Bono de Bienvenida
-                mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Bienvenida (0 €)</b>?';
-            } else if (esEspecial) {
-                // Clases especiales / Talleres (requieren Bono Ilimitado)
-                if (!cubiertaPorIlimitado) {
-                    if (automaticPostPayment) safeRemoveItem('pending_booking_clase_id');
-                    await Swal.fire({
-                        icon: 'info',
-                        title: 'Clase especial',
-                        text: 'Esta clase requiere un Bono Ilimitado activo y la clase especial mensual disponible.',
-                        confirmButtonColor: '#8C8658'
-                    });
-                    return false;
+                            <label class="flex items-start gap-3 p-3 rounded-2xl border-2 border-emerald-400 bg-emerald-50/80 cursor-pointer hover:bg-emerald-100 transition shadow-2xs">
+                                <input type="radio" name="swal-tipo-bienvenida" value="bienvenida" checked class="mt-1 accent-emerald-600">
+                                <div>
+                                    <span class="font-bold text-xs text-emerald-950 block">✨ Bono de Bienvenida (0 €)</span>
+                                    <span class="text-[11px] text-emerald-800 block">Disfrutar de tu crédito de bienvenida gratuito (Saldo: ${userSaldoClasesGratis}).</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-3 p-3 rounded-2xl border border-cocoa/20 bg-white cursor-pointer hover:bg-sand/20 transition shadow-2xs">
+                                <input type="radio" name="swal-tipo-bienvenida" value="normal" class="mt-1 accent-cocoa">
+                                <div>
+                                    <span class="font-bold text-xs text-cocoa block">🎟️ Bono Normal / Pack</span>
+                                    <span class="text-[11px] text-cocoa/70 block">Gastar 1 clase de tu pack o bono habitual (conservando tu bono de bienvenida para otra ocasión).</span>
+                                </div>
+                            </label>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Continuar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#D27D60',
+                    cancelButtonColor: '#9ca3af',
+                    preConfirm: () => {
+                        return document.querySelector('input[name="swal-tipo-bienvenida"]:checked')?.value || 'bienvenida';
+                    }
+                });
+                if (!selFreeRes.isConfirmed) return false;
+                forceRegular = selFreeRes.value === 'normal';
+            }
+
+            // 3. CASO BENEFICIO DE INVITADO GRATUITO (Bono Ilimitado)
+            if (!esCompania && guestBenefitCoversClass && !esSesionGratuita) {
+                const guestChoiceRes = await Swal.fire({
+                    title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">Bono Ilimitado</div>`,
+                    html: `
+                        <div class="text-left space-y-3 p-1">
+                            <p class="text-xs text-cocoa/80">Dispones de un <strong>Invitado Gratuito</strong> este mes con tu Bono Ilimitado:</p>
+
+                            <label class="flex items-start gap-3 p-3 rounded-2xl border-2 border-cocoa/30 bg-sand/10 cursor-pointer hover:bg-sand/20 transition shadow-2xs">
+                                <input type="radio" name="swal-guest-opt" value="propia" checked class="mt-1 accent-cocoa">
+                                <div>
+                                    <span class="font-bold text-xs text-cocoa block">🧘 Mi propia plaza (Bono Ilimitado)</span>
+                                    <span class="text-[11px] text-cocoa/70 block">Confirmar tu propia asistencia a la clase.</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-3 p-3 rounded-2xl border border-emerald-300 bg-emerald-50/70 cursor-pointer hover:bg-emerald-100 transition shadow-2xs">
+                                <input type="radio" name="swal-guest-opt" value="invitado" class="mt-1 accent-emerald-600">
+                                <div>
+                                    <span class="font-bold text-xs text-emerald-950 block">🎁 Invitar a un amigo/a (Gratis)</span>
+                                    <span class="text-[11px] text-emerald-800 block">Canjear tu beneficio mensual de invitado para que asista un acompañante.</span>
+                                </div>
+                            </label>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Continuar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#D27D60',
+                    cancelButtonColor: '#9ca3af',
+                    preConfirm: () => {
+                        return document.querySelector('input[name="swal-guest-opt"]:checked')?.value || 'propia';
+                    }
+                });
+                if (!guestChoiceRes.isConfirmed) return false;
+                if (guestChoiceRes.value === 'invitado') {
+                    return await invitarAClase(claseId);
                 }
-                if (isSpecialBenefitUsedForPeriod(periodoIlimitado)) {
-                    await Swal.fire({
-                        icon: 'info',
-                        title: 'Clase especial ya utilizada',
-                        text: 'Ya has usado la clase especial incluida en este mes natural.',
-                        confirmButtonColor: '#8C8658'
-                    });
-                    return false;
-                }
-                mensajeConfirmacion = '¿Quieres usar la <b>clase especial incluida</b> en tu Bono Ilimitado de este mes?';
-            } else if (canUseUnlimited) {
-                // Bono Ilimitado (válido para clases normales y sesiones gratuitas)
-                mensajeConfirmacion = '¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?';
-            } else if (canUsePacks) {
-                // Pack de clases o bonos normales
-                mensajeConfirmacion = esSesionGratuita
-                    ? '¿Quieres reservar esta sesión usando 1 clase de tu <b>Pack de Clases o Bono</b>?'
-                    : '¿Quieres reservar esta clase usando <b>una clase de tu pack o bono</b>?';
-            } else {
-                // Sin bonos válidos
+            }
+
+            const canUseFree = !esCompania && !esEspecial && esSesionGratuita && tieneBonoBienvenida && !forceRegular;
+
+            // 4. Comprobación de saldo disponible para reservar
+            if (!canUseFree && !canBookNormal) {
                 if (automaticPostPayment) {
                     await Swal.fire({
                         icon: 'info',
@@ -8921,11 +8966,43 @@
                     showCancelButton: true,
                     confirmButtonText: hasPromo50 ? 'Ver opciones (50% DTO)' : 'Ver tarifas y packs',
                     cancelButtonText: 'Cancelar',
-                    confirmButtonColor: hasPromo50 ? '#b48a47' : '#8C8658',
+                    confirmButtonColor: hasPromo50 ? '#b48a47' : '#D27D60',
                     cancelButtonColor: '#9ca3af'
                 });
                 if (result.isConfirmed) await abrirCompraPacks(null, claseId);
                 return false;
+            }
+
+            let mensajeConfirmacion = '';
+            if (canUseFree) {
+                mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Bienvenida (0 €)</b>?';
+            } else if (esEspecial) {
+                if (!cubiertaPorIlimitado) {
+                    if (automaticPostPayment) safeRemoveItem('pending_booking_clase_id');
+                    await Swal.fire({
+                        icon: 'info',
+                        title: 'Clase especial',
+                        text: 'Esta clase requiere un Bono Ilimitado activo y la clase especial mensual disponible.',
+                        confirmButtonColor: '#8C8658'
+                    });
+                    return false;
+                }
+                if (isSpecialBenefitUsedForPeriod(periodoIlimitado)) {
+                    await Swal.fire({
+                        icon: 'info',
+                        title: 'Clase especial ya utilizada',
+                        text: 'Ya has usado la clase especial incluida en este mes natural.',
+                        confirmButtonColor: '#8C8658'
+                    });
+                    return false;
+                }
+                mensajeConfirmacion = '¿Quieres usar la <b>clase especial incluida</b> en tu Bono Ilimitado de este mes?';
+            } else if (canUseUnlimited) {
+                mensajeConfirmacion = '¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?';
+            } else {
+                mensajeConfirmacion = esSesionGratuita
+                    ? '¿Quieres reservar esta sesión usando 1 clase de tu <b>Pack de Clases o Bono</b>?'
+                    : '¿Quieres reservar esta clase usando <b>una clase de tu pack o bono</b>?';
             }
 
             const confirmRes = automaticPostPayment
@@ -8935,7 +9012,7 @@
                     html: mensajeConfirmacion,
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonColor: '#8C8658',
+                    confirmButtonColor: '#D27D60',
                     cancelButtonColor: '#9ca3af',
                     confirmButtonText: 'Sí, reservar',
                     cancelButtonText: 'Cancelar'
@@ -8954,14 +9031,16 @@
                 let { error } = await client.rpc('reservar_con_bono', {
                     p_clase_id: claseId,
                     p_user_id: currentUser.id,
-                    p_use_welcome_companion: false
+                    p_use_unlimited_guest: false,
+                    p_force_regular: forceRegular
                 });
 
-                // Fallback automático para firmas de 2 parámetros si la función previa no tuviese el 3er argumento
-                if (error && /p_use_welcome_companion|parameter|signature/i.test(error.message || '')) {
+                // Fallback automático para firmas anteriores sin p_force_regular
+                if (error && /p_force_regular|parameter|signature/i.test(error.message || '')) {
                     const fallbackRes = await client.rpc('reservar_con_bono', {
                         p_clase_id: claseId,
-                        p_user_id: currentUser.id
+                        p_user_id: currentUser.id,
+                        p_use_unlimited_guest: false
                     });
                     error = fallbackRes.error;
                 }
@@ -15745,6 +15824,7 @@ async function adminTogglePromo50(userId, active) {
                         <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', -1, this)" class="w-8 h-8 rounded-lg border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
                         <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 1, this)" class="w-8 h-8 rounded-lg bg-gray-900 text-white hover:bg-black font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
                         <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 5, this)" class="px-2 h-8 rounded-lg bg-olive text-white hover:bg-black font-bold text-[10px] transition cursor-pointer active:scale-95">+5</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 10, this)" class="px-2 h-8 rounded-lg bg-cocoa text-white hover:bg-black font-bold text-[10px] transition cursor-pointer active:scale-95" title="Añadir 10 Clases (Pack 10)">+10</button>
                     </div>
                 </div>
 

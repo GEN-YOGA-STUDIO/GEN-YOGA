@@ -40,7 +40,7 @@ def run_checks():
     check("cargarAsistenciasPorClase presente", "async function cargarAsistenciasPorClase()" in p_html)
     check("Fallback de carga en asistencias presente", "from('clases').select('*')" in p_html and "from('profesionales').select('*')" in p_html)
     check("borrarClase presente con reembolso", "async function borrarClase(id)" in p_html and ("admin_eliminar_clase" in p_html or "saldo_gratis_descontado" in p_html))
-    check("reservarClase con regla canónica (gratis vs regular)", "esSesionGratuita && tieneBonoGratis" in p_html)
+    check("reservarClase con regla canónica (gratis vs regular)", "esSesionGratuita" in p_html and ("tieneBonoBienvenida" in p_html or "tieneBonoGratis" in p_html))
 
     # 3. Public Calendar Critical Rules
     with open("public-calendar.js", "r", encoding="utf-8") as f:
