@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="9.46">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.46">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.46">
+    <meta name="application-version" content="9.47">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.47">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.47">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,12 +25,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.46">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.47">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=9.46"></script>
+    <script src="i18n.js?v=9.47"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -888,12 +888,12 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v9.46 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v9.47 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '9.46';
+        const APP_VERSION = '9.47';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -1787,6 +1787,11 @@
             });
         }
 
+        window.irAReservarSesion = function(hrefDest) {
+            try { Swal.close(); } catch (_) { }
+            window.location.href = hrefDest;
+        };
+
         window.abrirModalSesionesIntroductorias = async function(slug = 'todas') {
             if (sesionesIntroductoriasCache === null) {
                 await actualizarHorariosSesionesIntroductorias();
@@ -1803,6 +1808,16 @@
             const filtradas = (slug && slug !== 'todas')
                 ? (sesionesIntroductoriasCache || []).filter(s => s.profesorSlug === slug)
                 : (sesionesIntroductoriasCache || []);
+
+            const buildHrefDest = (s) => {
+                const isConsulta = s.profesorSlug === 'isabel' || s.profesorSlug === 'miriam' || s.tipo === 'psicologia' || s.tipo === 'nutricion';
+                const targetView = isConsulta ? 'psicologia' : 'horarios';
+                const subtabParam = (s.profesorSlug === 'isabel' || s.tipo === 'nutricion') ? 'nutricion' : (isConsulta ? 'psicologia' : '');
+                const d = new Date(s.fechaIso || s.startDate);
+                const fechaStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const horaStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                return `profile.html?clase=${s.id}&fecha=${fechaStr}&hora=${horaStr}&teacher=${encodeURIComponent(s.profesorSlug)}&view=${targetView}&subtab=${encodeURIComponent(subtabParam)}&tipo=${encodeURIComponent(s.tipo || 'yoga')}&intro=true&oferta=gratis&from=tarifas`;
+            };
 
             if (filtradas.length === 0) {
                 const tName = teacherNames[slug] || (slug === 'todas' ? 'nuestros maestros' : 'este maestro/a');
@@ -1828,11 +1843,15 @@
                 return;
             }
 
+            // Si se ha seleccionado un profesor con exactamente 1 sesión (ej. Yanira, Miriam):
+            // Llevar DIRECTAMENTE a reservar esa sesión correspondiente
+            if (slug && slug !== 'todas' && filtradas.length === 1) {
+                window.location.href = buildHrefDest(filtradas[0]);
+                return;
+            }
+
             const cardsHtml = filtradas.map(s => {
-                const isConsulta = s.profesorSlug === 'isabel' || s.profesorSlug === 'miriam' || s.tipo === 'psicologia' || s.tipo === 'nutricion';
-                const targetView = isConsulta ? 'psicologia' : 'horarios';
-                const subtabParam = (s.profesorSlug === 'isabel' || s.tipo === 'nutricion') ? 'nutricion' : (isConsulta ? 'psicologia' : '');
-                const hrefDest = `profile.html?clase=${s.id}&view=${targetView}&subtab=${encodeURIComponent(subtabParam)}&tipo=${encodeURIComponent(s.tipo || 'yoga')}&intro=true&oferta=gratis&from=tarifas`;
+                const dest = buildHrefDest(s);
 
                 return `
                     <div class="bg-white border-2 rounded-2xl p-4 text-left shadow-sm transition hover:shadow-md flex flex-col justify-between gap-3" style="border-color: ${s.borderColor}; background: linear-gradient(to bottom, #ffffff, ${s.bgColor});">
@@ -1864,25 +1883,25 @@
                             <p class="text-[11px] text-gray-500 mt-2 italic leading-relaxed">${escapeHtml(s.descripcion)}</p>
                         </div>
                         
-                        <a href="${hrefDest}"
-                            class="w-full py-3 text-white text-center text-xs font-bold uppercase tracking-wider rounded-xl transition shadow hover:shadow-lg flex items-center justify-center gap-2"
+                        <button type="button" onclick="irAReservarSesion('${dest}')"
+                            class="w-full py-3 text-white text-center text-xs font-bold uppercase tracking-wider rounded-xl transition shadow hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                             style="background-color: ${s.color};">
-                            <span>Reservar plaza gratis</span>
+                            <span>Reservar esta sesión gratis</span>
                             <i class="ph-bold ph-arrow-right"></i>
-                        </a>
+                        </button>
                     </div>
                 `;
             }).join('');
 
             const titleModal = (slug && slug !== 'todas')
-                ? `Sesiones Introductorias: ${filtradas[0]?.profesor || teacherNames[slug] || ''}`
+                ? `Sesiones: ${filtradas[0]?.profesor || teacherNames[slug] || ''}`
                 : 'Sesiones Introductorias Gratuitas';
 
             Swal.fire({
                 title: `<div class="brand-font text-2xl font-bold text-cocoa pt-2">${titleModal}</div>`,
                 html: `
                     <div class="text-left mb-4">
-                        <p class="text-xs text-cocoa/75 text-center">Conoce nuestro espacio y practica en persona con nuestros maestros sin ningún coste ni compromiso:</p>
+                        <p class="text-xs text-cocoa/75 text-center">Selecciona el horario que prefieras para reservar tu plaza gratuita en persona:</p>
                     </div>
                     <div class="grid grid-cols-1 ${filtradas.length > 1 ? 'md:grid-cols-2' : ''} gap-3.5 max-h-[70vh] overflow-y-auto pr-1">
                         ${cardsHtml}

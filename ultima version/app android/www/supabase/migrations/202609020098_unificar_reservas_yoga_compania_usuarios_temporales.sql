@@ -4,14 +4,34 @@
 
 BEGIN;
 
--- 1. Añadir columna parent_reserva_id para vincular reservas de acompañantes al titular
+-- 1. Permitir perfiles de mostrador e invitados/acompañantes en public.profiles sin cuenta en auth.users
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+
+CREATE OR REPLACE FUNCTION public.handle_deleted_auth_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  DELETE FROM public.profiles WHERE id = old.id;
+  RETURN old;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_deleted ON auth.users;
+CREATE TRIGGER on_auth_user_deleted
+  AFTER DELETE ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_deleted_auth_user();
+
+-- 2. Añadir columna parent_reserva_id para vincular reservas de acompañantes al titular
 ALTER TABLE public.reservas_yoga
   ADD COLUMN IF NOT EXISTS parent_reserva_id bigint REFERENCES public.reservas_yoga(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS reservas_yoga_parent_reserva_idx
   ON public.reservas_yoga(parent_reserva_id);
 
--- 2. Actualizar función de RLS para que el titular pueda ver las reservas de sus acompañantes
+-- 3. Actualizar función de RLS para que el titular pueda ver las reservas de sus acompañantes
 CREATE OR REPLACE FUNCTION public.puede_ver_reserva_clase(p_user_id uuid, p_clase_id bigint)
 RETURNS boolean
 LANGUAGE plpgsql
@@ -77,7 +97,7 @@ BEGIN
 END;
 $function$;
 
--- 3. Función atómica para reservar Yoga en Compañía con reservas individuales y perfiles temporales
+-- 4. Función atómica para reservar Yoga en Compañía con reservas individuales y perfiles temporales
 CREATE OR REPLACE FUNCTION public.reservar_con_bono_compania(
   p_clase_id bigint,
   p_user_id uuid,
@@ -277,7 +297,7 @@ BEGIN
 END;
 $$;
 
--- 4. Actualizar cancelación con bono para limpiar en cascada acompañantes y usuarios temporales
+-- 5. Actualizar cancelación con bono para limpiar en cascada acompañantes y usuarios temporales
 CREATE OR REPLACE FUNCTION public.cancelar_con_bono(p_reserva_id bigint)
 RETURNS void
 LANGUAGE plpgsql
@@ -431,7 +451,7 @@ BEGIN
 END;
 $function$;
 
--- 5. Actualizar get_public_weekly_schedule para unificar el conteo de ocupación real en todas las áreas
+-- 6. Actualizar get_public_weekly_schedule para unificar el conteo de ocupación real en todas las áreas
 CREATE OR REPLACE FUNCTION public.get_public_weekly_schedule(p_week_start date)
 RETURNS TABLE(
   id bigint,
@@ -513,7 +533,7 @@ AS $function$
   ORDER BY c.fecha_inicio;
 $function$;
 
--- 6. Actualizar obtener_ocupacion_clases para contar cada plaza individual
+-- 7. Actualizar obtener_ocupacion_clases para contar cada plaza individual
 CREATE OR REPLACE FUNCTION public.obtener_ocupacion_clases(p_clase_ids bigint[])
 RETURNS TABLE(clase_id bigint, ocupadas bigint)
 LANGUAGE sql
