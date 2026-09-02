@@ -391,7 +391,7 @@ INSERT INTO public.class_credit_packs (
 )
 SELECT
   id,
-  'recov_pack10_' || id || '_' || extract(epoch from now())::bigint,
+  NULL,
   'pack_10',
   10,
   10,
