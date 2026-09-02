@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="9.47" />
+    <meta name="application-version" content="9.46" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.47" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.47" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=9.46" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=9.46" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=9.47">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=9.46">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
-    <script src="teacher-profiles.js?v=9.47"></script>
+    <script src="teacher-profiles.js?v=9.46"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=9.47"></script>
+    <script src="i18n.js?v=9.46"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <style>
@@ -3592,7 +3592,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v9.47. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v9.46. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4333,7 +4333,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '9.47';
+        const APP_VERSION = '9.46';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4892,7 +4892,7 @@
             const badgeClass = 'inline-flex items-center gap-1 text-[9px] font-bold text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b] px-1.5 py-0.5 rounded shadow-2xs';
             const renderPagoBadge = (label, title) => `<span class="${badgeClass}" title="${title}"><i class="ph-bold ph-ticket text-xs"></i> Pagado con: ${label}</span>`;
 
-            const modalidadReserva = String(r.welcome_companion_modality || '').toLowerCase().trim();
+            const modalidadReserva = String(r.welcome_companion_modality || c?.companion_modality || normalizarModalidadCompania(c?.nombre) || '').toLowerCase().trim();
             const esReservaCompania = String(r.tipo_reserva || '').toLowerCase().trim() === 'compania'
                 || (!!modalidadReserva && !['bienvenida', 'gratis'].includes(modalidadReserva));
 
@@ -6966,40 +6966,50 @@
                     return;
                 }
 
+                const modCompania = targetClase.companion_modality || normalizarModalidadCompania(ofertaParam) || normalizarModalidadCompania(targetClase.nombre);
+                if (modCompania) {
+                    setTimeout(() => {
+                        reservar(targetClase.id, { useCompanion: true });
+                    }, 400);
+                    return;
+                }
+
                 const profName = targetClase.profesionales?.nombre || 'GEN Yoga';
                 const dateStr = `${formatDisplayWeekday(targetClase.fecha_inicio)} ${new Date(targetClase.fecha_inicio).getDate()} de ${formatDisplayMonth(targetClase.fecha_inicio)}`;
                 const horaStr = formatDisplayTime(targetClase.fecha_inicio);
 
-                setTimeout(() => {
-                    Swal.fire({
-                        title: `¿Confirmar tu plaza?`,
-                        html: `
-                    <div class="text-left space-y-2 p-1">
-                        <div class="p-3.5 bg-emerald-50 border border-emerald-300/80 rounded-2xl shadow-2xs">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-900 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
-                                🎁 Sesión Gratuita de Bienvenida
-                            </span>
-                            <h4 class="text-base font-bold text-cocoa leading-tight">${escapeHtml(targetClase.nombre)}</h4>
-                            <p class="text-xs text-cocoa/75 mt-1">Con <strong>${escapeHtml(profName)}</strong></p>
-                            <p class="text-xs text-olive font-bold mt-1 flex items-center gap-1">
-                                <i class="ph-bold ph-calendar"></i> ${escapeHtml(dateStr)} · ⏰ ${escapeHtml(horaStr)}
-                            </p>
+                if (targetClase.es_gratuita || introParam || ofertaParam === 'gratis') {
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: `¿Confirmar tu plaza?`,
+                            html: `
+                        <div class="text-left space-y-2 p-1">
+                            <div class="p-3.5 bg-emerald-50 border border-emerald-300/80 rounded-2xl shadow-2xs">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-900 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
+                                    🎁 Sesión Gratuita de Bienvenida
+                                </span>
+                                <h4 class="text-base font-bold text-cocoa leading-tight">${escapeHtml(targetClase.nombre)}</h4>
+                                <p class="text-xs text-cocoa/75 mt-1">Con <strong>${escapeHtml(profName)}</strong></p>
+                                <p class="text-xs text-olive font-bold mt-1 flex items-center gap-1">
+                                    <i class="ph-bold ph-calendar"></i> ${escapeHtml(dateStr)} · ⏰ ${escapeHtml(horaStr)}
+                                </p>
+                            </div>
+                            <p class="text-xs text-cocoa/80 mt-2">Esta sesión es 100% gratuita (0 €). Pulsa en confirmar para asegurar tu plaza directamente.</p>
                         </div>
-                        <p class="text-xs text-cocoa/80 mt-2">Esta sesión es 100% gratuita (0 €). Pulsa en confirmar para asegurar tu plaza directamente.</p>
-                    </div>
-                `,
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonText: '¡Sí, reservar mi plaza gratis!',
-                        cancelButtonText: 'Ver horario completo',
-                        confirmButtonColor: '#059669',
-                        cancelButtonColor: '#795244'
-                    }).then(async (result) => {
-                        if (result.isConfirmed) {
-                            await reservar(targetClase.id, { useCompanion: false });
-                        }
-                    });
-                }, 400);
+                    `,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: '¡Sí, reservar mi plaza gratis!',
+                            cancelButtonText: 'Ver horario completo',
+                            confirmButtonColor: '#059669',
+                            cancelButtonColor: '#795244'
+                        }).then(async (result) => {
+                            if (result.isConfirmed) {
+                                await reservar(targetClase.id, { useCompanion: false });
+                            }
+                        });
+                    }, 400);
+                }
             } else if (fechaParam) {
                 selectedDate = fechaParam;
                 const [y, m] = fechaParam.split('-').map(Number);
@@ -7554,6 +7564,7 @@
             if (!c) return false;
             const tipo = String(c.tipo_clase || 'yoga').toLowerCase().trim();
             if (tipo === 'taller' || tipo === 'especial') return false;
+            if (c.companion_modality || normalizarModalidadCompania(c.companion_modality) || normalizarModalidadCompania(c.nombre)) return false;
             return c.es_gratuita === true || c.es_gratis === true || Number(c.precio) === 0;
         }
 
@@ -7897,7 +7908,9 @@
                 const profFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profName);
                 const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
                 const nombreClase = String(c.nombre || 'Clase de Yoga');
-                const companionBadgeTitle = {
+                const companionModKey = normalizarModalidadCompania(c.companion_modality || c.nombre || c.miReserva?.welcome_companion_modality);
+                const isCompanion = !!companionModKey || c.miReserva?.tipo_reserva === 'compania';
+                const companionBadgeTitle = COMPANION_MODALITY_LABELS[companionModKey] || {
                     pareja: 'Yoga con tu pareja',
                     colegas: 'Yoga con colegas',
                     hijo: 'Yoga con tu hijo',
@@ -8113,6 +8126,15 @@
                     const llena = c.ocupadas >= c.capacidad_max;
                     const reservada = !!c.miReserva;
 
+                    const companionModKey = normalizarModalidadCompania(c.companion_modality || c.nombre);
+                    const isCompanion = !!companionModKey;
+                    const companionBadgeTitle = COMPANION_MODALITY_LABELS[companionModKey] || 'Yoga en compañía';
+
+                    if (isCompanion) {
+                        iconColorClass = 'bg-amber-100 text-amber-900 border-amber-300 shadow-2xs';
+                        tipoTexto = 'Compañía';
+                    }
+
                     const isEligibleFree = esClaseElegibleBonoGratis(c);
                     const hasFreeCredit = userSaldoClasesGratis >= 1;
                     const isFree = isEligibleFree;
@@ -8133,23 +8155,7 @@
                         const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                         if (!esAlumno) {
                             btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
-                        } else if (isFree) {
-                            // ÚNICAMENTE para las 10 sesiones oficiales designadas (Bono Bienvenida en Verde)
-                            const btnText = (!hasFreeCredit)
-                                ? '0 BONOS BIENVENIDA'
-                                : 'RESERVAR GRATIS (0 €)';
-                            if (!hasFreeCredit) {
-                                btnAction = `
-                                <button disabled class="opacity-60 cursor-not-allowed grayscale bg-gray-400 text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-sm flex items-center gap-1.5">
-                                    <i class="ph-bold ph-sparkle"></i> ${escapeHtml(btnText)}
-                                </button>`;
-                            } else {
-                                btnAction = `
-                                <button onclick="reservar(${claseId})" class="btn-bienvenida-verde text-[11px] font-black px-6 py-2.5 rounded-full shadow-md flex items-center gap-1.5 cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important; color: #ffffff !important; border: 1px solid #10b981 !important; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;">
-                                    <i class="ph-bold ph-sparkle text-sm"></i> ${escapeHtml(btnText)}
-                                </button>`;
-                            }
-                        } else if (c.companion_modality) {
+                        } else if (isCompanion) {
                             // Clase de Yoga en Compañía (Dorado / Ámbar garantizado - requiere saldo_yoga_compania)
                             const hasCompanion = userSaldoYogaCompania >= 1;
                             const btnText = !hasCompanion
@@ -8164,6 +8170,22 @@
                                 btnAction = `
                                 <button onclick="reservar(${claseId})" class="btn-yoga-compania text-[11px] font-black px-6 py-2.5 rounded-full shadow-md flex items-center gap-1.5 cursor-pointer" style="background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #ca8a04 100%) !important; color: #ffffff !important; border: 1px solid #f59e0b !important; box-shadow: 0 4px 14px rgba(217, 119, 6, 0.45) !important;">
                                     <i class="ph-bold ph-users-three text-sm"></i> ${escapeHtml(btnText)}
+                                </button>`;
+                            }
+                        } else if (isFree) {
+                            // ÚNICAMENTE para las sesiones gratuitas designadas (Bono Bienvenida en Verde)
+                            const btnText = (!hasFreeCredit)
+                                ? '0 BONOS BIENVENIDA'
+                                : 'RESERVAR GRATIS (0 €)';
+                            if (!hasFreeCredit) {
+                                btnAction = `
+                                <button disabled class="opacity-60 cursor-not-allowed grayscale bg-gray-400 text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-sm flex items-center gap-1.5">
+                                    <i class="ph-bold ph-sparkle"></i> ${escapeHtml(btnText)}
+                                </button>`;
+                            } else {
+                                btnAction = `
+                                <button onclick="reservar(${claseId})" class="btn-bienvenida-verde text-[11px] font-black px-6 py-2.5 rounded-full shadow-md flex items-center gap-1.5 cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important; color: #ffffff !important; border: 1px solid #10b981 !important; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;">
+                                    <i class="ph-bold ph-sparkle text-sm"></i> ${escapeHtml(btnText)}
                                 </button>`;
                             }
                         } else {
@@ -8200,15 +8222,6 @@
                     const profesorAvatar = profesorFoto
                         ? `<img src="${escapeHtml(profesorFoto)}" alt="" class="w-full h-full object-cover">`
                         : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${escapeHtml(profesorName.charAt(0))}</div>`;
-
-                    const companionModKey = String(c.companion_modality || '').toLowerCase().trim();
-                    const isCompanion = !!companionModKey;
-                    const companionBadgeTitle = {
-                        pareja: 'Yoga con tu pareja',
-                        colegas: 'Yoga con colegas',
-                        hijo: 'Yoga con tu hijo',
-                        abuela: 'Yoga con tu abuela'
-                    }[companionModKey] || 'Yoga en compañía';
 
                     if (isCompanion) {
                         iconColorClass = 'bg-amber-100 text-amber-900 border-amber-300 shadow-2xs';
@@ -8452,74 +8465,238 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = String(clase.tipo_clase || '').toLowerCase() === 'taller';
 
-            // Una clase es de tipo sesión gratuita/introductoria o normal (estrictamente una de las 10 oficiales)
-            const esSesionGratuita = esClaseElegibleBonoGratis(clase);
+            // Detección estricta de clase Yoga en Compañía
+            const modalityCompania = normalizarModalidadCompania(clase.companion_modality || clase.nombre);
+            const esCompania = Boolean(modalityCompania);
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = userSaldoYogaCompania >= 1;
-            const esCompania = !!clase.companion_modality;
-            const canUseFree = !esEspecial && (esSesionGratuita && (tieneBonoBienvenida || !!clase.es_gratuita));
-            const canUseCompanion = !esEspecial && (tieneBonoCompania && esCompania);
-            const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
-            const canUsePacks = !esEspecial && (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
 
-            let useCompanion = (options.useCompanion !== undefined && options.useCompanion !== null) ? options.useCompanion : null;
+            // Si es sesión de compañía, NUNCA puede usarse el bono individual de bienvenida
+            const canUseFree = !esCompania && !esEspecial && (esSesionGratuita && (tieneBonoBienvenida || !!clase.es_gratuita));
+            const canUseCompanion = esCompania && !esEspecial && (tieneBonoCompania || isAdmin || esTrabajador());
+            const canUseUnlimited = !esCompania && cubiertaPorIlimitado && !esEspecial;
+            const canUsePacks = !esCompania && !esEspecial && (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
 
-            // Selector interactivo cuando el alumno puede canjear con más de un bono (Bienvenida vs Compañía)
-            if (useCompanion === null && canUseFree && canUseCompanion && !automaticPostPayment) {
-                const defaultIsGratis = window.activeBookingIntent === 'gratis' || !esCompania;
-                const selectorResult = await Swal.fire({
-                    title: 'Elige con qué bono reservar',
-                    html: `
-                <div class="text-left space-y-3 p-1">
-                    <p class="text-xs text-cocoa/80">Tienes varios bonos activos compatibles con esta clase. Elige con cuál deseas confirmar tu plaza:</p>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer ${defaultIsGratis ? 'border-emerald-500 bg-emerald-50/70' : 'border-gray-200 bg-white hover:bg-gray-50'}" id="label-opt-bono-gratis">
-                            <input type="radio" name="swal-bono-choice" value="gratis" ${defaultIsGratis ? 'checked' : ''} class="w-4 h-4 text-emerald-600 focus:ring-emerald-500" onchange="document.getElementById('label-opt-bono-gratis').className='flex items-center gap-3 p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/70 transition cursor-pointer'; document.getElementById('label-opt-bono-compania').className='flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 transition cursor-pointer';">
-                            <div class="flex-grow">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-emerald-900">🎁 Bono de Bienvenida / Sesión Gratuita</span>
-                                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">0 €</span>
-                                </div>
-                                <p class="text-[11px] text-emerald-700/80 mt-0.5">Saldo disponible: <strong>${userSaldoClasesGratis} clase${userSaldoClasesGratis !== 1 ? 's' : ''}</strong></p>
+            if (esCompania) {
+                if (!canUseCompanion) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Bono de Yoga en Compañía requerido',
+                        html: `
+                            <div class="text-left space-y-2 p-1 text-xs text-cocoa/85">
+                                <p>Esta sesión corresponde a <strong>${escapeHtml(COMPANION_MODALITY_LABELS[modalityCompania] || 'Yoga en Compañía')}</strong> y requiere un <b>Bono de Yoga en Compañía</b>.</p>
+                                <p class="text-cocoa/70">Al darte de alta dispones de un bono gratuito según tu grupo de edad, o puedes consultar las opciones disponibles en la sección de tarifas.</p>
                             </div>
-                        </label>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Ver tarifas y bonos',
+                        cancelButtonText: 'Cerrar',
+                        confirmButtonColor: '#8C8658'
+                    }).then(res => {
+                        if (res.isConfirmed) window.location.href = 'tarifas.html?cat=yoga';
+                    });
+                    return false;
+                }
 
-                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer ${!defaultIsGratis ? 'border-amber-500 bg-amber-50/70' : 'border-gray-200 bg-white hover:bg-gray-50'}" id="label-opt-bono-compania">
-                            <input type="radio" name="swal-bono-choice" value="compania" ${!defaultIsGratis ? 'checked' : ''} class="w-4 h-4 text-amber-600 focus:ring-amber-500" onchange="document.getElementById('label-opt-bono-compania').className='flex items-center gap-3 p-3 rounded-xl border-2 border-amber-500 bg-amber-50/70 transition cursor-pointer'; document.getElementById('label-opt-bono-gratis').className='flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 transition cursor-pointer';">
-                            <div class="flex-grow">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-amber-900">🤝 Bono Yoga en Compañía</span>
-                                    <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">0 €</span>
-                                </div>
-                                <p class="text-[11px] text-amber-700/80 mt-0.5">Saldo disponible: <strong>${userSaldoYogaCompania} bono${userSaldoYogaCompania !== 1 ? 's' : ''}</strong></p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            `,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Continuar con la reserva',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#8C8658',
-                    cancelButtonColor: '#9ca3af',
-                    preConfirm: () => {
-                        const selected = document.querySelector('input[name="swal-bono-choice"]:checked');
-                        return selected ? selected.value : (defaultIsGratis ? 'gratis' : 'compania');
+                const plazasLibres = Math.max(0, (clase.capacidad_max || 10) - (clase.ocupadas || 0));
+                let companionData = null;
+
+                if (modalityCompania === 'colegas') {
+                    if (plazasLibres < 3 && !isAdmin) {
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Aforo insuficiente',
+                            text: `Esta clase solo dispone de ${plazasLibres} plaza${plazasLibres === 1 ? '' : 's'} libre${plazasLibres === 1 ? '' : 's'}. Yoga con Colegas requiere al menos 3 plazas libres (tú + 2 amigos). Por favor, elige otro horario disponible.`,
+                            confirmButtonColor: '#5D4037'
+                        });
+                        return false;
                     }
-                });
 
-                if (!selectorResult.isConfirmed) return false;
-                useCompanion = selectorResult.value === 'compania';
-            } else if (useCompanion === null) {
-                if (window.activeBookingIntent === 'gratis' && canUseFree) {
-                    useCompanion = false;
-                } else if (window.activeBookingIntent === 'compania' && canUseCompanion) {
-                    useCompanion = true;
-                } else if (esCompania && canUseCompanion) {
-                    useCompanion = true;
-                } else if (canUseFree) {
-                    useCompanion = false;
+                    const puedeTresAmigos = plazasLibres >= 4 || isAdmin;
+                    const compRes = await Swal.fire({
+                        title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">🤝 Yoga con Colegas</div>`,
+                        html: `
+                            <div class="text-left space-y-3 p-1">
+                                <p class="text-xs text-cocoa/80">Esta sesión es compartida para ti y 2 ó 3 amigos (3 ó 4 plazas en total confirmadas con tu Bono de Yoga en Compañía, 0 €).</p>
+                                <p class="text-xs text-cocoa/90 font-bold">Indica los nombres de los amigos que vendrán contigo:</p>
+                                <div>
+                                    <label class="block text-xs font-bold text-cocoa mb-1">Amigo/a 1 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="swal-amigo-1" class="swal2-input !m-0 !w-full text-xs" placeholder="Nombre y apellidos (obligatorio)">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-cocoa mb-1">Amigo/a 2 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="swal-amigo-2" class="swal2-input !m-0 !w-full text-xs" placeholder="Nombre y apellidos (obligatorio)">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-cocoa mb-1">Amigo/a 3 <span class="text-cocoa/50 text-[10px]">(Opcional)</span></label>
+                                    <input type="text" id="swal-amigo-3" class="swal2-input !m-0 !w-full text-xs" placeholder="Nombre y apellidos (opcional)" ${!puedeTresAmigos ? 'disabled' : ''}>
+                                    ${!puedeTresAmigos ? '<p class="text-[10px] text-amber-700 mt-1">Solo quedan 3 plazas libres en esta clase, por lo que puedes venir con un máximo de 2 amigos.</p>' : ''}
+                                </div>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Confirmar reserva compartida',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#8C8658',
+                        cancelButtonColor: '#9ca3af',
+                        preConfirm: () => {
+                            const a1 = (document.getElementById('swal-amigo-1')?.value || '').trim();
+                            const a2 = (document.getElementById('swal-amigo-2')?.value || '').trim();
+                            const a3 = (document.getElementById('swal-amigo-3')?.value || '').trim();
+                            if (!a1 || !a2) {
+                                Swal.showValidationMessage('Debes indicar el nombre y apellidos de al menos 2 amigos (tú + 2 amigos).');
+                                return false;
+                            }
+                            const amigos = [{ nombre: a1 }, { nombre: a2 }];
+                            if (a3) amigos.push({ nombre: a3 });
+                            return {
+                                numPlazas: amigos.length + 1,
+                                nombreAcompanante: amigos.map(a => a.nombre).join(', '),
+                                acompanantes: amigos
+                            };
+                        }
+                    });
+                    if (!compRes.isConfirmed) return false;
+                    companionData = compRes.value;
+                } else {
+                    if (plazasLibres < 2 && !isAdmin) {
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Aforo insuficiente',
+                            text: `Esta clase solo dispone de ${plazasLibres} plaza libre. Yoga en Compañía requiere al menos 2 plazas libres (tú + tu acompañante). Por favor, elige otro horario disponible.`,
+                            confirmButtonColor: '#5D4037'
+                        });
+                        return false;
+                    }
+
+                    const labelPersona = modalityCompania === 'pareja' ? 'tu pareja'
+                        : modalityCompania === 'hijo' ? 'tu hijo/a'
+                        : modalityCompania === 'abuela' ? 'tu abuela/o' : 'tu acompañante';
+                    const tituloMod = COMPANION_MODALITY_LABELS[modalityCompania] || 'Yoga en Compañía';
+
+                    const compRes = await Swal.fire({
+                        title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">🤝 ${escapeHtml(tituloMod)}</div>`,
+                        html: `
+                            <div class="text-left space-y-3 p-1">
+                                <p class="text-xs text-cocoa/80">Esta sesión es para ti y ${labelPersona} (2 plazas reservadas con tu Bono de Yoga en Compañía, 0 €).</p>
+                                <div>
+                                    <label class="block text-xs font-bold text-cocoa mb-1">Nombre y apellidos de ${labelPersona} <span class="text-red-500">*</span></label>
+                                    <input type="text" id="swal-companion-name" class="swal2-input !m-0 !w-full text-xs" placeholder="Nombre y apellidos (obligatorio)">
+                                </div>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Confirmar reserva (2 plazas)',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#8C8658',
+                        cancelButtonColor: '#9ca3af',
+                        preConfirm: () => {
+                            const cName = (document.getElementById('swal-companion-name')?.value || '').trim();
+                            if (!cName) {
+                                Swal.showValidationMessage(`Debes indicar el nombre y apellidos de ${labelPersona}.`);
+                                return false;
+                            }
+                            return {
+                                numPlazas: 2,
+                                nombreAcompanante: cName,
+                                acompanantes: [{ nombre: cName }]
+                            };
+                        }
+                    });
+                    if (!compRes.isConfirmed) return false;
+                    companionData = compRes.value;
+                }
+
+                try {
+                    isReserving = true;
+                    const btn = document.activeElement;
+                    if (btn && btn.tagName === 'BUTTON') {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="ph-duotone ph-spinner animate-spin"></i>';
+                    }
+
+                    let { error } = await client.rpc('reservar_con_bono_compania', {
+                        p_clase_id: claseId,
+                        p_user_id: currentUser.id,
+                        p_nombre_acompanante: companionData.nombreAcompanante,
+                        p_num_plazas: companionData.numPlazas,
+                        p_acompanantes: companionData.acompanantes
+                    });
+
+                    // Fallback para firmas de 3 parámetros si una caché previa de PostgREST no reconociese aún num_plazas
+                    if (error && /schema cache|does not exist|parameters|function public\.reservar_con_bono_compania/i.test(error.message || '')) {
+                        const fallback3 = await client.rpc('reservar_con_bono_compania', {
+                            p_clase_id: claseId,
+                            p_user_id: currentUser.id,
+                            p_nombre_acompanante: companionData.nombreAcompanante
+                        });
+                        error = fallback3.error;
+                    }
+
+                    // Fallback para versión histórica de reservar_con_bono con flag de bienvenida
+                    if (error && /schema cache|does not exist|function public\.reservar_con_bono_compania/i.test(error.message || '')) {
+                        const fallbackBono = await client.rpc('reservar_con_bono', {
+                            p_clase_id: claseId,
+                            p_user_id: currentUser.id,
+                            p_use_welcome_companion: true
+                        });
+                        error = fallbackBono.error;
+                    }
+
+                    if (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No se puede reservar',
+                            text: getYogaBookingErrorMessage(error),
+                            confirmButtonColor: '#D27D60'
+                        });
+                        return false;
+                    }
+
+                    playYogaSound();
+                    userSaldoYogaCompania = Math.max(0, userSaldoYogaCompania - 1);
+                    if (currentProfileFields) currentProfileFields.saldo_yoga_compania = userSaldoYogaCompania;
+
+                    const profName = clase?.profesionales?.nombre || 'GEN Yoga';
+                    const dateStr = `${formatDisplayWeekday(clase.fecha_inicio)} ${new Date(clase.fecha_inicio).getDate()} de ${formatDisplayMonth(clase.fecha_inicio)}`;
+                    const horaStr = formatDisplayTime(clase.fecha_inicio);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Plaza Confirmada con Éxito!',
+                        html: `
+                            <div class="text-left space-y-2 p-1">
+                                <p class="text-xs text-emerald-800 font-bold">¡Estás oficialmente apuntado/a a esta sesión!</p>
+                                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-cocoa/85 space-y-1">
+                                    <p class="font-bold text-cocoa text-sm">${escapeHtml(clase.nombre)}</p>
+                                    <p><strong>Profesor/a:</strong> ${escapeHtml(profName)}</p>
+                                    <p><strong>Fecha y hora:</strong> ${escapeHtml(dateStr)} a las ${escapeHtml(horaStr)}</p>
+                                    <p class="text-amber-800 font-semibold pt-1 border-t border-emerald-200">🤝 Yoga en Compañía (${companionData.numPlazas} plazas): Con ${escapeHtml(companionData.nombreAcompanante)}</p>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonColor: '#8C8658'
+                    });
+
+                    try {
+                        await checkProfile();
+                        await cargarMisReservasUsuario();
+                        await cargarHorarios();
+                        await cargarClasesEspeciales();
+                        if (isAdmin) await cargarAsistenciasPorClase();
+                        refrescarInicioSiActivo();
+                    } catch (eRefresh) {
+                        console.warn('Error al refrescar tras reserva:', eRefresh);
+                        renderizarCalendario();
+                        renderizarClases();
+                    }
+                    return true;
+                } catch (e) {
+                    console.error('Error al procesar reserva de Yoga en Compañía:', e);
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error inesperado al reservar.', confirmButtonColor: '#D27D60' });
+                    return false;
+                } finally {
+                    isReserving = false;
                 }
             }
 
@@ -8528,10 +8705,7 @@
             if (clase.es_gratuita) {
                 // Sesión 100% libre configurada por el estudio (no consume ningún bono)
                 mensajeConfirmacion = '¿Quieres reservar tu plaza para esta sesión gratuita (0 €)?';
-            } else if (useCompanion === true && canUseCompanion) {
-                // Sesión reservada con el Bono de Yoga en Compañía
-                mensajeConfirmacion = '¿Quieres reservar tu plaza para esta clase con tu <b>Bono de Yoga en Compañía</b> (0 €)?';
-            } else if (useCompanion === false && canUseFree) {
+            } else if (canUseFree) {
                 // Sesión reservada con el Bono de Bienvenida
                 mensajeConfirmacion = '¿Quieres reservar tu plaza para esta clase con tu <b>Bono de Bienvenida / Sesión Gratuita</b> (0 €)?';
             } else if (esEspecial) {
@@ -8613,42 +8787,20 @@
 
             try {
                 isReserving = true;
-                let companionName = '';
-                if (useCompanion === true) {
-                    const companionResult = await Swal.fire({
-                        title: '¿Con quién vienes?',
-                        input: 'text',
-                        inputLabel: 'Indica el nombre de tu acompañante',
-                        inputPlaceholder: 'Nombre y apellidos',
-                        inputValidator: value => !String(value || '').trim() ? 'Es necesario indicar el acompañante.' : undefined,
-                        showCancelButton: true,
-                        confirmButtonText: 'Continuar',
-                        cancelButtonText: 'Cancelar',
-                        confirmButtonColor: '#8C8658'
-                    });
-                    if (!companionResult.isConfirmed) return false;
-                    companionName = String(companionResult.value || '').trim();
-                }
-
                 const btn = document.activeElement;
                 if (btn && btn.tagName === 'BUTTON') {
                     btn.disabled = true;
                     btn.innerHTML = '<i class="ph-duotone ph-spinner animate-spin"></i>';
                 }
 
-                const bookingFunction = useCompanion === true
-                    ? 'reservar_con_bono_compania'
-                    : 'reservar_con_bono';
-                let { error } = await client.rpc(bookingFunction, {
+                let { error } = await client.rpc('reservar_con_bono', {
                     p_clase_id: claseId,
                     p_user_id: currentUser.id,
-                    ...(bookingFunction === 'reservar_con_bono'
-                        ? { p_use_welcome_companion: false }
-                        : { p_nombre_acompanante: companionName })
+                    p_use_welcome_companion: false
                 });
 
                 // Fallback automático para firmas de 2 parámetros si la función previa no tuviese el 3er argumento
-                if (bookingFunction === 'reservar_con_bono' && error && /p_use_welcome_companion|parameter|signature/i.test(error.message || '')) {
+                if (error && /p_use_welcome_companion|parameter|signature/i.test(error.message || '')) {
                     const fallbackRes = await client.rpc('reservar_con_bono', {
                         p_clase_id: claseId,
                         p_user_id: currentUser.id
@@ -9894,8 +10046,8 @@
                                                 ${contactHtml}
                                             </div>
                                             <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
-                                            ${String(r.tipo_reserva || '').toLowerCase() === 'compania'
-                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante pendiente')}</div>`
+                                            ${String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante
+                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>${r.num_plazas && r.num_plazas > 1 ? `(${r.num_plazas} plazas) ` : ''}Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
                                                 : ''}
                                         </div>
                                         ${cancelBtn}
@@ -10622,6 +10774,9 @@
                                                 ${contactHtml}
                                             </div>
                                             <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
+                                            ${String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante
+                                                ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>${r.num_plazas && r.num_plazas > 1 ? `(${r.num_plazas} plazas) ` : ''}Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
+                                                : ''}
                                         </div>
                                     </div>`;
                         }).join('')}
@@ -11878,25 +12033,19 @@
 
                         // Asegurar que la nota también queda persistida aunque el trigger de auth falle o llegue tarde.
                         try {
-                            const { error: profilePersistError } = await client.from('profiles').upsert({
-                                id: newUserId,
-                                email: internalEmail,
-                                nombre: payload.nombre,
-                                apellidos: payload.apellidos || '',
-                                fecha_nacimiento: payload.fecha_nacimiento || null,
-                                telefono: payload.telefono || null,
-                                notas: payload.notas || '',
-                                rol: 'cliente',
-                                bonos: 0,
-                                saldo_clases_gratis: 1,
-                                saldo_consultas_gratis: 1,
-                                saldo_yoga_compania: 1
-                            }, { onConflict: 'id' });
+                            const { error: profilePersistError } = await client.rpc('admin_actualizar_perfil_usuario', {
+                                p_user_id: newUserId,
+                                p_nombre: payload.nombre,
+                                p_apellidos: payload.apellidos || '',
+                                p_telefono: payload.telefono || null,
+                                p_fecha_nacimiento: payload.fecha_nacimiento || null,
+                                p_notas: payload.notas || ''
+                            });
                             if (profilePersistError) {
-                                console.warn('No se pudo persistir la nota del cliente en profiles durante el alta directa:', profilePersistError);
+                                console.warn('No se pudo persistir la nota del cliente mediante RPC durante el alta directa:', profilePersistError);
                             }
                         } catch (persistEx) {
-                            console.warn('Excepción al persistir la nota del cliente en profiles:', persistEx);
+                            console.warn('Excepción al persistir la nota del cliente:', persistEx);
                         }
 
                         // Esperar a que el perfil exista en DB y aplicar los saldos iniciales (con reintentos)

@@ -1800,7 +1800,10 @@
             clase: String(item.id),
             from: 'calendario'
         });
-        if (item.isFree || state.oferta) {
+        if (item.companionModality) {
+            params.set('oferta', item.companionModality);
+            params.set('companion_modality', item.companionModality);
+        } else if (item.isFree || state.oferta) {
             params.set('oferta', state.oferta || 'yoga');
         }
         if (!hasSession) {
