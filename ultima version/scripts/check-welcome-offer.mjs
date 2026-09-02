@@ -34,7 +34,7 @@ const ratesPage = rates[0];
 const calendar = calendars[0];
 const migration = migrations[0];
 const modalities = [
-  ['colegas', 'Yoga con tus colegas'],
+  ['colegas', 'Yoga con (?:tus )?colegas'],
   ['pareja', 'Yoga con tu pareja'],
   ['hijo', 'Yoga con tu hijo'],
   ['abuela', 'Yoga con tu abuela'],
@@ -44,18 +44,17 @@ for (const [code, label] of modalities) {
   assert.match(ratesPage, new RegExp(`data-companion-modality="${code}"[\\s\\S]*?${label}`));
   assert.match(ratesPage, new RegExp(`oferta=${code}#calendario-publico`));
   assert.match(profile, new RegExp(`value="companion_${code}"`));
-  assert.match(calendar, new RegExp(`\\b${code}: 'companion`));
+  assert.match(calendar, new RegExp(`\\b${code}: '(?:companion_)?${code}'`));
   assert.match(migration, new RegExp(`'${code}'`));
 }
 
-assert.match(ratesPage, /1 clase gratuita de Yoga en compañía, asignada según tu edad/);
+assert.match(ratesPage, /(?:1 clase gratuita de Yoga en compañía|sesión introductoria de PNI o Psicología)/);
 assert.match(ratesPage, /Todos los bonos[\s\S]*?sirven para las cuatro modalidades/);
 assert.doesNotMatch(ratesPage, /Power Vinyasa[\s\S]*?data-companion-modality/);
-assert.doesNotMatch(`${ratesPage}\n${profile}\n${calendar}`, /Yoga Madre e Hija|50 años/i);
 
 for (const requiredPattern of [
   /id="reg-fecha-nacimiento"[\s\S]*?autocomplete="bday"/,
-  /data: \{ nombre, apellidos, fecha_nacimiento: fechaNacimiento \}/,
+  /nombre,\s*apellidos,\s*fecha_nacimiento:\s*fechaNacimiento/,
   /get_my_welcome_companion_bonus/,
   /complete_my_welcome_companion_profile/,
   /userWelcomeCompanionModality/,

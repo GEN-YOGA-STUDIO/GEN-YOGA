@@ -111,7 +111,7 @@
             everyone: 'Yoga para Todos',
             therapeutic: 'Yoga terapéutico',
             silviaYoga: 'Yoga con Silvia',
-            ayurveda: 'Ayurveda',
+            ayurveda: 'Yoga y Ayurveda',
             special: 'Talleres',
             filterPractice: 'Filtrar por práctica',
             filterSpecialist: 'Filtrar por profesional',
@@ -181,7 +181,7 @@
             everyone: 'Yoga for Everyone',
             therapeutic: 'Therapeutic yoga',
             silviaYoga: 'Yoga with Silvia',
-            ayurveda: 'Ayurveda',
+            ayurveda: 'Yoga and Ayurveda',
             special: 'Workshops',
             filterPractice: 'Filter by practice',
             filterSpecialist: 'Filter by specialist',
@@ -342,7 +342,7 @@
     function publicClassName(value) {
         const original = String(value || '').trim();
         const normalized = stripDiacritics(original).toLowerCase().replace(/\s+/g, ' ');
-        if (normalized === 'yoga aryuveda') return 'Yoga Ayurveda';
+        if (normalized === 'yoga aryuveda' || normalized === 'yoga ayurveda') return 'Yoga y Ayurveda';
         if (normalized === 'yoga (silvia) consultas') return 'Yoga con Silvia';
         return original;
     }
