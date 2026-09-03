@@ -67,9 +67,20 @@ if (fs.existsSync(profilePath)) {
     check('Guardado de evento admin respetando tipo clase_especial vs taller', profileContent.includes('evento-tipo-categoria') && profileContent.includes('tipoClaseEfectivo'));
     check('Gestión de bonos permite asignar y modificar Clases Especiales a usuarios', profileContent.includes('cambiarClaseEspecialAdmin') && profileContent.includes('asignarNuevaClaseEspecialAdmin'));
     check('Banner voluminoso de Administración de Consultas eliminado', !profileContent.includes('elimina turnos de psicología y nutrición. Revisa las reservas y estados de consulta.'));
+    check('Catálogo de clases soporta clase_especial y taller con badges específicos', profileContent.includes('CLASE ESPECIAL (PLATA)') && profileContent.includes('ajustarDuracionPorCategoriaTipo'));
+    check('Creación de eventos vinculada estrictamente a tipos configurados', profileContent.includes('actualizarTiposEventoModal') && profileContent.includes('Solo se pueden crear eventos cuyo tipo'));
 }
 
-console.log('\n--- 4. Verificando Traducciones (i18n.js) ---');
+console.log('\n--- 4. Verificando Migración v12.3 ---');
+const mig123Path = path.join(root, 'supabase', 'migrations', '202609030008_v12_3_nombres_oficiales_y_catalogo_clases.sql');
+check('Archivo de migración v12.3 existe', fs.existsSync(mig123Path));
+if (fs.existsSync(mig123Path)) {
+    const m123 = fs.readFileSync(mig123Path, 'utf8');
+    check('Taller 5821 renombrado a Introducción a Power Vinyasa', m123.includes('Introducción a Power Vinyasa') && m123.includes('5821'));
+    check('tipos_clases incluye categorías clase_especial y taller sincronizadas', m123.includes("categoria = 'clase_especial'") && m123.includes("categoria = 'taller'"));
+}
+
+console.log('\n--- 5. Verificando Traducciones (i18n.js) ---');
 const i18nPath = path.join(root, 'i18n.js');
 if (fs.existsSync(i18nPath)) {
     const i18nContent = fs.readFileSync(i18nPath, 'utf8');
@@ -81,6 +92,6 @@ if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.2 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.3 superadas con éxito!');
     process.exit(0);
 }
