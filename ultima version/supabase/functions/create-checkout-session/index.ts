@@ -33,7 +33,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '10.19'
+const APP_RELEASE = '11.0'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 

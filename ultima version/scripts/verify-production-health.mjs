@@ -103,9 +103,8 @@ async function run() {
     // --- 5. TARIFAS Y OFERTAS (TARIFAS.HTML) ---
     console.log('\n🔍 5. Estructura de tarifas y ofertas (tarifas.html)...');
     const tarifasHtml = await readFile(path.join(root, 'tarifas.html'), 'utf8');
-    check('Ficha 1: Bono de Bienvenida presente', tarifasHtml.includes('rates_welcome_title') || tarifasHtml.includes('Bono de Bienvenida'));
-    check('Ficha 2: Sesiones Introductorias presente', tarifasHtml.includes('rates_intro_title') || tarifasHtml.includes('Sesiones Introductorias'));
-    check('Ficha 3: Yoga en Compania presente', tarifasHtml.includes('rates_companion_title') || tarifasHtml.includes('Yoga en compañ'));
+    check('Oferta Única: Bono de Bienvenida (0 €) presente', (tarifasHtml.includes('rates_welcome_title') || tarifasHtml.includes('Bono de Bienvenida')) && tarifasHtml.includes('0 €'));
+    check('Inactivadas ofertas anteriores en sección ofertas', !tarifasHtml.includes('rates_intro_badge') && !tarifasHtml.includes('rates_companion_eyebrow'));
     check('Pestanas de filtrado (Ofertas, Clases, Consultas, Talleres)', tarifasHtml.includes('tab-ofertas') && tarifasHtml.includes('tab-yoga') && tarifasHtml.includes('tab-psicologia') && tarifasHtml.includes('tab-talleres'));
 
     // --- 6. CANALES DE CONTACTO Y WHATSAPP ---

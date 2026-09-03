@@ -611,14 +611,9 @@
     function classMatchesFilters(item) {
         if (state.oferta) {
             const ofKey = state.oferta.toLowerCase().trim();
-            if (COMPANION_MODALITY_LABELS[ofKey]) {
-                if (ofKey === 'abuela' || ofKey === 'madre') {
-                    if (item.companionModality !== 'abuela' && item.companionModality !== 'madre') return false;
-                } else if (item.companionModality !== ofKey) {
-                    return false;
-                }
-            } else if (['yoga', 'bienvenida', 'gratis', 'intro', 'introductoria'].includes(ofKey)) {
-                if (!item.isFree) return false;
+            if (['yoga', 'bienvenida', 'gratis', 'intro', 'introductoria'].includes(ofKey)) {
+                // v11.0: Todas las clases regulares de yoga son elegibles con el bono de bienvenida
+                if (item.classType === 'taller' || item.isSpecial) return false;
             }
         }
         if (state.style) {
@@ -715,7 +710,7 @@
             if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
                 return { disabled: true, stateClass: 'is-full gy-calendar__event-badge--occupied', badge: text('calendar_spot_occupied'), hint: text('calendar_spot_occupied') };
             }
-            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: text('availableReservation'), hint: text('calendar_book_consultation') };
+            return { disabled: false, stateClass: '', badge: text('availableReservation'), hint: text('calendar_book_consultation') };
         }
         if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
             return { disabled: true, stateClass: 'is-full', badge: text('full'), hint: text('full') };
@@ -727,10 +722,6 @@
         }
         if (item.classType === 'taller') {
             return { disabled: false, stateClass: '', badge: text('availableReservation'), hint: text('workshop') };
-        }
-        if (item.isFree) {
-            const badge = `🎁 Gratuita · ${text('availableReservation')}`;
-            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge, hint: 'Reservar gratis' };
         }
         const badge = text('availableReservation');
         return { disabled: false, stateClass: '', badge, hint: text('buy') };
