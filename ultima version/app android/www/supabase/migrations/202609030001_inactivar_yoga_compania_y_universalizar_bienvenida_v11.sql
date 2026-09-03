@@ -215,6 +215,10 @@ END;
 $$;
 
 -- 5. Universalizar reservar_con_bono: cualquier clase regular de yoga es reservable con saldo_clases_gratis
+DROP FUNCTION IF EXISTS public.reservar_con_bono(bigint, uuid, boolean) CASCADE;
+DROP FUNCTION IF EXISTS public.reservar_con_bono(bigint, uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.reservar_con_bono CASCADE;
+
 CREATE OR REPLACE FUNCTION public.reservar_con_bono(
   p_clase_id bigint,
   p_user_id uuid,
@@ -392,9 +396,26 @@ BEGIN
 END;
 $$;
 
+-- Sobrecarga compatible para llamadas con 2 parámetros
+CREATE OR REPLACE FUNCTION public.reservar_con_bono(
+  p_clase_id bigint,
+  p_user_id uuid
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+  PERFORM public.reservar_con_bono(p_clase_id, p_user_id, false);
+END;
+$$;
+
 REVOKE ALL ON FUNCTION public.reservar_con_bono(bigint, uuid, boolean) FROM public;
-GRANT EXECUTE ON FUNCTION public.reservar_con_bono(bigint, uuid, boolean) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.reservar_con_bono(bigint, uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.reservar_con_bono(bigint, uuid, boolean) TO anon, authenticated, service_role;
+
+REVOKE ALL ON FUNCTION public.reservar_con_bono(bigint, uuid) FROM public;
+GRANT EXECUTE ON FUNCTION public.reservar_con_bono(bigint, uuid) TO anon, authenticated, service_role;
 
 -- 6. Inactivar Yoga en Compañía en canjear_oferta_promocional
 CREATE OR REPLACE FUNCTION public.canjear_oferta_promocional(p_oferta text)
