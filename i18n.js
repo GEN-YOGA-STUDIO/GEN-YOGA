@@ -32,7 +32,7 @@ const translations = {
         "hero_quote": "En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu mente encuentren su equilibrio natural...",
         "hero_btn_more": "Ver más",
         "hero_subquote": "Tu refugio, tu energía, tu momento",
-        "marquee_text": "ECOSISTEMA DE SALUD INTEGRATIVA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EN ALIANZA CON FARMACIA Q19 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES",
+        "marquee_text": "NUEVO BONO DE BIENVENIDA · 1ª CLASE DE YOGA A 0 € AL CREAR TU CUENTA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ECOSISTEMA DE SALUD INTEGRATIVA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EN ALIANZA CON FARMACIA Q19 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1ª CLASE DE YOGA GRATIS (0 €) EN CUALQUIER HORARIO REGULAR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES",
 
         // index.html Modals
         "modal_history_title": "GEN YOGA",
@@ -477,7 +477,7 @@ const translations = {
         "hero_quote": "At GEN Yoga we fuse movement, breath and awareness to create a space where your body and mind find their natural balance...",
         "hero_btn_more": "learn more",
         "hero_subquote": "Your refuge, your energy, your moment",
-        "marquee_text": "INTEGRATIVE HEALTH ECOSYSTEM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IN PARTNERSHIP WITH PHARMACY Q19 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTER LED BY HEALTHCARE PROFESSIONALS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BOOK YOUR TRIAL CLASS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA & MEDITATION &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FLEXIBLE PASSES",
+        "marquee_text": "NEW WELCOME PASS · 1ST YOGA CLASS AT 0 € WHEN CREATING YOUR ACCOUNT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; INTEGRATIVE HEALTH ECOSYSTEM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IN PARTNERSHIP WITH PHARMACY Q19 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTER LED BY HEALTHCARE PROFESSIONALS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1ST REGULAR YOGA CLASS FREE (0 €) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA & MEDITATION &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FLEXIBLE PASSES",
 
         // index.html Modals
         "modal_history_title": "GEN YOGA",

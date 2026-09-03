@@ -698,7 +698,7 @@
                 if (Number.isFinite(value) && value >= 0 && value <= 168) return value;
             }
         } catch (_) {}
-        return 12;
+        return 24;
     }
 
     function getEventState(item) {

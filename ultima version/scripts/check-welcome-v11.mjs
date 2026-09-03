@@ -37,8 +37,8 @@ console.log('\n--- 3. Verificando Área Privada y Reservas (profile.html) ---');
 const profileHtml = fs.readFileSync(path.join(root, 'profile.html'), 'utf8');
 check('Bono de bienvenida permite reservar cualquier clase regular', profileHtml.includes('const esSesionGratuita = !esEspecial;'));
 check('Yoga en compañía inactivado en flags de reserva', profileHtml.includes('const modalityCompania = \'\';') && profileHtml.includes('const esCompania = false;'));
-check('Modalidad selector oculto en creación de clase', profileHtml.includes('<!-- Modalidad y Acceso a la Clase (Inactivado en v11.0: Todas las clases son regulares) -->'));
-check('Yoga en Compañía oculto en modal admin de saldo de usuario', profileHtml.includes('<!-- 3. Yoga en Compañía (Inactivado en v11.0) -->'));
+check('Modalidad selector oculto en creación de clase', profileHtml.includes('Modalidad y Acceso a la Clase (Inactivado'));
+check('Yoga en Compañía oculto en modal admin de saldo de usuario', profileHtml.includes('Yoga en Compañía (Inactivado'));
 check('Yoga en Compañía inactivado en saldo inicial mostrador', profileHtml.includes('saldo_yoga_compania: 0'));
 
 console.log('\n--- 4. Verificando Migración SQL v11.0 ---');
@@ -51,11 +51,26 @@ if (fs.existsSync(sqlPath)) {
     check('Trigger actualizado para nuevos usuarios', sqlContent.includes('crear_perfil_nuevo_usuario') && sqlContent.includes('saldo_clases_gratis'));
 }
 
+console.log('\n--- 5. Verificando Mejoras v11.1 (Flash Modal, Ticker y Aforos Ocultos) ---');
+const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+check('Flash Modal presente en index.html', indexHtml.includes('id="flash-welcome-modal"'));
+check('Flash Modal anuncia primera clase gratis (0 €)', indexHtml.includes('¡Tu 1ª Clase de Yoga es Gratis!') && indexHtml.includes('0 €'));
+check('Flash Modal enlaza a registro con bono', indexHtml.includes('profile.html?action=register') && indexHtml.includes('promo=bienvenida'));
+check('Función para cerrar Flash Modal', indexHtml.includes('cerrarFlashWelcomeModal'));
+
+check('Marquesina superior index.html habla del Bono de Bienvenida a 0 €', indexHtml.includes('NUEVO BONO DE BIENVENIDA · 1ª CLASE DE YOGA A 0 €'));
+const i18nJs = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8');
+check('i18n.js incluye Bono de Bienvenida a 0 € en marquesina', i18nJs.includes('NUEVO BONO DE BIENVENIDA · 1ª CLASE DE YOGA A 0 €'));
+
+check('Perfil de alumno no muestra aforo numérico en clases regulares', profileHtml.includes('infoCapacidadOEstado') && profileHtml.includes('Reserva Disponible') && profileHtml.includes('Reserva Cerrada'));
+check('Perfil de alumno no muestra aforo numérico en talleres', profileHtml.includes('aforoOEstadoTaller'));
+check('Tarjeta de registro en perfil muestra incentivo del Bono de Bienvenida', profileHtml.includes('Bono de Bienvenida Automático') && profileHtml.includes('¡Tu 1ª clase de Yoga es 100% GRATIS (0 €)!'));
+
 if (errors.length > 0) {
-    console.error(`\n❌ Fallaron ${errors.length} comprobaciones de v11.0:`);
+    console.error(`\n❌ Fallaron ${errors.length} comprobaciones de v11.0/v11.1:`);
     errors.forEach(e => console.error(`  - ${e}`));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 11.0 han superado con éxito!\n');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 11.0 / 11.1 han superado con éxito!\n');
     process.exit(0);
 }
