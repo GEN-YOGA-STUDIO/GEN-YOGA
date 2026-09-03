@@ -458,20 +458,21 @@ if (!/stopModalMedia\(\)/.test(closeModalFlow)) {
 
 const profile = await readFile(path.join(root, 'profile.html'), 'utf8');
 const adminStudentSearchFlow = profile.match(
-  /const ADMIN_STUDENT_SEARCH_RESULT_LIMIT[\s\S]*?(?=\nasync function abrirModalAsignarClaseYoga)/,
+  /const ADMIN_STUDENT_SEARCH_RESULT_LIMIT[\s\S]*?(?=\n\s*async function abrirModalAsignarClaseYoga)/,
 )?.[0] || '';
 const manualYogaAssignmentFlow = profile.match(
-  /async function abrirModalAsignarClaseYoga[\s\S]*?(?=\nasync function cargarGrupoEnClaseCreada)/,
+  /async function abrirModalAsignarClaseYoga[\s\S]*?(?=\n\s*async function cargarGrupoEnClaseCreada)/,
 )?.[0] || '';
 const manualConsultationAssignmentFlow = profile.match(
-  /async function abrirModalAsignarConsulta[\s\S]*?(?=\nasync function asignarClienteAConsulta)/,
+  /async function abrirModalAsignarConsulta[\s\S]*?(?=\n\s*async function asignarClienteAConsulta)/,
 )?.[0] || '';
 const consultationAssignmentRpcFlow = profile.match(
-  /async function asignarClienteAConsulta[\s\S]*?(?=\n\/\/ Las funciones legacy)/,
+  /async function asignarClienteAConsulta[\s\S]*?(?=\n\s*\/\/ Las funciones legacy)/,
 )?.[0] || '';
 const manualWorkshopAssignmentFlow = profile.match(
-  /async function abrirModalAsignarTaller[\s\S]*?(?=\nasync function cancelarReservaTaller)/,
+  /async function abrirModalAsignarTaller[\s\S]*?(?=\n\s*async function cancelarReservaTaller)/,
 )?.[0] || '';
+
 
 for (const [required, label] of [
   ['ADMIN_STUDENT_SEARCH_RESULT_LIMIT = 50', 'límite de resultados del buscador de alumnos'],

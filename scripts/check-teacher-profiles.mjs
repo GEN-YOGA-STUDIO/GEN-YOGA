@@ -12,11 +12,11 @@ const { descriptions, getEnglishProfile, repairLegacyDescription } = teacherProf
 const angel = descriptions.angel;
 const silvia = descriptions.silvia;
 
-assert.match(angel, /LUGAR DE NACIMIENTO: La Roda \(Albacete\)/);
+assert.match(angel, /SOBRE MÍ:\nLos últimos 6 años me dedico al estudio/);
 assert.doesNotMatch(angel, /\bNinguna\b/i);
-assert.match(angel, /TITULACIONES:\nBaso mi aprendizaje/);
-assert.match(angel, /Además, estoy cursando una mentoría para la certificación como profesor de yoga Iyengar\./);
-assert.doesNotMatch(angel, /\bseptiembre\b/i);
+assert.match(angel, /TITULACIONES:\nMi formación es constante/);
+assert.match(angel, /ÁMBITOS DE SESIÓN:\nLa práctica se basa en el ajuste preciso/);
+
 
 for (const invalidCopy of [
   /personal Y/,
@@ -71,11 +71,12 @@ assert.match(repairedMiriam.descripcion, /LUGAR DE NACIMIENTO:\s*Albacete \(Espa
 assert.doesNotMatch(repairedMiriam.descripcion, /Cuenca/i);
 
 const angelEnglish = getEnglishProfile({ nombre: 'Ángel Javier' });
-assert.match(angelEnglish.descripcion, /La Roda \(Albacete\)/);
+assert.match(angelEnglish.descripcion, /ABOUT ME:\nFor the past 6 years/);
 assert.doesNotMatch(angelEnglish.descripcion, /\bNone\b/);
 assert.doesNotMatch(angelEnglish.descripcion, /\bSeptember\b/);
-assert.match(angelEnglish.descripcion, /I SUPPORT YOU:/);
+assert.match(angelEnglish.descripcion, /SESSION FOCUS:/);
 assert.equal(angelEnglish.especialidad, 'Yoga for Men & Yoga for Everyone | classes');
+
 
 const miriamEnglish = getEnglishProfile({ email: 'miriam_profesora@genyoga.studio' });
 assert.match(miriamEnglish.descripcion, /self-awareness/);

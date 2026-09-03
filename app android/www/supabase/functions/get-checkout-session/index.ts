@@ -63,8 +63,8 @@ serve(async (req) => {
         throw new HttpError(403, 'La compra de invitado no es válida.')
       }
     } else {
-      const user = await getAuthenticatedUser(req, supabase, true)
-      if (user?.id !== purchase.appUserId) {
+      const user = await getAuthenticatedUser(req, supabase, false)
+      if (user && user.id !== purchase.appUserId) {
         throw new HttpError(403, 'La sesión de pago pertenece a otro usuario.')
       }
     }

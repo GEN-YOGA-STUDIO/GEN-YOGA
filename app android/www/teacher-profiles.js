@@ -2,19 +2,15 @@
     'use strict';
 
     const descriptions = Object.freeze({
-        angel: `LUGAR DE NACIMIENTO: La Roda (Albacete)
+        angel: `SOBRE MÍ:
+Los últimos 6 años me dedico al estudio y la práctica de Yoga. Centrándome en la profundidad del trabajo físico y en los beneficios que procura a todos los niveles.
+Siempre como estudiante, trato de compartir las enseñanzas que recibo y lo que aprendo de mi experiencia.
 
 TITULACIONES:
-Baso mi aprendizaje en el autoestudio y la práctica, en recibir clases e intensivos de profesores con larga trayectoria —anatomía, asana, filosofía y todo lo necesario para mi desarrollo en el camino del yoga—. Además, estoy cursando una mentoría para la certificación como profesor de yoga Iyengar.
+Mi formación es constante y está basada en el autoestudio y la práctica, en recibir clases e intensivos de profesores con larga trayectoria —anatomía, asana, filosofía y todo lo necesario para mi desarrollo en el camino del yoga—.
 
-SOBRE MÍ:
-Cuento con 6 años de experiencia en la práctica del yoga, de los cuales 5 años y medio están dedicados a estudiar y practicar yoga Iyengar en Valencia y La Roda.
-
-TE ACOMPAÑO:
-La práctica se basa en el ajuste preciso y la correcta alineación del cuerpo. Adapto la postura a las condiciones de cada alumno o alumna para encontrar los efectos y beneficios del asana. Trabajamos en la comprensión de las acciones y en sentir lo que hacemos; desde la profundidad de ese trabajo físico, abrimos la posibilidad de relacionarnos de una manera acorde con el conocimiento propio que surge con la práctica.
-
-ME DEFINE:
-"Dedicación y cuidado"`,
+ÁMBITOS DE SESIÓN:
+La práctica se basa en el ajuste preciso y la correcta alineación del cuerpo. Adaptando la postura a las condiciones de cada alumno o alumna para encontrar los efectos y beneficios de asana. Trabajamos en la comprensión de las acciones y en sentir lo que hacemos y, así, abrirnos a la posibilidad de una mejor relación interna a partir del conocimiento propio surgido de la práctica.`,
         miriam: `LUGAR DE NACIMIENTO: Albacete (España)
 
 TITULACIONES:
@@ -126,19 +122,15 @@ ME DEFINE:
         angel: Object.freeze({
             nombre: 'Ángel Javier',
             especialidad: 'Yoga for Men & Yoga for Everyone | classes',
-            descripcion: `PLACE OF BIRTH: La Roda (Albacete)
+            descripcion: `ABOUT ME:
+For the past 6 years, I have dedicated myself to the study and practice of Yoga, focusing on the depth of physical work and the benefits it brings on all levels.
+Always as a student, I seek to share the teachings I receive and what I learn from my experience.
 
 QUALIFICATIONS:
-I base my learning on self-study and practice, as well as classes and intensive courses with highly experienced teachers in anatomy, asana, philosophy and everything needed for my development on the path of yoga. In addition, I am currently undertaking a mentorship toward certification as an Iyengar yoga teacher.
+My education is ongoing and grounded in self-study and practice, attending classes and intensives with long-standing experienced teachers —anatomy, asana, philosophy, and everything essential for my progression on the yoga path—.
 
-ABOUT ME:
-I have 6 years of yoga experience, including 5 and a half years dedicated to studying and practising Iyengar yoga in Valencia and La Roda.
-
-I SUPPORT YOU:
-The practice is based on precise adjustment and correct body alignment. I adapt each posture to every student's needs so they can experience the effects and benefits of asana. We work on understanding the actions and feeling what we do; through the depth of this physical work, we open a way of relating to ourselves that reflects the self-knowledge developed through practice.
-
-WHAT DEFINES ME:
-"Dedication and care"`
+SESSION FOCUS:
+Practice is based on precise adjustment and correct body alignment, adapting the posture to each student's needs to experience the effects and benefits of asana. We work on understanding the actions and feeling what we do, and thus opening ourselves to the possibility of an improved internal relationship rooted in the self-knowledge gained from practice.`
         }),
         miriam: Object.freeze({
             nombre: 'Miriam',
@@ -326,19 +318,16 @@ Mindfulness for adults and children`
         let correctedSpecialty = originalSpecialty;
 
         if (key === 'angel') {
-            if (/(TITULACIONES:\s*)Ninguna\./i.test(corrected)) {
+            if (
+                /(TITULACIONES:\s*)Ninguna\./i.test(corrected)
+                || /mentoría para la certificación/i.test(corrected)
+                || /Cuento con 6 años de experiencia/i.test(corrected)
+                || /yoga Iyengar en Valencia/i.test(corrected)
+                || /Dedicación y cuidado/i.test(corrected)
+                || /LUGAR DE NACIMIENTO:\s*La Roda/i.test(corrected)
+            ) {
                 corrected = descriptions.angel;
             }
-            corrected = corrected
-                .replace(
-                    /(LUGAR DE NACIMIENTO:\s*)La Roda(?!\s*\(Albacete\))/i,
-                    '$1La Roda (Albacete)'
-                )
-                .replace(/(TITULACIONES:\s*)Ninguna\.\s*/i, '$1')
-                .replace(
-                    /En septiembre comienzo la mentoría para la certificación como profesor de yoga Iyengar\./i,
-                    'Además, estoy cursando una mentoría para la certificación como profesor de yoga Iyengar.'
-                );
             correctedSpecialty = correctedSpecialty.replace(
                 /Yoga terap[eé]utico/gi,
                 'Yoga para Todos'

@@ -24,6 +24,8 @@ export const PURCHASE_TYPES = {
   ISABEL_PNI_SIG: 'isabel_pni_sig',
   CLASE_ESPECIAL: 'clase_especial',
   TALLER_INTRO_POWER_VINYASA: 'taller_intro_power_vinyasa',
+  TALLER_35: 'taller_35',
+  TALLER: 'taller',
   PROMO_50_CLASE: 'promo_50_clase',
 } as const
 
@@ -138,11 +140,24 @@ export const CONSULTATION_CATALOG: Partial<Record<PurchaseType, ConsultationDeta
 export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = {
   [PURCHASE_TYPES.CLASE_ESPECIAL]: {
     name: 'Clase Especial',
+    amount: 2000,
     productId: WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL,
-    guestAllowed: true,
+    guestAllowed: false,
   },
   [PURCHASE_TYPES.TALLER_INTRO_POWER_VINYASA]: {
     name: 'Taller: Introducción a Power Vinyasa',
+    amount: 3500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.TALLER_35]: {
+    name: 'Taller GEN Yoga',
+    amount: 3500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.TALLER]: {
+    name: 'Taller GEN Yoga',
     amount: 3500,
     productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
     guestAllowed: true,
@@ -159,6 +174,7 @@ export type PromoDetails = {
 export const PROMO_CATALOG: Partial<Record<PurchaseType, PromoDetails>> = {
   [PURCHASE_TYPES.PROMO_50_CLASE]: {
     name: '1ª Clase con 50% Dto. (Promo GEN YOGA)',
+    amount: 750,
     productId: PROMO_PRODUCT_IDS.PROMO_50_CLASE,
     guestAllowed: false,
   },
@@ -177,7 +193,14 @@ export function getConsultationDetails(purchaseType: string): ConsultationDetail
 }
 
 export function getWorkshopDetails(purchaseType: string): WorkshopDetails | null {
-  return WORKSHOP_CATALOG[purchaseType as PurchaseType] || null
+  const norm = String(purchaseType || '').trim().toLowerCase()
+  if (WORKSHOP_CATALOG[norm as PurchaseType]) {
+    return WORKSHOP_CATALOG[norm as PurchaseType]!
+  }
+  if (norm.startsWith('taller')) {
+    return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_INTRO_POWER_VINYASA] || null
+  }
+  return null
 }
 
 export function getPromoDetails(purchaseType: string): PromoDetails | null {
@@ -750,31 +773,35 @@ export async function resolvePromoPrice(
   const details = getPromoDetails(purchaseType)
   if (!details) return null
 
-  const params: Stripe.PriceListParams = {
-    active: true,
-    currency: 'eur',
-    type: 'one_time',
-    product: details.productId,
-    limit: 20,
-  }
-  const prices = await stripe.prices.list(params)
-  const matchingPrice = prices.data.find((price: Stripe.Price) => {
-    if (!price.livemode || !price.active || price.currency.toLowerCase() !== 'eur' || price.type !== 'one_time' || price.recurring) {
-      return false
+  try {
+    const params: Stripe.PriceListParams = {
+      active: true,
+      currency: 'eur',
+      type: 'one_time',
+      product: details.productId,
+      limit: 20,
     }
-    if (stripeObjectId(price.product) !== details.productId) return false
-    if (details.amount !== undefined && price.unit_amount !== details.amount) return false
-    return true
-  }) || prices.data[0] || null
+    const prices = await stripe.prices.list(params)
+    const matchingPrice = prices.data.find((price: Stripe.Price) => {
+      if (!price.livemode || !price.active || price.currency.toLowerCase() !== 'eur' || price.type !== 'one_time' || price.recurring) {
+        return false
+      }
+      if (stripeObjectId(price.product) !== details.productId) return false
+      if (details.amount !== undefined && price.unit_amount !== details.amount) return false
+      return true
+    }) || prices.data[0] || null
 
-  if (!matchingPrice) {
+    if (matchingPrice) return matchingPrice
+
     const allProductPrices = await stripe.prices.list({ product: details.productId, active: true, limit: 10 })
     if (allProductPrices.data.length > 0) {
       return allProductPrices.data[0]
     }
-    throw new Error(`El producto promocional ${details.productId} no tiene un Price LIVE activo en Stripe.`)
+  } catch (err) {
+    console.warn(`Error al consultar precios para el producto promocional ${details.productId}:`, err)
   }
-  return matchingPrice
+
+  return null
 }
 
 export function assertValidPromoPrice(

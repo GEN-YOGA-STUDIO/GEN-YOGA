@@ -33,7 +33,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '9.12'
+const APP_RELEASE = '12.9'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -117,8 +117,8 @@ serve(async (req) => {
     if (!allowedPurchaseTypes.has(lookupKey)) {
       throw new HttpError(400, 'Producto no permitido.')
     }
-    const membershipMonth = lookupKey === PURCHASE_TYPES.BONO_ILIMITADO
-      ? validateMembershipMonth(body.membership_month)
+    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
+      ? (body.membership_month ? validateMembershipMonth(body.membership_month) : madridYearMonth())
       : null
 
     const requestedUserId = String(body.user_id || '').trim()
@@ -127,7 +127,7 @@ serve(async (req) => {
     const isWorkshop = isWorkshopPurchase(lookupKey)
     const isPromo = isPromoPurchase(lookupKey)
 
-    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && !isWorkshop) {
+    if (isGuest && (lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && (!isWorkshop || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL))) {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta, consulta individual o taller.')
     }
     const requestedAttemptId = String(body.checkout_attempt_id || '').trim()
@@ -140,7 +140,7 @@ serve(async (req) => {
     const supabase = createAdminClient(config)
 
     const user = isGuest ? null : await getAuthenticatedUser(req, supabase, true)
-    if (!isGuest && requestedUserId !== user?.id) {
+    if (!isGuest && requestedUserId && requestedUserId !== user?.id) {
       throw new HttpError(403, 'El usuario de la compra no coincide con la sesión autenticada.')
     }
 
@@ -156,11 +156,11 @@ serve(async (req) => {
       if (profile.account_deletion_pending) {
         throw new HttpError(409, 'La cuenta se está eliminando y no puede iniciar nuevos pagos.')
       }
-      if (isPromo && (!profile.descuento_promo_50_activo || profile.codigo_promo_usado)) {
-        throw new HttpError(400, 'No tienes activo el descuento del 50% de bienvenida o ya ha sido utilizado.')
+      if (isPromo && profile.codigo_promo_usado) {
+        throw new HttpError(400, 'Ya has utilizado la promoción del 50% de descuento en tu 1ª clase.')
       }
 
-      if (membershipMonth) {
+      if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_ILIMITADO) {
         const { data: existingMonth, error: existingMonthError } = await supabase
           .from('unlimited_membership_periods')
           .select('id')
@@ -233,17 +233,51 @@ serve(async (req) => {
         ]
       }
     } else if (getWorkshopDetails(purchaseType)) {
-      const workshopPrice = await resolveWorkshopPrice(stripe, purchaseType)
-      if (!workshopPrice) {
-        throw new Error(`No se pudo resolver el precio del taller ${purchaseType}.`)
+      const details = getWorkshopDetails(purchaseType)!
+      let workshopPrice: Stripe.Price | null = null
+      try {
+        workshopPrice = await resolveWorkshopPrice(stripe, purchaseType)
+      } catch (err) {
+        console.warn('resolveWorkshopPrice warning:', err)
       }
-      lineItems = [{ price: workshopPrice.id, quantity: 1 }]
+
+      if (workshopPrice) {
+        lineItems = [{ price: workshopPrice.id, quantity: 1 }]
+      } else {
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: details.amount || 2000,
+              product: details.productId,
+            },
+            quantity: 1,
+          },
+        ]
+      }
     } else if (getPromoDetails(purchaseType)) {
-      const promoPrice = await resolvePromoPrice(stripe, purchaseType)
-      if (!promoPrice) {
-        throw new Error(`No se pudo resolver el precio del producto promocional ${purchaseType}.`)
+      const details = getPromoDetails(purchaseType)!
+      let promoPrice: Stripe.Price | null = null
+      try {
+        promoPrice = await resolvePromoPrice(stripe, purchaseType)
+      } catch (err) {
+        console.warn('resolvePromoPrice warning:', err)
       }
-      lineItems = [{ price: promoPrice.id, quantity: 1 }]
+
+      if (promoPrice) {
+        lineItems = [{ price: promoPrice.id, quantity: 1 }]
+      } else {
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: details.amount || 750,
+              product: details.productId,
+            },
+            quantity: 1,
+          },
+        ]
+      }
     } else {
       throw new HttpError(400, 'Precio no configurado para el producto seleccionado.')
     }
@@ -285,7 +319,31 @@ serve(async (req) => {
       membershipMonth || 'no_month',
       checkoutAttemptId,
     ].join(':')
-    const session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
+    let session: Stripe.Checkout.Session
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
+    } catch (createErr) {
+      const details = getPromoDetails(purchaseType)
+      if (isPromo && details) {
+        console.warn('Reintentando creación de sesión promo con product_data fallback:', createErr)
+        sessionParams.line_items = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: details.amount || 750,
+              product_data: {
+                name: details.name,
+                metadata: { lookup_key: lookupKey, product_id: details.productId },
+              },
+            },
+            quantity: 1,
+          },
+        ]
+        session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey: `${idempotencyKey}:fallback` })
+      } else {
+        throw createErr
+      }
+    }
     if (!session.livemode) {
       throw new Error('Stripe no devolvió una sesión LIVE válida.')
     }

@@ -36,13 +36,18 @@
         abuela: 'abuela',
         abuelas: 'abuela',
         abuelo: 'abuela',
-        compania_abuela: 'abuela'
+        compania_abuela: 'abuela',
+        madre: 'madre',
+        madre_hija: 'madre',
+        'madre-hija': 'madre',
+        '50_anos': 'madre'
     };
     const COMPANION_MODALITY_LABELS = {
         colegas: 'Yoga con colegas',
         pareja: 'Yoga con tu pareja',
-        hijo: 'Yoga con tu hijo',
-        abuela: 'Yoga con tu abuela'
+        hijo: 'Yoga con tu hijo/a',
+        abuela: 'Yoga con tu abuela/nieta',
+        madre: 'Yoga con tu Madre/Hija'
     };
     function normalizeCompanionModality(value) {
         return COMPANION_MODALITY_MAP[String(value || '').toLowerCase().trim()] || '';
@@ -84,12 +89,13 @@
             loadedMany: '{count} clases publicadas',
             refreshed: 'Actualizado a las {time}',
             available: 'Disponible',
+            availableReservation: 'Reserva Disponible',
             checkSpot: 'Consultar plaza',
             spotsOne: '1 libre',
             spotsMany: '{count} libres',
             full: 'Completa',
             finished: 'Finalizada',
-            closed: 'Reserva cerrada',
+            closed: 'Reserva Cerrada',
             buy: 'Comprar o reservar',
             workshop: 'Reservar clase especial',
             noDayClasses: 'No hay clases publicadas para este día.',
@@ -106,7 +112,7 @@
             everyone: 'Yoga para Todos',
             therapeutic: 'Yoga terapéutico',
             silviaYoga: 'Yoga con Silvia',
-            ayurveda: 'Ayurveda',
+            ayurveda: 'Yoga y Ayurveda',
             special: 'Talleres',
             filterPractice: 'Filtrar por práctica',
             filterSpecialist: 'Filtrar por profesional',
@@ -154,12 +160,13 @@
             loadedMany: '{count} classes published',
             refreshed: 'Updated at {time}',
             available: 'Available',
+            availableReservation: 'Booking Available',
             checkSpot: 'Check spot',
             spotsOne: '1 spot',
             spotsMany: '{count} spots',
             full: 'Full',
             finished: 'Finished',
-            closed: 'Booking closed',
+            closed: 'Booking Closed',
             buy: 'Buy or book',
             workshop: 'Book special class',
             noDayClasses: 'There are no published classes on this day.',
@@ -176,7 +183,7 @@
             everyone: 'Yoga for Everyone',
             therapeutic: 'Therapeutic yoga',
             silviaYoga: 'Yoga with Silvia',
-            ayurveda: 'Ayurveda',
+            ayurveda: 'Yoga and Ayurveda',
             special: 'Workshops',
             filterPractice: 'Filter by practice',
             filterSpecialist: 'Filter by specialist',
@@ -337,7 +344,7 @@
     function publicClassName(value) {
         const original = String(value || '').trim();
         const normalized = stripDiacritics(original).toLowerCase().replace(/\s+/g, ' ');
-        if (normalized === 'yoga aryuveda') return 'Yoga Ayurveda';
+        if (normalized === 'yoga aryuveda' || normalized === 'yoga ayurveda') return 'Yoga y Ayurveda';
         if (normalized === 'yoga (silvia) consultas') return 'Yoga con Silvia';
         return original;
     }
@@ -534,15 +541,21 @@
         const rawClassType = String(raw?.tipo_clase || '').toLowerCase().trim();
         const rawName = String(raw?.nombre || '').trim();
         const isIntroOrOpen = /introductor|bienvenida|abierta|gratis|prueba/i.test(rawName);
-        const isSpecial = !isIntroOrOpen && (
-            raw?.es_especial === true
-            || rawClassType === 'taller'
+        const isClaseEspecial = !isIntroOrOpen && (
+            rawClassType === 'clase_especial'
             || rawClassType === 'especial'
-            || /taller|masterclass/i.test(rawName)
+            || rawName.toLowerCase().includes('yoga y meditación')
+            || (raw?.es_especial === true && !/taller|masterclass/i.test(rawName) && raw?.duracion_minutos === 75)
         );
-        const classType = isSpecial ? 'taller' : (rawClassType || 'yoga');
+        const isTaller = !isIntroOrOpen && !isClaseEspecial && (
+            rawClassType === 'taller'
+            || /taller|masterclass/i.test(rawName)
+            || (raw?.es_especial === true && raw?.duracion_minutos === 120)
+        );
+        const isSpecial = isClaseEspecial || isTaller;
+        const classType = isClaseEspecial ? 'clase_especial' : (isTaller ? 'taller' : (rawClassType || 'yoga'));
         const databaseName = publicClassName(
-            rawName || (isSpecial ? 'Taller GEN Yoga' : 'Yoga')
+            rawName || (isClaseEspecial ? 'Clase Especial' : (isTaller ? 'Taller GEN Yoga' : 'Yoga'))
         );
         const name = professor.slug === 'angel-javier'
             && canonicalStyle(databaseName) === 'yoga-terapeutico'
@@ -550,7 +563,7 @@
             : databaseName;
 
         const rawCap = Number(raw?.capacidad_max);
-        const capacity = classType === 'yoga'
+        const capacity = (classType === 'yoga' || classType === 'clase_especial')
             ? (Number.isFinite(rawCap) && rawCap > 0 && rawCap <= 10 ? rawCap : 10)
             : Math.max(0, rawCap || 0);
 
@@ -604,11 +617,9 @@
     function classMatchesFilters(item) {
         if (state.oferta) {
             const ofKey = state.oferta.toLowerCase().trim();
-            if (COMPANION_MODALITY_LABELS[ofKey]) {
-                // Modalidad de Yoga en Compañía: SOLO clases de esa modalidad
-                if (item.companionModality !== ofKey) return false;
-            } else if (['yoga', 'bienvenida', 'gratis', 'intro', 'introductoria'].includes(ofKey)) {
-                if (!item.isFree) return false;
+            if (['yoga', 'bienvenida', 'gratis', 'intro', 'introductoria'].includes(ofKey)) {
+                // v11.0: Todas las clases regulares de yoga son elegibles con el bono de bienvenida
+                if (item.classType === 'taller' || item.isSpecial) return false;
             }
         }
         if (state.style) {
@@ -673,6 +684,7 @@
             if (item.professor?.slug && knownTeacherColors[item.professor.slug]) return knownTeacherColors[item.professor.slug];
             if (item.professor?.color) return item.professor.color;
         }
+        if (item.classType === 'clase_especial') return '#475569';
         if (state.mode === 'talleres' || item.classType === 'taller' || item.classType === 'especial') {
             if (defaultStyleColors[item.style]) return defaultStyleColors[item.style];
             return '#c07238';
@@ -693,7 +705,7 @@
                 if (Number.isFinite(value) && value >= 0 && value <= 168) return value;
             }
         } catch (_) {}
-        return 12;
+        return 24;
     }
 
     function getEventState(item) {
@@ -705,10 +717,7 @@
             if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
                 return { disabled: true, stateClass: 'is-full gy-calendar__event-badge--occupied', badge: text('calendar_spot_occupied'), hint: text('calendar_spot_occupied') };
             }
-            const spotsText = Number.isFinite(item.freeSpots)
-                ? (item.freeSpots === 1 ? text('spotsOne') : text('spotsMany', { count: item.freeSpots }))
-                : text('calendar_spot_free');
-            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: spotsText, hint: text('calendar_book_consultation') };
+            return { disabled: false, stateClass: '', badge: text('availableReservation'), hint: text('calendar_book_consultation') };
         }
         if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
             return { disabled: true, stateClass: 'is-full', badge: text('full'), hint: text('full') };
@@ -718,24 +727,13 @@
         ) {
             return { disabled: true, stateClass: 'is-closed', badge: text('closed'), hint: text('closed') };
         }
+        if (item.classType === 'clase_especial') {
+            return { disabled: false, stateClass: '', badge: 'Clase Especial', hint: 'Bono Especial (20 € / Ilimitado)' };
+        }
         if (item.classType === 'taller') {
-            const spotsText = Number.isFinite(item.freeSpots)
-                ? (item.freeSpots === 1 ? text('spotsOne') : text('spotsMany', { count: item.freeSpots }))
-                : text('available');
-            return { disabled: false, stateClass: '', badge: spotsText, hint: text('workshop') };
+            return { disabled: false, stateClass: '', badge: 'Taller', hint: 'Plaza 35 €' };
         }
-        if (item.isFree) {
-            const spotsText = Number.isFinite(item.freeSpots)
-                ? (item.freeSpots === 1 ? text('spotsOne') : text('spotsMany', { count: item.freeSpots }))
-                : text('available');
-            const badge = `🎁 Gratuita · ${spotsText}`;
-            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge, hint: 'Reservar gratis' };
-        }
-        const badge = item.freeSpots === 1
-            ? text('spotsOne')
-            : (Number.isFinite(item.freeSpots)
-                ? text('spotsMany', { count: item.freeSpots })
-                : text('checkSpot'));
+        const badge = text('availableReservation');
         return { disabled: false, stateClass: '', badge, hint: text('buy') };
     }
 
@@ -786,6 +784,9 @@
         const focused = state.classId === item.id ? ' is-focused' : '';
         const disabled = status.disabled ? ' disabled' : '';
         const teacher = item.professor.displayName;
+        const actionLabel = status.badge.toLowerCase() === status.hint.toLowerCase()
+            ? `${status.badge} →`
+            : `${status.badge} · ${status.hint} →`;
         return `
             <article class="gy-calendar__mobile-event ${status.stateClass}${focused}" style="--event-color:${escapeHtml(eventColor(item))}" data-calendar-event="${item.id}">
                 <div class="gy-calendar__mobile-time">
@@ -796,7 +797,7 @@
                     <button type="button" class="gy-calendar__mobile-action" data-calendar-class="${item.id}"${disabled}
                         aria-label="${escapeHtml(classActionLabel(item, status.hint))}">
                         <strong>${escapeHtml(item.name)}</strong>
-                        <span>${escapeHtml(status.badge)} · ${escapeHtml(status.hint)} →</span>
+                        <span>${escapeHtml(actionLabel)}</span>
                     </button>
                     <a class="gy-calendar__mobile-teacher" href="${escapeHtml(teacherUrl(item))}"
                         aria-label="${escapeHtml(text('viewTeacher', { teacher }))}">
@@ -1127,9 +1128,9 @@
             .limit(300);
 
         if (targetMode === 'talleres') {
-            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true');
+            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true');
         } else if (targetMode === 'clases') {
-            query = query.or('tipo_clase.eq.yoga,tipo_clase.is.null,es_especial.eq.false,nombre.ilike.%introductor%,nombre.ilike.%abierta%,nombre.ilike.%bienvenida%');
+            query = query.or('tipo_clase.eq.yoga,tipo_clase.eq.clase_especial,tipo_clase.eq.taller,tipo_clase.is.null,es_especial.eq.true,es_especial.eq.false,nombre.ilike.%introductor%,nombre.ilike.%abierta%,nombre.ilike.%bienvenida%');
         }
 
         const { data, error } = await query;
@@ -1141,10 +1142,9 @@
 
         let filtered = [];
         if (targetMode === 'talleres') {
-            filtered = mapped.filter(item => item.classType === 'taller' || item.classType === 'especial' || item.isSpecial);
-        } else if (targetMode === 'clases') {
-            filtered = mapped.filter(item => (item.classType === 'yoga' || !item.classType) && !item.isSpecial);
+            filtered = mapped.filter(item => item.classType === 'taller' || item.classType === 'especial' || item.classType === 'clase_especial' || item.isSpecial);
         } else {
+            // targetMode === 'clases': muestra clases de yoga regulares, clases especiales y talleres
             filtered = mapped;
         }
 
@@ -1359,7 +1359,10 @@
                 }
             });
 
-            const allSlots = [...dbClases, ...generatedSlots];
+            // Todas las consultas en el horario público y de alumnos provienen de la base de datos real (dbClases),
+            // con el mismo criterio canónico que las clases de Yoga y Talleres: al eliminarse en el panel de administración,
+            // desaparecen de inmediato y de forma definitiva de la vista pública.
+            const allSlots = dbClases;
             return { exactAvailability: true, classes: allSlots };
         }
 
@@ -1376,7 +1379,7 @@
                         classes: data
                             .map(row => normalizeClassRow(row, true))
                             .filter(Boolean)
-                            .filter(c => c.classType === 'taller' || c.classType === 'especial')
+                            .filter(c => c.classType === 'taller' || c.classType === 'especial' || c.classType === 'clase_especial')
                     };
                 }
 
@@ -1405,7 +1408,6 @@
                     classes: data
                         .map(row => normalizeClassRow(row, true))
                         .filter(Boolean)
-                        .filter(c => c.classType === 'yoga')
                 };
             }
 
@@ -1528,9 +1530,9 @@
             .limit(300);
 
         if (state.mode === 'talleres') {
-            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true');
+            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true');
         } else if (state.mode === 'clases') {
-            query = query.eq('tipo_clase', 'yoga');
+            query = query.or('tipo_clase.eq.yoga,tipo_clase.eq.clase_especial,tipo_clase.eq.taller,tipo_clase.is.null,es_especial.eq.true,es_especial.eq.false');
         }
 
         const { data, error } = await query;
@@ -1539,8 +1541,7 @@
             .map(row => normalizeClassRow(row, false))
             .filter(Boolean)
             .filter(c => {
-                if (state.mode === 'talleres') return c.classType === 'taller' || c.classType === 'especial' || c.isSpecial;
-                if (state.mode === 'clases') return (c.classType === 'yoga' || !c.classType) && !c.isSpecial;
+                if (state.mode === 'talleres') return c.classType === 'taller' || c.classType === 'especial' || c.classType === 'clase_especial' || c.isSpecial;
                 return true;
             })
             .find(classMatchesFilters) || null;
@@ -1781,9 +1782,9 @@
             return;
         }
 
-        if (item.classType === 'taller' || item.classType === 'especial') {
+        if (item.classType === 'taller' || item.classType === 'especial' || item.classType === 'clase_especial') {
             const params = new URLSearchParams({
-                view: 'especiales',
+                view: 'horarios',
                 clase: String(item.id),
                 from: 'calendario'
             });
@@ -1797,7 +1798,10 @@
             clase: String(item.id),
             from: 'calendario'
         });
-        if (item.isFree || state.oferta) {
+        if (item.companionModality) {
+            params.set('oferta', item.companionModality);
+            params.set('companion_modality', item.companionModality);
+        } else if (item.isFree || state.oferta) {
             params.set('oferta', state.oferta || 'yoga');
         }
         if (!hasSession) {
@@ -2017,6 +2021,7 @@
         canonicalStyle,
         isPublicScheduleSlot,
         consultationStartMinutesFor,
-        consultationDurationMinutesFor
+        consultationDurationMinutesFor,
+        getEventState
     });
 })(typeof window !== 'undefined' ? window : globalThis);
