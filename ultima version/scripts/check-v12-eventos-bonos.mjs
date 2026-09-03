@@ -137,11 +137,26 @@ if (fs.existsSync(profilePath)) {
     check('Consulta Isabel PNI configurada a 80 €', pContent.includes("1ª Consulta PNI (80 €)") && pContent.includes("price: 80"));
 }
 
+console.log('\n--- 9. Verificando Novedades v12.7 (Garantía Clase Especial Yoga y Meditación) ---');
+if (fs.existsSync(profilePath)) {
+    const pContent = fs.readFileSync(profilePath, 'utf8');
+    check('Función esClaseEspecialTipo implementada', pContent.includes('function esClaseEspecialTipo'));
+    check('Función esTallerTipo implementada', pContent.includes('function esTallerTipo'));
+    check('cargarTalleresAdminV69 incluye tipo_clase.eq.clase_especial en query', pContent.includes('tipo_clase.eq.clase_especial,es_especial.eq.true'));
+}
+
+const mig127Path = path.join(root, 'supabase', 'migrations', '202609030011_v12_7_garantizar_clase_especial_yoga_y_meditacion.sql');
+check('Archivo de migración v12.7 existe', fs.existsSync(mig127Path));
+if (fs.existsSync(mig127Path)) {
+    const m127 = fs.readFileSync(mig127Path, 'utf8');
+    check('Migración v12.7 asigna tipo_clase = clase_especial a Yoga y Meditación', m127.includes("tipo_clase = 'clase_especial'") && m127.includes('6083'));
+}
+
 if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.6 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.7 superadas con éxito!');
     process.exit(0);
 }
 

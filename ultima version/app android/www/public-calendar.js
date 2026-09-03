@@ -543,13 +543,14 @@
         const isIntroOrOpen = /introductor|bienvenida|abierta|gratis|prueba/i.test(rawName);
         const isClaseEspecial = !isIntroOrOpen && (
             rawClassType === 'clase_especial'
+            || rawClassType === 'especial'
+            || rawName.toLowerCase().includes('yoga y meditación')
             || (raw?.es_especial === true && !/taller|masterclass/i.test(rawName) && raw?.duracion_minutos === 75)
         );
         const isTaller = !isIntroOrOpen && !isClaseEspecial && (
             rawClassType === 'taller'
-            || rawClassType === 'especial'
             || /taller|masterclass/i.test(rawName)
-            || raw?.es_especial === true
+            || (raw?.es_especial === true && raw?.duracion_minutos === 120)
         );
         const isSpecial = isClaseEspecial || isTaller;
         const classType = isClaseEspecial ? 'clase_especial' : (isTaller ? 'taller' : (rawClassType || 'yoga'));
