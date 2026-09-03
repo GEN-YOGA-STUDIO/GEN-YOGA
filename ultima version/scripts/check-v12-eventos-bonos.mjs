@@ -55,8 +55,8 @@ if (fs.existsSync(profilePath)) {
     const profileContent = fs.readFileSync(profilePath, 'utf8');
     check('Navbar botón público actualizado a EVENTOS', profileContent.includes('id="nav-public-especiales"') && profileContent.includes('EVENTOS'));
     check('Badge superior para clases regulares', profileContent.includes('>Clases<') || profileContent.includes('>Clases</span>'));
-    check('Badge superior plateado para clase especial a su derecha', profileContent.includes('Clase especial') && profileContent.includes('+ Especial'));
-    check('Tarjeta plateada para Clase Especial en perfil', profileContent.includes('Clase especial · Color Plata'));
+    check('Badge superior para clase especial a su derecha', profileContent.includes('Clase especial') && profileContent.includes('+ Especial'));
+    check('Tarjeta para Clase Especial en perfil', profileContent.includes('Bono de Clase Especial') && profileContent.includes('disp. este mes'));
     check('Modal de creación con radio selector: Clase Especial vs Taller', profileContent.includes('evento-tipo-categoria') && profileContent.includes('evento-tipo-clase-especial') && profileContent.includes('evento-tipo-taller'));
     check('Sub-pestañas en vista de eventos (Todos, Clases Especiales, Talleres)', profileContent.includes('btn-subtab-eventos-todos') && profileContent.includes('btn-subtab-eventos-clases') && profileContent.includes('btn-subtab-eventos-talleres'));
     check('Función switchEventosSubTab implementada', profileContent.includes('function switchEventosSubTab'));
@@ -67,7 +67,7 @@ if (fs.existsSync(profilePath)) {
     check('Guardado de evento admin respetando tipo clase_especial vs taller', profileContent.includes('evento-tipo-categoria') && profileContent.includes('tipoClaseEfectivo'));
     check('Gestión de bonos permite asignar y modificar Clases Especiales a usuarios', profileContent.includes('cambiarClaseEspecialAdmin') && profileContent.includes('asignarNuevaClaseEspecialAdmin'));
     check('Banner voluminoso de Administración de Consultas eliminado', !profileContent.includes('elimina turnos de psicología y nutrición. Revisa las reservas y estados de consulta.'));
-    check('Catálogo de clases soporta clase_especial y taller con badges específicos', profileContent.includes('CLASE ESPECIAL (PLATA)') && profileContent.includes('ajustarDuracionPorCategoriaTipo'));
+    check('Catálogo de clases soporta clase_especial y taller con badges específicos', profileContent.includes('CLASE ESPECIAL') && profileContent.includes('ajustarDuracionPorCategoriaTipo'));
     check('Creación de eventos vinculada estrictamente a tipos configurados', profileContent.includes('actualizarTiposEventoModal') && profileContent.includes('Solo se pueden crear eventos cuyo tipo'));
 }
 
@@ -91,7 +91,7 @@ if (fs.existsSync(i18nPath)) {
 console.log('\n--- 6. Verificando Novedades v12.4 (Calendario Unificado, Guía de Bonos y Botón Especial) ---');
 if (fs.existsSync(profilePath)) {
     const pContent = fs.readFileSync(profilePath, 'utf8');
-    check('Guía de Bonos define freeClassTitle y detalla clase especial y talleres', pContent.includes('freeClassTitle') && pContent.includes('Bono de Clase Especial (Plata') && pContent.includes('Talleres Temáticos'));
+    check('Guía de Bonos define freeClassTitle y detalla clase especial y talleres', pContent.includes('freeClassTitle') && pContent.includes('Bono de Clase Especial') && pContent.includes('Talleres Temáticos'));
     check('Botón + Clase Especial tiene estilo visible explícito', pContent.includes('id="btn-comprar-bono-especial"') && pContent.includes('linear-gradient(135deg, #334155 0%, #0f172a 100%)'));
     check('cargarHorarios consulta y admite clases especiales y talleres', pContent.includes('tipo_clase.eq.clase_especial') && pContent.includes('tipo_clase.eq.taller'));
     check('renderizarClases añade badge y acciones para clases especiales y talleres', pContent.includes('especialidadBadge') && pContent.includes('RESERVAR (1 ESPECIAL)') && pContent.includes('RESERVAR (20 € / ILIMITADO)'));
@@ -111,11 +111,30 @@ if (fs.existsSync(stripePath)) {
     check('Talleres de 35 euros mapeados a prod_V5uCPKKKH5K74P', sContent.includes("TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P'") && sContent.includes("TALLER_35"));
 }
 
+console.log('\n--- 7. Verificando Novedades v12.5 (Sin Plata, Banner Eliminado y Reprogramación Universal) ---');
+if (fs.existsSync(profilePath)) {
+    const pContent = fs.readFileSync(profilePath, 'utf8');
+    check('No hay referencias a Plata en clases especiales', !pContent.includes('Clase especial · Color Plata') && !pContent.includes('CLASE ESPECIAL (PLATA)') && !pContent.includes('Bono Especial Plateado'));
+    check('Banner voluminoso de eventos eliminado', !pContent.includes('Gestión integral de eventos independientes. Administra clases especiales'));
+    check('Tarjeta de crédito de taller reprogramado en saldos', pContent.includes('Crédito obtenido por reprogramación (>24h)') && pContent.includes('userCreditosReprogramacion.length'));
+    check('Tarjeta de consultas disponibles en saldos', pContent.includes('Consultas Individuales') && pContent.includes('userSaldoPsicologia + userSaldoNutricion'));
+    check('Canje universal de reprogramación de talleres', pContent.includes("userCreditosReprogramacion.find(r => r.tipo === 'taller' && r.estado === 'disponible')"));
+    check('Reserva de consultas con saldo previo o reprogramado confirmable a 0 €', pContent.includes('RESERVAR CITA (SALDO 0 €)') && pContent.includes('Confirmar Cita'));
+}
+
+const mig125Path = path.join(root, 'supabase', 'migrations', '202609030010_v12_5_reprogramacion_universal_talleres_y_consultas.sql');
+check('Archivo de migración v12.5 existe', fs.existsSync(mig125Path));
+if (fs.existsSync(mig125Path)) {
+    const m125 = fs.readFileSync(mig125Path, 'utf8');
+    check('reservar_con_bono permite créditos de reprogramación en cualquier fecha', m125.includes("v_class_type = 'taller'") && m125.includes("estado = 'disponible'"));
+    check('admin_eliminar_clase reembolsa talleres y clases especiales', m125.includes('creditos_reprogramacion') && m125.includes('bonos_clases_especiales'));
+}
+
 if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.4 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.5 superadas con éxito!');
     process.exit(0);
 }
 
