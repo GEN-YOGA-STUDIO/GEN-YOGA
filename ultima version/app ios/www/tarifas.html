@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="11.4">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=11.4">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=11.4">
+    <meta name="application-version" content="11.5">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=11.5">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=11.5">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,12 +25,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=11.4">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=11.5">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=11.4"></script>
+    <script src="i18n.js?v=11.5"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -77,6 +77,24 @@
             box-shadow: 0 20px 40px -15px rgba(121, 82, 68, 0.12);
         }
 
+        /* Utility: Force hide elements when hidden class is present */
+        .hidden {
+            display: none !important;
+        }
+
+        #section-ofertas {
+            width: 100%;
+            max-width: 48rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #section-ofertas article {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         @media (max-width: 639px) {
             html, body {
                 overflow-x: hidden;
@@ -98,12 +116,21 @@
 
             #section-yoga,
             #section-psicologia,
-            #section-talleres,
-            #section-ofertas {
+            #section-talleres {
                 width: 100%;
                 max-width: 100%;
                 min-width: 0;
                 grid-template-columns: minmax(0, 1fr);
+                margin-left: 0;
+                margin-right: 0;
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            #section-ofertas {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
                 margin-left: 0;
                 margin-right: 0;
                 padding-left: 0;
@@ -119,6 +146,7 @@
                 border-radius: 1.75rem;
             }
 
+            #tab-ofertas,
             #tab-yoga,
             #tab-psicologia,
             #tab-talleres {
@@ -236,12 +264,12 @@
         </div>
 
         <!-- Central Tariff Cards Layout -->
-        <div class="flex-grow w-full max-w-7xl mx-auto flex items-center justify-center relative z-20 pb-12 mt-4">
-                    <!-- 1. CATEGORY: OFERTAS (Oferta Única: Bono de Bienvenida 0 € para Nuevos Alumnos) -->
+        <div class="flex-grow w-full max-w-7xl mx-auto flex flex-col items-center justify-start relative z-20 pb-12 mt-2 sm:mt-4">
+            <!-- 1. CATEGORY: OFERTAS (Oferta Única: Bono de Bienvenida 0 € para Nuevos Alumnos) -->
             <div id="section-ofertas" role="tabpanel" aria-labelledby="tab-ofertas"
-                class="max-w-4xl mx-auto w-full px-4 transition-all duration-500">
+                class="max-w-3xl mx-auto w-full px-4 transition-all duration-300" style="display: block; opacity: 1; transform: translateY(0);">
                 
-                <article class="tariff-card flex flex-col justify-between bg-white/95 backdrop-blur-md border-2 border-emerald-500/40 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden ring-4 ring-emerald-500/10 w-full text-left">
+                <article class="tariff-card flex flex-col justify-between bg-white/95 backdrop-blur-md border-2 border-emerald-500/40 rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl relative overflow-hidden ring-4 ring-emerald-500/10 w-full text-left mx-auto">
                     <div class="absolute top-0 right-0 bg-emerald-700 text-white text-[10px] sm:text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl shadow-sm" data-i18n="rates_welcome_badge">
                         ★ 100% Gratuito
                     </div>
@@ -318,7 +346,7 @@
                 </article>
             </div>
 
-            <div id="section-yoga" role="tabpanel" aria-labelledby="tab-yoga" class="grid sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto gap-6 w-full px-4 items-stretch transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+            <div id="section-yoga" role="tabpanel" aria-labelledby="tab-yoga" class="grid sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto gap-6 w-full px-4 items-stretch transition-all duration-500 hidden opacity-0 transform translate-y-[20px]" style="display: none;">
                 <!-- Clase suelta -->
                 <div class="tariff-card flex flex-col justify-between border-suelta">
                     <div>
@@ -436,7 +464,7 @@
 
             <!-- 2. CATEGORY: CONSULTAS -->
             
-            <div id="section-psicologia" role="tabpanel" aria-labelledby="tab-psicologia" class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+            <div id="section-psicologia" role="tabpanel" aria-labelledby="tab-psicologia" class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]" style="display: none;">
                 <!-- Psicología con Miriam -->
                 <div class="tariff-card flex flex-col justify-between">
                     <div>
@@ -597,7 +625,7 @@
 
             <!-- 3. CATEGORY: TALLERES & CLASES ESPECIALES -->
             
-            <div id="section-talleres" role="tabpanel" aria-labelledby="tab-talleres" class="max-w-4xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+            <div id="section-talleres" role="tabpanel" aria-labelledby="tab-talleres" class="max-w-4xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]" style="display: none;">
                 <div id="talleres-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                     <!-- 1. Clase Especial: Yoga & Meditación -->
                     <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 border-[#6a6540]/30 shadow-xl relative overflow-hidden ring-2 ring-[#6a6540]/10">
@@ -722,12 +750,12 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v11.4 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v11.5 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '11.4';
+        const APP_VERSION = '11.5';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -817,6 +845,7 @@
                 if (!sec) return;
                 if (key === targetKey) {
                     sec.classList.remove('hidden');
+                    sec.style.display = (key === 'yoga' || key === 'psicologia') ? 'grid' : 'block';
                     sec.setAttribute('aria-hidden', 'false');
                     sec.offsetHeight; // force reflow
                     sec.style.opacity = '1';
@@ -824,8 +853,9 @@
                 } else {
                     sec.setAttribute('aria-hidden', 'true');
                     sec.style.opacity = '0';
-                    sec.style.transform = 'translateY(20px)';
+                    sec.style.transform = 'translateY(10px)';
                     sec.classList.add('hidden');
+                    sec.style.display = 'none';
                 }
             });
 
