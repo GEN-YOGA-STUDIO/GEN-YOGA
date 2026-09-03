@@ -24,6 +24,8 @@ export const PURCHASE_TYPES = {
   ISABEL_PNI_SIG: 'isabel_pni_sig',
   CLASE_ESPECIAL: 'clase_especial',
   TALLER_INTRO_POWER_VINYASA: 'taller_intro_power_vinyasa',
+  TALLER_35: 'taller_35',
+  TALLER: 'taller',
   PROMO_50_CLASE: 'promo_50_clase',
 } as const
 
@@ -148,6 +150,18 @@ export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = 
     productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
     guestAllowed: true,
   },
+  [PURCHASE_TYPES.TALLER_35]: {
+    name: 'Taller GEN Yoga',
+    amount: 3500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.TALLER]: {
+    name: 'Taller GEN Yoga',
+    amount: 3500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+    guestAllowed: true,
+  },
 }
 
 export type PromoDetails = {
@@ -179,7 +193,14 @@ export function getConsultationDetails(purchaseType: string): ConsultationDetail
 }
 
 export function getWorkshopDetails(purchaseType: string): WorkshopDetails | null {
-  return WORKSHOP_CATALOG[purchaseType as PurchaseType] || null
+  const norm = String(purchaseType || '').trim().toLowerCase()
+  if (WORKSHOP_CATALOG[norm as PurchaseType]) {
+    return WORKSHOP_CATALOG[norm as PurchaseType]!
+  }
+  if (norm.startsWith('taller')) {
+    return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_INTRO_POWER_VINYASA] || null
+  }
+  return null
 }
 
 export function getPromoDetails(purchaseType: string): PromoDetails | null {

@@ -88,10 +88,34 @@ if (fs.existsSync(i18nPath)) {
     check('profile_tab_specials traducido a EVENTS en EN', i18nContent.includes('"profile_tab_specials": "EVENTS"'));
 }
 
+console.log('\n--- 6. Verificando Novedades v12.4 (Calendario Unificado, Guía de Bonos y Botón Especial) ---');
+if (fs.existsSync(profilePath)) {
+    const pContent = fs.readFileSync(profilePath, 'utf8');
+    check('Guía de Bonos define freeClassTitle y detalla clase especial y talleres', pContent.includes('freeClassTitle') && pContent.includes('Bono de Clase Especial (Plata') && pContent.includes('Talleres Temáticos'));
+    check('Botón + Clase Especial tiene estilo visible explícito', pContent.includes('id="btn-comprar-bono-especial"') && pContent.includes('linear-gradient(135deg, #334155 0%, #0f172a 100%)'));
+    check('cargarHorarios consulta y admite clases especiales y talleres', pContent.includes('tipo_clase.eq.clase_especial') && pContent.includes('tipo_clase.eq.taller'));
+    check('renderizarClases añade badge y acciones para clases especiales y talleres', pContent.includes('especialidadBadge') && pContent.includes('RESERVAR (1 ESPECIAL)') && pContent.includes('RESERVAR (20 € / ILIMITADO)'));
+    check('iniciarCheckoutTallerStripe implementado en perfil', pContent.includes('async function iniciarCheckoutTallerStripe'));
+}
+
+const pubCalPath = path.join(root, 'public-calendar.js');
+if (fs.existsSync(pubCalPath)) {
+    const pcContent = fs.readFileSync(pubCalPath, 'utf8');
+    check('Calendario público incluye clases especiales y talleres en modo clases', pcContent.includes("tipo_clase.eq.clase_especial") && pcContent.includes("targetMode === 'clases'"));
+    check('public-calendar maneja color y estado de clase_especial', pcContent.includes("item.classType === 'clase_especial'") && pcContent.includes("Clase Especial"));
+}
+
+const stripePath = path.join(root, 'supabase', 'functions', '_shared', 'stripe-production.ts');
+if (fs.existsSync(stripePath)) {
+    const sContent = fs.readFileSync(stripePath, 'utf8');
+    check('Talleres de 35 euros mapeados a prod_V5uCPKKKH5K74P', sContent.includes("TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P'") && sContent.includes("TALLER_35"));
+}
+
 if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.3 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.4 superadas con éxito!');
     process.exit(0);
 }
+

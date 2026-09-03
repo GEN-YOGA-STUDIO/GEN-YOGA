@@ -541,15 +541,20 @@
         const rawClassType = String(raw?.tipo_clase || '').toLowerCase().trim();
         const rawName = String(raw?.nombre || '').trim();
         const isIntroOrOpen = /introductor|bienvenida|abierta|gratis|prueba/i.test(rawName);
-        const isSpecial = !isIntroOrOpen && (
-            raw?.es_especial === true
-            || rawClassType === 'taller'
+        const isClaseEspecial = !isIntroOrOpen && (
+            rawClassType === 'clase_especial'
+            || (raw?.es_especial === true && !/taller|masterclass/i.test(rawName) && raw?.duracion_minutos === 75)
+        );
+        const isTaller = !isIntroOrOpen && !isClaseEspecial && (
+            rawClassType === 'taller'
             || rawClassType === 'especial'
             || /taller|masterclass/i.test(rawName)
+            || raw?.es_especial === true
         );
-        const classType = isSpecial ? 'taller' : (rawClassType || 'yoga');
+        const isSpecial = isClaseEspecial || isTaller;
+        const classType = isClaseEspecial ? 'clase_especial' : (isTaller ? 'taller' : (rawClassType || 'yoga'));
         const databaseName = publicClassName(
-            rawName || (isSpecial ? 'Taller GEN Yoga' : 'Yoga')
+            rawName || (isClaseEspecial ? 'Clase Especial' : (isTaller ? 'Taller GEN Yoga' : 'Yoga'))
         );
         const name = professor.slug === 'angel-javier'
             && canonicalStyle(databaseName) === 'yoga-terapeutico'
@@ -557,7 +562,7 @@
             : databaseName;
 
         const rawCap = Number(raw?.capacidad_max);
-        const capacity = classType === 'yoga'
+        const capacity = (classType === 'yoga' || classType === 'clase_especial')
             ? (Number.isFinite(rawCap) && rawCap > 0 && rawCap <= 10 ? rawCap : 10)
             : Math.max(0, rawCap || 0);
 
@@ -678,6 +683,7 @@
             if (item.professor?.slug && knownTeacherColors[item.professor.slug]) return knownTeacherColors[item.professor.slug];
             if (item.professor?.color) return item.professor.color;
         }
+        if (item.classType === 'clase_especial') return '#475569';
         if (state.mode === 'talleres' || item.classType === 'taller' || item.classType === 'especial') {
             if (defaultStyleColors[item.style]) return defaultStyleColors[item.style];
             return '#c07238';
@@ -720,8 +726,11 @@
         ) {
             return { disabled: true, stateClass: 'is-closed', badge: text('closed'), hint: text('closed') };
         }
+        if (item.classType === 'clase_especial') {
+            return { disabled: false, stateClass: '', badge: 'Clase Especial', hint: 'Bono Especial (20 € / Ilimitado)' };
+        }
         if (item.classType === 'taller') {
-            return { disabled: false, stateClass: '', badge: text('availableReservation'), hint: text('workshop') };
+            return { disabled: false, stateClass: '', badge: 'Taller', hint: 'Plaza 35 €' };
         }
         const badge = text('availableReservation');
         return { disabled: false, stateClass: '', badge, hint: text('buy') };
@@ -1118,9 +1127,9 @@
             .limit(300);
 
         if (targetMode === 'talleres') {
-            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true');
+            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true');
         } else if (targetMode === 'clases') {
-            query = query.or('tipo_clase.eq.yoga,tipo_clase.is.null,es_especial.eq.false,nombre.ilike.%introductor%,nombre.ilike.%abierta%,nombre.ilike.%bienvenida%');
+            query = query.or('tipo_clase.eq.yoga,tipo_clase.eq.clase_especial,tipo_clase.eq.taller,tipo_clase.is.null,es_especial.eq.true,es_especial.eq.false,nombre.ilike.%introductor%,nombre.ilike.%abierta%,nombre.ilike.%bienvenida%');
         }
 
         const { data, error } = await query;
@@ -1132,10 +1141,9 @@
 
         let filtered = [];
         if (targetMode === 'talleres') {
-            filtered = mapped.filter(item => item.classType === 'taller' || item.classType === 'especial' || item.isSpecial);
-        } else if (targetMode === 'clases') {
-            filtered = mapped.filter(item => (item.classType === 'yoga' || !item.classType) && !item.isSpecial);
+            filtered = mapped.filter(item => item.classType === 'taller' || item.classType === 'especial' || item.classType === 'clase_especial' || item.isSpecial);
         } else {
+            // targetMode === 'clases': muestra clases de yoga regulares, clases especiales y talleres
             filtered = mapped;
         }
 
@@ -1370,7 +1378,7 @@
                         classes: data
                             .map(row => normalizeClassRow(row, true))
                             .filter(Boolean)
-                            .filter(c => c.classType === 'taller' || c.classType === 'especial')
+                            .filter(c => c.classType === 'taller' || c.classType === 'especial' || c.classType === 'clase_especial')
                     };
                 }
 
@@ -1399,7 +1407,6 @@
                     classes: data
                         .map(row => normalizeClassRow(row, true))
                         .filter(Boolean)
-                        .filter(c => c.classType === 'yoga')
                 };
             }
 
@@ -1522,9 +1529,9 @@
             .limit(300);
 
         if (state.mode === 'talleres') {
-            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true');
+            query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true');
         } else if (state.mode === 'clases') {
-            query = query.eq('tipo_clase', 'yoga');
+            query = query.or('tipo_clase.eq.yoga,tipo_clase.eq.clase_especial,tipo_clase.eq.taller,tipo_clase.is.null,es_especial.eq.true,es_especial.eq.false');
         }
 
         const { data, error } = await query;
@@ -1533,8 +1540,7 @@
             .map(row => normalizeClassRow(row, false))
             .filter(Boolean)
             .filter(c => {
-                if (state.mode === 'talleres') return c.classType === 'taller' || c.classType === 'especial' || c.isSpecial;
-                if (state.mode === 'clases') return (c.classType === 'yoga' || !c.classType) && !c.isSpecial;
+                if (state.mode === 'talleres') return c.classType === 'taller' || c.classType === 'especial' || c.classType === 'clase_especial' || c.isSpecial;
                 return true;
             })
             .find(classMatchesFilters) || null;
@@ -1775,9 +1781,9 @@
             return;
         }
 
-        if (item.classType === 'taller' || item.classType === 'especial') {
+        if (item.classType === 'taller' || item.classType === 'especial' || item.classType === 'clase_especial') {
             const params = new URLSearchParams({
-                view: 'especiales',
+                view: 'horarios',
                 clase: String(item.id),
                 from: 'calendario'
             });
