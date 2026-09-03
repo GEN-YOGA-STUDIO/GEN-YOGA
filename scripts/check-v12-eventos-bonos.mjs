@@ -173,11 +173,25 @@ if (fs.existsSync(profilePath)) {
     check('Sección Códigos Promocionales eliminada de abrirGestionBonosUsuario', !pContent.match(/function abrirGestionBonosUsuario[\s\S]*?7\.\s*C[oó]digo Promocional/i));
 }
 
+console.log('\n--- 11. Verificando Novedades v12.10 (Quitar Bono Ilimitado, Añadir Clase Visible y Sincronización) ---');
+if (fs.existsSync(profilePath)) {
+    const pContent = fs.readFileSync(profilePath, 'utf8');
+    check('Botón Quitar Bono Ilimitado presente en cabecera de sección 4', pContent.includes('>Quitar Bono</span>') && pContent.includes("retirarMesIlimitadoAdmin('${userId}', null, null)"));
+    check('Botón Añadir Clase Especial tiene estilo oscuro sólido visible (#0f172a)', pContent.includes('background-color: #0f172a') && pContent.includes('Añadir Clase</span>'));
+    check('Botón Quitar Mes Ilimitado individual visible en cada mes', pContent.includes('Quitar Mes') && pContent.includes("retirarMesIlimitadoAdmin('${userId}', '${periodId}', '${mKey}')"));
+}
+
+const syncAppsPath = path.join(root, 'scripts', 'sync_apps.py');
+if (fs.existsSync(syncAppsPath)) {
+    const syncContent = fs.readFileSync(syncAppsPath, 'utf8');
+    check('sync_apps.py sincroniza hacia ultima version', syncContent.includes('Ultima Version'));
+}
+
 if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.9 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.10 superadas con éxito!');
     process.exit(0);
 }
 
