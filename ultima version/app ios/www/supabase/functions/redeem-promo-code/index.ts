@@ -80,8 +80,9 @@ serve(async (req) => {
         .from('profiles')
         .update({
           descuento_promo_50_activo: active,
-          codigo_promo_canjeado: active ? 'GEN YOGA' : null,
-          codigo_promo_fecha_canje: active ? new Date().toISOString() : null,
+          codigo_promo_canjeado: active ? 'GEN YOGA' : undefined,
+          codigo_promo_usado: active ? false : undefined,
+          codigo_promo_fecha_canje: active ? new Date().toISOString() : undefined,
         })
         .eq('id', targetUserId)
 
