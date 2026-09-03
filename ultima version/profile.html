@@ -17075,22 +17075,52 @@
             const ilimitadoActivo = userMonths.length > 0 || !!u.bono_mensual_activo;
             const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+            // Agrupar bonos de clases especiales por mes (evitar duplicados)
+            const specialPassesByMonth = new Map();
+            for (const b of userSpecialPasses) {
+                const mKey = String(b.mes || '').slice(0, 7);
+                if (!mKey) continue;
+                if (specialPassesByMonth.has(mKey)) {
+                    const existing = specialPassesByMonth.get(mKey);
+                    existing.saldo = toSafeNumber(existing.saldo) + toSafeNumber(b.saldo);
+                } else {
+                    specialPassesByMonth.set(mKey, { mes: b.mes, saldo: toSafeNumber(b.saldo) });
+                }
+            }
+
+            // Incluir meses del bono ilimitado que no tengan ya entrada en clases especiales
+            for (const period of userMonths) {
+                const pMes = String(period.membership_month || period.starts_at || '').slice(0, 7);
+                if (!pMes) continue;
+                if (!specialPassesByMonth.has(pMes)) {
+                    specialPassesByMonth.set(pMes, { mes: pMes + '-01', saldo: 0 });
+                }
+            }
+
+            // Ordenar por mes
+            const sortedSpecialPasses = [...specialPassesByMonth.entries()]
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([, v]) => v);
+
             let htmlSpecialPassesList = '';
-            if (userSpecialPasses.length > 0) {
-                htmlSpecialPassesList = userSpecialPasses.map(b => {
+            if (sortedSpecialPasses.length > 0) {
+                htmlSpecialPassesList = sortedSpecialPasses.map(b => {
                     const mStr = String(b.mes || '').slice(0, 7);
                     const [yyyy, mm] = mStr.split('-');
                     const mesLabel = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${yyyy}` : mStr;
                     const saldoVal = toSafeNumber(b.saldo);
+                    const mesDate = mStr + '-01';
+                    const hasMensualIlimitado = userMonths.some(p => String(p.membership_month || p.starts_at || '').slice(0, 7) === mStr);
+                    const ilimitadoBadge = hasMensualIlimitado ? '<span class="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-200 ml-1">∞ Ilimitado</span>' : '';
                     return `
-                        <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs">
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
                             <span class="font-bold text-slate-800 flex items-center gap-1.5">
-                                <i class="ph-bold ph-calendar text-slate-400"></i> ${mesLabel}
+                                <i class="ph-bold ph-calendar text-slate-400"></i> ${mesLabel}${ilimitadoBadge}
                             </span>
-                            <div class="flex items-center gap-1">
-                                <span class="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg text-[11px] border border-slate-300 mr-1">${saldoVal} disp.</span>
-                                <button type="button" onclick="cambiarClaseEspecialAdmin('${userId}', '${b.mes}', -1)" class="w-7 h-7 rounded-lg border border-slate-300 text-slate-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95" title="Restar 1 clase especial">-1</button>
-                                <button type="button" onclick="cambiarClaseEspecialAdmin('${userId}', '${b.mes}', 1)" class="w-7 h-7 rounded-lg bg-slate-800 text-white hover:bg-black font-bold text-xs transition cursor-pointer active:scale-95" title="Sumar 1 clase especial">+1</button>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-black ${saldoVal > 0 ? 'text-emerald-800 bg-emerald-50 border-emerald-300' : 'text-slate-900 bg-slate-100 border-slate-300'} px-2.5 py-0.5 rounded-lg text-[11px] border">${saldoVal} disp.</span>
+                                <button type="button" onclick="cambiarClaseEspecialAdmin('${userId}', '${mesDate}', -1)" class="w-8 h-8 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 font-black text-sm transition cursor-pointer active:scale-95" title="Restar 1 clase especial">−</button>
+                                <button type="button" onclick="cambiarClaseEspecialAdmin('${userId}', '${mesDate}', 1)" class="w-8 h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-black text-sm transition cursor-pointer active:scale-95 shadow-xs" title="Sumar 1 clase especial">+</button>
                             </div>
                         </div>
                     `;
@@ -17267,20 +17297,32 @@
         async function cambiarClaseEspecialAdmin(userId, mesStr, delta) {
             try {
                 const mesDate = mesStr.slice(0, 7) + '-01';
-                const { data: existing, error: errFetch } = await client.from('bonos_clases_especiales')
+                const { data: rows, error: errFetch } = await client.from('bonos_clases_especiales')
                     .select('id, saldo')
                     .eq('user_id', userId)
                     .eq('mes', mesDate)
-                    .maybeSingle();
+                    .order('created_at', { ascending: true });
 
                 if (errFetch) throw errFetch;
 
-                if (existing) {
-                    const nuevoSaldo = Math.max(0, toSafeNumber(existing.saldo) + delta);
+                if (rows && rows.length > 0) {
+                    // Sumar saldo total de todas las filas del mismo mes
+                    const totalSaldo = rows.reduce((sum, r) => sum + toSafeNumber(r.saldo), 0);
+                    const nuevoSaldo = Math.max(0, totalSaldo + delta);
+
+                    // Actualizar la primera fila con el saldo consolidado
                     const { error: errUpd } = await client.from('bonos_clases_especiales')
                         .update({ saldo: nuevoSaldo, updated_at: new Date().toISOString() })
-                        .eq('id', existing.id);
+                        .eq('id', rows[0].id);
                     if (errUpd) throw errUpd;
+
+                    // Eliminar filas duplicadas (mantener solo la primera)
+                    if (rows.length > 1) {
+                        const duplicateIds = rows.slice(1).map(r => r.id);
+                        await client.from('bonos_clases_especiales')
+                            .delete()
+                            .in('id', duplicateIds);
+                    }
                 } else if (delta > 0) {
                     const { error: errIns } = await client.from('bonos_clases_especiales')
                         .insert({ user_id: userId, mes: mesDate, saldo: delta, origen: 'admin_manual' });
