@@ -66,11 +66,15 @@ check('Perfil de alumno no muestra aforo numérico en clases regulares', profile
 check('Perfil de alumno no muestra aforo numérico en talleres', profileHtml.includes('aforoOEstadoTaller'));
 check('Tarjeta de registro en perfil muestra incentivo del Bono de Bienvenida', profileHtml.includes('Bono de Bienvenida Automático') && profileHtml.includes('¡Tu 1ª clase de Yoga es 100% GRATIS (0 €)!'));
 
+check('Flash Modal con fondo sólido y opaco en index.html', indexHtml.includes('background-color: #FAF7F2') || indexHtml.includes('#FAF7F2'));
+check('Flash Modal solo salta una vez por sesión (sessionStorage)', indexHtml.includes('sessionStorage') && indexHtml.includes('WELCOME_MODAL_SHOWN_KEY'));
+check('Flash Modal no salta si el usuario navega desde otra sección interna', indexHtml.includes('document.referrer') && indexHtml.includes('refUrl.origin === window.location.origin'));
+
 if (errors.length > 0) {
-    console.error(`\n❌ Fallaron ${errors.length} comprobaciones de v11.0/v11.1:`);
+    console.error(`\n❌ Fallaron ${errors.length} comprobaciones de v11.0 - v11.3:`);
     errors.forEach(e => console.error(`  - ${e}`));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 11.0 / 11.1 han superado con éxito!\n');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 11.0 - 11.3 han superado con éxito!\n');
     process.exit(0);
 }
