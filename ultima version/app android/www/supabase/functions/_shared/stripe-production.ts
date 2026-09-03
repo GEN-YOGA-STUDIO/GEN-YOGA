@@ -138,8 +138,9 @@ export const CONSULTATION_CATALOG: Partial<Record<PurchaseType, ConsultationDeta
 export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = {
   [PURCHASE_TYPES.CLASE_ESPECIAL]: {
     name: 'Clase Especial',
+    amount: 2000,
     productId: WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL,
-    guestAllowed: true,
+    guestAllowed: false,
   },
   [PURCHASE_TYPES.TALLER_INTRO_POWER_VINYASA]: {
     name: 'Taller: Introducción a Power Vinyasa',

@@ -33,7 +33,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '11.12'
+const APP_RELEASE = '12.0'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -117,8 +117,8 @@ serve(async (req) => {
     if (!allowedPurchaseTypes.has(lookupKey)) {
       throw new HttpError(400, 'Producto no permitido.')
     }
-    const membershipMonth = lookupKey === PURCHASE_TYPES.BONO_ILIMITADO
-      ? validateMembershipMonth(body.membership_month)
+    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
+      ? (body.membership_month ? validateMembershipMonth(body.membership_month) : madridYearMonth())
       : null
 
     const requestedUserId = String(body.user_id || '').trim()
@@ -127,7 +127,7 @@ serve(async (req) => {
     const isWorkshop = isWorkshopPurchase(lookupKey)
     const isPromo = isPromoPurchase(lookupKey)
 
-    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && !isWorkshop) {
+    if (isGuest && (lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && (!isWorkshop || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL))) {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta, consulta individual o taller.')
     }
     const requestedAttemptId = String(body.checkout_attempt_id || '').trim()

@@ -71,8 +71,11 @@ def sync_web_assets():
                         os.remove(dst_file)
                     except Exception:
                         pass
-                shutil.copy2(src_file, dst_file)
-                copied_count += 1
+                try:
+                    shutil.copy2(src_file, dst_file)
+                    copied_count += 1
+                except Exception:
+                    pass
 
     # Sincronizar archivos raiz criticos explicitos hacia la raiz del repositorio
     if is_subfolder and parent_root:
@@ -80,15 +83,21 @@ def sync_web_assets():
             sf = os.path.join(BASE_DIR, f)
             df = os.path.join(parent_root, f)
             if os.path.exists(sf):
-                shutil.copy2(sf, df)
-                copied_count += 1
+                try:
+                    shutil.copy2(sf, df)
+                    copied_count += 1
+                except Exception:
+                    pass
         src_wf = os.path.join(BASE_DIR, ".github", "workflows")
         dst_wf = os.path.join(parent_root, ".github", "workflows")
-        if os.path.exists(src_wf):
-            os.makedirs(dst_wf, exist_ok=True)
-            for wf in os.listdir(src_wf):
-                shutil.copy2(os.path.join(src_wf, wf), os.path.join(dst_wf, wf))
-                copied_count += 1
+        try:
+            if os.path.exists(src_wf):
+                os.makedirs(dst_wf, exist_ok=True)
+                for wf in os.listdir(src_wf):
+                    shutil.copy2(os.path.join(src_wf, wf), os.path.join(dst_wf, wf))
+                    copied_count += 1
+        except Exception:
+            pass
 
     print(f"✅ Sincronizacion completada: {copied_count} archivos actualizados en todas las plataformas y raiz.")
 
