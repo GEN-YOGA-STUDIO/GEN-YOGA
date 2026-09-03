@@ -348,4 +348,47 @@ assert.match(overlapMigration, /create trigger trg_check_clases_schedule_no_over
 assert.match(overlapMigration, /Conflicto de horario/);
 assert.match(overlapMigration, /Conflicto de sala en el estudio/);
 
+// Check public calendar event statuses (v10.18: Finalizada, Reserva Cerrada, Completa, Reserva Disponible)
+assert.ok(typeof calendarApi.getEventState === 'function', 'getEventState debe estar expuesto');
+const baseItem = {
+  start: new Date(Date.now() + 48 * 3600 * 1000),
+  end: new Date(Date.now() + 49 * 3600 * 1000),
+  freeSpots: 10,
+  complete: false,
+  classType: 'yoga',
+  isFree: false,
+};
+
+// 1. Available class
+const availableState = calendarApi.getEventState(baseItem);
+assert.equal(availableState.badge, 'Reserva Disponible', 'La clase con plazas libres debe mostrar "Reserva Disponible"');
+assert.equal(availableState.hint, 'Comprar o reservar');
+assert.equal(availableState.disabled, false);
+
+// 2. Full class
+const fullState = calendarApi.getEventState({ ...baseItem, freeSpots: 0, complete: true });
+assert.equal(fullState.badge, 'Completa', 'La clase llena debe mostrar "Completa"');
+assert.equal(fullState.hint, 'Completa');
+assert.equal(fullState.disabled, true);
+
+// 3. Closed class (starts in 2 hours)
+const closedState = calendarApi.getEventState({
+  ...baseItem,
+  start: new Date(Date.now() + 2 * 3600 * 1000),
+  end: new Date(Date.now() + 3 * 3600 * 1000),
+});
+assert.equal(closedState.badge, 'Reserva Cerrada', 'La clase cerrada debe mostrar "Reserva Cerrada"');
+assert.equal(closedState.hint, 'Reserva Cerrada');
+assert.equal(closedState.disabled, true);
+
+// 4. Finished class (past)
+const finishedState = calendarApi.getEventState({
+  ...baseItem,
+  start: new Date(Date.now() - 3 * 3600 * 1000),
+  end: new Date(Date.now() - 2 * 3600 * 1000),
+});
+assert.equal(finishedState.badge, 'Finalizada', 'La clase pasada debe mostrar "Finalizada"');
+assert.equal(finishedState.hint, 'Finalizada');
+assert.equal(finishedState.disabled, true);
+
 console.log('Public weekly calendar checks passed.');

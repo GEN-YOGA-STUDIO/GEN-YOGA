@@ -89,12 +89,13 @@
             loadedMany: '{count} clases publicadas',
             refreshed: 'Actualizado a las {time}',
             available: 'Disponible',
+            availableReservation: 'Reserva Disponible',
             checkSpot: 'Consultar plaza',
             spotsOne: '1 libre',
             spotsMany: '{count} libres',
             full: 'Completa',
             finished: 'Finalizada',
-            closed: 'Reserva cerrada',
+            closed: 'Reserva Cerrada',
             buy: 'Comprar o reservar',
             workshop: 'Reservar clase especial',
             noDayClasses: 'No hay clases publicadas para este día.',
@@ -159,12 +160,13 @@
             loadedMany: '{count} classes published',
             refreshed: 'Updated at {time}',
             available: 'Available',
+            availableReservation: 'Booking Available',
             checkSpot: 'Check spot',
             spotsOne: '1 spot',
             spotsMany: '{count} spots',
             full: 'Full',
             finished: 'Finished',
-            closed: 'Booking closed',
+            closed: 'Booking Closed',
             buy: 'Buy or book',
             workshop: 'Book special class',
             noDayClasses: 'There are no published classes on this day.',
@@ -713,10 +715,7 @@
             if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
                 return { disabled: true, stateClass: 'is-full gy-calendar__event-badge--occupied', badge: text('calendar_spot_occupied'), hint: text('calendar_spot_occupied') };
             }
-            const spotsText = Number.isFinite(item.freeSpots)
-                ? (item.freeSpots === 1 ? text('spotsOne') : text('spotsMany', { count: item.freeSpots }))
-                : text('calendar_spot_free');
-            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: spotsText, hint: text('calendar_book_consultation') };
+            return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge: text('availableReservation'), hint: text('calendar_book_consultation') };
         }
         if (item.complete === true || (Number.isFinite(item.freeSpots) && item.freeSpots <= 0)) {
             return { disabled: true, stateClass: 'is-full', badge: text('full'), hint: text('full') };
@@ -727,23 +726,13 @@
             return { disabled: true, stateClass: 'is-closed', badge: text('closed'), hint: text('closed') };
         }
         if (item.classType === 'taller') {
-            const spotsText = Number.isFinite(item.freeSpots)
-                ? (item.freeSpots === 1 ? text('spotsOne') : text('spotsMany', { count: item.freeSpots }))
-                : text('available');
-            return { disabled: false, stateClass: '', badge: spotsText, hint: text('workshop') };
+            return { disabled: false, stateClass: '', badge: text('availableReservation'), hint: text('workshop') };
         }
         if (item.isFree) {
-            const spotsText = Number.isFinite(item.freeSpots)
-                ? (item.freeSpots === 1 ? text('spotsOne') : text('spotsMany', { count: item.freeSpots }))
-                : text('available');
-            const badge = `🎁 Gratuita · ${spotsText}`;
+            const badge = `🎁 Gratuita · ${text('availableReservation')}`;
             return { disabled: false, stateClass: 'gy-calendar__event-badge--free', badge, hint: 'Reservar gratis' };
         }
-        const badge = item.freeSpots === 1
-            ? text('spotsOne')
-            : (Number.isFinite(item.freeSpots)
-                ? text('spotsMany', { count: item.freeSpots })
-                : text('checkSpot'));
+        const badge = text('availableReservation');
         return { disabled: false, stateClass: '', badge, hint: text('buy') };
     }
 
@@ -794,6 +783,9 @@
         const focused = state.classId === item.id ? ' is-focused' : '';
         const disabled = status.disabled ? ' disabled' : '';
         const teacher = item.professor.displayName;
+        const actionLabel = status.badge.toLowerCase() === status.hint.toLowerCase()
+            ? `${status.badge} →`
+            : `${status.badge} · ${status.hint} →`;
         return `
             <article class="gy-calendar__mobile-event ${status.stateClass}${focused}" style="--event-color:${escapeHtml(eventColor(item))}" data-calendar-event="${item.id}">
                 <div class="gy-calendar__mobile-time">
@@ -804,7 +796,7 @@
                     <button type="button" class="gy-calendar__mobile-action" data-calendar-class="${item.id}"${disabled}
                         aria-label="${escapeHtml(classActionLabel(item, status.hint))}">
                         <strong>${escapeHtml(item.name)}</strong>
-                        <span>${escapeHtml(status.badge)} · ${escapeHtml(status.hint)} →</span>
+                        <span>${escapeHtml(actionLabel)}</span>
                     </button>
                     <a class="gy-calendar__mobile-teacher" href="${escapeHtml(teacherUrl(item))}"
                         aria-label="${escapeHtml(text('viewTeacher', { teacher }))}">
@@ -2031,6 +2023,7 @@
         canonicalStyle,
         isPublicScheduleSlot,
         consultationStartMinutesFor,
-        consultationDurationMinutesFor
+        consultationDurationMinutesFor,
+        getEventState
     });
 })(typeof window !== 'undefined' ? window : globalThis);
