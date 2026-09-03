@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="10.18">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=10.18">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=10.18">
+    <meta name="application-version" content="10.19">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=10.19">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=10.19">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,12 +25,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=10.18">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=10.19">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=10.18"></script>
+    <script src="i18n.js?v=10.19"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -772,7 +772,7 @@
             <!-- 3. CATEGORY: TALLERES & CLASES ESPECIALES -->
             
             <div id="section-talleres" role="tabpanel" aria-labelledby="tab-talleres" class="max-w-4xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                <div id="talleres-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                     <!-- 1. Clase Especial: Yoga & Meditación -->
                     <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 border-[#6a6540]/30 shadow-xl relative overflow-hidden ring-2 ring-[#6a6540]/10">
                         <div class="absolute top-0 right-0 bg-[#6a6540] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm">
@@ -896,12 +896,12 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v10.18 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v10.19 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '10.18';
+        const APP_VERSION = '10.19';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -913,6 +913,18 @@
 
         function safeSetItem(key, value) {
             try { sessionStorage.setItem(key, value); } catch (e) { console.warn('Storage error:', e); }
+        }
+        function safeRemoveItem(key) {
+            try { sessionStorage.removeItem(key); } catch (e) { console.warn('Storage error:', e); }
+        }
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
         function newCheckoutAttemptId() {
             try {
@@ -1003,6 +1015,10 @@
                     sym.style.transform = 'translateY(20px)';
                 }
             });
+
+            if (targetKey === 'talleres') {
+                cargarTalleresDinamicos().catch(e => console.warn('Error cargando talleres dinámicos:', e));
+            }
         }
 
         function normaliseSelectedClassId(value) {
@@ -1626,7 +1642,7 @@
             }
         }
 
-        async function iniciarCheckoutTallerStripe(lookupKey, title, price) {
+        async function iniciarCheckoutTallerStripe(lookupKey, title, price, claseId) {
             if (checkoutRequestInProgress) return;
 
             const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
@@ -1653,7 +1669,10 @@
                 if (result.isConfirmed) {
                     userId = 'guest';
                 } else if (result.isDenied) {
-                    window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    const buyParam = lookupKey ? `buy=${encodeURIComponent(lookupKey)}` : '';
+                    const claseParam = claseId ? `clase=${encodeURIComponent(claseId)}` : '';
+                    const params = [buyParam, claseParam, 'view=especiales'].filter(Boolean).join('&');
+                    window.location.href = `profile.html?${params}`;
                     return;
                 } else {
                     return;
@@ -1708,6 +1727,287 @@
                 console.error("Payment redirection error:", e);
                 Swal.fire('No se pudo iniciar el pago', e.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.', 'error');
             }
+        }
+
+        window.gestionarReservaTallerDinamico = async function(lookupKey, title, price, claseId) {
+            if (lookupKey) {
+                await iniciarCheckoutTallerStripe(lookupKey, title, price, claseId);
+            } else {
+                const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
+                const hasSession = Boolean(sessionRes?.data?.session?.user);
+
+                if (!hasSession) {
+                    const result = await Swal.fire({
+                        title: title || 'Reservar Taller',
+                        text: `¿Quieres reservar tu plaza en "${title}" iniciando sesión con tu cuenta de GEN Yoga, o prefieres ver los detalles en el calendario?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        showDenyButton: true,
+                        confirmButtonText: 'Iniciar Sesión / Registro',
+                        denyButtonText: 'Ver en Calendario',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#AB593D',
+                        denyButtonColor: '#6a6540',
+                        cancelButtonColor: '#d33',
+                        background: '#fff',
+                        color: '#333'
+                    });
+
+                    if (result.isConfirmed) {
+                        window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales&prompt=register`;
+                    } else if (result.isDenied) {
+                        window.location.href = `clases.html?style=taller#calendario-publico`;
+                    }
+                } else {
+                    window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales`;
+                }
+            }
+        };
+
+        let talleresDinamicosCache = null;
+        let cargandoTalleresDinamicos = false;
+
+        async function cargarTalleresDinamicos(options = {}) {
+            const container = document.getElementById('talleres-cards-container');
+            if (!container) return;
+
+            if (!options.force && talleresDinamicosCache !== null) {
+                renderizarListaTalleres(talleresDinamicosCache);
+                return;
+            }
+
+            if (cargandoTalleresDinamicos) return;
+            cargandoTalleresDinamicos = true;
+
+            try {
+                const { data: talleres, error } = await supabaseClient
+                    .from('clases')
+                    .select(`
+                        id,
+                        nombre,
+                        descripcion,
+                        fecha_inicio,
+                        fecha_fin,
+                        duracion_minutos,
+                        capacidad_max,
+                        tipo_clase,
+                        tipo_clase_id,
+                        es_especial,
+                        activa,
+                        profesionales (id, nombre, apellidos, color)
+                    `)
+                    .or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true')
+                    .eq('activa', true)
+                    .order('fecha_inicio', { ascending: true });
+
+                if (error) {
+                    console.error('Error cargando talleres dinámicos:', error);
+                    return;
+                }
+
+                const now = new Date();
+                // Filtrar estrictamente: solo los talleres/clases especiales que NO hayan finalizado
+                const futuros = (talleres || []).filter(c => {
+                    if (c.activa === false) return false;
+                    const start = new Date(c.fecha_inicio);
+                    if (isNaN(start.getTime())) return false;
+                    const dur = Number(c.duracion_minutos) || (c.tipo_clase === 'taller' ? 120 : 75);
+                    const end = c.fecha_fin ? new Date(c.fecha_fin) : new Date(start.getTime() + dur * 60000);
+                    return end.getTime() > now.getTime();
+                });
+
+                talleresDinamicosCache = futuros;
+                renderizarListaTalleres(futuros);
+            } catch (err) {
+                console.warn('Error al actualizar talleres dinámicos:', err);
+            } finally {
+                cargandoTalleresDinamicos = false;
+            }
+        }
+
+        function renderizarListaTalleres(talleres) {
+            const container = document.getElementById('talleres-cards-container');
+            const section = document.getElementById('section-talleres');
+            if (!container) return;
+
+            if (!talleres || talleres.length === 0) {
+                if (section) section.className = 'max-w-4xl mx-auto w-full px-4 transition-all duration-500';
+                container.className = 'grid grid-cols-1 gap-6 items-stretch';
+                container.innerHTML = `
+                    <div class="col-span-full max-w-xl mx-auto w-full text-center py-12 px-6 bg-white/85 backdrop-blur-md rounded-3xl border border-[#AB593D]/20 shadow-md">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#AB593D]/10 flex items-center justify-center text-[#AB593D]">
+                            <i class="ph-duotone ph-sparkle text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Próximamente nuevos talleres</h3>
+                        <p class="text-sm text-cocoa/75 font-light leading-relaxed mb-6">
+                            Actualmente no hay talleres o clases especiales activas con fechas futuras. Muy pronto publicaremos nuevas experiencias y fechas. Consulta nuestro horario semanal para descubrir todas las clases regulares.
+                        </p>
+                        <a href="clases.html#calendario-publico" class="inline-flex items-center gap-2 px-6 py-3 bg-[#AB593D] hover:bg-[#26160c] text-white text-xs font-bold uppercase tracking-widest rounded-xl transition shadow">
+                            <span>Ver horario completo</span>
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            if (section) {
+                section.className = talleres.length >= 3
+                    ? 'max-w-6xl mx-auto w-full px-4 transition-all duration-500'
+                    : 'max-w-4xl mx-auto w-full px-4 transition-all duration-500';
+            }
+
+            container.className = talleres.length === 1
+                ? 'grid grid-cols-1 max-w-lg mx-auto gap-6 items-stretch'
+                : (talleres.length === 2
+                    ? 'grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch'
+                    : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch');
+
+            container.innerHTML = talleres.map((t, idx) => renderizarCardTallerDinamico(t, idx, talleres.length)).join('');
+        }
+
+        function renderizarCardTallerDinamico(taller, index, total) {
+            const start = new Date(taller.fecha_inicio);
+            const isTaller = taller.tipo_clase === 'taller' || /taller|inmersi|power vinyasa/i.test(`${taller.nombre} ${taller.descripcion || ''}`);
+            const duracion = Number(taller.duracion_minutos) || (isTaller ? 120 : 75);
+            const end = taller.fecha_fin ? new Date(taller.fecha_fin) : new Date(start.getTime() + duracion * 60000);
+
+            let title = taller.nombre;
+            if (taller.nombre === 'Yoga y Meditación' && taller.descripcion?.toLowerCase().includes('power vinyasa')) {
+                title = 'Introducción a Power Vinyasa';
+            }
+
+            const badgeLabel = isTaller ? 'Próximo Taller' : 'Próxima Clase Especial';
+            const themeColor = isTaller ? '#AB593D' : '#6a6540';
+            const iconClass = isTaller ? 'ph-fire' : 'ph-sparkle';
+
+            const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const diaNombre = dias[start.getDay()];
+            const diaNum = start.getDate();
+            const mesNombre = meses[start.getMonth()];
+            const startH = String(start.getHours()).padStart(2, '0');
+            const startM = String(start.getMinutes()).padStart(2, '0');
+            const endH = String(end.getHours()).padStart(2, '0');
+            const endM = String(end.getMinutes()).padStart(2, '0');
+            const fechaPildora = `${diaNombre} ${diaNum} ${mesNombre} · ${startH}:${startM} a ${endH}:${endM}`;
+
+            const prof = Array.isArray(taller.profesionales) ? taller.profesionales[0] : taller.profesionales;
+            const profName = prof?.nombre || 'Yanira';
+
+            const subtitulo = isTaller
+                ? `Con ${profName} · ${duracion >= 120 ? '2 Horas de Inmersión' : `${duracion} Minutos de Inmersión`}`
+                : `Con ${profName} · Sesión Temática (${duracion} min)`;
+
+            let precio = isTaller ? '35' : '20';
+            const textoCompleto = `${taller.nombre} ${taller.descripcion || ''}`;
+            const precioMatch = textoCompleto.match(/(\d{1,3})\s*€/);
+            if (precioMatch) {
+                precio = precioMatch[1];
+            }
+
+            const precioSub = isTaller
+                ? `/ plaza (${duracion} min)`
+                : `/ plaza (o con Bono Ilimitado)`;
+
+            const descripcion = taller.descripcion
+                ? taller.descripcion
+                : (isTaller
+                    ? `Inmersión completa de ${duracion} minutos diseñada para aprender y consolidar los fundamentos de la práctica con atención personalizada.`
+                    : `Práctica guiada de profundización que combina asana suave con técnicas de pranayama y meditación profunda para calmar el sistema nervioso y restaurar el equilibrio interior.`);
+
+            const capacidad = Number(taller.capacidad_max) || 10;
+
+            const bullets = isTaller ? [
+                `Máximo ${capacidad} alumnos para atención personalizada`,
+                'Ajustes manuales y soporte individual',
+                'Material de apoyo e infusiones incluidas'
+            ] : [
+                `Grupos reducidos (máximo ${capacidad} plazas)`,
+                '<strong>1 clase al mes incluida</strong> con el Bono Ilimitado',
+                'Disponible para compra suelta o reserva con bono'
+            ];
+
+            let lookupKey = null;
+            const lowerTitle = title.toLowerCase();
+            if (lowerTitle.includes('power vinyasa')) {
+                lookupKey = 'taller_intro_power_vinyasa';
+            } else if (lowerTitle.includes('medita') || !isTaller) {
+                lookupKey = 'clase_especial';
+            }
+
+            const lookupKeyParam = lookupKey ? `'${lookupKey}'` : 'null';
+            const safeTitleJs = escapeHtml(title).replace(/'/g, "\\'");
+            const onclickAction = `gestionarReservaTallerDinamico(${lookupKeyParam}, '${safeTitleJs}', '${precio}', ${taller.id})`;
+
+            const enlaceHorario = isTaller
+                ? 'Ver detalles en el calendario →'
+                : 'Ver próximas fechas en horario →';
+
+            return `
+                <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 shadow-xl relative overflow-hidden ring-2"
+                    style="border-color: ${themeColor}4d; ring-color: ${themeColor}1a;">
+                    <div class="absolute top-0 right-0 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-sm"
+                        style="background-color: ${themeColor};">
+                        ${escapeHtml(badgeLabel)}
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner"
+                                style="background-color: ${themeColor}1a; color: ${themeColor};">
+                                <i class="ph-fill ${iconClass} text-2xl"></i>
+                            </div>
+                            <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mr-16"
+                                style="color: ${themeColor}; background-color: ${themeColor}1a; border: 1px solid ${themeColor}33;">
+                                ${escapeHtml(fechaPildora)}
+                            </span>
+                        </div>
+                        <div class="flex items-baseline justify-between gap-2 mb-1">
+                            <h3 class="text-2xl font-serif text-cocoa font-bold">${escapeHtml(title)}</h3>
+                        </div>
+                        <div class="flex items-baseline gap-2 mb-3">
+                            <span class="text-3xl font-extrabold" style="color: ${themeColor};">${escapeHtml(precio)} €</span>
+                            <span class="text-xs text-cocoa/60 font-light">${precioSub}</span>
+                        </div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider mb-3" style="color: ${themeColor};">${escapeHtml(subtitulo)}</p>
+                        
+                        <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-4">
+                            ${escapeHtml(descripcion)}
+                        </p>
+                        <ul class="text-xs text-cocoa/70 space-y-2 mb-6 text-left">
+                            ${bullets.map(b => `
+                                <li class="flex items-center gap-2">
+                                    <i class="ph-bold ph-check" style="color: ${themeColor};"></i>
+                                    <span>${b}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
+                        <button onclick="${onclickAction}"
+                            class="block w-full py-3.5 text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
+                            style="background-color: ${themeColor};">
+                            Reservar Plaza (${escapeHtml(precio)} €)
+                        </button>
+                        <a href="clases.html?style=taller#calendario-publico" class="text-center text-[11px] font-semibold transition py-1 underline decoration-transparent hover:decoration-current"
+                            style="color: ${themeColor};">
+                            ${enlaceHorario}
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Suscripción Realtime para actualizar la lista de talleres automáticamente ante cambios en intranet
+        if (supabaseClient && typeof supabaseClient.channel === 'function') {
+            try {
+                supabaseClient
+                    .channel('public:clases_talleres_tarifas')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, () => {
+                        cargarTalleresDinamicos({ force: true }).catch(() => {});
+                    })
+                    .subscribe();
+            } catch (_) {}
         }
 
         let sesionesIntroductoriasCache = null;
@@ -1927,6 +2227,7 @@
         // Initialize view routing and intro sessions on page load
         document.addEventListener('DOMContentLoaded', async () => {
             actualizarHorariosSesionesIntroductorias().catch(e => console.warn('Error cargando sesiones introductorias:', e));
+            cargarTalleresDinamicos().catch(e => console.warn('Error cargando talleres dinámicos:', e));
 
             const hasSelectedYogaClass = Boolean(await inspectRequestedYogaClass());
             const urlParams = new URLSearchParams(window.location.search);
