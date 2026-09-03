@@ -130,11 +130,18 @@ if (fs.existsSync(mig125Path)) {
     check('admin_eliminar_clase reembolsa talleres y clases especiales', m125.includes('creditos_reprogramacion') && m125.includes('bonos_clases_especiales'));
 }
 
+console.log('\n--- 8. Verificando Novedades v12.6 (Corrección Precio y Nombre Consulta Isabel PNI a 80 €) ---');
+if (fs.existsSync(profilePath)) {
+    const pContent = fs.readFileSync(profilePath, 'utf8');
+    check('Consulta Isabel PNI no incluye Nutrición ni 95 € en opciones', !pContent.includes("1ª Consulta PNI / Nutrición (95 €)") && !pContent.includes("Isabel · 1ª Consulta PNI (95 €)"));
+    check('Consulta Isabel PNI configurada a 80 €', pContent.includes("1ª Consulta PNI (80 €)") && pContent.includes("price: 80"));
+}
+
 if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.5 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.6 superadas con éxito!');
     process.exit(0);
 }
 
