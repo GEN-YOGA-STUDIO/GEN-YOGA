@@ -1,6 +1,6 @@
 -- Migration 202609030002_consulta_valoracion_gratuita_universal_v11_7.sql
--- Actualiza reservar_consulta_atomica para que los alumnos con saldo_consultas_gratis >= 1
--- puedan reservar consultas individuales (capacidad = 1) o de valoración/introductorias de Isabel y Miriam.
+-- Actualiza reservar_consulta_atomica para que el saldo gratuito solo cubra
+-- sesiones explícitamente introductorias o marcadas como gratuitas.
 
 BEGIN;
 
@@ -58,8 +58,8 @@ BEGIN
     RAISE EXCEPTION 'consultations can only be booked for client profiles' USING errcode = '42501';
   END IF;
 
-  -- Regla v11.7: La Consulta Gratuita de Valoración cubre sesiones individuales (capacidad 1), introductorias o marcadas como gratuitas
-  IF (v_is_free OR v_name LIKE '%introduct%' OR v_name LIKE '%valoraci%' OR (v_capacity = 1 AND v_target_free_consultations >= 1)) THEN
+  -- El bono gratuito nunca cubre consultas normales, aunque sean individuales.
+  IF (v_is_free OR v_name LIKE '%introduct%') THEN
     v_is_free := true;
   END IF;
 

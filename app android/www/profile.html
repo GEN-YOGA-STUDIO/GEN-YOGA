@@ -6143,7 +6143,7 @@
             const companionTitle = t('profile_saldos_info_companion_title', 'Bono Yoga en Compañía (0 €)');
             const companionDesc = t('profile_saldos_info_companion_desc', 'Crédito especial para reservar sesiones de Yoga en Compañía (Colegas, Pareja, Madre e Hija, Abuela y Nieta) para 2 personas a coste 0 €.');
             const freeConsultationTitle = t('profile_saldos_info_free_consultation_title', 'Consultas Gratuitas (0 €)');
-            const freeConsultationDesc = t('profile_saldos_info_free_consultation_desc', 'Sesión de valoración inicial gratuita con nuestros especialistas (Psicología, Psiconeuroinmunología PNI o Nutrición/Ayurveda) para orientarte.');
+            const freeConsultationDesc = t('profile_saldos_info_free_consultation_desc', 'El bono gratuito solo permite reservar sesiones introductorias claramente identificadas.');
             const btnRates = t('profile_saldos_info_btn_rates', 'Ver Todas las Tarifas');
             const btnClose = t('profile_saldos_info_btn_close', 'Entendido');
 
@@ -8051,27 +8051,10 @@
                 const profName = String(c.profesionales?.nombre || 'Staff GEN');
                 const profFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profName);
                 const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
-                const nombreClase = String(c.nombre || 'Clase de Yoga');
-                const companionModKey = normalizarModalidadCompania(c.companion_modality || c.nombre || c.miReserva?.welcome_companion_modality);
-                const isCompanion = !!companionModKey || c.miReserva?.tipo_reserva === 'compania';
-                const companionBadgeTitle = COMPANION_MODALITY_LABELS[companionModKey] || 'Yoga en compañía';
-
-                const cardBg = isCompanion
-                    ? 'bg-amber-50/20 border border-amber-300 shadow-2xs'
-                    : 'bg-white border border-olive/20 shadow-2xs';
-
-                let badgeHtml = '';
-                if (isCompanion) {
-                    if (companionModKey === 'abuela' || companionModKey === 'madre') {
-                        badgeHtml = `
-                            <div class="flex flex-wrap items-center gap-1.5 mb-1">
-                                <span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-2xs" style="background-color: #fef3c7 !important; color: #78350f !important; border: 1px solid #fcd34d !important;"><i class="ph-fill ph-users-three text-amber-700"></i> Yoga con tu abuela/nieta</span>
-                                <span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-2xs" style="background-color: #fef3c7 !important; color: #78350f !important; border: 1px solid #fcd34d !important;"><i class="ph-fill ph-users-three text-amber-700"></i> Yoga con tu Madre/Hija</span>
-                            </div>`;
-                    } else {
-                        badgeHtml = `<span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-2xs w-fit mb-1" style="background-color: #fef3c7 !important; color: #78350f !important; border: 1px solid #fcd34d !important;"><i class="ph-fill ph-users-three text-amber-700"></i> ${escapeHtml(companionBadgeTitle)}</span>`;
-                    }
-                }
+                const nombreOriginal = String(c.nombre || '');
+                const nombreClase = normalizarModalidadCompania(nombreOriginal) ? 'Clase de Yoga' : (nombreOriginal || 'Clase de Yoga');
+                const cardBg = 'bg-white border border-olive/20 shadow-2xs';
+                const badgeHtml = '';
 
                 return `
                         <div class="${cardBg} rounded-2xl p-3.5 hover:shadow-xs transition flex flex-col justify-between gap-3 relative overflow-hidden">
@@ -8082,17 +8065,14 @@
                                         <div class="w-10 h-10 rounded-xl overflow-hidden bg-sand/30 border border-cocoa/10 flex items-center justify-center shrink-0">
                                             ${profFoto
                         ? `<img src="${escapeHtml(profFoto)}" alt="${escapeHtml(profName)}" class="w-full h-full object-cover">`
-                        : `<i class="ph-bold ph-flower-lotus ${isCompanion ? 'text-amber-700' : 'text-olive'} text-xl"></i>`
+                        : `<i class="ph-bold ph-flower-lotus text-olive text-xl"></i>`
                     }
                                         </div>
                                         <div class="min-w-0">
                                             <h4 class="font-bold text-cocoa text-sm truncate" title="${escapeHtml(nombreClase)}">${escapeHtml(nombreClase)}</h4>
-                                            <p class="text-xs ${isCompanion ? 'text-amber-800' : 'text-olive'} font-bold mt-0.5 capitalize">
+                                            <p class="text-xs text-olive font-bold mt-0.5 capitalize">
                                                 <i class="ph-bold ph-calendar mr-0.5"></i> ${escapeHtml(diaNombre)} ${diaNumero} ${mes} · ${escapeHtml(hora)}
                                             </p>
-                                            ${(isCompanion && c.miReserva?.nombre_acompanante)
-                                                ? `<p class="text-[11px] text-amber-900 font-semibold mt-0.5 truncate"><i class="ph-bold ph-users-three mr-0.5"></i> Con: ${escapeHtml(c.miReserva.nombre_acompanante)}</p>`
-                                                : ''}
                                         </div>
                                     </div>
                                 </div>
@@ -17689,7 +17669,7 @@ async function adminTogglePromo50(userId, active) {
                         });
                     }
                     const confirmRes = await Swal.fire({
-                        title: 'Confirmar Consulta Gratuita',
+                        title: 'Confirmar Sesión Introductoria',
                         html: '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Consulta Gratuita</b> (0 €)?',
                         icon: 'question',
                         showCancelButton: true,

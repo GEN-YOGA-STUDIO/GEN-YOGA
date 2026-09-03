@@ -1507,7 +1507,7 @@
                             ¡Tu 1ª clase de Yoga es 100% GRATIS (0 €)!
                         </p>
                         <p class="text-[11px] text-white/85 font-light mt-0.5 leading-tight">
-                            Incluye 1 clase regular de yoga gratis + 1 valoración de Psicología/PNI al registrarte. ¡Apúntate ahora!
+                            Incluye 1 clase regular de yoga gratis + 1 sesión introductoria de Psicología/PNI al registrarte. ¡Apúntate ahora!
                         </p>
                     </div>
 
@@ -6296,7 +6296,7 @@
             const companionTitle = t('profile_saldos_info_companion_title', 'Bono Yoga en Compañía (0 €)');
             const companionDesc = t('profile_saldos_info_companion_desc', 'Crédito especial para reservar sesiones de Yoga en Compañía (Colegas, Pareja, Madre e Hija, Abuela y Nieta) para 2 personas a coste 0 €.');
             const freeConsultationTitle = t('profile_saldos_info_free_consultation_title', 'Consultas Gratuitas (0 €)');
-            const freeConsultationDesc = t('profile_saldos_info_free_consultation_desc', 'Sesión de valoración inicial gratuita con nuestros especialistas (Psicología, Psiconeuroinmunología PNI o Nutrición/Ayurveda) para orientarte.');
+            const freeConsultationDesc = t('profile_saldos_info_free_consultation_desc', 'El bono gratuito solo permite reservar sesiones introductorias claramente identificadas.');
             const btnRates = t('profile_saldos_info_btn_rates', 'Ver Todas las Tarifas');
             const btnClose = t('profile_saldos_info_btn_close', 'Entendido');
 
@@ -6415,10 +6415,10 @@
                 </div>
             </div>` : ''}
             ${userSaldoConsultasGratis > 0 ? `
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group" title="Consulta de valoración gratuita disponible. Haz clic para ver la guía de bonos.">
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group" title="Sesión introductoria gratuita disponible. Haz clic para ver la guía de bonos.">
                 <i class="ph-fill ph-gift text-base shrink-0 text-pink-600 group-hover:scale-110 transition-transform"></i>
                 <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-pink-800">Consulta Gratis</span>
+                    <span class="text-[8px] font-bold uppercase tracking-wider text-pink-800">Sesión Introductoria</span>
                     <span class="text-xs font-black text-pink-700">${userSaldoConsultasGratis} disp.</span>
                 </div>
             </div>` : ''}`;
@@ -7852,11 +7852,7 @@
             if (c.companion_modality || normalizarModalidadCompania(c.companion_modality) || normalizarModalidadCompania(c.nombre)) return false;
             if (c.es_gratuita === true || c.es_gratis === true) return true;
             const raw = String(c.nombre || '').toLowerCase();
-            if (/introductor|prueba|clase abierta|valoraci/.test(raw)) return true;
-            // Para consultas (psicología / nutrición / PNI), cualquier sesión individual (capacidad 1) es elegible para la valoración gratuita
-            if ((tipo === 'psicologia' || tipo === 'nutricion' || tipo === 'consulta') && toSafeNumber(c.capacidad_max) === 1) {
-                return true;
-            }
+            if (/introductor/.test(raw)) return true;
             return false;
         }
 
@@ -8273,27 +8269,12 @@
                 const profName = String(c.profesionales?.nombre || 'Staff GEN');
                 const profFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profName);
                 const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
-                const nombreClase = String(c.nombre || 'Clase de Yoga');
-                const companionModKey = normalizarModalidadCompania(c.companion_modality || c.nombre || c.miReserva?.welcome_companion_modality);
-                const isCompanion = !!companionModKey || c.miReserva?.tipo_reserva === 'compania';
-                const companionBadgeTitle = COMPANION_MODALITY_LABELS[companionModKey] || 'Yoga en compañía';
-
-                const cardBg = isCompanion
-                    ? 'bg-amber-50/20 border border-amber-300 shadow-2xs'
-                    : 'bg-white border border-olive/20 shadow-2xs';
-
-                let badgeHtml = '';
-                if (isCompanion) {
-                    if (companionModKey === 'abuela' || companionModKey === 'madre') {
-                        badgeHtml = `
-                            <div class="flex flex-wrap items-center gap-1.5 mb-1">
-                                <span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-2xs" style="background-color: #fef3c7 !important; color: #78350f !important; border: 1px solid #fcd34d !important;"><i class="ph-fill ph-users-three text-amber-700"></i> Yoga con tu abuela/nieta</span>
-                                <span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-2xs" style="background-color: #fef3c7 !important; color: #78350f !important; border: 1px solid #fcd34d !important;"><i class="ph-fill ph-users-three text-amber-700"></i> Yoga con tu Madre/Hija</span>
-                            </div>`;
-                    } else {
-                        badgeHtml = `<span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-2xs w-fit mb-1" style="background-color: #fef3c7 !important; color: #78350f !important; border: 1px solid #fcd34d !important;"><i class="ph-fill ph-users-three text-amber-700"></i> ${escapeHtml(companionBadgeTitle)}</span>`;
-                    }
-                }
+                const nombreOriginal = String(c.nombre || '');
+                const nombreClase = normalizarModalidadCompania(nombreOriginal)
+                    ? 'Clase de Yoga'
+                    : (nombreOriginal || 'Clase de Yoga');
+                const cardBg = 'bg-white border border-olive/20 shadow-2xs';
+                const badgeHtml = '';
 
                 return `
                         <div class="${cardBg} rounded-2xl p-3.5 hover:shadow-xs transition flex flex-col justify-between gap-3 relative overflow-hidden">
@@ -8304,17 +8285,14 @@
                                         <div class="w-10 h-10 rounded-xl overflow-hidden bg-sand/30 border border-cocoa/10 flex items-center justify-center shrink-0">
                                             ${profFoto
                         ? `<img src="${escapeHtml(profFoto)}" alt="${escapeHtml(profName)}" class="w-full h-full object-cover">`
-                        : `<i class="ph-bold ph-flower-lotus ${isCompanion ? 'text-amber-700' : 'text-olive'} text-xl"></i>`
+                        : `<i class="ph-bold ph-flower-lotus text-olive text-xl"></i>`
                     }
                                         </div>
                                         <div class="min-w-0">
                                             <h4 class="font-bold text-cocoa text-sm truncate" title="${escapeHtml(nombreClase)}">${escapeHtml(nombreClase)}</h4>
-                                            <p class="text-xs ${isCompanion ? 'text-amber-800' : 'text-olive'} font-bold mt-0.5 capitalize">
+                                            <p class="text-xs text-olive font-bold mt-0.5 capitalize">
                                                 <i class="ph-bold ph-calendar mr-0.5"></i> ${escapeHtml(diaNombre)} ${diaNumero} ${mes} · ${escapeHtml(hora)}
                                             </p>
-                                            ${(isCompanion && c.miReserva?.nombre_acompanante)
-                                                ? `<p class="text-[11px] text-amber-900 font-semibold mt-0.5 truncate"><i class="ph-bold ph-users-three mr-0.5"></i> Con: ${escapeHtml(c.miReserva.nombre_acompanante)}</p>`
-                                                : ''}
                                         </div>
                                     </div>
                                 </div>
@@ -17633,26 +17611,26 @@ async function adminTogglePromo50(userId, active) {
                     return !esMia && c.ocupadas < c.capacidad_max;
                 });
             } else if (filtroPsicologiaUsuario === 'introductorias') {
-                // SOLO sesiones introductorias / valoración
+                // SOLO sesiones introductorias
                 clasesAMostrar = clasesAMostrar.filter(c => {
                     const texto = `${String(c.nombre || '')} ${String(c.descripcion || '')}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                    return texto.includes('introduct') || texto.includes('valoraci') || c.es_gratuita === true;
+                    return texto.includes('introduct') || c.es_gratuita === true;
                 });
             } else if (filtroPsicologiaUsuario === 'isabel' || filtroPsicologiaUsuario === 'pni') {
-                // Sesiones individuales introductorias / valoración de Isabel (PNI)
+                // Sesiones introductorias de Isabel (PNI)
                 clasesAMostrar = clasesAMostrar.filter(c => {
                     const pName = (c.profesionales?.nombre || c.profesor_nombre || '').toLowerCase();
                     const pId = Number(c.profesionales?.id || c.profesor_id || 0);
                     const isIsabel = pId === 28 || pName.includes('isabel') || /pni/.test((c.nombre || '').toLowerCase());
-                    return isIsabel && (toSafeNumber(c.capacidad_max) === 1 || esClaseElegibleBonoGratis(c));
+                    return isIsabel && esClaseElegibleBonoGratis(c);
                 });
             } else if (filtroPsicologiaUsuario === 'miriam') {
-                // Sesiones individuales introductorias / valoración de Miriam (Psicología)
+                // Sesiones introductorias de Miriam (Psicología)
                 clasesAMostrar = clasesAMostrar.filter(c => {
                     const pName = (c.profesionales?.nombre || c.profesor_nombre || '').toLowerCase();
                     const pId = Number(c.profesionales?.id || c.profesor_id || 0);
                     const isMiriam = pId === 10 || pName.includes('miriam');
-                    return isMiriam && (toSafeNumber(c.capacidad_max) === 1 || esClaseElegibleBonoGratis(c));
+                    return isMiriam && esClaseElegibleBonoGratis(c);
                 });
             }
 
@@ -17815,7 +17793,7 @@ async function adminTogglePromo50(userId, active) {
                         : `<div class="w-full h-full bg-blue-50 flex items-center justify-center text-[#3B82F6] text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
 
                     const freeBadge = (isFree && userSaldoConsultasGratis >= 1)
-                        ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> Consulta Gratuita (Valoración)</span>`
+                        ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> Sesión Introductoria Gratuita</span>`
                         : (c.es_gratuita ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> Sesión Gratuita</span>` : '');
 
                     const row = document.createElement('div');
@@ -18194,7 +18172,7 @@ async function adminTogglePromo50(userId, active) {
                     });
                 }
 
-                const esGratuita = esClaseElegibleBonoGratis(clase) || (userSaldoConsultasGratis >= 1 && toSafeNumber(clase?.capacidad_max) === 1);
+                const esGratuita = esClaseElegibleBonoGratis(clase);
                 if (esGratuita && (userSaldoConsultasGratis >= 1 || clase?.es_gratuita)) {
                     if (!isAdmin && !esTrabajador() && userSaldoConsultasGratis < 1 && !clase?.es_gratuita) {
                         return Swal.fire({

@@ -162,7 +162,7 @@ BEGIN
   SELECT id INTO v_pack_id
     FROM public.class_credit_packs
    WHERE user_id = p_user_id
-     AND starts_at <= v_starts_at
+     AND purchased_at <= v_starts_at
      AND expires_at > v_starts_at
      AND credits_remaining > 0
    ORDER BY expires_at ASC, id ASC
