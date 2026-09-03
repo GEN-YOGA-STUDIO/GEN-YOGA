@@ -65,6 +65,8 @@ if (fs.existsSync(profilePath)) {
     check('Lógica de reserva diferenciada para Clase Especial (bono mensual) y Taller', profileContent.includes('isClaseEspecial') && profileContent.includes('isTaller'));
     check('Aviso de cancelación en taller informando de crédito de reprogramación (>24h)', profileContent.includes('Crédito de Reprogramación'));
     check('Guardado de evento admin respetando tipo clase_especial vs taller', profileContent.includes('evento-tipo-categoria') && profileContent.includes('tipoClaseEfectivo'));
+    check('Gestión de bonos permite asignar y modificar Clases Especiales a usuarios', profileContent.includes('cambiarClaseEspecialAdmin') && profileContent.includes('asignarNuevaClaseEspecialAdmin'));
+    check('Banner voluminoso de Administración de Consultas eliminado', !profileContent.includes('elimina turnos de psicología y nutrición. Revisa las reservas y estados de consulta.'));
 }
 
 console.log('\n--- 4. Verificando Traducciones (i18n.js) ---');
@@ -79,6 +81,6 @@ if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.1 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.2 superadas con éxito!');
     process.exit(0);
 }
