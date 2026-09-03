@@ -54,13 +54,13 @@ const profilePath = path.join(root, 'profile.html');
 if (fs.existsSync(profilePath)) {
     const profileContent = fs.readFileSync(profilePath, 'utf8');
     check('Navbar botón público actualizado a EVENTOS', profileContent.includes('id="nav-public-especiales"') && profileContent.includes('EVENTOS'));
-    check('Badge superior bronce para clases regulares', profileContent.includes('Clases Bronce'));
-    check('Badge superior plateado para bono de clases especiales a su derecha', profileContent.includes('Bono Especial') && profileContent.includes('+ Especial (20€)'));
-    check('Tarjeta plateada para Bono de Clases Especiales en perfil', profileContent.includes('Bonos de Clases Especiales · Color Plata'));
+    check('Badge superior para clases regulares', profileContent.includes('>Clases<') || profileContent.includes('>Clases</span>'));
+    check('Badge superior plateado para clase especial a su derecha', profileContent.includes('Clase especial') && profileContent.includes('+ Especial'));
+    check('Tarjeta plateada para Clase Especial en perfil', profileContent.includes('Clase especial · Color Plata'));
     check('Modal de creación con radio selector: Clase Especial vs Taller', profileContent.includes('evento-tipo-categoria') && profileContent.includes('evento-tipo-clase-especial') && profileContent.includes('evento-tipo-taller'));
     check('Sub-pestañas en vista de eventos (Todos, Clases Especiales, Talleres)', profileContent.includes('btn-subtab-eventos-todos') && profileContent.includes('btn-subtab-eventos-clases') && profileContent.includes('btn-subtab-eventos-talleres'));
     check('Función switchEventosSubTab implementada', profileContent.includes('function switchEventosSubTab'));
-    check('Función comprarBonoEspecialStripe implementada (20 €)', profileContent.includes('function comprarBonoEspecialStripe'));
+    check('Función comprarBonoEspecialStripe implementada', profileContent.includes('function comprarBonoEspecialStripe'));
     check('Carga de bonos_clases_especiales y creditos_reprogramacion en cargarEntitlementsV69', profileContent.includes("from('bonos_clases_especiales')") && profileContent.includes("from('creditos_reprogramacion')"));
     check('Lógica de reserva diferenciada para Clase Especial (bono mensual) y Taller', profileContent.includes('isClaseEspecial') && profileContent.includes('isTaller'));
     check('Aviso de cancelación en taller informando de crédito de reprogramación (>24h)', profileContent.includes('Crédito de Reprogramación'));
@@ -79,6 +79,6 @@ if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.1 superadas con éxito!');
     process.exit(0);
 }

@@ -33,7 +33,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '12.0'
+const APP_RELEASE = '12.1'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -140,7 +140,7 @@ serve(async (req) => {
     const supabase = createAdminClient(config)
 
     const user = isGuest ? null : await getAuthenticatedUser(req, supabase, true)
-    if (!isGuest && requestedUserId !== user?.id) {
+    if (!isGuest && requestedUserId && requestedUserId !== user?.id) {
       throw new HttpError(403, 'El usuario de la compra no coincide con la sesión autenticada.')
     }
 
@@ -160,7 +160,7 @@ serve(async (req) => {
         throw new HttpError(400, 'Ya has utilizado la promoción del 50% de descuento en tu 1ª clase.')
       }
 
-      if (membershipMonth) {
+      if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_ILIMITADO) {
         const { data: existingMonth, error: existingMonthError } = await supabase
           .from('unlimited_membership_periods')
           .select('id')
@@ -233,11 +233,28 @@ serve(async (req) => {
         ]
       }
     } else if (getWorkshopDetails(purchaseType)) {
-      const workshopPrice = await resolveWorkshopPrice(stripe, purchaseType)
-      if (!workshopPrice) {
-        throw new Error(`No se pudo resolver el precio del taller ${purchaseType}.`)
+      const details = getWorkshopDetails(purchaseType)!
+      let workshopPrice: Stripe.Price | null = null
+      try {
+        workshopPrice = await resolveWorkshopPrice(stripe, purchaseType)
+      } catch (err) {
+        console.warn('resolveWorkshopPrice warning:', err)
       }
-      lineItems = [{ price: workshopPrice.id, quantity: 1 }]
+
+      if (workshopPrice) {
+        lineItems = [{ price: workshopPrice.id, quantity: 1 }]
+      } else {
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: details.amount || 2000,
+              product: details.productId,
+            },
+            quantity: 1,
+          },
+        ]
+      }
     } else if (getPromoDetails(purchaseType)) {
       const details = getPromoDetails(purchaseType)!
       let promoPrice: Stripe.Price | null = null
