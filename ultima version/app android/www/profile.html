@@ -5776,6 +5776,12 @@
             return d.toLocaleDateString(getCurrentLocale(), options);
         }
 
+        function formatDisplayDate(date) {
+            const d = safeParseDate(date);
+            if (!d) return '';
+            return d.toLocaleDateString(getCurrentLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
         function formatDisplayDateTime(date) {
             const d = safeParseDate(date);
             if (!d) return '';
@@ -13619,91 +13625,112 @@
         async function abrirCodigosPromocionalesUsuario(userId) {
             if (!isAdmin && !esTrabajador()) return;
 
-            let u = (allUsersCache || []).find(x => String(x.id) === String(userId)) || {};
             try {
-                const { data: freshUser } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
-                if (freshUser) {
-                    u = { ...u, ...freshUser };
-                    const cacheIdx = (allUsersCache || []).findIndex(x => String(x.id) === String(userId));
-                    if (cacheIdx !== -1) allUsersCache[cacheIdx] = u;
+                let u = (allUsersCache || []).find(x => String(x.id) === String(userId)) || {};
+                try {
+                    const { data: freshUser } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
+                    if (freshUser) {
+                        u = { ...u, ...freshUser };
+                        const cacheIdx = (allUsersCache || []).findIndex(x => String(x.id) === String(userId));
+                        if (cacheIdx !== -1) allUsersCache[cacheIdx] = u;
+                    }
+                } catch (err) {
+                    console.warn('Error leyendo perfil para códigos promocionales:', err);
                 }
-            } catch (err) {
-                console.warn('Error leyendo perfil para códigos promocionales:', err);
-            }
 
-            const nombre = `${u.nombre || ''} ${u.apellidos || ''}`.trim() || u.email || 'Cliente';
-            const email = u.email || '';
+                const nombre = `${u.nombre || ''} ${u.apellidos || ''}`.trim() || u.email || 'Cliente';
+                const email = u.email || '';
 
-            const isActivo = !!u.descuento_promo_50_activo;
-            const isGastado = !isActivo && (!!u.codigo_promo_usado || (!!u.codigo_promo_canjeado && !u.descuento_promo_50_activo));
+                const isActivo = !!u.descuento_promo_50_activo;
+                const isGastado = !isActivo && (!!u.codigo_promo_usado || (!!u.codigo_promo_canjeado && !u.descuento_promo_50_activo));
 
-            let estadoBadge = '';
-            let estadoDescripcion = '';
-            let accionBtn = '';
+                let estadoBadge = '';
+                let estadoDescripcion = '';
+                let accionBtn = '';
 
-            if (isActivo) {
-                estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
-                    <i class="ph-fill ph-check-circle text-emerald-600 text-sm"></i> GENYOGA · CANJEADO Y ACTIVO
-                </span>`;
-                estadoDescripcion = `<p class="text-xs text-emerald-900 mt-2 font-medium">El cliente ha canjeado el código promocional y tiene disponible el <strong>50% de descuento</strong> para adquirir su 1ª clase regular de yoga a 7,50 €.</p>`;
+                let fechaCanjeStr = '';
                 if (u.codigo_promo_fecha_canje) {
-                    estadoDescripcion += `<p class="text-[11px] text-emerald-700/80 mt-1">Canjeado el: ${formatDisplayDate(u.codigo_promo_fecha_canje)}</p>`;
+                    try {
+                        const d = safeParseDate(u.codigo_promo_fecha_canje);
+                        if (d) {
+                            fechaCanjeStr = d.toLocaleDateString(getCurrentLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                    } catch (_) {}
                 }
-                accionBtn = `
-                    <button type="button" onclick="adminTogglePromo50('${userId}', false, true)" class="px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition cursor-pointer flex items-center gap-1.5">
-                        <i class="ph-bold ph-power"></i> Desactivar 50% DTO
-                    </button>
-                `;
-            } else if (isGastado) {
-                estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-red-600 text-white border border-red-700 shadow-2xs">
-                    <i class="ph-fill ph-x-circle text-white text-sm"></i> GENYOGA · GASTADO
-                </span>`;
-                estadoDescripcion = `<p class="text-xs text-red-900 mt-2 font-medium">El cliente ya canjeó y consumió este código promocional en su primera compra con el 50% de descuento.</p>`;
-                accionBtn = `
-                    <button type="button" onclick="adminReactivarPromo50('${userId}')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs">
-                        <i class="ph-bold ph-arrow-counter-clockwise"></i> Reactivar 50% DTO
-                    </button>
-                `;
-            } else {
-                estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-600 border border-gray-300 shadow-2xs">
-                    <i class="ph-bold ph-minus-circle text-gray-400 text-sm"></i> GENYOGA · NO CANJEADO
-                </span>`;
-                estadoDescripcion = `<p class="text-xs text-gray-600 mt-2 font-medium">El cliente aún no ha introducido ni canjeado este código promocional en su cuenta.</p>`;
-                accionBtn = `
-                    <button type="button" onclick="adminTogglePromo50('${userId}', true, true)" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs">
-                        <i class="ph-bold ph-tag"></i> Activar 50% DTO a este cliente
-                    </button>
-                `;
+
+                if (isActivo) {
+                    estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                        <i class="ph-fill ph-check-circle text-emerald-600 text-sm"></i> Canjeado pero sin consumir
+                    </span>`;
+                    estadoDescripcion = `<p class="text-xs text-emerald-900 mt-2 font-medium">El cliente ha canjeado el código promocional y tiene disponible el <strong>50% de descuento</strong> activo para reservar su 1ª clase regular de yoga a 7,50 €.</p>`;
+                    if (fechaCanjeStr) {
+                        estadoDescripcion += `<p class="text-[11px] text-emerald-700/80 mt-1">Canjeado el: ${escapeHtml(fechaCanjeStr)}</p>`;
+                    }
+                    accionBtn = `
+                        <button type="button" onclick="adminTogglePromo50('${userId}', false, true)" class="px-3.5 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition cursor-pointer flex items-center gap-1.5">
+                            <i class="ph-bold ph-power"></i> Desactivar 50% DTO
+                        </button>
+                    `;
+                } else if (isGastado) {
+                    estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white border border-red-700 shadow-2xs">
+                        <i class="ph-fill ph-x-circle text-white text-sm"></i> Canjeado y consumido
+                    </span>`;
+                    estadoDescripcion = `<p class="text-xs text-red-900 mt-2 font-medium">El cliente ya canjeó y consumió este código promocional (GENYOGA · GASTADO) en su primera reserva con el 50% de descuento.</p>`;
+                    if (fechaCanjeStr) {
+                        estadoDescripcion += `<p class="text-[11px] text-red-700/80 mt-1">Fecha de canje: ${escapeHtml(fechaCanjeStr)}</p>`;
+                    }
+                    accionBtn = `
+                        <button type="button" onclick="adminReactivarPromo50('${userId}')" class="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs">
+                            <i class="ph-bold ph-arrow-counter-clockwise"></i> Reactivar 50% DTO
+                        </button>
+                    `;
+                } else {
+                    estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300 shadow-2xs">
+                        <i class="ph-bold ph-minus-circle text-gray-400 text-sm"></i> No canjeado
+                    </span>`;
+                    estadoDescripcion = `<p class="text-xs text-gray-600 mt-2 font-medium">El cliente aún no ha introducido ni canjeado este código promocional en su cuenta.</p>`;
+                    accionBtn = `
+                        <button type="button" onclick="adminTogglePromo50('${userId}', true, true)" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs">
+                            <i class="ph-bold ph-tag"></i> Activar 50% DTO a este cliente
+                        </button>
+                    `;
+                }
+
+                await Swal.fire({
+                    title: `<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-xl"><i class="ph-duotone ph-tag text-amber-600"></i> Códigos Promocionales</div>`,
+                    html: `
+                <div class="text-left font-sans space-y-3.5 my-2">
+                    <div class="p-3 bg-cocoa/5 rounded-xl border border-cocoa/10">
+                        <p class="text-xs font-bold text-cocoa">${escapeHtml(nombre)}</p>
+                        <p class="text-[11px] text-cocoa/50">${escapeHtml(email)}</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl border ${isActivo ? 'border-emerald-300 bg-emerald-50/70' : (isGastado ? 'border-red-300 bg-red-50/80' : 'border-gray-200 bg-gray-50/80')} space-y-3 shadow-2xs">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-cocoa/10 text-cocoa">Fila 1</span>
+                                <span class="text-xs font-bold text-cocoa">Código promocional 1: <strong class="font-mono text-sm tracking-wide text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-300">GENYOGA</strong></span>
+                            </div>
+                            ${estadoBadge}
+                        </div>
+                        ${estadoDescripcion}
+                        <div class="pt-2 flex items-center justify-between gap-2 border-t ${isActivo ? 'border-emerald-200' : (isGastado ? 'border-red-200' : 'border-gray-200')} flex-wrap">
+                            <span class="text-[11px] text-gray-500 font-medium">Promoción 50% DTO 1ª clase (7,50 €)</span>
+                            ${accionBtn}
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-gray-400 italic text-center pt-1">Actualmente la plataforma dispone de 1 código promocional oficial activo (GENYOGA).</p>
+                </div>
+            `,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Cerrar',
+                    confirmButtonColor: '#8C8658'
+                });
+            } catch (err) {
+                console.error('Error abriendo modal de códigos promocionales:', err);
+                Swal.fire('Error', 'No se pudo cargar la información de códigos promocionales.', 'error');
             }
-
-            await Swal.fire({
-                title: `<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-xl"><i class="ph-duotone ph-tag text-amber-600"></i> Códigos Promocionales</div>`,
-                html: `
-            <div class="text-left font-sans space-y-3.5 my-2">
-                <div class="p-3 bg-cocoa/5 rounded-xl border border-cocoa/10">
-                    <p class="text-xs font-bold text-cocoa">${escapeHtml(nombre)}</p>
-                    <p class="text-[11px] text-cocoa/50">${escapeHtml(email)}</p>
-                </div>
-
-                <div class="p-4 rounded-2xl border ${isActivo ? 'border-emerald-300 bg-emerald-50/70' : (isGastado ? 'border-red-300 bg-red-50/80' : 'border-gray-200 bg-gray-50/80')} space-y-3">
-                    <div class="flex items-center justify-between gap-2 flex-wrap">
-                        <span class="text-xs uppercase tracking-wider font-extrabold text-cocoa/70">Código: <strong class="text-cocoa font-mono text-sm tracking-normal">GENYOGA</strong></span>
-                        ${estadoBadge}
-                    </div>
-                    ${estadoDescripcion}
-                    <div class="pt-2 flex items-center justify-between gap-2 border-t ${isActivo ? 'border-emerald-200' : (isGastado ? 'border-red-200' : 'border-gray-200')}">
-                        <span class="text-[11px] text-gray-400">Promoción 50% DTO 1ª clase (7,50 €)</span>
-                        ${accionBtn}
-                    </div>
-                </div>
-
-                <p class="text-[11px] text-gray-400 italic text-center pt-1">Actualmente la plataforma dispone de 1 código promocional oficial activo (GENYOGA).</p>
-            </div>
-        `,
-                showConfirmButton: true,
-                confirmButtonText: 'Cerrar',
-                confirmButtonColor: '#8C8658'
-            });
         }
 
         async function adminReactivarPromo50(userId) {
@@ -13893,7 +13920,7 @@
                     <button type="button" onclick="abrirCodigosPromocionalesUsuario('${uId}')"
                         class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
                         title="Códigos Promocionales">
-                        <i class="ph-bold ph-tag"></i> Códigos Promocionales
+                        <i class="ph-bold ph-tag"></i> Cod. Prom.
                     </button>
                     <button type="button" onclick="abrirEditarUsuarioAdmin('${uId}')"
                         class="px-2.5 py-1.5 bg-sand/30 hover:bg-sand/60 text-cocoa rounded-lg text-xs font-bold border border-cocoa/15 transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
