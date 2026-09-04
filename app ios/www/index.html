@@ -93,7 +93,7 @@
             }
         }
 
-        /* Estilos Flash Modal Bienvenida (100% Sólido y Opaco) */
+        /* Estilos Flash Modal Bienvenida (100% Sólido, Opaco y Responsive) */
         #flash-welcome-modal {
             background-color: rgba(22, 14, 9, 0.82) !important;
             backdrop-filter: blur(8px);
@@ -106,7 +106,23 @@
             background: #FAF7F2 !important;
             opacity: 1 !important;
             border: 2px solid #b48a47 !important;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(180, 138, 71, 0.25) !important;
+            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(180, 138, 71, 0.25) !important;
+            max-width: 480px !important;
+            width: 100% !important;
+            max-height: min(90vh, 90dvh) !important;
+            box-sizing: border-box !important;
+            margin: auto !important;
+        }
+
+        #flash-welcome-card::-webkit-scrollbar {
+            width: 5px;
+        }
+        #flash-welcome-card::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #flash-welcome-card::-webkit-scrollbar-thumb {
+            background: rgba(180, 138, 71, 0.4);
+            border-radius: 9999px;
         }
 
         .flash-badge-free {
@@ -589,88 +605,86 @@
     <!-- FLASH MODAL BIENVENIDA: 1ª CLASE DE YOGA GRATIS (0 €)   -->
     <!-- ======================================================== -->
     <div id="flash-welcome-modal" role="dialog" aria-modal="true" aria-labelledby="flash-welcome-title"
-        class="fixed inset-0 flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-all duration-300"
+        class="fixed inset-0 flex items-center justify-center p-3 sm:p-4 opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto"
         style="background-color: rgba(22, 14, 9, 0.82) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 9999 !important;">
         
         <div id="flash-welcome-card"
-            class="rounded-3xl p-6 sm:p-8 max-w-lg w-full relative text-left text-[#3c2a21] transform scale-95 transition-all duration-300"
-            style="background-color: #FAF7F2 !important; background: #FAF7F2 !important; border: 2px solid #b48a47 !important; box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(180, 138, 71, 0.25) !important; opacity: 1 !important;">
+            class="rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 max-w-[420px] w-full m-auto max-h-[92dvh] overflow-y-auto relative text-left text-[#3c2a21] transform scale-95 transition-all duration-300"
+            style="background-color: #FAF7F2 !important; background: #FAF7F2 !important; border: 2px solid #b48a47 !important; box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(180, 138, 71, 0.25) !important; opacity: 1 !important;">
             
-            <!-- Botón Cerrar (Esquina Superior Derecha) -->
-            <button type="button" onclick="cerrarFlashWelcomeModal()"
-                aria-label="Cerrar aviso promocional"
-                class="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition cursor-pointer text-lg font-bold"
-                style="background-color: rgba(60, 42, 33, 0.08) !important; color: #3c2a21 !important;">
-                ✕
-            </button>
-
-            <!-- Badge Superior -->
-            <div class="flex items-center gap-2 mb-3">
-                <span class="flash-badge-free inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-xs"
+            <!-- Cabecera: Badge Superior y Botón Cerrar -->
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="flash-badge-free inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs"
                     style="background-color: #D1FAE5 !important; color: #064E3B !important; border: 1px solid #6EE7B7 !important;">
                     ★ 100% Gratuito · Nuevos Alumnos
                 </span>
+                <button type="button" onclick="cerrarFlashWelcomeModal()"
+                    aria-label="Cerrar aviso promocional"
+                    class="w-7 h-7 rounded-full flex items-center justify-center transition cursor-pointer text-sm font-bold text-[#3c2a21]/70 hover:text-[#3c2a21]"
+                    style="background-color: rgba(60, 42, 33, 0.08) !important;">
+                    ✕
+                </button>
             </div>
 
-            <!-- Título y Precio -->
-            <h2 id="flash-welcome-title" class="text-2xl sm:text-3xl font-serif font-black text-[#3c2a21] tracking-tight leading-snug">
-                ¡Tu 1ª Clase de Yoga es Gratis!
-            </h2>
-            
-            <div class="flex items-baseline gap-2 mt-1 mb-4">
-                <span class="text-4xl sm:text-5xl font-black" style="color: #047857 !important;">0 €</span>
-                <span class="text-xs text-[#3c2a21]/65 font-medium">sin cuota de alta · sin compromiso</span>
+            <!-- Título y Precio alineados de forma compacta -->
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+                <div>
+                    <h2 id="flash-welcome-title" class="text-base sm:text-lg font-serif font-black text-[#3c2a21] tracking-tight leading-tight">
+                        ¡Tu 1ª Clase de Yoga es Gratis!
+                    </h2>
+                    <span class="text-[10.5px] sm:text-[11px] text-[#3c2a21]/70 font-medium">sin cuota de alta · sin compromiso</span>
+                </div>
+                <div class="text-right shrink-0">
+                    <span class="text-2xl sm:text-3xl font-black leading-none" style="color: #047857 !important;">0 €</span>
+                </div>
             </div>
 
-            <p class="text-xs sm:text-sm text-[#3c2a21]/85 leading-relaxed mb-4">
+            <p class="text-[11px] sm:text-xs text-[#3c2a21]/80 leading-snug mb-2">
                 Crea tu cuenta en <strong>GEN Yoga</strong> y recibe automáticamente en tu perfil tu <strong>Bono de Bienvenida</strong> para empezar a entrenar con nosotros:
             </p>
 
             <!-- Ventajas Incluidas -->
-            <div class="space-y-2.5 mb-6 text-xs text-[#3c2a21]/90">
-                <div class="flash-benefit-yoga flex items-start gap-3 p-3 rounded-2xl"
+            <div class="space-y-1.5 mb-2.5 text-xs text-[#3c2a21]">
+                <div class="flash-benefit-yoga flex items-start gap-2 p-2 rounded-xl"
                     style="background-color: #ECFDF5 !important; border: 1px solid #A7F3D0 !important;">
-                    <span class="text-emerald-700 font-bold text-base leading-none mt-0.5">🧘</span>
-                    <div>
-                        <strong class="text-emerald-950 font-bold block">1 Sesión Gratuita de Yoga para cualquier clase regular</strong>
-                        <span class="text-[11px] text-emerald-900/80 leading-tight block mt-0.5">
+                    <span class="text-emerald-700 font-bold text-sm leading-none mt-0.5">🧘</span>
+                    <div class="min-w-0">
+                        <strong class="text-emerald-950 font-bold block text-xs leading-tight">1 Sesión Gratuita de Yoga para cualquier clase regular</strong>
+                        <span class="text-[10px] sm:text-[10.5px] text-emerald-900/80 leading-tight block mt-0.5">
                             Válida para cualquier horario regular de la parrilla semanal (excluye talleres y clases especiales).
                         </span>
                     </div>
                 </div>
 
-                <div class="flash-benefit-consultas flex items-start gap-3 p-3 rounded-2xl"
+                <div class="flash-benefit-consultas flex items-start gap-2 p-2 rounded-xl"
                     style="background-color: #F5EDE3 !important; border: 1px solid #E2D5C3 !important;">
-                    <span class="text-[#8f6b2d] font-bold text-base leading-none mt-0.5">🌿</span>
-                    <div>
-                        <strong class="text-[#3c2a21] font-bold block">1 Sesión Introductoria Gratuita de Psicología o PNI</strong>
-                        <span class="text-[11px] text-[#3c2a21]/75 leading-tight block mt-0.5">
+                    <span class="text-[#8f6b2d] font-bold text-sm leading-none mt-0.5">🌿</span>
+                    <div class="min-w-0">
+                        <strong class="text-[#3c2a21] font-bold block text-xs leading-tight">1 Sesión Introductoria Gratuita de Psicología o PNI</strong>
+                        <span class="text-[10px] sm:text-[10.5px] text-[#3c2a21]/75 leading-tight block mt-0.5">
                             Valoración de salud integrativa con nuestras especialistas en consulta.
                         </span>
                     </div>
                 </div>
 
-                <div class="flash-benefit-inmediata flex items-start gap-3 p-2.5 rounded-xl"
-                    style="background-color: #FFFFFF !important; border: 1px solid rgba(60, 42, 33, 0.15) !important;">
-                    <span class="text-amber-600 font-bold text-base leading-none mt-0.5">⚡</span>
-                    <div>
-                        <strong class="text-[#3c2a21] font-bold block">Activación Inmediata</strong>
-                        <span class="text-[11px] text-[#3c2a21]/70 leading-tight block mt-0.5">
-                            Disponible al instante tras registrarte. ¡Apúntate y ven a conocernos!
-                        </span>
-                    </div>
+                <div class="flash-benefit-inmediata flex items-center gap-2 px-2.5 py-1 rounded-lg"
+                    style="background-color: #FFFFFF !important; border: 1px solid rgba(60, 42, 33, 0.12) !important;">
+                    <span class="text-amber-600 font-bold text-xs leading-none">⚡</span>
+                    <span class="text-[10.5px] sm:text-[11px] text-[#3c2a21]/80 font-medium leading-tight">
+                        <strong class="text-[#3c2a21]">Activación Inmediata:</strong> Disponible al instante tras registrarte. ¡Apúntate y ven a conocernos!
+                    </span>
                 </div>
             </div>
 
-            <!-- Botones de Acción -->
-            <div class="space-y-2">
+            <!-- Botones de Acción: Más compactos y centrados -->
+            <div class="text-center pt-0.5">
                 <a href="profile.html?action=register&prompt=register&promo=bienvenida"
-                    class="block w-full py-3.5 px-6 text-center text-white font-bold text-xs sm:text-sm uppercase tracking-widest rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-[1.01] active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2 text-center text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition transform hover:scale-[1.02] active:scale-98 cursor-pointer"
                     style="background: linear-gradient(135deg, #8f6b2d 0%, #6e5221 100%) !important;">
                     <span>✨ Crear Cuenta y Recibir Bono (0 €) &rarr;</span>
                 </a>
                 <button type="button" onclick="cerrarFlashWelcomeModal()"
-                    class="w-full text-center text-xs text-[#3c2a21]/60 hover:text-[#3c2a21] font-medium transition py-1.5 cursor-pointer">
+                    class="block w-full text-center text-[10.5px] sm:text-[11px] text-[#3c2a21]/60 hover:text-[#3c2a21] font-medium transition mt-1 py-0.5 cursor-pointer">
                     Cerrar y continuar al estudio
                 </button>
             </div>

@@ -4360,18 +4360,17 @@
                         <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Solo se pueden crear eventos cuyo tipo esté previamente definido en el Catálogo de Clases.</p>
                     </div>
 
-                    <!-- 3. MÉTODO DE PAGO / PRODUCTO STRIPE -->
+                    <!-- 3. MÉTODO DE PAGO / PRODUCTO STRIPE (Tarifa oficial fija asociada) -->
                     <div class="md:col-span-2" id="taller-metodo-pago-container">
                         <label class="text-xs font-black text-cocoa uppercase tracking-wider ml-1 mb-2 flex items-center justify-between">
-                            <span><i class="ph-bold ph-credit-card text-olive"></i> Método de Pago (Producto Stripe) <span class="text-red-500">*</span></span>
-                            <span class="text-[10px] font-normal text-cocoa/50">Vinculación pasarela online</span>
+                            <span><i class="ph-bold ph-credit-card text-olive"></i> Tarifa Stripe Asociada <span class="text-red-500">*</span></span>
+                            <span class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="ph-bold ph-lock-key"></i> Tarifa fija</span>
                         </label>
-                        <select id="taller-metodo-pago" name="taller-metodo-pago" required aria-label="Método de pago o producto Stripe"
-                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa font-bold">
-                            <option value="taller_intro_power_vinyasa" selected>Taller GEN Yoga — 35,00 € (Stripe: prod_V5uCPKKKH5K74P)</option>
-                            <option value="clase_especial">Clase Especial — 20,00 € (Stripe: prod_V5uBKuweMRE6ig)</option>
+                        <select id="taller-metodo-pago" name="taller-metodo-pago" required disabled aria-label="Tarifa Stripe asociada"
+                            class="w-full px-4 py-3 bg-sand/20 border border-cocoa/20 rounded-xl outline-none text-cocoa font-bold cursor-not-allowed opacity-90 transition">
+                            <option value="clase_especial" selected>Clase Especial — 20,00 €</option>
                         </select>
-                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Determina el producto de Stripe y el precio asociado al pago online de esta actividad.</p>
+                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Tarifa oficial fija asociada automáticamente (Clase Especial: 20 € · Taller: 35 €). Desplegable bloqueado por tarifa única.</p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Título de
@@ -5046,6 +5045,89 @@
             };
         }
 
+        function getProductosStripeProfesional(profesorOrName, tipo = 'psicologia') {
+            const rawName = typeof profesorOrName === 'string'
+                ? profesorOrName
+                : String(profesorOrName?.nombre || profesorOrName?.profesor_nombre || '');
+            const slug = rawName.toLowerCase();
+            const isMiriam = slug.includes('miriam');
+            const isIsabel = slug.includes('isabel') || slug.includes('pni');
+            const isSilvia = slug.includes('silvia') || slug.includes('ayurveda');
+
+            if (isMiriam) {
+                return [
+                    { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '60 min · Sesión inicial' },
+                    { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '60 min · Seguimiento' },
+                    { key: 'miriam_psico_pareja_1a', title: 'Terapia de pareja (1ª sesión)', price: 120, desc: '90 min · Sesión inicial pareja' },
+                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '90 min · Seguimiento pareja' }
+                ];
+            }
+            if (isIsabel) {
+                return [
+                    { key: 'isabel_pni_1a', title: 'Consulta PNI Clínica (1ª sesión)', price: 80, desc: '60 min · Valoración clínica integral' },
+                    { key: 'isabel_pni_sig', title: 'Consulta PNI Clínica (seguimiento)', price: 60, desc: '60 min · Evolución y ajustes' }
+                ];
+            }
+            if (isSilvia) {
+                return [
+                    { key: 'silvia_ayurveda_1a', title: 'Consulta de Ayurveda (1ª sesión)', price: 80, desc: '90 min · Diagnóstico doshas' },
+                    { key: 'silvia_ayurveda_sig', title: 'Consulta de Ayurveda (seguimiento)', price: 60, desc: '60 min · Revisión pautas' },
+                    { key: 'silvia_ayurveda_bono3', title: 'Bono Salud Integrativa (3 sesiones)', price: 170, desc: 'Ahorro 10 € · 3 consultas' },
+                    { key: 'silvia_ayurveda_bono6', title: 'Bono Salud Integrativa (6 sesiones)', price: 280, desc: 'Ahorro 80 € · 6 consultas' }
+                ];
+            }
+            if (tipo === 'psicologia') {
+                return [
+                    { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '60 min · Sesión individual' },
+                    { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '60 min · Seguimiento' }
+                ];
+            }
+            return [
+                { key: 'isabel_pni_1a', title: 'Consulta PNI Clínica (1ª sesión)', price: 80, desc: '60 min · Sesión individual' },
+                { key: 'isabel_pni_sig', title: 'Consulta PNI Clínica (seguimiento)', price: 60, desc: '60 min · Seguimiento' }
+            ];
+        }
+
+        function obtenerDetalleProductoConsulta(reserva, clase) {
+            const rawProd = (reserva?.producto_contratado || clase?.metodo_pago || '').trim();
+            const lookup = (reserva?.stripe_lookup_key || clase?.stripe_lookup_key || '').trim();
+            const origen = (reserva?.origen_pago || 'online').toLowerCase();
+            const esLocal = origen === 'local';
+
+            let nombre = rawProd;
+            if (!nombre && lookup) {
+                const catalogo = {
+                    'miriam_psico_individual_1a': 'Acompañamiento psicoterapéutico (1ª sesión) · 75 €',
+                    'miriam_psico_individual_sig': 'Acompañamiento psicoterapéutico (siguientes) · 65 €',
+                    'miriam_psico_pareja_1a': 'Terapia de pareja (1ª sesión) · 120 €',
+                    'miriam_psico_pareja_sig': 'Terapia de pareja (siguientes) · 100 €',
+                    'isabel_pni_1a': 'Consulta PNI Clínica (1ª sesión) · 80 €',
+                    'isabel_pni_sig': 'Consulta PNI Clínica (seguimiento) · 60 €',
+                    'silvia_ayurveda_1a': 'Consulta de Ayurveda (1ª sesión) · 80 €',
+                    'silvia_ayurveda_sig': 'Consulta de Ayurveda (seguimiento) · 60 €',
+                    'silvia_ayurveda_bono3': 'Bono Salud Integrativa (3 sesiones) · 170 €',
+                    'silvia_ayurveda_bono6': 'Bono Salud Integrativa (6 sesiones) · 280 €',
+                    'consulta_gratis': 'Consulta Gratuita de Bienvenida (0 €)'
+                };
+                nombre = catalogo[lookup] || lookup;
+            }
+            if (!nombre) {
+                if (reserva?.saldo_gratis_descontado || clase?.es_gratuita) {
+                    nombre = 'Consulta Gratuita de Bienvenida (0 €)';
+                } else {
+                    const tipo = (clase?.tipo_clase || reserva?.tipo || 'consulta').toLowerCase();
+                    nombre = tipo === 'psicologia' ? 'Consulta Psicología' : (tipo === 'nutricion' ? 'Consulta Nutrición' : 'Consulta');
+                }
+            }
+
+            return {
+                nombre,
+                lookup,
+                origen,
+                esLocal
+            };
+        }
+
         function obtenerBadgeTipoReserva(reserva, clase) {
             const r = reserva || {};
             const c = clase || {};
@@ -5059,8 +5141,15 @@
                 || (!!modalidadReserva && !['gratis'].includes(modalidadReserva));
 
             if (esConsulta) {
-                if (r.saldo_gratis_descontado) {
+                const prodInfo = obtenerDetalleProductoConsulta(r, c);
+                if (r.saldo_gratis_descontado || prodInfo.nombre?.includes('Gratuita')) {
                     return renderPagoBadge('Consulta Gratuita', 'Pagado con: Consulta Gratuita');
+                }
+                if (prodInfo.esLocal) {
+                    return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded shadow-2xs" title="Pago en local: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-storefront text-xs"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
+                }
+                if (prodInfo.nombre) {
+                    return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded shadow-2xs" title="Pagado online: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-credit-card text-xs"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
                 }
                 return renderPagoBadge('Bono Consulta', 'Pagado con: Bono Consulta');
             }
@@ -6027,9 +6116,52 @@
                     try {
                         const pendingData = JSON.parse(pendingConsultationRaw);
                         safeRemoveItem('pending_consultation_booking');
-                        if (pendingData && pendingData.tipo && pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
-                            setTimeout(() => {
-                                abrirConfirmacionReservaVirtual(pendingData.tipo, pendingData.profesor_id, pendingData.fecha, pendingData.hora);
+                        if (pendingData && pendingData.tipo) {
+                            setTimeout(async () => {
+                                try {
+                                    if (pendingData.isVirtual && pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
+                                        const startIso = new Date(`${pendingData.fecha}T${pendingData.hora}:00`).toISOString();
+                                        await client.rpc('reservar_consulta_virtual', {
+                                            p_tipo: pendingData.tipo,
+                                            p_profesor_id: Number(pendingData.profesor_id),
+                                            p_fecha_inicio: startIso,
+                                            p_user_id: currentUser.id,
+                                            p_cobrar_saldo: false,
+                                            p_producto_contratado: pendingData.producto_contratado || null,
+                                            p_stripe_lookup_key: pendingData.lookup_key || null,
+                                            p_origen_pago: 'online'
+                                        });
+                                    } else if (pendingData.clase_id) {
+                                        const numericClaseId = safePositiveInteger(pendingData.clase_id);
+                                        await client.rpc('reservar_consulta_atomica', {
+                                            p_tipo: pendingData.tipo,
+                                            p_clase_id: numericClaseId,
+                                            p_user_id: currentUser.id,
+                                            p_cobrar_saldo: false,
+                                            p_producto_contratado: pendingData.producto_contratado || null,
+                                            p_stripe_lookup_key: pendingData.lookup_key || null,
+                                            p_origen_pago: 'online'
+                                        });
+                                        await client.from('clases').update({
+                                            metodo_pago: pendingData.producto_contratado || null,
+                                            stripe_lookup_key: pendingData.lookup_key || null
+                                        }).eq('id', numericClaseId);
+                                    }
+                                    playYogaSound();
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: '¡Cita Reservada y Confirmada!',
+                                        html: `Tu reserva se ha completado correctamente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pagado online:</b> ${escapeHtml(pendingData.producto_contratado || 'Consulta')}</span>`,
+                                        showConfirmButton: false,
+                                        timer: 2500
+                                    });
+                                    await refrescarConsultas(pendingData.tipo);
+                                } catch (err) {
+                                    console.warn('Error al auto-reservar consulta post-pago:', err);
+                                    if (pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
+                                        abrirConfirmacionReservaVirtual(pendingData.tipo, pendingData.profesor_id, pendingData.fecha, pendingData.hora);
+                                    }
+                                }
                             }, 1000);
                         }
                     } catch (_) {
@@ -6758,7 +6890,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 ${singleClassBtnHtml}
                 <button onclick="comprarPack('pack_4', event)" class="py-2.5 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">4 · 50€</button>
-                <button onclick="comprarPack('pack_6', event)" class="py-2.5 bg-olive text-white hover:bg-black text-[10px] font-bold uppercase rounded-xl">6 · 65€</button>
+                <button onclick="comprarPack('pack_6', event)" class="py-2.5 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">6 · 65€</button>
             </div>
         </div>
         <div class="bg-white/95 p-5 rounded-3xl border border-slate-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);">
@@ -16187,9 +16319,9 @@
                                             <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Categoría</label>
                                             <select id="new-tipo-categoria" required onchange="ajustarDuracionPorCategoriaTipo()"
                                                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
-                                                <option value="yoga">Clase regular (60-75 min)</option>
-                                                <option value="clase_especial">Clase Especial (75 min)</option>
-                                                <option value="taller">Taller · Inmersión temática (120 min)</option>
+                                                <option value="yoga">Clase regular</option>
+                                                <option value="clase_especial">Clase especial</option>
+                                                <option value="taller">Taller</option>
                                             </select>
                                         </div>
                                         <div class="grid grid-cols-2 gap-4">
@@ -18693,13 +18825,16 @@
             const selectedKey = document.querySelector('input[name="consultation-lookup"]:checked')?.value;
             if (!selectedKey) return;
 
+            const selectedOpt = options.find(o => o.key === selectedKey);
             const pendingBooking = {
                 tipo,
                 profesor_id: prof.id || clase.profesor_id,
                 fecha: formatDateLocal(new Date(clase.fecha_inicio)),
                 hora: formatDisplayTime(clase.fecha_inicio),
                 clase_id: clase.id,
-                isVirtual: !!clase.isVirtual
+                isVirtual: !!clase.isVirtual,
+                lookup_key: selectedKey,
+                producto_contratado: selectedOpt?.title || selectedKey
             };
             safeSetItem('pending_consultation_booking', JSON.stringify(pendingBooking));
 
@@ -19060,6 +19195,11 @@
                     const reservada = !!c.miReserva;
 
                     const isFree = esClaseElegibleBonoGratis(c);
+                    const prodInfo = obtenerDetalleProductoConsulta(c.reservaConfirmada || c.miReserva, c);
+                    const tagOnlineBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-tag"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
+                    const tagLocalBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-storefront"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
+                    const tagBadge = prodInfo.esLocal ? tagLocalBadge : tagOnlineBadge;
+
                     let btnAction = '';
                     if (isAdmin) {
                         if (c.reservaConfirmada) {
@@ -19067,13 +19207,16 @@
                             const pacNombre = `${pac.nombre || ''} ${pac.apellidos || ''}`.trim() || pac.email || 'Paciente';
                             const resId = safePositiveInteger(c.reservaConfirmada.id) || 0;
                             btnAction = `
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <span class="text-xs font-bold text-gray-700 bg-sand/20 border border-cocoa/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="${escapeHtml(pac.email || '')}">
-                                <i class="ph-bold ph-user text-blue-600"></i> ${escapeHtml(pacNombre)}
-                            </span>
-                            <button onclick="cancelarConsulta('psicologia', ${resId})" class="text-xs font-bold text-red-600 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition">
-                                Cancelar Cita
-                            </button>
+                        <div class="flex flex-col items-end gap-1.5">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span class="text-xs font-bold text-gray-700 bg-sand/20 border border-cocoa/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="${escapeHtml(pac.email || '')}">
+                                    <i class="ph-bold ph-user text-blue-600"></i> ${escapeHtml(pacNombre)}
+                                </span>
+                                <button onclick="cancelarConsulta('psicologia', ${resId})" class="text-xs font-bold text-red-600 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition">
+                                    Cancelar Cita
+                                </button>
+                            </div>
+                            <div>${tagBadge}</div>
                         </div>`;
                         } else {
                             btnAction = `
@@ -19083,11 +19226,20 @@
                         }
                     } else if (reservada) {
                         btnAction = `
-                    <button onclick="cancelarConsulta('psicologia', ${reservaId})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
-                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
-                    </button>`;
+                    <div class="flex flex-col items-end gap-1.5">
+                        <button onclick="cancelarConsulta('psicologia', ${reservaId})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
+                            <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
+                        </button>
+                        <div>${tagBadge}</div>
+                    </div>`;
                     } else if (llena) {
-                        btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_reserved', 'Reservado'))}</span>`;
+                        btnAction = `
+                    <div class="flex flex-col items-end gap-1.5">
+                        <span class="text-[10px] font-bold text-cocoa/60 bg-sand/20 px-3 py-1.5 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed flex items-center gap-1">
+                            <i class="ph-bold ph-lock-key"></i> ${escapeHtml(profileT('profile_occupied', 'Ocupado'))}
+                        </span>
+                        <div>${tagOnlineBadge}</div>
+                    </div>`;
                     } else {
                         const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                         if (!esAlumno) {
@@ -19279,6 +19431,10 @@
                     const llena = c.ocupadas >= c.capacidad_max;
                     const reservada = !!c.miReserva;
                     const isFree = esClaseElegibleBonoGratis(c);
+                    const prodInfo = obtenerDetalleProductoConsulta(c.reservaConfirmada || c.miReserva, c);
+                    const tagOnlineBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-tag"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
+                    const tagLocalBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-storefront"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
+                    const tagBadge = prodInfo.esLocal ? tagLocalBadge : tagOnlineBadge;
 
                     let btnAction = '';
                     if (isAdmin) {
@@ -19287,13 +19443,16 @@
                             const pacNombre = `${pac.nombre || ''} ${pac.apellidos || ''}`.trim() || pac.email || 'Paciente';
                             const resId = safePositiveInteger(c.reservaConfirmada.id) || 0;
                             btnAction = `
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <span class="text-xs font-bold text-gray-700 bg-sand/20 border border-cocoa/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="${escapeHtml(pac.email || '')}">
-                                <i class="ph-bold ph-user text-purple-600"></i> ${escapeHtml(pacNombre)}
-                            </span>
-                            <button onclick="cancelarConsulta('nutricion', ${resId})" class="text-xs font-bold text-red-600 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition">
-                                Cancelar Cita
-                            </button>
+                        <div class="flex flex-col items-end gap-1.5">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span class="text-xs font-bold text-gray-700 bg-sand/20 border border-cocoa/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="${escapeHtml(pac.email || '')}">
+                                    <i class="ph-bold ph-user text-purple-600"></i> ${escapeHtml(pacNombre)}
+                                </span>
+                                <button onclick="cancelarConsulta('nutricion', ${resId})" class="text-xs font-bold text-red-600 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition">
+                                    Cancelar Cita
+                                </button>
+                            </div>
+                            <div>${tagBadge}</div>
                         </div>`;
                         } else {
                             btnAction = `
@@ -19303,11 +19462,20 @@
                         }
                     } else if (reservada) {
                         btnAction = `
-                    <button onclick="cancelarConsulta('nutricion', ${reservaId})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
-                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
-                    </button>`;
+                    <div class="flex flex-col items-end gap-1.5">
+                        <button onclick="cancelarConsulta('nutricion', ${reservaId})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
+                            <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
+                        </button>
+                        <div>${tagBadge}</div>
+                    </div>`;
                     } else if (llena) {
-                        btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_reserved', 'Reservado'))}</span>`;
+                        btnAction = `
+                    <div class="flex flex-col items-end gap-1.5">
+                        <span class="text-[10px] font-bold text-cocoa/60 bg-sand/20 px-3 py-1.5 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed flex items-center gap-1">
+                            <i class="ph-bold ph-lock-key"></i> ${escapeHtml(profileT('profile_occupied', 'Ocupado'))}
+                        </span>
+                        <div>${tagOnlineBadge}</div>
+                    </div>`;
                     } else {
                         const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                         if (!esAlumno) {
@@ -21253,6 +21421,17 @@
 
             const clientes = (perfiles || []).filter(esClienteAsignable);
 
+            let profesionalObj = null;
+            if (!isVirtual) {
+                profesionalObj = turno?.profesionales || (allProfesionalesCache || []).find(p => p.id === turno?.profesor_id);
+            } else {
+                const parts = String(claseId).split('-');
+                const profId = Number(parts[1]);
+                profesionalObj = (allProfesionalesCache || []).find(p => p.id === profId);
+            }
+            const profNombre = profesionalObj ? `${profesionalObj.nombre || ''} ${profesionalObj.apellidos || ''}`.trim() : (config.label || 'Profesional');
+            const productosStripe = getProductosStripeProfesional(profesionalObj, tipo);
+
             let activeAssignMode = 'existente';
             let studentPicker = null;
 
@@ -21305,9 +21484,25 @@
                     </div>
                 </div>
 
+                <div class="space-y-1">
+                    <label class="block text-xs font-bold text-cocoa/70 mb-1">
+                        <i class="ph-bold ph-tag text-olive mr-1"></i> Producto / Tarifa Stripe pagada en el local <span class="text-red-500">*</span>
+                    </label>
+                    <select id="swal-consulta-producto" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none text-cocoa font-medium">
+                        ${productosStripe.map(p => `
+                            <option value="${escapeHtml(p.key)}" data-title="${escapeHtml(p.title)}" data-price="${p.price}">
+                                ${escapeHtml(p.title)} ${p.price > 0 ? `(${p.price} €)` : ''} ${p.desc ? `— ${p.desc}` : ''}
+                            </option>
+                        `).join('')}
+                    </select>
+                    <p class="text-[11px] text-cocoa/50 mt-1">
+                        Selecciona el servicio de <strong>${escapeHtml(profNombre)}</strong> que el cliente ha abonado presencialmente en el local.
+                    </p>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-cocoa/60 mb-1">Notas / Motivo (opcional)</label>
-                    <input type="text" id="swal-temp-notas" placeholder="Ej: Primera consulta / Seguimiento"
+                    <input type="text" id="swal-temp-notas" placeholder="Ej: Primera consulta / Pago en efectivo en recepción"
                         class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none">
                 </div>
             </div>
@@ -21350,13 +21545,24 @@
                     });
                 },
                 preConfirm: async () => {
+                    const selectElem = document.getElementById('swal-consulta-producto');
+                    const selectedOption = selectElem?.options[selectElem.selectedIndex];
+                    const selectedKey = selectElem?.value || '';
+                    const selectedTitle = selectedOption?.getAttribute('data-title') || selectedKey;
+                    const notas = (document.getElementById('swal-temp-notas')?.value || '').trim();
+
+                    if (!selectedKey) {
+                        Swal.showValidationMessage('Debes seleccionar el producto o tarifa pagada en el local');
+                        return false;
+                    }
+
+                    let clienteId = null;
                     if (activeAssignMode === 'existente') {
-                        const clienteId = studentPicker?.getSelectedId();
+                        clienteId = studentPicker?.getSelectedId();
                         if (!clienteId) {
                             Swal.showValidationMessage('Busca y selecciona un cliente');
                             return false;
                         }
-                        return clienteId;
                     } else {
                         const nombre = (document.getElementById('swal-temp-nombre')?.value || '').trim();
                         const apellidos = (document.getElementById('swal-temp-apellidos')?.value || '').trim();
@@ -21376,12 +21582,19 @@
                                 p_telefono: telefono || null
                             });
                             if (createErr) throw createErr;
-                            return newUserId;
+                            clienteId = newUserId;
                         } catch (err) {
                             Swal.showValidationMessage(err.message || 'Error al crear usuario temporal');
                             return false;
                         }
                     }
+
+                    return {
+                        userId: clienteId,
+                        productoTitle: selectedTitle,
+                        lookupKey: selectedKey,
+                        notas: notas
+                    };
                 }
             });
 
@@ -21390,12 +21603,17 @@
             }
         }
 
-        async function asignarClienteAConsulta(tipo, claseId, userId) {
+        async function asignarClienteAConsulta(tipo, claseId, assignData) {
             if (isReserving) return;
 
             const config = getConsultaConfig(tipo);
             try {
                 isReserving = true;
+
+                const userId = typeof assignData === 'object' ? assignData.userId : assignData;
+                const productoTitle = assignData?.productoTitle || 'Consulta ' + (tipo === 'psicologia' ? 'Psicología' : 'Nutrición');
+                const lookupKey = assignData?.lookupKey || null;
+                const notas = assignData?.notas || '';
 
                 const isVirtual = typeof claseId === 'string' && claseId.startsWith('virtual-');
                 let error = null;
@@ -21413,7 +21631,11 @@
                         p_profesor_id: parseInt(profId, 10),
                         p_fecha_inicio: new Date(isoDate).toISOString(),
                         p_user_id: userId,
-                        p_cobrar_saldo: false
+                        p_cobrar_saldo: false,
+                        p_producto_contratado: productoTitle,
+                        p_stripe_lookup_key: lookupKey,
+                        p_origen_pago: 'local',
+                        p_notas: notas
                     });
                     error = res.error;
                 } else {
@@ -21421,7 +21643,11 @@
                         p_tipo: tipo,
                         p_clase_id: claseId,
                         p_user_id: userId,
-                        p_cobrar_saldo: false
+                        p_cobrar_saldo: false,
+                        p_producto_contratado: productoTitle,
+                        p_stripe_lookup_key: lookupKey,
+                        p_origen_pago: 'local',
+                        p_notas: notas
                     });
                     error = res.error;
                 }
@@ -21431,12 +21657,19 @@
                     return;
                 }
 
+                if (!isVirtual) {
+                    await client.from('clases').update({
+                        metodo_pago: productoTitle,
+                        stripe_lookup_key: lookupKey
+                    }).eq('id', Number(claseId));
+                }
+
                 Swal.fire({
                     icon: 'success',
                     title: 'Cliente asignado',
-                    text: 'El hueco queda reservado.',
+                    html: `El hueco queda reservado.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pago en local:</b> ${escapeHtml(productoTitle)}</span>`,
                     showConfirmButton: false,
-                    timer: 1500
+                    timer: 2000
                 });
                 await refrescarConsultas(tipo);
                 await cargarConsultasAdmin();
@@ -21455,15 +21688,15 @@
 
             if (tipoNormalizado === 'psicologia') {
                 select.innerHTML = `
-                    <option value="miriam_psico_individual_1a" selected>Acompañamiento psicoterapéutico (1ª sesión) — 75,00 € (Stripe: prod_V1pKHgtMwPkCpC)</option>
-                    <option value="miriam_psico_individual_sig">Acompañamiento psicoterapéutico (siguientes) — 65,00 € (Stripe: prod_V1pLmzpCRU8ZpL)</option>
-                    <option value="miriam_psico_pareja_1a">Terapia de pareja (1ª sesión) — 120,00 € (Stripe: prod_V1pLCY3t5sprlK)</option>
-                    <option value="miriam_psico_pareja_sig">Terapia de pareja (siguientes) — 100,00 € (Stripe: prod_V1pLWNLzr9Vb3g)</option>
+                    <option value="miriam_psico_individual_1a" selected>Acompañamiento psicoterapéutico (1ª sesión) — 75,00 €</option>
+                    <option value="miriam_psico_individual_sig">Acompañamiento psicoterapéutico (siguientes) — 65,00 €</option>
+                    <option value="miriam_psico_pareja_1a">Terapia de pareja (1ª sesión) — 120,00 €</option>
+                    <option value="miriam_psico_pareja_sig">Terapia de pareja (siguientes) — 100,00 €</option>
                 `;
             } else if (tipoNormalizado === 'nutricion') {
                 select.innerHTML = `
-                    <option value="isabel_pni_1a" selected>Consulta PNI Clínica (1ª sesión) — 80,00 € (Stripe: prod_V1ppAeiDF9dlkZ)</option>
-                    <option value="isabel_pni_sig">Consulta PNI Clínica (seguimiento) — 60,00 € (Stripe: prod_V1pqPF6rtJf0SW)</option>
+                    <option value="isabel_pni_1a" selected>Consulta PNI Clínica (1ª sesión) — 80,00 €</option>
+                    <option value="isabel_pni_sig">Consulta PNI Clínica (seguimiento) — 60,00 €</option>
                 `;
             } else if (tipoNormalizado === 'ayurveda') {
                 select.innerHTML = `
@@ -22327,6 +22560,11 @@
                             const perfil = window.allConsultasAdminPerfilesMap[reserva.user_id] || {};
                             const contact = obtenerDatosContactoPerfil(perfil);
                             const reservaId = safePositiveInteger(reserva.id) || 0;
+                            const prodInfo = obtenerDetalleProductoConsulta(reserva, c);
+
+                            const badgePago = prodInfo.esLocal
+                                ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-storefront text-xs text-amber-600"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`
+                                : `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-credit-card text-xs text-blue-600"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
 
                             let contactDetails = '';
                             if (contact.cleanTel) {
@@ -22353,6 +22591,11 @@
                                 contactDetails = `<span class="text-xs text-gray-400 italic">Sin datos de contacto</span>`;
                             }
 
+                            const notasHtml = reserva.notas ? `
+                            <div class="mt-1 flex items-center gap-1 text-[11px] text-cocoa/70 italic bg-sand/20 px-2 py-0.5 rounded-md border border-cocoa/5">
+                                <i class="ph-bold ph-note text-cocoa/40"></i> ${escapeHtml(reserva.notas)}
+                            </div>` : '';
+
                             return `
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-sand/10 border border-cocoa/10 rounded-2xl gap-3">
                             <div class="flex items-center gap-3 min-w-0">
@@ -22366,6 +22609,10 @@
                                     </div>
                                     <div class="mt-0.5 flex flex-col gap-0.5">
                                         ${contactDetails}
+                                    </div>
+                                    <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                                        ${badgePago}
+                                        ${notasHtml}
                                     </div>
                                 </div>
                             </div>
@@ -22753,9 +23000,12 @@
                 card.innerHTML = `
             <div class="flex items-start justify-between gap-4">
                 <div>
-                    <div class="flex items-center gap-2 mb-2">
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
                         ${badgeTipoAdmin}
                         <span class="text-xs font-bold text-gray-400">${toSafeNumber(c.duracion_minutos)} min</span>
+                        <span class="text-[10px] font-bold ${isClaseEspecial ? 'text-slate-700 bg-slate-100 border border-slate-300' : 'text-orange-800 bg-orange-50 border border-orange-200'} px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                            <i class="ph-bold ph-credit-card"></i> ${isClaseEspecial ? '20,00 € (Stripe)' : '35,00 € (Stripe)'}
+                        </span>
                     </div>
                     <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || (isClaseEspecial ? 'Clase Especial' : 'Taller'))}</h3>
                     <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fecha)} - ${escapeHtml(hora)}</p>
@@ -23031,7 +23281,14 @@
                 }
                 const metodoPagoSelect = document.getElementById('taller-metodo-pago');
                 if (metodoPagoSelect) {
-                    metodoPagoSelect.value = esClaseEspecial ? 'clase_especial' : 'taller_intro_power_vinyasa';
+                    if (esClaseEspecial) {
+                        metodoPagoSelect.innerHTML = '<option value="clase_especial" selected>Clase Especial — 20,00 €</option>';
+                        metodoPagoSelect.value = 'clase_especial';
+                    } else {
+                        metodoPagoSelect.innerHTML = '<option value="taller_intro_power_vinyasa" selected>Taller GEN Yoga — 35,00 €</option>';
+                        metodoPagoSelect.value = 'taller_intro_power_vinyasa';
+                    }
+                    metodoPagoSelect.disabled = true;
                 }
             } catch (err) {
                 console.error('Error cargando tipos en modal evento:', err);
@@ -23469,7 +23726,7 @@
             <div class="grid gap-2.5 text-left font-sans">
                 ${promoOptionHtml}
                 <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>4 clases</b><small class="block text-gray-500">60 días de validez</small></span><span><input type="radio" name="swal-pack" value="pack_4" ${hasPromo50 ? '' : 'checked'}> 50 €</span></label>
-                <label class="flex items-center justify-between gap-3 border border-olive/20 bg-olive/5 rounded-xl p-3 cursor-pointer"><span><b>6 clases</b><small class="block text-gray-500">60 días de validez</small></span><span><input type="radio" name="swal-pack" value="pack_6"> 65 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>6 clases</b><small class="block text-gray-500">60 días de validez</small></span><span><input type="radio" name="swal-pack" value="pack_6"> 65 €</span></label>
                 <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>10 clases</b><small class="block text-gray-500">60 días de validez</small></span><span><input type="radio" name="swal-pack" value="pack_10"> 95 €</span></label>
             </div>`,
                 showCancelButton: true,
