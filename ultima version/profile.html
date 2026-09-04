@@ -2681,7 +2681,7 @@
                                     <th class="px-5 py-3">Cliente / Contacto</th>
                                     <th class="px-3 py-3 text-center">Rol</th>
                                     <th class="px-4 py-3">Saldos de Bonos (Ajuste rápido - / +)</th>
-                                    <th class="px-5 py-3 text-right">Acciones</th>
+                                    <th class="px-5 py-3 text-right whitespace-nowrap min-w-[340px]">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="users-table-body" class="text-sm text-cocoa/70"></tbody>
@@ -13881,48 +13881,27 @@
         }
 
         function renderActionsAdmin(u) {
-            const isPromoActive = !!u.descuento_promo_50_activo;
-            const isPromoUsed = !isPromoActive && (!!u.codigo_promo_usado || (!!u.codigo_promo_canjeado && !u.descuento_promo_50_activo));
             const uId = escapeHtml(String(u.id || ''));
 
-            let promoBtnClass = 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300';
-            let promoBadgeMarkup = '<span class="text-amber-800 text-[10px] font-semibold ml-0.5">(Sin canjear)</span>';
-            let promoTitle = 'Códigos Promocionales: GENYOGA (Sin canjear)';
-
-            if (isPromoActive) {
-                promoBtnClass = 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs border border-emerald-600';
-                promoBadgeMarkup = '<span class="bg-emerald-800 text-white text-[10px] font-black px-1.5 py-0.5 rounded ml-0.5 shadow-2xs">GENYOGA (Activo)</span>';
-                promoTitle = 'Códigos Promocionales: GENYOGA (Canjeado y Activo - 50% DTO)';
-            } else if (isPromoUsed) {
-                promoBtnClass = 'bg-red-600 hover:bg-red-700 text-white shadow-2xs border border-red-700';
-                promoBadgeMarkup = '<span class="bg-red-800 text-white text-[10px] font-black px-1.5 py-0.5 rounded ml-0.5 shadow-2xs">GENYOGA (Gastado)</span>';
-                promoTitle = 'Códigos Promocionales: GENYOGA (Canjeado y Gastado)';
-            }
-
             return `
-                <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                <div class="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
                     <button type="button" onclick="abrirGestionBonosUsuario('${uId}')"
-                        class="px-2.5 py-1.5 bg-olive text-white hover:bg-black rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                        class="px-2.5 py-1.5 bg-olive text-white hover:bg-black rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
                         title="Gestionar Bonos y Saldos">
                         <i class="ph-bold ph-wallet"></i> Bonos
                     </button>
-                    <button type="button" onclick="adminInscribirEnConsulta('${uId}')"
-                        class="px-2.5 py-1.5 bg-[#3B82F6] hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                        title="Inscribir manualmente en una consulta de psicología (sin consumo de bonos)">
-                        <i class="ph-bold ph-brain"></i> Consulta
-                    </button>
                     <button type="button" onclick="abrirCodigosPromocionalesUsuario('${uId}')"
-                        class="px-2.5 py-1.5 ${promoBtnClass} rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                        title="${promoTitle}">
-                        <i class="ph-bold ph-tag"></i> Códigos Promocionales ${promoBadgeMarkup}
+                        class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
+                        title="Códigos Promocionales">
+                        <i class="ph-bold ph-tag"></i> Códigos Promocionales
                     </button>
                     <button type="button" onclick="abrirEditarUsuarioAdmin('${uId}')"
-                        class="px-2.5 py-1.5 bg-sand/30 hover:bg-sand/60 text-cocoa rounded-lg text-xs font-bold border border-cocoa/15 transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                        class="px-2.5 py-1.5 bg-sand/30 hover:bg-sand/60 text-cocoa rounded-lg text-xs font-bold border border-cocoa/15 transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
                         title="Editar Datos del Cliente">
                         <i class="ph-bold ph-pencil-simple"></i> Editar
                     </button>
                     <button type="button" onclick="borrarUsuario('${uId}')"
-                        class="w-8 h-8 flex items-center justify-center rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition shadow-2xs cursor-pointer"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition shadow-2xs cursor-pointer shrink-0"
                         title="Eliminar Usuario">
                         <i class="ph-bold ph-trash text-xs"></i>
                     </button>
@@ -14007,7 +13986,7 @@
                     <td class="px-4 py-3">
                         ${renderSaldoBadgeAdmin(u)}
                     </td>
-                    <td class="px-5 py-3 text-right">
+                    <td class="px-5 py-3 text-right whitespace-nowrap">
                         ${renderActionsAdmin(u)}
                     </td>
                 `;

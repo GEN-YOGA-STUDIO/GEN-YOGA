@@ -166,7 +166,7 @@ if (fs.existsSync(profilePath)) {
     const pContent = fs.readFileSync(profilePath, 'utf8');
     check('Funciones asignarMesIlimitadoAdmin y retirarMesIlimitadoAdmin implementadas en profile.html', pContent.includes('function asignarMesIlimitadoAdmin') && pContent.includes('function retirarMesIlimitadoAdmin'));
     check('Función normalizarMesClave implementada en profile.html', pContent.includes('function normalizarMesClave'));
-    check('Botón Códigos Promocionales con estilo rojo para GENYOGA (Gastado)', pContent.includes('GENYOGA (Gastado)') && pContent.includes('bg-red-600') && pContent.includes('bg-red-800'));
+    check('Botón Códigos Promocionales limpio sin estado dinámico', pContent.includes('title="Códigos Promocionales">') && !pContent.includes('(Sin canjear)'));
     check('Modal Códigos Promocionales muestra GENYOGA · GASTADO en rojo', pContent.includes('GENYOGA · GASTADO') && pContent.includes('bg-red-600 text-white'));
     check('Columna Bonos (renderSaldoBadgeAdmin) excluye promociones GENYOGA', !pContent.match(/function renderSaldoBadgeAdmin[\s\S]*?badges\.push\([^)]*GENYOGA/));
     check('Botones -1 y +1 de alto contraste en Clases Especiales', pContent.includes('title="Restar 1 clase especial">-1</button>') && pContent.includes('title="Sumar 1 clase especial">+1</button>'));
