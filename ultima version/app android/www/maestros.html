@@ -976,17 +976,10 @@
                 <span data-i18n="btn_back_home">Inicio</span>
             </a>
 
-            <svg class="teachers-hero__doodle teachers-hero__doodle--left" viewBox="0 0 380 470" aria-hidden="true">
-                <path d="M245 -35 C 55 25, 30 185, 147 205 C 290 230, 300 60, 202 38 C 80 10, 5 115, 57 255 C 105 385, 245 320, 213 242 C 180 163, 12 247, -42 355" />
-            </svg>
-            <svg class="teachers-hero__doodle teachers-hero__doodle--right" viewBox="0 0 400 470" aria-hidden="true">
-                <path d="M340 -40 C 150 4, 84 115, 166 156 C 258 201, 384 110, 330 64 C 267 10, 83 126, 132 226 C 181 326, 377 236, 345 180 C 306 113, 87 250, 144 355 C 194 448, 365 374, 406 310" />
-            </svg>
-
-            <img class="teachers-hero__portrait teachers-hero__portrait--left-top" src="img/maestra-silvia-recortada.webp" alt="" aria-hidden="true" loading="eager" />
-            <img class="teachers-hero__portrait teachers-hero__portrait--left-bottom" src="img/maestro-angel-recortado.webp" alt="" aria-hidden="true" loading="eager" />
-            <img class="teachers-hero__portrait teachers-hero__portrait--right-top" src="img/maestra-miriam-recortada.webp" alt="" aria-hidden="true" loading="eager" />
-            <img class="teachers-hero__portrait teachers-hero__portrait--right-bottom" src="img/maestra-yanira-recortada.webp" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--left-top" src="img/maestra-silvia-recortada.webp?v=20260904" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--left-bottom" src="img/maestro-angel-recortado.webp?v=20260904" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--right-top" src="img/maestra-miriam-recortada.webp?v=20260904" alt="" aria-hidden="true" loading="eager" />
+            <img class="teachers-hero__portrait teachers-hero__portrait--right-bottom" src="img/maestra-yanira-recortada.webp?v=20260904" alt="" aria-hidden="true" loading="eager" />
 
             <h1 id="teachers-hero-title" class="teachers-hero__title">
                 <span class="teachers-hero__title-line teachers-hero__title-line--orange" data-i18n="teachers_hero_our">Nuestros</span>
@@ -1545,26 +1538,33 @@
             renderProfesionalesLanding(filtrados);
         }
 
+        const TEACHER_ASSET_VERSION = '20260904';
+        function withTeacherAssetVersion(url) {
+            if (!url || typeof url !== 'string') return url || '';
+            if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+            return url.includes('?') ? url : `${url}?v=${TEACHER_ASSET_VERSION}`;
+        }
+
         function getTeacherDoodlesSvg(nombre) {
             return '';
         }
 
         function getTeacherPhoto(nombre) {
             const n = (nombre || '').toLowerCase();
-            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
-            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.webp';
-            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
-            if (n.includes('isabel')) return 'img/maestra-isabel-recortada.webp';
-            return 'img/maestra-silvia-recortada.webp';
+            if (n.includes('ángel') || n.includes('angel')) return withTeacherAssetVersion('img/maestro-angel-recortado.webp');
+            if (n.includes('miriam')) return withTeacherAssetVersion('img/maestra-miriam-recortada.webp');
+            if (n.includes('yanira')) return withTeacherAssetVersion('img/maestra-yanira-recortada.webp');
+            if (n.includes('isabel')) return withTeacherAssetVersion('img/maestra-isabel-recortada.webp');
+            return withTeacherAssetVersion('img/maestra-silvia-recortada.webp');
         }
 
         function getTeacherCutoutPhoto(nombre) {
             const n = (nombre || '').toLowerCase();
-            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
-            if (n.includes('miriam')) return 'img/maestra-miriam-recortada.webp';
-            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
-            if (n.includes('isabel')) return 'img/maestra-isabel-recortada.webp';
-            return 'img/maestra-silvia-recortada.webp';
+            if (n.includes('ángel') || n.includes('angel')) return withTeacherAssetVersion('img/maestro-angel-recortado.webp');
+            if (n.includes('miriam')) return withTeacherAssetVersion('img/maestra-miriam-recortada.webp');
+            if (n.includes('yanira')) return withTeacherAssetVersion('img/maestra-yanira-recortada.webp');
+            if (n.includes('isabel')) return withTeacherAssetVersion('img/maestra-isabel-recortada.webp');
+            return withTeacherAssetVersion('img/maestra-silvia-recortada.webp');
         }
 
         function renderProfesionalesLanding(profesionales) {
@@ -1585,8 +1585,7 @@
             profesionales.forEach((prof, index) => {
                 const nombre = prof.nombre || 'PROFESOR';
                 const especialidadTexto = getEspecialidadTexto(prof.especialidad) || t('teachers_fallback_spec');
-                const doodlesSvg = getTeacherDoodlesSvg(nombre);
-                const photoUrl = prof.foto_cutout || getTeacherPhoto(nombre);
+                const photoUrl = withTeacherAssetVersion(prof.foto_cutout || getTeacherPhoto(nombre));
                 const teacherSlug = getTeacherSlug(prof);
                 const profileHref = buildTeacherProfileHref(prof);
                 const portraitAlt = window.currentLang === 'en'
@@ -1600,7 +1599,6 @@
                 card.innerHTML = `
                     <a class="teacher-card__trigger" href="${escapeHtmlPublic(profileHref)}" aria-label="${escapeHtmlPublic(`${t('teachers_view_card')} ${nombre}`)}">
                         <div class="teacher-card__figure">
-                            ${doodlesSvg}
                             <img src="${escapeHtmlPublic(photoUrl)}" alt="${escapeHtmlPublic(portraitAlt)}" class="teacher-card__portrait" loading="lazy" />
                         </div>
 
@@ -1705,7 +1703,7 @@
             const copy = getTeacherModalCopy();
             const nombre = prof.nombre || 'Profesor';
             const esp = getEspecialidadTexto(prof.especialidad) || 'GEN Yoga';
-            const photoUrl = prof.foto_cutout || getTeacherCutoutPhoto(nombre);
+            const photoUrl = withTeacherAssetVersion(prof.foto_cutout || getTeacherCutoutPhoto(nombre));
             const aboutItems = parsed.sobreMi.length ? parsed.sobreMi : [rawBio || esp];
             const qualificationItems = parsed.titulos;
             const sessionItems = parsed.teAcompano.length ? parsed.teAcompano : [esp];

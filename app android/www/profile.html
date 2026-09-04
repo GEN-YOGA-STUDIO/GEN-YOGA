@@ -4877,27 +4877,34 @@
             }
         }
 
+        const TEACHER_PHOTO_VERSION = '20260904';
+        function withTeacherPhotoVersion(url) {
+            if (!url || typeof url !== 'string') return url || '';
+            if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+            return url.includes('?') ? url : `${url}?v=${TEACHER_PHOTO_VERSION}`;
+        }
+
         function getTeacherPhotoFallback(prof) {
             if (!prof) return '';
             if (typeof prof === 'string') {
                 const n = prof.toLowerCase();
-                if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
-                if (n.includes('silvia')) return 'img/maestra-silvia-recortada.webp';
-                if (n.includes('miriam') || n.includes('respira')) return 'img/maestra-miriam-recortada.webp';
-                if (n.includes('isabel') || n.includes('isarodriguez')) return 'img/maestra-isabel-recortada.webp';
-                if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
+                if (n.includes('ángel') || n.includes('angel')) return withTeacherPhotoVersion('img/maestro-angel-recortado.webp');
+                if (n.includes('silvia')) return withTeacherPhotoVersion('img/maestra-silvia-recortada.webp');
+                if (n.includes('miriam') || n.includes('respira')) return withTeacherPhotoVersion('img/maestra-miriam-recortada.webp');
+                if (n.includes('isabel') || n.includes('isarodriguez')) return withTeacherPhotoVersion('img/maestra-isabel-recortada.webp');
+                if (n.includes('yanira')) return withTeacherPhotoVersion('img/maestra-yanira-recortada.webp');
                 const safe = safeImageUrl(prof);
-                return safe || '';
+                return safe ? withTeacherPhotoVersion(safe) : '';
             }
             const rawPhoto = prof.foto_url || prof.foto || prof.foto_cutout || prof.profesionalFoto;
             const safe = safeImageUrl(rawPhoto);
-            if (safe) return safe;
+            if (safe) return withTeacherPhotoVersion(safe);
             const n = `${prof.nombre || ''} ${prof.profesionalNombre || ''} ${prof.email || ''}`.toLowerCase();
-            if (n.includes('ángel') || n.includes('angel')) return 'img/maestro-angel-recortado.webp';
-            if (n.includes('silvia')) return 'img/maestra-silvia-recortada.webp';
-            if (n.includes('miriam') || n.includes('respira')) return 'img/maestra-miriam-recortada.webp';
-            if (n.includes('isabel') || n.includes('isarodriguez')) return 'img/maestra-isabel-recortada.webp';
-            if (n.includes('yanira')) return 'img/maestra-yanira-recortada.webp';
+            if (n.includes('ángel') || n.includes('angel')) return withTeacherPhotoVersion('img/maestro-angel-recortado.webp');
+            if (n.includes('silvia')) return withTeacherPhotoVersion('img/maestra-silvia-recortada.webp');
+            if (n.includes('miriam') || n.includes('respira')) return withTeacherPhotoVersion('img/maestra-miriam-recortada.webp');
+            if (n.includes('isabel') || n.includes('isarodriguez')) return withTeacherPhotoVersion('img/maestra-isabel-recortada.webp');
+            if (n.includes('yanira')) return withTeacherPhotoVersion('img/maestra-yanira-recortada.webp');
             return '';
         }
 
