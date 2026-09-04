@@ -1638,18 +1638,18 @@
             class="profile-shell w-full max-w-[1400px] bg-white/80 backdrop-blur-2xl md:rounded-[2.5rem] shadow-2xl flex flex-col min-h-screen md:min-h-[90vh] overflow-hidden border border-cocoa/10 relative">
             <header class="bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-cocoa/10 shadow-sm">
                 <div class="profile-header-inner max-w-7xl mx-auto px-4 h-20 flex justify-between items-center gap-4">
-                    <a href="index.html" class="flex items-center gap-3 group">
+                    <a href="index.html" class="flex items-center gap-3 group shrink-0">
                         <img src="img/logo1.webp" alt="GEN Yoga Logo"
                             class="h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition duration-300 brightness-0">
                     </a>
 
-                    <div class="profile-header-actions flex items-center justify-end gap-3 min-w-0">
-                        <div id="header-profile-summary" class="client-only flex items-center gap-3 min-w-0">
+                    <div class="profile-header-actions flex items-center justify-end gap-3 min-w-0 flex-1">
+                        <div id="header-profile-summary" class="client-only flex items-center gap-2.5 shrink-0">
                             <div
                                 class="profile-header-avatar w-10 h-10 rounded-2xl bg-olive/10 border border-olive/20 items-center justify-center text-olive shrink-0">
                                 <i class="ph-fill ph-user text-xl"></i>
                             </div>
-                            <div class="profile-header-meta min-w-0">
+                            <div class="profile-header-meta shrink-0 max-w-[130px] sm:max-w-[170px]">
                                 <span id="profile-nombre-full"
                                     class="profile-header-name block font-serif font-black text-cocoa tracking-tight truncate">--</span>
                                 <button onclick="abrirEditarPerfil()"
@@ -1660,26 +1660,25 @@
                                 </button>
                             </div>
                         </div>
-                        <div id="header-bonos-container" class="flex flex-col items-end">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[9px] text-cocoa/50 font-bold uppercase tracking-widest"
-                                    data-i18n="profile_saldos_label">Mis saldos</span>
-                                <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-olive/10 hover:bg-olive text-olive hover:text-white text-[9px] font-bold transition shadow-2xs group cursor-pointer"
-                                    title="¿Cómo funcionan tus bonos y saldos? Haz clic para ver la guía completa"
-                                    aria-label="Información de bonos y saldos">
-                                    <i class="ph-bold ph-info group-hover:scale-110 transition-transform"></i>
-                                    <span>Guía de Bonos</span>
-                                </button>
-                            </div>
-                            <div id="header-saldos-wrapper" class="flex flex-wrap justify-end gap-2">
+
+                        <!-- Separador vertical visible e inamovible entre perfil y bonos -->
+                        <div class="h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
+
+                        <div id="header-bonos-container" class="flex items-center gap-2 min-w-0 overflow-x-auto py-1" style="scrollbar-width: none;">
+                            <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-2">
                                 <!-- Rellenado dinámicamente en JS -->
                             </div>
+                            <button type="button" onclick="mostrarInfoBonosSaldos(event)"
+                                class="hidden sm:inline-flex items-center justify-center w-7 h-7 rounded-full text-cocoa/40 hover:text-olive hover:bg-olive/10 transition shrink-0 cursor-pointer"
+                                title="Guía de bonos y saldos"
+                                aria-label="Información de bonos y saldos">
+                                <i class="ph-bold ph-info text-sm"></i>
+                            </button>
                         </div>
-                        <div class="h-8 w-px bg-cocoa/10 hidden sm:block"></div>
+                        <div class="h-8 w-px bg-cocoa/10 shrink-0"></div>
 
                         <button type="button" onclick="logout()" aria-label="Cerrar sesión"
-                            class="text-cocoa/40 hover:text-red-500 transition p-2.5 hover:bg-red-50 rounded-full group"
+                            class="text-cocoa/40 hover:text-red-500 transition p-2.5 hover:bg-red-50 rounded-full group shrink-0"
                             title="Cerrar Sesión">
                             <i class="ph-bold ph-sign-out text-xl group-hover:-translate-x-0.5 transition"></i>
                         </button>
@@ -4213,6 +4212,17 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                         </select>
                     </div>
+                    <div class="md:col-span-2" id="consulta-metodo-pago-container">
+                        <label class="text-xs font-black text-cocoa uppercase tracking-wider ml-1 mb-2 flex items-center justify-between">
+                            <span><i class="ph-bold ph-credit-card text-olive"></i> Método de Pago (Producto Stripe) <span class="text-red-500">*</span></span>
+                            <span class="text-[10px] font-normal text-cocoa/50">Vinculación pasarela online</span>
+                        </label>
+                        <select id="consulta-metodo-pago" name="consulta-metodo-pago" required aria-label="Método de pago o producto Stripe"
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa font-bold">
+                            <!-- Poblado dinámicamente según especialidad -->
+                        </select>
+                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Determina el producto de Stripe y el precio asociado a la reserva online de esta consulta.</p>
+                    </div>
                     <div>
                         <label
                             class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Fecha</label>
@@ -4348,6 +4358,20 @@
                             <option value="" disabled selected>Cargando tipos configurados...</option>
                         </select>
                         <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Solo se pueden crear eventos cuyo tipo esté previamente definido en el Catálogo de Clases.</p>
+                    </div>
+
+                    <!-- 3. MÉTODO DE PAGO / PRODUCTO STRIPE -->
+                    <div class="md:col-span-2" id="taller-metodo-pago-container">
+                        <label class="text-xs font-black text-cocoa uppercase tracking-wider ml-1 mb-2 flex items-center justify-between">
+                            <span><i class="ph-bold ph-credit-card text-olive"></i> Método de Pago (Producto Stripe) <span class="text-red-500">*</span></span>
+                            <span class="text-[10px] font-normal text-cocoa/50">Vinculación pasarela online</span>
+                        </label>
+                        <select id="taller-metodo-pago" name="taller-metodo-pago" required aria-label="Método de pago o producto Stripe"
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa font-bold">
+                            <option value="taller_intro_power_vinyasa" selected>Taller GEN Yoga — 35,00 € (Stripe: prod_V5uCPKKKH5K74P)</option>
+                            <option value="clase_especial">Clase Especial — 20,00 € (Stripe: prod_V5uBKuweMRE6ig)</option>
+                        </select>
+                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Determina el producto de Stripe y el precio asociado al pago online de esta actividad.</p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Título de
@@ -5921,6 +5945,7 @@
                     if (duracionSelect) {
                         duracionSelect.value = (tipoVal === 'ayurveda') ? '90' : '60';
                     }
+                    actualizarMetodosPagoConsulta(tipoVal);
                 });
             }
 
@@ -6454,6 +6479,15 @@
             });
         }
 
+        function abrirPestanaEventosTalleres(event) {
+            if (event) event.stopPropagation();
+            switchTab('especiales');
+            if (typeof switchEventosSubTab === 'function') {
+                switchEventosSubTab('talleres');
+            }
+        }
+        window.abrirPestanaEventosTalleres = abrirPestanaEventosTalleres;
+
         function renderSaldosClienteV69() {
             const headerWrapper = document.getElementById('header-saldos-wrapper');
             const profileWrapper = document.getElementById('profile-saldos-wrapper');
@@ -6468,10 +6502,15 @@
             ]);
             const canManageBilling = !!userStripeCustomerId || portalStatuses.has(userStripeSubscriptionStatus);
 
+            const userTalleresCreditos = (userCreditosReprogramacion || []).filter(c => (c.tipo === 'taller' || c.tipo === 'credito_taller') && c.estado === 'disponible').length;
+            const userSaldoTalleres = toSafeNumber(currentUserProfile?.saldo_talleres) || 0;
+            const userTotalTalleresDisponibles = userTalleresCreditos + userSaldoTalleres;
+            const userCreditosReprogConsulta = (userCreditosReprogramacion || []).filter(c => c.tipo === 'consulta' && c.estado === 'disponible').length;
+
             if (headerWrapper) {
                 headerWrapper.innerHTML = `
             <!-- 1. CLASES NORMALES (BRONCE METÁLICO) -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02]" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 2px 8px rgba(196, 130, 77, 0.2);" title="Clases de Yoga disponibles. Haz clic para ver detalles.">
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 2px 8px rgba(196, 130, 77, 0.2);" title="Clases de Yoga disponibles. Haz clic para ver detalles.">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">
                     <i class="ph-fill ph-ticket text-xs"></i>
                 </div>
@@ -6479,11 +6518,11 @@
                     <span class="text-[8px] font-black uppercase tracking-wider text-[#874113]">Clases</span>
                     <span class="text-xs font-black text-[#5e2704]">${userBonos} disp.</span>
                 </div>
-                <button onclick="abrirCompraPacks(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);" title="Comprar más packs">+ Packs</button>
+                <button onclick="abrirCompraPacks(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);" title="Comprar más packs">+ Packs</button>
             </div>
 
-            <!-- 2. CLASE ESPECIAL - A SU DERECHA -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02]" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 2px 8px rgba(148, 163, 184, 0.25);" title="Clases especiales disponibles. Haz clic para ver detalles.">
+            <!-- 2. CLASE ESPECIAL (PLATEADA METÁLICA) -->
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 2px 8px rgba(148, 163, 184, 0.25);" title="Clases especiales disponibles. Haz clic para ver detalles.">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
                     <i class="ph-fill ph-sparkle text-xs text-amber-300"></i>
                 </div>
@@ -6491,36 +6530,57 @@
                     <span class="text-[8px] font-black uppercase tracking-wider text-[#334155]">Clase especial</span>
                     <span class="text-xs font-black text-[#0f172a]">${userSpecialBonosMes} disp.</span>
                 </div>
-                <button onclick="comprarBonoEspecialStripe(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);" title="Comprar Clase Especial">+ Especial</button>
+                <button onclick="comprarBonoEspecialStripe(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);" title="Comprar Clase Especial">+ Especial</button>
             </div>
 
-            <!-- 3. BONO ILIMITADO (MENSUAL) -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group" title="Bono Mensual Ilimitado. Haz clic para ver la guía de bonos.">
-                <i class="ph-fill ph-infinity text-base shrink-0 ${userBonoMensualActivo ? 'text-emerald-600' : 'text-cocoa/40'} group-hover:scale-110 transition-transform"></i>
+            ${userTotalTalleresDisponibles > 0 ? `
+            <!-- 3. TALLERES (DORADA METÁLICA - A LA DERECHA DE LA PLATEADA) -->
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);" title="Bono o créditos de taller (35 €) disponibles. Haz clic para ver detalles.">
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                    <i class="ph-fill ph-chalkboard-teacher text-xs"></i>
+                </div>
+                <div class="flex flex-col text-left leading-tight">
+                    <span class="text-[8px] font-black uppercase tracking-wider text-[#92400e]">Taller</span>
+                    <span class="text-xs font-black text-[#78350f]">${userTotalTalleresDisponibles} disp.</span>
+                </div>
+                <button onclick="abrirPestanaEventosTalleres(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);" title="Ver eventos y talleres">+ Taller</button>
+            </div>` : ''}
+
+            <!-- 4. BONO ILIMITADO (MENSUAL) -->
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Bono Mensual Ilimitado. Haz clic para ver la guía de bonos.">
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-2xs ${userBonoMensualActivo ? 'bg-emerald-600 text-white' : 'bg-cocoa/10 text-cocoa/50'}">
+                    <i class="ph-fill ph-infinity text-xs"></i>
+                </div>
                 <div class="flex flex-col text-left leading-tight">
                     <span class="text-[8px] font-bold uppercase tracking-wider ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">Ilimitado</span>
                     <span class="text-xs font-black ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próx: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes')}</span>
                 </div>
-                <button onclick="comprarBonoMensual(event)" class="ml-1 px-2 py-0.5 text-[9px] font-bold uppercase bg-terracotta hover:bg-black text-white rounded-md transition shadow-2xs cursor-pointer" title="Comprar mes ilimitado">+ Mes</button>
+                <button onclick="comprarBonoMensual(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-bold uppercase bg-terracotta hover:bg-black text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" title="Comprar mes ilimitado">+ Mes</button>
             </div>
-            ${userCreditosReprogramacion.length > 0 ? `
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group" title="Crédito de Taller disponible. Haz clic para ver la guía de bonos.">
+
+            ${userCreditosReprogConsulta > 0 ? `
+            <!-- 5. CRÉDITO CONSULTA REPROGRAMADA -->
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Crédito de consulta disponible. Haz clic para ver la guía de bonos.">
                 <i class="ph-bold ph-arrows-clockwise text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
                 <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Crédito Taller</span>
-                    <span class="text-xs font-black text-emerald-700">${userCreditosReprogramacion.length} disp.</span>
+                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Crédito</span>
+                    <span class="text-xs font-black text-emerald-700">${userCreditosReprogConsulta} disp.</span>
                 </div>
             </div>` : ''}
+
             ${userSaldoClasesGratis > 0 ? `
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group" title="Bono de Bienvenida disponible. Haz clic para ver la guía de bonos.">
+            <!-- 6. BONO BIENVENIDA -->
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Bono de Bienvenida disponible. Haz clic para ver la guía de bonos.">
                 <i class="ph-fill ph-sparkle text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
                 <div class="flex flex-col text-left leading-tight">
                     <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Bienvenida</span>
                     <span class="text-xs font-black text-emerald-700">${userSaldoClasesGratis} disp.</span>
                 </div>
             </div>` : ''}
+
             ${userSaldoConsultasGratis > 0 ? `
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group" title="Consulta de valoración gratuita disponible. Haz clic para ver la guía de bonos.">
+            <!-- 7. CONSULTA GRATIS -->
+            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Consulta de valoración gratuita disponible. Haz clic para ver la guía de bonos.">
                 <i class="ph-fill ph-gift text-base shrink-0 text-pink-600 group-hover:scale-110 transition-transform"></i>
                 <div class="flex flex-col text-left leading-tight">
                     <span class="text-[8px] font-bold uppercase tracking-wider text-pink-800">Consulta Gratis</span>
@@ -6715,23 +6775,23 @@
                 <i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> Comprar Clase Especial (20 €)
             </button>
         </div>
-        ${userCreditosReprogramacion.length ? `
-        <div class="bg-white/95 p-5 rounded-3xl border border-emerald-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%);">
+        ${userTotalTalleresDisponibles > 0 ? `
+        <div class="bg-white/95 p-5 rounded-3xl border border-amber-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #fffdf2 50%, #fef3c7 100%);">
             <div>
                 <div class="flex items-center justify-between gap-4 mb-4">
                     <div>
-                        <span class="block text-[10px] text-emerald-800 font-black uppercase tracking-wider">Talleres Temáticos</span>
-                        <p class="text-xl font-black text-emerald-950 mt-1">${userCreditosReprogramacion.length} crédito${userCreditosReprogramacion.length > 1 ? 's' : ''} disp.</p>
+                        <span class="block text-[10px] text-amber-800 font-black uppercase tracking-wider">Talleres Temáticos</span>
+                        <p class="text-xl font-black text-amber-950 mt-1">${userTotalTalleresDisponibles} disponible${userTotalTalleresDisponibles > 1 ? 's' : ''}</p>
                     </div>
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
-                        <i class="ph-bold ph-arrows-clockwise text-2xl text-emerald-200"></i>
+                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                        <i class="ph-fill ph-chalkboard-teacher text-2xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-emerald-900 leading-relaxed mb-3">
-                    Crédito obtenido por reprogramación (>24h). <strong>Válido para reservar tu plaza en cualquier taller temático a 0 €</strong>.
+                <p class="text-xs text-amber-900 leading-relaxed mb-3">
+                    Bono o crédito de taller (35 €). Crédito obtenido por reprogramación (>24h) o saldo asignado (${userCreditosReprogramacion.length ? `${userTalleresCreditos} por reprogramación` : '0 reprogramados'}). <strong>Válido para reservar tu plaza en cualquier taller temático a 0 €</strong>.
                 </p>
             </div>
-            <button onclick="switchPublicView('horarios')" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #065f46 100%);">
+            <button onclick="abrirPestanaEventosTalleres(event)" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);">
                 <i class="ph-bold ph-calendar-plus mr-1"></i> Ver Talleres y Reservar (0 €)
             </button>
         </div>` : ''}
@@ -8413,11 +8473,14 @@
                         aforoOEstadoTaller = `<span class="text-xs font-bold text-slate-700 flex items-center gap-1"><i class="ph-fill ph-sparkle text-slate-500"></i> Clase Especial (${escapeHtml(monthFriendlyName)})</span>`;
                     } else {
                         // Taller
-                        const creditoReprog = userCreditosReprogramacion.find(r => r.tipo === 'taller' && r.estado === 'disponible');
-                        if (creditoReprog) {
-                            action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 bg-emerald-600 hover:bg-emerald-700"><i class="ph-bold ph-arrows-clockwise mr-1"></i> CANJEAR REPROGRAMACIÓN (0 €)</button>`;
+                        const creditoReprog = userCreditosReprogramacion.find(r => (r.tipo === 'taller' || r.tipo === 'credito_taller') && r.estado === 'disponible');
+                        const tieneSaldoTaller = (toSafeNumber(currentUserProfile?.saldo_talleres) || 0) > 0;
+                        if (creditoReprog || tieneSaldoTaller) {
+                            action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 bg-emerald-600 hover:bg-emerald-700"><i class="ph-bold ph-arrows-clockwise mr-1"></i> RESERVAR CON BONO / CRÉDITO (0 €)</button>`;
                         } else {
-                            action = `<button onclick="iniciarCheckoutTallerStripe('taller_intro_power_vinyasa', '${escapeHtml(c.nombre)}', '35', ${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">RESERVAR PLAZA (35 €)</button>`;
+                            const lookupKey = c.stripe_lookup_key || c.metodo_pago || 'taller_intro_power_vinyasa';
+                            const precio = lookupKey === 'clase_especial' ? '20' : '35';
+                            action = `<button onclick="iniciarCheckoutTallerStripe('${lookupKey}', '${escapeHtml(c.nombre)}', '${precio}', ${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">RESERVAR PLAZA (${precio} €)</button>`;
                         }
                         aforoOEstadoTaller = `<span class="text-xs font-bold text-[#AB593D] flex items-center gap-1"><i class="ph-bold ph-barbell"></i> Taller (Plaza Individual)</span>`;
                     }
@@ -13842,6 +13905,11 @@
                         class="px-2.5 py-1.5 bg-olive text-white hover:bg-black rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
                         title="Gestionar Bonos y Saldos">
                         <i class="ph-bold ph-wallet"></i> Bonos
+                    </button>
+                    <button type="button" onclick="adminInscribirEnConsulta('${uId}')"
+                        class="px-2.5 py-1.5 bg-[#3B82F6] hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        title="Inscribir manualmente en una consulta de psicología (sin consumo de bonos)">
+                        <i class="ph-bold ph-brain"></i> Consulta
                     </button>
                     <button type="button" onclick="abrirCodigosPromocionalesUsuario('${uId}')"
                         class="px-2.5 py-1.5 ${promoBtnClass} rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
@@ -21384,6 +21452,35 @@
 
         // Las funciones legacy de carga individual de consultas admin han sido eliminadas para usar la vista unificada.
 
+        function actualizarMetodosPagoConsulta(tipo = 'psicologia') {
+            const select = document.getElementById('consulta-metodo-pago');
+            if (!select) return;
+            select.innerHTML = '';
+            const tipoNormalizado = (tipo === 'ayurveda') ? 'ayurveda' : (tipo === 'nutricion' ? 'nutricion' : 'psicologia');
+
+            if (tipoNormalizado === 'psicologia') {
+                select.innerHTML = `
+                    <option value="miriam_psico_individual_1a" selected>Acompañamiento psicoterapéutico (1ª sesión) — 75,00 € (Stripe: prod_V1pKHgtMwPkCpC)</option>
+                    <option value="miriam_psico_individual_sig">Acompañamiento psicoterapéutico (siguientes) — 65,00 € (Stripe: prod_V1pLmzpCRU8ZpL)</option>
+                    <option value="miriam_psico_pareja_1a">Terapia de pareja (1ª sesión) — 120,00 € (Stripe: prod_V1pLCY3t5sprlK)</option>
+                    <option value="miriam_psico_pareja_sig">Terapia de pareja (siguientes) — 100,00 € (Stripe: prod_V1pLWNLzr9Vb3g)</option>
+                `;
+            } else if (tipoNormalizado === 'nutricion') {
+                select.innerHTML = `
+                    <option value="isabel_pni_1a" selected>Consulta PNI Clínica (1ª sesión) — 80,00 € (Stripe: prod_V1ppAeiDF9dlkZ)</option>
+                    <option value="isabel_pni_sig">Consulta PNI Clínica (seguimiento) — 60,00 € (Stripe: prod_V1pqPF6rtJf0SW)</option>
+                `;
+            } else if (tipoNormalizado === 'ayurveda') {
+                select.innerHTML = `
+                    <option value="silvia_ayurveda_1a" selected>Consulta Ayurveda (1ª sesión) — 80,00 €</option>
+                    <option value="silvia_ayurveda_sig">Consulta Ayurveda (seguimiento) — 60,00 €</option>
+                    <option value="silvia_ayurveda_bono3">Bono Salud Integrativa (3 consultas) — 170,00 €</option>
+                    <option value="silvia_ayurveda_bono6">Bono Salud Integrativa (6 consultas) — 280,00 €</option>
+                `;
+            }
+        }
+        window.actualizarMetodosPagoConsulta = actualizarMetodosPagoConsulta;
+
         function abrirModalCrearConsulta(tipo = 'psicologia') {
             if (!tieneAccesoConsultasAdmin()) {
                 Swal.fire('Sin permiso', 'No puedes crear consultas.', 'warning');
@@ -21419,6 +21516,7 @@
             const tipoSelect = document.getElementById('consulta-tipo');
             if (tipoSelect) tipoSelect.value = tipoNormalizado;
             actualizarProfesoresSelectConsulta(tipoNormalizado);
+            actualizarMetodosPagoConsulta(tipoNormalizado);
 
             const title = document.getElementById('modal-consulta-title');
             if (title) {
@@ -21479,6 +21577,7 @@
             const horaInicio = document.getElementById('consulta-hora-inicio').value;
             const duracion = parseInt(document.getElementById('consulta-duracion').value);
             const notas = document.getElementById('consulta-notas').value;
+            const metodoPagoConsulta = document.getElementById('consulta-metodo-pago')?.value || '';
 
             if (!profesorId) {
                 Swal.fire('Error', 'Debes seleccionar un profesional', 'error');
@@ -21532,7 +21631,9 @@
                     profesor_id: profesorId,
                     tipo_clase: tipoClaseInsert,
                     descripcion: notas,
-                    duracion_minutos: duracion
+                    duracion_minutos: duracion,
+                    metodo_pago: metodoPagoConsulta,
+                    stripe_lookup_key: metodoPagoConsulta
                 });
             }
 
@@ -22933,6 +23034,10 @@
                 if (duracionSelect) {
                     duracionSelect.value = esClaseEspecial ? '75' : '120';
                 }
+                const metodoPagoSelect = document.getElementById('taller-metodo-pago');
+                if (metodoPagoSelect) {
+                    metodoPagoSelect.value = esClaseEspecial ? 'clase_especial' : 'taller_intro_power_vinyasa';
+                }
             } catch (err) {
                 console.error('Error cargando tipos en modal evento:', err);
                 tipoSelect.innerHTML = '<option value="" disabled selected>Error al cargar tipos</option>';
@@ -23059,6 +23164,9 @@
             const esClaseEspecial = categoriaEvento === 'clase_especial';
             const tipoClaseEfectivo = esClaseEspecial ? 'clase_especial' : 'taller';
 
+            const metodoPagoTallerSelect = document.getElementById('taller-metodo-pago');
+            const metodoPagoTaller = metodoPagoTallerSelect?.value || (esClaseEspecial ? 'clase_especial' : 'taller_intro_power_vinyasa');
+
             Swal.fire({
                 title: repeatCount > 1 ? (esClaseEspecial ? 'Creando clases especiales...' : 'Creando talleres...') : (esClaseEspecial ? 'Creando clase especial...' : 'Creando taller...'),
                 didOpen: () => Swal.showLoading()
@@ -23080,7 +23188,9 @@
                     activa: true,
                     es_especial: true,
                     descripcion: notas,
-                    duracion_minutos: duracion
+                    duracion_minutos: duracion,
+                    metodo_pago: metodoPagoTaller,
+                    stripe_lookup_key: metodoPagoTaller
                 });
             }
 
