@@ -1143,8 +1143,10 @@
         let filtered = [];
         if (targetMode === 'talleres') {
             filtered = mapped.filter(item => item.classType === 'taller' || item.classType === 'especial' || item.classType === 'clase_especial' || item.isSpecial);
+        } else if (targetMode === 'clases') {
+            // targetMode === 'clases': muestra clases de yoga regulares, clases especiales y talleres (excluye consultas)
+            filtered = mapped.filter(item => item.classType !== 'psicologia' && item.classType !== 'nutricion' && item.classType !== 'consulta');
         } else {
-            // targetMode === 'clases': muestra clases de yoga regulares, clases especiales y talleres
             filtered = mapped;
         }
 
@@ -1197,10 +1199,13 @@
                         });
                         if (!error && Array.isArray(data)) {
                             state.rpcAvailable = true;
-                            return data.map(row => normalizeClassRow(row, true)).filter(Boolean);
+                            return data
+                                .map(row => normalizeClassRow(row, true))
+                                .filter(Boolean)
+                                .filter(item => item.classType !== 'psicologia' && item.classType !== 'nutricion' && item.classType !== 'consulta');
                         }
                     }
-                    return await fetchDirectWeek(weekStart, 'todo');
+                    return await fetchDirectWeek(weekStart, 'clases');
                 })(),
                 (async () => {
                     const savedMode = state.mode;
@@ -1211,7 +1216,14 @@
                 })()
             ]);
 
-            const merged = [...(yogaAndWorkshops || []), ...(consultations || [])]
+            // Deduplicación estricta por ID: garantiza que ninguna clase o consulta se duplique
+            const uniqueMap = new Map();
+            [...(yogaAndWorkshops || []), ...(consultations || [])].forEach(item => {
+                if (item && item.id && !uniqueMap.has(item.id)) {
+                    uniqueMap.set(item.id, item);
+                }
+            });
+            const merged = Array.from(uniqueMap.values())
                 .sort((a, b) => a.start.getTime() - b.start.getTime());
             return { exactAvailability: true, classes: merged };
         }
@@ -1362,7 +1374,13 @@
             // Todas las consultas en el horario público y de alumnos provienen de la base de datos real (dbClases),
             // con el mismo criterio canónico que las clases de Yoga y Talleres: al eliminarse en el panel de administración,
             // desaparecen de inmediato y de forma definitiva de la vista pública.
-            const allSlots = dbClases;
+            const uniqueConsultations = new Map();
+            dbClases.forEach(c => {
+                if (c && c.id && !uniqueConsultations.has(c.id)) {
+                    uniqueConsultations.set(c.id, c);
+                }
+            });
+            const allSlots = Array.from(uniqueConsultations.values());
             return { exactAvailability: true, classes: allSlots };
         }
 
@@ -1408,6 +1426,7 @@
                     classes: data
                         .map(row => normalizeClassRow(row, true))
                         .filter(Boolean)
+                        .filter(item => item.classType !== 'psicologia' && item.classType !== 'nutricion' && item.classType !== 'consulta')
                 };
             }
 
@@ -1438,7 +1457,13 @@
             ]);
             if (requestId !== state.requestSerial || !state.open) return;
 
-            state.classes = result.classes.sort((a, b) => a.start - b.start || a.id - b.id);
+            const uniqueStateMap = new Map();
+            (result.classes || []).forEach(item => {
+                if (item && item.id && !uniqueStateMap.has(item.id)) {
+                    uniqueStateMap.set(item.id, item);
+                }
+            });
+            state.classes = Array.from(uniqueStateMap.values()).sort((a, b) => a.start - b.start || a.id - b.id);
             state.availabilityExact = result.exactAvailability;
             state.loading = false;
             state.error = null;
