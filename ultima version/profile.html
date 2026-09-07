@@ -5133,54 +5133,79 @@
             const c = clase || {};
             const tipoNorm = normalizarTipoClase(c.tipo_clase || r.tipo_clase);
             const esConsulta = tipoNorm === 'psicologia' || tipoNorm === 'nutricion';
-            const badgeClass = 'inline-flex items-center gap-1 text-[9px] font-bold text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b] px-1.5 py-0.5 rounded shadow-2xs';
-            const renderPagoBadge = (label, title) => `<span class="${badgeClass}" title="${title}"><i class="ph-bold ph-ticket text-xs"></i> Pagado con: ${label}</span>`;
 
-            const modalidadReserva = String(r.welcome_companion_modality || c?.companion_modality || normalizarModalidadCompania(c?.nombre) || '').toLowerCase().trim();
-            const esReservaCompania = String(r.tipo_reserva || '').toLowerCase().trim() === 'compania'
-                || (!!modalidadReserva && !['gratis'].includes(modalidadReserva));
+            const badgeBase = 'inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-2xs';
+            const renderPagoBadge = (label, title, icon = 'ph-ticket', colorClass = 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]') =>
+                `<span class="${badgeBase} ${colorClass}" title="${title}"><i class="ph-bold ${icon} text-xs"></i> Pagado con: ${label}</span>`;
 
+            // 1. Consultas médicas (Psicología / Nutrición)
             if (esConsulta) {
                 const prodInfo = obtenerDetalleProductoConsulta(r, c);
                 if (r.saldo_gratis_descontado || prodInfo.nombre?.includes('Gratuita')) {
-                    return renderPagoBadge('Consulta Gratuita', 'Pagado con: Consulta Gratuita');
+                    return renderPagoBadge('Consulta Gratuita', 'Pagado con: Consulta Gratuita', 'ph-gift', 'text-pink-800 bg-pink-50 border border-pink-200');
                 }
                 if (prodInfo.esLocal) {
-                    return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded shadow-2xs" title="Pago en local: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-storefront text-xs"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
+                    return `<span class="${badgeBase} text-amber-800 bg-amber-50 border border-amber-200" title="Pago en local: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-storefront text-xs"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
                 }
                 if (prodInfo.nombre) {
-                    return `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded shadow-2xs" title="Pagado online: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-credit-card text-xs"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
+                    return `<span class="${badgeBase} text-blue-800 bg-blue-50 border border-blue-200" title="Pagado online: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-credit-card text-xs"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
                 }
-                return renderPagoBadge('Bono Consulta', 'Pagado con: Bono Consulta');
+                return renderPagoBadge('Bono Consulta', 'Pagado con: Bono Consulta', 'ph-first-aid', 'text-purple-800 bg-purple-50 border border-purple-200');
             }
 
-            // 1. Bono Ilimitado (mes natural o suscripción)
-            if (r.usado_bono_mensual) {
-                return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Ilimitado');
+            // 2. Talleres especiales (inmersiones temáticas / 35 €)
+            const esTaller = (c.tipo_clase === 'taller' || /taller/i.test(c.nombre || '') || r.tipo_reserva === 'taller' || r.tipo_reserva === 'reprogramacion_taller');
+            if (esTaller) {
+                if (r.tipo_reserva === 'reprogramacion_taller') {
+                    return renderPagoBadge('Reprogramación Taller', 'Pagado con: Crédito de Reprogramación', 'ph-arrows-clockwise', 'text-amber-900 bg-amber-100 border border-amber-300');
+                }
+                return renderPagoBadge('Plaza Taller (35 €)', 'Pagado con: Plaza de Taller abonada', 'ph-credit-card', 'text-orange-900 bg-orange-100 border border-orange-300');
             }
 
-            // 2. Yoga en Compañía: cualquier modalidad de compañía debe aparecer con ese nombre, nunca como clase suelta.
+            // 3. Clases Especiales
+            if (r.tipo_reserva === 'clase_especial' || c.tipo_clase === 'clase_especial') {
+                return renderPagoBadge('Clase Especial', 'Pagado con: Bono Clase Especial', 'ph-sparkle', 'text-slate-800 bg-slate-100 border border-slate-300');
+            }
+
+            // 4. Bono Mensual Ilimitado
+            if (r.usado_bono_mensual || String(r.tipo_reserva || '').toLowerCase() === 'ilimitado') {
+                return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Mensual Ilimitado', 'ph-infinity', 'text-emerald-900 bg-emerald-100 border border-emerald-300');
+            }
+
+            // 5. Clase suelta o Pack de clases (prioridad absoluta para reservas abonadas con bono regular o pack)
+            if (r.bono_descontado || r.class_pack_id || String(r.tipo_reserva || '').toLowerCase() === 'pack_normal' || String(r.tipo_reserva || '').toLowerCase() === 'clase_suelta') {
+                if (r.class_pack_id) {
+                    return renderPagoBadge('Pack de clases', 'Pagado con: Pack de clases', 'ph-stack', 'text-olive bg-olive/10 border border-olive/30');
+                }
+                return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta', 'ph-ticket', 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]');
+            }
+
+            // 6. Pase de Invitado (Bono Ilimitado)
+            if (r.beneficio_invitado_de && !r.parent_reserva_id && String(r.tipo_reserva || '').toLowerCase() !== 'compania') {
+                return renderPagoBadge('Pase Invitado', 'Invitado/a por alumno con Bono Ilimitado', 'ph-user-plus', 'text-teal-800 bg-teal-50 border border-teal-200');
+            }
+
+            // 7. Bono de Bienvenida
+            if (r.saldo_gratis_descontado || String(r.tipo_reserva || '').toLowerCase() === 'bienvenida') {
+                return renderPagoBadge('Bono Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)', 'ph-sparkle', 'text-emerald-800 bg-emerald-50 border border-emerald-200');
+            }
+
+            // 8. Yoga en Compañía (SOLO si fue reservado explícitamente como modalidad compañía y no como bono normal/ilimitado)
+            const esReservaCompania = String(r.tipo_reserva || '').toLowerCase().trim() === 'compania';
             if (esReservaCompania) {
                 if (r.beneficio_invitado_de || r.parent_reserva_id) {
-                    return renderPagoBadge('Invitado (Yoga en Compañía)', 'Invitado/a con Bono de Yoga en Compañía');
+                    return renderPagoBadge('Invitado (Yoga en Compañía)', 'Invitado/a con Bono de Yoga en Compañía', 'ph-users-three', 'text-amber-900 bg-amber-100 border border-amber-300');
                 }
-                return renderPagoBadge('Yoga en Compañía', 'Pagado con: Bono de Yoga en Compañía');
+                return renderPagoBadge('Yoga en Compañía', 'Pagado con: Bono de Yoga en Compañía', 'ph-handshake', 'text-amber-900 bg-amber-100 border border-amber-300');
             }
 
-
-
-            // 4. Pase de Invitado
-            if (r.beneficio_invitado_de) {
-                return renderPagoBadge('Pase Invitado', 'Pagado con: Pase Invitado');
+            // 9. Clase abierta o gratuita
+            if (c.es_gratuita) {
+                return renderPagoBadge('Clase Gratuita', 'Clase abierta sin coste', 'ph-gift', 'text-emerald-800 bg-emerald-50 border border-emerald-200');
             }
 
-            // 5. Clase suelta (pack de clases o saldo de clases)
-            if (r.bono_descontado || r.class_pack_id) {
-                return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta');
-            }
-
-            // Fallback: Bono de Bienvenida
-            return renderPagoBadge('Bono de Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)');
+            // 10. Fallback estándar resiliente: Clase suelta
+            return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta', 'ph-ticket', 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]');
         }
 
         async function mostrarBonosAlumnoPopup(userId) {
@@ -8859,8 +8884,9 @@
                 const profFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profName);
                 const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
                 const nombreClase = String(c.nombre || 'Clase de Yoga');
-                const companionModKey = normalizarModalidadCompania(c.companion_modality || c.nombre || c.miReserva?.welcome_companion_modality);
-                const isCompanion = !!companionModKey || c.miReserva?.tipo_reserva === 'compania';
+                const esBonoNormal = !!c.miReserva?.bono_descontado || !!c.miReserva?.usado_bono_mensual || !!c.miReserva?.class_pack_id;
+                const isCompanion = !esBonoNormal && String(c.miReserva?.tipo_reserva || '').toLowerCase() === 'compania';
+                const companionModKey = isCompanion ? normalizarModalidadCompania(c.miReserva?.welcome_companion_modality || c.companion_modality) : '';
                 const companionBadgeTitle = COMPANION_MODALITY_LABELS[companionModKey] || 'Yoga en compañía';
 
                 const cardBg = isCompanion
@@ -10617,32 +10643,37 @@
                         });
 
                         if (!rpcError && Array.isArray(rpcData)) {
-                            if (rpcData.length > 0 && rpcData[0].usado_bono_mensual === undefined) {
-                                try {
-                                    const rIds = rpcData.map(x => x.reserva_id).filter(Boolean);
-                                    if (rIds.length > 0) {
-                                        const { data: rawYoga } = await client
-                                            .from('reservas_yoga')
-                                            .select('id, usado_bono_mensual, bono_descontado, saldo_gratis_descontado, welcome_companion_modality, tipo_reserva, class_pack_id, beneficio_invitado_de')
-                                            .in('id', rIds);
-                                        if (rawYoga && rawYoga.length > 0) {
-                                            const yogaMap = new Map(rawYoga.map(y => [y.id, y]));
-                                            rpcData.forEach(r => {
-                                                const y = yogaMap.get(r.reserva_id);
-                                                if (y) {
-                                                    r.usado_bono_mensual = y.usado_bono_mensual;
-                                                    r.bono_descontado = y.bono_descontado;
-                                                    r.saldo_gratis_descontado = y.saldo_gratis_descontado;
-                                                    r.welcome_companion_modality = y.welcome_companion_modality;
-                                                    r.class_pack_id = y.class_pack_id;
-                                                    r.beneficio_invitado_de = y.beneficio_invitado_de;
-                                                }
-                                            });
-                                        }
+                            // Enriquecer campos detallados de reservas_yoga (tipo_reserva, parent_reserva_id, nombre_acompanante, etc.)
+                            try {
+                                const rYogaIds = rpcData
+                                    .filter(x => !x.tipo_clase || x.tipo_clase === 'yoga')
+                                    .map(x => x.reserva_id)
+                                    .filter(Boolean);
+                                if (rYogaIds.length > 0) {
+                                    const { data: rawYoga } = await client
+                                        .from('reservas_yoga')
+                                        .select('id, usado_bono_mensual, bono_descontado, saldo_gratis_descontado, welcome_companion_modality, tipo_reserva, class_pack_id, beneficio_invitado_de, parent_reserva_id, nombre_acompanante')
+                                        .in('id', rYogaIds);
+                                    if (rawYoga && rawYoga.length > 0) {
+                                        const yogaMap = new Map(rawYoga.map(y => [y.id, y]));
+                                        rpcData.forEach(r => {
+                                            const y = yogaMap.get(r.reserva_id);
+                                            if (y) {
+                                                if (y.usado_bono_mensual !== undefined) r.usado_bono_mensual = y.usado_bono_mensual;
+                                                if (y.bono_descontado !== undefined) r.bono_descontado = y.bono_descontado;
+                                                if (y.saldo_gratis_descontado !== undefined) r.saldo_gratis_descontado = y.saldo_gratis_descontado;
+                                                if (y.welcome_companion_modality !== undefined) r.welcome_companion_modality = y.welcome_companion_modality;
+                                                if (y.class_pack_id !== undefined) r.class_pack_id = y.class_pack_id;
+                                                if (y.beneficio_invitado_de !== undefined) r.beneficio_invitado_de = y.beneficio_invitado_de;
+                                                r.tipo_reserva = y.tipo_reserva || r.tipo_reserva || null;
+                                                r.parent_reserva_id = y.parent_reserva_id || r.parent_reserva_id || null;
+                                                r.nombre_acompanante = y.nombre_acompanante || r.nombre_acompanante || null;
+                                            }
+                                        });
                                     }
-                                } catch (eEnrich) {
-                                    console.warn('Aviso al enriquecer metodo_reserva:', eEnrich);
                                 }
+                            } catch (eEnrich) {
+                                console.warn('Aviso al enriquecer metodo_reserva:', eEnrich);
                             }
 
                             const reservasPorClase = {};
@@ -10659,8 +10690,11 @@
                                     bono_descontado: !!r.bono_descontado,
                                     saldo_gratis_descontado: !!r.saldo_gratis_descontado,
                                     welcome_companion_modality: r.welcome_companion_modality || null,
+                                    tipo_reserva: r.tipo_reserva || null,
                                     class_pack_id: r.class_pack_id || null,
-                                    beneficio_invitado_de: r.beneficio_invitado_de || null
+                                    beneficio_invitado_de: r.beneficio_invitado_de || null,
+                                    parent_reserva_id: r.parent_reserva_id || null,
+                                    nombre_acompanante: r.nombre_acompanante || null
                                 });
 
                                 if (r.user_id) {
@@ -11250,13 +11284,13 @@
 
         function agruparReservasAsistencias(listadoReservas) {
             const companionGroups = new Map();
-            const guestOrphans = [];
             const standalone = [];
 
-            // 1. Localizar titulares de Yoga en Compañía
+            // 1. Localizar titulares de Yoga en Compañía (SOLO reservas de tipo 'compania' no pagadas con bono/pack/mensual)
             (listadoReservas || []).forEach(r => {
                 const esInvitado = Boolean(r.beneficio_invitado_de || r.parent_reserva_id);
-                const esCompania = (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.nombre_acompanante || r.welcome_companion_modality);
+                const esCompania = String(r.tipo_reserva || '').toLowerCase().trim() === 'compania'
+                    && !r.bono_descontado && !r.usado_bono_mensual && !r.class_pack_id;
                 if (!esInvitado && esCompania) {
                     const key = String(r.id || r.reserva_id || r.user_id);
                     let mod = r.welcome_companion_modality || '';
@@ -11278,10 +11312,11 @@
                 }
             });
 
-            // 2. Asociar acompañantes / invitados con su titular
+            // 2. Asociar acompañantes legítimos con su titular
             (listadoReservas || []).forEach(r => {
                 const esInvitado = Boolean(r.beneficio_invitado_de || r.parent_reserva_id);
-                const esCompania = (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.nombre_acompanante || r.welcome_companion_modality);
+                const esCompania = String(r.tipo_reserva || '').toLowerCase().trim() === 'compania'
+                    && !r.bono_descontado && !r.usado_bono_mensual && !r.class_pack_id;
                 if (!esInvitado && esCompania) return; // ya procesado como titular
 
                 let assignedGroup = null;
@@ -11293,7 +11328,7 @@
                         }
                     }
                 }
-                if (!assignedGroup && r.beneficio_invitado_de) {
+                if (!assignedGroup && r.beneficio_invitado_de && esCompania) {
                     for (const grp of companionGroups.values()) {
                         if (grp.userId === String(r.beneficio_invitado_de)) {
                             assignedGroup = grp;
@@ -11301,29 +11336,13 @@
                         }
                     }
                 }
-                if (!assignedGroup && (esInvitado || esCompania || (r.apellidos && r.apellidos.toLowerCase().includes(' de ')))) {
-                    if (companionGroups.size === 1) {
-                        assignedGroup = companionGroups.values().next().value;
-                    }
-                }
 
                 if (assignedGroup) {
                     assignedGroup.items.push(r);
-                } else if (esInvitado || esCompania) {
-                    guestOrphans.push(r);
                 } else {
                     standalone.push(r);
                 }
             });
-
-            if (guestOrphans.length > 0) {
-                if (companionGroups.size === 1) {
-                    const onlyGrp = companionGroups.values().next().value;
-                    guestOrphans.forEach(g => onlyGrp.items.push(g));
-                } else {
-                    guestOrphans.forEach(g => standalone.push(g));
-                }
-            }
 
             return {
                 groups: Array.from(companionGroups.values()),
@@ -11403,8 +11422,8 @@
                         ${contactHtml}
                     </div>
                     <div class="mt-1.5">${obtenerBadgeTipoReserva(r, c)}</div>
-                    ${(!r.beneficio_invitado_de && !r.parent_reserva_id && (String(r.tipo_reserva || '').toLowerCase() === 'compania' || r.welcome_companion_modality || r.nombre_acompanante))
-                        ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante || 'Acompañante')}</div>`
+                    ${(!r.beneficio_invitado_de && !r.parent_reserva_id && !r.bono_descontado && !r.usado_bono_mensual && !r.class_pack_id && String(r.tipo_reserva || '').toLowerCase() === 'compania' && r.nombre_acompanante)
+                        ? `<div class="mt-1 text-[10px] font-semibold text-amber-800"><i class="ph-bold ph-users-three mr-1"></i>Con: ${escapeHtml(r.nombre_acompanante)}</div>`
                         : ''}
                 </div>
                 ${cancelBtn}
@@ -11417,7 +11436,7 @@
 
             // 1. Grupos de Yoga en Compañía (conectados visualmente)
             groups.forEach(grp => {
-                const modRaw = String(grp.modalidad || c.companion_modality || 'pareja').toLowerCase();
+                const modRaw = String(grp.modalidad || 'pareja').toLowerCase();
                 let modLabel = 'Pareja';
                 if (modRaw.includes('colega') || modRaw.includes('amig')) modLabel = 'Colegas';
                 else if (modRaw.includes('hijo') || modRaw.includes('hija')) modLabel = 'Hijo/a';
