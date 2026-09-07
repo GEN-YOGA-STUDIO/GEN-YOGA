@@ -8623,7 +8623,7 @@
                         if (creditoReprog || tieneSaldoTaller) {
                             action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 bg-emerald-600 hover:bg-emerald-700"><i class="ph-bold ph-arrows-clockwise mr-1"></i> RESERVAR CON BONO / CRÉDITO (0 €)</button>`;
                         } else {
-                            const lookupKey = c.stripe_lookup_key || c.metodo_pago || 'taller_intro_power_vinyasa';
+                            const lookupKey = c.stripe_lookup_key || c.metodo_pago || (c.tipo_clase === 'clase_especial' ? 'clase_especial' : 'taller_intro_power_vinyasa');
                             const precio = lookupKey === 'clase_especial' ? '20' : '35';
                             action = `<button onclick="iniciarCheckoutTallerStripe('${lookupKey}', '${escapeHtml(c.nombre)}', '${precio}', ${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">RESERVAR PLAZA (${precio} €)</button>`;
                         }
@@ -21658,10 +21658,14 @@
                 }
 
                 if (!isVirtual) {
-                    await client.from('clases').update({
-                        metodo_pago: productoTitle,
-                        stripe_lookup_key: lookupKey
-                    }).eq('id', Number(claseId));
+                    try {
+                        await client.from('clases').update({
+                            metodo_pago: productoTitle,
+                            stripe_lookup_key: lookupKey
+                        }).eq('id', Number(claseId));
+                    } catch (e) {
+                        console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', e);
+                    }
                 }
 
                 Swal.fire({
@@ -21859,9 +21863,7 @@
                     profesor_id: profesorId,
                     tipo_clase: tipoClaseInsert,
                     descripcion: notas,
-                    duracion_minutos: duracion,
-                    metodo_pago: metodoPagoConsulta,
-                    stripe_lookup_key: metodoPagoConsulta
+                    duracion_minutos: duracion
                 });
             }
 
@@ -21901,6 +21903,15 @@
                     text: error.message
                 });
             } else {
+                if (data && data.length > 0 && metodoPagoConsulta) {
+                    const createdIds = data.map(c => c.id).filter(Boolean);
+                    if (createdIds.length > 0) {
+                        client.from('clases').update({
+                            metodo_pago: metodoPagoConsulta,
+                            stripe_lookup_key: metodoPagoConsulta
+                        }).in('id', createdIds).then(() => {}).catch(() => {});
+                    }
+                }
                 cerrarModalCrearConsulta();
                 Swal.fire({
                     icon: 'success',
@@ -23440,9 +23451,7 @@
                     activa: true,
                     es_especial: true,
                     descripcion: notas,
-                    duracion_minutos: duracion,
-                    metodo_pago: metodoPagoTaller,
-                    stripe_lookup_key: metodoPagoTaller
+                    duracion_minutos: duracion
                 });
             }
 
@@ -23482,6 +23491,15 @@
                     text: error.message
                 });
             } else {
+                if (data && data.length > 0 && metodoPagoTaller) {
+                    const createdIds = data.map(c => c.id).filter(Boolean);
+                    if (createdIds.length > 0) {
+                        client.from('clases').update({
+                            metodo_pago: metodoPagoTaller,
+                            stripe_lookup_key: metodoPagoTaller
+                        }).in('id', createdIds).then(() => {}).catch(() => {});
+                    }
+                }
                 cerrarModalCrearTaller();
                 Swal.fire({
                     icon: 'success',
