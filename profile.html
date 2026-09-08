@@ -6205,10 +6205,17 @@
                                             p_stripe_lookup_key: pendingData.lookup_key || null,
                                             p_origen_pago: 'online'
                                         });
-                                        await client.from('clases').update({
-                                            metodo_pago: pendingData.producto_contratado || null,
-                                            stripe_lookup_key: pendingData.lookup_key || null
-                                        }).eq('id', numericClaseId);
+                                        try {
+                                            const { error: optClaseErr } = await client.from('clases').update({
+                                                metodo_pago: pendingData.producto_contratado || null,
+                                                stripe_lookup_key: pendingData.lookup_key || null
+                                            }).eq('id', numericClaseId);
+                                            if (optClaseErr) {
+                                                console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', optClaseErr.message);
+                                            }
+                                        } catch (eOpt) {
+                                            console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', eOpt);
+                                        }
                                     }
                                     playYogaSound();
                                     Swal.fire({
@@ -15763,7 +15770,15 @@
             }
 
             // Actualizar en base de datos
-            const { error: updateErr } = await client.from('clases').update(updatePayload).eq('id', cid);
+            let { error: updateErr } = await client.from('clases').update(updatePayload).eq('id', cid);
+            if (updateErr && (updateErr.message?.includes('metodo_pago') || updateErr.message?.includes('stripe_lookup_key') || updateErr.message?.includes('schema cache'))) {
+                console.warn('Reintentando guardar edición sin columnas metodo_pago/stripe_lookup_key...', updateErr);
+                const safePayload = { ...updatePayload };
+                delete safePayload.metodo_pago;
+                delete safePayload.stripe_lookup_key;
+                const retryRes = await client.from('clases').update(safePayload).eq('id', cid);
+                updateErr = retryRes.error;
+            }
 
             Swal.close();
 
@@ -16514,7 +16529,7 @@
                                                     <option value="">-- Pago en el centro (Efectivo / Bizum) --</option>
                                                     <option value="gratuita">Sesión Gratuita / Bienvenida (0 €)</option>
                                                     <option value="local">Pago en local (Efectivo / Bizum)</option>
-                                                    <option value="prod_VDmmlmsGGhMebt">Sesión Grupal Miriam (30 €) · prod_VDmmlmsGGhMebt</option>
+                                                    <option value="prod_VDmmlmsGGhMebt">Sesion grupal Miriam (80 €) · prod_VDmmlmsGGhMebt</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -16532,9 +16547,14 @@
                                             </div>
                                         </div>
 
-                                        <button type="submit" class="w-full py-4 mt-2 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transform active:scale-[0.98] transition flex items-center justify-center gap-2 group/btn">
-                                            <span>Guardar Nuevo Tipo</span>
+                                        <input type="hidden" id="editing-tipo-id" value="">
+                                        <button type="submit" id="btn-guardar-tipo" class="w-full py-4 mt-2 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transform active:scale-[0.98] transition flex items-center justify-center gap-2 group/btn">
+                                            <span id="btn-guardar-tipo-texto">Guardar Nuevo Tipo</span>
                                             <i class="ph-bold ph-arrow-right group-hover/btn:translate-x-1 transition-transform"></i>
+                                        </button>
+                                        <button type="button" id="btn-cancelar-editar-tipo" onclick="cancelarEdicionTipoClase()" class="hidden w-full py-2.5 mt-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5">
+                                            <i class="ph-bold ph-x"></i>
+                                            <span>Cancelar Edición</span>
                                         </button>
                                     </form>
                                 </div>
@@ -16623,8 +16643,9 @@
                                 '<option value="gratuita">Sesión Gratuita / Bienvenida (0 €)</option>' +
                                 '<option value="local">Pago en local (Efectivo / Bizum)</option>' +
                                 prods.map(p => {
-                                    const precioStr = p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2)} €` : 'Precio variable';
-                                    return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} (${precioStr}) · ${escapeHtml(p.id)}</option>`;
+                                    const precio = p.formatted_price || (p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2).replace('.', ',')} €` : (p.unit_amount ? `${(p.unit_amount / 100).toFixed(2).replace('.', ',')} €` : ''));
+                                    const precioStr = precio ? ` (${precio})` : '';
+                                    return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${precioStr} · ${escapeHtml(p.id)}</option>`;
                                 }).join('');
                             if (curVal) sel.value = curVal;
                         }
@@ -16681,9 +16702,14 @@
                                     <div class="mt-1 flex items-center gap-1.5 flex-wrap">${catBadge}${pagoBadge}</div>
                                 </div>
                             </div>
-                            <button onclick="borrarTipoClase(${tipoId})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition cursor-pointer" title="Eliminar">
-                                <i class="ph-bold ph-trash text-lg"></i>
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button onclick="cargarParaEditarTipoClase(${tipoId})" class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition cursor-pointer" title="Editar configuración">
+                                    <i class="ph-bold ph-pencil-simple text-lg"></i>
+                                </button>
+                                <button onclick="borrarTipoClase(${tipoId})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition cursor-pointer" title="Eliminar">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
+                            </div>
                         </div>`;
                     }).join('');
                 } catch (err) {
@@ -16691,17 +16717,80 @@
                 }
             };
 
+            window.cargarParaEditarTipoClase = async (id) => {
+                try {
+                    const { data: tipo, error } = await client.from('tipos_clases').select('*').eq('id', id).single();
+                    if (error || !tipo) return Swal.fire('Error', 'No se pudo cargar el tipo para editar.', 'error');
+
+                    const editIdInput = document.getElementById('editing-tipo-id');
+                    if (editIdInput) editIdInput.value = tipo.id;
+
+                    const nomInput = document.getElementById('new-tipo-nombre');
+                    if (nomInput) nomInput.value = tipo.nombre || '';
+
+                    const catInput = document.getElementById('new-tipo-categoria');
+                    if (catInput) catInput.value = tipo.categoria || 'yoga';
+
+                    const durInput = document.getElementById('new-tipo-duracion');
+                    if (durInput) durInput.value = tipo.duracion_predeterminada || 60;
+
+                    const capInput = document.getElementById('new-tipo-capacidad');
+                    if (capInput) capInput.value = tipo.capacidad_predeterminada || 10;
+
+                    const espInput = document.getElementById('new-tipo-especialidad');
+                    if (espInput) espInput.value = tipo.especialidad || 'yoga';
+
+                    const stripeSelect = document.getElementById('new-tipo-stripe-product');
+                    if (stripeSelect) {
+                        stripeSelect.value = tipo.stripe_product_id || tipo.metodo_pago || '';
+                    }
+
+                    if (tipo.color) selectColor(tipo.color);
+                    if (tipo.icono) selectIcon(tipo.icono);
+
+                    const btnText = document.getElementById('btn-guardar-tipo-texto');
+                    if (btnText) btnText.textContent = `Actualizar Tipo: ${tipo.nombre}`;
+
+                    const cancelBtn = document.getElementById('btn-cancelar-editar-tipo');
+                    if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+                    nomInput?.focus();
+                } catch (e) {
+                    console.error('Error en cargarParaEditarTipoClase:', e);
+                }
+            };
+
+            window.cancelarEdicionTipoClase = () => {
+                const editIdInput = document.getElementById('editing-tipo-id');
+                if (editIdInput) editIdInput.value = '';
+
+                document.getElementById('form-crear-tipo')?.reset();
+                selectColor('#EF4444');
+                selectIcon('ph-person-simple-tai-chi');
+
+                const btnText = document.getElementById('btn-guardar-tipo-texto');
+                if (btnText) btnText.textContent = 'Guardar Nuevo Tipo';
+
+                const cancelBtn = document.getElementById('btn-cancelar-editar-tipo');
+                if (cancelBtn) cancelBtn.classList.add('hidden');
+            };
+
             window.crearTipoClase = async (e) => {
                 e.preventDefault();
-                const nombre = document.getElementById('new-tipo-nombre').value;
-                const duracion = document.getElementById('new-tipo-duracion').value;
+                const editingId = document.getElementById('editing-tipo-id')?.value || '';
+                const nombre = (document.getElementById('new-tipo-nombre')?.value || '').trim();
+                const duracion = document.getElementById('new-tipo-duracion')?.value || '60';
                 const capacidad = document.getElementById('new-tipo-capacidad')?.value || '10';
                 const stripeSelectVal = document.getElementById('new-tipo-stripe-product')?.value || '';
                 const rawCat = document.getElementById('new-tipo-categoria')?.value;
                 const categoria = ['clase_especial', 'taller', 'consulta', 'consulta_grupal'].includes(rawCat) ? rawCat : 'yoga';
                 const especialidad = document.getElementById('new-tipo-especialidad')?.value || 'yoga';
-                const color = document.getElementById('new-tipo-color').value;
-                const icono = document.getElementById('new-tipo-icono').value;
+                const color = document.getElementById('new-tipo-color')?.value || '#EF4444';
+                const icono = document.getElementById('new-tipo-icono')?.value || 'ph-person-simple-tai-chi';
+
+                if (!nombre) {
+                    return Swal.fire('Campo requerido', 'Por favor introduce un nombre para el tipo.', 'warning');
+                }
 
                 let stripeProductId = null;
                 let metodoPago = null;
@@ -16717,9 +16806,9 @@
                 }
 
                 try {
-                    const insertPayload = {
+                    const payload = {
                         nombre,
-                        duracion_predeterminada: parseInt(duracion),
+                        duracion_predeterminada: parseInt(duracion) || 60,
                         capacidad_predeterminada: parseInt(capacidad) || 10,
                         stripe_product_id: stripeProductId,
                         metodo_pago: metodoPago,
@@ -16730,27 +16819,59 @@
                         activo: true
                     };
 
-                    let { error } = await client.from('tipos_clases').insert([insertPayload]);
+                    let targetId = editingId ? parseInt(editingId, 10) : null;
+
+                    // Si no se está editando expresamente por ID, comprobar si ya existe un tipo con este mismo nombre para actualizarlo
+                    if (!targetId) {
+                        const { data: existing } = await client.from('tipos_clases')
+                            .select('id, nombre')
+                            .ilike('nombre', nombre)
+                            .maybeSingle();
+                        if (existing) {
+                            targetId = existing.id;
+                        }
+                    }
+
+                    let opError = null;
+                    if (targetId) {
+                        const { error: updateErr } = await client.from('tipos_clases').update(payload).eq('id', targetId);
+                        opError = updateErr;
+                    } else {
+                        const { error: insertErr } = await client.from('tipos_clases').insert([payload]);
+                        opError = insertErr;
+                    }
+
+                    // Fallback para resolver conflicto de nombre duplicado si la condición de carrera ocurriera
+                    if (opError && (String(opError.message || '').includes('duplicate key') || String(opError.message || '').includes('tipos_clases_nombre_key'))) {
+                        console.warn('Detectada clave única duplicada en nombre, actualizando registro existente...');
+                        const { error: retryErr } = await client.from('tipos_clases').update(payload).ilike('nombre', nombre);
+                        if (!retryErr) {
+                            opError = null;
+                            targetId = targetId || 1;
+                        }
+                    }
 
                     // Fallback para clases regulares si el esquema no tiene aún las columnas nuevas
-                    if (error && (error.message?.includes('capacidad_predeterminada') || error.message?.includes('schema cache') || error.message?.includes('especialidad')) && ['yoga', 'taller', 'clase_especial'].includes(categoria)) {
-                        console.warn('Reintentando inserción con esquema clásico para clase regular...', error);
+                    if (opError && (opError.message?.includes('capacidad_predeterminada') || opError.message?.includes('schema cache') || opError.message?.includes('especialidad')) && ['yoga', 'taller', 'clase_especial'].includes(categoria)) {
+                        console.warn('Reintentando inserción con esquema clásico para clase regular...', opError);
                         const fallbackPayload = {
                             nombre,
-                            duracion_predeterminada: parseInt(duracion),
+                            duracion_predeterminada: parseInt(duracion) || 60,
                             color,
                             icono,
                             categoria,
                             activo: true
                         };
-                        const fallbackResult = await client.from('tipos_clases').insert([fallbackPayload]);
+                        const fallbackResult = targetId
+                            ? await client.from('tipos_clases').update(fallbackPayload).eq('id', targetId)
+                            : await client.from('tipos_clases').insert([fallbackPayload]);
                         if (!fallbackResult.error) {
-                            error = null;
+                            opError = null;
                         }
                     }
 
-                    if (error) {
-                        const errMsg = String(error.message || '');
+                    if (opError) {
+                        const errMsg = String(opError.message || '');
                         if (errMsg.includes('capacidad_predeterminada') || errMsg.includes('schema cache') || errMsg.includes('especialidad') || errMsg.includes('categoria_check') || errMsg.includes('stripe_product_id')) {
                             Swal.fire({
                                 icon: 'warning',
@@ -16759,15 +16880,13 @@
                                 confirmButtonText: 'Entendido'
                             });
                         } else {
-                            Swal.fire('Error', 'No se pudo crear el tipo: ' + errMsg, 'error');
+                            Swal.fire('Error', 'No se pudo guardar el tipo: ' + errMsg, 'error');
                         }
                     } else {
-                        document.getElementById('form-crear-tipo').reset();
-                        selectColor('#EF4444');
-                        selectIcon('ph-person-simple-tai-chi');
+                        cancelarEdicionTipoClase();
                         await renderTiposClases();
-                        const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-                        toast.fire({ icon: 'success', title: 'Tipo creado exitosamente' });
+                        const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2200 });
+                        toast.fire({ icon: 'success', title: targetId ? 'Tipo actualizado exitosamente' : 'Tipo creado exitosamente' });
                     }
                 } catch (err) {
                     console.error('Unexpected error in crearTipoClase:', err);
@@ -18966,7 +19085,7 @@
             let options = [];
             if (isPsico) {
                 options = [
-                    { key: 'prod_VDmmlmsGGhMebt', title: 'Miriam · Sesión Grupal (30 €)', desc: 'Sesión psicoterapéutica grupal en grupo', price: 30 },
+                    { key: 'prod_VDmmlmsGGhMebt', title: 'Miriam · Sesión Grupal (80 €)', desc: 'Sesión psicoterapéutica grupal en grupo', price: 80 },
                     { key: 'miriam_psico_individual_1a', title: 'Miriam · 1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
                     { key: 'miriam_psico_individual_sig', title: 'Miriam · Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
                     { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Psiconeuroinmunología Clínica inicial (60 min)', price: 80 },
@@ -18977,10 +19096,10 @@
                 options = [
                     { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Valoración clínica integral de PNI (60 min)', price: 80 },
                     { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Revisión y evolución (60 min)', price: 60 },
-                    { key: 'silvia_ayurveda_1a', title: 'Silvia · 1ª Consulta Ayurveda (65 €)', desc: 'Diagnóstico doshas y nutrición consciente (90 min)', price: 65 },
-                    { key: 'silvia_ayurveda_sig', title: 'Silvia · Seguimiento Ayurveda (50 €)', desc: 'Revisión y ajustes (60 min)', price: 50 },
-                    { key: 'silvia_ayurveda_bono3', title: 'Silvia · Bono 3 Sesiones Ayurveda (135 €)', desc: 'Bono 3 consultas individuales (Ahorro 15 €)', price: 135 },
-                    { key: 'silvia_ayurveda_bono6', title: 'Silvia · Bono 6 Sesiones Ayurveda (240 €)', desc: 'Bono 6 consultas individuales (Ahorro 60 €)', price: 240 }
+                    { key: 'silvia_ayurveda_1a', title: 'Silvia · 1ª Consulta Ayurveda (80 €)', desc: 'Diagnóstico doshas y nutrición consciente (90 min)', price: 80 },
+                    { key: 'silvia_ayurveda_sig', title: 'Silvia · Seguimiento Ayurveda (60 €)', desc: 'Revisión y ajustes (60 min)', price: 60 },
+                    { key: 'silvia_ayurveda_bono3', title: 'Silvia · Bono 3 Sesiones Ayurveda (170 €)', desc: 'Bono 3 consultas individuales (Ahorro 10 €)', price: 170 },
+                    { key: 'silvia_ayurveda_bono6', title: 'Silvia · Bono 6 Sesiones Ayurveda (280 €)', desc: 'Bono 6 consultas individuales (Ahorro 80 €)', price: 280 }
                 ];
             }
 
@@ -19042,7 +19161,7 @@
             let options = [];
             if (isMiriam) {
                 options = [
-                    { key: 'prod_VDmmlmsGGhMebt', title: 'Sesión Grupal Miriam (30 €)', desc: 'Sesión psicoterapéutica grupal (60 min)', price: 30 },
+                    { key: 'prod_VDmmlmsGGhMebt', title: 'Sesión Grupal Miriam (80 €)', desc: 'Sesión psicoterapéutica grupal (60 min)', price: 80 },
                     { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
                     { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
                     { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (90 min)', price: 120 },
@@ -22048,32 +22167,72 @@
             }
         };
 
-        // Carga y cache de productos Stripe en vivo
+        // Carga y cache de productos Stripe en vivo (Nivel 1: Edge Function, Nivel 2: Tabla stripe_productos, Nivel 3: Catálogo verificado)
         window.stripeProductsCache = null;
         async function cargarStripeProductosDinamicos() {
             if (window.stripeProductsCache && window.stripeProductsCache.length > 0) {
                 return window.stripeProductsCache;
             }
+
+            // Nivel 1: Invocación en vivo a Edge Function de Stripe
             try {
                 const { data, error } = await client.functions.invoke('list-stripe-products');
-                if (!error && data && data.products && Array.isArray(data.products)) {
+                if (!error && data && data.products && Array.isArray(data.products) && data.products.length > 0) {
                     window.stripeProductsCache = data.products;
                     return window.stripeProductsCache;
                 }
             } catch (e) {
-                console.warn('Error al invocar list-stripe-products, usando catálogo estándar:', e);
+                console.warn('Edge function list-stripe-products no disponible, consultando base de datos Supabase:', e);
             }
+
+            // Nivel 2: Consulta a tabla pública de Supabase stripe_productos
+            try {
+                const { data: dbProds, error: dbErr } = await client.from('stripe_productos').select('*').eq('activo', true).order('nombre');
+                if (!dbErr && dbProds && Array.isArray(dbProds) && dbProds.length > 0) {
+                    window.stripeProductsCache = dbProds.map(p => ({
+                        id: p.id,
+                        name: p.nombre,
+                        description: p.descripcion || '',
+                        active: p.activo,
+                        price_id: p.price_id,
+                        unit_amount: p.unit_amount,
+                        currency: p.currency || 'eur',
+                        formatted_price: p.precio_formateado,
+                        price: {
+                            id: p.price_id,
+                            unit_amount: p.unit_amount,
+                            currency: p.currency || 'eur',
+                            formatted: p.precio_formateado
+                        }
+                    }));
+                    return window.stripeProductsCache;
+                }
+            } catch (dbEx) {
+                console.warn('Error consultando tabla stripe_productos:', dbEx);
+            }
+
+            // Nivel 3: Catálogo verificado con los 20 productos reales existentes en Stripe
             window.stripeProductsCache = [
-                { id: 'prod_VDmmlmsGGhMebt', name: 'Sesión Grupal Miriam', active: true, price: { id: 'price_miriam_grupal', unit_amount: 3000, currency: 'eur' } },
-                { id: 'prod_V1pKHgtMwPkCpC', name: 'Acompañamiento psicoterapéutico (1ª sesión)', active: true, price: { id: 'price_psico_1a', unit_amount: 7500, currency: 'eur' } },
-                { id: 'prod_V1pLmzpCRU8ZpL', name: 'Acompañamiento psicoterapéutico (siguientes)', active: true, price: { id: 'price_psico_sig', unit_amount: 6500, currency: 'eur' } },
-                { id: 'prod_V1pLCY3t5sprlK', name: 'Terapia de pareja (1ª sesión)', active: true, price: { id: 'price_pareja_1a', unit_amount: 12000, currency: 'eur' } },
-                { id: 'prod_V1pLWNLzr9Vb3g', name: 'Terapia de pareja (siguientes)', active: true, price: { id: 'price_pareja_sig', unit_amount: 10000, currency: 'eur' } },
-                { id: 'prod_V1ppAeiDF9dlkZ', name: 'Consulta PNI Clínica (1ª sesión)', active: true, price: { id: 'price_pni_1a', unit_amount: 8000, currency: 'eur' } },
-                { id: 'prod_V1pqPF6rtJf0SW', name: 'Consulta PNI Clínica (seguimiento)', active: true, price: { id: 'price_pni_sig', unit_amount: 6000, currency: 'eur' } },
-                { id: 'prod_V5uCPKKKH5K74P', name: 'Taller Introducción Power Vinyasa', active: true, price: { id: 'price_taller_intro', unit_amount: 3500, currency: 'eur' } },
-                { id: 'prod_VDY8mI9bZ3SQeb', name: 'Taller GEN Yoga 25€', active: true, price: { id: 'price_taller_25', unit_amount: 2500, currency: 'eur' } },
-                { id: 'prod_V5uBKuweMRE6ig', name: 'Clase Especial', active: true, price: { id: 'price_clase_esp', unit_amount: 2000, currency: 'eur' } }
+                { id: 'prod_VDmmlmsGGhMebt', name: 'Sesion grupal Miriam', formatted_price: '80,00 €', unit_amount: 8000, active: true, price: { unit_amount: 8000, formatted: '80,00 €' } },
+                { id: 'prod_VDY8mI9bZ3SQeb', name: 'Taller con descuento', formatted_price: '25,00 €', unit_amount: 2500, active: true, price: { unit_amount: 2500, formatted: '25,00 €' } },
+                { id: 'prod_V9eGZTzwCNJ55q', name: 'Clase suelta PROMOCION 50%', formatted_price: '7,50 €', unit_amount: 750, active: true, price: { unit_amount: 750, formatted: '7,50 €' } },
+                { id: 'prod_V5uCPKKKH5K74P', name: 'Taller Gen Yoga', formatted_price: '35,00 €', unit_amount: 3500, active: true, price: { unit_amount: 3500, formatted: '35,00 €' } },
+                { id: 'prod_V5uBKuweMRE6ig', name: 'Clase especial', formatted_price: '20,00 €', unit_amount: 2000, active: true, price: { unit_amount: 2000, formatted: '20,00 €' } },
+                { id: 'prod_V1pxtuahf6l09m', name: 'Consulta de Ayurveda sucesiva con Silvia', formatted_price: '60,00 €', unit_amount: 6000, active: true, price: { unit_amount: 6000, formatted: '60,00 €' } },
+                { id: 'prod_V1pwyAFdIdxWG5', name: 'Consulta de Ayurveda inicial con Silvia', formatted_price: '80,00 €', unit_amount: 8000, active: true, price: { unit_amount: 8000, formatted: '80,00 €' } },
+                { id: 'prod_V1psDxhdrLmncY', name: 'Bono de Salud Integrativa (6 consultas sucesivas)', formatted_price: '280,00 €', unit_amount: 28000, active: true, price: { unit_amount: 28000, formatted: '280,00 €' } },
+                { id: 'prod_V1psYkVdT3ZgxH', name: 'Bono de Salud Integrativa (3 consultas sucesivas)', formatted_price: '170,00 €', unit_amount: 17000, active: true, price: { unit_amount: 17000, formatted: '170,00 €' } },
+                { id: 'prod_V1pqPF6rtJf0SW', name: 'Consulta de Psiconeuroinmunología Clínica sucesiva con Isabel', formatted_price: '60,00 €', unit_amount: 6000, active: true, price: { unit_amount: 6000, formatted: '60,00 €' } },
+                { id: 'prod_V1ppAeiDF9dlkZ', name: 'Consulta de Psiconeuroinmunología Clínica inicial con Isabel', formatted_price: '80,00 €', unit_amount: 8000, active: true, price: { unit_amount: 8000, formatted: '80,00 €' } },
+                { id: 'prod_V1pLWNLzr9Vb3g', name: 'Terapia de pareja sucesiva con Miriam', formatted_price: '100,00 €', unit_amount: 10000, active: true, price: { unit_amount: 10000, formatted: '100,00 €' } },
+                { id: 'prod_V1pLCY3t5sprlK', name: 'Terapia de pareja inicial con Miriam', formatted_price: '120,00 €', unit_amount: 12000, active: true, price: { unit_amount: 12000, formatted: '120,00 €' } },
+                { id: 'prod_V1pLmzpCRU8ZpL', name: 'Acompañamiento psicoterapéutico sucesivo con Miriam', formatted_price: '65,00 €', unit_amount: 6500, active: true, price: { unit_amount: 6500, formatted: '65,00 €' } },
+                { id: 'prod_V1pKHgtMwPkCpC', name: 'Acompañamiento psicoterapéutico inicial con Miriam', formatted_price: '75,00 €', unit_amount: 7500, active: true, price: { unit_amount: 7500, formatted: '75,00 €' } },
+                { id: 'prod_V0IUYoGJJbX7FW', name: 'Bono 10 clases', formatted_price: '95,00 €', unit_amount: 9500, active: true, price: { unit_amount: 9500, formatted: '95,00 €' } },
+                { id: 'prod_V0IUpyuvd7uX00', name: 'Bono 6 clases', formatted_price: '65,00 €', unit_amount: 6500, active: true, price: { unit_amount: 6500, formatted: '65,00 €' } },
+                { id: 'prod_V0ITB6mD71fwnD', name: 'Bono 4 clases', formatted_price: '50,00 €', unit_amount: 5000, active: true, price: { unit_amount: 5000, formatted: '50,00 €' } },
+                { id: 'prod_UqBxkWuX2OeIz8', name: 'Bono mensual', formatted_price: '2 precios', unit_amount: 9000, active: true, price: { unit_amount: 9000, formatted: '2 precios' } },
+                { id: 'prod_UqBwGSWJNVAK0j', name: 'Clase suelta', formatted_price: '15,00 €', unit_amount: 1500, active: true, price: { unit_amount: 1500, formatted: '15,00 €' } }
             ];
             return window.stripeProductsCache;
         }
@@ -22090,7 +22249,7 @@
             if (tipoNormalizado === 'psicologia') {
                 baseOptions = `
                     <optgroup label="Sesiones Grupales (Stripe)">
-                        <option value="prod_VDmmlmsGGhMebt" selected>Sesión Grupal Miriam — 30,00 € (prod_VDmmlmsGGhMebt)</option>
+                        <option value="prod_VDmmlmsGGhMebt" selected>Sesión Grupal Miriam — 80,00 € (prod_VDmmlmsGGhMebt)</option>
                     </optgroup>
                     <optgroup label="Consultas Individuales (Stripe)">
                         <option value="miriam_psico_individual_1a">Acompañamiento psicoterapéutico (1ª sesión) — 75,00 €</option>
@@ -22139,7 +22298,7 @@
                     dynamicProds.forEach(p => {
                         const opt = document.createElement('option');
                         opt.value = p.id;
-                        const priceText = p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2)} €` : 'Stripe';
+                        const priceText = p.formatted_price || (p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2)} €` : (p.unit_amount ? `${(p.unit_amount / 100).toFixed(2)} €` : 'Stripe'));
                         opt.textContent = `${p.name} — ${priceText} (${p.id})`;
                         dynGroup.appendChild(opt);
                     });
@@ -22198,7 +22357,7 @@
                 if (pagoVal === 'gratuita' || metodoPago === 'gratuita') {
                     pagoDisp.value = 'Gratuita (0 €) · Fija';
                 } else if (pagoVal === 'prod_VDmmlmsGGhMebt' || stripeProductId === 'prod_VDmmlmsGGhMebt') {
-                    pagoDisp.value = 'Sesión Grupal Miriam (30 €) · Stripe';
+                    pagoDisp.value = 'Sesión Grupal Miriam (80 €) · Stripe';
                 } else if (stripeProductId) {
                     pagoDisp.value = `${stripeProductId} · Stripe`;
                 } else if (pagoVal === 'local' || !pagoVal) {
@@ -22415,8 +22574,6 @@
                     tipo_clase_id: tipoClaseId,
                     descripcion: notas,
                     duracion_minutos: duracion,
-                    metodo_pago: metodoPagoConsulta,
-                    stripe_lookup_key: metodoPagoConsulta,
                     es_gratuita: esGratuita
                 });
             }
@@ -22444,9 +22601,31 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            const { data, error } = await client.from('clases')
+            let { data, error } = await client.from('clases')
                 .insert(inserts)
                 .select('id, nombre, fecha_inicio, fecha_fin, duracion_minutos, capacidad_max, profesor_id, tipo_clase');
+
+            // Fallback de seguridad si el esquema de la BD en Supabase tiene columnas pendientes de migración
+            if (error && (error.message?.includes('tipo_clase_id') || error.message?.includes('es_gratuita') || error.message?.includes('metodo_pago') || error.message?.includes('schema cache'))) {
+                console.warn('Reintentando inserción de consulta con esquema base...', error);
+                const fallbackInserts = inserts.map(item => ({
+                    nombre: item.nombre,
+                    fecha_inicio: item.fecha_inicio,
+                    fecha_fin: item.fecha_fin,
+                    capacidad_max: item.capacidad_max,
+                    profesor_id: item.profesor_id,
+                    tipo_clase: item.tipo_clase,
+                    descripcion: item.descripcion,
+                    duracion_minutos: item.duracion_minutos
+                }));
+                const retryRes = await client.from('clases')
+                    .insert(fallbackInserts)
+                    .select('id, nombre, fecha_inicio, fecha_fin, duracion_minutos, capacidad_max, profesor_id, tipo_clase');
+                if (!retryRes.error) {
+                    data = retryRes.data;
+                    error = null;
+                }
+            }
 
             Swal.close();
 
@@ -22460,10 +22639,17 @@
                 if (data && data.length > 0 && metodoPagoConsulta) {
                     const createdIds = data.map(c => c.id).filter(Boolean);
                     if (createdIds.length > 0) {
-                        client.from('clases').update({
-                            metodo_pago: metodoPagoConsulta,
-                            stripe_lookup_key: metodoPagoConsulta
-                        }).in('id', createdIds).then(() => {}).catch(() => {});
+                        try {
+                            const { error: optErr } = await client.from('clases').update({
+                                metodo_pago: metodoPagoConsulta,
+                                stripe_lookup_key: metodoPagoConsulta
+                            }).in('id', createdIds);
+                            if (optErr) {
+                                console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', optErr.message);
+                            }
+                        } catch (e) {
+                            console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', e);
+                        }
                     }
                 }
                 cerrarModalCrearConsulta();
@@ -24043,9 +24229,7 @@
                     activa: true,
                     es_especial: true,
                     descripcion: notas,
-                    duracion_minutos: duracion,
-                    metodo_pago: metodoPagoTaller,
-                    stripe_lookup_key: metodoPagoTaller
+                    duracion_minutos: duracion
                 });
             }
 
@@ -24072,9 +24256,33 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            const { data, error } = await client.from('clases')
+            let { data, error } = await client.from('clases')
                 .insert(inserts)
                 .select('id, nombre, fecha_inicio, fecha_fin, duracion_minutos, capacidad_max, profesor_id, tipo_clase');
+
+            // Fallback si falla alguna columna opcional en esquema antiguo
+            if (error && (error.message?.includes('tipo_clase_id') || error.message?.includes('metodo_pago') || error.message?.includes('schema cache'))) {
+                console.warn('Reintentando inserción de taller con esquema base...', error);
+                const fallbackInserts = inserts.map(item => ({
+                    nombre: item.nombre,
+                    fecha_inicio: item.fecha_inicio,
+                    fecha_fin: item.fecha_fin,
+                    capacidad_max: item.capacidad_max,
+                    profesor_id: item.profesor_id,
+                    tipo_clase: item.tipo_clase,
+                    activa: item.activa,
+                    es_especial: item.es_especial,
+                    descripcion: item.descripcion,
+                    duracion_minutos: item.duracion_minutos
+                }));
+                const retryRes = await client.from('clases')
+                    .insert(fallbackInserts)
+                    .select('id, nombre, fecha_inicio, fecha_fin, duracion_minutos, capacidad_max, profesor_id, tipo_clase');
+                if (!retryRes.error) {
+                    data = retryRes.data;
+                    error = null;
+                }
+            }
 
             Swal.close();
 
@@ -24088,10 +24296,17 @@
                 if (data && data.length > 0 && metodoPagoTaller) {
                     const createdIds = data.map(c => c.id).filter(Boolean);
                     if (createdIds.length > 0) {
-                        await client.from('clases').update({
-                            metodo_pago: metodoPagoTaller,
-                            stripe_lookup_key: metodoPagoTaller
-                        }).in('id', createdIds).catch(() => {});
+                        try {
+                            const { error: optErr } = await client.from('clases').update({
+                                metodo_pago: metodoPagoTaller,
+                                stripe_lookup_key: metodoPagoTaller
+                            }).in('id', createdIds);
+                            if (optErr) {
+                                console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', optErr.message);
+                            }
+                        } catch (e) {
+                            console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', e);
+                        }
                     }
                 }
                 cerrarModalCrearTaller();
