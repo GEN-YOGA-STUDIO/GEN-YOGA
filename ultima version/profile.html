@@ -4054,6 +4054,20 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
+                    <!-- Tarifa Stripe Asociada (Solo para Talleres) -->
+                    <div id="editar-clase-tarifa-taller-container" class="md:col-span-2 hidden bg-amber-50/70 border border-amber-200/90 p-4 rounded-2xl space-y-2">
+                        <label class="text-xs font-black text-cocoa uppercase tracking-wider flex items-center justify-between">
+                            <span><i class="ph-bold ph-credit-card text-olive"></i> Tarifa Stripe Asociada (Taller) <span class="text-red-500">*</span></span>
+                            <span class="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-md">Tarifa Taller</span>
+                        </label>
+                        <select id="editar-clase-metodo-pago-taller" name="editar-clase-metodo-pago-taller" aria-label="Tarifa Stripe asociada para taller"
+                            class="w-full px-4 py-3 bg-white border border-cocoa/20 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none text-cocoa font-bold transition">
+                            <option value="taller_intro_power_vinyasa">Taller GEN Yoga — 35,00 €</option>
+                            <option value="taller_25">Taller GEN Yoga — 25,00 €</option>
+                        </select>
+                        <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
+                    </div>
+
                     <!-- Modalidad y Acceso a la Clase (Inactivado en v12.11: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
@@ -4360,17 +4374,17 @@
                         <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Solo se pueden crear eventos cuyo tipo esté previamente definido en el Catálogo de Clases.</p>
                     </div>
 
-                    <!-- 3. MÉTODO DE PAGO / PRODUCTO STRIPE (Tarifa oficial fija asociada) -->
+                    <!-- 3. MÉTODO DE PAGO / PRODUCTO STRIPE (Tarifa oficial fija o seleccionable) -->
                     <div class="md:col-span-2" id="taller-metodo-pago-container">
                         <label class="text-xs font-black text-cocoa uppercase tracking-wider ml-1 mb-2 flex items-center justify-between">
                             <span><i class="ph-bold ph-credit-card text-olive"></i> Tarifa Stripe Asociada <span class="text-red-500">*</span></span>
-                            <span class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="ph-bold ph-lock-key"></i> Tarifa fija</span>
+                            <span id="taller-tarifa-badge" class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="ph-bold ph-lock-key"></i> Tarifa fija (20 €)</span>
                         </label>
                         <select id="taller-metodo-pago" name="taller-metodo-pago" required disabled aria-label="Tarifa Stripe asociada"
                             class="w-full px-4 py-3 bg-sand/20 border border-cocoa/20 rounded-xl outline-none text-cocoa font-bold cursor-not-allowed opacity-90 transition">
                             <option value="clase_especial" selected>Clase Especial — 20,00 €</option>
                         </select>
-                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Tarifa oficial fija asociada automáticamente (Clase Especial: 20 € · Taller: 35 €). Desplegable bloqueado por tarifa única.</p>
+                        <p id="taller-tarifa-help" class="text-[10px] text-cocoa/50 mt-1 ml-1">Tarifa oficial fija asociada automáticamente (Clase Especial: 20 € · En talleres puedes seleccionar entre 35 € y 25 €).</p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Título de
@@ -5153,13 +5167,15 @@
                 return renderPagoBadge('Bono Consulta', 'Pagado con: Bono Consulta', 'ph-first-aid', 'text-purple-800 bg-purple-50 border border-purple-200');
             }
 
-            // 2. Talleres especiales (inmersiones temáticas / 35 €)
+            // 2. Talleres especiales (inmersiones temáticas / 25 € o 35 €)
             const esTaller = (c.tipo_clase === 'taller' || /taller/i.test(c.nombre || '') || r.tipo_reserva === 'taller' || r.tipo_reserva === 'reprogramacion_taller');
             if (esTaller) {
                 if (r.tipo_reserva === 'reprogramacion_taller') {
                     return renderPagoBadge('Reprogramación Taller', 'Pagado con: Crédito de Reprogramación', 'ph-arrows-clockwise', 'text-amber-900 bg-amber-100 border border-amber-300');
                 }
-                return renderPagoBadge('Plaza Taller (35 €)', 'Pagado con: Plaza de Taller abonada', 'ph-credit-card', 'text-orange-900 bg-orange-100 border border-orange-300');
+                const lKey = c.stripe_lookup_key || c.metodo_pago;
+                const tallerPrecio = (lKey === 'taller_25') ? '25' : '35';
+                return renderPagoBadge(`Plaza Taller (${tallerPrecio} €)`, `Pagado con: Plaza de Taller abonada (${tallerPrecio} €)`, 'ph-credit-card', 'text-orange-900 bg-orange-100 border border-orange-300');
             }
 
             // 3. Clases Especiales
@@ -8649,7 +8665,7 @@
                             action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 bg-emerald-600 hover:bg-emerald-700"><i class="ph-bold ph-arrows-clockwise mr-1"></i> RESERVAR CON BONO / CRÉDITO (0 €)</button>`;
                         } else {
                             const lookupKey = c.stripe_lookup_key || c.metodo_pago || (c.tipo_clase === 'clase_especial' ? 'clase_especial' : 'taller_intro_power_vinyasa');
-                            const precio = lookupKey === 'clase_especial' ? '20' : '35';
+                            const precio = lookupKey === 'clase_especial' ? '20' : (lookupKey === 'taller_25' ? '25' : '35');
                             action = `<button onclick="iniciarCheckoutTallerStripe('${lookupKey}', '${escapeHtml(c.nombre)}', '${precio}', ${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">RESERVAR PLAZA (${precio} €)</button>`;
                         }
                         aforoOEstadoTaller = `<span class="text-xs font-bold text-[#AB593D] flex items-center gap-1"><i class="ph-bold ph-barbell"></i> Taller (Plaza Individual)</span>`;
@@ -9176,9 +9192,11 @@
                                         <i class="ph-bold ph-arrows-clockwise mr-1"></i> RESERVAR (CRÉDITO 0 €)
                                     </button>`;
                             } else {
+                                const lookupKeyTaller = c.stripe_lookup_key || c.metodo_pago || 'taller_intro_power_vinyasa';
+                                const precioTaller = (lookupKeyTaller === 'taller_25') ? '25' : '35';
                                 btnAction = `
                                     <button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-5 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 active:scale-95" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%); color: #ffffff;">
-                                        RESERVAR PLAZA (35 €)
+                                        RESERVAR PLAZA (${precioTaller} €)
                                     </button>`;
                             }
                         } else {
@@ -10002,6 +10020,8 @@
                 if (tieneReprog) {
                     mensajeConfirmacion = `¿Quieres canjear tu <b>Crédito de Reprogramación de Taller</b> para reservar tu plaza en <b>${escapeHtml(clase.nombre || 'Taller')}</b> a 0 €?`;
                 } else if (!isAdmin) {
+                    const lookupKeyTaller = clase.stripe_lookup_key || clase.metodo_pago || 'taller_intro_power_vinyasa';
+                    const precioTaller = (lookupKeyTaller === 'taller_25') ? '25' : '35';
                     const tallerConfirm = await Swal.fire({
                         title: `<span class="font-serif font-black text-cocoa">${escapeHtml(clase.nombre || 'Taller GEN Yoga')}</span>`,
                         html: `
@@ -10009,19 +10029,19 @@
                             <p>Inmersión temática especial (120 minutos). Los talleres no están incluidos en los bonos de clases normales ni en el bono ilimitado.</p>
                             <div class="p-3 bg-orange-50 border border-orange-200 rounded-xl text-orange-950 font-bold flex items-center justify-between">
                                 <span>Precio de plaza en taller:</span>
-                                <span class="text-base text-[#AB593D]">35 €</span>
+                                <span class="text-base text-[#AB593D]">${precioTaller} €</span>
                             </div>
                             <p class="text-[11px] text-cocoa/60">Si cancelas con más de 24h de antelación, recibirás automáticamente un Crédito de Reprogramación para disfrutar de otro taller sin coste.</p>
                         </div>`,
                         icon: 'info',
                         showCancelButton: true,
-                        confirmButtonText: '<i class="ph-bold ph-credit-card mr-1"></i> Reservar Plaza (35 € en Stripe)',
+                        confirmButtonText: `<i class="ph-bold ph-credit-card mr-1"></i> Reservar Plaza (${precioTaller} € en Stripe)`,
                         cancelButtonText: 'Cancelar',
                         confirmButtonColor: '#AB593D',
                         cancelButtonColor: '#94a3b8'
                     });
                     if (tallerConfirm.isConfirmed) {
-                        await iniciarCheckoutTallerStripe('taller_intro_power_vinyasa', clase.nombre || 'Taller GEN Yoga', '35', claseId);
+                        await iniciarCheckoutTallerStripe(lookupKeyTaller, clase.nombre || 'Taller GEN Yoga', precioTaller, claseId);
                     }
                     return false;
                 } else {
@@ -15373,6 +15393,16 @@
                         if (opt && opt.dataset && opt.dataset.duracion) {
                             document.getElementById('editar-clase-duracion').value = String(opt.dataset.duracion);
                         }
+                        const txt = (opt?.text || '').toLowerCase();
+                        const isNowTaller = catFiltro === 'taller' || txt.includes('taller') || txt.includes('masterclass');
+                        const tContainer = document.getElementById('editar-clase-tarifa-taller-container');
+                        if (tContainer) {
+                            if (isNowTaller) {
+                                tContainer.classList.remove('hidden');
+                            } else {
+                                tContainer.classList.add('hidden');
+                            }
+                        }
                     };
                 } else {
                     const customOpt = document.createElement('option');
@@ -15536,6 +15566,26 @@
                 if (regRadio) regRadio.checked = true;
             }
             actualizarModalidadEditarClase();
+
+            // Tarifa Taller Stripe
+            const isTallerSesion = !isConsulta && ((typeof esTallerTipo === 'function' && esTallerTipo(clase)) || tipoNorm === 'taller');
+            const tarifaTallerContainer = document.getElementById('editar-clase-tarifa-taller-container');
+            const tarifaTallerSelect = document.getElementById('editar-clase-metodo-pago-taller');
+            if (tarifaTallerContainer) {
+                if (isTallerSesion) {
+                    tarifaTallerContainer.classList.remove('hidden');
+                    if (tarifaTallerSelect) {
+                        const rawLookup = String(clase.stripe_lookup_key || clase.metodo_pago || '').toLowerCase().trim();
+                        if (rawLookup === 'taller_25' || rawLookup === 'taller-25' || rawLookup === 'taller25' || rawLookup === 'prod_vdy8mi9bz3sqeb') {
+                            tarifaTallerSelect.value = 'taller_25';
+                        } else {
+                            tarifaTallerSelect.value = 'taller_intro_power_vinyasa';
+                        }
+                    }
+                } else {
+                    tarifaTallerContainer.classList.add('hidden');
+                }
+            }
         }
 
         async function guardarEdicionClase(event) {
@@ -15621,11 +15671,24 @@
                 descripcion
             };
 
+            const isTallerSesion = !isConsulta && (
+                (typeof esTallerTipo === 'function' && (esTallerTipo(currentEditingClass) || esTallerTipo({ tipo_clase: claseTipoReal, nombre, duracion_minutos: duracion }))) ||
+                tipoNorm === 'taller'
+            );
+
             if (isConsulta) {
                 updatePayload.tipo_clase = claseTipoReal;
                 updatePayload.es_gratuita = false;
                 updatePayload.companion_modality = null;
                 updatePayload.tipo_clase_id = null;
+            } else if (isTallerSesion) {
+                updatePayload.tipo_clase_id = tipoClaseId;
+                updatePayload.es_gratuita = false;
+                updatePayload.companion_modality = null;
+                const tarifaTallerSelect = document.getElementById('editar-clase-metodo-pago-taller');
+                const tallerTarifa = (tarifaTallerSelect?.value === 'taller_25') ? 'taller_25' : 'taller_intro_power_vinyasa';
+                updatePayload.stripe_lookup_key = tallerTarifa;
+                updatePayload.metodo_pago = tallerTarifa;
             } else {
                 updatePayload.tipo_clase_id = tipoClaseId;
                 updatePayload.es_gratuita = esGratuita;
@@ -15646,7 +15709,7 @@
 
             await Swal.fire({
                 icon: 'success',
-                title: isConsulta ? 'Consulta actualizada' : 'Clase actualizada',
+                title: isConsulta ? 'Consulta actualizada' : (isTallerSesion ? 'Taller actualizado' : 'Clase actualizada'),
                 text: 'Los cambios se han guardado correctamente.',
                 timer: 2000,
                 showConfirmButton: false
@@ -15665,6 +15728,8 @@
             await cargarTodasLasClasesConProfesionales({ force: true });
             await cargarHorarios();
             if (typeof cargarTalleres === 'function') cargarTalleres();
+            if (typeof cargarTalleresAdmin === 'function') await cargarTalleresAdmin();
+            if (typeof cargarClasesEspeciales === 'function') await cargarClasesEspeciales();
             if (typeof cargarConsultasAdmin === 'function') await cargarConsultasAdmin();
             if (typeof cargarNutricion === 'function') await cargarNutricion();
             if (typeof cargarPsicologia === 'function') await cargarPsicologia();
@@ -23025,6 +23090,18 @@
                     ? `<span class="text-xs font-black text-slate-700 bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-lg uppercase tracking-wide inline-flex items-center gap-1 shadow-2xs"><i class="ph-fill ph-sparkle text-slate-500"></i> Clase Especial</span>`
                     : `<span class="text-xs font-black text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-lg uppercase tracking-wide inline-flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-barbell"></i> Taller</span>`;
 
+                let precioAdminTexto = '35,00 € (Stripe)';
+                if (isClaseEspecial) {
+                    precioAdminTexto = '20,00 € (Stripe)';
+                } else {
+                    const rawLookup = String(c.stripe_lookup_key || c.metodo_pago || '').toLowerCase().trim();
+                    if (rawLookup === 'taller_25' || rawLookup === 'taller-25' || rawLookup === 'taller25' || rawLookup === 'prod_vdy8mi9bz3sqeb') {
+                        precioAdminTexto = '25,00 € (Stripe)';
+                    } else {
+                        precioAdminTexto = '35,00 € (Stripe)';
+                    }
+                }
+
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-3xl border border-gray-100 p-6 shadow-sm';
                 card.innerHTML = `
@@ -23034,7 +23111,7 @@
                         ${badgeTipoAdmin}
                         <span class="text-xs font-bold text-gray-400">${toSafeNumber(c.duracion_minutos)} min</span>
                         <span class="text-[10px] font-bold ${isClaseEspecial ? 'text-slate-700 bg-slate-100 border border-slate-300' : 'text-orange-800 bg-orange-50 border border-orange-200'} px-2 py-0.5 rounded-md inline-flex items-center gap-1">
-                            <i class="ph-bold ph-credit-card"></i> ${isClaseEspecial ? '20,00 € (Stripe)' : '35,00 € (Stripe)'}
+                            <i class="ph-bold ph-credit-card"></i> ${precioAdminTexto}
                         </span>
                     </div>
                     <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || (isClaseEspecial ? 'Clase Especial' : 'Taller'))}</h3>
@@ -23310,15 +23387,29 @@
                     duracionSelect.value = esClaseEspecial ? '75' : '120';
                 }
                 const metodoPagoSelect = document.getElementById('taller-metodo-pago');
+                const tarifaBadge = document.getElementById('taller-tarifa-badge');
+                const tarifaHelp = document.getElementById('taller-tarifa-help');
                 if (metodoPagoSelect) {
                     if (esClaseEspecial) {
                         metodoPagoSelect.innerHTML = '<option value="clase_especial" selected>Clase Especial — 20,00 €</option>';
                         metodoPagoSelect.value = 'clase_especial';
+                        metodoPagoSelect.disabled = true;
+                        metodoPagoSelect.classList.add('cursor-not-allowed', 'opacity-90', 'bg-sand/20');
+                        metodoPagoSelect.classList.remove('bg-white', 'cursor-pointer');
+                        if (tarifaBadge) tarifaBadge.innerHTML = '<i class="ph-bold ph-lock-key"></i> Tarifa fija (20 €)';
+                        if (tarifaHelp) tarifaHelp.textContent = 'Tarifa oficial fija asociada automáticamente (Clase Especial: 20 €).';
                     } else {
-                        metodoPagoSelect.innerHTML = '<option value="taller_intro_power_vinyasa" selected>Taller GEN Yoga — 35,00 €</option>';
+                        metodoPagoSelect.innerHTML = `
+                            <option value="taller_intro_power_vinyasa" selected>Taller GEN Yoga — 35,00 €</option>
+                            <option value="taller_25">Taller GEN Yoga — 25,00 €</option>
+                        `;
                         metodoPagoSelect.value = 'taller_intro_power_vinyasa';
+                        metodoPagoSelect.disabled = false;
+                        metodoPagoSelect.classList.remove('cursor-not-allowed', 'opacity-90', 'bg-sand/20');
+                        metodoPagoSelect.classList.add('bg-white', 'cursor-pointer');
+                        if (tarifaBadge) tarifaBadge.innerHTML = '<i class="ph-bold ph-tag"></i> Tarifa seleccionable (35 € / 25 €)';
+                        if (tarifaHelp) tarifaHelp.textContent = 'Selecciona la tarifa oficial de Stripe para este taller (35 € estándar o 25 € promocional/específico).';
                     }
-                    metodoPagoSelect.disabled = true;
                 }
             } catch (err) {
                 console.error('Error cargando tipos en modal evento:', err);
@@ -23470,7 +23561,9 @@
                     activa: true,
                     es_especial: true,
                     descripcion: notas,
-                    duracion_minutos: duracion
+                    duracion_minutos: duracion,
+                    metodo_pago: metodoPagoTaller,
+                    stripe_lookup_key: metodoPagoTaller
                 });
             }
 
@@ -23493,7 +23586,7 @@
             }
 
             Swal.fire({
-                title: repeatCount > 1 ? 'Creando talleres...' : 'Creando taller...',
+                title: repeatCount > 1 ? (esClaseEspecial ? 'Creando clases especiales...' : 'Creando talleres...') : (esClaseEspecial ? 'Creando clase especial...' : 'Creando taller...'),
                 didOpen: () => Swal.showLoading()
             });
 
@@ -23513,10 +23606,10 @@
                 if (data && data.length > 0 && metodoPagoTaller) {
                     const createdIds = data.map(c => c.id).filter(Boolean);
                     if (createdIds.length > 0) {
-                        client.from('clases').update({
+                        await client.from('clases').update({
                             metodo_pago: metodoPagoTaller,
                             stripe_lookup_key: metodoPagoTaller
-                        }).in('id', createdIds).then(() => {}).catch(() => {});
+                        }).in('id', createdIds).catch(() => {});
                     }
                 }
                 cerrarModalCrearTaller();

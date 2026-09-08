@@ -25,6 +25,7 @@ export const PURCHASE_TYPES = {
   CLASE_ESPECIAL: 'clase_especial',
   TALLER_INTRO_POWER_VINYASA: 'taller_intro_power_vinyasa',
   TALLER_35: 'taller_35',
+  TALLER_25: 'taller_25',
   TALLER: 'taller',
   PROMO_50_CLASE: 'promo_50_clase',
 } as const
@@ -57,6 +58,7 @@ export const ISABEL_PRODUCT_IDS = {
 export const WORKSHOP_PRODUCT_IDS = {
   CLASE_ESPECIAL: 'prod_V5uBKuweMRE6ig',
   TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P',
+  TALLER_25: 'prod_VDY8mI9bZ3SQeb',
 } as const
 
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
@@ -156,6 +158,12 @@ export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = 
     productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
     guestAllowed: true,
   },
+  [PURCHASE_TYPES.TALLER_25]: {
+    name: 'Taller GEN Yoga',
+    amount: 2500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_25,
+    guestAllowed: true,
+  },
   [PURCHASE_TYPES.TALLER]: {
     name: 'Taller GEN Yoga',
     amount: 3500,
@@ -194,6 +202,9 @@ export function getConsultationDetails(purchaseType: string): ConsultationDetail
 
 export function getWorkshopDetails(purchaseType: string): WorkshopDetails | null {
   const norm = String(purchaseType || '').trim().toLowerCase()
+  if (norm === 'taller_25' || norm === 'taller-25' || norm === 'taller25') {
+    return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_25] || null
+  }
   if (WORKSHOP_CATALOG[norm as PurchaseType]) {
     return WORKSHOP_CATALOG[norm as PurchaseType]!
   }

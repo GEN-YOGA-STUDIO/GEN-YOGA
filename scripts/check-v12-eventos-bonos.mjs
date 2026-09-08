@@ -109,6 +109,7 @@ const stripePath = path.join(root, 'supabase', 'functions', '_shared', 'stripe-p
 if (fs.existsSync(stripePath)) {
     const sContent = fs.readFileSync(stripePath, 'utf8');
     check('Talleres de 35 euros mapeados a prod_V5uCPKKKH5K74P', sContent.includes("TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P'") && sContent.includes("TALLER_35"));
+    check('Talleres de 25 euros mapeados a prod_VDY8mI9bZ3SQeb', sContent.includes("TALLER_25: 'prod_VDY8mI9bZ3SQeb'") && sContent.includes("TALLER_25"));
 }
 
 console.log('\n--- 7. Verificando Novedades v12.5 (Sin Plata, Banner Eliminado y Reprogramación Universal) ---');
@@ -187,11 +188,20 @@ if (fs.existsSync(syncAppsPath)) {
     check('sync_apps.py sincroniza hacia ultima version', syncContent.includes('Ultima Version'));
 }
 
+console.log('\n--- 12. Verificando Novedades v12.16 (Talleres Stripe 25 € prod_VDY8mI9bZ3SQeb en Creación y Edición) ---');
+if (fs.existsSync(profilePath)) {
+    const pContent = fs.readFileSync(profilePath, 'utf8');
+    check('Modal edición incluye selector de tarifa Stripe para talleres', pContent.includes('id="editar-clase-tarifa-taller-container"') && pContent.includes('id="editar-clase-metodo-pago-taller"'));
+    check('Opciones de taller 35 € y 25 € en modal edición', pContent.includes('value="taller_intro_power_vinyasa">Taller GEN Yoga — 35,00 €</option>') && pContent.includes('value="taller_25">Taller GEN Yoga — 25,00 €</option>'));
+    check('Modal creación incluye opción de 25 € para talleres', pContent.includes('value="taller_25">Taller GEN Yoga — 25,00 €</option>'));
+    check('Checkout de taller y reservas soportan precio 25 € dinámico', pContent.includes("lookupKeyTaller === 'taller_25'") || pContent.includes("lookupKey === 'taller_25'"));
+}
+
 if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.10 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.16 superadas con éxito!');
     process.exit(0);
 }
 

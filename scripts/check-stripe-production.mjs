@@ -90,6 +90,7 @@ for (const [productId, label] of [
   ['prod_V1pqPF6rtJf0SW', 'Isabel PNI sucesiva'],
   ['prod_V5uBKuweMRE6ig', 'Clase Especial'],
   ['prod_V5uCPKKKH5K74P', 'Taller Introducción Power Vinyasa'],
+  ['prod_VDY8mI9bZ3SQeb', 'Taller 25 euros'],
   ['prod_V9eGZTzwCNJ55q', 'Promo 50% GEN YOGA'],
 ]) {
   requireText(shared, productId, `Producto Stripe de ${label}`);

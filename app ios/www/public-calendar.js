@@ -120,7 +120,7 @@
             calendar_mode_all: 'Calendario Global',
             calendar_mode_classes: 'Clases de Yoga',
             calendar_mode_consultations: 'Consultas',
-            calendar_mode_workshops: 'Talleres y Clases Especiales',
+            calendar_mode_workshops: 'Eventos y Clases Especiales',
             calendar_spot_free: 'Disponible',
             calendar_spot_occupied: 'Ocupada',
             calendar_book_consultation: 'Reservar consulta'
@@ -191,7 +191,7 @@
             calendar_mode_all: 'Global Schedule',
             calendar_mode_classes: 'Yoga Classes',
             calendar_mode_consultations: 'Consultations',
-            calendar_mode_workshops: 'Workshops & Special Classes',
+            calendar_mode_workshops: 'Events & Special Classes',
             calendar_spot_free: 'Available',
             calendar_spot_occupied: 'Occupied',
             calendar_book_consultation: 'Book consultation'
