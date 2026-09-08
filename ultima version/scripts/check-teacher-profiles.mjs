@@ -170,7 +170,7 @@ assert.doesNotMatch(maestros, /filter:\s*grayscale\(1\)/);
 assert.match(maestros, /email:\s*'isarodriguez\.pni@gmail\.com'/);
 assert.match(maestros, /email:\s*'sil-hada@hotmail\.com'/);
 assert.match(maestros, /email:\s*'angeljavier\.yoga@gmail\.com'/);
-assert.match(clases, /src="img\/isabel-pni\.jpg"/);
+assert.match(clases, /src="img\/isabel-pni\.jpg(?:\?[^"]*)?"/);
 assert.match(profile, /isarodriguez\.pni@gmail\.com/);
 assert.match(profile, /sil-hada@hotmail\.com/);
 assert.match(profile, /angeljavier\.yoga@gmail\.com/);
