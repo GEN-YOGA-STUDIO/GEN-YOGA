@@ -569,10 +569,10 @@
 
         let finalOccupied = exactAvailability && Number.isFinite(occupied) ? Math.max(0, occupied) : null;
         let finalFreeSpots = exactAvailability && Number.isFinite(freeSpots) ? Math.max(0, freeSpots) : null;
-        if (classType === 'yoga' && exactAvailability) {
-            if (finalOccupied !== null) {
+        if (exactAvailability) {
+            if (finalOccupied !== null && capacity > 0) {
                 finalFreeSpots = Math.max(0, capacity - finalOccupied);
-            } else if (finalFreeSpots !== null && finalFreeSpots > 10) {
+            } else if (classType === 'yoga' && finalFreeSpots !== null && finalFreeSpots > 10) {
                 finalFreeSpots = 10;
             }
         }

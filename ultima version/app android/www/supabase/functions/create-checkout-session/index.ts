@@ -25,6 +25,7 @@ import {
   resolveConsultationPrice,
   resolveWorkshopPrice,
   resolvePromoPrice,
+  resolveDynamicStripePrice,
   resolveReturnBaseUrl,
   safeErrorResponse,
   isSingleConsultation,
@@ -114,7 +115,8 @@ serve(async (req) => {
       ...Object.keys(WORKSHOP_CATALOG),
       ...Object.keys(PROMO_CATALOG),
     ])
-    if (!allowedPurchaseTypes.has(lookupKey)) {
+    const isDynamicStripe = lookupKey.startsWith('prod_') || lookupKey.startsWith('price_')
+    if (!allowedPurchaseTypes.has(lookupKey) && !isDynamicStripe) {
       throw new HttpError(400, 'Producto no permitido.')
     }
     const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
@@ -127,7 +129,7 @@ serve(async (req) => {
     const isWorkshop = isWorkshopPurchase(lookupKey)
     const isPromo = isPromoPurchase(lookupKey)
 
-    if (isGuest && (lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && (!isWorkshop || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL))) {
+    if (isGuest && (lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && (!isWorkshop || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL) && !isDynamicStripe)) {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta, consulta individual o taller.')
     }
     const requestedAttemptId = String(body.checkout_attempt_id || '').trim()
@@ -278,6 +280,12 @@ serve(async (req) => {
           },
         ]
       }
+    } else if (isDynamicStripe) {
+      const dynamicResolved = await resolveDynamicStripePrice(stripe, purchaseType)
+      if (!dynamicResolved) {
+        throw new HttpError(400, 'No se pudo resolver el precio activo en Stripe para el producto seleccionado.')
+      }
+      lineItems = [{ price: dynamicResolved.price.id, quantity: 1 }]
     } else {
       throw new HttpError(400, 'Precio no configurado para el producto seleccionado.')
     }
@@ -297,7 +305,7 @@ serve(async (req) => {
       sessionParams.customer_email = user.email
     }
 
-    if (isGuest || isConsultationSingle || isWorkshop) {
+    if (isGuest || isConsultationSingle || isWorkshop || isDynamicStripe) {
       sessionParams.phone_number_collection = { enabled: true }
     }
 

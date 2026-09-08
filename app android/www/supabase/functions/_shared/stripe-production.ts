@@ -16,6 +16,7 @@ export const PURCHASE_TYPES = {
   MIRIAM_PSICO_INDIVIDUAL_SIG: 'miriam_psico_individual_sig',
   MIRIAM_PSICO_PAREJA_1A: 'miriam_psico_pareja_1a',
   MIRIAM_PSICO_PAREJA_SIG: 'miriam_psico_pareja_sig',
+  MIRIAM_PSICO_GRUPAL: 'prod_VDmmlmsGGhMebt',
   SILVIA_AYURVEDA_1A: 'silvia_ayurveda_1a',
   SILVIA_AYURVEDA_SIG: 'silvia_ayurveda_sig',
   SILVIA_AYURVEDA_BONO3: 'silvia_ayurveda_bono3',
@@ -48,6 +49,7 @@ export const MIRIAM_PRODUCT_IDS = {
   INDIVIDUAL_SIG: 'prod_V1pLmzpCRU8ZpL',
   PAREJA_1A: 'prod_V1pLCY3t5sprlK',
   PAREJA_SIG: 'prod_V1pLWNLzr9Vb3g',
+  SESION_GRUPAL: 'prod_VDmmlmsGGhMebt',
 } as const
 
 export const ISABEL_PRODUCT_IDS = {
@@ -103,6 +105,12 @@ export const CONSULTATION_CATALOG: Partial<Record<PurchaseType, ConsultationDeta
     name: 'Terapia de pareja (siguientes)',
     amount: 10000,
     productId: MIRIAM_PRODUCT_IDS.PAREJA_SIG,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_PSICO_GRUPAL]: {
+    name: 'Sesión Grupal Miriam',
+    amount: 3000,
+    productId: MIRIAM_PRODUCT_IDS.SESION_GRUPAL,
     guestAllowed: true,
   },
   [PURCHASE_TYPES.SILVIA_AYURVEDA_1A]: {
@@ -833,6 +841,51 @@ export function assertValidPromoPrice(
   return details
 }
 
+export async function resolveDynamicStripePrice(
+  stripe: Stripe,
+  lookupKeyOrProductId: string,
+): Promise<{ price: Stripe.Price; product: Stripe.Product } | null> {
+  try {
+    const rawId = String(lookupKeyOrProductId || '').trim()
+    if (!rawId) return null
+
+    if (rawId.startsWith('price_')) {
+      const price = await stripe.prices.retrieve(rawId, { expand: ['product'] })
+      if (price && price.active && price.livemode) {
+        const prod = typeof price.product === 'object'
+          ? (price.product as Stripe.Product)
+          : await stripe.products.retrieve(price.product as string)
+        return { price, product: prod }
+      }
+    }
+
+    if (rawId.startsWith('prod_')) {
+      const prod = await stripe.products.retrieve(rawId)
+      if (prod && prod.active && prod.livemode) {
+        let price: Stripe.Price | null = null
+        if (prod.default_price) {
+          const defaultPriceId = typeof prod.default_price === 'string'
+            ? prod.default_price
+            : prod.default_price.id
+          try {
+            price = await stripe.prices.retrieve(defaultPriceId)
+          } catch (_) { }
+        }
+        if (!price || !price.active) {
+          const prices = await stripe.prices.list({ product: prod.id, active: true, limit: 10 })
+          price = prices.data.find((p: Stripe.Price) => p.currency.toLowerCase() === 'eur') || prices.data[0] || null
+        }
+        if (price) {
+          return { price, product: prod }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`Error al resolver producto/precio dinámico de Stripe ${lookupKeyOrProductId}:`, err)
+  }
+  return null
+}
+
 export function unixSecondsToIso(value: number | null | undefined): string | null {
   return typeof value === 'number' ? new Date(value * 1000).toISOString() : null
 }
@@ -907,6 +960,13 @@ export function validateCheckoutPurchase(
       price = lineItems[0].price
       const validDetails = assertValidPromoPrice(price, purchaseType)
       expectedAmount = validDetails.amount ?? price.unit_amount ?? session.amount_total
+    } else if (rawMetaType.startsWith('prod_') || rawMetaType.startsWith('price_') || (itemProduct && itemProduct.startsWith('prod_'))) {
+      purchaseType = rawMetaType as PurchaseType
+      price = lineItems[0].price
+      if (!price.livemode || price.currency.toLowerCase() !== 'eur') {
+        throw new HttpError(400, 'El precio del producto Stripe no es válido.')
+      }
+      expectedAmount = price.unit_amount ?? session.amount_total
     } else {
       throw new HttpError(400, 'El producto comprado no está permitido.')
     }
@@ -936,7 +996,9 @@ export function validateCheckoutPurchase(
     appUserId === 'guest' &&
     purchaseType !== PURCHASE_TYPES.CLASE_SUELTA &&
     !isSingleConsultation(purchaseType) &&
-    !isWorkshopPurchase(purchaseType)
+    !isWorkshopPurchase(purchaseType) &&
+    !purchaseType.startsWith('prod_') &&
+    !purchaseType.startsWith('price_')
   ) {
     throw new HttpError(400, 'Una compra de invitado solo puede ser una clase suelta, consulta individual o taller.')
   }

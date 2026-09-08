@@ -4206,36 +4206,71 @@
                         class="ph-bold ph-x text-2xl"></i></button>
             </div>
             <form id="form-crear-consulta" class="p-6 space-y-5">
+                <input type="hidden" id="consulta-tipo-clase-id" value="">
+                <input type="hidden" id="consulta-tipo-especialidad" value="psicologia">
+                <input type="hidden" id="consulta-tipo" value="psicologia">
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label
-                            class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Especialidad
-                            / Tipo de Consulta</label>
-                        <select id="consulta-tipo" name="consulta-tipo" aria-label="Tipo de consulta" required
-                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
-                            <option value="psicologia" selected>Psicología</option>
-                            <option value="nutricion">Nutrición / PNI</option>
-                            <option value="ayurveda">Ayurveda</option>
+                    <!-- 1. TIPO DE CONSULTA CONFIGURADO EN EL CATÁLOGO -->
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-black text-cocoa uppercase tracking-wider ml-1 mb-2 block">
+                            1. Tipo de Consulta configurado en Catálogo <span class="text-red-500">*</span>
+                        </label>
+                        <select id="consulta-tipo-select" name="consulta-tipo-select" required aria-label="Tipo de consulta configurado"
+                            onchange="actualizarCamposTipoConsultaModal()"
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa font-bold">
+                            <option value="" disabled selected>Cargando tipos de consulta del catálogo...</option>
                         </select>
+                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Solo se abren turnos definidos en el Catálogo de Clases. El nombre, duración y tarifa quedan asignados y bloqueados por seguridad.</p>
                     </div>
+
+                    <!-- 2. VALORES FIJADOS POR EL TIPO (Bloqueados con candado de seguridad) -->
+                    <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-amber-500/5 p-3.5 rounded-2xl border border-amber-500/20">
+                        <div>
+                            <label class="text-[10px] font-black text-cocoa/70 uppercase tracking-wider block mb-1 flex items-center gap-1">
+                                <i class="ph-bold ph-lock-key text-amber-700"></i> Nombre Oficial
+                            </label>
+                            <input type="text" id="consulta-nombre" name="consulta-nombre" readonly value="Consulta en grupo"
+                                class="w-full px-3 py-2 bg-white/80 border border-cocoa/10 rounded-lg text-xs font-bold text-cocoa cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-cocoa/70 uppercase tracking-wider block mb-1 flex items-center gap-1">
+                                <i class="ph-bold ph-lock-key text-amber-700"></i> Duración Fija
+                            </label>
+                            <input type="text" id="consulta-duracion-display" readonly value="60 minutos"
+                                class="w-full px-3 py-2 bg-white/80 border border-cocoa/10 rounded-lg text-xs font-bold text-cocoa cursor-not-allowed">
+                            <input type="hidden" id="consulta-duracion" name="consulta-duracion" value="60">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-cocoa/70 uppercase tracking-wider block mb-1 flex items-center gap-1">
+                                <i class="ph-bold ph-lock-key text-amber-700"></i> Tarifa / Cobro
+                            </label>
+                            <input type="text" id="consulta-metodo-pago-display" readonly value="Stripe / Local"
+                                class="w-full px-3 py-2 bg-white/80 border border-cocoa/10 rounded-lg text-xs font-bold text-cocoa cursor-not-allowed truncate">
+                            <input type="hidden" id="consulta-metodo-pago" name="consulta-metodo-pago" value="">
+                        </div>
+                    </div>
+
+                    <!-- 3. PROFESIONAL ASIGNADO -->
                     <div>
-                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Nombre
-                            del Profesional</label>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">
+                            2. Profesional Asignado <span class="text-red-500">*</span>
+                        </label>
                         <select id="consulta-profesor-id" name="consulta-profesor-id"
                             aria-label="Profesional de la consulta" required
-                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa font-semibold">
+                            <option value="" disabled selected>Selecciona Profesional</option>
                         </select>
                     </div>
-                    <div class="md:col-span-2" id="consulta-metodo-pago-container">
-                        <label class="text-xs font-black text-cocoa uppercase tracking-wider ml-1 mb-2 flex items-center justify-between">
-                            <span><i class="ph-bold ph-credit-card text-olive"></i> Método de Pago (Producto Stripe) <span class="text-red-500">*</span></span>
-                            <span class="text-[10px] font-normal text-cocoa/50">Vinculación pasarela online</span>
+
+                    <!-- 4. AFORO / CAPACIDAD MÁXIMA -->
+                    <div>
+                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">
+                            3. Plazas / Capacidad Máxima <span class="text-red-500">*</span>
                         </label>
-                        <select id="consulta-metodo-pago" name="consulta-metodo-pago" required aria-label="Método de pago o producto Stripe"
+                        <input type="number" id="consulta-capacidad" name="consulta-capacidad" value="10" min="1" max="50" required aria-label="Capacidad máxima de la consulta"
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa font-bold">
-                            <!-- Poblado dinámicamente según especialidad -->
-                        </select>
-                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Determina el producto de Stripe y el precio asociado a la reserva online de esta consulta.</p>
+                        <p id="consulta-capacidad-help" class="text-[10px] text-cocoa/50 mt-1 ml-1">10 plazas para consultas grupales o 1 para individuales.</p>
                     </div>
                     <div>
                         <label
@@ -4251,20 +4286,7 @@
                             aria-label="Hora de inicio de la consulta" required
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
-                    <div>
-                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Duración
-                            (minutos)</label>
-                        <select id="consulta-duracion" name="consulta-duracion"
-                            aria-label="Duración de la consulta en minutos" required
-                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
-                            <option value="30">30 minutos</option>
-                            <option value="45">45 minutos</option>
-                            <option value="50">50 minutos</option>
-                            <option value="60" selected>60 minutos</option>
-                            <option value="90">90 minutos</option>
-                        </select>
-                    </div>
-                    <div>
+                    <div class="md:col-span-2">
                         <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Notas /
                             Ubicación</label>
                         <input type="text" id="consulta-notas" name="consulta-notas"
@@ -15330,27 +15352,51 @@
 
             if (isConsulta) {
                 selectTipo.innerHTML = '';
-                const opcionesConsulta = [
-                    'Consulta Ayurveda',
-                    'Consulta Nutrición',
-                    'Consulta Psicología',
-                    'Consulta PNI / Nutrición',
-                    'Consulta PNI / Psicología',
-                    'Consulta Psiconutrición',
-                    'Consulta Individual'
-                ];
-                if (clase.nombre && !opcionesConsulta.some(o => o.toLowerCase() === (clase.nombre || '').toLowerCase())) {
-                    opcionesConsulta.unshift(clase.nombre);
+                const { data: tiposConsulta } = await client.from('tipos_clases')
+                    .select('*')
+                    .eq('activo', true)
+                    .in('categoria', ['consulta', 'consulta_grupal'])
+                    .order('orden');
+
+                let matchTipo = false;
+                if (tiposConsulta && tiposConsulta.length > 0) {
+                    tiposConsulta.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = String(t.id);
+                        const catLabel = t.categoria === 'consulta_grupal' ? `Grupo · ${t.capacidad_predeterminada || 10} pl.` : 'Individual · 1 pl.';
+                        opt.text = `${t.nombre} (${catLabel})`;
+                        opt.dataset.duracion = t.duracion_predeterminada || 60;
+                        opt.dataset.capacidad = t.capacidad_predeterminada || (t.categoria === 'consulta_grupal' ? 10 : 1);
+                        opt.dataset.categoria = t.categoria;
+                        opt.dataset.nombre = t.nombre;
+                        if (clase.tipo_clase_id && Number(clase.tipo_clase_id) === Number(t.id)) {
+                            opt.selected = true;
+                            matchTipo = true;
+                        } else if (!matchTipo && (clase.nombre || '').toLowerCase().trim() === (t.nombre || '').toLowerCase().trim()) {
+                            opt.selected = true;
+                            matchTipo = true;
+                        }
+                        selectTipo.appendChild(opt);
+                    });
                 }
-                opcionesConsulta.forEach(nom => {
-                    const opt = document.createElement('option');
-                    opt.value = 'custom';
-                    opt.text = nom;
-                    if ((clase.nombre || '').toLowerCase().trim() === nom.toLowerCase().trim()) {
-                        opt.selected = true;
+                if (!matchTipo) {
+                    const customOpt = document.createElement('option');
+                    customOpt.value = clase.tipo_clase_id ? String(clase.tipo_clase_id) : 'custom';
+                    customOpt.text = clase.nombre || 'Consulta personalizada';
+                    customOpt.selected = true;
+                    selectTipo.insertBefore(customOpt, selectTipo.firstChild);
+                }
+                selectTipo.onchange = () => {
+                    const opt = selectTipo.options[selectTipo.selectedIndex];
+                    if (opt && opt.dataset) {
+                        if (opt.dataset.duracion) {
+                            document.getElementById('editar-clase-duracion').value = String(opt.dataset.duracion);
+                        }
+                        if (opt.dataset.capacidad) {
+                            document.getElementById('editar-clase-capacidad').value = String(opt.dataset.capacidad);
+                        }
                     }
-                    selectTipo.appendChild(opt);
-                });
+                };
             } else {
                 let catFiltro = 'yoga';
                 if (tipoNorm === 'taller') catFiltro = 'taller';
@@ -15602,9 +15648,9 @@
             const selectTipo = document.getElementById('editar-clase-tipo-select');
             const selectedOpt = selectTipo ? selectTipo.options[selectTipo.selectedIndex] : null;
             const rawTipoVal = selectTipo ? selectTipo.value : '';
-            const tipoClaseId = (!isConsulta && rawTipoVal && rawTipoVal !== 'custom')
+            const tipoClaseId = (rawTipoVal && rawTipoVal !== 'custom')
                 ? (safePositiveInteger(rawTipoVal) || null)
-                : (isConsulta ? null : (safePositiveInteger(currentEditingClass?.tipo_clase_id) || null));
+                : (safePositiveInteger(currentEditingClass?.tipo_clase_id) || null);
             const nombre = (selectedOpt?.text || currentEditingClass?.nombre || (isConsulta ? 'Consulta Individual' : 'Yoga')).trim();
 
             const fecha = document.getElementById('editar-clase-fecha').value;
@@ -15678,9 +15724,9 @@
 
             if (isConsulta) {
                 updatePayload.tipo_clase = claseTipoReal;
-                updatePayload.es_gratuita = false;
+                updatePayload.es_gratuita = currentEditingClass?.es_gratuita ?? false;
                 updatePayload.companion_modality = null;
-                updatePayload.tipo_clase_id = null;
+                updatePayload.tipo_clase_id = tipoClaseId;
             } else if (isTallerSesion) {
                 updatePayload.tipo_clase_id = tipoClaseId;
                 updatePayload.es_gratuita = false;
@@ -16399,14 +16445,28 @@
                                         <i class="ph-bold ph-plus-circle text-blue-500"></i> Crear Nuevo Tipo
                                     </h4>
                                     <form id="form-crear-tipo" class="space-y-5" onsubmit="crearTipoClase(event)">
-                                        <div>
-                                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Categoría</label>
-                                            <select id="new-tipo-categoria" required onchange="ajustarDuracionPorCategoriaTipo()"
-                                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
-                                                <option value="yoga">Clase regular</option>
-                                                <option value="clase_especial">Clase especial</option>
-                                                <option value="taller">Taller</option>
-                                            </select>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Categoría</label>
+                                                <select id="new-tipo-categoria" required onchange="ajustarDuracionPorCategoriaTipo()"
+                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
+                                                    <option value="yoga">Clase regular (Yoga)</option>
+                                                    <option value="clase_especial">Clase especial</option>
+                                                    <option value="taller">Taller</option>
+                                                    <option value="consulta">Hueco sesión individual</option>
+                                                    <option value="consulta_grupal">Consulta en grupo</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Especialidad / Rama</label>
+                                                <select id="new-tipo-especialidad" required
+                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
+                                                    <option value="yoga">Yoga</option>
+                                                    <option value="psicologia">Psicología</option>
+                                                    <option value="nutricion">Nutrición / PNI</option>
+                                                    <option value="ayurveda">Ayurveda</option>
+                                                </select>
+                                            </div>
                                         </div>
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
@@ -16418,6 +16478,23 @@
                                                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Duración (min)</label>
                                                 <input type="number" id="new-tipo-duracion" value="60" required 
                                                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Plazas predeterminadas</label>
+                                                <input type="number" id="new-tipo-capacidad" value="10" min="1" max="100" required 
+                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Cobro / Producto Stripe</label>
+                                                <select id="new-tipo-stripe-product"
+                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800 truncate">
+                                                    <option value="">-- Pago en el centro (Efectivo / Bizum) --</option>
+                                                    <option value="gratuita">Sesión Gratuita / Bienvenida (0 €)</option>
+                                                    <option value="local">Pago en local (Efectivo / Bizum)</option>
+                                                    <option value="prod_VDmmlmsGGhMebt">Sesión Grupal Miriam (30 €) · prod_VDmmlmsGGhMebt</option>
+                                                </select>
                                             </div>
                                         </div>
 
@@ -16449,10 +16526,34 @@
             window.ajustarDuracionPorCategoriaTipo = () => {
                 const cat = document.getElementById('new-tipo-categoria')?.value;
                 const dur = document.getElementById('new-tipo-duracion');
-                if (!dur) return;
-                if (cat === 'clase_especial') dur.value = '75';
-                else if (cat === 'taller') dur.value = '120';
-                else dur.value = '60';
+                const cap = document.getElementById('new-tipo-capacidad');
+                const nom = document.getElementById('new-tipo-nombre');
+                const esp = document.getElementById('new-tipo-especialidad');
+                const stripeSelect = document.getElementById('new-tipo-stripe-product');
+                if (dur) {
+                    if (cat === 'clase_especial') dur.value = '75';
+                    else if (cat === 'taller') dur.value = '120';
+                    else if (cat === 'consulta' || cat === 'consulta_grupal') dur.value = '60';
+                    else dur.value = '60';
+                }
+                if (cap) {
+                    if (cat === 'consulta') cap.value = '1';
+                    else if (cat === 'consulta_grupal') cap.value = '10';
+                    else if (cat === 'taller') cap.value = '15';
+                    else cap.value = '10';
+                }
+                if (esp) {
+                    if (cat === 'consulta' || cat === 'consulta_grupal') esp.value = 'psicologia';
+                    else esp.value = 'yoga';
+                }
+                if (nom && (!nom.value || nom.value === 'Yoga suave' || nom.value === 'Consulta en grupo' || nom.value === 'Consulta individual')) {
+                    if (cat === 'consulta_grupal') nom.value = 'Consulta en grupo';
+                    else if (cat === 'consulta') nom.value = 'Consulta individual';
+                    else if (cat === 'yoga') nom.value = 'Yoga suave';
+                }
+                if (stripeSelect && cat === 'consulta_grupal' && !stripeSelect.value) {
+                    stripeSelect.value = 'prod_VDmmlmsGGhMebt';
+                }
             };
 
             window.renderColorPicker = () => {
@@ -16491,6 +16592,24 @@
                 const listContainer = document.getElementById('tipos-clases-list');
                 if (!listContainer) return;
 
+                // Intentar poblar selector de productos Stripe
+                if (typeof cargarStripeProductosDinamicos === 'function') {
+                    cargarStripeProductosDinamicos().then(prods => {
+                        const sel = document.getElementById('new-tipo-stripe-product');
+                        if (sel && prods && prods.length > 0) {
+                            const curVal = sel.value;
+                            sel.innerHTML = '<option value="">-- Pago en el centro (Efectivo / Bizum) --</option>' +
+                                '<option value="gratuita">Sesión Gratuita / Bienvenida (0 €)</option>' +
+                                '<option value="local">Pago en local (Efectivo / Bizum)</option>' +
+                                prods.map(p => {
+                                    const precioStr = p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2)} €` : 'Precio variable';
+                                    return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} (${precioStr}) · ${escapeHtml(p.id)}</option>`;
+                                }).join('');
+                            if (curVal) sel.value = curVal;
+                        }
+                    }).catch(() => {});
+                }
+
                 try {
                     const { data, error } = await client.from('tipos_clases').select('*').order('orden', { ascending: true });
 
@@ -16509,13 +16628,26 @@
                         const color = safeCssColor(t.color, '#2d8a8e');
                         const icon = safeIconClass(t.icono);
                         const tipoId = safePositiveInteger(t.id) || 0;
+                        const espStr = (t.especialidad && t.especialidad !== 'yoga') ? ` · ${escapeHtml(t.especialidad.toUpperCase())}` : '';
                         let catBadge = '';
                         if (t.categoria === 'clase_especial') {
                             catBadge = `<span class="text-[9px] font-black tracking-wide text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 uppercase inline-flex items-center gap-1"><i class="ph-fill ph-sparkle text-slate-500"></i> CLASE ESPECIAL · ${toSafeNumber(t.duracion_predeterminada)} MIN</span>`;
                         } else if (t.categoria === 'taller') {
                             catBadge = `<span class="text-[9px] font-black tracking-wide text-orange-800 bg-orange-50 px-2 py-0.5 rounded border border-orange-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-barbell text-orange-600"></i> TALLER · ${toSafeNumber(t.duracion_predeterminada)} MIN</span>`;
+                        } else if (t.categoria === 'consulta_grupal') {
+                            catBadge = `<span class="text-[9px] font-black tracking-wide text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-users text-purple-600"></i> CONSULTA EN GRUPO · ${toSafeNumber(t.duracion_predeterminada)} MIN · ${toSafeNumber(t.capacidad_predeterminada || 10)} PLAZAS${espStr}</span>`;
+                        } else if (t.categoria === 'consulta') {
+                            catBadge = `<span class="text-[9px] font-black tracking-wide text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-user text-teal-600"></i> CONSULTA INDIVIDUAL · ${toSafeNumber(t.duracion_predeterminada)} MIN${espStr}</span>`;
                         } else {
                             catBadge = `<span class="text-[9px] font-black tracking-wide text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-person-simple-tai-chi text-blue-600"></i> CLASE REGULAR · ${toSafeNumber(t.duracion_predeterminada)} MIN</span>`;
+                        }
+                        let pagoBadge = '';
+                        if (t.metodo_pago === 'gratuita') {
+                            pagoBadge = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1"><i class="ph-bold ph-gift"></i> Gratuita (0 €)</span>`;
+                        } else if (t.stripe_product_id) {
+                            pagoBadge = `<span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-flex items-center gap-1" title="Stripe Product ID"><i class="ph-bold ph-credit-card"></i> ${escapeHtml(t.stripe_product_id)}</span>`;
+                        } else if (t.metodo_pago === 'local' || t.categoria === 'consulta' || t.categoria === 'consulta_grupal') {
+                            pagoBadge = `<span class="text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1"><i class="ph-bold ph-storefront"></i> Pago Local</span>`;
                         }
                         return `
                         <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:border-gray-200 transition group">
@@ -16525,7 +16657,7 @@
                                 </div>
                                 <div>
                                     <p class="font-bold text-gray-800 text-sm leading-tight">${escapeHtml(t.nombre || 'Sin nombre')}</p>
-                                    <div class="mt-1">${catBadge}</div>
+                                    <div class="mt-1 flex items-center gap-1.5 flex-wrap">${catBadge}${pagoBadge}</div>
                                 </div>
                             </div>
                             <button onclick="borrarTipoClase(${tipoId})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition cursor-pointer" title="Eliminar">
@@ -16542,15 +16674,35 @@
                 e.preventDefault();
                 const nombre = document.getElementById('new-tipo-nombre').value;
                 const duracion = document.getElementById('new-tipo-duracion').value;
+                const capacidad = document.getElementById('new-tipo-capacidad')?.value || '10';
+                const stripeSelectVal = document.getElementById('new-tipo-stripe-product')?.value || '';
                 const rawCat = document.getElementById('new-tipo-categoria')?.value;
-                const categoria = (rawCat === 'clase_especial' || rawCat === 'taller') ? rawCat : 'yoga';
+                const categoria = ['clase_especial', 'taller', 'consulta', 'consulta_grupal'].includes(rawCat) ? rawCat : 'yoga';
+                const especialidad = document.getElementById('new-tipo-especialidad')?.value || 'yoga';
                 const color = document.getElementById('new-tipo-color').value;
                 const icono = document.getElementById('new-tipo-icono').value;
+
+                let stripeProductId = null;
+                let metodoPago = null;
+                if (stripeSelectVal === 'gratuita') {
+                    metodoPago = 'gratuita';
+                } else if (stripeSelectVal === 'local') {
+                    metodoPago = 'local';
+                } else if (stripeSelectVal.startsWith('prod_') || stripeSelectVal.startsWith('price_')) {
+                    stripeProductId = stripeSelectVal;
+                    metodoPago = stripeSelectVal;
+                } else if (stripeSelectVal) {
+                    metodoPago = stripeSelectVal;
+                }
 
                 try {
                     const { error } = await client.from('tipos_clases').insert([{
                         nombre,
                         duracion_predeterminada: parseInt(duracion),
+                        capacidad_predeterminada: parseInt(capacidad) || 10,
+                        stripe_product_id: stripeProductId,
+                        metodo_pago: metodoPago,
+                        especialidad,
                         color,
                         icono,
                         categoria,
@@ -16568,6 +16720,7 @@
                         toast.fire({ icon: 'success', title: 'Tipo creado exitosamente' });
                     }
                 } catch (err) {
+                    console.error('Unexpected error in crearTipoClase:', err);
                     Swal.fire('Error inesperado', err.message, 'error');
                 }
             };
@@ -18763,6 +18916,7 @@
             let options = [];
             if (isPsico) {
                 options = [
+                    { key: 'prod_VDmmlmsGGhMebt', title: 'Miriam · Sesión Grupal (30 €)', desc: 'Sesión psicoterapéutica grupal en grupo', price: 30 },
                     { key: 'miriam_psico_individual_1a', title: 'Miriam · 1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
                     { key: 'miriam_psico_individual_sig', title: 'Miriam · Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
                     { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Psiconeuroinmunología Clínica inicial (60 min)', price: 80 },
@@ -18833,15 +18987,21 @@
             const isMiriam = profSlug.includes('miriam');
             const isIsabel = profSlug.includes('isabel');
             const isSilvia = profSlug.includes('silvia');
+            const esClaseGrupal = (clase.capacidad_max && clase.capacidad_max > 1) || (clase.nombre || '').toLowerCase().includes('grupo');
 
             let options = [];
             if (isMiriam) {
                 options = [
+                    { key: 'prod_VDmmlmsGGhMebt', title: 'Sesión Grupal Miriam (30 €)', desc: 'Sesión psicoterapéutica grupal (60 min)', price: 30 },
                     { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
                     { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
                     { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (90 min)', price: 120 },
                     { key: 'miriam_psico_pareja_sig', title: 'Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (90 min)', price: 100 }
                 ];
+                if (!esClaseGrupal && clase.stripe_lookup_key !== 'prod_VDmmlmsGGhMebt') {
+                    const grupalOpt = options.shift();
+                    options.splice(1, 0, grupalOpt);
+                }
             } else if (isIsabel) {
                 options = [
                     { key: 'isabel_pni_1a', title: '1ª Consulta PNI (80 €)', desc: 'Valoración clínica integral y pautas iniciales (60 min)', price: 80 },
@@ -18858,6 +19018,16 @@
                 options = [
                     { key: tipo === 'psicologia' ? 'miriam_psico_individual_1a' : 'silvia_ayurveda_1a', title: `1ª Sesión de ${tipo === 'psicologia' ? 'Psicología' : 'Nutrición'}`, desc: 'Consulta individual', price: 65 }
                 ];
+            }
+
+            const customStripeKey = clase.stripe_lookup_key || clase.metodo_pago;
+            if (customStripeKey && (customStripeKey.startsWith('prod_') || customStripeKey.startsWith('price_')) && !options.some(o => o.key === customStripeKey)) {
+                options.unshift({
+                    key: customStripeKey,
+                    title: `${clase.nombre || 'Consulta'} (${customStripeKey})`,
+                    desc: 'Producto Stripe vinculado a esta sesión',
+                    price: 30
+                });
             }
 
             const fechaFormat = formatDisplayLongDate(clase.fecha_inicio);
@@ -19286,7 +19456,22 @@
 
                     let btnAction = '';
                     if (isAdmin) {
-                        if (c.reservaConfirmada) {
+                        if (c.capacidad_max > 1) {
+                            const ocupadasCount = c.ocupadas || 0;
+                            btnAction = `
+                        <div class="flex flex-col items-end gap-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold ${llena ? 'text-red-600 bg-red-50 border-red-200' : 'text-purple-700 bg-purple-50 border-purple-200'} border px-2.5 py-1 rounded-xl flex items-center gap-1">
+                                    <i class="ph-bold ph-users"></i> ${ocupadasCount} / ${c.capacidad_max} plazas
+                                </span>
+                                ${!llena ? `
+                                <button onclick="abrirModalAsignarPlazaAdmin('psicologia', ${inlineJsString(rawId)})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
+                                    <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
+                                </button>` : ''}
+                            </div>
+                            <div>${tagBadge}</div>
+                        </div>`;
+                        } else if (c.reservaConfirmada) {
                             const pac = c.reservaConfirmada.paciente || {};
                             const pacNombre = `${pac.nombre || ''} ${pac.apellidos || ''}`.trim() || pac.email || 'Paciente';
                             const resId = safePositiveInteger(c.reservaConfirmada.id) || 0;
@@ -19375,6 +19560,7 @@
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#3B82F6] transition leading-tight">
                                     ${escapeHtml(c.nombre || profileT('common_consultation', 'Consulta'))}
                                 </h4>
+                                ${c.capacidad_max > 1 ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Grupo · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : ''}
                                 ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
@@ -19522,7 +19708,22 @@
 
                     let btnAction = '';
                     if (isAdmin) {
-                        if (c.reservaConfirmada) {
+                        if (c.capacidad_max > 1) {
+                            const ocupadasCount = c.ocupadas || 0;
+                            btnAction = `
+                        <div class="flex flex-col items-end gap-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold ${llena ? 'text-red-600 bg-red-50 border-red-200' : 'text-purple-700 bg-purple-50 border-purple-200'} border px-2.5 py-1 rounded-xl flex items-center gap-1">
+                                    <i class="ph-bold ph-users"></i> ${ocupadasCount} / ${c.capacidad_max} plazas
+                                </span>
+                                ${!llena ? `
+                                <button onclick="abrirModalAsignarPlazaAdmin('nutricion', ${inlineJsString(rawId)})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
+                                    <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
+                                </button>` : ''}
+                            </div>
+                            <div>${tagBadge}</div>
+                        </div>`;
+                        } else if (c.reservaConfirmada) {
                             const pac = c.reservaConfirmada.paciente || {};
                             const pacNombre = `${pac.nombre || ''} ${pac.apellidos || ''}`.trim() || pac.email || 'Paciente';
                             const resId = safePositiveInteger(c.reservaConfirmada.id) || 0;
@@ -19616,6 +19817,7 @@
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#8B5CF6] transition leading-tight">
                                     ${escapeHtml(c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'))}
                                 </h4>
+                                ${c.capacidad_max > 1 ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Grupo · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : ''}
                                 ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
@@ -21768,36 +21970,209 @@
 
         // Las funciones legacy de carga individual de consultas admin han sido eliminadas para usar la vista unificada.
 
+        // Helper rápido para fijar valores de consulta
+        window.setConsultaNombreRapido = (nombre, capacidad, metodoPago) => {
+            const nInput = document.getElementById('consulta-nombre');
+            if (nInput) nInput.value = nombre;
+            const cInput = document.getElementById('consulta-capacidad');
+            if (cInput && capacidad) cInput.value = capacidad;
+            const mSelect = document.getElementById('consulta-metodo-pago');
+            if (mSelect && metodoPago) {
+                mSelect.value = metodoPago;
+            }
+        };
+
+        // Carga y cache de productos Stripe en vivo
+        window.stripeProductsCache = null;
+        async function cargarStripeProductosDinamicos() {
+            if (window.stripeProductsCache && window.stripeProductsCache.length > 0) {
+                return window.stripeProductsCache;
+            }
+            try {
+                const { data, error } = await client.functions.invoke('list-stripe-products');
+                if (!error && data && data.products && Array.isArray(data.products)) {
+                    window.stripeProductsCache = data.products;
+                    return window.stripeProductsCache;
+                }
+            } catch (e) {
+                console.warn('Error al invocar list-stripe-products, usando catálogo estándar:', e);
+            }
+            window.stripeProductsCache = [
+                { id: 'prod_VDmmlmsGGhMebt', name: 'Sesión Grupal Miriam', active: true, price: { id: 'price_miriam_grupal', unit_amount: 3000, currency: 'eur' } },
+                { id: 'prod_V1pKHgtMwPkCpC', name: 'Acompañamiento psicoterapéutico (1ª sesión)', active: true, price: { id: 'price_psico_1a', unit_amount: 7500, currency: 'eur' } },
+                { id: 'prod_V1pLmzpCRU8ZpL', name: 'Acompañamiento psicoterapéutico (siguientes)', active: true, price: { id: 'price_psico_sig', unit_amount: 6500, currency: 'eur' } },
+                { id: 'prod_V1pLCY3t5sprlK', name: 'Terapia de pareja (1ª sesión)', active: true, price: { id: 'price_pareja_1a', unit_amount: 12000, currency: 'eur' } },
+                { id: 'prod_V1pLWNLzr9Vb3g', name: 'Terapia de pareja (siguientes)', active: true, price: { id: 'price_pareja_sig', unit_amount: 10000, currency: 'eur' } },
+                { id: 'prod_V1ppAeiDF9dlkZ', name: 'Consulta PNI Clínica (1ª sesión)', active: true, price: { id: 'price_pni_1a', unit_amount: 8000, currency: 'eur' } },
+                { id: 'prod_V1pqPF6rtJf0SW', name: 'Consulta PNI Clínica (seguimiento)', active: true, price: { id: 'price_pni_sig', unit_amount: 6000, currency: 'eur' } },
+                { id: 'prod_V5uCPKKKH5K74P', name: 'Taller Introducción Power Vinyasa', active: true, price: { id: 'price_taller_intro', unit_amount: 3500, currency: 'eur' } },
+                { id: 'prod_VDY8mI9bZ3SQeb', name: 'Taller GEN Yoga 25€', active: true, price: { id: 'price_taller_25', unit_amount: 2500, currency: 'eur' } },
+                { id: 'prod_V5uBKuweMRE6ig', name: 'Clase Especial', active: true, price: { id: 'price_clase_esp', unit_amount: 2000, currency: 'eur' } }
+            ];
+            return window.stripeProductsCache;
+        }
+        window.cargarStripeProductosDinamicos = cargarStripeProductosDinamicos;
+
         function actualizarMetodosPagoConsulta(tipo = 'psicologia') {
             const select = document.getElementById('consulta-metodo-pago');
             if (!select) return;
+            const prevVal = select.value;
             select.innerHTML = '';
             const tipoNormalizado = (tipo === 'ayurveda') ? 'ayurveda' : (tipo === 'nutricion' ? 'nutricion' : 'psicologia');
 
+            let baseOptions = '';
             if (tipoNormalizado === 'psicologia') {
-                select.innerHTML = `
-                    <option value="miriam_psico_individual_1a" selected>Acompañamiento psicoterapéutico (1ª sesión) — 75,00 €</option>
-                    <option value="miriam_psico_individual_sig">Acompañamiento psicoterapéutico (siguientes) — 65,00 €</option>
-                    <option value="miriam_psico_pareja_1a">Terapia de pareja (1ª sesión) — 120,00 €</option>
-                    <option value="miriam_psico_pareja_sig">Terapia de pareja (siguientes) — 100,00 €</option>
+                baseOptions = `
+                    <optgroup label="Sesiones Grupales (Stripe)">
+                        <option value="prod_VDmmlmsGGhMebt" selected>Sesión Grupal Miriam — 30,00 € (prod_VDmmlmsGGhMebt)</option>
+                    </optgroup>
+                    <optgroup label="Consultas Individuales (Stripe)">
+                        <option value="miriam_psico_individual_1a">Acompañamiento psicoterapéutico (1ª sesión) — 75,00 €</option>
+                        <option value="miriam_psico_individual_sig">Acompañamiento psicoterapéutico (siguientes) — 65,00 €</option>
+                        <option value="miriam_psico_pareja_1a">Terapia de pareja (1ª sesión) — 120,00 €</option>
+                        <option value="miriam_psico_pareja_sig">Terapia de pareja (siguientes) — 100,00 €</option>
+                    </optgroup>
                 `;
             } else if (tipoNormalizado === 'nutricion') {
-                select.innerHTML = `
-                    <option value="isabel_pni_1a" selected>Consulta PNI Clínica (1ª sesión) — 80,00 €</option>
-                    <option value="isabel_pni_sig">Consulta PNI Clínica (seguimiento) — 60,00 €</option>
+                baseOptions = `
+                    <optgroup label="Consultas PNI Clínica (Stripe)">
+                        <option value="isabel_pni_1a" selected>Consulta PNI Clínica (1ª sesión) — 80,00 €</option>
+                        <option value="isabel_pni_sig">Consulta PNI Clínica (seguimiento) — 60,00 €</option>
+                    </optgroup>
                 `;
             } else if (tipoNormalizado === 'ayurveda') {
-                select.innerHTML = `
-                    <option value="silvia_ayurveda_1a" selected>Consulta Ayurveda (1ª sesión) — 80,00 €</option>
-                    <option value="silvia_ayurveda_sig">Consulta Ayurveda (seguimiento) — 60,00 €</option>
-                    <option value="silvia_ayurveda_bono3">Bono Salud Integrativa (3 consultas) — 170,00 €</option>
-                    <option value="silvia_ayurveda_bono6">Bono Salud Integrativa (6 consultas) — 280,00 €</option>
+                baseOptions = `
+                    <optgroup label="Consultas Ayurveda (Stripe)">
+                        <option value="silvia_ayurveda_1a" selected>Consulta Ayurveda (1ª sesión) — 80,00 €</option>
+                        <option value="silvia_ayurveda_sig">Consulta Ayurveda (seguimiento) — 60,00 €</option>
+                        <option value="silvia_ayurveda_bono3">Bono Salud Integrativa (3 consultas) — 170,00 €</option>
+                        <option value="silvia_ayurveda_bono6">Bono Salud Integrativa (6 consultas) — 280,00 €</option>
+                    </optgroup>
                 `;
+            }
+
+            const extraOptions = `
+                <optgroup label="Otras Opciones de Pago">
+                    <option value="pago_centro">Pago en el centro / Local</option>
+                    <option value="gratuita">Sesión Introductoria Gratuita (0 €)</option>
+                </optgroup>
+            `;
+
+            select.innerHTML = baseOptions + extraOptions;
+
+            // Inyectar productos Stripe dinámicos en segundo plano
+            cargarStripeProductosDinamicos().then(prods => {
+                if (!select || !prods || prods.length === 0) return;
+                const dynamicProds = prods.filter(p => {
+                    const id = p.id;
+                    return id !== 'prod_VDmmlmsGGhMebt' && !baseOptions.includes(id);
+                });
+                if (dynamicProds.length > 0) {
+                    const dynGroup = document.createElement('optgroup');
+                    dynGroup.label = 'Otros Productos Stripe Conectados';
+                    dynamicProds.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        const priceText = p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2)} €` : 'Stripe';
+                        opt.textContent = `${p.name} — ${priceText} (${p.id})`;
+                        dynGroup.appendChild(opt);
+                    });
+                    select.appendChild(dynGroup);
+                    if (prevVal && select.querySelector(`option[value="${prevVal}"]`)) {
+                        select.value = prevVal;
+                    }
+                }
+            }).catch(() => {});
+
+            if (prevVal && select.querySelector(`option[value="${prevVal}"]`)) {
+                select.value = prevVal;
             }
         }
         window.actualizarMetodosPagoConsulta = actualizarMetodosPagoConsulta;
 
-        function abrirModalCrearConsulta(tipo = 'psicologia') {
+        function actualizarCamposTipoConsultaModal() {
+            const select = document.getElementById('consulta-tipo-select');
+            if (!select) return;
+            const opt = select.options[select.selectedIndex];
+            if (!opt || !opt.value) return;
+
+            const tipoId = opt.value;
+            const nombre = opt.dataset.nombre || opt.text;
+            const duracion = parseInt(opt.dataset.duracion, 10) || 60;
+            const capacidad = parseInt(opt.dataset.capacidad, 10) || (opt.dataset.categoria === 'consulta_grupal' ? 10 : 1);
+            const categoria = opt.dataset.categoria || 'consulta';
+            const especialidad = opt.dataset.especialidad || 'psicologia';
+            const metodoPago = opt.dataset.metodoPago || '';
+            const stripeProductId = opt.dataset.stripeProductId || '';
+
+            const idInput = document.getElementById('consulta-tipo-clase-id');
+            if (idInput) idInput.value = tipoId;
+
+            const espInput = document.getElementById('consulta-tipo-especialidad');
+            if (espInput) espInput.value = especialidad;
+
+            const legacyTipo = document.getElementById('consulta-tipo');
+            if (legacyTipo) legacyTipo.value = especialidad;
+
+            const nomInput = document.getElementById('consulta-nombre');
+            if (nomInput) nomInput.value = nombre;
+
+            const durInput = document.getElementById('consulta-duracion');
+            if (durInput) durInput.value = duracion;
+
+            const durDisp = document.getElementById('consulta-duracion-display');
+            if (durDisp) durDisp.value = `${duracion} minutos (Fija)`;
+
+            const pagoVal = stripeProductId || metodoPago || '';
+            const pagoInput = document.getElementById('consulta-metodo-pago');
+            if (pagoInput) pagoInput.value = pagoVal;
+
+            const pagoDisp = document.getElementById('consulta-metodo-pago-display');
+            if (pagoDisp) {
+                if (pagoVal === 'gratuita' || metodoPago === 'gratuita') {
+                    pagoDisp.value = 'Gratuita (0 €) · Fija';
+                } else if (pagoVal === 'prod_VDmmlmsGGhMebt' || stripeProductId === 'prod_VDmmlmsGGhMebt') {
+                    pagoDisp.value = 'Sesión Grupal Miriam (30 €) · Stripe';
+                } else if (stripeProductId) {
+                    pagoDisp.value = `${stripeProductId} · Stripe`;
+                } else if (pagoVal === 'local' || !pagoVal) {
+                    pagoDisp.value = 'Pago en local · Fija';
+                } else {
+                    pagoDisp.value = `${pagoVal} · Fija`;
+                }
+            }
+
+            const capInput = document.getElementById('consulta-capacidad');
+            const capHelp = document.getElementById('consulta-capacidad-help');
+            if (capInput) {
+                capInput.value = capacidad;
+                if (categoria === 'consulta') {
+                    capInput.value = 1;
+                    capInput.readOnly = true;
+                    capInput.classList.add('bg-sand/20', 'cursor-not-allowed');
+                    if (capHelp) capHelp.textContent = 'Hueco individual: 1 plaza reservable.';
+                } else {
+                    capInput.value = capacidad || 10;
+                    capInput.readOnly = false;
+                    capInput.classList.remove('bg-sand/20', 'cursor-not-allowed');
+                    if (capHelp) capHelp.textContent = `Consulta en grupo: aforo predeterminado de ${capacidad || 10} plazas.`;
+                }
+            }
+
+            // Actualizar título modal según especialidad
+            const title = document.getElementById('modal-consulta-title');
+            if (title) {
+                if (especialidad === 'ayurveda') title.textContent = 'Nueva Consulta de Ayurveda';
+                else if (especialidad === 'nutricion') title.textContent = 'Nueva Consulta de Nutrición / PNI';
+                else title.textContent = 'Nueva Consulta de Psicología';
+            }
+
+            // Filtrar profesores asignables según especialidad
+            actualizarProfesoresSelectConsulta(especialidad);
+        }
+        window.actualizarCamposTipoConsultaModal = actualizarCamposTipoConsultaModal;
+
+        async function abrirModalCrearConsulta(tipo = 'psicologia') {
             if (!tieneAccesoConsultasAdmin()) {
                 Swal.fire('Sin permiso', 'No puedes crear consultas.', 'warning');
                 return;
@@ -21829,26 +22204,57 @@
 
             form.reset();
 
-            const tipoSelect = document.getElementById('consulta-tipo');
-            if (tipoSelect) tipoSelect.value = tipoNormalizado;
-            actualizarProfesoresSelectConsulta(tipoNormalizado);
-            actualizarMetodosPagoConsulta(tipoNormalizado);
+            // Cargar tipos configurados desde Catálogo de Clases
+            const tipoSelect = document.getElementById('consulta-tipo-select');
+            if (tipoSelect) {
+                tipoSelect.innerHTML = '<option value="" disabled selected>Cargando tipos del catálogo...</option>';
+                try {
+                    const { data: tipos, error: tiposError } = await client.from('tipos_clases')
+                        .select('*')
+                        .eq('activo', true)
+                        .in('categoria', ['consulta', 'consulta_grupal'])
+                        .order('orden', { ascending: true });
 
-            const title = document.getElementById('modal-consulta-title');
-            if (title) {
-                if (tipoNormalizado === 'ayurveda') {
-                    title.textContent = 'Nueva Consulta de Ayurveda';
-                } else if (tipoNormalizado === 'nutricion') {
-                    title.textContent = 'Nueva Consulta de Nutrición / PNI';
-                } else {
-                    title.textContent = 'Nueva Consulta de Psicología';
+                    if (tiposError) throw tiposError;
+
+                    if (!tipos || tipos.length === 0) {
+                        tipoSelect.innerHTML = '<option value="" disabled selected>No hay tipos de consulta definidos en el Catálogo</option>';
+                    } else {
+                        tipoSelect.innerHTML = '';
+                        let targetOpt = null;
+                        tipos.forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t.id;
+                            const catLabel = t.categoria === 'consulta_grupal' ? `Grupo · ${t.capacidad_predeterminada || 10} pl.` : 'Individual · 1 pl.';
+                            const espLabel = t.especialidad ? ` [${t.especialidad.toUpperCase()}]` : '';
+                            opt.textContent = `${t.nombre} (${catLabel})${espLabel}`;
+                            opt.dataset.nombre = t.nombre;
+                            opt.dataset.duracion = t.duracion_predeterminada || 60;
+                            opt.dataset.capacidad = t.capacidad_predeterminada || (t.categoria === 'consulta_grupal' ? 10 : 1);
+                            opt.dataset.categoria = t.categoria;
+                            opt.dataset.especialidad = t.especialidad || 'psicologia';
+                            opt.dataset.metodoPago = t.metodo_pago || '';
+                            opt.dataset.stripeProductId = t.stripe_product_id || '';
+                            tipoSelect.appendChild(opt);
+
+                            if (!targetOpt && t.especialidad === tipoNormalizado) {
+                                targetOpt = opt;
+                            }
+                        });
+
+                        if (targetOpt) {
+                            tipoSelect.value = targetOpt.value;
+                        } else if (tipoSelect.options.length > 0) {
+                            tipoSelect.selectedIndex = 0;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error cargando tipos de consulta:', e);
+                    tipoSelect.innerHTML = '<option value="" disabled selected>Error al cargar tipos del catálogo</option>';
                 }
             }
 
-            const duracionInput = document.getElementById('consulta-duracion');
-            if (duracionInput) {
-                duracionInput.value = (tipoNormalizado === 'ayurveda') ? '90' : '60';
-            }
+            actualizarCamposTipoConsultaModal();
 
             const repeatEnabled = document.getElementById('consulta-repeat-enabled');
             const repeatOptions = document.getElementById('consulta-repeat-options');
@@ -21887,13 +22293,18 @@
                 return;
             }
 
-            const tipo = document.getElementById('consulta-tipo').value;
+            const tipoClaseId = safePositiveInteger(document.getElementById('consulta-tipo-clase-id')?.value);
+            const tipoEspecialidad = document.getElementById('consulta-tipo-especialidad')?.value || 'psicologia';
             const profesorId = document.getElementById('consulta-profesor-id').value;
             const fecha = document.getElementById('consulta-fecha').value;
             const horaInicio = document.getElementById('consulta-hora-inicio').value;
-            const duracion = parseInt(document.getElementById('consulta-duracion').value);
+            const duracion = parseInt(document.getElementById('consulta-duracion').value) || 60;
             const notas = document.getElementById('consulta-notas').value;
             const metodoPagoConsulta = document.getElementById('consulta-metodo-pago')?.value || '';
+            const nombreIngresado = (document.getElementById('consulta-nombre')?.value || '').trim() || 'Consulta';
+            const capacidadIngresada = parseInt(document.getElementById('consulta-capacidad')?.value || '10', 10);
+            const capacidadFinal = Number.isFinite(capacidadIngresada) && capacidadIngresada > 0 ? capacidadIngresada : 10;
+            const esGratuita = metodoPagoConsulta === 'gratuita' || metodoPagoConsulta === 'sesion_introductoria';
 
             if (!profesorId) {
                 Swal.fire('Error', 'Debes seleccionar un profesional', 'error');
@@ -21901,7 +22312,7 @@
             }
 
             if (!isAdmin && esTrabajador()) {
-                const permitidos = getProfesionalesConsultaDisponibles(tipo).map(p => String(p.id));
+                const permitidos = getProfesionalesConsultaDisponibles(tipoEspecialidad).map(p => String(p.id));
                 if (permitidos.length > 0 && !permitidos.includes(String(profesorId))) {
                     Swal.fire('Sin permiso', 'Solo puedes crear consultas para tu profesional vinculado.', 'warning');
                     return;
@@ -21921,18 +22332,7 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            const prof = (allProfesionalesCache || []).find(p => String(p.id) === String(profesorId));
-            const profNameLower = (prof?.nombre || '').toLowerCase();
-            let nombreClase = tipo === 'psicologia' ? 'Consulta Psicología' : (tipo === 'ayurveda' ? 'Consulta Ayurveda' : 'Consulta Nutrición');
-            if (tipo === 'ayurveda' || profNameLower.includes('silvia')) {
-                nombreClase = 'Consulta Ayurveda';
-            } else if (profNameLower.includes('isabel')) {
-                nombreClase = tipo === 'psicologia' ? 'Consulta PNI / Psicología' : 'Consulta PNI / Nutrición';
-            } else if (profNameLower.includes('miriam')) {
-                nombreClase = tipo === 'psicologia' ? 'Consulta Psicología' : 'Consulta Psiconutrición';
-            }
-
-            const tipoClaseInsert = tipo === 'psicologia' ? 'psicologia' : 'nutricion';
+            const tipoClaseInsert = tipoEspecialidad === 'nutricion' ? 'nutricion' : (tipoEspecialidad === 'ayurveda' ? 'ayurveda' : 'psicologia');
 
             const inserts = [];
             for (let i = 0; i < repeatCount; i++) {
@@ -21940,14 +22340,18 @@
                 start.setDate(start.getDate() + (i * 7 * repeatEveryWeeks));
                 const end = new Date(start.getTime() + duracion * 60000);
                 inserts.push({
-                    nombre: nombreClase,
+                    nombre: nombreIngresado,
                     fecha_inicio: start.toISOString(),
                     fecha_fin: end.toISOString(),
-                    capacidad_max: 1,
+                    capacidad_max: capacidadFinal,
                     profesor_id: profesorId,
                     tipo_clase: tipoClaseInsert,
+                    tipo_clase_id: tipoClaseId,
                     descripcion: notas,
-                    duracion_minutos: duracion
+                    duracion_minutos: duracion,
+                    metodo_pago: metodoPagoConsulta,
+                    stripe_lookup_key: metodoPagoConsulta,
+                    es_gratuita: esGratuita
                 });
             }
 
