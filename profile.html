@@ -16696,7 +16696,7 @@
                 }
 
                 try {
-                    const { error } = await client.from('tipos_clases').insert([{
+                    const insertPayload = {
                         nombre,
                         duracion_predeterminada: parseInt(duracion),
                         capacidad_predeterminada: parseInt(capacidad) || 10,
@@ -16707,10 +16707,39 @@
                         icono,
                         categoria,
                         activo: true
-                    }]);
+                    };
+
+                    let { error } = await client.from('tipos_clases').insert([insertPayload]);
+
+                    // Fallback para clases regulares si el esquema no tiene aún las columnas nuevas
+                    if (error && (error.message?.includes('capacidad_predeterminada') || error.message?.includes('schema cache') || error.message?.includes('especialidad')) && ['yoga', 'taller', 'clase_especial'].includes(categoria)) {
+                        console.warn('Reintentando inserción con esquema clásico para clase regular...', error);
+                        const fallbackPayload = {
+                            nombre,
+                            duracion_predeterminada: parseInt(duracion),
+                            color,
+                            icono,
+                            categoria,
+                            activo: true
+                        };
+                        const fallbackResult = await client.from('tipos_clases').insert([fallbackPayload]);
+                        if (!fallbackResult.error) {
+                            error = null;
+                        }
+                    }
 
                     if (error) {
-                        Swal.fire('Error', 'No se pudo crear el tipo: ' + error.message, 'error');
+                        const errMsg = String(error.message || '');
+                        if (errMsg.includes('capacidad_predeterminada') || errMsg.includes('schema cache') || errMsg.includes('especialidad') || errMsg.includes('categoria_check') || errMsg.includes('stripe_product_id')) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Migración Pendiente en Supabase',
+                                html: `La base de datos de Supabase aún no tiene habilitadas las columnas para consultas y capacidad.<br><br>Para solucionarlo, debes ejecutar la migración SQL <b>202609080002_catalogo_consultas_integracion_estricta.sql</b> en el <b>SQL Editor del panel de Supabase</b>.<br><br><small class="text-gray-500 font-mono text-[11px]">${escapeHtml(errMsg)}</small>`,
+                                confirmButtonText: 'Entendido'
+                            });
+                        } else {
+                            Swal.fire('Error', 'No se pudo crear el tipo: ' + errMsg, 'error');
+                        }
                     } else {
                         document.getElementById('form-crear-tipo').reset();
                         selectColor('#EF4444');
