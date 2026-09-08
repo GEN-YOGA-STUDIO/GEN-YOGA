@@ -695,7 +695,7 @@
                         class="folder-body consultation-card consultation-card--miriam flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer"
                         role="button" tabindex="0" aria-label="Ver consultas disponibles con Miriam">
                         <div class="consultation-card__portrait w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl relative bg-cocoa/10 pointer-events-none">
-                            <img src="img/miriam-psicologia.jpg?v=20260908b" alt="Miriam - Psicología" class="w-full h-full object-cover">
+                            <img src="img/miriam-psicologia.jpg?v=20260908b" alt="Miriam - Psicología" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         </div>
                         <div class="consultation-card__copy w-full md:w-[55%] flex flex-col justify-center text-left pointer-events-none">
                             <span class="consultation-card__eyebrow">Psicoterapia · Miriam Alfaro</span>
@@ -788,7 +788,7 @@
                         style="background-color: #c07238 !important; background: #c07238 !important;"
                         role="button" tabindex="0" aria-label="Ver calendario de talleres intensivos">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
-                            <img src="img/clases-vinyasa.jpg" alt="Talleres Intensivos" class="w-full h-full object-cover">
+                            <img src="img/clases-vinyasa.jpg" alt="Talleres Intensivos" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         </div>
                         <div class="w-full md:w-[55%] flex flex-col justify-center text-left text-white pointer-events-none">
                             <span class="text-white/70 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2" data-i18n="classes_taller_int_tagline">Profundización, práctica y autoconocimiento.</span>
@@ -1259,14 +1259,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!isIOS && !isAndroid) {
         const parallaxBg = document.getElementById('parallax-bg');
+        let parallaxRafId = null;
 
         document.addEventListener('mousemove', (e) => {
-            if (parallaxBg) {
-                const x = (e.clientX / window.innerWidth - 0.5) * 40;
-                const y = (e.clientY / window.innerHeight - 0.5) * 40;
-                parallaxBg.style.transform = `translate(${x}px, ${y}px)`;
+            if (parallaxBg && !parallaxRafId) {
+                parallaxRafId = requestAnimationFrame(() => {
+                    const x = (e.clientX / window.innerWidth - 0.5) * 40;
+                    const y = (e.clientY / window.innerHeight - 0.5) * 40;
+                    parallaxBg.style.transform = `translate(${x}px, ${y}px)`;
+                    parallaxRafId = null;
+                });
             }
-        });
+        }, { passive: true });
     }
 
 

@@ -18,13 +18,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="teacher-profiles.js?v=12.11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
     <script src="i18n.js?v=12.11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <style>
         /* INLINED profile.css */
@@ -8436,12 +8436,18 @@
                 return;
             }
 
-            // Traer reservas confirmadas (RLS: cada alumno solo ve las suyas;
-            // la ocupación real se pide a la RPC obtener_ocupacion_clases).
-            const { data: reservas, error: errReservas } =
-                await client.from('reservas_yoga')
-                    .select('*')
-                    .eq('estado', 'confirmada');
+            // Traer reservas confirmadas acotadas a las clases visibles del periodo
+            const claseIdsValidas = clasesValidas.map(c => c.id);
+            let reservasQuery = client.from('reservas_yoga')
+                .select('id, clase_id, user_id, estado')
+                .eq('estado', 'confirmada')
+                .in('clase_id', claseIdsValidas);
+
+            if (!isAdmin && currentUser?.id) {
+                reservasQuery = reservasQuery.eq('user_id', currentUser.id);
+            }
+
+            const { data: reservas, error: errReservas } = await reservasQuery;
 
             if (errReservas) {
                 console.error('Error cargando reservas', errReservas);
@@ -8560,11 +8566,21 @@
                 }
             }
             let reservas = [];
-            const reservasResult = await client.from('reservas_yoga')
-                .select('*')
-                .eq('estado', 'confirmada');
-            if (!reservasResult.error) reservas = reservasResult.data || [];
-            else console.error('Error cargando reservas especiales:', reservasResult.error);
+            const visibleIds = (visibles || []).map(c => c.id).filter(Boolean);
+            if (visibleIds.length > 0) {
+                let resQuery = client.from('reservas_yoga')
+                    .select('id, clase_id, user_id, estado')
+                    .eq('estado', 'confirmada')
+                    .in('clase_id', visibleIds);
+
+                if (!isAdmin && currentUser?.id) {
+                    resQuery = resQuery.eq('user_id', currentUser.id);
+                }
+
+                const reservasResult = await resQuery;
+                if (!reservasResult.error) reservas = reservasResult.data || [];
+                else console.error('Error cargando reservas especiales:', reservasResult.error);
+            }
 
             const reservasMap = {};
             reservas.filter(r => r.estado === 'confirmada').forEach(r => {
@@ -10422,7 +10438,12 @@
 
             // Load sub-tab specific data
             if (type === 'clases') {
-                await cargarHorarios();
+                if (!allClasesCache || allClasesCache.length === 0) {
+                    await cargarHorarios();
+                } else {
+                    renderizarCalendario();
+                    renderizarClases();
+                }
             } else if (type === 'consultas') {
                 selectedAdminConsultaFecha = formatDateLocal(new Date());
                 mostrarDiasPasadosConsultasAdmin = false;
@@ -19196,16 +19217,32 @@
             const dbClases = (rawClases || []).filter(esHorarioValidoConsulta);
 
             if (dbClases.length > 0) {
-                const [reservasRes, perfilesRes] = await Promise.all([
-                    client.from('reservas_psicologia').select('*').eq('estado', 'confirmada'),
-                    client.from('profiles').select('id, nombre, apellidos, email, telefono')
-                ]);
+                const dbClaseIds = dbClases.map(c => c.id);
+                let resQuery = client.from('reservas_psicologia')
+                    .select('*')
+                    .eq('estado', 'confirmada')
+                    .in('clase_id', dbClaseIds);
+                if (!isAdmin && currentUser?.id) {
+                    resQuery = resQuery.eq('user_id', currentUser.id);
+                }
+                const { data: reservasRaw } = await resQuery;
+                const reservasConfirmadas = reservasRaw || [];
 
                 const perfilesMap = {};
-                (perfilesRes.data || []).forEach(p => { perfilesMap[p.id] = p; });
+                if (window.allUsersCache && window.allUsersCache.length > 0) {
+                    window.allUsersCache.forEach(p => { if (p?.id) perfilesMap[p.id] = p; });
+                } else if (isAdmin) {
+                    const userIds = [...new Set(reservasConfirmadas.map(r => r.user_id).filter(Boolean))];
+                    if (userIds.length > 0) {
+                        const { data: pData } = await client.from('profiles')
+                            .select('id, nombre, apellidos, email, telefono')
+                            .in('id', userIds);
+                        (pData || []).forEach(p => { if (p?.id) perfilesMap[p.id] = p; });
+                    }
+                }
 
                 const reservasMap = {};
-                (reservasRes.data || []).forEach(r => {
+                reservasConfirmadas.forEach(r => {
                     if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
                     reservasMap[r.clase_id].push(r);
                 });
@@ -22657,14 +22694,26 @@
 
             if (emptyState) emptyState.classList.add('hidden');
 
-            const [reservasPsicoRes, reservasNutriRes, perfilesRes] = await Promise.all([
-                client.from('reservas_psicologia').select('*').eq('estado', 'confirmada'),
-                client.from('reservas_nutricion').select('*').eq('estado', 'confirmada'),
-                client.from('profiles').select('id, nombre, apellidos, email, telefono, auth_method, fecha_nacimiento, rol')
+            const consultaIds = consultas.map(c => c.id).filter(Boolean);
+            const [reservasPsicoRes, reservasNutriRes] = await Promise.all([
+                client.from('reservas_psicologia').select('*').eq('estado', 'confirmada').in('clase_id', consultaIds),
+                client.from('reservas_nutricion').select('*').eq('estado', 'confirmada').in('clase_id', consultaIds)
             ]);
 
+            const userIds = [...new Set([
+                ...(reservasPsicoRes.data || []).map(r => r.user_id),
+                ...(reservasNutriRes.data || []).map(r => r.user_id)
+            ].filter(Boolean))];
+
             const perfilesMap = {};
-            (perfilesRes.data || []).forEach(p => { perfilesMap[p.id] = p; });
+            if (window.allUsersCache && window.allUsersCache.length > 0) {
+                window.allUsersCache.forEach(p => { if (p?.id) perfilesMap[p.id] = p; });
+            } else if (userIds.length > 0) {
+                const { data: pData } = await client.from('profiles')
+                    .select('id, nombre, apellidos, email, telefono, auth_method, fecha_nacimiento, rol')
+                    .in('id', userIds);
+                (pData || []).forEach(p => { if (p?.id) perfilesMap[p.id] = p; });
+            }
 
             const reservasMap = {}; // clase_id => array de reservas
             (reservasPsicoRes.data || []).forEach(r => {
