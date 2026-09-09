@@ -156,8 +156,8 @@ export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = 
   },
   [PURCHASE_TYPES.TALLER_INTRO_POWER_VINYASA]: {
     name: 'Taller: Introducción a Power Vinyasa',
-    amount: 3500,
-    productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+    amount: 2500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_25,
     guestAllowed: true,
   },
   [PURCHASE_TYPES.TALLER_35]: {
@@ -174,8 +174,8 @@ export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = 
   },
   [PURCHASE_TYPES.TALLER]: {
     name: 'Taller GEN Yoga',
-    amount: 3500,
-    productId: WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+    amount: 2500,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_25,
     guestAllowed: true,
   },
 }
@@ -210,8 +210,11 @@ export function getConsultationDetails(purchaseType: string): ConsultationDetail
 
 export function getWorkshopDetails(purchaseType: string): WorkshopDetails | null {
   const norm = String(purchaseType || '').trim().toLowerCase()
-  if (norm === 'taller_25' || norm === 'taller-25' || norm === 'taller25') {
+  if (norm === 'taller_25' || norm === 'taller-25' || norm === 'taller25' || norm === WORKSHOP_PRODUCT_IDS.TALLER_25.toLowerCase()) {
     return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_25] || null
+  }
+  if (norm === 'taller_35' || norm === 'taller-35' || norm === 'taller35' || norm === WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA.toLowerCase()) {
+    return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_35] || null
   }
   if (WORKSHOP_CATALOG[norm as PurchaseType]) {
     return WORKSHOP_CATALOG[norm as PurchaseType]!
@@ -753,14 +756,23 @@ export async function resolveWorkshopPrice(
     limit: 20,
   }
   const prices = await stripe.prices.list(params)
-  const matchingPrice = prices.data.find((price: Stripe.Price) => {
+  let matchingPrice = prices.data.find((price: Stripe.Price) => {
     if (!price.livemode || !price.active || price.currency.toLowerCase() !== 'eur' || price.type !== 'one_time' || price.recurring) {
       return false
     }
     if (stripeObjectId(price.product) !== details.productId) return false
-    if (details.amount !== undefined && price.unit_amount !== details.amount) return false
-    return true
-  }) || prices.data[0] || null
+    if (details.amount !== undefined && price.unit_amount === details.amount) return true
+    return false
+  })
+
+  if (!matchingPrice) {
+    matchingPrice = prices.data.find((price: Stripe.Price) => {
+      if (!price.livemode || !price.active || price.currency.toLowerCase() !== 'eur' || price.type !== 'one_time' || price.recurring) {
+        return false
+      }
+      return stripeObjectId(price.product) === details.productId
+    }) || prices.data[0] || null
+  }
 
   if (!matchingPrice) {
     throw new Error(`El producto ${details.productId} no tiene un Price LIVE activo en Stripe.`)
@@ -776,11 +788,14 @@ export function assertValidWorkshopPrice(
   if (!details) {
     throw new HttpError(400, 'El taller o clase especial comprado no está autorizado.')
   }
-  if (!price.livemode || price.currency.toLowerCase() !== 'eur' || stripeObjectId(price.product) !== details.productId) {
+  const isAllowedProduct = stripeObjectId(price.product) === details.productId ||
+    (purchaseType.includes('taller') && (
+      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_25 ||
+      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA ||
+      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL
+    ))
+  if (!price.livemode || price.currency.toLowerCase() !== 'eur' || !isAllowedProduct) {
     throw new HttpError(400, 'El producto comprado no coincide con el producto autorizado de Stripe.')
-  }
-  if (details.amount !== undefined && price.unit_amount !== details.amount) {
-    throw new HttpError(400, 'El importe del taller no coincide con el precio esperado.')
   }
   return details
 }
@@ -954,7 +969,7 @@ export function validateCheckoutPurchase(
       purchaseType = rawMetaType as PurchaseType
       price = lineItems[0].price
       const validDetails = assertValidWorkshopPrice(price, purchaseType)
-      expectedAmount = validDetails.amount ?? price.unit_amount ?? session.amount_total
+      expectedAmount = price.unit_amount ?? validDetails.amount ?? session.amount_total
     } else if (promoDetails) {
       purchaseType = normPromoType as PurchaseType
       price = lineItems[0].price

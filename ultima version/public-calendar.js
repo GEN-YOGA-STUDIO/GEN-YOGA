@@ -242,6 +242,7 @@
         weekStart: '',
         classes: [],
         typeColors: new Map(),
+        workshopPrices: new Map(),
         typeColorsLoaded: false,
         style: '',
         teacher: '',
@@ -708,6 +709,29 @@
         return 24;
     }
 
+    function resolveWorkshopPriceHint(item) {
+        if (!item) return 'Plaza 25 €';
+        if (item.classTypeId && state.workshopPrices.has(`id:${item.classTypeId}`)) {
+            return `Plaza ${state.workshopPrices.get(`id:${item.classTypeId}`)}`;
+        }
+        const normName = (item.name || '').toLowerCase().trim();
+        if (state.workshopPrices.has(`name:${normName}`)) {
+            return `Plaza ${state.workshopPrices.get(`name:${normName}`)}`;
+        }
+        for (const [key, val] of state.workshopPrices.entries()) {
+            if (key.startsWith('name:') && normName.includes(key.slice(5))) {
+                return `Plaza ${val}`;
+            }
+        }
+        const match = (item.name || '').match(/(\d{1,3})\s*€/);
+        if (match) return `Plaza ${match[1]} €`;
+
+        if (state.workshopPrices.has('prod:prod_VDY8mI9bZ3SQeb')) {
+            return `Plaza ${state.workshopPrices.get('prod:prod_VDY8mI9bZ3SQeb')}`;
+        }
+        return 'Plaza 25 €';
+    }
+
     function getEventState(item) {
         const now = Date.now();
         if (item.end.getTime() <= now) {
@@ -731,7 +755,7 @@
             return { disabled: false, stateClass: '', badge: 'Clase Especial', hint: 'Bono Especial (20 € / Ilimitado)' };
         }
         if (item.classType === 'taller') {
-            return { disabled: false, stateClass: '', badge: 'Taller', hint: 'Plaza 35 €' };
+            return { disabled: false, stateClass: '', badge: 'Taller', hint: resolveWorkshopPriceHint(item) };
         }
         const badge = text('availableReservation');
         return { disabled: false, stateClass: '', badge, hint: text('buy') };
@@ -1087,23 +1111,54 @@
     async function loadTypeColors() {
         if (state.typeColorsLoaded || !state.client) return;
         try {
-            const { data, error } = await state.client
-                .from('tipos_clases')
-                .select('id,nombre,color,activo')
-                .eq('activo', true)
-                .order('orden');
-            if (error) throw error;
+            const [typesRes, prodsRes] = await Promise.all([
+                state.client
+                    .from('tipos_clases')
+                    .select('id,nombre,color,activo,stripe_product_id')
+                    .eq('activo', true)
+                    .order('orden'),
+                state.client
+                    .from('stripe_productos')
+                    .select('id,nombre,precio_formateado,unit_amount')
+                    .eq('activo', true)
+            ]);
+
+            const data = typesRes?.data || [];
+            const prods = prodsRes?.data || [];
+            const prodsById = new Map();
+            prods.forEach(p => {
+                if (p.id) prodsById.set(p.id, p);
+            });
 
             state.typeColors.clear();
-            (data || []).forEach(type => {
+            state.workshopPrices.clear();
+
+            data.forEach(type => {
                 const color = normaliseColor(type.color);
-                if (!color) return;
                 const typeId = safePositiveInteger(type.id);
-                if (typeId) state.typeColors.set(`id:${typeId}`, color);
-                state.typeColors.set(`style:${canonicalStyle(type.nombre)}`, color);
+                if (color) {
+                    if (typeId) state.typeColors.set(`id:${typeId}`, color);
+                    state.typeColors.set(`style:${canonicalStyle(type.nombre)}`, color);
+                }
+                if (type.stripe_product_id && prodsById.has(type.stripe_product_id)) {
+                    const prod = prodsById.get(type.stripe_product_id);
+                    const formatted = prod.unit_amount ? `${Math.round(prod.unit_amount / 100)} €` : (prod.precio_formateado ? String(prod.precio_formateado).replace(',00', '').trim() : null);
+                    if (formatted) {
+                        if (typeId) state.workshopPrices.set(`id:${typeId}`, formatted);
+                        state.workshopPrices.set(`name:${(type.nombre || '').toLowerCase().trim()}`, formatted);
+                    }
+                }
+            });
+
+            prods.forEach(p => {
+                const formatted = p.unit_amount ? `${Math.round(p.unit_amount / 100)} €` : (p.precio_formateado ? String(p.precio_formateado).replace(',00', '').trim() : null);
+                if (formatted) {
+                    state.workshopPrices.set(`prod:${p.id}`, formatted);
+                    state.workshopPrices.set(`name:${(p.nombre || '').toLowerCase().trim()}`, formatted);
+                }
             });
         } catch (error) {
-            console.warn('No se pudieron cargar los colores públicos del horario:', error?.message || error);
+            console.warn('No se pudieron cargar los colores públicos y precios del horario:', error?.message || error);
         } finally {
             state.typeColorsLoaded = true;
         }

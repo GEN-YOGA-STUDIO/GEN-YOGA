@@ -250,7 +250,7 @@ serve(async (req) => {
           {
             price_data: {
               currency: 'eur',
-              unit_amount: details.amount || 2000,
+              unit_amount: details.amount || 2500,
               product: details.productId,
             },
             quantity: 1,
