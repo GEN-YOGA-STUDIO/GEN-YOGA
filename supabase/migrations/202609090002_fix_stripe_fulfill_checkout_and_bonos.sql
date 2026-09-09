@@ -1,11 +1,41 @@
 -- ==============================================================================
--- Migración 202609090002: Corrección Crítica de stripe_fulfill_checkout,
--- Sincronización de Bonos de Packs y Reconciliación de Mercedes Sahuquillo
+-- Migración 202609090002: Corrección Crítica del Motor de Pagos Stripe,
+-- stripe_fulfill_checkout, Desbloqueo de Restricciones y Auto-reconciliación
 -- ==============================================================================
 
 BEGIN;
 
--- 1. Reemplazar la función stripe_fulfill_checkout con la estructura de columnas exacta y segura
+-- 1. Asegurar columnas necesarias en public.stripe_purchases
+ALTER TABLE public.stripe_purchases
+  ADD COLUMN IF NOT EXISTS membership_month date;
+
+-- 2. Eliminar restricciones check obsoletas o demasiado estrictas que abortaban compras válidas
+ALTER TABLE public.stripe_purchases
+  DROP CONSTRAINT IF EXISTS stripe_purchases_purchase_type_check;
+
+ALTER TABLE public.stripe_purchases
+  DROP CONSTRAINT IF EXISTS stripe_purchases_membership_month_check;
+
+ALTER TABLE public.stripe_purchases
+  DROP CONSTRAINT IF EXISTS stripe_purchases_owner_shape_check;
+
+-- Restricción de forma limpia y general para stripe_purchases
+ALTER TABLE public.stripe_purchases
+  ADD CONSTRAINT stripe_purchases_owner_shape_check CHECK (
+    (is_guest AND user_id IS NULL)
+    OR (NOT is_guest AND user_id IS NOT NULL)
+  );
+
+-- 3. Asegurar que class_credit_packs admita todos los tipos de packs válidos
+ALTER TABLE public.class_credit_packs
+  DROP CONSTRAINT IF EXISTS class_credit_packs_pack_type_check;
+
+ALTER TABLE public.class_credit_packs
+  ADD CONSTRAINT class_credit_packs_pack_type_check CHECK (
+    pack_type IN ('clase_suelta', 'pack_4', 'pack_6', 'pack_10', 'promo_50_clase')
+  );
+
+-- 4. Reemplazar la función stripe_fulfill_checkout con la estructura canónica exacta y segura
 CREATE OR REPLACE FUNCTION public.stripe_fulfill_checkout(
   p_event_id text,
   p_event_type text,
@@ -37,6 +67,7 @@ DECLARE
   v_inserted integer := 0;
   v_existing public.stripe_purchases%ROWTYPE;
   v_pack_credits integer := null;
+  v_pack_record_type text := null;
   v_purchased_at timestamptz;
   v_account_deletion_pending boolean;
   v_membership_month date := null;
@@ -74,6 +105,11 @@ BEGIN
     WHEN 'pack_6' THEN 6
     WHEN 'pack_10' THEN 10
     ELSE null
+  END;
+
+  v_pack_record_type := CASE
+    WHEN v_normalized_purchase_type = 'promo_50_clase' THEN 'clase_suelta'
+    ELSE v_normalized_purchase_type
   END;
 
   -- Manejo de mes de membresía para bonos ilimitados y clases especiales
@@ -177,7 +213,7 @@ BEGIN
           user_id, checkout_session_id, pack_type, credits_total,
           credits_remaining, purchased_at, expires_at
         ) VALUES (
-          p_user_id, p_checkout_session_id, v_normalized_purchase_type,
+          p_user_id, p_checkout_session_id, v_pack_record_type,
           v_pack_credits, v_pack_credits, v_purchased_at, v_purchased_at + interval '60 days'
         )
         ON CONFLICT (checkout_session_id) DO NOTHING;
@@ -218,7 +254,7 @@ BEGIN
         user_id, checkout_session_id, pack_type, credits_total,
         credits_remaining, purchased_at, expires_at
       ) VALUES (
-        p_user_id, p_checkout_session_id, v_normalized_purchase_type,
+        p_user_id, p_checkout_session_id, v_pack_record_type,
         v_pack_credits, v_pack_credits, v_purchased_at, v_purchased_at + interval '60 days'
       )
       ON CONFLICT (checkout_session_id) DO NOTHING;
@@ -331,45 +367,60 @@ $$;
 REVOKE ALL ON FUNCTION public.stripe_fulfill_checkout(text, text, bigint, text, uuid, boolean, text, text, text, text, text, bigint, text, text, text, timestamptz, timestamptz, text, boolean, boolean) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.stripe_fulfill_checkout(text, text, bigint, text, uuid, boolean, text, text, text, text, text, bigint, text, text, text, timestamptz, timestamptz, text, boolean, boolean) TO service_role, anon, authenticated;
 
--- 2. RECONCILIACIÓN RETROACTIVA PARA MERCEDES SAHUQUILLO
--- Asignar los 2 packs de 6 clases (12 clases en total) cobrados en Stripe que no se consolidaron
+-- 5. AUTO-RECONCILIACIÓN DE COMPRAS PREVIAS EN STRIPE_PURCHASES:
+-- Para cualquier compra de pack o clase en stripe_purchases que haya quedado sin su pack correspondiente
 DO $$
 DECLARE
-  v_rec record;
-  v_now timestamptz := timezone('utc', now());
-  v_pack1_id text := 'reconciled_pack6_1_' || to_char(v_now, 'YYYYMMDDHH24MISS');
-  v_pack2_id text := 'reconciled_pack6_2_' || to_char(v_now, 'YYYYMMDDHH24MISS');
+  v_p record;
+  v_credits integer;
+  v_ptype text;
 BEGIN
-  FOR v_rec IN
-    SELECT id, nombre, apellidos, email, bonos
-      FROM public.profiles
-     WHERE lower(coalesce(apellidos, '')) LIKE '%sahuquillo%'
-        OR (lower(coalesce(nombre, '')) LIKE '%mercedes%' AND lower(coalesce(apellidos, '')) LIKE '%sahu%')
-        OR lower(coalesce(email, '')) LIKE '%sahuquillo%'
+  FOR v_p IN
+    SELECT p.checkout_session_id, p.user_id, p.purchase_type, p.created_at
+      FROM public.stripe_purchases p
+     WHERE p.user_id IS NOT NULL
+       AND p.payment_status = 'paid'
+       AND p.purchase_type IN ('clase_suelta', 'promo_50_clase', 'pack_4', 'pack_6', 'pack_10')
+       AND NOT EXISTS (
+         SELECT 1 FROM public.class_credit_packs ccp
+          WHERE ccp.checkout_session_id = p.checkout_session_id
+       )
   LOOP
-    -- 1. Asignar los dos packs de 6 clases (total 12) a su historial de class_credit_packs
-    INSERT INTO public.class_credit_packs (
-      user_id, checkout_session_id, pack_type, credits_total,
-      credits_remaining, purchased_at, expires_at
-    ) VALUES 
-      (v_rec.id, v_pack1_id, 'pack_6', 6, 6, v_now, v_now + interval '60 days'),
-      (v_rec.id, v_pack2_id, 'pack_6', 6, 6, v_now, v_now + interval '60 days')
-    ON CONFLICT (checkout_session_id) DO NOTHING;
+    v_credits := CASE v_p.purchase_type
+      WHEN 'clase_suelta' THEN 1
+      WHEN 'promo_50_clase' THEN 1
+      WHEN 'pack_4' THEN 4
+      WHEN 'pack_6' THEN 6
+      WHEN 'pack_10' THEN 10
+      ELSE 0
+    END;
 
-    -- 2. Incrementar el saldo directo en el perfil de Mercedes Sahuquillo (+12 créditos)
-    UPDATE public.profiles
-       SET bonos = coalesce(bonos, 0) + 12,
-           updated_at = v_now
-     WHERE id = v_rec.id;
+    v_ptype := CASE WHEN v_p.purchase_type = 'promo_50_clase' THEN 'clase_suelta' ELSE v_p.purchase_type END;
 
-    RAISE NOTICE 'Reconciliado con éxito el perfil de Mercedes Sahuquillo (ID: %): +12 bonos (2 packs de 6 clases)', v_rec.id;
+    IF v_credits > 0 THEN
+      INSERT INTO public.class_credit_packs (
+        user_id, checkout_session_id, pack_type, credits_total,
+        credits_remaining, purchased_at, expires_at
+      ) VALUES (
+        v_p.user_id, v_p.checkout_session_id, v_ptype,
+        v_credits, v_credits, v_p.created_at, v_p.created_at + interval '60 days'
+      )
+      ON CONFLICT (checkout_session_id) DO NOTHING;
+
+      UPDATE public.profiles
+         SET bonos = coalesce(bonos, 0) + v_credits,
+             updated_at = timezone('utc', now())
+       WHERE id = v_p.user_id;
+
+      RAISE NOTICE 'Auto-reconciliada compra % para usuario % (+% créditos)', v_p.checkout_session_id, v_p.user_id, v_credits;
+    END IF;
   END LOOP;
 END $$;
 
--- 3. RECONCILIACIÓN GENERAL:
--- Para cualquier usuario con packs activos en class_credit_packs que tenga bonos desincronizados
+-- 6. SINCRONIZACIÓN GENERAL DE BONOS ACTIVOS:
+-- Para cualquier usuario con saldo inferior a sus créditos vigentes en class_credit_packs
 UPDATE public.profiles p
-   SET bonos = coalesce(p.bonos, 0) + c.total_restante,
+   SET bonos = c.total_restante,
        updated_at = timezone('utc', now())
   FROM (
     SELECT user_id, sum(credits_remaining) AS total_restante
@@ -385,3 +436,4 @@ NOTIFY pgrst, 'reload schema';
 NOTIFY pgrst, 'reload config';
 
 COMMIT;
+
