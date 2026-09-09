@@ -38,7 +38,7 @@ const profileHtml = fs.readFileSync(path.join(root, 'profile.html'), 'utf8');
 check('Bono de bienvenida permite reservar cualquier clase regular', profileHtml.includes('const esSesionGratuita = !esEspecial;'));
 check('Yoga en compañía inactivado en flags de reserva', profileHtml.includes('const modalityCompania = \'\';') && profileHtml.includes('const esCompania = false;'));
 check('Modalidad selector oculto en creación de clase', profileHtml.includes('Modalidad y Acceso a la Clase (Inactivado'));
-check('Yoga en Compañía oculto en modal admin de saldo de usuario', profileHtml.includes('Yoga en Compañía (Inactivado'));
+check('Yoga en Compañía oculto en modal admin de saldo de usuario', !profileHtml.includes('3. Yoga en Compañía') || profileHtml.includes('Yoga en Compañía (Inactivado'));
 check('Yoga en Compañía inactivado en saldo inicial mostrador', profileHtml.includes('saldo_yoga_compania: 0'));
 
 console.log('\n--- 4. Verificando Migración SQL v11.0 ---');

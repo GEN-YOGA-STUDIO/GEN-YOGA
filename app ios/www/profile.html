@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="12.11" />
+    <meta name="application-version" content="13.0" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=12.11" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=12.11" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.0" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.0" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=12.11">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.0">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
-    <script src="teacher-profiles.js?v=12.11"></script>
+    <script src="teacher-profiles.js?v=13.0"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=12.11"></script>
+    <script src="i18n.js?v=13.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <style>
@@ -1465,6 +1465,15 @@
                                 placeholder="" required>
                         </div>
 
+                        <!-- Recuperar contraseña -->
+                        <div class="text-right -mt-2 mb-2">
+                            <button type="button" onclick="toggleAuth('recover')"
+                                class="text-white/90 hover:text-white text-xs md:text-sm underline underline-offset-2 transition-all font-medium cursor-pointer"
+                                data-i18n="forgot_password_link">
+                                ¿Has olvidado tu contraseña?
+                            </button>
+                        </div>
+
                         <!-- Log In Action Button (Outline pill matching screenshot) -->
                         <div class="flex justify-center pt-4">
                             <button type="submit"
@@ -1623,6 +1632,108 @@
                         <button type="button" onclick="toggleAuth('login')"
                             class="text-white/80 hover:text-white font-medium text-base hover:underline transition"
                             data-i18n="auth_back_login">
+                            ← Volver a Iniciar Sesión
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RECOVER PASSWORD CARD -->
+                <div id="recover-card"
+                    class="bg-gradient-to-br from-[#e06b53] to-[#a69c6a] p-8 sm:p-10 md:p-12 rounded-[2.5rem] shadow-2xl relative text-white hidden flex flex-col gap-6 md:gap-8 w-full max-w-md mx-auto">
+
+                    <div class="text-center select-none">
+                        <h2 class="text-3xl md:text-4xl font-black uppercase tracking-wider text-white"
+                            data-i18n="recover_pwd_title">Recuperar Contraseña</h2>
+                        <p class="text-white/90 text-xs sm:text-sm font-light mt-1" data-i18n="recover_pwd_subtitle">
+                            Restablece tu acceso con tu email o teléfono registrado</p>
+                    </div>
+
+                    <!-- Step 1: Identifier verification -->
+                    <div id="recover-step-1" class="space-y-5">
+                        <div class="bg-white/15 border border-white/30 rounded-2xl p-4 text-center">
+                            <p class="text-xs sm:text-sm font-medium text-white/95 leading-relaxed">
+                                Introduce el correo electrónico o el teléfono móvil con el que creaste tu cuenta originalmente.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="recover-identifier"
+                                class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left">
+                                Email o Teléfono Móvil
+                            </label>
+                            <input type="text" id="recover-identifier" name="recover-identifier"
+                                class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold box-border max-w-full"
+                                placeholder="tu@email.com o 612345678" required>
+                        </div>
+
+                        <div class="flex justify-center pt-2">
+                            <button type="button" onclick="verificarIdentificadorRecuperacion()"
+                                id="btn-recover-verify"
+                                class="inline-flex items-center gap-2.5 px-8 py-3.5 bg-transparent border-2 border-white text-white font-extrabold rounded-full text-xs sm:text-sm uppercase tracking-widest hover:bg-white hover:text-[#e06b53] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl cursor-pointer"
+                                data-i18n="recover_pwd_btn_verify">
+                                <span>Comprobar cuenta</span> &rarr;
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: New password entry (Initially hidden) -->
+                    <form id="recover-step-2" class="space-y-5 hidden" onsubmit="ejecutarRestablecimientoContrasena(event)">
+                        <div id="recover-user-badge" class="bg-emerald-600/30 border border-emerald-300/50 rounded-2xl p-3.5 text-center">
+                            <div class="flex items-center justify-center gap-1.5 text-emerald-200 text-xs font-bold mb-0.5">
+                                <i class="ph-bold ph-check-circle text-base"></i>
+                                <span>Cuenta verificada</span>
+                            </div>
+                            <p id="recover-user-name" class="text-xs sm:text-sm font-extrabold text-white truncate">
+                                Usuario
+                            </p>
+                        </div>
+
+                        <div class="group">
+                            <label for="recover-new-password"
+                                class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left">
+                                Nueva Contraseña
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="recover-new-password" name="recover-new-password" autocomplete="new-password"
+                                    class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold box-border max-w-full pr-12"
+                                    placeholder="Mínimo 6 caracteres" minlength="6" required>
+                                <button type="button" onclick="togglePasswordVisibility('recover-new-password', 'recover-eye-icon-1')"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-[#795244]/70 hover:text-[#795244] text-xl p-1 cursor-pointer">
+                                    <i id="recover-eye-icon-1" class="ph-bold ph-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="group">
+                            <label for="recover-confirm-password"
+                                class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left">
+                                Repetir Nueva Contraseña
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="recover-confirm-password" name="recover-confirm-password" autocomplete="new-password"
+                                    class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold box-border max-w-full pr-12"
+                                    placeholder="Repite la contraseña" minlength="6" required>
+                                <button type="button" onclick="togglePasswordVisibility('recover-confirm-password', 'recover-eye-icon-2')"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-[#795244]/70 hover:text-[#795244] text-xl p-1 cursor-pointer">
+                                    <i id="recover-eye-icon-2" class="ph-bold ph-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center pt-2">
+                            <button type="submit"
+                                id="btn-recover-submit"
+                                class="inline-flex items-center gap-2.5 px-8 py-3.5 bg-transparent border-2 border-white text-white font-extrabold rounded-full text-xs sm:text-sm uppercase tracking-widest hover:bg-white hover:text-[#e06b53] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl cursor-pointer"
+                                data-i18n="recover_pwd_btn_submit">
+                                <span>Guardar nueva contraseña</span> &rarr;
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-2">
+                        <button type="button" onclick="toggleAuth('login')"
+                            class="text-white/80 hover:text-white font-medium text-base hover:underline transition"
+                            data-i18n="recover_pwd_back_to_login">
                             ← Volver a Iniciar Sesión
                         </button>
                     </div>
@@ -3133,12 +3244,12 @@
                                     <div>
                                         <h3
                                             class="brand-font text-base sm:text-lg font-bold text-cocoa flex items-center gap-2">
-                                            <i class="ph-bold ph-chart-donut text-amber-700"></i> Mix de la Comunidad
+                                            <i class="ph-bold ph-chart-donut text-amber-700"></i> Mix de Bonos de Pago
                                         </h3>
-                                        <p class="text-xs text-cocoa/60 mt-0.5">Distribución de bonos y membresías</p>
+                                        <p class="text-xs text-cocoa/60 mt-0.5">Distribución de bonos y servicios de pago</p>
                                     </div>
                                     <span id="dashboard-members-ratio-badge"
-                                        class="text-xs font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">Segmentación</span>
+                                        class="text-xs font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">Bonos de Pago</span>
                                 </div>
                                 <div class="relative w-full h-64 sm:h-72">
                                     <canvas id="chart-clients-distribution"></canvas>
@@ -3681,7 +3792,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v12.11. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v13.0. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -3760,7 +3871,7 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v12.11: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.0: Todas las clases son regulares) -->
                     <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4068,7 +4179,7 @@
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v12.11: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.0: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4520,7 +4631,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '12.11';
+        const APP_VERSION = '13.0';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -4868,7 +4979,13 @@
         }
 
         function getSaldoConsultaActual(tipo) {
-            return tipo === 'psicologia' ? userSaldoPsicologia : userSaldoNutricion;
+            const directSaldo = tipo === 'psicologia' ? userSaldoPsicologia : userSaldoNutricion;
+            const reprogCreditos = (userCreditosReprogramacion || []).filter(c =>
+                c.tipo === 'consulta' &&
+                c.estado === 'disponible' &&
+                (!c.subtipo || c.subtipo === tipo)
+            ).length;
+            return Math.max(toSafeNumber(directSaldo), reprogCreditos);
         }
 
         function animateBalance(id, value) {
@@ -5386,15 +5503,213 @@
         function toggleAuth(view) {
             const login = document.getElementById('login-card');
             const reg = document.getElementById('register-card');
+            const recover = document.getElementById('recover-card');
+
+            login?.classList.add('hidden');
+            reg?.classList.add('hidden');
+            recover?.classList.add('hidden');
 
             if (view === 'register') {
-                login?.classList.add('hidden');
                 reg?.classList.remove('hidden');
                 reg?.classList.add('fade-in');
+            } else if (view === 'recover') {
+                recover?.classList.remove('hidden');
+                recover?.classList.add('fade-in');
+                const step1 = document.getElementById('recover-step-1');
+                const step2 = document.getElementById('recover-step-2');
+                if (step1) step1.classList.remove('hidden');
+                if (step2) step2.classList.add('hidden');
+                const loginVal = document.getElementById('login-email')?.value?.trim();
+                const recInput = document.getElementById('recover-identifier');
+                if (recInput) {
+                    if (loginVal && !recInput.value) recInput.value = loginVal;
+                    recInput.focus();
+                }
             } else {
-                reg?.classList.add('hidden');
                 login?.classList.remove('hidden');
                 login?.classList.add('fade-in');
+            }
+        }
+
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('ph-eye');
+                    icon.classList.add('ph-eye-slash');
+                }
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('ph-eye-slash');
+                    icon.classList.add('ph-eye');
+                }
+            }
+        }
+
+        async function verificarIdentificadorRecuperacion() {
+            const rawId = document.getElementById('recover-identifier')?.value?.trim();
+            if (!rawId) {
+                return Swal.fire({
+                    icon: 'warning',
+                    title: 'Campo obligatorio',
+                    text: 'Introduce tu correo electrónico o tu teléfono móvil.',
+                    confirmButtonColor: '#D27D60'
+                });
+            }
+
+            Swal.fire({
+                title: 'Comprobando cuenta...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                let { data, error } = await client.rpc('verificar_usuario_recuperacion', {
+                    p_identificador: rawId
+                });
+
+                if (error) {
+                    throw new Error(error.message || 'No se encontró ninguna cuenta registrada.');
+                }
+
+                Swal.close();
+
+                // Mostrar paso 2
+                document.getElementById('recover-step-1')?.classList.add('hidden');
+                const step2 = document.getElementById('recover-step-2');
+                if (step2) {
+                    step2.classList.remove('hidden');
+                    step2.classList.add('fade-in');
+                }
+                const nameBadge = document.getElementById('recover-user-name');
+                if (nameBadge) {
+                    nameBadge.textContent = (data && data.nombre) ? data.nombre : 'Cuenta encontrada';
+                }
+                document.getElementById('recover-new-password')?.focus();
+
+            } catch (err) {
+                console.error('Error al verificar identificador de recuperación:', err);
+                const msg = String(err?.message || '');
+                if (msg.includes('schema cache') || msg.includes('Could not find the function') || msg.includes('verificar_usuario_recuperacion')) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Migración Pendiente en Supabase',
+                        html: 'La función de base de datos para recuperar contraseñas aún no se ha ejecutado en Supabase.<br><br>Por favor, ejecuta la migración <b>202609090001_recuperar_contrasena_usuario.sql</b> en el <b>SQL Editor</b> de tu panel de Supabase.',
+                        confirmButtonColor: '#D27D60'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cuenta no encontrada',
+                        text: 'No encontramos ninguna cuenta con este email o teléfono exacto. Comprueba los datos introducidos.',
+                        confirmButtonColor: '#D27D60'
+                    });
+                }
+            }
+        }
+
+        async function ejecutarRestablecimientoContrasena(e) {
+            if (e && typeof e.preventDefault === 'function') e.preventDefault();
+            const rawId = document.getElementById('recover-identifier')?.value?.trim();
+            const newPwd = document.getElementById('recover-new-password')?.value || '';
+            const confirmPwd = document.getElementById('recover-confirm-password')?.value || '';
+
+            if (!rawId) {
+                return Swal.fire('Error', 'Falta el identificador de cuenta.', 'warning');
+            }
+            if (newPwd.length < 6) {
+                return Swal.fire({
+                    icon: 'warning',
+                    title: 'Contraseña débil',
+                    text: 'La nueva contraseña debe tener al menos 6 caracteres.',
+                    confirmButtonColor: '#D27D60'
+                });
+            }
+            if (newPwd !== confirmPwd) {
+                return Swal.fire({
+                    icon: 'warning',
+                    title: 'Las contraseñas no coinciden',
+                    text: 'Verifica que ambas contraseñas escritas sean exactamente iguales.',
+                    confirmButtonColor: '#D27D60'
+                });
+            }
+
+            Swal.fire({
+                title: 'Actualizando contraseña...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                let { data, error } = await client.rpc('restablecer_contrasena_usuario', {
+                    p_identificador: rawId,
+                    p_nueva_contrasena: newPwd
+                });
+
+                if (error) {
+                    throw new Error(error.message || 'No se pudo actualizar la contraseña.');
+                }
+
+                // Éxito: Preparar login con las nuevas credenciales
+                const loginEmailInput = document.getElementById('login-email');
+                const loginPasswordInput = document.getElementById('login-password');
+                if (loginEmailInput) loginEmailInput.value = rawId;
+                if (loginPasswordInput) loginPasswordInput.value = newPwd;
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Contraseña restablecida!',
+                    text: 'Tu contraseña se ha actualizado correctamente en el sistema. Ya puedes acceder con ella.',
+                    confirmButtonText: 'Entrar ahora',
+                    confirmButtonColor: '#D27D60'
+                }).then(async () => {
+                    toggleAuth('login');
+                    if (client && rawId) {
+                        try {
+                            const cleanDigits = rawId.replace(/\D/g, '');
+                            let loginEmail = rawId.toLowerCase();
+                            if (!rawId.includes('@') && cleanDigits.length >= 9) {
+                                loginEmail = `movil.${cleanDigits.slice(-9)}@genyoga.studio`;
+                            }
+                            const resLogin = await client.auth.signInWithPassword({
+                                email: data?.email_login || loginEmail,
+                                password: newPwd
+                            });
+                            if (resLogin?.data?.session) {
+                                location.reload();
+                            }
+                        } catch (autoLoginErr) {
+                            console.warn('Auto-login tras recuperación:', autoLoginErr);
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error('Error al restablecer contraseña:', err);
+                const msg = String(err?.message || '');
+                if (msg.includes('schema cache') || msg.includes('Could not find the function') || msg.includes('restablecer_contrasena_usuario')) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Migración Pendiente en Supabase',
+                        html: 'La función de base de datos para restablecer contraseñas aún no se ha ejecutado en Supabase.<br><br>Por favor, ejecuta la migración <b>202609090001_recuperar_contrasena_usuario.sql</b> en el <b>SQL Editor</b> de tu panel de Supabase.',
+                        confirmButtonColor: '#D27D60'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al actualizar',
+                        text: msg || 'Ocurrió un error al actualizar la contraseña. Comprueba los datos e inténtalo de nuevo.',
+                        confirmButtonColor: '#D27D60'
+                    });
+                }
             }
         }
 
@@ -5586,7 +5901,15 @@
                     icon: 'error',
                     title: 'Ups...',
                     text: 'Credenciales incorrectas. Comprueba tu email o teléfono y contraseña.',
-                    confirmButtonColor: '#D27D60'
+                    showCancelButton: true,
+                    confirmButtonColor: '#D27D60',
+                    cancelButtonColor: '#795244',
+                    confirmButtonText: 'Reintentar',
+                    cancelButtonText: '¿Olvidaste tu contraseña?'
+                }).then((result) => {
+                    if (result.dismiss === Swal.DismissReason.cancel) {
+                        toggleAuth('recover');
+                    }
                 });
             } else {
                 Swal.close();
@@ -6871,7 +7194,7 @@
             const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
             const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
 
-            // Regla v12.11: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
+            // Regla v13.0: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
             const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
@@ -7097,7 +7420,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v12.11: Cargar ofertas promocionales canjeadas por este usuario
+                // v13.0: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -7248,7 +7571,7 @@
                 comprarBonoMensual();
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v12.11)
+            // Comprobar si el usuario llega con una oferta para canjear (v13.0)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -9519,12 +9842,12 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = esClaseEspecialTipo(clase) || esTallerTipo(clase);
 
-            // v12.11: Yoga en Compañía inactivado al 100%
+            // v13.0: Yoga en Compañía inactivado al 100%
             const modalityCompania = '';
             const esCompania = false;
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = false;
-            // v12.11: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
+            // v13.0: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
             const esSesionGratuita = !esEspecial;
             const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
             const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
@@ -12996,15 +13319,16 @@
                 });
             }
 
-            // Gráfica 4: Mix de la Comunidad
-            let countIlimitado = 0, countNormales = 0, countBienvenida = 0, countCompania = 0;
+            // Gráfica 4: Mix de Bonos de Pago (solo bonos y servicios de pago)
+            let countIlimitado = 0, countNormales = 0, countEspeciales = 0, countConsultas = 0;
             clients.forEach(u => {
-                if (u.bono_mensual_activo === true || (u.bono_mensual_fin && new Date(u.bono_mensual_fin) >= new Date())) countIlimitado++;
+                const tieneIlimitado = (u.unlimited_periods && u.unlimited_periods.length > 0) || u.bono_mensual_activo === true || (u.bono_mensual_fin && new Date(u.bono_mensual_fin) >= new Date());
+                if (tieneIlimitado) countIlimitado++;
                 if (toSafeNumber(u.bonos) > 0) countNormales++;
-                const bienvenida = toSafeNumber(u.saldo_clases_gratis) > 0 ? toSafeNumber(u.saldo_clases_gratis) : 1;
-                if (bienvenida > 0) countBienvenida++;
-                const compania = toSafeNumber(u.saldo_yoga_compania);
-                if (compania > 0) countCompania++;
+                const tieneEspecial = (u.special_passes || []).some(s => toSafeNumber(s.saldo) > 0);
+                if (tieneEspecial) countEspeciales++;
+                const tieneConsulta = toSafeNumber(u.saldo_psicologia) > 0 || toSafeNumber(u.saldo_nutricion) > 0;
+                if (tieneConsulta) countConsultas++;
             });
 
             const ctxDistribution = document.getElementById('chart-clients-distribution')?.getContext('2d');
@@ -13013,10 +13337,10 @@
                 chartClientsDistributionInstance = new Chart(ctxDistribution, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Mes Ilimitado', 'Clases Sueltas/Packs', 'Bono Bienvenida', 'Yoga en Compañía'],
+                        labels: ['Mes Ilimitado', 'Clases Sueltas/Packs', 'Clases Especiales', 'Consultas Privadas'],
                         datasets: [{
-                            data: [countIlimitado, countNormales, countBienvenida, countCompania],
-                            backgroundColor: ['#059669', '#5f6448', '#10b981', '#d97706'],
+                            data: [countIlimitado, countNormales, countEspeciales, countConsultas],
+                            backgroundColor: ['#059669', '#5f6448', '#d97706', '#7c3aed'],
                             borderWidth: 2,
                             borderColor: '#ffffff'
                         }]
@@ -13417,10 +13741,11 @@
             const staffBody = document.getElementById('staff-table-body');
             if (staffBody) staffBody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400 italic"><i class="ph-duotone ph-spinner animate-spin"></i> Cargando...</td></tr>';
 
-            const [usersRes, periodsRes, specialRes] = await Promise.allSettled([
+            const [usersRes, periodsRes, specialRes, reprogRes] = await Promise.allSettled([
                 client.from('profiles').select('*').order('email'),
                 client.from('unlimited_membership_periods').select('id, user_id, membership_month, starts_at, ends_at').order('membership_month', { ascending: true }),
-                client.from('bonos_clases_especiales').select('id, user_id, mes, saldo, origen').order('mes', { ascending: true })
+                client.from('bonos_clases_especiales').select('id, user_id, mes, saldo, origen').order('mes', { ascending: true }),
+                client.from('creditos_reprogramacion').select('id, user_id, tipo, subtipo, mes, estado, created_at').order('created_at', { ascending: false })
             ]);
 
             const users = (usersRes.status === 'fulfilled' && usersRes.value.data) ? usersRes.value.data : [];
@@ -13432,6 +13757,7 @@
 
             const allPeriods = (periodsRes.status === 'fulfilled' && periodsRes.value.data) ? periodsRes.value.data : [];
             const allSpecials = (specialRes.status === 'fulfilled' && specialRes.value.data) ? specialRes.value.data : [];
+            const allReprog = (reprogRes.status === 'fulfilled' && reprogRes.value.data) ? reprogRes.value.data : [];
 
             const periodsByUser = new Map();
             for (const p of allPeriods) {
@@ -13447,9 +13773,17 @@
                 specialsByUser.get(s.user_id).push(s);
             }
 
+            const reprogByUser = new Map();
+            for (const r of allReprog) {
+                if (!r.user_id) continue;
+                if (!reprogByUser.has(r.user_id)) reprogByUser.set(r.user_id, []);
+                reprogByUser.get(r.user_id).push(r);
+            }
+
             users.forEach(u => {
                 u.unlimited_periods = periodsByUser.get(u.id) || [];
                 u.special_passes = specialsByUser.get(u.id) || [];
+                u.reprog_credits = reprogByUser.get(u.id) || [];
             });
 
             allUsersCache = users;
@@ -13472,7 +13806,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v12.11: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v13.0: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
@@ -14124,6 +14458,24 @@
             // 5. Consulta Gratis
             if (consultas > 0) {
                 badges.push(`<span class="bg-pink-50 text-pink-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-pink-200 flex items-center gap-1"><i class="ph-bold ph-gift"></i> ${consultas} Consulta</span>`);
+            }
+
+            // 6. Consultas Psicología y Nutrición
+            const psic = toSafeNumber(u.saldo_psicologia);
+            if (psic > 0) {
+                badges.push(`<span class="bg-blue-50 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-200 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-brain text-blue-600"></i> ${psic} Psicología</span>`);
+            }
+            const nutri = toSafeNumber(u.saldo_nutricion);
+            if (nutri > 0) {
+                badges.push(`<span class="bg-purple-50 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-purple-200 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-apple text-purple-600"></i> ${nutri} Nutrición</span>`);
+            }
+
+            // 7. Créditos de Reprogramación disponibles
+            if (u.reprog_credits && u.reprog_credits.length > 0) {
+                const activeReprog = u.reprog_credits.filter(r => (r.estado || '').toLowerCase() === 'disponible');
+                if (activeReprog.length > 0) {
+                    badges.push(`<span class="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1 shadow-2xs" title="${activeReprog.length} créditos de reprogramación disponibles"><i class="ph-bold ph-arrow-counter-clockwise text-amber-700"></i> ${activeReprog.length} Reprog</span>`);
+                }
             }
 
             // NOTA: Los códigos promocionales (GENYOGA) NO van aquí; van exclusivamente en el botón de Códigos Promocionales
@@ -16353,7 +16705,158 @@
                     </div>
                     
                     <div class="space-y-8">
-                    
+
+                    <!-- GESTIÓN DE TIPOS DE SESIÓN (SUPERIOR - MÁXIMA VISIBILIDAD) -->
+                    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden relative group hover:shadow-2xl transition">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></div>
+
+                        <div class="p-6 sm:p-8 pb-10">
+                            <!-- Cabecera con título y botón desplegable para crear -->
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm shrink-0">
+                                        <i class="ph-bold ph-squares-four text-2xl sm:text-3xl"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <h3 class="text-xl sm:text-2xl font-bold text-gray-900">Gestión de tipos de sesión</h3>
+                                        <p class="text-gray-500 text-xs sm:text-sm">Configura las clases regulares, consultas privadas y talleres o eventos.</p>
+                                    </div>
+                                </div>
+                                <button type="button" id="btn-toggle-crear-tipo" onclick="toggleFormCrearTipo()"
+                                    class="px-4 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 shrink-0">
+                                    <i id="btn-toggle-crear-icon" class="ph-bold ph-plus-circle text-base text-blue-400"></i>
+                                    <span id="btn-toggle-crear-text">+ Nuevo Tipo de Sesión</span>
+                                </button>
+                            </div>
+
+                            <!-- Panel Desplegable Creador / Editor de Tipo de Sesión -->
+                            <div id="panel-crear-tipo-sesion" class="hidden mb-8 p-6 bg-slate-50/90 rounded-2xl border border-slate-200 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+                                    <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                        <i class="ph-bold ph-pencil-simple-line text-blue-600"></i>
+                                        <span id="form-crear-tipo-titulo">Crear Nuevo Tipo de Sesión</span>
+                                    </h4>
+                                    <button type="button" onclick="cancelarEdicionTipoClase()" class="text-gray-400 hover:text-gray-600 text-xs font-bold flex items-center gap-1 cursor-pointer">
+                                        <i class="ph-bold ph-x"></i> Cerrar
+                                    </button>
+                                </div>
+                                <form id="form-crear-tipo" class="space-y-4" onsubmit="crearTipoClase(event)">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Categoría</label>
+                                            <select id="new-tipo-categoria" required onchange="ajustarDuracionPorCategoriaTipo()"
+                                                class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition text-gray-800">
+                                                <option value="yoga">Clase regular (Yoga)</option>
+                                                <option value="consulta">Consulta individual</option>
+                                                <option value="consulta_grupal">Consulta en grupo</option>
+                                                <option value="taller">Taller</option>
+                                                <option value="clase_especial">Clase especial</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Especialidad</label>
+                                            <select id="new-tipo-especialidad" required
+                                                class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition text-gray-800">
+                                                <option value="yoga">Yoga</option>
+                                                <option value="psicologia">Psicología</option>
+                                                <option value="nutricion">Nutrición / PNI</option>
+                                                <option value="ayurveda">Ayurveda</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Nombre</label>
+                                            <input type="text" id="new-tipo-nombre" placeholder="Ej: Yoga Suave" required 
+                                                class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition text-gray-800">
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Duración</label>
+                                                <input type="number" id="new-tipo-duracion" value="60" required 
+                                                    class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 outline-none transition text-gray-800 text-center">
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Plazas</label>
+                                                <input type="number" id="new-tipo-capacidad" value="10" min="1" max="100" required 
+                                                    class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 outline-none transition text-gray-800 text-center">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Métodos de Cobro y Productos Stripe (Multi-selección) -->
+                                    <div class="pt-2">
+                                        <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-2 block pl-1 flex items-center justify-between">
+                                            <span>Métodos de Cobro y Productos de Stripe (Selección Múltiple)</span>
+                                            <span class="text-[9px] font-medium text-gray-400">Puedes marcar varios según corresponda</span>
+                                        </label>
+                                        <div id="container-tipo-pago-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-white p-3.5 rounded-xl border border-slate-200 max-h-48 overflow-y-auto custom-scrollbar">
+                                            <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
+                                                <input type="checkbox" name="tipo-pago-checkbox" value="local" class="w-4 h-4 text-blue-600 rounded cursor-pointer">
+                                                <span>Pago en local (Efectivo / Bizum)</span>
+                                            </label>
+                                            <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
+                                                <input type="checkbox" name="tipo-pago-checkbox" value="gratuita" class="w-4 h-4 text-blue-600 rounded cursor-pointer">
+                                                <span>Sesión Gratuita / Bienvenida (0 €)</span>
+                                            </label>
+                                            <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
+                                                <input type="checkbox" name="tipo-pago-checkbox" value="prod_VDmmlmsGGhMebt" class="w-4 h-4 text-blue-600 rounded cursor-pointer">
+                                                <span class="truncate" title="Sesión grupal Miriam (80 €)">Sesión grupal Miriam (80 €)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" id="editing-tipo-id" value="">
+                                    <input type="hidden" id="new-tipo-stripe-product" value="">
+                                    <div class="flex items-center justify-end gap-3 pt-2">
+                                        <button type="button" id="btn-cancelar-editar-tipo" onclick="cancelarEdicionTipoClase()"
+                                            class="hidden px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xs transition cursor-pointer">
+                                            Cancelar
+                                        </button>
+                                        <button type="submit" id="btn-guardar-tipo"
+                                            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer active:scale-95">
+                                            <span id="btn-guardar-tipo-texto">Guardar Tipo de Sesión</span>
+                                            <i class="ph-bold ph-check"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Selector en 3 trozos: Clases, Consultas, Eventos -->
+                            <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+                                <div class="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                                    <button type="button" onclick="cambiarTabTiposSesion('clases')" id="tab-tipos-clases"
+                                        class="tab-tipo-btn px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 bg-white text-gray-900 shadow-xs">
+                                        <i class="ph-bold ph-person-simple-tai-chi text-blue-600"></i>
+                                        <span>Clases</span>
+                                        <span id="badge-count-clases" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">0</span>
+                                    </button>
+                                    <button type="button" onclick="cambiarTabTiposSesion('consultas')" id="tab-tipos-consultas"
+                                        class="tab-tipo-btn px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 text-gray-500 hover:text-gray-900">
+                                        <i class="ph-bold ph-brain text-purple-600"></i>
+                                        <span>Consultas</span>
+                                        <span id="badge-count-consultas" class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">0</span>
+                                    </button>
+                                    <button type="button" onclick="cambiarTabTiposSesion('eventos')" id="tab-tipos-eventos"
+                                        class="tab-tipo-btn px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 text-gray-500 hover:text-gray-900">
+                                        <i class="ph-bold ph-sparkle text-amber-600"></i>
+                                        <span>Eventos</span>
+                                        <span id="badge-count-eventos" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">0</span>
+                                    </button>
+                                </div>
+                                <span class="text-xs text-gray-400 font-medium italic" id="tab-tipos-descripcion">Mostrando clases regulares</span>
+                            </div>
+
+                            <!-- Listado de tipos de sesión filtrado -->
+                            <div class="bg-gray-50/70 rounded-2xl p-4 sm:p-5 border border-gray-200">
+                                <div id="tipos-clases-list" class="space-y-2.5 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
+                                    <div class="flex flex-col items-center justify-center py-12 opacity-50">
+                                        <i class="ph-duotone ph-spinner animate-spin text-3xl text-blue-600"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GESTIÓN DE STAFF Y LÍMITES DE TIEMPO -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         
                         <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition flex flex-col h-full">
@@ -16447,122 +16950,49 @@
                         </div>
 
                     </div>
-
-                    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden relative group hover:shadow-2xl transition">
-                        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
-
-                        <div class="p-8 pb-10">
-                            <div class="flex items-center justify-center gap-4 mb-8">
-                                <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
-                                    <i class="ph-fill ph-bookmarks text-3xl"></i>
-                                </div>
-                                <div class="text-left">
-                                    <h3 class="text-2xl font-bold text-gray-900">Catálogo de Clases</h3>
-                                    <p class="text-gray-500 text-sm">Gestiona por separado los tipos regulares y los de clases especiales / talleres.</p>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <i class="ph-bold ph-list"></i> Tipos activos por categoría
-                                    </h4>
-                                    <div class="max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                                        <div id="tipos-clases-list" class="space-y-3">
-                                            <div class="flex flex-col items-center justify-center py-10 opacity-50">
-                                                <i class="ph-duotone ph-spinner animate-spin text-3xl text-blue-600"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <i class="ph-bold ph-plus-circle text-blue-500"></i> Crear Nuevo Tipo
-                                    </h4>
-                                    <form id="form-crear-tipo" class="space-y-5" onsubmit="crearTipoClase(event)">
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Categoría</label>
-                                                <select id="new-tipo-categoria" required onchange="ajustarDuracionPorCategoriaTipo()"
-                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
-                                                    <option value="yoga">Clase regular (Yoga)</option>
-                                                    <option value="clase_especial">Clase especial</option>
-                                                    <option value="taller">Taller</option>
-                                                    <option value="consulta">Hueco sesión individual</option>
-                                                    <option value="consulta_grupal">Consulta en grupo</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Especialidad / Rama</label>
-                                                <select id="new-tipo-especialidad" required
-                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
-                                                    <option value="yoga">Yoga</option>
-                                                    <option value="psicologia">Psicología</option>
-                                                    <option value="nutricion">Nutrición / PNI</option>
-                                                    <option value="ayurveda">Ayurveda</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Nombre</label>
-                                                <input type="text" id="new-tipo-nombre" placeholder="Ej: Yoga suave" required 
-                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
-                                            </div>
-                                            <div>
-                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Duración (min)</label>
-                                                <input type="number" id="new-tipo-duracion" value="60" required 
-                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Plazas predeterminadas</label>
-                                                <input type="number" id="new-tipo-capacidad" value="10" min="1" max="100" required 
-                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
-                                            </div>
-                                            <div>
-                                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Cobro / Producto Stripe</label>
-                                                <select id="new-tipo-stripe-product"
-                                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800 truncate">
-                                                    <option value="">-- Pago en el centro (Efectivo / Bizum) --</option>
-                                                    <option value="gratuita">Sesión Gratuita / Bienvenida (0 €)</option>
-                                                    <option value="local">Pago en local (Efectivo / Bizum)</option>
-                                                    <option value="prod_VDmmlmsGGhMebt">Sesion grupal Miriam (80 €) · prod_VDmmlmsGGhMebt</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="space-y-4 pt-2">
-                                            <div>
-                                                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 block pl-1">Seleccionar Color</label>
-                                                 <div class="flex flex-wrap gap-2" id="color-picker-container"></div>
-                                                 <input type="hidden" id="new-tipo-color" value="#EF4444">
-                                            </div>
-                                            <div>
-                                                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 block pl-1">Seleccionar Icono</label>
-                                                 <div class="flex flex-wrap gap-2" id="icon-picker-container"></div>
-                                                 <input type="hidden" id="new-tipo-icono" value="ph-person-simple-tai-chi">
-                                            </div>
-                                        </div>
-
-                                        <input type="hidden" id="editing-tipo-id" value="">
-                                        <button type="submit" id="btn-guardar-tipo" class="w-full py-4 mt-2 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transform active:scale-[0.98] transition flex items-center justify-center gap-2 group/btn">
-                                            <span id="btn-guardar-tipo-texto">Guardar Nuevo Tipo</span>
-                                            <i class="ph-bold ph-arrow-right group-hover/btn:translate-x-1 transition-transform"></i>
-                                        </button>
-                                        <button type="button" id="btn-cancelar-editar-tipo" onclick="cancelarEdicionTipoClase()" class="hidden w-full py-2.5 mt-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5">
-                                            <i class="ph-bold ph-x"></i>
-                                            <span>Cancelar Edición</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             `;
+
+            window.currentTiposSesionTab = 'clases';
+
+            window.cambiarTabTiposSesion = (tab) => {
+                window.currentTiposSesionTab = tab || 'clases';
+                const tabs = ['clases', 'consultas', 'eventos'];
+                tabs.forEach(t => {
+                    const btn = document.getElementById(`tab-tipos-${t}`);
+                    if (!btn) return;
+                    if (t === window.currentTiposSesionTab) {
+                        btn.className = 'tab-tipo-btn px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 bg-white text-gray-900 shadow-xs';
+                    } else {
+                        btn.className = 'tab-tipo-btn px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 text-gray-500 hover:text-gray-900';
+                    }
+                });
+
+                const desc = document.getElementById('tab-tipos-descripcion');
+                if (desc) {
+                    if (window.currentTiposSesionTab === 'consultas') desc.textContent = 'Mostrando consultas individuales y grupales';
+                    else if (window.currentTiposSesionTab === 'eventos') desc.textContent = 'Mostrando talleres y clases especiales';
+                    else desc.textContent = 'Mostrando clases regulares';
+                }
+
+                renderTiposClases();
+            };
+
+            window.toggleFormCrearTipo = () => {
+                const panel = document.getElementById('panel-crear-tipo-sesion');
+                if (!panel) return;
+                const isHidden = panel.classList.contains('hidden');
+                if (isHidden) {
+                    panel.classList.remove('hidden');
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const txt = document.getElementById('btn-toggle-crear-text');
+                    const ico = document.getElementById('btn-toggle-crear-icon');
+                    if (txt) txt.textContent = 'Cerrar Formulario';
+                    if (ico) ico.className = 'ph-bold ph-minus-circle text-base text-red-400';
+                } else {
+                    cancelarEdicionTipoClase();
+                }
+            };
 
             window.ajustarDuracionPorCategoriaTipo = () => {
                 const cat = document.getElementById('new-tipo-categoria')?.value;
@@ -16570,7 +17000,6 @@
                 const cap = document.getElementById('new-tipo-capacidad');
                 const nom = document.getElementById('new-tipo-nombre');
                 const esp = document.getElementById('new-tipo-especialidad');
-                const stripeSelect = document.getElementById('new-tipo-stripe-product');
                 if (dur) {
                     if (cat === 'clase_especial') dur.value = '75';
                     else if (cat === 'taller') dur.value = '120';
@@ -16587,67 +17016,47 @@
                     if (cat === 'consulta' || cat === 'consulta_grupal') esp.value = 'psicologia';
                     else esp.value = 'yoga';
                 }
-                if (nom && (!nom.value || nom.value === 'Yoga suave' || nom.value === 'Consulta en grupo' || nom.value === 'Consulta individual')) {
+                if (nom && (!nom.value || nom.value === 'Yoga suave' || nom.value === 'Yoga Suave' || nom.value === 'Consulta en grupo' || nom.value === 'Consulta individual')) {
                     if (cat === 'consulta_grupal') nom.value = 'Consulta en grupo';
                     else if (cat === 'consulta') nom.value = 'Consulta individual';
-                    else if (cat === 'yoga') nom.value = 'Yoga suave';
+                    else if (cat === 'yoga') nom.value = 'Yoga Suave';
                 }
-                if (stripeSelect && cat === 'consulta_grupal' && !stripeSelect.value) {
-                    stripeSelect.value = 'prod_VDmmlmsGGhMebt';
+                if (cat === 'consulta_grupal') {
+                    const cb = document.querySelector('input[name="tipo-pago-checkbox"][value="prod_VDmmlmsGGhMebt"]');
+                    if (cb) cb.checked = true;
                 }
-            };
-
-            window.renderColorPicker = () => {
-                const container = document.getElementById('color-picker-container');
-                const standardColors = [
-                    '#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6',
-                    '#6366F1', '#8B5CF6', '#EC4899', '#14B8A6', '#64748B'
-                ];
-
-                container.innerHTML = standardColors.map((color, index) => `
-                    <button type="button" onclick="selectColor('${color}')" 
-                        class="w-8 h-8 rounded-full border-2 border-white shadow-sm hover:scale-110 transition flex items-center justify-center color-swatch ${index === 0 ? 'ring-2 ring-offset-2 ring-gray-300' : ''}"
-                        style="background-color: ${color};"
-                        data-color="${color}"
-                        title="${color}">
-                        ${index === 0 ? '<i class="ph-bold ph-check text-white text-xs"></i>' : ''}
-                    </button>
-                `).join('');
-                document.getElementById('new-tipo-color').value = standardColors[0];
-            };
-
-            window.selectColor = (color) => {
-                document.getElementById('new-tipo-color').value = color;
-                const btns = document.querySelectorAll('.color-swatch');
-                btns.forEach(btn => {
-                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-gray-300');
-                    btn.innerHTML = '';
-                    if (btn.dataset.color === color) {
-                        btn.classList.add('ring-2', 'ring-offset-2', 'ring-gray-300');
-                        btn.innerHTML = '<i class="ph-bold ph-check text-white text-xs"></i>';
-                    }
-                });
             };
 
             window.renderTiposClases = async () => {
                 const listContainer = document.getElementById('tipos-clases-list');
                 if (!listContainer) return;
 
-                // Intentar poblar selector de productos Stripe
+                // Poblar checkboxes de productos Stripe si se obtienen dinámicamente
                 if (typeof cargarStripeProductosDinamicos === 'function') {
                     cargarStripeProductosDinamicos().then(prods => {
-                        const sel = document.getElementById('new-tipo-stripe-product');
-                        if (sel && prods && prods.length > 0) {
-                            const curVal = sel.value;
-                            sel.innerHTML = '<option value="">-- Pago en el centro (Efectivo / Bizum) --</option>' +
-                                '<option value="gratuita">Sesión Gratuita / Bienvenida (0 €)</option>' +
-                                '<option value="local">Pago en local (Efectivo / Bizum)</option>' +
-                                prods.map(p => {
+                        const cbContainer = document.getElementById('container-tipo-pago-checkboxes');
+                        if (cbContainer && prods && prods.length > 0) {
+                            const currentlyChecked = new Set(
+                                Array.from(cbContainer.querySelectorAll('input[name="tipo-pago-checkbox"]:checked')).map(c => c.value)
+                            );
+                            const baseOptions = [
+                                { val: 'local', label: 'Pago en local (Efectivo / Bizum)' },
+                                { val: 'gratuita', label: 'Sesión Gratuita / Bienvenida (0 €)' }
+                            ];
+                            const allOptions = [
+                                ...baseOptions,
+                                ...prods.map(p => {
                                     const precio = p.formatted_price || (p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2).replace('.', ',')} €` : (p.unit_amount ? `${(p.unit_amount / 100).toFixed(2).replace('.', ',')} €` : ''));
                                     const precioStr = precio ? ` (${precio})` : '';
-                                    return `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${precioStr} · ${escapeHtml(p.id)}</option>`;
-                                }).join('');
-                            if (curVal) sel.value = curVal;
+                                    return { val: p.id, label: `${p.name}${precioStr}` };
+                                })
+                            ];
+                            cbContainer.innerHTML = allOptions.map(opt => `
+                                <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
+                                    <input type="checkbox" name="tipo-pago-checkbox" value="${escapeHtml(opt.val)}" ${currentlyChecked.has(opt.val) ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded cursor-pointer">
+                                    <span class="truncate" title="${escapeHtml(opt.label)}">${escapeHtml(opt.label)}</span>
+                                </label>
+                            `).join('');
                         }
                     }).catch(() => {});
                 }
@@ -16661,52 +17070,122 @@
                         return;
                     }
 
-                    if (!data || data.length === 0) {
-                        listContainer.innerHTML = `<p class="text-gray-400 text-xs text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">No hay tipos de clase creados.</p>`;
+                    const allTipos = data || [];
+                    
+                    // Contadores para los 3 trozos
+                    const countClases = allTipos.filter(t => (t.categoria || 'yoga') === 'yoga').length;
+                    const countConsultas = allTipos.filter(t => t.categoria === 'consulta' || t.categoria === 'consulta_grupal').length;
+                    const countEventos = allTipos.filter(t => t.categoria === 'taller' || t.categoria === 'clase_especial').length;
+
+                    const badgeClases = document.getElementById('badge-count-clases');
+                    const badgeConsultas = document.getElementById('badge-count-consultas');
+                    const badgeEventos = document.getElementById('badge-count-eventos');
+                    if (badgeClases) badgeClases.textContent = countClases;
+                    if (badgeConsultas) badgeConsultas.textContent = countConsultas;
+                    if (badgeEventos) badgeEventos.textContent = countEventos;
+
+                    // Filtrar por pestaña activa
+                    const activeTab = window.currentTiposSesionTab || 'clases';
+                    let filtered = [];
+                    if (activeTab === 'consultas') {
+                        filtered = allTipos.filter(t => t.categoria === 'consulta' || t.categoria === 'consulta_grupal');
+                    } else if (activeTab === 'eventos') {
+                        filtered = allTipos.filter(t => t.categoria === 'taller' || t.categoria === 'clase_especial');
+                    } else {
+                        filtered = allTipos.filter(t => (t.categoria || 'yoga') === 'yoga');
+                    }
+
+                    if (filtered.length === 0) {
+                        const emptyLabels = {
+                            clases: 'No hay clases regulares configuradas.',
+                            consultas: 'No hay tipos de consultas configurados.',
+                            eventos: 'No hay talleres ni clases especiales configurados.'
+                        };
+                        listContainer.innerHTML = `<p class="text-gray-400 text-xs text-center py-8 bg-white rounded-xl border border-dashed border-gray-200">${emptyLabels[activeTab] || 'No hay elementos creados.'}</p>`;
                         return;
                     }
 
-                    listContainer.innerHTML = data.map(t => {
-                        const color = safeCssColor(t.color, '#2d8a8e');
-                        const icon = safeIconClass(t.icono);
+                    listContainer.innerHTML = filtered.map(t => {
                         const tipoId = safePositiveInteger(t.id) || 0;
-                        const espStr = (t.especialidad && t.especialidad !== 'yoga') ? ` · ${escapeHtml(t.especialidad.toUpperCase())}` : '';
+                        const esp = (t.especialidad && t.especialidad !== 'yoga') ? t.especialidad.toUpperCase() : '';
+                        
+                        // Icono y distintivo según categoría
                         let catBadge = '';
+                        let iconClass = 'ph-person-simple-tai-chi text-blue-600';
+                        let iconBg = 'bg-blue-50 text-blue-600 border border-blue-200';
+                        
                         if (t.categoria === 'clase_especial') {
-                            catBadge = `<span class="text-[9px] font-black tracking-wide text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 uppercase inline-flex items-center gap-1"><i class="ph-fill ph-sparkle text-slate-500"></i> CLASE ESPECIAL · ${toSafeNumber(t.duracion_predeterminada)} MIN</span>`;
+                            catBadge = `<span class="text-[9px] font-black tracking-wide text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 uppercase inline-flex items-center gap-1"><i class="ph-fill ph-sparkle text-amber-500"></i> CLASE ESPECIAL</span>`;
+                            iconClass = 'ph-sparkle text-amber-600';
+                            iconBg = 'bg-amber-50 text-amber-600 border border-amber-200';
                         } else if (t.categoria === 'taller') {
-                            catBadge = `<span class="text-[9px] font-black tracking-wide text-orange-800 bg-orange-50 px-2 py-0.5 rounded border border-orange-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-barbell text-orange-600"></i> TALLER · ${toSafeNumber(t.duracion_predeterminada)} MIN</span>`;
+                            catBadge = `<span class="text-[9px] font-black tracking-wide text-orange-800 bg-orange-50 px-2 py-0.5 rounded border border-orange-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-barbell text-orange-600"></i> TALLER</span>`;
+                            iconClass = 'ph-barbell text-orange-600';
+                            iconBg = 'bg-orange-50 text-orange-600 border border-orange-200';
                         } else if (t.categoria === 'consulta_grupal') {
-                            catBadge = `<span class="text-[9px] font-black tracking-wide text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-users text-purple-600"></i> CONSULTA EN GRUPO · ${toSafeNumber(t.duracion_predeterminada)} MIN · ${toSafeNumber(t.capacidad_predeterminada || 10)} PLAZAS${espStr}</span>`;
+                            catBadge = `<span class="text-[9px] font-black tracking-wide text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-users text-purple-600"></i> CONSULTA EN GRUPO</span>`;
+                            iconClass = 'ph-users text-purple-600';
+                            iconBg = 'bg-purple-50 text-purple-600 border border-purple-200';
                         } else if (t.categoria === 'consulta') {
-                            catBadge = `<span class="text-[9px] font-black tracking-wide text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-user text-teal-600"></i> CONSULTA INDIVIDUAL · ${toSafeNumber(t.duracion_predeterminada)} MIN${espStr}</span>`;
+                            catBadge = `<span class="text-[9px] font-black tracking-wide text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-user text-teal-600"></i> CONSULTA INDIVIDUAL</span>`;
+                            iconClass = 'ph-user text-teal-600';
+                            iconBg = 'bg-teal-50 text-teal-600 border border-teal-200';
                         } else {
-                            catBadge = `<span class="text-[9px] font-black tracking-wide text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-person-simple-tai-chi text-blue-600"></i> CLASE REGULAR · ${toSafeNumber(t.duracion_predeterminada)} MIN</span>`;
+                            catBadge = `<span class="text-[9px] font-black tracking-wide text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 uppercase inline-flex items-center gap-1"><i class="ph-bold ph-person-simple-tai-chi text-blue-600"></i> CLASE REGULAR</span>`;
+                            iconClass = 'ph-person-simple-tai-chi text-blue-600';
+                            iconBg = 'bg-blue-50 text-blue-600 border border-blue-200';
                         }
-                        let pagoBadge = '';
-                        if (t.metodo_pago === 'gratuita') {
-                            pagoBadge = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1"><i class="ph-bold ph-gift"></i> Gratuita (0 €)</span>`;
-                        } else if (t.stripe_product_id) {
-                            pagoBadge = `<span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-flex items-center gap-1" title="Stripe Product ID"><i class="ph-bold ph-credit-card"></i> ${escapeHtml(t.stripe_product_id)}</span>`;
-                        } else if (t.metodo_pago === 'local' || t.categoria === 'consulta' || t.categoria === 'consulta_grupal') {
-                            pagoBadge = `<span class="text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1"><i class="ph-bold ph-storefront"></i> Pago Local</span>`;
+
+                        const espBadge = esp ? `<span class="text-[9px] font-bold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${escapeHtml(esp)}</span>` : '';
+                        const durBadge = `<span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${toSafeNumber(t.duracion_predeterminada)} min</span>`;
+                        const capBadge = `<span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${toSafeNumber(t.capacidad_predeterminada || 10)} plazas</span>`;
+
+                        // Desglose de métodos de cobro
+                        const paymentBadges = [];
+                        const metodos = Array.isArray(t.metodos_pago) && t.metodos_pago.length > 0
+                            ? t.metodos_pago
+                            : [t.metodo_pago, t.stripe_product_id].filter(Boolean);
+
+                        const metodosUnicos = [...new Set(metodos.flatMap(m => String(m).split(',')).map(s => s.trim()).filter(Boolean))];
+
+                        metodosUnicos.forEach(m => {
+                            if (m === 'local') {
+                                paymentBadges.push(`<span class="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1"><i class="ph-bold ph-storefront"></i> Pago Local</span>`);
+                            } else if (m === 'gratuita') {
+                                paymentBadges.push(`<span class="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1"><i class="ph-bold ph-gift"></i> Gratuita (0 €)</span>`);
+                            } else if (m.startsWith('prod_') || m.startsWith('price_')) {
+                                paymentBadges.push(`<span class="text-[9px] font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-flex items-center gap-1" title="${escapeHtml(m)}"><i class="ph-bold ph-credit-card"></i> Stripe: ${escapeHtml(m)}</span>`);
+                            } else if (m) {
+                                paymentBadges.push(`<span class="text-[9px] font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">${escapeHtml(m)}</span>`);
+                            }
+                        });
+
+                        if (paymentBadges.length === 0) {
+                            paymentBadges.push(`<span class="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1"><i class="ph-bold ph-storefront"></i> Pago Local</span>`);
                         }
+
                         return `
-                        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:border-gray-200 transition group">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style="background-color: ${color}20; color: ${color}">
-                                    <i class="ph-fill ${icon} text-xl"></i>
+                        <div class="flex items-center justify-between bg-white p-3.5 rounded-xl border border-gray-100 shadow-2xs hover:border-gray-300 transition group">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}">
+                                    <i class="ph-bold ${iconClass} text-lg"></i>
                                 </div>
                                 <div>
-                                    <p class="font-bold text-gray-800 text-sm leading-tight">${escapeHtml(t.nombre || 'Sin nombre')}</p>
-                                    <div class="mt-1 flex items-center gap-1.5 flex-wrap">${catBadge}${pagoBadge}</div>
+                                    <p class="font-bold text-gray-900 text-sm leading-tight">${escapeHtml(t.nombre || 'Sin nombre')}</p>
+                                    <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                        ${catBadge}
+                                        ${durBadge}
+                                        ${capBadge}
+                                        ${espBadge}
+                                        ${paymentBadges.join('')}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <button onclick="cargarParaEditarTipoClase(${tipoId})" class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition cursor-pointer" title="Editar configuración">
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="cargarParaEditarTipoClase(${tipoId})" class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg transition cursor-pointer" title="Editar configuración">
                                     <i class="ph-bold ph-pencil-simple text-lg"></i>
                                 </button>
-                                <button onclick="borrarTipoClase(${tipoId})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition cursor-pointer" title="Eliminar">
+                                <button onclick="borrarTipoClase(${tipoId})" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition cursor-pointer" title="Eliminar">
                                     <i class="ph-bold ph-trash text-lg"></i>
                                 </button>
                             </div>
@@ -16721,6 +17200,26 @@
                 try {
                     const { data: tipo, error } = await client.from('tipos_clases').select('*').eq('id', id).single();
                     if (error || !tipo) return Swal.fire('Error', 'No se pudo cargar el tipo para editar.', 'error');
+
+                    // Abrir panel desplegable
+                    const panel = document.getElementById('panel-crear-tipo-sesion');
+                    if (panel) {
+                        panel.classList.remove('hidden');
+                        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                    const toggleText = document.getElementById('btn-toggle-crear-text');
+                    const toggleIcon = document.getElementById('btn-toggle-crear-icon');
+                    if (toggleText) toggleText.textContent = 'Cerrar Formulario';
+                    if (toggleIcon) toggleIcon.className = 'ph-bold ph-minus-circle text-base text-red-400';
+
+                    const formTitulo = document.getElementById('form-crear-tipo-titulo');
+                    if (formTitulo) formTitulo.textContent = `Editar Tipo: ${tipo.nombre}`;
+
+                    const btnText = document.getElementById('btn-guardar-tipo-texto');
+                    if (btnText) btnText.textContent = `Actualizar Tipo`;
+
+                    const cancelBtn = document.getElementById('btn-cancelar-editar-tipo');
+                    if (cancelBtn) cancelBtn.classList.remove('hidden');
 
                     const editIdInput = document.getElementById('editing-tipo-id');
                     if (editIdInput) editIdInput.value = tipo.id;
@@ -16740,19 +17239,22 @@
                     const espInput = document.getElementById('new-tipo-especialidad');
                     if (espInput) espInput.value = tipo.especialidad || 'yoga';
 
-                    const stripeSelect = document.getElementById('new-tipo-stripe-product');
-                    if (stripeSelect) {
-                        stripeSelect.value = tipo.stripe_product_id || tipo.metodo_pago || '';
+                    // Establecer checkboxes de pago
+                    const metodosActivos = new Set();
+                    if (Array.isArray(tipo.metodos_pago)) {
+                        tipo.metodos_pago.forEach(m => metodosActivos.add(String(m).trim()));
+                    }
+                    if (tipo.metodo_pago) {
+                        String(tipo.metodo_pago).split(',').forEach(m => metodosActivos.add(m.trim()));
+                    }
+                    if (tipo.stripe_product_id) {
+                        String(tipo.stripe_product_id).split(',').forEach(m => metodosActivos.add(m.trim()));
                     }
 
-                    if (tipo.color) selectColor(tipo.color);
-                    if (tipo.icono) selectIcon(tipo.icono);
-
-                    const btnText = document.getElementById('btn-guardar-tipo-texto');
-                    if (btnText) btnText.textContent = `Actualizar Tipo: ${tipo.nombre}`;
-
-                    const cancelBtn = document.getElementById('btn-cancelar-editar-tipo');
-                    if (cancelBtn) cancelBtn.classList.remove('hidden');
+                    const cbs = document.querySelectorAll('input[name="tipo-pago-checkbox"]');
+                    cbs.forEach(cb => {
+                        cb.checked = metodosActivos.has(cb.value);
+                    });
 
                     nomInput?.focus();
                 } catch (e) {
@@ -16765,14 +17267,28 @@
                 if (editIdInput) editIdInput.value = '';
 
                 document.getElementById('form-crear-tipo')?.reset();
-                selectColor('#EF4444');
-                selectIcon('ph-person-simple-tai-chi');
+
+                const cbs = document.querySelectorAll('input[name="tipo-pago-checkbox"]');
+                cbs.forEach(cb => {
+                    cb.checked = (cb.value === 'local');
+                });
+
+                const formTitulo = document.getElementById('form-crear-tipo-titulo');
+                if (formTitulo) formTitulo.textContent = 'Crear Nuevo Tipo de Sesión';
 
                 const btnText = document.getElementById('btn-guardar-tipo-texto');
-                if (btnText) btnText.textContent = 'Guardar Nuevo Tipo';
+                if (btnText) btnText.textContent = 'Guardar Tipo de Sesión';
 
                 const cancelBtn = document.getElementById('btn-cancelar-editar-tipo');
                 if (cancelBtn) cancelBtn.classList.add('hidden');
+
+                const panel = document.getElementById('panel-crear-tipo-sesion');
+                if (panel) panel.classList.add('hidden');
+
+                const toggleText = document.getElementById('btn-toggle-crear-text');
+                const toggleIcon = document.getElementById('btn-toggle-crear-icon');
+                if (toggleText) toggleText.textContent = '+ Nuevo Tipo de Sesión';
+                if (toggleIcon) toggleIcon.className = 'ph-bold ph-plus-circle text-base text-blue-400';
             };
 
             window.crearTipoClase = async (e) => {
@@ -16781,47 +17297,35 @@
                 const nombre = (document.getElementById('new-tipo-nombre')?.value || '').trim();
                 const duracion = document.getElementById('new-tipo-duracion')?.value || '60';
                 const capacidad = document.getElementById('new-tipo-capacidad')?.value || '10';
-                const stripeSelectVal = document.getElementById('new-tipo-stripe-product')?.value || '';
                 const rawCat = document.getElementById('new-tipo-categoria')?.value;
                 const categoria = ['clase_especial', 'taller', 'consulta', 'consulta_grupal'].includes(rawCat) ? rawCat : 'yoga';
                 const especialidad = document.getElementById('new-tipo-especialidad')?.value || 'yoga';
-                const color = document.getElementById('new-tipo-color')?.value || '#EF4444';
-                const icono = document.getElementById('new-tipo-icono')?.value || 'ph-person-simple-tai-chi';
 
                 if (!nombre) {
-                    return Swal.fire('Campo requerido', 'Por favor introduce un nombre para el tipo.', 'warning');
+                    return Swal.fire('Campo requerido', 'Por favor introduce un nombre para el tipo de sesión.', 'warning');
                 }
 
-                let stripeProductId = null;
-                let metodoPago = null;
-                if (stripeSelectVal === 'gratuita') {
-                    metodoPago = 'gratuita';
-                } else if (stripeSelectVal === 'local') {
-                    metodoPago = 'local';
-                } else if (stripeSelectVal.startsWith('prod_') || stripeSelectVal.startsWith('price_')) {
-                    stripeProductId = stripeSelectVal;
-                    metodoPago = stripeSelectVal;
-                } else if (stripeSelectVal) {
-                    metodoPago = stripeSelectVal;
-                }
+                // Obtener métodos seleccionados en los checkboxes
+                const checkedBoxes = Array.from(document.querySelectorAll('input[name="tipo-pago-checkbox"]:checked')).map(cb => cb.value);
+                const metodosPago = checkedBoxes.length > 0 ? checkedBoxes : ['local'];
+                const stripeProductIds = metodosPago.filter(v => v.startsWith('prod_') || v.startsWith('price_')).join(',') || null;
+                const metodoPago = metodosPago.includes('gratuita') ? 'gratuita' : (metodosPago.includes('local') ? 'local' : (metodosPago[0] || 'local'));
 
                 try {
                     const payload = {
                         nombre,
                         duracion_predeterminada: parseInt(duracion) || 60,
                         capacidad_predeterminada: parseInt(capacidad) || 10,
-                        stripe_product_id: stripeProductId,
+                        stripe_product_id: stripeProductIds,
                         metodo_pago: metodoPago,
+                        metodos_pago: metodosPago,
                         especialidad,
-                        color,
-                        icono,
                         categoria,
                         activo: true
                     };
 
                     let targetId = editingId ? parseInt(editingId, 10) : null;
 
-                    // Si no se está editando expresamente por ID, comprobar si ya existe un tipo con este mismo nombre para actualizarlo
                     if (!targetId) {
                         const { data: existing } = await client.from('tipos_clases')
                             .select('id, nombre')
@@ -16841,7 +17345,6 @@
                         opError = insertErr;
                     }
 
-                    // Fallback para resolver conflicto de nombre duplicado si la condición de carrera ocurriera
                     if (opError && (String(opError.message || '').includes('duplicate key') || String(opError.message || '').includes('tipos_clases_nombre_key'))) {
                         console.warn('Detectada clave única duplicada en nombre, actualizando registro existente...');
                         const { error: retryErr } = await client.from('tipos_clases').update(payload).ilike('nombre', nombre);
@@ -16851,14 +17354,12 @@
                         }
                     }
 
-                    // Fallback para clases regulares si el esquema no tiene aún las columnas nuevas
-                    if (opError && (opError.message?.includes('capacidad_predeterminada') || opError.message?.includes('schema cache') || opError.message?.includes('especialidad')) && ['yoga', 'taller', 'clase_especial'].includes(categoria)) {
-                        console.warn('Reintentando inserción con esquema clásico para clase regular...', opError);
+                    // Fallback para esquemas antiguos
+                    if (opError && (opError.message?.includes('capacidad_predeterminada') || opError.message?.includes('schema cache') || opError.message?.includes('especialidad') || opError.message?.includes('metodos_pago'))) {
+                        console.warn('Reintentando con esquema clásico...', opError);
                         const fallbackPayload = {
                             nombre,
                             duracion_predeterminada: parseInt(duracion) || 60,
-                            color,
-                            icono,
                             categoria,
                             activo: true
                         };
@@ -16872,21 +17373,12 @@
 
                     if (opError) {
                         const errMsg = String(opError.message || '');
-                        if (errMsg.includes('capacidad_predeterminada') || errMsg.includes('schema cache') || errMsg.includes('especialidad') || errMsg.includes('categoria_check') || errMsg.includes('stripe_product_id')) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Migración Pendiente en Supabase',
-                                html: `La base de datos de Supabase aún no tiene habilitadas las columnas para consultas y capacidad.<br><br>Para solucionarlo, debes ejecutar la migración SQL <b>202609080002_catalogo_consultas_integracion_estricta.sql</b> en el <b>SQL Editor del panel de Supabase</b>.<br><br><small class="text-gray-500 font-mono text-[11px]">${escapeHtml(errMsg)}</small>`,
-                                confirmButtonText: 'Entendido'
-                            });
-                        } else {
-                            Swal.fire('Error', 'No se pudo guardar el tipo: ' + errMsg, 'error');
-                        }
+                        Swal.fire('Error', 'No se pudo guardar el tipo: ' + errMsg, 'error');
                     } else {
                         cancelarEdicionTipoClase();
                         await renderTiposClases();
                         const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2200 });
-                        toast.fire({ icon: 'success', title: targetId ? 'Tipo actualizado exitosamente' : 'Tipo creado exitosamente' });
+                        toast.fire({ icon: 'success', title: targetId ? 'Tipo de sesión actualizado' : 'Tipo de sesión creado' });
                     }
                 } catch (err) {
                     console.error('Unexpected error in crearTipoClase:', err);
@@ -16894,51 +17386,21 @@
                 }
             };
 
-            window.renderIconPicker = () => {
-                const container = document.getElementById('icon-picker-container');
-                if (!container) return;
-
-                const icons = [
-                    'ph-person-simple-tai-chi', 'ph-barbell', 'ph-heart-beat',
-                    'ph-fire', 'ph-drop', 'ph-smiley-blank',
-                    'ph-yin-yang', 'ph-bicycle', 'ph-waves', 'ph-star'
-                ];
-                const currentIcon = document.getElementById('new-tipo-icono').value;
-
-                container.innerHTML = icons.map(icon => `
-                    <button type="button" onclick="selectIcon('${icon}')" 
-                        class="w-8 h-8 rounded-xl bg-gray-50 text-gray-400 border border-gray-100 hover:bg-gray-100 hover:text-gray-600 transition flex items-center justify-center icon-swatch ${icon === currentIcon ? 'ring-2 ring-offset-2 ring-gray-300 !bg-gray-800 !text-white' : ''}"
-                        data-icon="${icon}">
-                        <i class="ph-fill ${icon} text-lg"></i>
-                    </button>
-                `).join('');
-            };
-
-            window.selectIcon = (icon) => {
-                document.getElementById('new-tipo-icono').value = icon;
-                const btns = document.querySelectorAll('.icon-swatch');
-                btns.forEach(btn => {
-                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-gray-300', '!bg-gray-800', '!text-white');
-                    if (btn.dataset.icon === icon) {
-                        btn.classList.add('ring-2', 'ring-offset-2', 'ring-gray-300', '!bg-gray-800', '!text-white');
-                    }
-                });
-            };
-
             window.borrarTipoClase = async (id) => {
                 const { isConfirmed } = await Swal.fire({
-                    title: '¿Borrar Tipo?',
-                    text: 'No podrás crear nuevas clases de este tipo.',
+                    title: '¿Borrar Tipo de Sesión?',
+                    text: 'No podrás crear nuevas sesiones de este tipo.',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Sí, borrar',
+                    cancelButtonText: 'Cancelar',
                     confirmButtonColor: '#ef4444'
                 });
 
                 if (isConfirmed) {
                     const { error } = await client.from('tipos_clases').delete().eq('id', id);
                     if (error) {
-                        Swal.fire('Error', 'No se puede borrar. Intenta desactivarlo.', 'error');
+                        Swal.fire('Error', 'No se puede borrar este tipo porque tiene clases asociadas. Intenta desactivarlo.', 'error');
                     } else {
                         renderTiposClases();
                     }
@@ -17145,8 +17607,6 @@
             };
 
             await renderTiposClases();
-            renderColorPicker();
-            renderIconPicker();
         }
 
         async function actualizarConfigRapido(clave, nuevoValor) {
@@ -17764,8 +18224,23 @@
 
             const bonosActual = toSafeNumber(u.bonos);
             const bienvenidaActual = toSafeNumber(u.saldo_clases_gratis);
-            const companiaActual = toSafeNumber(u.saldo_yoga_compania);
             const consultaActual = toSafeNumber(u.saldo_consultas_gratis);
+            const psicologiaActual = toSafeNumber(u.saldo_psicologia);
+            const nutricionActual = toSafeNumber(u.saldo_nutricion);
+
+            // Consultar créditos de reprogramación del usuario
+            let userReprogCredits = [];
+            try {
+                const { data: rcData } = await client.from('creditos_reprogramacion')
+                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilized_at')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+                if (rcData && rcData.length > 0) {
+                    userReprogCredits = rcData;
+                }
+            } catch (err) {
+                console.warn('Error leyendo creditos_reprogramacion en modal:', err);
+            }
 
             // Consultar meses ilimitados del usuario
             let userMonths = [];
@@ -17887,6 +18362,41 @@
                 `;
             }
 
+            let htmlReprogList = '';
+            if (userReprogCredits.length > 0) {
+                htmlReprogList = userReprogCredits.map(r => {
+                    const isDisp = (r.estado || '').toLowerCase() === 'disponible';
+                    const tipoLabel = r.tipo === 'consulta' ? `Consulta (${r.subtipo || 'General'})` : (r.tipo === 'taller' ? 'Taller / Especial' : (r.tipo || 'Clase'));
+                    const statusBadge = isDisp
+                        ? '<span class="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded border border-amber-300">Disponible</span>'
+                        : '<span class="text-[9px] bg-gray-100 text-gray-500 font-medium px-1.5 py-0.5 rounded border border-gray-200">Utilizado</span>';
+                    const fecha = r.created_at ? new Date(r.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200 text-xs shadow-2xs">
+                            <div class="flex items-center gap-2">
+                                <i class="ph-bold ph-arrow-counter-clockwise ${isDisp ? 'text-amber-600' : 'text-gray-400'}"></i>
+                                <div>
+                                    <p class="font-bold text-cocoa leading-tight text-[11px]">${escapeHtml(tipoLabel)} ${statusBadge}</p>
+                                    <p class="text-[9px] text-cocoa/50">${fecha ? 'Emitido el ' + fecha : ''}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                ${isDisp ? `
+                                    <button type="button" onclick="retirarCreditoReprogramacionAdmin('${userId}', '${r.id}')"
+                                        class="px-2 py-1 rounded-lg text-[10px] font-black transition cursor-pointer active:scale-95 flex items-center gap-1"
+                                        style="background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fca5a5 !important;"
+                                        title="Retirar este crédito de reprogramación">
+                                        <i class="ph-bold ph-trash"></i> Retirar
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                htmlReprogList = '<p class="text-xs text-amber-800/60 italic py-1">Sin créditos de reprogramación pendientes</p>';
+            }
+
             await Swal.fire({
                 title: `<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-xl"><i class="ph-duotone ph-wallet text-olive"></i> Gestión de Bonos y Saldos</div>`,
                 html: `
@@ -17928,22 +18438,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Yoga en Compañía (Inactivado) -->
-                <div class="hidden flex items-center justify-between p-2.5 rounded-xl border border-amber-300 bg-amber-50/80" style="display: none !important;">
-                    <div class="flex items-center gap-2">
-                        <i class="ph-bold ph-users-three text-amber-700 text-lg"></i>
-                        <div>
-                            <p class="text-xs font-bold text-cocoa">3. Yoga en Compañía</p>
-                            <p class="text-[10px] text-amber-900">Saldo: <strong id="modal-saldo-yoga_compania" class="text-amber-800 font-black">${companiaActual}</strong></p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga_compania', -1, this)" class="w-8 h-8 rounded-lg border border-amber-300 text-amber-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga_compania', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition shadow-sm hover:brightness-95 cursor-pointer active:scale-95">+1</button>
-                    </div>
-                </div>
-
-                <!-- 4. Consulta Gratis -->
+                <!-- 3. Consulta Gratis -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-pink-200 bg-pink-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-gift text-pink-600 text-lg"></i>
@@ -17958,13 +18453,65 @@
                     </div>
                 </div>
 
-                <!-- 5. Mes Ilimitado -->
+                <!-- 4. Consulta Psicología -->
+                <div class="flex items-center justify-between p-2.5 rounded-xl border border-blue-200 bg-blue-50/60">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-bold ph-brain text-blue-600 text-lg"></i>
+                        <div>
+                            <p class="text-xs font-bold text-cocoa">4. Consulta Psicología</p>
+                            <p class="text-[10px] text-blue-800">Saldo: <strong id="modal-saldo-psicologia" class="text-blue-700 font-black">${psicologiaActual}</strong></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', -1, this)" class="w-8 h-8 rounded-lg border border-blue-200 text-blue-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', 1, this)" class="w-8 h-8 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                    </div>
+                </div>
+
+                <!-- 5. Consulta Nutrición -->
+                <div class="flex items-center justify-between p-2.5 rounded-xl border border-purple-200 bg-purple-50/60">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-bold ph-apple text-purple-600 text-lg"></i>
+                        <div>
+                            <p class="text-xs font-bold text-cocoa">5. Consulta Nutrición</p>
+                            <p class="text-[10px] text-purple-800">Saldo: <strong id="modal-saldo-nutricion" class="text-purple-700 font-black">${nutricionActual}</strong></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', -1, this)" class="w-8 h-8 rounded-lg border border-purple-200 text-purple-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', 1, this)" class="w-8 h-8 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                    </div>
+                </div>
+
+                <!-- 6. Créditos de Reprogramación -->
+                <div class="p-3.5 rounded-2xl border border-amber-300 bg-amber-50/70 space-y-2.5">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-arrow-counter-clockwise text-amber-700 text-xl"></i>
+                            <div>
+                                <p class="text-xs font-bold text-cocoa">6. Créditos de Reprogramación</p>
+                                <p class="text-[10px] text-amber-800">Bonos por cancelaciones para reutilizar</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="asignarCreditoReprogramacionAdmin('${userId}')"
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+                            style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important;"
+                            title="Añadir un crédito de reprogramación">
+                            <i class="ph-bold ph-plus text-sm"></i> <span>+ Añadir Crédito</span>
+                        </button>
+                    </div>
+                    <div class="pt-2 space-y-2 border-t border-amber-200/70">
+                        ${htmlReprogList}
+                    </div>
+                </div>
+
+                <!-- 7. Mes Ilimitado -->
                 <div class="p-3.5 rounded-2xl border ${ilimitadoActivo ? 'border-emerald-300 bg-emerald-50/80' : 'border-gray-200 bg-gray-50/80'} space-y-2.5">
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <i class="ph-bold ph-infinity ${ilimitadoActivo ? 'text-emerald-700' : 'text-gray-400'} text-xl"></i>
                             <div>
-                                <p class="text-xs font-bold text-cocoa">4. Bono Mensual Ilimitado</p>
+                                <p class="text-xs font-bold text-cocoa">7. Bono Mensual Ilimitado</p>
                                 <p class="text-[10px] ${ilimitadoActivo ? 'text-emerald-700 font-bold' : 'text-gray-500'}">Meses naturales contratados</p>
                             </div>
                         </div>
@@ -17988,13 +18535,13 @@
                     </div>
                 </div>
 
-                <!-- 6. Clases Especiales -->
+                <!-- 8. Clases Especiales -->
                 <div class="p-3.5 rounded-2xl border border-slate-300 bg-slate-50/90 space-y-2.5">
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <i class="ph-bold ph-sparkle text-slate-700 text-xl"></i>
                             <div>
-                                <p class="text-xs font-bold text-cocoa">5. Clases Especiales</p>
+                                <p class="text-xs font-bold text-cocoa">8. Clases Especiales</p>
                                 <p class="text-[10px] text-slate-600">Saldos por mes natural</p>
                             </div>
                         </div>
@@ -18016,6 +18563,105 @@
                 confirmButtonColor: '#8C8658'
             });
         }
+
+        async function retirarCreditoReprogramacionAdmin(userId, creditoId) {
+            const confirm = await Swal.fire({
+                title: '¿Retirar Crédito?',
+                text: 'El crédito de reprogramación quedará retirado y no podrá utilizarse para reservar.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, retirar crédito',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirm.isConfirmed) return abrirGestionBonosUsuario(userId);
+
+            Swal.fire({ title: 'Retirando crédito...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+            let success = false;
+            try {
+                const { data, error } = await client.rpc('admin_retirar_credito_reprogramacion', {
+                    p_credito_id: parseInt(creditoId, 10)
+                });
+                if (!error) success = true;
+            } catch (rpcErr) {
+                console.warn('Fallo RPC admin_retirar_credito_reprogramacion:', rpcErr);
+            }
+
+            if (!success) {
+                try {
+                    const { error } = await client.from('creditos_reprogramacion')
+                        .update({ estado: 'retirado_admin', utilized_at: new Date().toISOString() })
+                        .eq('id', parseInt(creditoId, 10));
+                    if (!error) success = true;
+                } catch (fbErr) {
+                    console.error('Error fallback retirar crédito:', fbErr);
+                }
+            }
+
+            if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
+            await abrirGestionBonosUsuario(userId);
+        }
+
+        async function asignarCreditoReprogramacionAdmin(userId) {
+            const { value: formValues } = await Swal.fire({
+                title: 'Añadir Crédito Reprogramación',
+                html: `
+                    <div class="text-left font-sans space-y-3 my-2">
+                        <div>
+                            <label class="block text-xs font-bold text-cocoa mb-1">Tipo de Crédito:</label>
+                            <select id="swal-reprog-tipo" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white">
+                                <option value="consulta">Consulta privada</option>
+                                <option value="taller">Taller / Especial</option>
+                                <option value="clase">Clase regular</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-cocoa mb-1">Especialidad / Subtipo:</label>
+                            <select id="swal-reprog-subtipo" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white">
+                                <option value="psicologia">Psicología</option>
+                                <option value="nutricion">Nutrición</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Crear Crédito',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d97706',
+                preConfirm: () => {
+                    const tipo = document.getElementById('swal-reprog-tipo')?.value || 'consulta';
+                    const subtipo = document.getElementById('swal-reprog-subtipo')?.value || 'general';
+                    return { tipo, subtipo };
+                }
+            });
+
+            if (!formValues) return abrirGestionBonosUsuario(userId);
+
+            Swal.fire({ title: 'Guardando crédito...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+            try {
+                const { error } = await client.from('creditos_reprogramacion').insert([{
+                    user_id: userId,
+                    tipo: formValues.tipo,
+                    subtipo: formValues.subtipo,
+                    estado: 'disponible',
+                    mes: new Date().toISOString().slice(0, 7) + '-01'
+                }]);
+                if (error) throw error;
+            } catch (err) {
+                console.error('Error insertando credito_reprogramacion:', err);
+                await Swal.fire('Error', 'No se pudo guardar el crédito: ' + (err.message || err), 'error');
+            }
+
+            if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
+            await abrirGestionBonosUsuario(userId);
+        }
+
+        window.retirarCreditoReprogramacionAdmin = retirarCreditoReprogramacionAdmin;
+        window.asignarCreditoReprogramacionAdmin = asignarCreditoReprogramacionAdmin;
 
         async function retirarMesIlimitadoAdmin(userId, periodId = null, mesStr = null) {
             const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -20138,7 +20784,7 @@
                     });
                 }
 
-                const esGratuita = esClaseElegibleBonoGratis(clase) || (userSaldoConsultasGratis >= 1 && toSafeNumber(clase?.capacidad_max) === 1);
+                const esGratuita = esClaseElegibleBonoGratis(clase);
                 if (esGratuita && (userSaldoConsultasGratis >= 1 || clase?.es_gratuita)) {
                     if (!isAdmin && !esTrabajador() && userSaldoConsultasGratis < 1 && !clase?.es_gratuita) {
                         return Swal.fire({
@@ -20191,7 +20837,7 @@
                         p_profesor_id: profId,
                         p_fecha_inicio: new Date(clase.fecha_inicio).toISOString(),
                         p_user_id: currentUser.id,
-                        p_cobrar_saldo: !esGratuita
+                        p_cobrar_saldo: true
                     });
                     resError = error;
                 } else {
@@ -20200,7 +20846,7 @@
                         p_tipo: tipo,
                         p_clase_id: numericClaseId,
                         p_user_id: currentUser.id,
-                        p_cobrar_saldo: !esGratuita
+                        p_cobrar_saldo: true
                     });
                     resError = error;
                 }

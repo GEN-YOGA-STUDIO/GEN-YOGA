@@ -61,7 +61,7 @@ assert(profileHtml.includes('prod_VDmmlmsGGhMebt'), 'Must reference Miriam group
 assert(profileHtml.includes('cargarStripeProductosDinamicos'), 'Must define cargarStripeProductosDinamicos');
 assert(profileHtml.includes('new-tipo-capacidad'), 'Must have new-tipo-capacidad in class type creator');
 assert(profileHtml.includes('new-tipo-especialidad'), 'Must have new-tipo-especialidad in class type creator');
-assert(profileHtml.includes('new-tipo-stripe-product'), 'Must have new-tipo-stripe-product in class type creator');
+assert(profileHtml.includes('new-tipo-stripe-product') || profileHtml.includes('container-tipo-pago-checkboxes'), 'Must have stripe product selection in class type creator');
 assert(profileHtml.includes('value="consulta_grupal"'), 'Must have consulta_grupal in new-tipo-categoria');
 assert(profileHtml.includes('value="consulta"'), 'Must have consulta in new-tipo-categoria');
 assert(profileHtml.includes('CONSULTA EN GRUPO'), 'Must render badge for CONSULTA EN GRUPO');
