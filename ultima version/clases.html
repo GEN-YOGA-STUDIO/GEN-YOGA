@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="13.1">
+    <meta name="application-version" content="13.2">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.1">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.1">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.2">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.2">
     <title>GEN Yoga | Clases</title>
 
     <!-- Rendimiento, SEO y tarjetas sociales -->
@@ -25,9 +25,9 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-    <script src="i18n.js?v=13.1"></script>
+    <script src="i18n.js?v=13.2"></script>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.1" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.2" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -234,6 +234,9 @@
             margin: auto;
             transition: opacity 0.25s ease-out, transform 0.25s ease-out;
             pointer-events: none;
+            will-change: transform;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
 
         .folder-card-container.is-active,
@@ -245,10 +248,35 @@
         .folder-body {
             position: relative;
             border-radius: 1.5rem;
-            border-top-left-radius: 0;
             width: 100%;
+            margin-top: -1px;
             box-shadow: 0 20px 45px -15px rgba(38, 22, 12, 0.15);
             z-index: 20;
+        }
+
+        /* Carpetas con pestaña en la izquierda: esquina superior izquierda recta */
+        #card-1 .folder-body,
+        #card-miriam .folder-body,
+        #card-taller-1 .folder-body {
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 1.5rem !important;
+        }
+
+        /* Carpetas con pestaña centrada: ambas esquinas superiores redondeadas */
+        #card-2 .folder-body,
+        #card-3 .folder-body,
+        #card-silvia .folder-body,
+        #card-taller-2 .folder-body {
+            border-top-left-radius: 1.5rem !important;
+            border-top-right-radius: 1.5rem !important;
+        }
+
+        /* Carpetas con pestaña en la extrema derecha: esquina superior derecha recta sin gap */
+        #card-4 .folder-body,
+        #card-isabel .folder-body,
+        #card-taller-3 .folder-body {
+            border-top-left-radius: 1.5rem !important;
+            border-top-right-radius: 0 !important;
         }
 
         /* Colores de fondo de las 4 carpetas de clases */
@@ -310,33 +338,27 @@
         .consultation-card {
             overflow: hidden;
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                0 24px 52px -20px rgba(38, 22, 12, 0.48);
-            backdrop-filter: blur(8px);
+            border: none !important;
+            box-shadow: 0 20px 45px -15px rgba(38, 22, 12, 0.15) !important;
             transition: transform 300ms ease, box-shadow 300ms ease;
         }
 
         .consultation-card--miriam {
-            background-color: #744833;
-            background-image:
-                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.18), transparent 38%),
-                linear-gradient(135deg, #744833 0%, #4a2d1f 100%);
+            background-color: #744833 !important;
+            background: #744833 !important;
+            background-image: none !important;
         }
 
         .consultation-card--silvia {
-            background-color: #68704a;
-            background-image:
-                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.18), transparent 38%),
-                linear-gradient(135deg, #68704a 0%, #3e442c 100%);
+            background-color: #68704a !important;
+            background: #68704a !important;
+            background-image: none !important;
         }
 
         .consultation-card--isabel {
-            background-color: #8f6b2d;
-            background-image:
-                radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.20), transparent 38%),
-                linear-gradient(135deg, #8f6b2d 0%, #58401a 100%);
+            background-color: #8f6b2d !important;
+            background: #8f6b2d !important;
+            background-image: none !important;
         }
 
         .consultation-card:focus-visible {
@@ -467,7 +489,7 @@
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
-    <link rel="stylesheet" href="public-calendar.css?v=13.1">
+    <link rel="stylesheet" href="public-calendar.css?v=13.2">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
 
@@ -960,7 +982,7 @@
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                 <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">Política de privacidad</a>
-                <span class="opacity-60 text-[10px]">v13.1 | @2026 Gen Yoga</span>
+                <span class="opacity-60 text-[10px]">v13.2 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
@@ -1497,8 +1519,8 @@ window.switchCategoryDeck = function(cat) {
 };
 
 </script>
-    <script src="public-calendar.js?v=13.1"></script>
-    <script src="facilities-carousel.js?v=13.1"></script>
+    <script src="public-calendar.js?v=13.2"></script>
+    <script src="facilities-carousel.js?v=13.2"></script>
     <script>
         window.GENPublicCalendar?.init({ client });
     </script>
@@ -1762,6 +1784,11 @@ window.switchCategoryDeck = function(cat) {
                     
                     headerTitle.style.opacity = '1';
                     headerTitle.style.transform = 'translateY(0)';
+                    if (stickyHeader) {
+                        stickyHeader.style.opacity = '1';
+                        stickyHeader.style.transform = 'translateY(0)';
+                        stickyHeader.style.pointerEvents = 'auto';
+                    }
                 } else {
                     // PUSH TRANSITION: Translate active deck and title upwards as Slide 4 panel rises
                     const pPush = Math.max(0, Math.min(1, (progress - pushStart) / pushSpan));
@@ -1775,6 +1802,13 @@ window.switchCategoryDeck = function(cat) {
                     
                     headerTitle.style.opacity = '1';
                     headerTitle.style.transform = `translateY(-${pPush * 100}vh)`;
+
+                    if (stickyHeader) {
+                        stickyHeader.style.transform = `translateY(-${pPush * 100}vh)`;
+                        const headerOpacity = Math.max(0, 1 - pPush * 2.5);
+                        stickyHeader.style.opacity = headerOpacity.toString();
+                        stickyHeader.style.pointerEvents = headerOpacity < 0.05 ? 'none' : 'auto';
+                    }
                 }
 
                 // 3. Slide 4 Panel rising transition

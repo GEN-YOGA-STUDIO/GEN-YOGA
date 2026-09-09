@@ -568,11 +568,11 @@ for (const { label, source, idPrefix, permission, required } of scalableAssignme
 for (const [required, label] of [
   ["client.rpc('reservar_consulta_atomica'", 'RPC atómica al asignar consultas'],
   ['p_tipo: tipo', 'tipo de consulta elegido'],
-  ['p_clase_id: claseId', 'hueco de consulta elegido'],
+  ['p_clase_id: numericClaseId', 'hueco de consulta elegido'],
   ['p_user_id: userId', 'cliente de consulta elegido'],
   ['p_cobrar_saldo: false', 'asignación admin sin consumo de saldo'],
 ]) {
-  if (!consultationAssignmentRpcFlow.includes(required)) {
+  if (!consultationAssignmentRpcFlow.includes(required) && !(label === 'hueco de consulta elegido' && consultationAssignmentRpcFlow.includes('p_clase_id: claseId'))) {
     errors.push(`profile.html: falta ${label}`);
   }
 }
