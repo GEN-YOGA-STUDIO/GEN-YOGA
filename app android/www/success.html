@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="13.0">
+    <meta name="application-version" content="13.1">
     <meta name="robots" content="noindex,nofollow">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.0">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.1">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.1">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
     <!-- Sugerencias de rendimiento -->
@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.0">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.1">
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
@@ -170,7 +170,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-60 flex flex-col items-center gap-1.5 text-xs text-cocoa">
-            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v13.0</span>
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v13.1</span>
             <a href="politica-privacidad.html" class="hover:underline transition text-[11px] text-cocoa/70">Política de privacidad</a>
         </div>
     </div>
@@ -212,6 +212,145 @@
                 .replace(/'/g, '&#039;');
         }
 
+        async function verificarPagoConReintentos(maxIntentos = 3) {
+            let ultimoError = null;
+            for (let intento = 1; intento <= maxIntentos; intento++) {
+                try {
+                    if (!client) throw new Error('Supabase client failed to initialize.');
+
+                    let invokeHeaders = {};
+                    try {
+                        const sessionRes = await client.auth.getSession();
+                        const token = sessionRes?.data?.session?.access_token;
+                        if (token) {
+                            invokeHeaders['Authorization'] = `Bearer ${token}`;
+                        }
+                    } catch (_) {}
+
+                    const { data, error } = await client.functions.invoke('get-checkout-session', {
+                        headers: invokeHeaders,
+                        body: {
+                            session_id: stripeSessionId,
+                            supports_guest_consultation_ui: true
+                        }
+                    });
+
+                    if (error) {
+                        let errorMsg = error.message || 'Error al conectar con la pasarela de pago.';
+                        try {
+                            const ctxJson = await error.context?.json?.();
+                            if (ctxJson?.error) errorMsg = ctxJson.error;
+                        } catch (_) {}
+                        throw new Error(errorMsg);
+                    }
+
+                    if (!data || data.paymentStatus !== 'paid') {
+                        throw new Error('La sesión no está confirmada como pagada.');
+                    }
+
+                    return data;
+                } catch (err) {
+                    ultimoError = err;
+                    console.warn(`Intento ${intento} de verificación de pago fallido:`, err);
+
+                    // Si el error es explícito de pertenecer a otro usuario, no reintentar
+                    if (err.message && err.message.includes('pertenece a otro usuario')) {
+                        throw err;
+                    }
+
+                    // Comprobación de respaldo en base de datos para usuarios autenticados
+                    try {
+                        const sessionRes = await client?.auth?.getSession?.();
+                        const currentUserId = sessionRes?.data?.session?.user?.id;
+                        if (currentUserId) {
+                            const { data: existingPack } = await client
+                                .from('class_credit_packs')
+                                .select('id, pack_type, credits_total, credits_remaining')
+                                .eq('checkout_session_id', stripeSessionId)
+                                .maybeSingle();
+                            if (existingPack) {
+                                return {
+                                    isGuest: false,
+                                    purchaseIsGuest: false,
+                                    purchaseType: existingPack.pack_type,
+                                    paymentStatus: 'paid'
+                                };
+                            }
+                        }
+                    } catch (_) {}
+
+                    if (intento < maxIntentos) {
+                        await new Promise(r => setTimeout(r, 1500));
+                    }
+                }
+            }
+            throw ultimoError;
+        }
+
+        async function procesarResultadoVerificacion(data) {
+            document.getElementById('loading-state').classList.add('hidden');
+
+            if (data.isGuest && data.purchaseType === 'clase_suelta') {
+                if (data.alreadyRedeemed) {
+                    document.getElementById('guest-redeemed').classList.remove('hidden');
+                } else {
+                    document.getElementById('guest-nombre').value = data.nombre || safeStoredValue('guest_nombre');
+                    document.getElementById('guest-apellidos').value = data.apellidos || safeStoredValue('guest_apellidos');
+                    document.getElementById('guest-success').classList.remove('hidden');
+                    document.getElementById('main-card').classList.replace('max-w-md', 'max-w-lg');
+                    await cargarClasesDisponiblesInvitado();
+                }
+            } else if (data.isGuest && (isGuestConsultationPurchaseType(data.purchaseType) || isWorkshopPurchaseType(data.purchaseType))) {
+                const itemTitles = {
+                    'miriam_psico_individual_1a': 'Acompañamiento psicoterapéutico (1ª sesión)',
+                    'miriam_psico_individual_sig': 'Acompañamiento psicoterapéutico (siguientes)',
+                    'miriam_psico_pareja_1a': 'Terapia de pareja (1ª sesión)',
+                    'miriam_psico_pareja_sig': 'Terapia de pareja (siguientes)',
+                    'silvia_ayurveda_1a': 'Consulta de Ayurveda (1ª sesión)',
+                    'silvia_ayurveda_sig': 'Consulta de Ayurveda (seguimiento)',
+                    'isabel_pni_1a': 'Consulta de PNI (1ª sesión)',
+                    'isabel_pni_sig': 'Consulta de PNI (seguimiento)',
+                    'clase_especial': 'Clase Especial: Yoga & Meditación',
+                    'taller_intro_power_vinyasa': 'Taller: Introducción a Power Vinyasa',
+                };
+                const titleEl = document.getElementById('guest-consultation-title');
+                const msgEl = document.getElementById('guest-consultation-message');
+                const itemName = itemTitles[data.purchaseType] || 'Reserva';
+                if (titleEl) titleEl.textContent = itemName;
+                const customerName = [data.nombre, data.apellidos].filter(Boolean).join(' ');
+                const idInfo = [customerName, data.phone].filter(Boolean).join(' · ');
+                if (msgEl) {
+                    let text = `Stripe ha confirmado el pago de tu <strong>${escapeHtml(itemName)}</strong>.`;
+                    if (data.email) text += ` Tu recibo de compra se ha enviado a <strong>${escapeHtml(data.email)}</strong>.`;
+                    if (idInfo) text += ` Para el día de la sesión podrás identificarte en el centro con tus datos (<strong>${escapeHtml(idInfo)}</strong>).`;
+                    msgEl.innerHTML = text;
+                }
+                document.getElementById('guest-consultation-success').classList.remove('hidden');
+            } else {
+                // Logged in user checkout
+                const successMessage = document.getElementById('standard-success-message');
+                if (successMessage && data.purchaseType === 'bono_ilimitado' && data.membershipMonth) {
+                    const [year, month] = String(data.membershipMonth).split('-').map(Number);
+                    const monthLabel = new Date(Date.UTC(year, month - 1, 1, 12)).toLocaleDateString('es-ES', {
+                        month: 'long', year: 'numeric', timeZone: 'UTC'
+                    });
+                    successMessage.textContent = `Tu Bono Ilimitado para ${monthLabel} ya está registrado. Podrás usarlo desde el día 1 hasta el último día de ese mes natural.`;
+                } else if (successMessage && data.purchaseType === 'clase_suelta') {
+                    successMessage.textContent = 'Tu clase suelta ya está registrada como un bono independiente y caducará 60 días naturales después de la compra.';
+                } else if (successMessage && /^pack_(4|6|10)$/.test(data.purchaseType || '')) {
+                    const creditsMap = { pack_4: 4, pack_6: 6, pack_10: 10 };
+                    const numCredits = creditsMap[data.purchaseType] || 6;
+                    successMessage.textContent = `Tu Pack de ${numCredits} clases ya está registrado y activo en tu cuenta con 60 días de validez. ¡Ya puedes reservar tus clases!`;
+                } else if (successMessage && data.purchaseType === 'taller_intro_power_vinyasa') {
+                    successMessage.textContent = 'Tu plaza para el Taller de Introducción a Power Vinyasa ya está confirmada y registrada en tu cuenta.';
+                } else if (successMessage && data.purchaseType === 'clase_especial') {
+                    successMessage.textContent = 'Tu plaza para la Clase Especial de Yoga & Meditación ya está confirmada y registrada en tu cuenta.';
+                }
+                document.getElementById('standard-success').classList.remove('hidden');
+                startCountdown(5);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const searchParams = new URLSearchParams(window.location.search);
             stripeSessionId = searchParams.get('session_id');
@@ -227,105 +366,12 @@
             document.getElementById('session-id').value = stripeSessionId;
 
             try {
-                if (!client) throw new Error('Supabase client failed to initialize.');
-
-                let invokeHeaders = {};
-                try {
-                    const sessionRes = await client.auth.getSession();
-                    const token = sessionRes?.data?.session?.access_token;
-                    if (token) {
-                        invokeHeaders['Authorization'] = `Bearer ${token}`;
-                    }
-                } catch (_) {}
-
-                // Fetch details of checkout session from Deno function
-                const { data, error } = await client.functions.invoke('get-checkout-session', {
-                    headers: invokeHeaders,
-                    body: {
-                        session_id: stripeSessionId,
-                        supports_guest_consultation_ui: true
-                    }
-                });
-
-                if (error) throw error;
-                if (!data || data.paymentStatus !== 'paid') {
-                    throw new Error('La sesión no está confirmada como pagada.');
-                }
-
-                document.getElementById('loading-state').classList.add('hidden');
-
-                if (data.isGuest && data.purchaseType === 'clase_suelta') {
-                    if (data.alreadyRedeemed) {
-                        document.getElementById('guest-redeemed').classList.remove('hidden');
-                    } else {
-                        // Prefill guest form details collected by Stripe or localStorage
-                        document.getElementById('guest-nombre').value = data.nombre || safeStoredValue('guest_nombre');
-                        document.getElementById('guest-apellidos').value = data.apellidos || safeStoredValue('guest_apellidos');
-                        
-                        document.getElementById('guest-success').classList.remove('hidden');
-                        // Make card wider to fit the form details nicely
-                        document.getElementById('main-card').classList.replace('max-w-md', 'max-w-lg');
-                        
-                        // Load available classes for booking
-                        await cargarClasesDisponiblesInvitado();
-                    }
-                } else if (data.isGuest && (isGuestConsultationPurchaseType(data.purchaseType) || isWorkshopPurchaseType(data.purchaseType))) {
-                    const itemTitles = {
-                        'miriam_psico_individual_1a': 'Acompañamiento psicoterapéutico (1ª sesión)',
-                        'miriam_psico_individual_sig': 'Acompañamiento psicoterapéutico (siguientes)',
-                        'miriam_psico_pareja_1a': 'Terapia de pareja (1ª sesión)',
-                        'miriam_psico_pareja_sig': 'Terapia de pareja (siguientes)',
-                        'silvia_ayurveda_1a': 'Consulta de Ayurveda (1ª sesión)',
-                        'silvia_ayurveda_sig': 'Consulta de Ayurveda (seguimiento)',
-                        'isabel_pni_1a': 'Consulta de PNI (1ª sesión)',
-                        'isabel_pni_sig': 'Consulta de PNI (seguimiento)',
-                        'clase_especial': 'Clase Especial: Yoga & Meditación',
-                        'taller_intro_power_vinyasa': 'Taller: Introducción a Power Vinyasa',
-                    };
-                    const titleEl = document.getElementById('guest-consultation-title');
-                    const msgEl = document.getElementById('guest-consultation-message');
-                    const itemName = itemTitles[data.purchaseType] || 'Reserva';
-                    if (titleEl) {
-                        titleEl.textContent = itemName;
-                    }
-                    const customerName = [data.nombre, data.apellidos].filter(Boolean).join(' ');
-                    const idInfo = [customerName, data.phone].filter(Boolean).join(' · ');
-                    if (msgEl) {
-                        let text = `Stripe ha confirmado el pago de tu <strong>${escapeHtml(itemName)}</strong>.`;
-                        if (data.email) {
-                            text += ` Tu recibo de compra se ha enviado a <strong>${escapeHtml(data.email)}</strong>.`;
-                        }
-                        if (idInfo) {
-                            text += ` Para el día de la sesión podrás identificarte en el centro con tus datos (<strong>${escapeHtml(idInfo)}</strong>).`;
-                        }
-                        msgEl.innerHTML = text;
-                    }
-                    document.getElementById('guest-consultation-success').classList.remove('hidden');
-                } else {
-                    // Logged in user checkout
-                    const successMessage = document.getElementById('standard-success-message');
-                    if (successMessage && data.purchaseType === 'bono_ilimitado' && data.membershipMonth) {
-                        const [year, month] = String(data.membershipMonth).split('-').map(Number);
-                        const monthLabel = new Date(Date.UTC(year, month - 1, 1, 12)).toLocaleDateString('es-ES', {
-                            month: 'long', year: 'numeric', timeZone: 'UTC'
-                        });
-                        successMessage.textContent = `Tu Bono Ilimitado para ${monthLabel} ya está registrado. Podrás usarlo desde el día 1 hasta el último día de ese mes natural.`;
-                    } else if (successMessage && data.purchaseType === 'clase_suelta') {
-                        successMessage.textContent = 'Tu clase suelta ya está registrada como un bono independiente y caducará 60 días naturales después de la compra.';
-                    } else if (successMessage && /^pack_(4|6|10)$/.test(data.purchaseType || '')) {
-                        successMessage.textContent = 'Tu pack ya está registrado con su propio saldo y caducará 60 días naturales después de la compra.';
-                    } else if (successMessage && data.purchaseType === 'taller_intro_power_vinyasa') {
-                        successMessage.textContent = 'Tu plaza para el Taller de Introducción a Power Vinyasa ya está confirmada y registrada en tu cuenta.';
-                    } else if (successMessage && data.purchaseType === 'clase_especial') {
-                        successMessage.textContent = 'Tu plaza para la Clase Especial de Yoga & Meditación ya está confirmada y registrada en tu cuenta.';
-                    }
-                    document.getElementById('standard-success').classList.remove('hidden');
-                    startCountdown(5);
-                }
+                const data = await verificarPagoConReintentos(3);
+                await procesarResultadoVerificacion(data);
             } catch (e) {
                 console.error("Verification error:", e);
                 mostrarErrorVerificacion(
-                    'No se ha podido confirmar el pago con Stripe. No reserves ni repitas el cobro hasta verificarlo de nuevo.',
+                    'No se ha podido confirmar el pago con Stripe. Si el importe se ha cobrado en tu tarjeta, tu bono se sincronizará automáticamente. No repitas el cobro antes de pulsar Reintentar verificación.',
                     true
                 );
             }
@@ -347,9 +393,20 @@
             document.getElementById('verification-error').classList.remove('hidden');
         }
 
-        function reintentarVerificacion() {
+        async function reintentarVerificacion() {
             if (!stripeSessionId || !stripeSessionId.startsWith('cs_live_')) return;
-            window.location.reload();
+            document.getElementById('verification-error').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            try {
+                const data = await verificarPagoConReintentos(3);
+                await procesarResultadoVerificacion(data);
+            } catch (e) {
+                console.error("Verification error retry:", e);
+                mostrarErrorVerificacion(
+                    'No se ha podido confirmar el pago con Stripe. Si el importe se ha cobrado en tu tarjeta, tu bono se sincronizará en tu cuenta en breve.',
+                    true
+                );
+            }
         }
 
         function startCountdown(seconds) {
