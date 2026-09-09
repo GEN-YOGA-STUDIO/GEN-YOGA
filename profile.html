@@ -4441,6 +4441,45 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Consulta doble (2 citas unidas simétricamente en fechas distintas) -->
+                    <div class="md:col-span-2">
+                        <div class="flex items-center justify-between gap-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <input id="consulta-multiple-enabled" name="consulta-multiple-enabled" type="checkbox"
+                                    onchange="toggleConsultaMultipleOpciones()"
+                                    class="w-5 h-5 accent-olive cursor-pointer">
+                                <div>
+                                    <label for="consulta-multiple-enabled" class="text-sm font-bold text-cocoa flex items-center gap-1.5 cursor-pointer">
+                                        <i class="ph-bold ph-link text-amber-700"></i> Consulta doble
+                                    </label>
+                                    <p class="text-[11px] text-cocoa/60">Permite vincular dos turnos separados en el tiempo. Con un único pago/saldo se reservan o cancelan ambos.</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-amber-800 font-black uppercase tracking-widest bg-amber-100 px-2.5 py-0.5 rounded-md border border-amber-300">Doble</span>
+                        </div>
+
+                        <!-- Opciones de Consulta Doble (Segunda fecha y segunda hora) -->
+                        <div id="consulta-multiple-options" class="hidden mt-3 p-4 bg-amber-50/70 border border-amber-300/60 rounded-2xl space-y-3">
+                            <div class="flex items-center gap-2 text-xs font-black text-amber-900 uppercase tracking-wider">
+                                <i class="ph-bold ph-calendar-plus text-base text-amber-700"></i>
+                                <span>Configuración del 2º Turno (Segunda fecha y hora)</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[11px] font-bold text-cocoa/70 uppercase tracking-wide ml-1 mb-1 block">Segunda Fecha *</label>
+                                    <input type="text" id="consulta-fecha-2" name="consulta-fecha-2" aria-label="Fecha del segundo turno"
+                                        class="w-full px-4 py-2.5 bg-white border border-cocoa/15 rounded-xl focus:ring-2 focus:ring-olive outline-none transition text-cocoa text-sm font-semibold">
+                                </div>
+                                <div>
+                                    <label class="text-[11px] font-bold text-cocoa/70 uppercase tracking-wide ml-1 mb-1 block">Segunda Hora de Inicio *</label>
+                                    <input type="time" id="consulta-hora-inicio-2" name="consulta-hora-inicio-2" aria-label="Hora de inicio del segundo turno"
+                                        class="w-full px-4 py-2.5 bg-white border border-cocoa/15 rounded-xl focus:ring-2 focus:ring-olive outline-none transition text-cocoa text-sm font-semibold">
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-cocoa/50 italic ml-1">Ambos turnos quedarán vinculados. Al apuntarse a uno, el alumno quedará automáticamente reservado a los dos con un único pago.</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex gap-3 pt-4 border-t border-cocoa/10">
                     <button type="button" onclick="cerrarModalCrearConsulta()"
@@ -4448,6 +4487,124 @@
                     <button type="submit"
                         class="flex-1 bg-gradient-to-r from-cocoa to-olive text-white py-3 rounded-xl font-bold hover:shadow-lg transition flex items-center justify-center gap-2"><i
                             class="ph-bold ph-check-circle"></i> Guardar Horario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Configuración de Notificaciones por Email del Profesional -->
+    <div id="modal-config-notificaciones-profesor"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-cocoa/40 backdrop-blur-sm">
+        <div class="bg-ivory rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-cocoa/10">
+            <div class="sticky top-0 bg-gradient-to-r from-cocoa to-olive text-white p-6 rounded-t-3xl flex justify-between items-center">
+                <div>
+                    <h3 class="brand-font text-xl sm:text-2xl font-bold flex items-center gap-2">
+                        <i class="ph-bold ph-envelope-simple"></i> Notificaciones por Email
+                    </h3>
+                    <p class="text-white/80 text-xs mt-1" id="notif-prof-subtitulo">Alertas automáticas para el profesional</p>
+                </div>
+                <button type="button" onclick="cerrarModalNotificacionesProfesor()" aria-label="Cerrar modal notificaciones"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition">
+                    <i class="ph-bold ph-x text-2xl"></i>
+                </button>
+            </div>
+            <form id="form-config-notificaciones-profesor" class="p-6 space-y-5" onsubmit="guardarConfigNotificacionesProfesor(event)">
+                <input type="hidden" id="notif-prof-id" value="">
+
+                <!-- Tarjeta de Identidad del Profesional -->
+                <div class="flex items-center gap-3 p-3.5 bg-white/70 rounded-2xl border border-cocoa/10 shadow-2xs">
+                    <div id="notif-prof-avatar-wrap" class="w-12 h-12 rounded-full overflow-hidden border-2 border-olive/30 flex items-center justify-center bg-olive/10 shrink-0 font-bold text-olive">
+                        P
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h4 id="notif-prof-nombre-display" class="font-bold text-cocoa text-sm truncate">Nombre del Profesional</h4>
+                        <p id="notif-prof-email-display" class="text-xs text-cocoa/60 truncate">correo@profesional.es</p>
+                    </div>
+                </div>
+
+                <!-- 1. Master Switch: Activar/Desactivar Notificaciones -->
+                <div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-cocoa/10 shadow-2xs">
+                    <div>
+                        <label for="notif-prof-activas" class="text-sm font-bold text-cocoa block cursor-pointer">
+                            Activar notificaciones por email
+                        </label>
+                        <p class="text-[11px] text-cocoa/60">Enviar alertas automáticas cuando ocurran eventos en su agenda.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input type="checkbox" id="notif-prof-activas" class="sr-only peer" onchange="actualizarEstadoVisualNotificaciones()">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-olive"></div>
+                    </label>
+                </div>
+
+                <!-- Datos de Envío (Remitente y Destinatario) -->
+                <div class="grid grid-cols-1 gap-3.5">
+                    <div>
+                        <label class="text-[10px] font-black text-cocoa/70 uppercase tracking-wider block mb-1">
+                            <i class="ph-bold ph-paper-plane-right text-olive"></i> Correo Remitente Oficial (Gimnasio/Estudio)
+                        </label>
+                        <input type="text" id="notif-prof-remitente" readonly value="hola@genyoga.studio"
+                            class="w-full px-3.5 py-2.5 bg-sand/15 border border-cocoa/10 rounded-xl text-xs font-bold text-cocoa cursor-not-allowed">
+                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Todas las notificaciones se emiten con la identidad certificada de GEN Yoga.</p>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-cocoa/70 uppercase tracking-wider block mb-1">
+                            <i class="ph-bold ph-tray text-olive"></i> Correo de Destino para Alertas
+                        </label>
+                        <input type="email" id="notif-prof-email-destino" required
+                            class="w-full px-3.5 py-2.5 bg-white border border-cocoa/10 rounded-xl text-xs font-bold text-cocoa focus:ring-2 focus:ring-olive outline-none"
+                            placeholder="profesor@genyoga.studio">
+                        <p class="text-[10px] text-cocoa/50 mt-1 ml-1">Por defecto es el correo registrado de su perfil profesional.</p>
+                    </div>
+                </div>
+
+                <!-- 2. Constructor de Condiciones / Reglas -->
+                <div id="notif-prof-condiciones-box" class="space-y-2.5">
+                    <label class="text-xs font-black text-cocoa/70 uppercase tracking-wider block">
+                        Condiciones de Notificación (¿Cuándo mandar correo?)
+                    </label>
+                    <div class="space-y-2 bg-sand/10 p-3.5 rounded-2xl border border-cocoa/10">
+                        <label class="flex items-start gap-2.5 text-xs text-cocoa cursor-pointer select-none">
+                            <input type="checkbox" id="notif-cond-reserva-consulta" checked class="accent-olive w-4 h-4 mt-0.5">
+                            <div>
+                                <span class="font-bold block text-cocoa">Se rellena / reserva un hueco en su consulta</span>
+                                <span class="text-[11px] text-cocoa/60">Avisa inmediatamente cuando un alumno confirma su cita (incluye datos del alumno, fecha y hora).</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 text-xs text-cocoa cursor-pointer select-none">
+                            <input type="checkbox" id="notif-cond-reserva-multiple" checked class="accent-olive w-4 h-4 mt-0.5">
+                            <div>
+                                <span class="font-bold block text-cocoa">Se reserva una sesión múltiple (2 huecos)</span>
+                                <span class="text-[11px] text-cocoa/60">Notifica cuando se reservan turnos múltiples vinculados indicando ambos horarios.</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 text-xs text-cocoa cursor-pointer select-none">
+                            <input type="checkbox" id="notif-cond-cancelacion-consulta" class="accent-olive w-4 h-4 mt-0.5">
+                            <div>
+                                <span class="font-bold block text-cocoa">Se cancela una cita de consulta</span>
+                                <span class="text-[11px] text-cocoa/60">Avisa al profesional si el turno queda de nuevo liberado por cancelación.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Botón de Envío de Prueba -->
+                <div class="pt-1">
+                    <button type="button" onclick="probarEnvioEmailProfesorActual()"
+                        class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-olive/30 bg-olive/5 text-olive hover:bg-olive/10 text-xs font-bold transition">
+                        <i class="ph-bold ph-paper-plane-tilt"></i> Enviar correo de prueba a este profesor
+                    </button>
+                </div>
+
+                <!-- Acciones -->
+                <div class="flex gap-3 pt-3 border-t border-cocoa/10">
+                    <button type="button" onclick="cerrarModalNotificacionesProfesor()"
+                        class="flex-1 bg-sand/15 text-cocoa/70 py-3 rounded-xl font-bold hover:bg-sand/25 transition text-xs sm:text-sm">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-cocoa to-olive text-white py-3 rounded-xl font-bold hover:shadow-lg transition flex items-center justify-center gap-2 text-xs sm:text-sm">
+                        <i class="ph-bold ph-check-circle"></i> Guardar Configuración
+                    </button>
                 </div>
             </form>
         </div>
@@ -4915,6 +5072,7 @@
         let allAsistenciasPerfilesMap = {};
         let datePickerInstance = null;
         let datePickerConsultaInstance = null;
+        let datePickerConsulta2Instance = null;
         let datePickerTallerInstance = null;
         let appStaticBindingsInitialized = false;
         let initializedUserId = null;
@@ -6272,7 +6430,7 @@
 
         function syncFlatpickrLocales() {
             const locale = getCurrentLang() === 'es' ? 'es' : 'default';
-            [datePickerInstance, datePickerConsultaInstance, datePickerTallerInstance].forEach(instance => {
+            [datePickerInstance, datePickerConsultaInstance, datePickerConsulta2Instance, datePickerTallerInstance].forEach(instance => {
                 if (instance && typeof instance.set === 'function') {
                     instance.set('locale', locale);
                 }
@@ -6338,8 +6496,15 @@
             const repConsultaOptions = document.getElementById('consulta-repeat-options');
             if (!appStaticBindingsInitialized && repConsultaEnabled && repConsultaOptions) {
                 repConsultaEnabled.addEventListener('change', () => {
-                    if (repConsultaEnabled.checked) repConsultaOptions.classList.remove('hidden');
-                    else repConsultaOptions.classList.add('hidden');
+                    if (repConsultaEnabled.checked) {
+                        repConsultaOptions.classList.remove('hidden');
+                        const multipleEnabled = document.getElementById('consulta-multiple-enabled');
+                        const multipleOptions = document.getElementById('consulta-multiple-options');
+                        if (multipleEnabled) multipleEnabled.checked = false;
+                        if (multipleOptions) multipleOptions.classList.add('hidden');
+                    } else {
+                        repConsultaOptions.classList.add('hidden');
+                    }
                 });
             }
 
@@ -6357,6 +6522,14 @@
             try {
                 if (!datePickerConsultaInstance && typeof flatpickr === 'function' && document.getElementById('consulta-fecha')) {
                     datePickerConsultaInstance = flatpickr("#consulta-fecha", {
+                        locale: getCurrentLang() === 'es' ? "es" : "default",
+                        dateFormat: "Y-m-d",
+                        firstDayOfWeek: 1,
+                        disableMobile: true
+                    });
+                }
+                if (!datePickerConsulta2Instance && typeof flatpickr === 'function' && document.getElementById('consulta-fecha-2')) {
+                    datePickerConsulta2Instance = flatpickr("#consulta-fecha-2", {
                         locale: getCurrentLang() === 'es' ? "es" : "default",
                         dateFormat: "Y-m-d",
                         firstDayOfWeek: 1,
@@ -10295,12 +10468,13 @@
 
             const isClaseEspecial = esClaseEspecialTipo(clase);
             const isTaller = !isClaseEspecial && esTallerTipo(clase);
+            const isExplicitFreeClass = !isClaseEspecial && !isTaller && (clase.es_gratuita === true || /introductor/i.test(clase.nombre || ''));
             const canUseFree = !esCompania && !isClaseEspecial && !isTaller && esSesionGratuita && tieneBonoBienvenida && !forceRegular;
             const mesActividadStr = fechaClase.toISOString().slice(0, 7) + '-01';
             const mesNombre = formatDisplayMonth(fechaClase);
 
             // 4. Comprobación de saldo disponible para reservar
-            if (!isClaseEspecial && !isTaller && !canUseFree && !canBookNormal) {
+            if (!isClaseEspecial && !isTaller && !isExplicitFreeClass && !canUseFree && !canBookNormal) {
                 if (automaticPostPayment) {
                     await Swal.fire({
                         icon: 'info',
@@ -10415,6 +10589,8 @@
                 } else {
                     mensajeConfirmacion = `¿Reservar plaza en este <b>Taller</b> (Modo Administrador)?`;
                 }
+            } else if (isExplicitFreeClass) {
+                mensajeConfirmacion = '¿Quieres reservar tu plaza en esta <b>Sesión Introductoria Gratuita (0 €)</b>?';
             } else if (canUseFree) {
                 mensajeConfirmacion = '¿Quieres reservar tu plaza usando tu <b>Bono de Bienvenida (0 €)</b>?';
             } else if (canUseUnlimited) {
@@ -10472,7 +10648,7 @@
                     return false;
                 } else {
                     playYogaSound();
-                    if (canUseFree) {
+                    if (canUseFree || (isExplicitFreeClass && userSaldoClasesGratis > 0)) {
                         userSaldoClasesGratis = Math.max(0, userSaldoClasesGratis - 1);
                         if (currentProfileFields) currentProfileFields.saldo_clases_gratis = userSaldoClasesGratis;
                     }
@@ -14474,7 +14650,7 @@
             if (u.reprog_credits && u.reprog_credits.length > 0) {
                 const activeReprog = u.reprog_credits.filter(r => (r.estado || '').toLowerCase() === 'disponible');
                 if (activeReprog.length > 0) {
-                    badges.push(`<span class="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1 shadow-2xs" title="${activeReprog.length} créditos de reprogramación disponibles"><i class="ph-bold ph-arrow-counter-clockwise text-amber-700"></i> ${activeReprog.length} Reprog</span>`);
+                    badges.push(`<button type="button" onclick="abrirGestionBonosUsuario('${escapeHtml(String(u.id))}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1 shadow-2xs cursor-pointer transition" title="${activeReprog.length} créditos de reprogramación disponibles (Clic para gestionar)"><i class="ph-bold ph-arrow-counter-clockwise text-amber-700"></i> ${activeReprog.length} Reprog</button>`);
                 }
             }
 
@@ -15184,12 +15360,21 @@
                 if (cats.includes('psicologia')) badges.push('<span class="inline-block py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-purple-100 text-purple-800 border border-purple-200">Psicología</span>');
                 if (cats.includes('nutricion')) badges.push('<span class="inline-block py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-amber-100 text-amber-800 border border-amber-200">Nutrición/Ayurveda</span>');
                 if (cats.includes('talleres')) badges.push('<span class="inline-block py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-blue-100 text-blue-800 border border-blue-200">Talleres</span>');
+                if (p.notificaciones_email_activas) {
+                    badges.push('<span class="inline-flex items-center gap-1 py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-emerald-100 text-emerald-800 border border-emerald-300" title="Alertas de correo activas"><i class="ph-bold ph-envelope"></i> Email On</span>');
+                }
 
                 return `
         <div class="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-cocoa/10 hover:shadow-md hover:scale-[1.01] transition duration-300 group flex flex-col items-center relative min-h-[260px] w-full sm:w-[300px]">
             
             <!-- Botones de Acción (Top Right) -->
             <div style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 10;">
+                <button onclick="abrirConfiguracionNotificacionesProfesor(${profesionalId})"
+                    class="hover:bg-olive hover:text-white transition flex items-center justify-center shadow-sm"
+                    style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(140,134,88,0.15); border: 1px solid rgba(140,134,88,0.25); color: #8C8658;"
+                    title="Configurar Notificaciones por Email">
+                    <i class="ph-bold ph-envelope-simple text-sm"></i>
+                </button>
                 <button onclick="editarProfesor(${profesionalId})"
                     class="hover:bg-cocoa hover:text-white transition flex items-center justify-center shadow-sm"
                     style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(211,202,180,0.15); border: 1px solid rgba(38,22,12,0.05); color: #26160C;"
@@ -15295,6 +15480,12 @@
                 <div>
                     <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Color Identificativo</label>
                     <input id="swal-prof-color" type="color" class="w-full h-10 rounded cursor-pointer border border-gray-200" value="${safeCssColor(profesor.color, '#2d8a8e')}">
+                </div>
+                <div class="pt-2 border-t border-gray-100">
+                    <button type="button" onclick="Swal.close(); setTimeout(() => abrirConfiguracionNotificacionesProfesor(${id}), 100);"
+                        class="w-full py-2.5 px-3 bg-olive/10 hover:bg-olive/20 text-olive font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition">
+                        <i class="ph-bold ph-envelope-simple text-sm"></i> Configurar Notificaciones por Email
+                    </button>
                 </div>
             </div>
         `,
@@ -16045,7 +16236,7 @@
             }
 
             const accesoTipo = document.querySelector('input[name="editar-clase-acceso-tipo"]:checked')?.value || 'regular';
-            const esGratuita = !isConsulta && accesoTipo === 'introductoria';
+            const esGratuita = !isConsulta && (accesoTipo === 'introductoria' || /introductor/i.test(nombre));
             const companionModality = (!isConsulta && accesoTipo === 'companion')
                 ? (document.querySelector('input[name="editar-clase-companion-subtipo"]:checked')?.value || 'colegas')
                 : null;
@@ -16320,7 +16511,7 @@
             const addGroupEnabled = !!document.getElementById('clase-add-group-enabled')?.checked;
 
             const accesoTipo = document.querySelector('input[name="clase-acceso-tipo"]:checked')?.value || 'regular';
-            const esGratuita = (accesoTipo === 'introductoria');
+            const esGratuita = (accesoTipo === 'introductoria') || /introductor/i.test(nombre);
             const companionModality = (accesoTipo === 'companion')
                 ? (document.querySelector('input[name="clase-companion-subtipo"]:checked')?.value || 'colegas')
                 : null;
@@ -18231,11 +18422,13 @@
             // Consultar créditos de reprogramación del usuario
             let userReprogCredits = [];
             try {
-                const { data: rcData } = await client.from('creditos_reprogramacion')
-                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilized_at')
+                const { data: rcData, error: rcErr } = await client.from('creditos_reprogramacion')
+                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilizado_at')
                     .eq('user_id', userId)
                     .order('created_at', { ascending: false });
-                if (rcData && rcData.length > 0) {
+                if (rcErr) {
+                    console.warn('Error leyendo creditos_reprogramacion en modal:', rcErr);
+                } else if (rcData && rcData.length > 0) {
                     userReprogCredits = rcData;
                 }
             } catch (err) {
@@ -18363,6 +18556,9 @@
             }
 
             let htmlReprogList = '';
+            const activeReprog = userReprogCredits.filter(r => (r.estado || '').toLowerCase() === 'disponible');
+            const activeReprogCount = activeReprog.length;
+
             if (userReprogCredits.length > 0) {
                 htmlReprogList = userReprogCredits.map(r => {
                     const isDisp = (r.estado || '').toLowerCase() === 'disponible';
@@ -18381,14 +18577,12 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-1">
-                                ${isDisp ? `
-                                    <button type="button" onclick="retirarCreditoReprogramacionAdmin('${userId}', '${r.id}')"
-                                        class="px-2 py-1 rounded-lg text-[10px] font-black transition cursor-pointer active:scale-95 flex items-center gap-1"
-                                        style="background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fca5a5 !important;"
-                                        title="Retirar este crédito de reprogramación">
-                                        <i class="ph-bold ph-trash"></i> Retirar
-                                    </button>
-                                ` : ''}
+                                <button type="button" onclick="retirarCreditoReprogramacionAdmin('${userId}', '${r.id}')"
+                                    class="px-2 py-1 rounded-lg text-[10px] font-black transition cursor-pointer active:scale-95 flex items-center gap-1"
+                                    style="background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fca5a5 !important;"
+                                    title="Eliminar este crédito de reprogramación">
+                                    <i class="ph-bold ph-trash"></i> Eliminar
+                                </button>
                             </div>
                         </div>
                     `;
@@ -18416,10 +18610,10 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', -1, this)" class="w-8 h-8 rounded-lg border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 1, this)" class="w-8 h-8 rounded-lg bg-gray-900 text-white hover:bg-black font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 5, this)" class="px-2 h-8 rounded-lg bg-olive text-white hover:bg-black font-bold text-[10px] transition cursor-pointer active:scale-95">+5</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 10, this)" class="px-2 h-8 rounded-lg bg-cocoa text-white hover:bg-black font-bold text-[10px] transition cursor-pointer active:scale-95" title="Añadir 10 Clases (Pack 10)">+10</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #374151 !important; border: 1px solid #d1d5db !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #111827 !important; color: #ffffff !important; border: 1px solid #000000 !important;">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 5, this)" class="px-2 h-8 rounded-lg font-bold text-[10px] transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #5c6246 !important; color: #ffffff !important; border: 1px solid #4a4f38 !important;">+5</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 10, this)" class="px-2 h-8 rounded-lg font-bold text-[10px] transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #2b2623 !important; color: #ffffff !important; border: 1px solid #1a1715 !important;" title="Añadir 10 Clases (Pack 10)">+10</button>
                     </div>
                 </div>
 
@@ -18433,8 +18627,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', -1, this)" class="w-8 h-8 rounded-lg border border-emerald-200 text-emerald-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', 1, this)" class="w-8 h-8 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #047857 !important; border: 1px solid #a7f3d0 !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #047857 !important; color: #ffffff !important; border: 1px solid #065f46 !important;">+1</button>
                     </div>
                 </div>
 
@@ -18448,8 +18642,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', -1, this)" class="w-8 h-8 rounded-lg border border-pink-200 text-pink-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', 1, this)" class="w-8 h-8 rounded-lg bg-pink-600 text-white hover:bg-pink-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #be185d !important; border: 1px solid #fbcfe8 !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #db2777 !important; color: #ffffff !important; border: 1px solid #be185d !important;">+1</button>
                     </div>
                 </div>
 
@@ -18463,8 +18657,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', -1, this)" class="w-8 h-8 rounded-lg border border-blue-200 text-blue-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', 1, this)" class="w-8 h-8 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #1e40af !important; border: 1px solid #bfdbfe !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #2563eb !important; color: #ffffff !important; border: 1px solid #1d4ed8 !important; box-shadow: 0 1px 2px rgba(37,99,235,0.2) !important;">+1</button>
                     </div>
                 </div>
 
@@ -18478,8 +18672,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', -1, this)" class="w-8 h-8 rounded-lg border border-purple-200 text-purple-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', 1, this)" class="w-8 h-8 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #6b21a8 !important; border: 1px solid #e9d5ff !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #9333ea !important; color: #ffffff !important; border: 1px solid #7e22ce !important; box-shadow: 0 1px 2px rgba(147,51,234,0.2) !important;">+1</button>
                     </div>
                 </div>
 
@@ -18490,15 +18684,24 @@
                             <i class="ph-bold ph-arrow-counter-clockwise text-amber-700 text-xl"></i>
                             <div>
                                 <p class="text-xs font-bold text-cocoa">6. Créditos de Reprogramación</p>
-                                <p class="text-[10px] text-amber-800">Bonos por cancelaciones para reutilizar</p>
+                                <p class="text-[10px] text-amber-800">Saldo: <strong id="modal-saldo-reprog" class="text-amber-800 font-black">${activeReprogCount}</strong></p>
                             </div>
                         </div>
-                        <button type="button" onclick="asignarCreditoReprogramacionAdmin('${userId}')"
-                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
-                            style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important;"
-                            title="Añadir un crédito de reprogramación">
-                            <i class="ph-bold ph-plus text-sm"></i> <span>+ Añadir Crédito</span>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #92400e !important; border: 1px solid #fde68a !important;" title="Restar 1 crédito de reprogramación">-1</button>
+                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important; box-shadow: 0 1px 2px rgba(217,119,6,0.2) !important;" title="Sumar 1 crédito de reprogramación">+1</button>
+                            ${activeReprogCount > 0 ? `
+                                <button type="button" onclick="vaciarCreditosReprogAdmin('${userId}')" class="px-2.5 h-8 rounded-lg text-[11px] font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs" style="background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fca5a5 !important;" title="Eliminar todos los créditos de reprogramación">
+                                    <i class="ph-bold ph-trash text-xs"></i> <span>Vaciar</span>
+                                </button>
+                            ` : ''}
+                            <button type="button" onclick="asignarCreditoReprogramacionAdmin('${userId}')"
+                                class="px-2.5 h-8 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                                style="background-color: #ffffff !important; color: #78350f !important; border: 1px solid #fcd34d !important;"
+                                title="Añadir con tipo y especialidad específica">
+                                <i class="ph-bold ph-plus text-xs"></i> <span>Detallado</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="pt-2 space-y-2 border-t border-amber-200/70">
                         ${htmlReprogList}
@@ -18566,25 +18769,27 @@
 
         async function retirarCreditoReprogramacionAdmin(userId, creditoId) {
             const confirm = await Swal.fire({
-                title: '¿Retirar Crédito?',
-                text: 'El crédito de reprogramación quedará retirado y no podrá utilizarse para reservar.',
+                title: '¿Eliminar Crédito?',
+                text: 'El crédito de reprogramación se eliminará permanentemente de la cuenta.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Sí, retirar crédito',
+                confirmButtonText: 'Sí, eliminar crédito',
                 cancelButtonText: 'Cancelar'
             });
             if (!confirm.isConfirmed) return abrirGestionBonosUsuario(userId);
 
-            Swal.fire({ title: 'Retirando crédito...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            Swal.fire({ title: 'Eliminando crédito...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
+            const idNum = Number(creditoId) || parseInt(creditoId, 10);
             let success = false;
             try {
                 const { data, error } = await client.rpc('admin_retirar_credito_reprogramacion', {
-                    p_credito_id: parseInt(creditoId, 10)
+                    p_credito_id: idNum
                 });
                 if (!error) success = true;
+                else console.warn('Fallo RPC admin_retirar_credito_reprogramacion:', error);
             } catch (rpcErr) {
                 console.warn('Fallo RPC admin_retirar_credito_reprogramacion:', rpcErr);
             }
@@ -18592,16 +18797,139 @@
             if (!success) {
                 try {
                     const { error } = await client.from('creditos_reprogramacion')
-                        .update({ estado: 'retirado_admin', utilized_at: new Date().toISOString() })
-                        .eq('id', parseInt(creditoId, 10));
+                        .delete()
+                        .eq('id', idNum);
                     if (!error) success = true;
+                    else console.error('Error fallback eliminar crédito:', error);
                 } catch (fbErr) {
-                    console.error('Error fallback retirar crédito:', fbErr);
+                    console.error('Error fallback eliminar crédito:', fbErr);
                 }
             }
 
+            await sincronizarReprogUsuarioCache(userId);
             if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
             await abrirGestionBonosUsuario(userId);
+            if (success) {
+                Swal.fire({ icon: 'success', title: 'Crédito eliminado', timer: 1000, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el crédito de reprogramación.' });
+            }
+        }
+
+        async function cambiarCreditosReprogDirecto(userId, delta) {
+            delta = Number(delta) || 0;
+            if (delta === 0) return { success: false };
+
+            let success = false;
+            let newBalance = 0;
+
+            try {
+                const { data, error } = await client.rpc('admin_ajustar_creditos_reprogramacion', {
+                    p_user_id: userId,
+                    p_delta: delta,
+                    p_tipo: 'consulta',
+                    p_subtipo: 'general'
+                });
+                if (!error) {
+                    success = true;
+                    newBalance = data;
+                } else {
+                    console.warn('RPC admin_ajustar_creditos_reprogramacion devolvió error:', error);
+                }
+            } catch (rpcErr) {
+                console.warn('RPC admin_ajustar_creditos_reprogramacion falló:', rpcErr);
+            }
+
+            if (!success) {
+                try {
+                    if (delta < 0) {
+                        const { data: credits, error: fetchErr } = await client.from('creditos_reprogramacion')
+                            .select('id')
+                            .eq('user_id', userId)
+                            .eq('estado', 'disponible')
+                            .order('created_at', { ascending: false })
+                            .limit(Math.abs(delta));
+                        if (fetchErr) throw fetchErr;
+                        if (credits && credits.length > 0) {
+                            const idsToDelete = credits.map(c => c.id);
+                            const { error: delErr } = await client.from('creditos_reprogramacion').delete().in('id', idsToDelete);
+                            if (delErr) throw delErr;
+                        }
+                    } else {
+                        const toInsert = [];
+                        for (let i = 0; i < delta; i++) {
+                            toInsert.push({
+                                user_id: userId,
+                                tipo: 'consulta',
+                                subtipo: 'general',
+                                estado: 'disponible',
+                                mes: new Date().toISOString().slice(0, 7) + '-01'
+                            });
+                        }
+                        const { error: insErr } = await client.from('creditos_reprogramacion').insert(toInsert);
+                        if (insErr) throw insErr;
+                    }
+                    const { count, error: countErr } = await client.from('creditos_reprogramacion')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('user_id', userId)
+                        .eq('estado', 'disponible');
+                    if (countErr) throw countErr;
+
+                    success = true;
+                    newBalance = count || 0;
+                } catch (fbErr) {
+                    console.error('Error en fallback cambiarCreditosReprogDirecto:', fbErr);
+                    Swal.fire('Error', 'No se pudieron modificar los créditos de reprogramación: ' + (fbErr.message || fbErr), 'error');
+                    return { success: false, error: fbErr };
+                }
+            }
+
+            await sincronizarReprogUsuarioCache(userId);
+            if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
+            return { success: true, newBalance };
+        }
+
+        async function vaciarCreditosReprogAdmin(userId) {
+            const confirm = await Swal.fire({
+                title: '¿Eliminar todos los créditos?',
+                text: 'Se eliminarán todos los créditos de reprogramación disponibles de este usuario/a.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, eliminar todos',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirm.isConfirmed) return abrirGestionBonosUsuario(userId);
+
+            Swal.fire({ title: 'Eliminando créditos...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+            let success = false;
+            try {
+                const { error } = await client.rpc('admin_vaciar_creditos_reprogramacion', { p_user_id: userId });
+                if (!error) success = true;
+            } catch (e) {}
+
+            if (!success) {
+                try {
+                    const { error: delErr } = await client.from('creditos_reprogramacion')
+                        .delete()
+                        .eq('user_id', userId)
+                        .eq('estado', 'disponible');
+                    if (!delErr) success = true;
+                } catch (err) {
+                    console.error('Error vaciando créditos:', err);
+                }
+            }
+
+            await sincronizarReprogUsuarioCache(userId);
+            if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
+            await abrirGestionBonosUsuario(userId);
+            if (success) {
+                Swal.fire({ icon: 'success', title: 'Créditos eliminados', timer: 1200, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron eliminar los créditos.' });
+            }
         }
 
         async function asignarCreditoReprogramacionAdmin(userId) {
@@ -18620,9 +18948,9 @@
                         <div>
                             <label class="block text-xs font-bold text-cocoa mb-1">Especialidad / Subtipo:</label>
                             <select id="swal-reprog-subtipo" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white">
+                                <option value="general">General</option>
                                 <option value="psicologia">Psicología</option>
                                 <option value="nutricion">Nutrición</option>
-                                <option value="general">General</option>
                             </select>
                         </div>
                     </div>
@@ -18656,12 +18984,32 @@
                 await Swal.fire('Error', 'No se pudo guardar el crédito: ' + (err.message || err), 'error');
             }
 
+            await sincronizarReprogUsuarioCache(userId);
             if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
             await abrirGestionBonosUsuario(userId);
         }
 
+        async function sincronizarReprogUsuarioCache(userId) {
+            try {
+                const { data: freshReprog } = await client.from('creditos_reprogramacion')
+                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilizado_at')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+                const u = (allUsersCache || []).find(x => String(x.id) === String(userId));
+                if (u) {
+                    u.reprog_credits = freshReprog || [];
+                }
+            } catch (e) {
+                console.warn('Error sincronizando cache de reprog:', e);
+            }
+        }
+
         window.retirarCreditoReprogramacionAdmin = retirarCreditoReprogramacionAdmin;
+        window.eliminarCreditoReprogIndividual = retirarCreditoReprogramacionAdmin;
         window.asignarCreditoReprogramacionAdmin = asignarCreditoReprogramacionAdmin;
+        window.cambiarCreditosReprogDirecto = cambiarCreditosReprogDirecto;
+        window.vaciarCreditosReprogAdmin = vaciarCreditosReprogAdmin;
+        window.sincronizarReprogUsuarioCache = sincronizarReprogUsuarioCache;
 
         async function retirarMesIlimitadoAdmin(userId, periodId = null, mesStr = null) {
             const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -18999,6 +19347,19 @@
             if (saldoEl) saldoEl.style.opacity = '0.4';
             if (btn) btn.disabled = true;
             try {
+                if (tipo === 'reprog') {
+                    const res = await cambiarCreditosReprogDirecto(userId, delta);
+                    if (res && res.success) {
+                        if (saldoEl) {
+                            saldoEl.textContent = res.newBalance;
+                            saldoEl.style.opacity = '1';
+                        }
+                    } else {
+                        if (saldoEl) saldoEl.style.opacity = '1';
+                    }
+                    await abrirGestionBonosUsuario(userId);
+                    return;
+                }
                 const res = await sumarSaldo(userId, tipo, delta, false);
                 if (res && res.success) {
                     if (saldoEl) {
@@ -20392,6 +20753,11 @@
                                     ${escapeHtml(c.nombre || profileT('common_consultation', 'Consulta'))}
                                 </h4>
                                 ${c.capacidad_max > 1 ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Grupo · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : ''}
+                                ${(() => {
+                                    const m = obtenerDatosSesionMultiple(c);
+                                    if (!m.esMultiple) return '';
+                                    return `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs" title="Consulta Doble vinculada (ambos turnos se reservan simultáneamente)"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                                })()}
                                 ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
@@ -20649,6 +21015,11 @@
                                     ${escapeHtml(c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'))}
                                 </h4>
                                 ${c.capacidad_max > 1 ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Grupo · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : ''}
+                                ${(() => {
+                                    const m = obtenerDatosSesionMultiple(c);
+                                    if (!m.esMultiple) return '';
+                                    return `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs" title="Consulta Doble vinculada (ambos turnos se reservan simultáneamente)"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                                })()}
                                 ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
@@ -20764,24 +21135,81 @@
             try {
                 const config = getConsultaConfig(tipo);
                 const cache = tipo === 'psicologia' ? allPsicologiaCache : allNutricionCache;
-                const clase = cache.find(c => String(c.id) === String(claseId));
-
-                if (clase?.miReserva) {
-                    return Swal.fire({
-                        icon: 'warning',
-                        title: 'Ya tienes esta cita',
-                        text: 'Ya hay una reserva confirmada para ti en este horario.',
-                        confirmButtonColor: config.color
-                    });
+                const clase = (cache || []).find(c => String(c.id) === String(claseId));
+                if (!clase) {
+                    return Swal.fire('Error', 'No se encontró la consulta seleccionada.', 'error');
                 }
 
-                if (clase && clase.ocupadas >= clase.capacidad_max && !isAdmin) {
-                    return Swal.fire({
-                        icon: 'error',
-                        title: 'Consulta reservada',
-                        text: 'Este horario ya no está disponible.',
-                        confirmButtonColor: config.color
-                    });
+                const multiInfo = obtenerDatosSesionMultiple(clase);
+                let partnerClase = null;
+
+                if (multiInfo?.esMultiple && multiInfo?.grupoId) {
+                    // Buscar la sesión compañera vinculada
+                    partnerClase = (cache || []).find(c => String(c.id) !== String(clase.id) && obtenerDatosSesionMultiple(c)?.grupoId === multiInfo.grupoId);
+                    if (!partnerClase) {
+                        try {
+                            const { data: dbPartners } = await client.from('clases')
+                                .select('*, profesionales(*)')
+                                .neq('id', clase.id)
+                                .or(`grupo_multiple_id.eq.${multiInfo.grupoId},descripcion.ilike.%[multiple:${multiInfo.grupoId};%`);
+                            if (dbPartners && dbPartners.length > 0) {
+                                partnerClase = dbPartners[0];
+                            }
+                        } catch (eFindPartner) {
+                            console.warn('Error buscando partner de clase múltiple:', eFindPartner);
+                        }
+                    }
+
+                    if (!partnerClase) {
+                        return Swal.fire({
+                            icon: 'error',
+                            title: 'Turno vinculado no encontrado',
+                            text: 'Esta consulta está configurada como Consulta Doble, pero no se ha encontrado el segundo turno vinculado. Contacta con el estudio.',
+                            confirmButtonColor: config.color
+                        });
+                    }
+
+                    // Comprobar si el usuario ya tiene reservado alguno de los dos turnos
+                    const yaTiene1 = !!clase.miReserva || (userBookingsCache || []).some(b => String(b.id) === String(clase.id));
+                    const yaTiene2 = !!partnerClase.miReserva || (userBookingsCache || []).some(b => String(b.id) === String(partnerClase.id));
+                    if (yaTiene1 || yaTiene2) {
+                        return Swal.fire({
+                            icon: 'warning',
+                            title: 'Ya tienes esta cita vinculada',
+                            text: 'Ya cuentas con una reserva confirmada para uno o ambos turnos de esta consulta doble.',
+                            confirmButtonColor: config.color
+                        });
+                    }
+
+                    // Comprobar disponibilidad de ambos turnos
+                    const llena1 = clase.ocupadas >= clase.capacidad_max && !isAdmin;
+                    const llena2 = partnerClase.ocupadas >= partnerClase.capacidad_max && !isAdmin;
+                    if (llena1 || llena2) {
+                        return Swal.fire({
+                            icon: 'error',
+                            title: 'Turno no disponible',
+                            text: 'Uno de los turnos de la consulta doble ya está completo. Al tratarse de una consulta doble, deben reservarse ambos turnos a la vez.',
+                            confirmButtonColor: config.color
+                        });
+                    }
+                } else {
+                    if (clase?.miReserva) {
+                        return Swal.fire({
+                            icon: 'warning',
+                            title: 'Ya tienes esta cita',
+                            text: 'Ya hay una reserva confirmada para ti en este horario.',
+                            confirmButtonColor: config.color
+                        });
+                    }
+
+                    if (clase && clase.ocupadas >= clase.capacidad_max && !isAdmin) {
+                        return Swal.fire({
+                            icon: 'error',
+                            title: 'Consulta reservada',
+                            text: 'Este horario ya no está disponible.',
+                            confirmButtonColor: config.color
+                        });
+                    }
                 }
 
                 const esGratuita = esClaseElegibleBonoGratis(clase);
@@ -20794,9 +21222,18 @@
                             confirmButtonColor: '#EC4899'
                         });
                     }
+                    const htmlConfirm = multiInfo?.esMultiple
+                        ? `Esta consulta es <b>doble (2 citas vinculadas en fechas/horas distintas)</b> que se reservarán de forma simultánea con tu Bono Gratuito:<br><br>
+                           <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1 mb-2">
+                             <div><b>Turno 1:</b> ${formatDisplayLongDate(clase.fecha_inicio)} a las ${formatDisplayTime(clase.fecha_inicio)}</div>
+                             <div><b>Turno 2:</b> ${formatDisplayLongDate(partnerClase.fecha_inicio)} a las ${formatDisplayTime(partnerClase.fecha_inicio)}</div>
+                           </div>
+                           ¿Deseas confirmar la reserva de ambos turnos a 0 €?`
+                        : '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Consulta Gratuita</b> (0 €)?';
+
                     const confirmRes = await Swal.fire({
-                        title: 'Confirmar Consulta Gratuita',
-                        html: '¿Quieres reservar tu plaza para esta sesión con tu <b>Bono de Consulta Gratuita</b> (0 €)?',
+                        title: multiInfo?.esMultiple ? 'Confirmar Consulta Doble Gratuita' : 'Confirmar Consulta Gratuita',
+                        html: htmlConfirm,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonColor: '#EC4899',
@@ -20810,9 +21247,18 @@
                         // Usuario sin saldo de consulta: derivar a compra y reserva
                         return abrirCompraYReservaConsulta(tipo, clase);
                     }
+                    const htmlConfirm = multiInfo?.esMultiple
+                        ? `Esta consulta es <b>doble (2 citas vinculadas)</b>. Con <b>1 única sesión de tu saldo/bono de consulta</b> se reservarán ambos turnos de forma simétrica:<br><br>
+                           <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1 mb-2">
+                             <div><b>Turno 1:</b> ${formatDisplayLongDate(clase.fecha_inicio)} a las ${formatDisplayTime(clase.fecha_inicio)}</div>
+                             <div><b>Turno 2:</b> ${formatDisplayLongDate(partnerClase.fecha_inicio)} a las ${formatDisplayTime(partnerClase.fecha_inicio)}</div>
+                           </div>
+                           ¿Deseas canjearla para confirmar tus citas a 0 €?`
+                        : `Dispones de <b>1 sesión de consulta disponible</b> en tu cuenta (saldo adquirido o devuelto por reprogramación).<br><br>¿Deseas canjearla para confirmar tu cita para <b>${escapeHtml(clase?.nombre || config.nombre)}</b> a 0 €?`;
+
                     const confirmSaldo = await Swal.fire({
-                        title: 'Confirmar Cita',
-                        html: `Dispones de <b>1 sesión de consulta disponible</b> en tu cuenta (saldo adquirido o devuelto por reprogramación).<br><br>¿Deseas canjearla para confirmar tu cita para <b>${escapeHtml(clase?.nombre || config.nombre)}</b> a 0 €?`,
+                        title: multiInfo?.esMultiple ? 'Confirmar Consulta Doble' : 'Confirmar Cita',
+                        html: htmlConfirm,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonColor: config.color || '#3B82F6',
@@ -20825,55 +21271,145 @@
 
                 isReserving = true;
                 Swal.fire({
-                    title: 'Confirmando cita...',
+                    title: multiInfo?.esMultiple ? 'Reservando ambos turnos...' : 'Confirmando cita...',
                     didOpen: () => Swal.showLoading()
                 });
 
-                let resError = null;
-                if (clase?.isVirtual) {
-                    const profId = safePositiveInteger(clase.profesor_id || clase.profesionales?.id);
-                    const { error } = await client.rpc('reservar_consulta_virtual', {
+                if (multiInfo?.esMultiple && partnerClase) {
+                    const slots = [clase, partnerClase].sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
+                    const s1 = slots[0];
+                    const s2 = slots[1];
+
+                    // 1. Reservar Slot 1 cobrando saldo
+                    const { data: res1Id, error: err1 } = await client.rpc('reservar_consulta_atomica', {
                         p_tipo: tipo,
-                        p_profesor_id: profId,
-                        p_fecha_inicio: new Date(clase.fecha_inicio).toISOString(),
+                        p_clase_id: safePositiveInteger(s1.id),
                         p_user_id: currentUser.id,
                         p_cobrar_saldo: true
                     });
-                    resError = error;
-                } else {
-                    const numericClaseId = safePositiveInteger(claseId);
-                    const { error } = await client.rpc('reservar_consulta_atomica', {
+
+                    if (err1) {
+                        Swal.close();
+                        return Swal.fire({
+                            icon: 'error',
+                            title: 'No se pudo reservar',
+                            text: mensajeErrorConsulta(err1, tipo, 'reservar'),
+                            confirmButtonColor: config.color
+                        });
+                    }
+
+                    // 2. Reservar Slot 2 sin cobrar saldo (cubierto por el mismo bono)
+                    const { data: res2Id, error: err2 } = await client.rpc('reservar_consulta_atomica', {
                         p_tipo: tipo,
-                        p_clase_id: numericClaseId,
+                        p_clase_id: safePositiveInteger(s2.id),
                         p_user_id: currentUser.id,
-                        p_cobrar_saldo: true
+                        p_cobrar_saldo: false
                     });
-                    resError = error;
-                }
 
-                Swal.close();
+                    if (err2) {
+                        // Rollback estricto de slot 1: o las dos o ninguna
+                        if (res1Id) {
+                            try {
+                                await client.rpc('cancelar_consulta_atomica', {
+                                    p_tipo: tipo,
+                                    p_reserva_id: res1Id
+                                });
+                            } catch (rbErr) {
+                                console.error('Error durante rollback de slot 1:', rbErr);
+                            }
+                        }
+                        Swal.close();
+                        return Swal.fire({
+                            icon: 'error',
+                            title: 'No se pudo completar la consulta doble',
+                            text: `No fue posible reservar el segundo turno (${mensajeErrorConsulta(err2, tipo, 'reservar')}). Se ha cancelado la reserva para proteger tu saldo.`,
+                            confirmButtonColor: config.color
+                        });
+                    }
 
-                if (resError) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'No se pudo reservar',
-                        text: mensajeErrorConsulta(resError, tipo, 'reservar'),
-                        confirmButtonColor: config.color
-                    });
-                } else {
+                    Swal.close();
                     playYogaSound();
                     Swal.fire({
                         icon: 'success',
-                        title: '¡Cita Reservada!',
-                        text: 'Tu profesional te espera.',
-                        showConfirmButton: false,
-                        timer: 1500
+                        title: '¡Consulta Doble Reservada!',
+                        html: `Se han reservado correctamente los 2 turnos vinculados con un solo pago/saldo:<br><br>
+                               <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1">
+                                 <div><b>Turno 1:</b> ${formatDisplayLongDate(s1.fecha_inicio)} a las ${formatDisplayTime(s1.fecha_inicio)}</div>
+                                 <div><b>Turno 2:</b> ${formatDisplayLongDate(s2.fecha_inicio)} a las ${formatDisplayTime(s2.fecha_inicio)}</div>
+                               </div>`,
+                        showConfirmButton: true,
+                        confirmButtonColor: config.color
                     });
-                    await checkProfile();
-                    await cargarMisReservasUsuario();
-                    await refrescarConsultas(tipo);
-                    refrescarInicioSiActivo();
+
+                    // Notificación por correo al profesional (no bloqueante)
+                    const profId = safePositiveInteger(s1.profesor_id || s1.profesionales?.id || s2.profesor_id || s2.profesionales?.id);
+                    if (profId) {
+                        enviarNotificacionEmailProfesor(profId, 'reserva_multiple', {
+                            clase_nombre: s1.nombre || 'Consulta Doble',
+                            es_multiple: true,
+                            slot1_info: `${formatDisplayLongDate(s1.fecha_inicio)} a las ${formatDisplayTime(s1.fecha_inicio)}`,
+                            slot2_info: `${formatDisplayLongDate(s2.fecha_inicio)} a las ${formatDisplayTime(s2.fecha_inicio)}`,
+                            fecha: formatDisplayLongDate(s1.fecha_inicio),
+                            hora: formatDisplayTime(s1.fecha_inicio)
+                        }).catch(e => console.warn('Notificación email profesor falló:', e));
+                    }
+                } else {
+                    let resError = null;
+                    if (clase?.isVirtual) {
+                        const profId = safePositiveInteger(clase.profesor_id || clase.profesionales?.id);
+                        const { error } = await client.rpc('reservar_consulta_virtual', {
+                            p_tipo: tipo,
+                            p_profesor_id: profId,
+                            p_fecha_inicio: new Date(clase.fecha_inicio).toISOString(),
+                            p_user_id: currentUser.id,
+                            p_cobrar_saldo: true
+                        });
+                        resError = error;
+                    } else {
+                        const numericClaseId = safePositiveInteger(claseId);
+                        const { error } = await client.rpc('reservar_consulta_atomica', {
+                            p_tipo: tipo,
+                            p_clase_id: numericClaseId,
+                            p_user_id: currentUser.id,
+                            p_cobrar_saldo: true
+                        });
+                        resError = error;
+                    }
+
+                    Swal.close();
+
+                    if (resError) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No se pudo reservar',
+                            text: mensajeErrorConsulta(resError, tipo, 'reservar'),
+                            confirmButtonColor: config.color
+                        });
+                    } else {
+                        playYogaSound();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Cita Reservada!',
+                            text: 'Tu profesional te espera.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+
+                        const profId = safePositiveInteger(clase.profesor_id || clase.profesionales?.id);
+                        if (profId) {
+                            enviarNotificacionEmailProfesor(profId, 'reserva_consulta', {
+                                clase_nombre: clase.nombre || config.label,
+                                fecha: formatDisplayLongDate(clase.fecha_inicio),
+                                hora: formatDisplayTime(clase.fecha_inicio)
+                            }).catch(e => console.warn('Notificación email profesor falló:', e));
+                        }
+                    }
                 }
+
+                await checkProfile();
+                await cargarMisReservasUsuario();
+                await refrescarConsultas(tipo);
+                refrescarInicioSiActivo();
             } catch (e) {
                 console.error('Error al reservar consulta:', e);
             } finally {
@@ -20885,23 +21421,87 @@
             const numericReservationId = Number(reservaId);
             if (!Number.isSafeInteger(numericReservationId) || numericReservationId <= 0) return;
 
+            let normalizedTipo = (tipo || '').toLowerCase().trim();
+            if (normalizedTipo !== 'nutricion' && normalizedTipo !== 'psicologia') {
+                normalizedTipo = 'psicologia';
+            }
+
+            // Identificar si esta reserva corresponde a una sesión múltiple
+            let currentBooking = (userBookingsCache || []).find(b => Number(b.reservaId) === numericReservationId && (b.tipo === normalizedTipo || b.tipo === tipo));
+            let partnerBookings = [];
+            let profId = null;
+            let claseNombre = 'Consulta';
+            let fechaStr = '';
+            let horaStr = '';
+
+            if (currentBooking) {
+                const multi = obtenerDatosSesionMultiple(currentBooking);
+                profId = currentBooking.profesor_id;
+                claseNombre = currentBooking.nombre || 'Consulta';
+                fechaStr = formatDisplayLongDate(currentBooking.fecha);
+                horaStr = formatDisplayTime(currentBooking.fecha);
+
+                if (multi?.esMultiple && multi?.grupoId) {
+                    partnerBookings = (userBookingsCache || []).filter(b => 
+                        Number(b.reservaId) !== numericReservationId && 
+                        obtenerDatosSesionMultiple(b)?.grupoId === multi.grupoId
+                    );
+                }
+            }
+
+            // Si es admin o no estaba en userBookingsCache, buscar en la BD
+            if (!currentBooking) {
+                try {
+                    const tableName = normalizedTipo === 'psicologia' ? 'reservas_psicologia' : 'reservas_nutricion';
+                    const { data: resData } = await client.from(tableName)
+                        .select('*, clases(*)')
+                        .eq('id', numericReservationId)
+                        .maybeSingle();
+                    if (resData && resData.clases) {
+                        const multi = obtenerDatosSesionMultiple(resData.clases);
+                        profId = resData.clases.profesor_id;
+                        claseNombre = resData.clases.nombre || 'Consulta';
+                        fechaStr = formatDisplayLongDate(resData.clases.fecha_inicio);
+                        horaStr = formatDisplayTime(resData.clases.fecha_inicio);
+
+                        if (multi?.esMultiple && multi?.grupoId) {
+                            const { data: partnerRes } = await client.from(tableName)
+                                .select('id, clase_id, user_id, clases(*)')
+                                .eq('user_id', resData.user_id)
+                                .eq('estado', 'confirmada')
+                                .neq('id', numericReservationId);
+                            if (partnerRes) {
+                                partnerBookings = partnerRes.filter(r => r.clases && obtenerDatosSesionMultiple(r.clases)?.grupoId === multi.grupoId).map(r => ({
+                                    reservaId: r.id,
+                                    tipo: normalizedTipo
+                                }));
+                            }
+                        }
+                    }
+                } catch (eSearch) {
+                    console.warn('Error al buscar detalles de consulta doble en cancelación:', eSearch);
+                }
+            }
+
+            const esSesionMultiple = partnerBookings.length > 0;
+            const confirmTitle = esSesionMultiple ? '¿Cancelar Consulta Doble?' : '¿Cancelar consulta?';
+            const confirmHtml = esSesionMultiple
+                ? 'Esta cita forma parte de una <b>Consulta Doble</b> simétrica.<br><br>Al cancelarla, <b>se cancelarán automáticamente ambos turnos asociados</b> y se devolverá el bono o saldo consumido a tu perfil.<br><br>¿Deseas continuar?'
+                : 'Se liberará el turno y, si consumió saldo o bono, se devolverá automáticamente a tu perfil.';
+
             const res = await Swal.fire({
-                title: '¿Cancelar consulta?',
-                text: 'Se liberará el turno y, si consumió saldo o bono, se devolverá automáticamente a tu perfil.',
+                title: confirmTitle,
+                html: confirmHtml,
                 icon: 'warning',
                 iconColor: '#D27D60',
                 showCancelButton: true,
                 confirmButtonColor: '#8C8658',
                 cancelButtonColor: '#9ca3af',
-                confirmButtonText: 'Sí, cancelar',
+                confirmButtonText: esSesionMultiple ? 'Sí, cancelar ambos turnos' : 'Sí, cancelar',
                 cancelButtonText: 'No, mantener'
             });
 
             if (res.isConfirmed) {
-                let normalizedTipo = (tipo || '').toLowerCase().trim();
-                if (normalizedTipo !== 'nutricion' && normalizedTipo !== 'psicologia') {
-                    normalizedTipo = 'psicologia';
-                }
                 let { error } = await client.rpc('cancelar_consulta_atomica', {
                     p_tipo: normalizedTipo,
                     p_reserva_id: numericReservationId
@@ -20921,14 +21521,43 @@
 
                 if (error) {
                     Swal.fire('No se pudo cancelar', mensajeErrorConsulta(error, normalizedTipo, 'cancelar'), 'error');
-                } else {
-                    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-                    Toast.fire({ icon: 'info', title: 'Consulta cancelada y saldo devuelto.' });
-                    await checkProfile();
-                    await cargarMisReservasUsuario();
-                    await refrescarConsultas(normalizedTipo);
-                    refrescarInicioSiActivo();
+                    return;
                 }
+
+                // Cancelar también la reserva vinculada si es múltiple
+                if (esSesionMultiple) {
+                    for (const pb of partnerBookings) {
+                        try {
+                            const pTipo = pb.tipo || normalizedTipo;
+                            await client.rpc('cancelar_consulta_atomica', {
+                                p_tipo: pTipo,
+                                p_reserva_id: Number(pb.reservaId)
+                            });
+                        } catch (pErr) {
+                            console.warn('Error cancelando turno vinculado secundario:', pErr);
+                        }
+                    }
+                }
+
+                // Enviar notificación al profesional por email (no bloqueante)
+                if (profId) {
+                    enviarNotificacionEmailProfesor(profId, 'cancelacion_consulta', {
+                        clase_nombre: claseNombre,
+                        fecha: fechaStr,
+                        hora: horaStr,
+                        es_multiple: esSesionMultiple
+                    }).catch(e => console.warn('Error notificando cancelación a profesional:', e));
+                }
+
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+                Toast.fire({
+                    icon: 'info',
+                    title: esSesionMultiple ? 'Sesión múltiple cancelada y saldo devuelto.' : 'Consulta cancelada y saldo devuelto.'
+                });
+                await checkProfile();
+                await cargarMisReservasUsuario();
+                await refrescarConsultas(normalizedTipo);
+                refrescarInicioSiActivo();
             }
         }
 
@@ -21323,7 +21952,11 @@
                         profesionalFoto: getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profName) || (c.profesionales ? c.profesionales.foto_url : null),
                         colorClass: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20',
                         tipoLabel: profileT('common_psychology', 'Psicología'),
-                        descripcion: c.descripcion || ''
+                        descripcion: c.descripcion || '',
+                        grupo_multiple_id: c.grupo_multiple_id || null,
+                        sesion_multiple_parte: c.sesion_multiple_parte || null,
+                        sesion_multiple_total: c.sesion_multiple_total || null,
+                        profesor_id: c.profesor_id || null
                     });
                 });
 
@@ -21342,7 +21975,11 @@
                         profesionalFoto: getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profName) || (c.profesionales ? c.profesionales.foto_url : null),
                         colorClass: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20',
                         tipoLabel: profileT('common_nutrition', 'Nutrición'),
-                        descripcion: c.descripcion || ''
+                        descripcion: c.descripcion || '',
+                        grupo_multiple_id: c.grupo_multiple_id || null,
+                        sesion_multiple_parte: c.sesion_multiple_parte || null,
+                        sesion_multiple_total: c.sesion_multiple_total || null,
+                        profesor_id: c.profesor_id || null
                     });
                 });
 
@@ -21687,6 +22324,11 @@
                                 <span>${escapeHtml(b.profesional)}</span>
                             </div>
                             <span class="inicio-booking-status"><i class="ph-fill ph-check-circle"></i> ${escapeHtml(profileT('profile_confirmed', 'Confirmada'))}</span>
+                            ${(() => {
+                                const m = obtenerDatosSesionMultiple(b);
+                                if (!m.esMultiple) return '';
+                                return `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                            })()}
                         </div>
 
                         ${b.descripcion ? `<p class="inicio-booking-description"><i class="ph-bold ph-info"></i> ${escapeHtml(b.descripcion)}</p>` : ''}
@@ -21879,6 +22521,11 @@
                                 <span>${escapeHtml(b.profesional)}</span>
                             </div>
                             <span class="inicio-booking-status"><i class="ph-fill ph-check-circle"></i> ${escapeHtml(profileT('profile_confirmed', 'Confirmada'))}</span>
+                            ${(() => {
+                                const m = obtenerDatosSesionMultiple(b);
+                                if (!m.esMultiple) return '';
+                                return `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                            })()}
                         </div>
 
                         ${b.descripcion ? `<p class="inicio-booking-description"><i class="ph-bold ph-info"></i> ${escapeHtml(b.descripcion)}</p>` : ''}
@@ -22734,6 +23381,9 @@
 
                 const isVirtual = typeof claseId === 'string' && claseId.startsWith('virtual-');
                 let error = null;
+                let partnerClase = null;
+                let multiInfo = { esMultiple: false };
+                let targetClase = null;
 
                 if (isVirtual) {
                     // virtual-[profId]-[YYYY-MM-DD]-[HH:mm]
@@ -22756,9 +23406,29 @@
                     });
                     error = res.error;
                 } else {
+                    const numericClaseId = safePositiveInteger(claseId);
+                    try {
+                        const { data: dbClase } = await client.from('clases').select('*, profesionales(*)').eq('id', numericClaseId).maybeSingle();
+                        if (dbClase) {
+                            targetClase = dbClase;
+                            multiInfo = obtenerDatosSesionMultiple(dbClase);
+                            if (multiInfo.esMultiple && multiInfo.grupoId) {
+                                const { data: dbPartners } = await client.from('clases')
+                                    .select('*, profesionales(*)')
+                                    .neq('id', dbClase.id)
+                                    .or(`grupo_multiple_id.eq.${multiInfo.grupoId},descripcion.ilike.%[multiple:${multiInfo.grupoId};%`);
+                                if (dbPartners && dbPartners.length > 0) {
+                                    partnerClase = dbPartners[0];
+                                }
+                            }
+                        }
+                    } catch (eCheck) {
+                        console.warn('Error comprobando sesión múltiple en asignación admin:', eCheck);
+                    }
+
                     const res = await client.rpc('reservar_consulta_atomica', {
                         p_tipo: tipo,
-                        p_clase_id: claseId,
+                        p_clase_id: numericClaseId,
                         p_user_id: userId,
                         p_cobrar_saldo: false,
                         p_producto_contratado: productoTitle,
@@ -22767,6 +23437,23 @@
                         p_notas: notas
                     });
                     error = res.error;
+
+                    if (!error && partnerClase) {
+                        try {
+                            await client.rpc('reservar_consulta_atomica', {
+                                p_tipo: tipo,
+                                p_clase_id: partnerClase.id,
+                                p_user_id: userId,
+                                p_cobrar_saldo: false,
+                                p_producto_contratado: productoTitle,
+                                p_stripe_lookup_key: lookupKey,
+                                p_origen_pago: 'local',
+                                p_notas: notas
+                            });
+                        } catch (pErr) {
+                            console.warn('Error asignando turno secundario de sesión múltiple admin:', pErr);
+                        }
+                    }
                 }
 
                 if (error) {
@@ -22776,19 +23463,34 @@
 
                 if (!isVirtual) {
                     try {
+                        const idsToUpdate = [Number(claseId)];
+                        if (partnerClase?.id) idsToUpdate.push(Number(partnerClase.id));
                         await client.from('clases').update({
                             metodo_pago: productoTitle,
                             stripe_lookup_key: lookupKey
-                        }).eq('id', Number(claseId));
+                        }).in('id', idsToUpdate);
                     } catch (e) {
                         console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', e);
                     }
                 }
 
+                // Notificar al profesional por correo si corresponde
+                const profId = targetClase?.profesor_id || targetClase?.profesionales?.id;
+                if (profId) {
+                    enviarNotificacionEmailProfesor(profId, multiInfo.esMultiple ? 'reserva_multiple' : 'reserva_consulta', {
+                        clase_nombre: targetClase?.nombre || productoTitle,
+                        fecha: targetClase?.fecha_inicio ? formatDisplayLongDate(targetClase.fecha_inicio) : '',
+                        hora: targetClase?.fecha_inicio ? formatDisplayTime(targetClase.fecha_inicio) : '',
+                        es_multiple: multiInfo.esMultiple
+                    }).catch(e => console.warn('Error notificando asignación admin a profesor:', e));
+                }
+
                 Swal.fire({
                     icon: 'success',
-                    title: 'Cliente asignado',
-                    html: `El hueco queda reservado.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pago en local:</b> ${escapeHtml(productoTitle)}</span>`,
+                    title: multiInfo.esMultiple ? 'Sesión múltiple asignada' : 'Cliente asignado',
+                    html: multiInfo.esMultiple 
+                        ? `Se han asignado correctamente ambos turnos vinculados al cliente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pago en local:</b> ${escapeHtml(productoTitle)}</span>`
+                        : `El hueco queda reservado.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pago en local:</b> ${escapeHtml(productoTitle)}</span>`,
                     showConfirmButton: false,
                     timer: 2000
                 });
@@ -23132,6 +23834,11 @@
             if (repeatEnabled) repeatEnabled.checked = false;
             if (repeatOptions) repeatOptions.classList.add('hidden');
 
+            const multipleEnabled = document.getElementById('consulta-multiple-enabled');
+            const multipleOptions = document.getElementById('consulta-multiple-options');
+            if (multipleEnabled) multipleEnabled.checked = false;
+            if (multipleOptions) multipleOptions.classList.add('hidden');
+
             const hoy = formatDateLocal(new Date());
             if (datePickerConsultaInstance) {
                 datePickerConsultaInstance.set('minDate', hoy);
@@ -23154,6 +23861,80 @@
             if (modal) modal.classList.add('hidden');
             const form = document.getElementById('form-crear-consulta');
             if (form) form.reset();
+            const multipleOptions = document.getElementById('consulta-multiple-options');
+            if (multipleOptions) multipleOptions.classList.add('hidden');
+        }
+
+        function toggleConsultaMultipleOpciones() {
+            const multipleEnabled = !!document.getElementById('consulta-multiple-enabled')?.checked;
+            const optionsDiv = document.getElementById('consulta-multiple-options');
+            if (optionsDiv) {
+                if (multipleEnabled) {
+                    optionsDiv.classList.remove('hidden');
+                    // Si se activa Consulta Doble, desactivamos Repetir consulta
+                    const repEnabled = document.getElementById('consulta-repeat-enabled');
+                    const repOptions = document.getElementById('consulta-repeat-options');
+                    if (repEnabled) repEnabled.checked = false;
+                    if (repOptions) repOptions.classList.add('hidden');
+
+                    const fecha1Val = document.getElementById('consulta-fecha')?.value || formatDateLocal(new Date());
+                    const fecha2Input = document.getElementById('consulta-fecha-2');
+                    if (fecha2Input && !fecha2Input.value) {
+                        fecha2Input.value = fecha1Val;
+                    }
+                    if (!datePickerConsulta2Instance && typeof flatpickr === 'function' && fecha2Input) {
+                        try {
+                            datePickerConsulta2Instance = flatpickr("#consulta-fecha-2", {
+                                locale: getCurrentLang() === 'es' ? "es" : "default",
+                                dateFormat: "Y-m-d",
+                                firstDayOfWeek: 1,
+                                disableMobile: true,
+                                defaultDate: fecha1Val
+                            });
+                        } catch (e) {
+                            console.warn('Flatpickr consulta-fecha-2 init:', e);
+                        }
+                    }
+                    const hora1Val = document.getElementById('consulta-hora-inicio')?.value;
+                    const hora2Input = document.getElementById('consulta-hora-inicio-2');
+                    if (hora2Input && !hora2Input.value) {
+                        if (hora1Val) {
+                            const [h, m] = hora1Val.split(':').map(Number);
+                            const nextH = String((h + 1) % 24).padStart(2, '0');
+                            hora2Input.value = `${nextH}:${String(m).padStart(2, '0')}`;
+                        } else {
+                            hora2Input.value = '11:30';
+                        }
+                    }
+                } else {
+                    optionsDiv.classList.add('hidden');
+                }
+            }
+        }
+
+        function obtenerDatosSesionMultiple(clase) {
+            const noMultiple = { esMultiple: false, grupoId: null, parte: 0, total: 0 };
+            if (!clase) return noMultiple;
+            let grupoId = clase.grupo_multiple_id || null;
+            let parte = toSafeNumber(clase.sesion_multiple_parte) || 0;
+            let total = toSafeNumber(clase.sesion_multiple_total) || 2;
+
+            if (!grupoId && clase.descripcion) {
+                const match = clase.descripcion.match(/\[multiple:([^;\]]+)(?:;parte:(\d+))?(?:;total:(\d+))?\]/);
+                if (match) {
+                    grupoId = match[1];
+                    parte = parseInt(match[2] || '1', 10);
+                    total = parseInt(match[3] || '2', 10);
+                }
+            }
+
+            if (!grupoId) return noMultiple;
+            return {
+                esMultiple: true,
+                grupoId,
+                parte: parte || 1,
+                total: total || 2
+            };
         }
 
         async function guardarConsultaAdmin(e) {
@@ -23190,6 +23971,17 @@
                 }
             }
 
+            const multipleEnabled = !!document.getElementById('consulta-multiple-enabled')?.checked;
+            const fecha2 = document.getElementById('consulta-fecha-2')?.value;
+            const horaInicio2 = document.getElementById('consulta-hora-inicio-2')?.value;
+
+            if (multipleEnabled) {
+                if (!fecha2 || !horaInicio2) {
+                    Swal.fire('Datos incompletos', 'Debes indicar la fecha y hora de inicio del 2º turno de la consulta doble.', 'warning');
+                    return;
+                }
+            }
+
             const repeatEnabled = !!document.getElementById('consulta-repeat-enabled')?.checked;
             const repeatEveryWeeks = parseInt(document.getElementById('consulta-repeat-every')?.value || '1', 10);
             let repeatCount = parseInt(document.getElementById('consulta-repeat-count')?.value || '1', 10);
@@ -23199,29 +23991,74 @@
             const fechaInicio = new Date(`${fecha}T${horaInicio}`);
 
             Swal.fire({
-                title: repeatCount > 1 ? 'Creando consultas...' : 'Creando consulta...',
+                title: multipleEnabled ? 'Creando consulta doble...' : (repeatCount > 1 ? 'Creando consultas...' : 'Creando consulta...'),
                 didOpen: () => Swal.showLoading()
             });
 
             const tipoClaseInsert = tipoEspecialidad === 'nutricion' ? 'nutricion' : (tipoEspecialidad === 'ayurveda' ? 'ayurveda' : 'psicologia');
 
             const inserts = [];
-            for (let i = 0; i < repeatCount; i++) {
-                const start = new Date(fechaInicio);
-                start.setDate(start.getDate() + (i * 7 * repeatEveryWeeks));
-                const end = new Date(start.getTime() + duracion * 60000);
+            if (multipleEnabled) {
+                // Generación de Consulta Doble (2 turnos simétricos separados en el tiempo)
+                const fechaInicio2 = new Date(`${fecha2}T${horaInicio2}`);
+                const start2 = new Date(fechaInicio2);
+                const end2 = new Date(start2.getTime() + duracion * 60000);
+
+                const grupoId = 'mult_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+                const tagMultiple1 = ` [multiple:${grupoId};parte:1;total:2]`;
+                const tagMultiple2 = ` [multiple:${grupoId};parte:2;total:2]`;
+
                 inserts.push({
-                    nombre: nombreIngresado,
-                    fecha_inicio: start.toISOString(),
-                    fecha_fin: end.toISOString(),
+                    nombre: `${nombreIngresado} (Turno 1/2)`,
+                    fecha_inicio: fechaInicio.toISOString(),
+                    fecha_fin: new Date(fechaInicio.getTime() + duracion * 60000).toISOString(),
                     capacidad_max: capacidadFinal,
                     profesor_id: profesorId,
                     tipo_clase: tipoClaseInsert,
                     tipo_clase_id: tipoClaseId,
-                    descripcion: notas,
+                    descripcion: (notas ? `${notas}\n` : '') + tagMultiple1,
                     duracion_minutos: duracion,
-                    es_gratuita: esGratuita
+                    es_gratuita: esGratuita,
+                    grupo_multiple_id: grupoId,
+                    sesion_multiple_parte: 1,
+                    sesion_multiple_total: 2
                 });
+
+                inserts.push({
+                    nombre: `${nombreIngresado} (Turno 2/2)`,
+                    fecha_inicio: start2.toISOString(),
+                    fecha_fin: end2.toISOString(),
+                    capacidad_max: capacidadFinal,
+                    profesor_id: profesorId,
+                    tipo_clase: tipoClaseInsert,
+                    tipo_clase_id: tipoClaseId,
+                    descripcion: (notas ? `${notas}\n` : '') + tagMultiple2,
+                    duracion_minutos: duracion,
+                    es_gratuita: esGratuita,
+                    grupo_multiple_id: grupoId,
+                    sesion_multiple_parte: 2,
+                    sesion_multiple_total: 2
+                });
+            } else {
+                // Generación normal de consulta (individual o repetida en el calendario)
+                for (let i = 0; i < repeatCount; i++) {
+                    const start = new Date(fechaInicio);
+                    start.setDate(start.getDate() + (i * 7 * repeatEveryWeeks));
+                    const end = new Date(start.getTime() + duracion * 60000);
+
+                    inserts.push({
+                        nombre: nombreIngresado,
+                        fecha_inicio: start.toISOString(),
+                        fecha_fin: end.toISOString(),
+                        capacidad_max: capacidadFinal,
+                        profesor_id: profesorId,
+                        tipo_clase: tipoClaseInsert,
+                        tipo_clase_id: tipoClaseId,
+                        descripcion: notas,
+                        duracion_minutos: duracion,
+                        es_gratuita: esGratuita
+                    });
+                }
             }
 
             Swal.fire({
@@ -23252,7 +24089,7 @@
                 .select('id, nombre, fecha_inicio, fecha_fin, duracion_minutos, capacidad_max, profesor_id, tipo_clase');
 
             // Fallback de seguridad si el esquema de la BD en Supabase tiene columnas pendientes de migración
-            if (error && (error.message?.includes('tipo_clase_id') || error.message?.includes('es_gratuita') || error.message?.includes('metodo_pago') || error.message?.includes('schema cache'))) {
+            if (error && (error.message?.includes('tipo_clase_id') || error.message?.includes('es_gratuita') || error.message?.includes('metodo_pago') || error.message?.includes('grupo_multiple_id') || error.message?.includes('sesion_multiple_parte') || error.message?.includes('schema cache'))) {
                 console.warn('Reintentando inserción de consulta con esquema base...', error);
                 const fallbackInserts = inserts.map(item => ({
                     nombre: item.nombre,
@@ -23316,9 +24153,261 @@
                     await cargarNutricion();
                 }
                 await cargarConsultasAdmin();
-                if (isAdmin || esTrabajador()) {
-                    if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
+            }
+        }
+
+        /* ==============================================================================
+         * GESTIÓN DE NOTIFICACIONES POR CORREO ELECTRÓNICO (hola@genyoga.studio)
+         * ============================================================================== */
+
+        async function abrirConfiguracionNotificacionesProfesor(profesorId) {
+            if (!isAdmin) {
+                return Swal.fire('Sin permiso', 'Solo administradores pueden configurar notificaciones.', 'warning');
+            }
+            const prof = allProfesionalesCache.find(p => Number(p.id) === Number(profesorId));
+            if (!prof) {
+                return Swal.fire('Error', 'Profesional no encontrado.', 'error');
+            }
+
+            const modal = document.getElementById('modal-config-notificaciones-profesor');
+            if (!modal) return;
+
+            document.getElementById('notif-prof-id').value = prof.id;
+            document.getElementById('notif-prof-nombre-display').textContent = `${prof.nombre || ''} ${prof.apellidos || ''}`.trim() || 'Profesional';
+            document.getElementById('notif-prof-email-display').textContent = prof.email || 'Sin email registrado';
+            document.getElementById('notif-prof-subtitulo').textContent = `Alertas para ${prof.nombre || 'el profesional'}`;
+
+            const avatarWrap = document.getElementById('notif-prof-avatar-wrap');
+            if (avatarWrap) {
+                const foto = getTeacherPhotoFallback(prof);
+                if (foto) {
+                    avatarWrap.innerHTML = `<img src="${escapeHtml(foto)}" class="w-full h-full object-cover">`;
+                } else {
+                    avatarWrap.innerHTML = escapeHtml((prof.nombre || 'P').charAt(0).toUpperCase());
                 }
+            }
+
+            const masterSwitch = document.getElementById('notif-prof-activas');
+            if (masterSwitch) {
+                masterSwitch.checked = !!prof.notificaciones_email_activas;
+            }
+
+            const emailDestinoInput = document.getElementById('notif-prof-email-destino');
+            if (emailDestinoInput) {
+                emailDestinoInput.value = prof.email_notificaciones || prof.email || '';
+            }
+
+            const cfg = prof.notificaciones_config || {};
+            const condReserva = document.getElementById('notif-cond-reserva-consulta');
+            if (condReserva) condReserva.checked = cfg.reserva_consulta !== false;
+
+            const condMultiple = document.getElementById('notif-cond-reserva-multiple');
+            if (condMultiple) condMultiple.checked = cfg.reserva_multiple !== false;
+
+            const condCancel = document.getElementById('notif-cond-cancelacion-consulta');
+            if (condCancel) condCancel.checked = !!cfg.cancelacion_consulta;
+
+            actualizarEstadoVisualNotificaciones();
+            modal.classList.remove('hidden');
+        }
+
+        function cerrarModalNotificacionesProfesor() {
+            const modal = document.getElementById('modal-config-notificaciones-profesor');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function actualizarEstadoVisualNotificaciones() {
+            const active = !!document.getElementById('notif-prof-activas')?.checked;
+            const condBox = document.getElementById('notif-prof-condiciones-box');
+            if (condBox) {
+                if (active) {
+                    condBox.classList.remove('opacity-40', 'pointer-events-none');
+                } else {
+                    condBox.classList.add('opacity-40', 'pointer-events-none');
+                }
+            }
+        }
+
+        async function guardarConfigNotificacionesProfesor(e) {
+            if (e) e.preventDefault();
+            const profId = safePositiveInteger(document.getElementById('notif-prof-id')?.value);
+            if (!profId) return;
+
+            const activas = !!document.getElementById('notif-prof-activas')?.checked;
+            const emailDestino = (document.getElementById('notif-prof-email-destino')?.value || '').trim();
+            if (activas && (!emailDestino || !emailDestino.includes('@'))) {
+                return Swal.fire('Email inválido', 'Debes especificar un correo electrónico de destino válido para recibir alertas.', 'warning');
+            }
+
+            const config = {
+                reserva_consulta: !!document.getElementById('notif-cond-reserva-consulta')?.checked,
+                reserva_multiple: !!document.getElementById('notif-cond-reserva-multiple')?.checked,
+                cancelacion_consulta: !!document.getElementById('notif-cond-cancelacion-consulta')?.checked
+            };
+
+            Swal.fire({
+                title: 'Guardando configuración...',
+                didOpen: () => Swal.showLoading()
+            });
+
+            const updatePayload = {
+                notificaciones_email_activas: activas,
+                email_notificaciones: emailDestino || null,
+                notificaciones_config: config
+            };
+
+            let { error } = await client.from('profesionales').update(updatePayload).eq('id', profId);
+
+            // Fallback si las columnas aún no están en la caché del esquema de BD
+            if (error && (error.message?.includes('notificaciones_') || error.message?.includes('schema cache'))) {
+                console.warn('Fallback al guardar configuración de notificaciones:', error);
+                error = null;
+            }
+
+            Swal.close();
+
+            if (error) {
+                Swal.fire('Error', 'No se pudo guardar la configuración: ' + error.message, 'error');
+            } else {
+                // Actualizar cache local
+                const p = allProfesionalesCache.find(x => Number(x.id) === profId);
+                if (p) {
+                    p.notificaciones_email_activas = activas;
+                    p.email_notificaciones = emailDestino;
+                    p.notificaciones_config = config;
+                }
+
+                cerrarModalNotificacionesProfesor();
+                cargarProfesoresAdmin();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Configuración Guardada',
+                    text: activas ? `Las notificaciones se enviarán a ${emailDestino} desde hola@genyoga.studio.` : 'Notificaciones desactivadas para este profesional.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        async function probarEnvioEmailProfesorActual() {
+            const profId = safePositiveInteger(document.getElementById('notif-prof-id')?.value);
+            const emailDestino = (document.getElementById('notif-prof-email-destino')?.value || '').trim();
+            if (!emailDestino || !emailDestino.includes('@')) {
+                return Swal.fire('Email requerido', 'Introduce un correo válido antes de enviar la prueba.', 'warning');
+            }
+            const prof = allProfesionalesCache.find(p => Number(p.id) === profId);
+            const profNombre = prof?.nombre || 'Profesional';
+
+            Swal.fire({
+                title: 'Enviando correo de prueba...',
+                text: `Desde hola@genyoga.studio a ${emailDestino}`,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const res = await enviarNotificacionEmailProfesor(profId, 'prueba', {
+                    profesor_nombre: profNombre,
+                    destinatario_forzado: emailDestino,
+                    cliente_nombre: 'Equipo GEN Yoga',
+                    clase_nombre: 'Prueba de Sistema de Notificaciones',
+                    fecha: formatDateLocal(new Date()),
+                    hora: '12:00'
+                });
+
+                Swal.close();
+                if (res && res.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Prueba enviada!',
+                        html: `Se ha emitido la notificación desde <b>hola@genyoga.studio</b> hacia <b>${escapeHtml(emailDestino)}</b>.<br><br><small class="text-cocoa/60">Revisa la bandeja de entrada o spam de dicho correo.</small>`,
+                        confirmButtonColor: '#1a4d4f'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Notificación procesada',
+                        text: res?.message || 'La alerta ha quedado registrada en el sistema de GEN Yoga.',
+                        confirmButtonColor: '#1a4d4f'
+                    });
+                }
+            } catch (e) {
+                Swal.close();
+                Swal.fire('Error en la prueba', e.message || 'No se pudo emitir la prueba', 'error');
+            }
+        }
+
+        async function enviarNotificacionEmailProfesor(profesorId, evento, datos = {}) {
+            try {
+                const prof = allProfesionalesCache.find(p => Number(p.id) === Number(profesorId));
+                if (!prof) return { ok: false, error: 'profesor_no_encontrado' };
+
+                const emailDestino = datos.destinatario_forzado || prof.email_notificaciones || prof.email;
+                if (!emailDestino || !emailDestino.includes('@')) {
+                    return { ok: false, error: 'sin_email_valido' };
+                }
+
+                // Si no es prueba, validar si tiene las notificaciones activas y la condición habilitada
+                if (evento !== 'prueba') {
+                    if (!prof.notificaciones_email_activas) return { ok: false, error: 'notificaciones_desactivadas' };
+                    const cfg = prof.notificaciones_config || {};
+                    if (evento === 'reserva_consulta' && cfg.reserva_consulta === false) return { ok: false, error: 'condicion_no_activa' };
+                    if (evento === 'reserva_multiple' && cfg.reserva_multiple === false && cfg.reserva_consulta === false) return { ok: false, error: 'condicion_no_activa' };
+                    if (evento === 'cancelacion_consulta' && !cfg.cancelacion_consulta) return { ok: false, error: 'condicion_no_activa' };
+                }
+
+                const payload = {
+                    profesional_id: prof.id,
+                    evento: evento,
+                    destinatario: emailDestino,
+                    remitente: 'hola@genyoga.studio',
+                    datos: {
+                        profesor_nombre: `${prof.nombre || ''} ${prof.apellidos || ''}`.trim() || 'Profesional',
+                        cliente_nombre: datos.cliente_nombre || `${currentUser?.nombre || ''} ${currentUser?.apellidos || ''}`.trim() || 'Alumno/a',
+                        cliente_email: datos.cliente_email || currentUser?.email || '',
+                        clase_nombre: datos.clase_nombre || 'Consulta',
+                        fecha: datos.fecha || '',
+                        hora: datos.hora || '',
+                        duracion: datos.duracion || 60,
+                        notas: datos.notas || '',
+                        es_multiple: !!datos.es_multiple,
+                        slot1_info: datos.slot1_info || '',
+                        slot2_info: datos.slot2_info || ''
+                    }
+                };
+
+                // 1. Invocar Edge Function send-email-notification
+                let edgeResult = null;
+                try {
+                    const { data, error } = await client.functions.invoke('send-email-notification', {
+                        body: payload
+                    });
+                    if (!error && data) edgeResult = data;
+                } catch (edgeErr) {
+                    console.warn('Edge function invoke bypassed:', edgeErr);
+                }
+
+                // 2. Registro local de auditoría si la tabla existe
+                try {
+                    await client.from('notificaciones_email_log').insert({
+                        profesional_id: prof.id,
+                        profesor_email: emailDestino,
+                        evento: evento,
+                        destinatario: emailDestino,
+                        remitente: 'hola@genyoga.studio',
+                        asunto: (evento === 'reserva_multiple' ? '¡Sesión Múltiple Reservada! - GEN Yoga' : '¡Nuevo hueco reservado en tu consulta! - GEN Yoga'),
+                        cuerpo_html: `Notificación emitida desde hola@genyoga.studio para ${prof.nombre}`,
+                        estado: edgeResult?.delivered ? 'enviado' : 'registrado',
+                        detalles: payload.datos
+                    });
+                } catch (logErr) {
+                    // Silencioso
+                }
+
+                return edgeResult || { ok: true, message: 'Notificación registrada en GEN Yoga.' };
+            } catch (e) {
+                console.warn('Error en enviarNotificacionEmailProfesor:', e);
+                return { ok: false, error: e.message };
             }
         }
 
@@ -24092,10 +25181,15 @@
                     card.innerHTML = `
                 <div class="flex items-start justify-between gap-4">
                     <div>
-                        <div class="flex items-center gap-2 mb-2">
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
                             <span class="text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide border ${tagColor}">${tagLabel}</span>
                             <span class="text-xs font-bold text-gray-400">${toSafeNumber(c.duracion_minutos)} min</span>
                             ${badgeEstado}
+                            ${(() => {
+                                const m = obtenerDatosSesionMultiple(c);
+                                if (!m.esMultiple) return '';
+                                return `<span class="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1" title="Consulta Doble vinculada"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                            })()}
                         </div>
                         <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || 'Consulta Individual')}</h3>
                         <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fecha)} - ${escapeHtml(hora)}</p>

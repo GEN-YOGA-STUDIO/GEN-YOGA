@@ -18422,11 +18422,13 @@
             // Consultar créditos de reprogramación del usuario
             let userReprogCredits = [];
             try {
-                const { data: rcData } = await client.from('creditos_reprogramacion')
-                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilized_at')
+                const { data: rcData, error: rcErr } = await client.from('creditos_reprogramacion')
+                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilizado_at')
                     .eq('user_id', userId)
                     .order('created_at', { ascending: false });
-                if (rcData && rcData.length > 0) {
+                if (rcErr) {
+                    console.warn('Error leyendo creditos_reprogramacion en modal:', rcErr);
+                } else if (rcData && rcData.length > 0) {
                     userReprogCredits = rcData;
                 }
             } catch (err) {
@@ -18608,10 +18610,10 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', -1, this)" class="w-8 h-8 rounded-lg border border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 1, this)" class="w-8 h-8 rounded-lg bg-gray-900 text-white hover:bg-black font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 5, this)" class="px-2 h-8 rounded-lg bg-olive text-white hover:bg-black font-bold text-[10px] transition cursor-pointer active:scale-95">+5</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 10, this)" class="px-2 h-8 rounded-lg bg-cocoa text-white hover:bg-black font-bold text-[10px] transition cursor-pointer active:scale-95" title="Añadir 10 Clases (Pack 10)">+10</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #374151 !important; border: 1px solid #d1d5db !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #111827 !important; color: #ffffff !important; border: 1px solid #000000 !important;">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 5, this)" class="px-2 h-8 rounded-lg font-bold text-[10px] transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #5c6246 !important; color: #ffffff !important; border: 1px solid #4a4f38 !important;">+5</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'yoga', 10, this)" class="px-2 h-8 rounded-lg font-bold text-[10px] transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #2b2623 !important; color: #ffffff !important; border: 1px solid #1a1715 !important;" title="Añadir 10 Clases (Pack 10)">+10</button>
                     </div>
                 </div>
 
@@ -18625,8 +18627,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', -1, this)" class="w-8 h-8 rounded-lg border border-emerald-200 text-emerald-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', 1, this)" class="w-8 h-8 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #047857 !important; border: 1px solid #a7f3d0 !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'clases_gratis', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #047857 !important; color: #ffffff !important; border: 1px solid #065f46 !important;">+1</button>
                     </div>
                 </div>
 
@@ -18640,8 +18642,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', -1, this)" class="w-8 h-8 rounded-lg border border-pink-200 text-pink-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', 1, this)" class="w-8 h-8 rounded-lg bg-pink-600 text-white hover:bg-pink-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #be185d !important; border: 1px solid #fbcfe8 !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #db2777 !important; color: #ffffff !important; border: 1px solid #be185d !important;">+1</button>
                     </div>
                 </div>
 
@@ -18655,8 +18657,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', -1, this)" class="w-8 h-8 rounded-lg border border-blue-200 text-blue-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', 1, this)" class="w-8 h-8 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #1e40af !important; border: 1px solid #bfdbfe !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'psicologia', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #2563eb !important; color: #ffffff !important; border: 1px solid #1d4ed8 !important; box-shadow: 0 1px 2px rgba(37,99,235,0.2) !important;">+1</button>
                     </div>
                 </div>
 
@@ -18670,8 +18672,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', -1, this)" class="w-8 h-8 rounded-lg border border-purple-200 text-purple-700 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', 1, this)" class="w-8 h-8 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-bold text-xs transition cursor-pointer active:scale-95">+1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #6b21a8 !important; border: 1px solid #e9d5ff !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'nutricion', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #9333ea !important; color: #ffffff !important; border: 1px solid #7e22ce !important; box-shadow: 0 1px 2px rgba(147,51,234,0.2) !important;">+1</button>
                     </div>
                 </div>
 
@@ -18686,15 +18688,16 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
-                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', -1, this)" class="w-8 h-8 rounded-lg border border-amber-300 text-amber-800 hover:bg-red-50 hover:text-red-600 font-bold text-xs transition cursor-pointer active:scale-95" title="Restar 1 crédito de reprogramación">-1</button>
-                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', 1, this)" class="w-8 h-8 rounded-lg bg-amber-700 text-white hover:bg-amber-800 font-bold text-xs transition cursor-pointer active:scale-95" title="Sumar 1 crédito de reprogramación">+1</button>
+                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #92400e !important; border: 1px solid #fde68a !important;" title="Restar 1 crédito de reprogramación">-1</button>
+                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important; box-shadow: 0 1px 2px rgba(217,119,6,0.2) !important;" title="Sumar 1 crédito de reprogramación">+1</button>
                             ${activeReprogCount > 0 ? `
-                                <button type="button" onclick="vaciarCreditosReprogAdmin('${userId}')" class="px-2.5 h-8 rounded-lg text-[11px] font-black bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 transition cursor-pointer active:scale-95 flex items-center gap-1" title="Eliminar todos los créditos de reprogramación">
+                                <button type="button" onclick="vaciarCreditosReprogAdmin('${userId}')" class="px-2.5 h-8 rounded-lg text-[11px] font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs" style="background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fca5a5 !important;" title="Eliminar todos los créditos de reprogramación">
                                     <i class="ph-bold ph-trash text-xs"></i> <span>Vaciar</span>
                                 </button>
                             ` : ''}
                             <button type="button" onclick="asignarCreditoReprogramacionAdmin('${userId}')"
-                                class="px-2.5 h-8 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer hover:scale-105 active:scale-95 bg-white text-amber-900 border border-amber-300 hover:bg-amber-100"
+                                class="px-2.5 h-8 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                                style="background-color: #ffffff !important; color: #78350f !important; border: 1px solid #fcd34d !important;"
                                 title="Añadir con tipo y especialidad específica">
                                 <i class="ph-bold ph-plus text-xs"></i> <span>Detallado</span>
                             </button>
@@ -18779,12 +18782,14 @@
 
             Swal.fire({ title: 'Eliminando crédito...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
+            const idNum = Number(creditoId) || parseInt(creditoId, 10);
             let success = false;
             try {
                 const { data, error } = await client.rpc('admin_retirar_credito_reprogramacion', {
-                    p_credito_id: parseInt(creditoId, 10)
+                    p_credito_id: idNum
                 });
                 if (!error) success = true;
+                else console.warn('Fallo RPC admin_retirar_credito_reprogramacion:', error);
             } catch (rpcErr) {
                 console.warn('Fallo RPC admin_retirar_credito_reprogramacion:', rpcErr);
             }
@@ -18793,8 +18798,9 @@
                 try {
                     const { error } = await client.from('creditos_reprogramacion')
                         .delete()
-                        .eq('id', parseInt(creditoId, 10));
+                        .eq('id', idNum);
                     if (!error) success = true;
+                    else console.error('Error fallback eliminar crédito:', error);
                 } catch (fbErr) {
                     console.error('Error fallback eliminar crédito:', fbErr);
                 }
@@ -18803,6 +18809,11 @@
             await sincronizarReprogUsuarioCache(userId);
             if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
             await abrirGestionBonosUsuario(userId);
+            if (success) {
+                Swal.fire({ icon: 'success', title: 'Crédito eliminado', timer: 1000, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el crédito de reprogramación.' });
+            }
         }
 
         async function cambiarCreditosReprogDirecto(userId, delta) {
@@ -18822,6 +18833,8 @@
                 if (!error) {
                     success = true;
                     newBalance = data;
+                } else {
+                    console.warn('RPC admin_ajustar_creditos_reprogramacion devolvió error:', error);
                 }
             } catch (rpcErr) {
                 console.warn('RPC admin_ajustar_creditos_reprogramacion falló:', rpcErr);
@@ -18830,15 +18843,17 @@
             if (!success) {
                 try {
                     if (delta < 0) {
-                        const { data: credits } = await client.from('creditos_reprogramacion')
+                        const { data: credits, error: fetchErr } = await client.from('creditos_reprogramacion')
                             .select('id')
                             .eq('user_id', userId)
                             .eq('estado', 'disponible')
                             .order('created_at', { ascending: false })
                             .limit(Math.abs(delta));
+                        if (fetchErr) throw fetchErr;
                         if (credits && credits.length > 0) {
                             const idsToDelete = credits.map(c => c.id);
-                            await client.from('creditos_reprogramacion').delete().in('id', idsToDelete);
+                            const { error: delErr } = await client.from('creditos_reprogramacion').delete().in('id', idsToDelete);
+                            if (delErr) throw delErr;
                         }
                     } else {
                         const toInsert = [];
@@ -18851,12 +18866,14 @@
                                 mes: new Date().toISOString().slice(0, 7) + '-01'
                             });
                         }
-                        await client.from('creditos_reprogramacion').insert(toInsert);
+                        const { error: insErr } = await client.from('creditos_reprogramacion').insert(toInsert);
+                        if (insErr) throw insErr;
                     }
-                    const { count } = await client.from('creditos_reprogramacion')
+                    const { count, error: countErr } = await client.from('creditos_reprogramacion')
                         .select('id', { count: 'exact', head: true })
                         .eq('user_id', userId)
                         .eq('estado', 'disponible');
+                    if (countErr) throw countErr;
 
                     success = true;
                     newBalance = count || 0;
@@ -18895,11 +18912,11 @@
 
             if (!success) {
                 try {
-                    await client.from('creditos_reprogramacion')
+                    const { error: delErr } = await client.from('creditos_reprogramacion')
                         .delete()
                         .eq('user_id', userId)
                         .eq('estado', 'disponible');
-                    success = true;
+                    if (!delErr) success = true;
                 } catch (err) {
                     console.error('Error vaciando créditos:', err);
                 }
@@ -18908,7 +18925,11 @@
             await sincronizarReprogUsuarioCache(userId);
             if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
             await abrirGestionBonosUsuario(userId);
-            Swal.fire({ icon: 'success', title: 'Créditos eliminados', timer: 1200, showConfirmButton: false });
+            if (success) {
+                Swal.fire({ icon: 'success', title: 'Créditos eliminados', timer: 1200, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron eliminar los créditos.' });
+            }
         }
 
         async function asignarCreditoReprogramacionAdmin(userId) {
@@ -18971,7 +18992,7 @@
         async function sincronizarReprogUsuarioCache(userId) {
             try {
                 const { data: freshReprog } = await client.from('creditos_reprogramacion')
-                    .select('id, user_id, tipo, subtipo, mes, estado, created_at')
+                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilizado_at')
                     .eq('user_id', userId)
                     .order('created_at', { ascending: false });
                 const u = (allUsersCache || []).find(x => String(x.id) === String(userId));
@@ -18984,6 +19005,7 @@
         }
 
         window.retirarCreditoReprogramacionAdmin = retirarCreditoReprogramacionAdmin;
+        window.eliminarCreditoReprogIndividual = retirarCreditoReprogramacionAdmin;
         window.asignarCreditoReprogramacionAdmin = asignarCreditoReprogramacionAdmin;
         window.cambiarCreditosReprogDirecto = cambiarCreditosReprogDirecto;
         window.vaciarCreditosReprogAdmin = vaciarCreditosReprogAdmin;
