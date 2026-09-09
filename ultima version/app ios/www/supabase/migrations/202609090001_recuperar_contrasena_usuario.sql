@@ -7,7 +7,17 @@
 BEGIN;
 
 -- 1. Asegurar extensión pgcrypto para hashing bcrypt estándar de contraseñas
-CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+EXCEPTION
+  WHEN OTHERS THEN
+    BEGIN
+      CREATE EXTENSION IF NOT EXISTS pgcrypto;
+    EXCEPTION
+      WHEN OTHERS THEN NULL;
+    END;
+END $$;
 
 -- 2. Función RPC para verificar si existe una cuenta asociada al email o teléfono
 CREATE OR REPLACE FUNCTION public.verificar_usuario_recuperacion(
@@ -188,7 +198,12 @@ BEGIN
   END IF;
 
   -- Generar el hash bcrypt con coste 10 (compatible con Supabase GoTrue)
-  v_encrypted := extensions.crypt(p_nueva_contrasena, extensions.gen_salt('bf', 10));
+  BEGIN
+    v_encrypted := extensions.crypt(p_nueva_contrasena, extensions.gen_salt('bf', 10));
+  EXCEPTION
+    WHEN OTHERS THEN
+      v_encrypted := crypt(p_nueva_contrasena, gen_salt('bf', 10));
+  END;
 
   -- Actualizar de forma atómica la contraseña en auth.users
   UPDATE auth.users
