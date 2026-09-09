@@ -23,6 +23,7 @@ interface NotificationPayload {
     cliente_nombre?: string
     cliente_email?: string
     clase_nombre?: string
+    tipo_clase?: string
     fecha?: string
     hora?: string
     duracion?: number
@@ -30,6 +31,11 @@ interface NotificationPayload {
     es_multiple?: boolean
     slot1_info?: string
     slot2_info?: string
+    repeticiones?: number
+    fechas_resumen?: string
+    capacidad_max?: number
+    ubicacion?: string
+    creado_por?: string
   }
 }
 
@@ -38,11 +44,11 @@ function generarHtmlNotificacion(payload: NotificationPayload): { asunto: string
   const profNombre = payload.datos?.profesor_nombre || 'Profesional'
   const cliNombre = payload.datos?.cliente_nombre || 'Alumno/a de GEN Yoga'
   const cliEmail = payload.datos?.cliente_email || 'No especificado'
-  const claseNombre = payload.datos?.clase_nombre || 'Consulta'
+  const claseNombre = payload.datos?.clase_nombre || 'Clase / Sesión'
   const fecha = payload.datos?.fecha || ''
   const hora = payload.datos?.hora || ''
   const duracion = payload.datos?.duracion ? `${payload.datos.duracion} min` : '60 min'
-  const notas = payload.datos?.notas ? `<p style="margin: 8px 0; color: #5a4b41; font-style: italic;"><strong>Notas/Ubicación:</strong> ${payload.datos.notas}</p>` : ''
+  const notas = payload.datos?.notas ? `<p style="margin: 8px 0; color: #5a4b41; font-style: italic;"><strong>Notas/Observaciones:</strong> ${payload.datos.notas}</p>` : ''
   const esMultiple = !!payload.datos?.es_multiple
 
   let asunto = payload.asunto || ''
@@ -58,6 +64,54 @@ function generarHtmlNotificacion(payload: NotificationPayload): { asunto: string
       <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin: 16px 0;">
         <p style="margin: 0; color: #166534; font-weight: bold;">✓ Canal de comunicación activo y verificado</p>
         <p style="margin: 6px 0 0 0; color: #15803d; font-size: 13px;">Recibirás avisos inmediatos en este correo cada vez que se cumpla la condición configurada.</p>
+      </div>
+    `
+  } else if (payload.evento === 'creacion_clase') {
+    const repeticiones = payload.datos?.repeticiones || 1
+    const fechasResumen = payload.datos?.fechas_resumen || (fecha ? `${fecha} a las ${hora}` : 'Consultar en agenda')
+    const tipoTexto = payload.datos?.tipo_clase ? String(payload.datos.tipo_clase).replace(/_/g, ' ').toUpperCase() : 'CLASE'
+    const capacidad = payload.datos?.capacidad_max ? `${payload.datos.capacidad_max} plazas` : '10 plazas'
+    const ubicacion = payload.datos?.ubicacion || 'Estudio GEN Yoga (Albacete)'
+
+    if (repeticiones > 1) {
+      asunto = asunto || `📅 Nuevas clases programadas (${repeticiones} sesiones): ${claseNombre} - GEN Yoga`
+      tituloHeader = `Clases Asignadas en tu Agenda`
+      bannerTexto = `Se han programado <strong>${repeticiones} sesiones</strong> de <strong>${claseNombre}</strong> asignadas a tu horario como profesor/a en GEN Yoga.`
+    } else {
+      asunto = asunto || `📅 Nueva clase programada: ${claseNombre} - GEN Yoga`
+      tituloHeader = `Nueva Clase en tu Agenda`
+      bannerTexto = `Se ha añadido una nueva sesión de <strong>${claseNombre}</strong> a tu horario como profesor/a en GEN Yoga.`
+    }
+
+    detallesEspecificos = `
+      <div style="background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 12px; padding: 18px; margin: 16px 0;">
+        <div style="margin-bottom: 12px;">
+          <span style="display: inline-block; background: #8C8658; color: #ffffff; font-size: 11px; font-weight: bold; padding: 3px 9px; border-radius: 6px; text-transform: uppercase;">${tipoTexto}</span>
+          ${repeticiones > 1 ? `<span style="display: inline-block; background: #26160C; color: #ffffff; font-size: 11px; font-weight: bold; padding: 3px 9px; border-radius: 6px; text-transform: uppercase; margin-left: 6px;">${repeticiones} Sesiones Programadas</span>` : ''}
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #26160C;">
+          <tr>
+            <td style="padding: 6px 0; color: #8C8658; font-weight: bold; width: 140px;">🧘 Clase/Sesión:</td>
+            <td style="padding: 6px 0; font-weight: 700; color: #26160C;">${claseNombre}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #8C8658; font-weight: bold;">📅 Fecha(s):</td>
+            <td style="padding: 6px 0; font-weight: 600;">${fechasResumen}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #8C8658; font-weight: bold;">⏰ Horario:</td>
+            <td style="padding: 6px 0; font-weight: 600;">${hora} (${duracion})</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #8C8658; font-weight: bold;">👥 Aforo:</td>
+            <td style="padding: 6px 0;">${capacidad}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #8C8658; font-weight: bold;">📍 Ubicación:</td>
+            <td style="padding: 6px 0;">${ubicacion}</td>
+          </tr>
+        </table>
+        ${notas}
       </div>
     `
   } else if (payload.evento === 'reserva_multiple') {
@@ -211,25 +265,65 @@ serve(async (req: Request) => {
     let proveedor = 'none'
     let errorDetalle: string | null = null
 
-    // 1. Intentar envío vía Resend si está configurada la API key
-    const resendApiKey = Deno.env.get('RESEND_API_KEY')?.trim()
+    // 1. Obtener API key de Resend (desde env o desde tabla configuracion)
+    let resendApiKey = Deno.env.get('RESEND_API_KEY')?.trim()
+    if (!resendApiKey) {
+      try {
+        const { data: cfgRow } = await supabaseClient
+          .from('configuracion')
+          .select('valor')
+          .eq('clave', 'resend_api_key')
+          .maybeSingle()
+        if (cfgRow?.valor) resendApiKey = String(cfgRow.valor).trim()
+      } catch (e) {
+        console.warn('No se pudo consultar configuracion.resend_api_key:', e)
+      }
+    }
+
     if (resendApiKey) {
       try {
-        const resendRes = await fetch('https://api.resend.com/emails', {
+        let fromHeader = `GEN Yoga <${remitente}>`
+        let resendRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: `GEN Yoga <${remitente}>`,
+            from: fromHeader,
             to: [destinatario],
             subject: asunto,
             html: html
           })
         })
-        const resendData = await resendRes.json()
-        if (resendRes.ok) {
+        let resendData = await resendRes.json()
+
+        // Fallback controlado si el dominio oficial no está verificado en Resend todavía:
+        if (!resendRes.ok && (JSON.stringify(resendData).includes('domain') || JSON.stringify(resendData).includes('verified') || resendRes.status === 403)) {
+          console.warn('Dominio no verificado en Resend. Reintentando con remitente de pruebas onboarding@resend.dev...')
+          fromHeader = `GEN Yoga <onboarding@resend.dev>`
+          const retryRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              from: fromHeader,
+              to: [destinatario],
+              subject: asunto,
+              html: html
+            })
+          })
+          const retryData = await retryRes.json()
+          if (retryRes.ok && retryData?.id) {
+            entregaExitosa = true
+            proveedor = 'resend_onboarding'
+            errorDetalle = null
+          } else {
+            errorDetalle = `Resend error: ${JSON.stringify(retryData || resendData)}`
+          }
+        } else if (resendRes.ok && resendData?.id) {
           entregaExitosa = true
           proveedor = 'resend'
         } else {
@@ -247,7 +341,7 @@ serve(async (req: Request) => {
       await supabaseClient.from('notificaciones_email_log').insert({
         profesional_id: profesional_id || null,
         profesor_email: destinatario,
-        evento: evento || 'reserva_consulta',
+        evento: evento || 'creacion_clase',
         destinatario: destinatario,
         remitente: remitente,
         asunto: asunto,
@@ -271,7 +365,11 @@ serve(async (req: Request) => {
       sender: remitente,
       subject: asunto,
       status: estadoLog,
-      message: entregaExitosa ? 'Correo enviado correctamente.' : 'Notificación procesada y registrada en el sistema de GEN Yoga.'
+      message: entregaExitosa 
+        ? 'Correo enviado correctamente a la bandeja del profesor.' 
+        : (resendApiKey 
+            ? `Aviso registrado en el sistema. Error del proveedor: ${errorDetalle}` 
+            : 'Notificación registrada en el sistema de GEN Yoga (configure RESEND_API_KEY en Supabase para entrega directa en buzón).')
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

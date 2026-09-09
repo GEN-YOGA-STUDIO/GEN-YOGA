@@ -4565,6 +4565,13 @@
                     </label>
                     <div class="space-y-2 bg-sand/10 p-3.5 rounded-2xl border border-cocoa/10">
                         <label class="flex items-start gap-2.5 text-xs text-cocoa cursor-pointer select-none">
+                            <input type="checkbox" id="notif-cond-creacion-clase" checked class="accent-olive w-4 h-4 mt-0.5">
+                            <div>
+                                <span class="font-bold block text-cocoa">Se le asigna / crea una nueva clase o sesión en su agenda</span>
+                                <span class="text-[11px] text-cocoa/60">Avisa de inmediato al profesor cuando se añade una clase a su horario (incluye nombre, fecha, hora y aforo).</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 text-xs text-cocoa cursor-pointer select-none">
                             <input type="checkbox" id="notif-cond-reserva-consulta" checked class="accent-olive w-4 h-4 mt-0.5">
                             <div>
                                 <span class="font-bold block text-cocoa">Se rellena / reserva un hueco en su consulta</span>
@@ -16815,6 +16822,37 @@
                 });
             }
 
+            // Notificar al profesor asignado por correo electrónico
+            try {
+                if (profesorId && createdClasses && createdClasses.length > 0) {
+                    const firstCls = createdClasses[0];
+                    const fechasLista = createdClasses.map(c => {
+                        const d = new Date(c.fecha_inicio);
+                        return d.toLocaleDateString(getCurrentLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
+                    });
+                    const resumenFechas = createdClasses.length > 1
+                        ? `${fechasLista[0]} a ${fechasLista[fechasLista.length - 1]} (${createdClasses.length} sesiones: ${fechasLista.join(', ')})`
+                        : `${fechasLista[0]}`;
+                    
+                    const fInicio = new Date(firstCls.fecha_inicio);
+                    const horaStr = fInicio.toLocaleTimeString(getCurrentLocale(), { hour: '2-digit', minute: '2-digit' });
+
+                    enviarNotificacionEmailProfesor(profesorId, 'creacion_clase', {
+                        clase_nombre: nombre,
+                        tipo_clase: firstCls.tipo_clase || 'yoga',
+                        fecha: fechasLista[0],
+                        hora: horaStr,
+                        duracion: duracion,
+                        repeticiones: createdClasses.length,
+                        fechas_resumen: resumenFechas,
+                        capacidad_max: firstCls.capacidad_max || 10,
+                        notas: firstCls.descripcion || ''
+                    }).catch(e => console.warn('Error al notificar al profesor:', e));
+                }
+            } catch (notifErr) {
+                console.warn('Error al preparar notificación a profesor:', notifErr);
+            }
+
             await cargarTodasLasClasesConProfesionales({ force: true });
             await cargarHorarios();
             if (isAdmin || esTrabajador()) await cargarAsistenciasPorClase();
@@ -24207,6 +24245,38 @@
                 if (inserts && inserts[0] && inserts[0].fecha_inicio) {
                     selectedAdminConsultaFecha = formatDateLocal(inserts[0].fecha_inicio);
                 }
+
+                // Notificar al profesional de la consulta por correo
+                try {
+                    if (profesorId && inserts && inserts.length > 0) {
+                        const firstIns = inserts[0];
+                        const fechasLista = inserts.map(c => {
+                            const d = new Date(c.fecha_inicio);
+                            return d.toLocaleDateString(getCurrentLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
+                        });
+                        const resumenFechas = inserts.length > 1
+                            ? `${fechasLista[0]} a ${fechasLista[fechasLista.length - 1]} (${inserts.length} citas: ${fechasLista.join(', ')})`
+                            : `${fechasLista[0]}`;
+                        
+                        const fInicio = new Date(firstIns.fecha_inicio);
+                        const horaStr = fInicio.toLocaleTimeString(getCurrentLocale(), { hour: '2-digit', minute: '2-digit' });
+
+                        enviarNotificacionEmailProfesor(profesorId, 'creacion_clase', {
+                            clase_nombre: nombreIngresado || 'Consulta',
+                            tipo_clase: 'consulta',
+                            fecha: fechasLista[0],
+                            hora: horaStr,
+                            duracion: duracion,
+                            repeticiones: inserts.length,
+                            fechas_resumen: resumenFechas,
+                            capacidad_max: 1,
+                            notas: notas || ''
+                        }).catch(e => console.warn('Error al notificar al profesional:', e));
+                    }
+                } catch (notifErr) {
+                    console.warn('Error al preparar notificación a profesional:', notifErr);
+                }
+
                 await cargarTodasLasClasesConProfesionales({ force: true });
                 if (tipo === 'psicologia') {
                     await cargarPsicologia();
@@ -24259,6 +24329,9 @@
             }
 
             const cfg = prof.notificaciones_config || {};
+            const condClase = document.getElementById('notif-cond-creacion-clase');
+            if (condClase) condClase.checked = cfg.creacion_clase !== false;
+
             const condReserva = document.getElementById('notif-cond-reserva-consulta');
             if (condReserva) condReserva.checked = cfg.reserva_consulta !== false;
 
@@ -24301,6 +24374,7 @@
             }
 
             const config = {
+                creacion_clase: !!document.getElementById('notif-cond-creacion-clase')?.checked,
                 reserva_consulta: !!document.getElementById('notif-cond-reserva-consulta')?.checked,
                 reserva_multiple: !!document.getElementById('notif-cond-reserva-multiple')?.checked,
                 cancelacion_consulta: !!document.getElementById('notif-cond-cancelacion-consulta')?.checked
@@ -24412,9 +24486,23 @@
                 if (evento !== 'prueba') {
                     if (!prof.notificaciones_email_activas) return { ok: false, error: 'notificaciones_desactivadas' };
                     const cfg = prof.notificaciones_config || {};
+                    if (evento === 'creacion_clase' && cfg.creacion_clase === false) return { ok: false, error: 'condicion_no_activa' };
                     if (evento === 'reserva_consulta' && cfg.reserva_consulta === false) return { ok: false, error: 'condicion_no_activa' };
                     if (evento === 'reserva_multiple' && cfg.reserva_multiple === false && cfg.reserva_consulta === false) return { ok: false, error: 'condicion_no_activa' };
                     if (evento === 'cancelacion_consulta' && !cfg.cancelacion_consulta) return { ok: false, error: 'condicion_no_activa' };
+                }
+
+                let asuntoCalculado = 'Notificación de GEN Yoga';
+                if (evento === 'creacion_clase') {
+                    asuntoCalculado = datos.repeticiones > 1
+                        ? `📅 Nuevas clases programadas (${datos.repeticiones} sesiones): ${datos.clase_nombre || 'Clase'} - GEN Yoga`
+                        : `📅 Nueva clase programada: ${datos.clase_nombre || 'Clase'} - GEN Yoga`;
+                } else if (evento === 'reserva_multiple') {
+                    asuntoCalculado = '¡Sesión Múltiple Reservada! - GEN Yoga';
+                } else if (evento === 'cancelacion_consulta') {
+                    asuntoCalculado = 'Cancelación de cita en tu consulta - GEN Yoga';
+                } else if (evento === 'reserva_consulta') {
+                    asuntoCalculado = '¡Nuevo hueco reservado en tu consulta! - GEN Yoga';
                 }
 
                 const payload = {
@@ -24422,18 +24510,24 @@
                     evento: evento,
                     destinatario: emailDestino,
                     remitente: 'hola@genyoga.studio',
+                    asunto: asuntoCalculado,
                     datos: {
                         profesor_nombre: `${prof.nombre || ''} ${prof.apellidos || ''}`.trim() || 'Profesional',
                         cliente_nombre: datos.cliente_nombre || `${currentUser?.nombre || ''} ${currentUser?.apellidos || ''}`.trim() || 'Alumno/a',
                         cliente_email: datos.cliente_email || currentUser?.email || '',
-                        clase_nombre: datos.clase_nombre || 'Consulta',
+                        clase_nombre: datos.clase_nombre || 'Clase / Sesión',
+                        tipo_clase: datos.tipo_clase || '',
                         fecha: datos.fecha || '',
                         hora: datos.hora || '',
                         duracion: datos.duracion || 60,
                         notas: datos.notas || '',
                         es_multiple: !!datos.es_multiple,
                         slot1_info: datos.slot1_info || '',
-                        slot2_info: datos.slot2_info || ''
+                        slot2_info: datos.slot2_info || '',
+                        repeticiones: datos.repeticiones || 1,
+                        fechas_resumen: datos.fechas_resumen || '',
+                        capacidad_max: datos.capacidad_max || 10,
+                        ubicacion: datos.ubicacion || 'Estudio GEN Yoga (Albacete)'
                     }
                 };
 
@@ -24443,7 +24537,11 @@
                     const { data, error } = await client.functions.invoke('send-email-notification', {
                         body: payload
                     });
-                    if (!error && data) edgeResult = data;
+                    if (!error && data) {
+                        edgeResult = data;
+                    } else if (error) {
+                        console.warn('Edge function invoke error:', error);
+                    }
                 } catch (edgeErr) {
                     console.warn('Edge function invoke bypassed:', edgeErr);
                 }
@@ -24456,9 +24554,9 @@
                         evento: evento,
                         destinatario: emailDestino,
                         remitente: 'hola@genyoga.studio',
-                        asunto: (evento === 'reserva_multiple' ? '¡Sesión Múltiple Reservada! - GEN Yoga' : '¡Nuevo hueco reservado en tu consulta! - GEN Yoga'),
+                        asunto: asuntoCalculado,
                         cuerpo_html: `Notificación emitida desde hola@genyoga.studio para ${prof.nombre}`,
-                        estado: edgeResult?.delivered ? 'enviado' : 'registrado',
+                        estado: edgeResult?.delivered ? 'enviado' : (edgeResult?.status || 'registrado'),
                         detalles: payload.datos
                     });
                 } catch (logErr) {
@@ -26119,6 +26217,38 @@
                     showConfirmButton: false,
                     timer: 2000
                 });
+
+                // Notificar al profesor del taller/clase especial por correo
+                try {
+                    if (profesorId && inserts && inserts.length > 0) {
+                        const firstIns = inserts[0];
+                        const fechasLista = inserts.map(c => {
+                            const d = new Date(c.fecha_inicio);
+                            return d.toLocaleDateString(getCurrentLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
+                        });
+                        const resumenFechas = inserts.length > 1
+                            ? `${fechasLista[0]} a ${fechasLista[fechasLista.length - 1]} (${inserts.length} fechas: ${fechasLista.join(', ')})`
+                            : `${fechasLista[0]}`;
+                        
+                        const fInicio = new Date(firstIns.fecha_inicio);
+                        const horaStr = fInicio.toLocaleTimeString(getCurrentLocale(), { hour: '2-digit', minute: '2-digit' });
+
+                        enviarNotificacionEmailProfesor(profesorId, 'creacion_clase', {
+                            clase_nombre: nombre,
+                            tipo_clase: tipoClaseEfectivo,
+                            fecha: fechasLista[0],
+                            hora: horaStr,
+                            duracion: duracion,
+                            repeticiones: inserts.length,
+                            fechas_resumen: resumenFechas,
+                            capacidad_max: capacidad,
+                            notas: notas || ''
+                        }).catch(e => console.warn('Error al notificar al instructor del evento:', e));
+                    }
+                } catch (notifErr) {
+                    console.warn('Error al preparar notificación al instructor:', notifErr);
+                }
+
                 await cargarTodasLasClasesConProfesionales({ force: true });
                 await cargarTalleresAdmin();
                 await cargarClasesEspeciales();
