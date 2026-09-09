@@ -343,8 +343,8 @@ BEGIN
   FOR v_rec IN
     SELECT id, nombre, apellidos, email, bonos
       FROM public.profiles
-     WHERE lower(unaccent(coalesce(apellidos, ''))) LIKE '%sahuquillo%'
-        OR (lower(unaccent(coalesce(nombre, ''))) LIKE '%mercedes%' AND lower(unaccent(coalesce(apellidos, ''))) LIKE '%sahu%')
+     WHERE lower(coalesce(apellidos, '')) LIKE '%sahuquillo%'
+        OR (lower(coalesce(nombre, '')) LIKE '%mercedes%' AND lower(coalesce(apellidos, '')) LIKE '%sahu%')
         OR lower(coalesce(email, '')) LIKE '%sahuquillo%'
   LOOP
     -- 1. Asignar los dos packs de 6 clases (total 12) a su historial de class_credit_packs
