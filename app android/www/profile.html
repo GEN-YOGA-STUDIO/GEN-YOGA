@@ -15908,6 +15908,72 @@
             return `${user}@${domain}`;
         }
 
+        function extraerTokensNombrePersona(nombreRaw, apellidosRaw) {
+            const normText = (s) => (s ? String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '');
+            const cleanTokenList = (s) => (s ? String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length >= 2) : []);
+
+            return {
+                nombreRaw: String(nombreRaw || '').trim(),
+                apellidosRaw: String(apellidosRaw || '').trim(),
+                nombreNorm: normText(nombreRaw),
+                apellidosNorm: normText(apellidosRaw),
+                nombreTokens: cleanTokenList(nombreRaw),
+                apellidosTokens: cleanTokenList(apellidosRaw)
+            };
+        }
+
+        function sonNombresCompatibles(p1, p2) {
+            const n1 = p1.nombreNorm;
+            const n2 = p2.nombreNorm;
+            if (!n1 || !n2) return false;
+            if (n1 === n2) return true;
+
+            // Variantes habituales en español (ej. Mari / María)
+            const n1Alt = n1.replace(/^mari(?=[a-z])/, 'maria');
+            const n2Alt = n2.replace(/^mari(?=[a-z])/, 'maria');
+            if (n1Alt === n2Alt) return true;
+
+            // Nombre compuesto abreviado (ej. Angeles vs Maria Angeles)
+            if (n1.length >= 5 && n2.length >= 5) {
+                if (n1.includes(n2) || n2.includes(n1)) return true;
+                // Pequeña errata de 1 letra en nombres largos (ej. Beatris vs Beatriz)
+                if (distanciaLevenshteinDuplicados(n1, n2) <= 1) return true;
+            }
+            return false;
+        }
+
+        function sonApellidosCompatibles(p1, p2, crossOrigin = false) {
+            const ap1 = p1.apellidosTokens;
+            const ap2 = p2.apellidosTokens;
+
+            if (!ap1 || ap1.length === 0 || !ap2 || ap2.length === 0) {
+                return false;
+            }
+
+            // Primer apellido: DEBE coincidir
+            const s1_1 = ap1[0];
+            const s2_1 = ap2[0];
+            const primerMatch = (s1_1 === s2_1) || (s1_1.length >= 6 && s2_1.length >= 6 && distanciaLevenshteinDuplicados(s1_1, s2_1) <= 1);
+            if (!primerMatch) {
+                return false;
+            }
+
+            // Si ambos tienen segundo apellido registrado: DEBEN coincidir
+            if (ap1.length >= 2 && ap2.length >= 2) {
+                const s1_2 = ap1[1];
+                const s2_2 = ap2[1];
+                const segundoMatch = (s1_2 === s2_2) || (s1_2.length >= 6 && s2_2.length >= 6 && distanciaLevenshteinDuplicados(s1_2, s2_2) <= 1);
+                return segundoMatch;
+            }
+
+            // Si uno tiene 1 solo apellido y el otro 2, solo considerar sospechoso si es origen cruzado (Mostrador vs Online)
+            if (crossOrigin) {
+                return true;
+            }
+
+            return false;
+        }
+
         function detectarDuplicadosUsuarios(userList) {
             const list = Array.isArray(userList) ? userList : [];
             const clients = list.filter(u => !['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
@@ -15920,10 +15986,7 @@
                 const tel1 = normalizarTelefonoDuplicados(u1.telefono, u1.email);
                 const email1 = normalizarEmailDuplicados(u1.email);
                 const isMostrador1 = esClienteMostrador(u1);
-
-                const full1 = `${u1.nombre || ''} ${u1.apellidos || ''}`.trim();
-                const n1 = normalizarTextoCompararDuplicados(full1);
-                const tokens1 = full1.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length >= 3);
+                const p1 = extraerTokensNombrePersona(u1.nombre, u1.apellidos);
 
                 for (let j = i + 1; j < clients.length; j++) {
                     const u2 = clients[j];
@@ -15931,7 +15994,9 @@
                     const tel2 = normalizarTelefonoDuplicados(u2.telefono, u2.email);
                     const email2 = normalizarEmailDuplicados(u2.email);
                     const isMostrador2 = esClienteMostrador(u2);
+                    const p2 = extraerTokensNombrePersona(u2.nombre, u2.apellidos);
 
+                    const crossOrigin = (isMostrador1 !== isMostrador2);
                     const reasons = [];
 
                     // 1. Teléfono idéntico (9 dígitos finales)
@@ -15939,40 +16004,33 @@
                         reasons.push(`📱 Mismo teléfono móvil (${tel1})`);
                     }
 
-                    // 2. Email idéntico o muy cercano (excluyendo correos sintéticos de mostrador)
+                    // 2. Email idéntico
                     if (email1 && email2) {
                         if (email1 === email2) {
                             reasons.push(`✉️ Mismo correo (${email1})`);
                         } else {
+                            // Errata en email SOLO si los nombres son compatibles o coincide el primer apellido
                             const [userPart1, dom1] = email1.split('@');
                             const [userPart2, dom2] = email2.split('@');
                             if (dom1 === dom2 && distanciaLevenshteinDuplicados(userPart1, userPart2) <= 2) {
-                                reasons.push(`✉️ Correos casi idénticos (${u1.email} vs ${u2.email})`);
+                                if (sonNombresCompatibles(p1, p2) || (p1.apellidosTokens[0] && p1.apellidosTokens[0] === p2.apellidosTokens[0])) {
+                                    reasons.push(`✉️ Correos casi idénticos (${u1.email} vs ${u2.email})`);
+                                }
                             }
                         }
                     }
 
-                    // 3. Nombre y Apellidos
-                    const full2 = `${u2.nombre || ''} ${u2.apellidos || ''}`.trim();
-                    const n2 = normalizarTextoCompararDuplicados(full2);
-                    const tokens2 = full2.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length >= 3);
-
-                    if (n1 && n2 && n1.length >= 5 && n2.length >= 5) {
-                        if (n1 === n2) {
-                            reasons.push(`👤 Mismo nombre completo ("${full1}")`);
-                        } else if (distanciaLevenshteinDuplicados(n1, n2) <= 2 && Math.min(n1.length, n2.length) >= 7) {
-                            reasons.push(`👤 Nombre casi idéntico ("${full1}" vs "${full2}")`);
-                        } else if (tokens1.length >= 2 && tokens2.length >= 2) {
-                            // Coincidencia de tokens: primer nombre igual y al menos un apellido en común
-                            const common = tokens1.filter(t => tokens2.includes(t));
-                            if (common.length >= 2 && (tokens1[0] === tokens2[0] || common.includes(tokens1[0]))) {
-                                reasons.push(`👤 Coincidencia en nombre y apellido (${common.join(', ')})`);
-                            }
+                    // 3. Nombre y Apellidos (Estricto: nombres compatibles y apellidos coincidentes)
+                    if (sonNombresCompatibles(p1, p2) && sonApellidosCompatibles(p1, p2, crossOrigin)) {
+                        const full1 = `${u1.nombre || ''} ${u1.apellidos || ''}`.trim();
+                        const full2 = `${u2.nombre || ''} ${u2.apellidos || ''}`.trim();
+                        if (normalizarTextoCompararDuplicados(full1) === normalizarTextoCompararDuplicados(full2)) {
+                            reasons.push(`👤 Mismo nombre y apellidos ("${full1}")`);
+                        } else {
+                            reasons.push(`👤 Nombres y apellidos compatibles ("${full1}" vs "${full2}")`);
                         }
                     }
 
-                    // 4. Verificación cruzada Mostrador vs Online
-                    const crossOrigin = (isMostrador1 !== isMostrador2);
                     if (reasons.length > 0) {
                         if (crossOrigin) {
                             reasons.push(`🏷️ Origen mixto: Uno en Mostrador y otro con Cuenta Online`);
