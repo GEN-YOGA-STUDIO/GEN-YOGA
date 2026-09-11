@@ -1826,10 +1826,10 @@
                                 <!-- Rellenado dinámicamente en JS -->
                             </div>
                             <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                class="hidden sm:inline-flex items-center justify-center w-7 h-7 rounded-full text-cocoa/40 hover:text-olive hover:bg-olive/10 transition shrink-0 cursor-pointer"
+                                class="inline-flex items-center justify-center w-7 h-7 rounded-xl text-cocoa/60 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer"
                                 title="Guía de bonos y saldos"
                                 aria-label="Información de bonos y saldos">
-                                <i class="ph-bold ph-info text-sm"></i>
+                                <i class="ph-bold ph-info text-base"></i>
                             </button>
                         </div>
                         <div class="h-8 w-px bg-cocoa/10 shrink-0"></div>
@@ -7372,7 +7372,7 @@
             if (headerWrapper) {
                 headerWrapper.innerHTML = `
             <!-- 1. CLASES NORMALES (BRONCE METÁLICO) -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 2px 8px rgba(196, 130, 77, 0.2);" title="Clases de Yoga disponibles. Haz clic para ver detalles.">
+            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 2px 8px rgba(196, 130, 77, 0.2);" title="Comprar más packs de clases">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">
                     <i class="ph-fill ph-ticket text-xs"></i>
                 </div>
@@ -7380,11 +7380,11 @@
                     <span class="text-[8px] font-black uppercase tracking-wider text-[#874113]">Clases</span>
                     <span class="text-xs font-black text-[#5e2704]">${userBonos} disp.</span>
                 </div>
-                <button onclick="abrirCompraPacks(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);" title="Comprar más packs">+ Packs</button>
+                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">+ Packs</span>
             </div>
 
             <!-- 2. CLASE ESPECIAL (PLATEADA METÁLICA) -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 2px 8px rgba(148, 163, 184, 0.25);" title="Clases especiales disponibles. Haz clic para ver detalles.">
+            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 2px 8px rgba(148, 163, 184, 0.25);" title="Comprar Bono Clase Especial">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
                     <i class="ph-fill ph-sparkle text-xs text-amber-300"></i>
                 </div>
@@ -7392,12 +7392,12 @@
                     <span class="text-[8px] font-black uppercase tracking-wider text-[#334155]">Clase especial</span>
                     <span class="text-xs font-black text-[#0f172a]">${userSpecialBonosMes} disp.</span>
                 </div>
-                <button onclick="comprarBonoEspecialStripe(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);" title="Comprar Clase Especial">+ Especial</button>
+                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">+ Especial</span>
             </div>
 
             ${userTotalTalleresDisponibles > 0 ? `
             <!-- 3. TALLERES (DORADA METÁLICA - A LA DERECHA DE LA PLATEADA) -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);" title="Bono o créditos de taller (35 €) disponibles. Haz clic para ver detalles.">
+            <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);" title="Ver y reservar talleres temáticos">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
                     <i class="ph-fill ph-chalkboard-teacher text-xs"></i>
                 </div>
@@ -7405,11 +7405,11 @@
                     <span class="text-[8px] font-black uppercase tracking-wider text-[#92400e]">Taller</span>
                     <span class="text-xs font-black text-[#78350f]">${userTotalTalleresDisponibles} disp.</span>
                 </div>
-                <button onclick="abrirPestanaEventosTalleres(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);" title="Ver eventos y talleres">+ Taller</button>
+                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);">+ Taller</span>
             </div>` : ''}
 
             <!-- 4. BONO ILIMITADO (MENSUAL) -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Bono Mensual Ilimitado. Haz clic para ver la guía de bonos.">
+            <div role="button" tabindex="0" onclick="comprarBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar mes ilimitado">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-2xs ${userBonoMensualActivo ? 'bg-emerald-600 text-white' : 'bg-cocoa/10 text-cocoa/50'}">
                     <i class="ph-fill ph-infinity text-xs"></i>
                 </div>
@@ -7417,37 +7417,40 @@
                     <span class="text-[8px] font-bold uppercase tracking-wider ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">Ilimitado</span>
                     <span class="text-xs font-black ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próx: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes')}</span>
                 </div>
-                <button onclick="comprarBonoMensual(event)" class="ml-1 px-2.5 py-0.5 text-[9px] font-bold uppercase bg-terracotta hover:bg-black text-white rounded-md transition shadow-2xs hover:scale-105 cursor-pointer leading-none" title="Comprar mes ilimitado">+ Mes</button>
+                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-bold uppercase bg-terracotta group-hover:bg-black text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none">+ Mes</span>
             </div>
 
             ${userCreditosReprogConsulta > 0 ? `
             <!-- 5. CRÉDITO CONSULTA REPROGRAMADA -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Crédito de consulta disponible. Haz clic para ver la guía de bonos.">
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y agendar consultas disponibles">
                 <i class="ph-bold ph-arrows-clockwise text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
                 <div class="flex flex-col text-left leading-tight">
                     <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Crédito</span>
                     <span class="text-xs font-black text-emerald-700">${userCreditosReprogConsulta} disp.</span>
                 </div>
+                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-emerald-600">+ Citas</span>
             </div>` : ''}
 
             ${userSaldoClasesGratis > 0 ? `
             <!-- 6. BONO BIENVENIDA -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Bono de Bienvenida disponible. Haz clic para ver la guía de bonos.">
+            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar más packs de clases">
                 <i class="ph-fill ph-sparkle text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
                 <div class="flex flex-col text-left leading-tight">
                     <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Bienvenida</span>
                     <span class="text-xs font-black text-emerald-700">${userSaldoClasesGratis} disp.</span>
                 </div>
+                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-emerald-600">+ Packs</span>
             </div>` : ''}
 
             ${userSaldoConsultasGratis > 0 ? `
             <!-- 7. CONSULTA GRATIS -->
-            <div onclick="mostrarInfoBonosSaldos(event)" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group shrink-0" title="Consulta de valoración gratuita disponible. Haz clic para ver la guía de bonos.">
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y reservar consultas">
                 <i class="ph-fill ph-gift text-base shrink-0 text-pink-600 group-hover:scale-110 transition-transform"></i>
                 <div class="flex flex-col text-left leading-tight">
                     <span class="text-[8px] font-bold uppercase tracking-wider text-pink-800">Consulta Gratis</span>
                     <span class="text-xs font-black text-pink-700">${userSaldoConsultasGratis} disp.</span>
                 </div>
+                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-pink-600">+ Cita</span>
             </div>` : ''}`;
             }
 
