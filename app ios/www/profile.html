@@ -2815,8 +2815,13 @@
                                 nutrición.</p>
                         </div>
                         <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                            <button type="button" onclick="analizarPosiblesDuplicados()" id="btn-analizar-duplicados"
+                                style="background-color: #fef3c7 !important; color: #78350f !important; border: 2px solid #f59e0b !important;"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold shadow-sm transition uppercase tracking-wide cursor-pointer hover:opacity-90">
+                                <i class="ph-bold ph-users text-base" style="color: #b45309 !important;"></i> Analizar posibles duplicados
+                            </button>
                             <button onclick="abrirCrearClienteMostrador()"
-                                class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-5 py-3 rounded-xl text-xs font-bold shadow-sm transition uppercase tracking-wide">
+                                class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-5 py-3 rounded-xl text-xs font-bold shadow-sm transition uppercase tracking-wide cursor-pointer">
                                 <i class="ph-bold ph-user-plus text-base"></i> Crear cliente
                             </button>
                             <div class="relative w-full md:w-80 group">
@@ -2826,6 +2831,40 @@
                                     class="w-full pl-11 pr-4 py-3 bg-white/80 border border-cocoa/20 rounded-xl focus:ring-2 focus:ring-olive outline-none shadow-sm transition placeholder-cocoa/30"
                                     placeholder="Buscar nombre o email...">
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Banner de Filtro de Duplicados -->
+                    <div id="duplicate-filter-banner"
+                        style="background-color: #fffbeb !important; border: 1px solid #fcd34d !important; color: #78350f !important;"
+                        class="hidden mb-4 p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-sm transition">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style="background-color: #fde68a !important; color: #92400e !important;">
+                                <i class="ph-fill ph-warning"></i>
+                            </span>
+                            <div>
+                                <p class="font-bold text-xs md:text-sm text-cocoa" id="duplicate-banner-title">
+                                    Filtro de duplicados: <span id="duplicate-count-badge" class="ml-1 px-2 py-0.5 rounded-full text-[11px] font-bold" style="background-color: #fde68a; color: #78350f;">0 posibles pares</span>
+                                </p>
+                                <p class="text-[11px] text-cocoa/70" id="duplicate-banner-desc">
+                                    Mostrando clientes sospechosos de duplicidad por coincidencia en teléfono, correo o nombre.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap w-full md:w-auto justify-end">
+                            <button type="button" onclick="abrirModalDetalleDuplicados()"
+                                class="px-3 py-2 bg-cocoa text-white hover:bg-black rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-list-magnifying-glass"></i> Ver comparativa
+                            </button>
+                            <button type="button" id="btn-mostrar-todos-dupes" onclick="filtrarTodosLosDuplicados()"
+                                style="background-color: #fde68a; color: #78350f; border: 1px solid #f59e0b;"
+                                class="hidden px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-users"></i> Ver todos los sospechosos
+                            </button>
+                            <button type="button" onclick="quitarFiltroDuplicados()"
+                                class="px-3 py-2 bg-white text-cocoa hover:bg-sand/20 border border-cocoa/20 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-x"></i> Quitar filtro
+                            </button>
                         </div>
                     </div>
 
@@ -14877,9 +14916,17 @@
 
         function renderActionsAdmin(u) {
             const uId = escapeHtml(String(u.id || ''));
+            const isDupe = Boolean(duplicateUserIds && duplicateUserIds.has(String(u.id)));
 
             return `
                 <div class="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
+                    ${isDupe ? `
+                    <button type="button" onclick="abrirComparativaParaUsuario('${uId}')"
+                        class="px-2 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
+                        title="Ver comparativa de duplicado">
+                        <i class="ph-bold ph-warning"></i> Duplicado
+                    </button>
+                    ` : ''}
                     <button type="button" onclick="abrirGestionBonosUsuario('${uId}')"
                         class="px-2.5 py-1.5 bg-olive text-white hover:bg-black rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
                         title="Gestionar Bonos y Saldos">
@@ -14921,8 +14968,11 @@
                 const isAdminRow = rolUsuario === 'admin';
                 const contact = obtenerDatosContactoPerfil(u);
                 const inicial = contact.inicial === '📱' ? '<i class="ph-bold ph-device-mobile"></i>' : escapeHtml(contact.inicial);
+                const isDupe = Boolean(duplicateUserIds && duplicateUserIds.has(String(u.id)));
                 const row = document.createElement('tr');
-                row.className = 'bg-white/90 hover:bg-white transition shadow-2xs border border-cocoa/10 rounded-xl';
+                row.className = isDupe
+                    ? 'bg-amber-50/50 hover:bg-amber-50/80 transition shadow-2xs border-l-4 border-l-amber-500 border border-amber-200/60 rounded-xl'
+                    : 'bg-white/90 hover:bg-white transition shadow-2xs border border-cocoa/10 rounded-xl';
 
                 let roleBadge = '<span class="bg-gray-100 text-gray-500 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-gray-200">Cliente</span>';
 
@@ -14961,16 +15011,21 @@
                     notasHtml = `<div class="text-[10px] text-amber-900 bg-amber-50/90 border border-amber-300/60 px-2 py-0.5 rounded-md mt-1 truncate max-w-[220px]" title="Notas: ${escapeHtml(u.notas)}">📝 ${escapeHtml(u.notas)}</div>`;
                 }
 
+                const dupeTagHtml = isDupe
+                    ? `<button type="button" onclick="abrirComparativaParaUsuario('${escapeHtml(String(u.id))}')" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-200 text-amber-900 border border-amber-300 hover:bg-amber-300 transition cursor-pointer" title="Hacer clic para ver coincidencias de duplicado"><i class="ph-bold ph-warning"></i> Posible duplicado</button>`
+                    : '';
+
                 row.innerHTML = `
                     <td class="px-5 py-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${isAdminRow ? 'bg-gold-100 text-gold-700' : 'bg-sand/30 text-cocoa'} shrink-0 border border-cocoa/10">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${isAdminRow ? 'bg-gold-100 text-gold-700' : (isDupe ? 'bg-amber-200 text-amber-900' : 'bg-sand/30 text-cocoa')} shrink-0 border border-cocoa/10">
                                 ${inicial}
                             </div>
                             <div class="flex flex-col min-w-0">
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     <span class="font-bold text-cocoa truncate max-w-[150px] sm:max-w-none text-sm">${escapeHtml(contact.nombreCompleto)}</span>
                                     ${contact.edadStr ? `<span class="text-[9px] font-bold text-cocoa/40">(${escapeHtml(contact.edadStr)})</span>` : ''}
+                                    ${dupeTagHtml}
                                 </div>
                                 ${contactInfo}
                                 ${notasHtml}
@@ -15786,9 +15841,435 @@
             }
         }
 
+        // --- SISTEMA DE ANÁLISIS Y DETECCIÓN DE POSIBLES DUPLICADOS ---
+        let duplicatePairsFound = [];
+        let duplicateUserIds = new Set();
+        let filtroDuplicadosActivo = false;
+        let filtroDuplicadosParActual = null; // null: todos los sospechosos, [id1, id2]: par específico
+
+        function normalizarTextoCompararDuplicados(str) {
+            if (!str) return '';
+            return String(str)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, '')
+                .trim();
+        }
+
+        function distanciaLevenshteinDuplicados(a, b) {
+            if (a === b) return 0;
+            if (!a) return b.length;
+            if (!b) return a.length;
+            const d = [];
+            for (let i = 0; i <= a.length; i++) d[i] = [i];
+            for (let j = 0; j <= b.length; j++) d[0][j] = j;
+            for (let i = 1; i <= a.length; i++) {
+                for (let j = 1; j <= b.length; j++) {
+                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                    d[i][j] = Math.min(
+                        d[i - 1][j] + 1,
+                        d[i][j - 1] + 1,
+                        d[i - 1][j - 1] + cost
+                    );
+                }
+            }
+            return d[a.length][b.length];
+        }
+
+        function normalizarTelefonoDuplicados(tel, email) {
+            let raw = String(tel || '').trim();
+            if (!raw && email) {
+                const match = String(email).match(/^(?:movil|telefono)\.([0-9]+)@genyoga\.studio$/i);
+                if (match) raw = match[1];
+            }
+            const digits = raw.replace(/\D/g, '');
+            if (digits.length >= 9) {
+                return digits.slice(-9);
+            }
+            return '';
+        }
+
+        function normalizarEmailDuplicados(email) {
+            if (!email) return null;
+            const raw = String(email).trim().toLowerCase();
+            if (/^(?:movil|telefono)\.[0-9]+@genyoga\.studio$/i.test(raw) ||
+                /^mostrador\+.+@genyoga\.studio$/i.test(raw) ||
+                /^guest_.+@genyoga\.es$/i.test(raw) ||
+                /^paciente\..+@temporal\.genyoga\.studio$/i.test(raw)) {
+                return null; // Email sintético
+            }
+            const parts = raw.split('@');
+            if (parts.length !== 2) return raw;
+            let [user, domain] = parts;
+            if (domain === 'gmail.com' || domain === 'googlemail.com') {
+                user = user.split('+')[0].replace(/\./g, '');
+            }
+            return `${user}@${domain}`;
+        }
+
+        function detectarDuplicadosUsuarios(userList) {
+            const list = Array.isArray(userList) ? userList : [];
+            const clients = list.filter(u => !['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
+            const pairs = [];
+            const userIdSet = new Set();
+
+            for (let i = 0; i < clients.length; i++) {
+                const u1 = clients[i];
+                const c1 = obtenerDatosContactoPerfil(u1);
+                const tel1 = normalizarTelefonoDuplicados(u1.telefono, u1.email);
+                const email1 = normalizarEmailDuplicados(u1.email);
+                const isMostrador1 = esClienteMostrador(u1);
+
+                const full1 = `${u1.nombre || ''} ${u1.apellidos || ''}`.trim();
+                const n1 = normalizarTextoCompararDuplicados(full1);
+                const tokens1 = full1.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length >= 3);
+
+                for (let j = i + 1; j < clients.length; j++) {
+                    const u2 = clients[j];
+                    const c2 = obtenerDatosContactoPerfil(u2);
+                    const tel2 = normalizarTelefonoDuplicados(u2.telefono, u2.email);
+                    const email2 = normalizarEmailDuplicados(u2.email);
+                    const isMostrador2 = esClienteMostrador(u2);
+
+                    const reasons = [];
+
+                    // 1. Teléfono idéntico (9 dígitos finales)
+                    if (tel1 && tel2 && tel1 === tel2) {
+                        reasons.push(`📱 Mismo teléfono móvil (${tel1})`);
+                    }
+
+                    // 2. Email idéntico o muy cercano (excluyendo correos sintéticos de mostrador)
+                    if (email1 && email2) {
+                        if (email1 === email2) {
+                            reasons.push(`✉️ Mismo correo (${email1})`);
+                        } else {
+                            const [userPart1, dom1] = email1.split('@');
+                            const [userPart2, dom2] = email2.split('@');
+                            if (dom1 === dom2 && distanciaLevenshteinDuplicados(userPart1, userPart2) <= 2) {
+                                reasons.push(`✉️ Correos casi idénticos (${u1.email} vs ${u2.email})`);
+                            }
+                        }
+                    }
+
+                    // 3. Nombre y Apellidos
+                    const full2 = `${u2.nombre || ''} ${u2.apellidos || ''}`.trim();
+                    const n2 = normalizarTextoCompararDuplicados(full2);
+                    const tokens2 = full2.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length >= 3);
+
+                    if (n1 && n2 && n1.length >= 5 && n2.length >= 5) {
+                        if (n1 === n2) {
+                            reasons.push(`👤 Mismo nombre completo ("${full1}")`);
+                        } else if (distanciaLevenshteinDuplicados(n1, n2) <= 2 && Math.min(n1.length, n2.length) >= 7) {
+                            reasons.push(`👤 Nombre casi idéntico ("${full1}" vs "${full2}")`);
+                        } else if (tokens1.length >= 2 && tokens2.length >= 2) {
+                            // Coincidencia de tokens: primer nombre igual y al menos un apellido en común
+                            const common = tokens1.filter(t => tokens2.includes(t));
+                            if (common.length >= 2 && (tokens1[0] === tokens2[0] || common.includes(tokens1[0]))) {
+                                reasons.push(`👤 Coincidencia en nombre y apellido (${common.join(', ')})`);
+                            }
+                        }
+                    }
+
+                    // 4. Verificación cruzada Mostrador vs Online
+                    const crossOrigin = (isMostrador1 !== isMostrador2);
+                    if (reasons.length > 0) {
+                        if (crossOrigin) {
+                            reasons.push(`🏷️ Origen mixto: Uno en Mostrador y otro con Cuenta Online`);
+                        }
+                        userIdSet.add(String(u1.id));
+                        userIdSet.add(String(u2.id));
+                        pairs.push({
+                            u1,
+                            u2,
+                            c1,
+                            c2,
+                            reasons,
+                            crossOrigin
+                        });
+                    }
+                }
+            }
+
+            return { pairs, userIdSet };
+        }
+
+        async function analizarPosiblesDuplicados() {
+            const btn = document.getElementById('btn-analizar-duplicados');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-base"></i> Analizando...';
+            }
+
+            try {
+                if (!allUsersCache || allUsersCache.length === 0) {
+                    await cargarUsuarios();
+                }
+
+                const { pairs, userIdSet } = detectarDuplicadosUsuarios(allUsersCache);
+                duplicatePairsFound = pairs;
+                duplicateUserIds = userIdSet;
+
+                if (pairs.length === 0) {
+                    quitarFiltroDuplicados();
+                    await Swal.fire({
+                        title: 'Sin duplicados detectados',
+                        text: 'No se encontraron clientes con teléfonos repetidos, correos similares ni nombres sospechosamente iguales.',
+                        icon: 'info',
+                        confirmButtonColor: '#26160C',
+                        confirmButtonText: 'Entendido'
+                    });
+                    return;
+                }
+
+                // Activar filtro en la tabla
+                filtroDuplicadosActivo = true;
+                filtroDuplicadosParActual = null;
+                actualizarBannerDuplicados();
+                filtrarUsuarios();
+
+                // Abrir modal con la comparativa detallada
+                await abrirModalDetalleDuplicados();
+            } catch (err) {
+                console.error('Error al analizar duplicados:', err);
+                Swal.fire('Error', 'Ocurrió un fallo al analizar los posibles duplicados: ' + (err.message || err), 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        function actualizarBannerDuplicados() {
+            const banner = document.getElementById('duplicate-filter-banner');
+            const badge = document.getElementById('duplicate-count-badge');
+            const desc = document.getElementById('duplicate-banner-desc');
+            const btnTodos = document.getElementById('btn-mostrar-todos-dupes');
+            if (!banner) return;
+
+            if (!filtroDuplicadosActivo) {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            banner.classList.remove('hidden');
+
+            if (filtroDuplicadosParActual && Array.isArray(filtroDuplicadosParActual)) {
+                if (badge) badge.textContent = '1 par seleccionado';
+                if (desc) desc.textContent = 'Mostrando únicamente el par de clientes en comparación.';
+                if (btnTodos) btnTodos.classList.remove('hidden');
+            } else {
+                if (badge) badge.textContent = `${duplicatePairsFound.length} posibles pares (${duplicateUserIds.size} clientes)`;
+                if (desc) desc.textContent = 'Mostrando todos los perfiles de clientes sospechosos de duplicidad.';
+                if (btnTodos) btnTodos.classList.add('hidden');
+            }
+        }
+
+        function filtrarSoloParDuplicado(u1Id, u2Id) {
+            filtroDuplicadosActivo = true;
+            filtroDuplicadosParActual = [String(u1Id), String(u2Id)];
+            actualizarBannerDuplicados();
+            filtrarUsuarios();
+            Swal.close();
+        }
+
+        function filtrarTodosLosDuplicados() {
+            filtroDuplicadosActivo = true;
+            filtroDuplicadosParActual = null;
+            actualizarBannerDuplicados();
+            filtrarUsuarios();
+        }
+
+        function quitarFiltroDuplicados() {
+            filtroDuplicadosActivo = false;
+            filtroDuplicadosParActual = null;
+            actualizarBannerDuplicados();
+            filtrarUsuarios();
+        }
+
+        function abrirComparativaParaUsuario(userId) {
+            const matchedPairs = (duplicatePairsFound || []).filter(p =>
+                String(p.u1.id) === String(userId) || String(p.u2.id) === String(userId)
+            );
+            if (matchedPairs.length === 0) {
+                // Si aún no se ha ejecutado el análisis completo, ejecutarlo automáticamente
+                if (duplicatePairsFound.length === 0) {
+                    const { pairs, userIdSet } = detectarDuplicadosUsuarios(allUsersCache);
+                    duplicatePairsFound = pairs;
+                    duplicateUserIds = userIdSet;
+                    const newlyMatched = (duplicatePairsFound || []).filter(p =>
+                        String(p.u1.id) === String(userId) || String(p.u2.id) === String(userId)
+                    );
+                    if (newlyMatched.length > 0) {
+                        return abrirModalDetalleDuplicados(newlyMatched);
+                    }
+                }
+                Swal.fire('Sin duplicados', 'No se encontraron coincidencias de duplicado para este usuario con los criterios actuales.', 'info');
+                return;
+            }
+            abrirModalDetalleDuplicados(matchedPairs);
+        }
+
+        function formatSaldoResumenCliente(u) {
+            const items = [];
+            const bYoga = toSafeNumber(u.bonos);
+            const bGratis = toSafeNumber(u.saldo_clases_gratis);
+            const bComp = toSafeNumber(u.saldo_yoga_compania);
+            const cGratis = toSafeNumber(u.saldo_consultas_gratis);
+            const bPsi = toSafeNumber(u.saldo_psicologia);
+            const bNut = toSafeNumber(u.saldo_nutricion);
+
+            if (bYoga > 0) items.push(`${bYoga} Yoga`);
+            if (bGratis > 0) items.push(`${bGratis} Bienvenida`);
+            if (bComp > 0) items.push(`${bComp} Compañía`);
+            if (cGratis > 0) items.push(`${cGratis} Consulta Gratis`);
+            if (bPsi > 0) items.push(`${bPsi} Psicología`);
+            if (bNut > 0) items.push(`${bNut} Nutrición`);
+
+            return items.length > 0 ? items.join(', ') : 'Sin bonos activos';
+        }
+
+        async function abrirModalDetalleDuplicados(pairsList = null) {
+            const pairs = pairsList || duplicatePairsFound || [];
+            if (pairs.length === 0) {
+                return Swal.fire('Sin duplicados', 'No hay posibles pares duplicados que mostrar.', 'info');
+            }
+
+            const rowsHtml = pairs.map((pair, idx) => {
+                const { u1, u2, c1, c2, reasons, crossOrigin } = pair;
+                const saldo1 = formatSaldoResumenCliente(u1);
+                const saldo2 = formatSaldoResumenCliente(u2);
+
+                const origin1Badge = c1.isMostrador
+                    ? '<span class="bg-olive/15 text-olive font-bold text-[10px] px-2 py-0.5 rounded-full border border-olive/30">Mostrador (Sin login)</span>'
+                    : '<span class="bg-blue-50 text-blue-800 font-bold text-[10px] px-2 py-0.5 rounded-full border border-blue-200">Cuenta Online</span>';
+
+                const origin2Badge = c2.isMostrador
+                    ? '<span class="bg-olive/15 text-olive font-bold text-[10px] px-2 py-0.5 rounded-full border border-olive/30">Mostrador (Sin login)</span>'
+                    : '<span class="bg-blue-50 text-blue-800 font-bold text-[10px] px-2 py-0.5 rounded-full border border-blue-200">Cuenta Online</span>';
+
+                const reasonsBadges = reasons.map(r =>
+                    `<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100/90 text-amber-900 border border-amber-300/80">${escapeHtml(r)}</span>`
+                ).join(' ');
+
+                return `
+                    <div class="bg-sand/10 border border-cocoa/15 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs hover:border-amber-400/60 transition text-left font-sans">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cocoa/10 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-amber-200 text-amber-900 font-bold text-xs flex items-center justify-center">${idx + 1}</span>
+                                <span class="text-xs font-bold text-cocoa uppercase tracking-wider">Par sospechoso</span>
+                                ${crossOrigin ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200">⚡ Mixto: Mostrador + Online</span>' : ''}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="filtrarSoloParDuplicado('${escapeHtml(String(u1.id))}', '${escapeHtml(String(u2.id))}')"
+                                    class="px-3 py-1.5 bg-cocoa text-white hover:bg-black rounded-xl text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
+                                    <i class="ph-bold ph-faders"></i> Ver en tabla
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Motivos -->
+                        <div class="flex flex-wrap gap-1.5">
+                            ${reasonsBadges}
+                        </div>
+
+                        <!-- Comparativa 2 columnas -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <!-- Perfil 1 -->
+                            <div class="p-3.5 bg-white rounded-xl border border-cocoa/10 space-y-1.5 shadow-2xs">
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="text-[10px] font-bold uppercase text-cocoa/50 tracking-wider">Perfil A</span>
+                                    ${origin1Badge}
+                                </div>
+                                <div class="font-bold text-sm text-cocoa truncate">${escapeHtml(c1.nombreCompleto)}</div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1">
+                                    <span>📱</span>
+                                    <span class="font-semibold">${c1.cleanTel ? escapeHtml(c1.cleanTel) : '<em class="text-cocoa/40">Sin teléfono</em>'}</span>
+                                </div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1 truncate" title="${escapeHtml(u1.email || '')}">
+                                    <span>✉️</span>
+                                    <span>${c1.realEmail ? escapeHtml(c1.realEmail) : `<em class="text-cocoa/40">${escapeHtml(u1.email || 'Sin email')}</em>`}</span>
+                                </div>
+                                <div class="text-[11px] text-cocoa/80 bg-sand/20 rounded-lg px-2.5 py-1 mt-2 flex items-center gap-1">
+                                    <i class="ph-bold ph-wallet text-olive"></i>
+                                    <span><strong>Saldos:</strong> ${escapeHtml(saldo1)}</span>
+                                </div>
+                                ${u1.notas ? `<div class="text-[10px] text-amber-900 bg-amber-50 rounded px-2 py-0.5 truncate" title="Notas: ${escapeHtml(u1.notas)}">📝 ${escapeHtml(u1.notas)}</div>` : ''}
+                            </div>
+
+                            <!-- Perfil 2 -->
+                            <div class="p-3.5 bg-white rounded-xl border border-cocoa/10 space-y-1.5 shadow-2xs">
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="text-[10px] font-bold uppercase text-cocoa/50 tracking-wider">Perfil B</span>
+                                    ${origin2Badge}
+                                </div>
+                                <div class="font-bold text-sm text-cocoa truncate">${escapeHtml(c2.nombreCompleto)}</div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1">
+                                    <span>📱</span>
+                                    <span class="font-semibold">${c2.cleanTel ? escapeHtml(c2.cleanTel) : '<em class="text-cocoa/40">Sin teléfono</em>'}</span>
+                                </div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1 truncate" title="${escapeHtml(u2.email || '')}">
+                                    <span>✉️</span>
+                                    <span>${c2.realEmail ? escapeHtml(c2.realEmail) : `<em class="text-cocoa/40">${escapeHtml(u2.email || 'Sin email')}</em>`}</span>
+                                </div>
+                                <div class="text-[11px] text-cocoa/80 bg-sand/20 rounded-lg px-2.5 py-1 mt-2 flex items-center gap-1">
+                                    <i class="ph-bold ph-wallet text-olive"></i>
+                                    <span><strong>Saldos:</strong> ${escapeHtml(saldo2)}</span>
+                                </div>
+                                ${u2.notas ? `<div class="text-[10px] text-amber-900 bg-amber-50 rounded px-2 py-0.5 truncate" title="Notas: ${escapeHtml(u2.notas)}">📝 ${escapeHtml(u2.notas)}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            await Swal.fire({
+                title: `<div class="text-cocoa font-bold text-lg md:text-xl flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-users-three text-amber-600"></i> Análisis de Posibles Duplicados
+                </div>`,
+                html: `
+                    <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1 text-left">
+                        <p class="text-xs text-cocoa/70 leading-relaxed font-sans">
+                            Se han analizado los perfiles buscando coincidencias en teléfono móvil, correos electrónicos idénticos o con erratas, nombres y apellidos similares, y cruces entre fichas de mostrador y registros online.
+                        </p>
+                        <div class="space-y-3">
+                            ${rowsHtml}
+                        </div>
+                    </div>
+                `,
+                width: '880px',
+                showConfirmButton: true,
+                confirmButtonText: 'Ver todos en la tabla',
+                confirmButtonColor: '#26160C',
+                showCancelButton: true,
+                cancelButtonText: 'Cerrar',
+                cancelButtonColor: '#78716c',
+                customClass: {
+                    popup: 'rounded-3xl p-5 sm:p-7 border border-cocoa/10 shadow-2xl'
+                }
+            }).then(res => {
+                if (res.isConfirmed) {
+                    filtrarTodosLosDuplicados();
+                }
+            });
+        }
+
         function filtrarUsuarios() {
-            const term = document.getElementById('user-search').value.toLowerCase();
-            const filtered = allUsersCache.filter(u => getTextoBusquedaPerfil(u).includes(term));
+            const term = (document.getElementById('user-search')?.value || '').toLowerCase().trim();
+            let sourceList = allUsersCache || [];
+
+            if (filtroDuplicadosActivo) {
+                if (filtroDuplicadosParActual && Array.isArray(filtroDuplicadosParActual)) {
+                    const pairSet = new Set(filtroDuplicadosParActual.map(String));
+                    sourceList = sourceList.filter(u => pairSet.has(String(u.id)));
+                } else if (duplicateUserIds && duplicateUserIds.size > 0) {
+                    sourceList = sourceList.filter(u => duplicateUserIds.has(String(u.id)));
+                }
+            }
+
+            const filtered = term ? sourceList.filter(u => getTextoBusquedaPerfil(u).includes(term)) : sourceList;
 
             const clients = filtered.filter(u => !['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
             const staff = filtered.filter(u => ['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
