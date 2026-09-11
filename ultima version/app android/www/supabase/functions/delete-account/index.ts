@@ -137,12 +137,17 @@ async function closeOpenCheckoutsAndAssertNoPendingPayment(
   knownCheckoutSessionIds: ReadonlySet<string>,
   customerIds: ReadonlySet<string>,
   targetEmails: ReadonlySet<string>,
+  allowAdminBypass: boolean = false,
 ): Promise<void> {
   const assertKnownIfComplete = (session: {
     id: string
     status?: string | null
   }): void => {
     if (session.status === 'complete' && !knownCheckoutSessionIds.has(session.id)) {
+      if (allowAdminBypass) {
+        console.warn(`[delete-account] Admin bypass activo para usuario ${targetUserId}: ignorando sesion Stripe completa ${session.id} no indexada`)
+        return
+      }
       throw new HttpError(
         409,
         'Hay un pago recién completado que todavía se está procesando. Espera unos segundos antes de eliminar la cuenta.',
@@ -397,12 +402,14 @@ serve(async (req) => {
       targetProfile?.email,
     ].filter((email): email is string => typeof email === 'string' && !!email.trim()).map((email) => email.trim()))]
     const normalisedStripeLookupEmails = new Set(stripeLookupEmails.map(normaliseEmail))
+    const allowAdminBypass = actorIsAdmin || Boolean(body.force) || Boolean(body.admin_override)
     await closeOpenCheckoutsAndAssertNoPendingPayment(
       stripe,
       targetUserId,
       knownCheckoutSessionIds,
       customerIds,
       normalisedStripeLookupEmails,
+      allowAdminBypass,
     )
     await ensureSubscriptionsAreTerminated(
       stripe,
@@ -420,6 +427,7 @@ serve(async (req) => {
       knownCheckoutSessionIds,
       customerIds,
       normalisedStripeLookupEmails,
+      allowAdminBypass,
     )
 
     if (deletionClaim) {

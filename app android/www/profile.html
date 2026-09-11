@@ -16390,36 +16390,34 @@
             }
 
             const targetUser = allUsersCache.find(user => user.id === uid);
-            const targetEmail = String(targetUser?.email || '').trim();
-            if (!targetEmail) {
-                await Swal.fire('No se puede eliminar', 'No se encontró un correo verificable para esta cuenta.', 'error');
-                return;
-            }
+            let targetEmail = String(targetUser?.email || '').trim();
+            const targetPhone = String(targetUser?.telefono || '').trim();
+            const identifier = targetEmail || targetPhone || 'ELIMINAR';
 
-            const { value: confirmationEmail } = await Swal.fire({
+            const { value: confirmationInput } = await Swal.fire({
                 title: '¿Eliminar usuario definitivamente?',
                 html: `
             <p class="text-sm text-gray-600 mb-3">Se eliminarán su acceso, perfil, saldos, reservas y pertenencia a grupos.</p>
-            <p class="text-xs text-red-600 font-bold">La operación se bloqueará si Stripe conserva una suscripción sin terminar.</p>
+            <p class="text-xs text-red-600 font-bold">La operación intentará cancelar suscripciones en Stripe y purgará los registros de la base de datos.</p>
         `,
                 icon: 'warning',
-                input: 'email',
-                inputLabel: `Escribe ${targetEmail} para confirmar`,
-                inputPlaceholder: targetEmail,
+                input: 'text',
+                inputLabel: `Escribe ${identifier} para confirmar`,
+                inputPlaceholder: identifier,
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Eliminar definitivamente',
                 cancelButtonText: 'Cancelar',
                 preConfirm: (value) => {
-                    if (String(value || '').trim().toLowerCase() !== targetEmail.toLowerCase()) {
-                        Swal.showValidationMessage('El correo no coincide con la cuenta seleccionada.');
+                    if (String(value || '').trim().toLowerCase() !== identifier.toLowerCase()) {
+                        Swal.showValidationMessage(`Debes escribir exactamente "${identifier}" para confirmar.`);
                         return false;
                     }
                     return String(value).trim();
                 }
             });
-            if (!confirmationEmail) return;
+            if (!confirmationInput) return;
 
             Swal.fire({
                 title: 'Eliminando cuenta...',
@@ -16429,20 +16427,71 @@
             });
 
             try {
-                const { data, error } = await client.functions.invoke('delete-account', {
-                    body: {
-                        target_user_id: uid,
-                        confirmation: 'DELETE_ACCOUNT',
-                        confirmation_email: confirmationEmail
+                if (targetEmail) {
+                    const { data, error } = await client.functions.invoke('delete-account', {
+                        body: {
+                            target_user_id: uid,
+                            confirmation: 'DELETE_ACCOUNT',
+                            confirmation_email: targetEmail,
+                            admin_override: true,
+                            force: true
+                        }
+                    });
+                    if (error || !data?.success) {
+                        const message = await obtenerMensajeErrorFuncion(
+                            error,
+                            data,
+                            'El servicio de eliminación estándar reportó un aviso.'
+                        );
+                        console.warn('[borrarUsuario] Edge Function no completó:', message);
+
+                        // Si Stripe reporta pagos en proceso, sesiones pendientes o falla la función,
+                        // dar la opción al admin de forzar la eliminación definitiva en la base de datos
+                        const confirmForce = await Swal.fire({
+                            title: '¿Forzar borrado en Base de Datos?',
+                            html: `
+                                <div class="text-left text-sm space-y-2">
+                                    <p class="text-gray-700">El servicio de sincronización devolvió:</p>
+                                    <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded p-2 text-xs font-mono">${message}</div>
+                                    <p class="text-gray-600">Como administrador, puedes forzar la eliminación definitiva directa en la base de datos.</p>
+                                    <p class="text-xs text-red-600 font-bold">Se eliminarán el perfil, reservas, bonos y el acceso de autenticación.</p>
+                                </div>
+                            `,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Sí, forzar borrado en BD',
+                            cancelButtonText: 'Cancelar'
+                        });
+
+                        if (!confirmForce.isConfirmed) {
+                            throw new Error(message);
+                        }
+
+                        Swal.fire({
+                            title: 'Purgando en base de datos...',
+                            text: 'Eliminando perfil, reservas y cuenta de Auth...',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        const { error: rpcError } = await client.rpc('admin_eliminar_usuario_completo', {
+                            p_target_user_id: uid
+                        });
+
+                        if (rpcError) {
+                            throw new Error(rpcError.message || 'Error al forzar la eliminación en la base de datos.');
+                        }
                     }
-                });
-                if (error || !data?.success) {
-                    const message = await obtenerMensajeErrorFuncion(
-                        error,
-                        data,
-                        'No se pudo completar la eliminación de la cuenta.'
-                    );
-                    throw new Error(message);
+                } else {
+                    // Usuario sin email (cuenta mostrador / teléfono directo)
+                    const { error: rpcError } = await client.rpc('admin_eliminar_usuario_completo', {
+                        p_target_user_id: uid
+                    });
+                    if (rpcError) {
+                        throw new Error(rpcError.message || 'Error al eliminar usuario en la base de datos.');
+                    }
                 }
 
                 const refreshResults = await Promise.allSettled([
@@ -16453,7 +16502,7 @@
                 for (const result of refreshResults) {
                     if (result.status === 'rejected') console.warn('La cuenta se eliminó, pero falló una recarga del panel:', result.reason);
                 }
-                await Swal.fire('Cuenta eliminada', 'El perfil, sus reservas y su acceso han sido eliminados.', 'success');
+                await Swal.fire('Cuenta eliminada', 'El perfil, sus reservas y su acceso han sido eliminados de la base de datos.', 'success');
             } catch (error) {
                 console.error('Error al eliminar una cuenta desde administración:', error);
                 await Swal.fire('No se pudo eliminar', error.message || 'La cuenta no se eliminó.', 'error');
