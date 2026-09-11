@@ -16427,68 +16427,43 @@
             });
 
             try {
+                let deleted = false;
                 if (targetEmail) {
-                    const { data, error } = await client.functions.invoke('delete-account', {
-                        body: {
-                            target_user_id: uid,
-                            confirmation: 'DELETE_ACCOUNT',
-                            confirmation_email: targetEmail,
-                            admin_override: true,
-                            force: true
-                        }
-                    });
-                    if (error || !data?.success) {
-                        const message = await obtenerMensajeErrorFuncion(
-                            error,
-                            data,
-                            'El servicio de eliminación estándar reportó un aviso.'
-                        );
-                        console.warn('[borrarUsuario] Edge Function no completó:', message);
-
-                        // Si Stripe reporta pagos en proceso, sesiones pendientes o falla la función,
-                        // dar la opción al admin de forzar la eliminación definitiva en la base de datos
-                        const confirmForce = await Swal.fire({
-                            title: '¿Forzar borrado en Base de Datos?',
-                            html: `
-                                <div class="text-left text-sm space-y-2">
-                                    <p class="text-gray-700">El servicio de sincronización devolvió:</p>
-                                    <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded p-2 text-xs font-mono">${message}</div>
-                                    <p class="text-gray-600">Como administrador, puedes forzar la eliminación definitiva directa en la base de datos.</p>
-                                    <p class="text-xs text-red-600 font-bold">Se eliminarán el perfil, reservas, bonos y el acceso de autenticación.</p>
-                                </div>
-                            `,
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            cancelButtonColor: '#3085d6',
-                            confirmButtonText: 'Sí, forzar borrado en BD',
-                            cancelButtonText: 'Cancelar'
+                    try {
+                        const { data, error } = await client.functions.invoke('delete-account', {
+                            body: {
+                                target_user_id: uid,
+                                confirmation: 'DELETE_ACCOUNT',
+                                confirmation_email: targetEmail,
+                                admin_override: true,
+                                force: true
+                            }
                         });
-
-                        if (!confirmForce.isConfirmed) {
-                            throw new Error(message);
+                        if (!error && data?.success) {
+                            deleted = true;
+                        } else {
+                            const edgeMsg = await obtenerMensajeErrorFuncion(error, data, 'Aviso de Stripe');
+                            console.warn('[borrarUsuario] delete-account reportó aviso de Stripe (' + edgeMsg + '). Purgando directamente en la base de datos...');
                         }
-
-                        Swal.fire({
-                            title: 'Purgando en base de datos...',
-                            text: 'Eliminando perfil, reservas y cuenta de Auth...',
-                            allowOutsideClick: false,
-                            didOpen: () => Swal.showLoading()
-                        });
-
-                        const { error: rpcError } = await client.rpc('admin_eliminar_usuario_completo', {
-                            p_target_user_id: uid
-                        });
-
-                        if (rpcError) {
-                            throw new Error(rpcError.message || 'Error al forzar la eliminación en la base de datos.');
-                        }
+                    } catch (invokeErr) {
+                        console.warn('[borrarUsuario] Invocación de delete-account falló, procediendo por base de datos:', invokeErr);
                     }
-                } else {
-                    // Usuario sin email (cuenta mostrador / teléfono directo)
+                }
+
+                if (!deleted) {
+                    // Si delete-account falló (bloqueo de Stripe por pago reciente, etc.) o usuario sin email:
+                    // Purgar de forma directa y definitiva en la base de datos mediante la RPC administrativa
+                    Swal.fire({
+                        title: 'Eliminando en base de datos...',
+                        text: 'Purgando perfil, reservas y cuenta de Auth...',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+
                     const { error: rpcError } = await client.rpc('admin_eliminar_usuario_completo', {
                         p_target_user_id: uid
                     });
+
                     if (rpcError) {
                         throw new Error(rpcError.message || 'Error al eliminar usuario en la base de datos.');
                     }
