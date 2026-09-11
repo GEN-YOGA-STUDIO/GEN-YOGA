@@ -58,7 +58,7 @@ assert.ok(profile.includes('silvia_ayurveda_1a'), 'Debe incluir consulta Ayurved
 
 // Comprobar modal de asignación admin
 assert.ok(profile.includes('id="swal-consulta-producto"'), 'Modal de asignación de consulta debe tener el selector swal-consulta-producto');
-assert.ok(profile.includes('Producto / Tarifa Stripe pagada en el local'), 'Modal debe indicar explícitamente la tarifa pagada en el local');
+assert.ok(profile.includes('Producto / Tarifa Stripe asociada'), 'Modal debe indicar la tarifa Stripe asociada');
 assert.ok(profile.includes('lookupKey: selectedKey'), 'Modal debe extraer lookupKey seleccionado');
 assert.ok(profile.includes('productoTitle: selectedTitle'), 'Modal debe extraer productoTitle seleccionado');
 
@@ -70,10 +70,10 @@ assert.ok(profile.includes('metodo_pago: productoTitle'), 'asignarClienteAConsul
 assert.ok(profile.includes("p_origen_pago: 'online'"), "Post-checkout debe marcar origen_pago: 'online'");
 assert.ok(profile.includes('pendingData.producto_contratado'), 'Post-checkout debe preservar producto_contratado');
 
-// Comprobar visualización de tags en paneles y calendarios
-assert.ok(profile.includes('Pago en local:'), 'Debe mostrar badge de Pago en local');
-assert.ok(profile.includes('Pagado online:'), 'Debe mostrar badge de Pagado online');
-assert.ok(profile.includes('tagOnlineBadge'), 'Debe renderizar tag de consulta pagada online cuando el hueco está ocupado');
+// Comprobar visualización de tags en paneles y calendarios (sin pago local)
+assert.ok(!profile.includes('Pago en local:'), 'No debe mostrar texto obsoleto de Pago en local');
+assert.ok(profile.includes('obtenerDetalleProductoConsulta'), 'Debe utilizar obtenerDetalleProductoConsulta para resolver producto Stripe');
+assert.ok(profile.includes('prodInfo.nombre'), 'Debe renderizar nombre de producto Stripe dinámico en tag de consulta');
 
 console.log('  ✅ profile.html verificado correctamente con todas las funcionalidades solicitadas');
 

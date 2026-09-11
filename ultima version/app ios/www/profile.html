@@ -1378,6 +1378,52 @@
             box-shadow: 0 6px 18px rgba(210, 125, 96, 0.5) !important;
             transform: translateY(-1px) scale(1.02) !important;
         }
+
+        /* BOTÓN GUARDAR Y ACTUALIZAR TIPO DE SESIÓN */
+        #btn-guardar-tipo,
+        .btn-guardar-tipo {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            border: 1px solid #1d4ed8 !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+        }
+
+        #btn-guardar-tipo:hover,
+        .btn-guardar-tipo:hover {
+            background-color: #1d4ed8 !important;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5) !important;
+            filter: brightness(1.05) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        #btn-guardar-tipo.btn-modo-edicion {
+            background-color: #1d4ed8 !important;
+            border-color: #1e40af !important;
+            box-shadow: 0 4px 14px rgba(29, 78, 216, 0.45) !important;
+        }
+
+        #btn-cancelar-editar-tipo {
+            background-color: #e2e8f0 !important;
+            color: #334155 !important;
+            border: 1px solid #cbd5e1 !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+        }
+
+        #btn-cancelar-editar-tipo:hover {
+            background-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+
+        .bg-blue-600 {
+            background-color: #2563eb !important;
+        }
     </style>
 </head>
 
@@ -4357,7 +4403,7 @@
                             <label class="text-[10px] font-black text-cocoa/70 uppercase tracking-wider block mb-1 flex items-center gap-1">
                                 <i class="ph-bold ph-lock-key text-amber-700"></i> Tarifa / Cobro
                             </label>
-                            <input type="text" id="consulta-metodo-pago-display" readonly value="Stripe / Local"
+                            <input type="text" id="consulta-metodo-pago-display" readonly value="Stripe"
                                 class="w-full px-3 py-2 bg-white/80 border border-cocoa/10 rounded-lg text-xs font-bold text-cocoa cursor-not-allowed truncate">
                             <input type="hidden" id="consulta-metodo-pago" name="consulta-metodo-pago" value="">
                         </div>
@@ -5407,13 +5453,113 @@
             ];
         }
 
+        window.CATALOGO_STRIPE_PRODUCTOS_ESTATICO = {
+            'prod_VDmmlmsGGhMebt': { name: 'Sesión Grupal Miriam', precio: '80,00 €', unit_amount: 8000 },
+            'prod_VDY8mI9bZ3SQeb': { name: 'Taller con descuento', precio: '25,00 €', unit_amount: 2500 },
+            'prod_V9eGZTzwCNJ55q': { name: 'Clase suelta PROMOCIÓN 50%', precio: '7,50 €', unit_amount: 750 },
+            'prod_V5uCPKKKH5K74P': { name: 'Taller GEN Yoga', precio: '35,00 €', unit_amount: 3500 },
+            'prod_V5uBKuweMRE6ig': { name: 'Clase Especial', precio: '20,00 €', unit_amount: 2000 },
+            'prod_V1pxtuahf6l09m': { name: 'Consulta de Ayurveda sucesiva con Silvia', precio: '60,00 €', unit_amount: 6000 },
+            'prod_V1pwyAFdIdxWG5': { name: 'Consulta de Ayurveda inicial con Silvia', precio: '80,00 €', unit_amount: 8000 },
+            'prod_V1psDxhdrLmncY': { name: 'Bono de Salud Integrativa (6 consultas)', precio: '280,00 €', unit_amount: 28000 },
+            'prod_V1psYkVdT3ZgxH': { name: 'Bono de Salud Integrativa (3 consultas)', precio: '170,00 €', unit_amount: 17000 },
+            'prod_V1pqPF6rtJf0SW': { name: 'Consulta PNI Clínica sucesiva con Isabel', precio: '60,00 €', unit_amount: 6000 },
+            'prod_V1ppAeiDF9dlkZ': { name: 'Consulta PNI Clínica inicial con Isabel', precio: '80,00 €', unit_amount: 8000 },
+            'prod_V1pLWNLzr9Vb3g': { name: 'Terapia de pareja sucesiva con Miriam', precio: '100,00 €', unit_amount: 10000 },
+            'prod_V1pLCY3t5sprlK': { name: 'Terapia de pareja inicial con Miriam', precio: '120,00 €', unit_amount: 12000 },
+            'prod_V1pLmzpCRU8ZpL': { name: 'Acompañamiento psicoterapéutico sucesivo con Miriam', precio: '65,00 €', unit_amount: 6500 },
+            'prod_V1pKHgtMwPkCpC': { name: 'Acompañamiento psicoterapéutico inicial con Miriam', precio: '75,00 €', unit_amount: 7500 },
+            'prod_V0IUYoGJJbX7FW': { name: 'Bono 10 clases', precio: '95,00 €', unit_amount: 9500 },
+            'prod_V0IUpyuvd7uX00': { name: 'Bono 6 clases', precio: '65,00 €', unit_amount: 6500 },
+            'prod_V0ITB6mD71fwnD': { name: 'Bono 4 clases', precio: '50,00 €', unit_amount: 5000 },
+            'prod_UqBxkWuX2OeIz8': { name: 'Bono mensual', precio: '90,00 €', unit_amount: 9000 },
+            'prod_UqBwGSWJNVAK0j': { name: 'Clase suelta', precio: '15,00 €', unit_amount: 1500 },
+            'miriam_psico_individual_1a': { name: 'Acompañamiento psicoterapéutico inicial (Miriam)', precio: '75,00 €' },
+            'miriam_psico_individual_sig': { name: 'Acompañamiento psicoterapéutico sucesivo (Miriam)', precio: '65,00 €' },
+            'miriam_psico_pareja_1a': { name: 'Terapia de pareja inicial (Miriam)', precio: '120,00 €' },
+            'miriam_psico_pareja_sig': { name: 'Terapia de pareja sucesiva (Miriam)', precio: '100,00 €' },
+            'isabel_pni_1a': { name: 'Consulta PNI Clínica inicial (Isabel)', precio: '80,00 €' },
+            'isabel_pni_sig': { name: 'Consulta PNI Clínica sucesiva (Isabel)', precio: '60,00 €' },
+            'silvia_ayurveda_1a': { name: 'Consulta de Ayurveda inicial (Silvia)', precio: '80,00 €' },
+            'silvia_ayurveda_sig': { name: 'Consulta de Ayurveda sucesiva (Silvia)', precio: '60,00 €' },
+            'silvia_ayurveda_bono3': { name: 'Bono Salud Integrativa (3 consultas)', precio: '170,00 €' },
+            'silvia_ayurveda_bono6': { name: 'Bono Salud Integrativa (6 consultas)', precio: '280,00 €' },
+            'taller_35': { name: 'Taller GEN Yoga', precio: '35,00 €' },
+            'taller_25': { name: 'Taller con descuento', precio: '25,00 €' },
+            'taller_intro_power_vinyasa': { name: 'Taller GEN Yoga', precio: '35,00 €' },
+            'clase_especial': { name: 'Clase Especial', precio: '20,00 €' },
+            'gratuita': { name: 'Sesión Gratuita / Bienvenida', precio: '0 €' }
+        };
+
+        window.obtenerDetalleStripeProducto = function(idOrKey) {
+            if (!idOrKey) return null;
+            const key = String(idOrKey).trim();
+            if (!key) return null;
+
+            // 1. Buscar en mapa dinámico si está cargado
+            if (window.stripeProductsMap && window.stripeProductsMap.has(key)) {
+                const item = window.stripeProductsMap.get(key);
+                const precioStr = item.precio ? ` (${item.precio})` : '';
+                return {
+                    id: key,
+                    name: item.name || key,
+                    precio: item.precio || '',
+                    label: `${item.name || key}${precioStr}`
+                };
+            }
+
+            // 2. Buscar en cache dinámico
+            if (window.stripeProductsCache && Array.isArray(window.stripeProductsCache)) {
+                const found = window.stripeProductsCache.find(p => p.id === key || p.price_id === key);
+                if (found) {
+                    const name = found.name || found.nombre || key;
+                    const precio = found.formatted_price || found.precio_formateado || (found.price?.unit_amount ? `${(found.price.unit_amount / 100).toFixed(2).replace('.', ',')} €` : '');
+                    const precioStr = precio ? ` (${precio})` : '';
+                    return {
+                        id: key,
+                        name: name,
+                        precio: precio,
+                        label: `${name}${precioStr}`
+                    };
+                }
+            }
+
+            // 3. Buscar en catálogo estático completo
+            if (window.CATALOGO_STRIPE_PRODUCTOS_ESTATICO && window.CATALOGO_STRIPE_PRODUCTOS_ESTATICO[key]) {
+                const item = window.CATALOGO_STRIPE_PRODUCTOS_ESTATICO[key];
+                const precioStr = item.precio ? ` (${item.precio})` : '';
+                return {
+                    id: key,
+                    name: item.name,
+                    precio: item.precio,
+                    label: `${item.name}${precioStr}`
+                };
+            }
+
+            return {
+                id: key,
+                name: key,
+                precio: '',
+                label: key
+            };
+        };
+
         function obtenerDetalleProductoConsulta(reserva, clase) {
             const rawProd = (reserva?.producto_contratado || clase?.metodo_pago || '').trim();
             const lookup = (reserva?.stripe_lookup_key || clase?.stripe_lookup_key || '').trim();
             const origen = (reserva?.origen_pago || 'online').toLowerCase();
             const esLocal = origen === 'local';
 
-            let nombre = rawProd;
+            let nombre = '';
+            const prodDetail = window.obtenerDetalleStripeProducto(rawProd) || window.obtenerDetalleStripeProducto(lookup);
+            if (prodDetail && prodDetail.name && prodDetail.name !== rawProd && prodDetail.name !== lookup) {
+                nombre = prodDetail.label;
+            } else if (rawProd && !rawProd.startsWith('prod_') && !rawProd.startsWith('price_')) {
+                nombre = rawProd;
+            } else if (prodDetail && prodDetail.name) {
+                nombre = prodDetail.label;
+            }
+
             if (!nombre && lookup) {
                 const catalogo = {
                     'miriam_psico_individual_1a': 'Acompañamiento psicoterapéutico (1ª sesión) · 75 €',
@@ -5463,11 +5609,8 @@
                 if (r.saldo_gratis_descontado || prodInfo.nombre?.includes('Gratuita')) {
                     return renderPagoBadge('Consulta Gratuita', 'Pagado con: Consulta Gratuita', 'ph-gift', 'text-pink-800 bg-pink-50 border border-pink-200');
                 }
-                if (prodInfo.esLocal) {
-                    return `<span class="${badgeBase} text-amber-800 bg-amber-50 border border-amber-200" title="Pago en local: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-storefront text-xs"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
-                }
                 if (prodInfo.nombre) {
-                    return `<span class="${badgeBase} text-blue-800 bg-blue-50 border border-blue-200" title="Pagado online: ${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-credit-card text-xs"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
+                    return `<span class="${badgeBase} text-blue-800 bg-blue-50 border border-blue-200" title="${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-credit-card text-xs"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
                 }
                 return renderPagoBadge('Bono Consulta', 'Pagado con: Bono Consulta', 'ph-first-aid', 'text-purple-800 bg-purple-50 border border-purple-200');
             }
@@ -17080,10 +17223,6 @@
                                         </label>
                                         <div id="container-tipo-pago-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-white p-3.5 rounded-xl border border-slate-200 max-h-48 overflow-y-auto custom-scrollbar">
                                             <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
-                                                <input type="checkbox" name="tipo-pago-checkbox" value="local" class="w-4 h-4 text-blue-600 rounded cursor-pointer">
-                                                <span>Pago en local (Efectivo / Bizum)</span>
-                                            </label>
-                                            <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
                                                 <input type="checkbox" name="tipo-pago-checkbox" value="gratuita" class="w-4 h-4 text-blue-600 rounded cursor-pointer">
                                                 <span>Sesión Gratuita / Bienvenida (0 €)</span>
                                             </label>
@@ -17098,13 +17237,15 @@
                                     <input type="hidden" id="new-tipo-stripe-product" value="">
                                     <div class="flex items-center justify-end gap-3 pt-2">
                                         <button type="button" id="btn-cancelar-editar-tipo" onclick="cancelarEdicionTipoClase()"
-                                            class="hidden px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xs transition cursor-pointer">
+                                            class="hidden px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold text-xs transition cursor-pointer"
+                                            style="background-color: #e2e8f0; color: #334155;">
                                             Cancelar
                                         </button>
                                         <button type="submit" id="btn-guardar-tipo"
-                                            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer active:scale-95">
+                                            class="px-6 py-2.5 bg-[#2563eb] hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer active:scale-95 btn-guardar-tipo"
+                                            style="background-color: #2563eb !important; color: #ffffff !important;">
                                             <span id="btn-guardar-tipo-texto">Guardar Tipo de Sesión</span>
-                                            <i class="ph-bold ph-check"></i>
+                                            <i id="btn-guardar-tipo-icon" class="ph-bold ph-check"></i>
                                         </button>
                                     </div>
                                 </form>
@@ -17321,34 +17462,51 @@
                 const listContainer = document.getElementById('tipos-clases-list');
                 if (!listContainer) return;
 
-                // Poblar checkboxes de productos Stripe si se obtienen dinámicamente
+                // Cargar dinámicamente productos reales de Stripe
+                let prods = [];
                 if (typeof cargarStripeProductosDinamicos === 'function') {
-                    cargarStripeProductosDinamicos().then(prods => {
-                        const cbContainer = document.getElementById('container-tipo-pago-checkboxes');
-                        if (cbContainer && prods && prods.length > 0) {
-                            const currentlyChecked = new Set(
-                                Array.from(cbContainer.querySelectorAll('input[name="tipo-pago-checkbox"]:checked')).map(c => c.value)
-                            );
-                            const baseOptions = [
-                                { val: 'local', label: 'Pago en local (Efectivo / Bizum)' },
-                                { val: 'gratuita', label: 'Sesión Gratuita / Bienvenida (0 €)' }
-                            ];
-                            const allOptions = [
-                                ...baseOptions,
-                                ...prods.map(p => {
-                                    const precio = p.formatted_price || (p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2).replace('.', ',')} €` : (p.unit_amount ? `${(p.unit_amount / 100).toFixed(2).replace('.', ',')} €` : ''));
-                                    const precioStr = precio ? ` (${precio})` : '';
-                                    return { val: p.id, label: `${p.name}${precioStr}` };
-                                })
-                            ];
-                            cbContainer.innerHTML = allOptions.map(opt => `
-                                <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
-                                    <input type="checkbox" name="tipo-pago-checkbox" value="${escapeHtml(opt.val)}" ${currentlyChecked.has(opt.val) ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded cursor-pointer">
-                                    <span class="truncate" title="${escapeHtml(opt.label)}">${escapeHtml(opt.label)}</span>
-                                </label>
-                            `).join('');
-                        }
-                    }).catch(() => {});
+                    try {
+                        prods = await cargarStripeProductosDinamicos();
+                    } catch (e) {
+                        console.warn('Error al cargar productos Stripe dinámicos:', e);
+                    }
+                }
+                if (!prods || prods.length === 0) {
+                    prods = window.stripeProductsCache || [];
+                }
+
+                // Generar mapa de productos Stripe (ID -> { nombre, precio })
+                const prodsMap = new Map();
+                prods.forEach(p => {
+                    const precio = p.formatted_price || p.precio_formateado || (p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2).replace('.', ',')} €` : (p.unit_amount ? `${(p.unit_amount / 100).toFixed(2).replace('.', ',')} €` : ''));
+                    prodsMap.set(p.id, {
+                        id: p.id,
+                        name: p.name || p.nombre || p.id,
+                        precio: precio
+                    });
+                });
+                window.stripeProductsMap = prodsMap;
+
+                // Poblar checkboxes de productos Stripe
+                const cbContainer = document.getElementById('container-tipo-pago-checkboxes');
+                if (cbContainer && prods && prods.length > 0) {
+                    const currentlyChecked = new Set(
+                        Array.from(cbContainer.querySelectorAll('input[name="tipo-pago-checkbox"]:checked')).map(c => c.value).filter(v => v !== 'local')
+                    );
+                    const allOptions = [
+                        { val: 'gratuita', label: 'Sesión Gratuita / Bienvenida (0 €)' },
+                        ...prods.map(p => {
+                            const precio = p.formatted_price || p.precio_formateado || (p.price?.unit_amount ? `${(p.price.unit_amount / 100).toFixed(2).replace('.', ',')} €` : (p.unit_amount ? `${(p.unit_amount / 100).toFixed(2).replace('.', ',')} €` : ''));
+                            const precioStr = precio ? ` (${precio})` : '';
+                            return { val: p.id, label: `${p.name || p.nombre}${precioStr}` };
+                        })
+                    ];
+                    cbContainer.innerHTML = allOptions.map(opt => `
+                        <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
+                            <input type="checkbox" name="tipo-pago-checkbox" value="${escapeHtml(opt.val)}" ${currentlyChecked.has(opt.val) ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded cursor-pointer">
+                            <span class="truncate" title="${escapeHtml(opt.label)}">${escapeHtml(opt.label)}</span>
+                        </label>
+                    `).join('');
                 }
 
                 try {
@@ -17430,28 +17588,35 @@
                         const durBadge = `<span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${toSafeNumber(t.duracion_predeterminada)} min</span>`;
                         const capBadge = `<span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${toSafeNumber(t.capacidad_predeterminada || 10)} plazas</span>`;
 
-                        // Desglose de métodos de cobro
+                        // Desglose de métodos de cobro y Stripe
                         const paymentBadges = [];
                         const metodos = Array.isArray(t.metodos_pago) && t.metodos_pago.length > 0
                             ? t.metodos_pago
                             : [t.metodo_pago, t.stripe_product_id].filter(Boolean);
 
-                        const metodosUnicos = [...new Set(metodos.flatMap(m => String(m).split(',')).map(s => s.trim()).filter(Boolean))];
+                        // Excluir terminantemente 'local' de los métodos
+                        const metodosUnicos = [...new Set(metodos.flatMap(m => String(m).split(',')).map(s => s.trim()).filter(Boolean))].filter(m => m !== 'local');
 
                         metodosUnicos.forEach(m => {
-                            if (m === 'local') {
-                                paymentBadges.push(`<span class="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1"><i class="ph-bold ph-storefront"></i> Pago Local</span>`);
-                            } else if (m === 'gratuita') {
-                                paymentBadges.push(`<span class="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1"><i class="ph-bold ph-gift"></i> Gratuita (0 €)</span>`);
-                            } else if (m.startsWith('prod_') || m.startsWith('price_')) {
-                                paymentBadges.push(`<span class="text-[9px] font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-flex items-center gap-1" title="${escapeHtml(m)}"><i class="ph-bold ph-credit-card"></i> Stripe: ${escapeHtml(m)}</span>`);
-                            } else if (m) {
-                                paymentBadges.push(`<span class="text-[9px] font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">${escapeHtml(m)}</span>`);
+                            if (m === 'gratuita') {
+                                paymentBadges.push(`<span class="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1"><i class="ph-bold ph-gift text-emerald-600"></i> Gratuita (0 €)</span>`);
+                            } else {
+                                const pInfo = window.obtenerDetalleStripeProducto(m);
+                                const pName = (pInfo && pInfo.name && !pInfo.name.startsWith('prod_')) ? pInfo.name : (prodsMap.get(m)?.name || m);
+                                const pPrecio = (pInfo && pInfo.precio) ? ` (${pInfo.precio})` : (prodsMap.get(m)?.precio ? ` (${prodsMap.get(m).precio})` : '');
+                                paymentBadges.push(`<span class="text-[9px] font-bold text-indigo-900 bg-indigo-50 px-2.5 py-0.5 rounded-lg border border-indigo-200 inline-flex items-center gap-1.5 shadow-2xs" title="${escapeHtml(pName)}${escapeHtml(pPrecio)}"><i class="ph-bold ph-credit-card text-indigo-600"></i> ${escapeHtml(pName)}${escapeHtml(pPrecio)}</span>`);
                             }
                         });
 
+                        // Distintivos aclaratorios de modelo de reserva según categoría:
+                        if (t.categoria === 'taller') {
+                            paymentBadges.push(`<span class="text-[9px] font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-300 inline-flex items-center gap-1" title="Los talleres se pagan directamente en Stripe y no son canjeables con bonos de clases normales"><i class="ph-bold ph-shield-check text-amber-600"></i> Exclusivo Taller (No bonos)</span>`);
+                        } else if (t.categoria === 'yoga' || !t.categoria) {
+                            paymentBadges.push(`<span class="text-[9px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 inline-flex items-center gap-1" title="Adquisición de bonos mediante packs (4, 6, 10 o mensual)"><i class="ph-bold ph-ticket text-teal-600"></i> Canjeable con Bonos</span>`);
+                        }
+
                         if (paymentBadges.length === 0) {
-                            paymentBadges.push(`<span class="text-[9px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1"><i class="ph-bold ph-storefront"></i> Pago Local</span>`);
+                            paymentBadges.push(`<span class="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-flex items-center gap-1"><i class="ph-bold ph-warning-circle text-slate-400"></i> Sin producto Stripe asignado</span>`);
                         }
 
                         return `
@@ -17505,8 +17670,16 @@
                     const formTitulo = document.getElementById('form-crear-tipo-titulo');
                     if (formTitulo) formTitulo.textContent = `Editar Tipo: ${tipo.nombre}`;
 
+                    const btnGuardar = document.getElementById('btn-guardar-tipo');
                     const btnText = document.getElementById('btn-guardar-tipo-texto');
+                    const btnIcon = document.getElementById('btn-guardar-tipo-icon');
                     if (btnText) btnText.textContent = `Actualizar Tipo`;
+                    if (btnIcon) btnIcon.className = 'ph-bold ph-check';
+                    if (btnGuardar) {
+                        btnGuardar.classList.add('btn-modo-edicion');
+                        btnGuardar.style.setProperty('background-color', '#1d4ed8', 'important');
+                        btnGuardar.style.setProperty('color', '#ffffff', 'important');
+                    }
 
                     const cancelBtn = document.getElementById('btn-cancelar-editar-tipo');
                     if (cancelBtn) cancelBtn.classList.remove('hidden');
@@ -17534,16 +17707,16 @@
                     if (Array.isArray(tipo.metodos_pago)) {
                         tipo.metodos_pago.forEach(m => metodosActivos.add(String(m).trim()));
                     }
-                    if (tipo.metodo_pago) {
+                    if (tipo.metodo_pago && tipo.metodo_pago !== 'local') {
                         String(tipo.metodo_pago).split(',').forEach(m => metodosActivos.add(m.trim()));
                     }
-                    if (tipo.stripe_product_id) {
+                    if (tipo.stripe_product_id && tipo.stripe_product_id !== 'local') {
                         String(tipo.stripe_product_id).split(',').forEach(m => metodosActivos.add(m.trim()));
                     }
 
                     const cbs = document.querySelectorAll('input[name="tipo-pago-checkbox"]');
                     cbs.forEach(cb => {
-                        cb.checked = metodosActivos.has(cb.value);
+                        cb.checked = (cb.value !== 'local' && metodosActivos.has(cb.value));
                     });
 
                     nomInput?.focus();
@@ -17560,14 +17733,22 @@
 
                 const cbs = document.querySelectorAll('input[name="tipo-pago-checkbox"]');
                 cbs.forEach(cb => {
-                    cb.checked = (cb.value === 'local');
+                    cb.checked = false;
                 });
 
                 const formTitulo = document.getElementById('form-crear-tipo-titulo');
                 if (formTitulo) formTitulo.textContent = 'Crear Nuevo Tipo de Sesión';
 
+                const btnGuardar = document.getElementById('btn-guardar-tipo');
                 const btnText = document.getElementById('btn-guardar-tipo-texto');
+                const btnIcon = document.getElementById('btn-guardar-tipo-icon');
                 if (btnText) btnText.textContent = 'Guardar Tipo de Sesión';
+                if (btnIcon) btnIcon.className = 'ph-bold ph-check';
+                if (btnGuardar) {
+                    btnGuardar.classList.remove('btn-modo-edicion');
+                    btnGuardar.style.setProperty('background-color', '#2563eb', 'important');
+                    btnGuardar.style.setProperty('color', '#ffffff', 'important');
+                }
 
                 const cancelBtn = document.getElementById('btn-cancelar-editar-tipo');
                 if (cancelBtn) cancelBtn.classList.add('hidden');
@@ -17595,11 +17776,18 @@
                     return Swal.fire('Campo requerido', 'Por favor introduce un nombre para el tipo de sesión.', 'warning');
                 }
 
-                // Obtener métodos seleccionados en los checkboxes
-                const checkedBoxes = Array.from(document.querySelectorAll('input[name="tipo-pago-checkbox"]:checked')).map(cb => cb.value);
-                const metodosPago = checkedBoxes.length > 0 ? checkedBoxes : ['local'];
-                const stripeProductIds = metodosPago.filter(v => v.startsWith('prod_') || v.startsWith('price_')).join(',') || null;
-                const metodoPago = metodosPago.includes('gratuita') ? 'gratuita' : (metodosPago.includes('local') ? 'local' : (metodosPago[0] || 'local'));
+                // Obtener métodos seleccionados en los checkboxes (excluyendo cualquier residuo de local)
+                const checkedBoxes = Array.from(document.querySelectorAll('input[name="tipo-pago-checkbox"]:checked'))
+                    .map(cb => cb.value)
+                    .filter(v => v && v !== 'local');
+                const stripeProductIds = checkedBoxes.filter(v => v.startsWith('prod_') || v.startsWith('price_')).join(',') || null;
+                const metodoPago = checkedBoxes.includes('gratuita') ? 'gratuita' : (stripeProductIds || checkedBoxes[0] || null);
+
+                const btnGuardar = document.getElementById('btn-guardar-tipo');
+                const btnText = document.getElementById('btn-guardar-tipo-texto');
+                const originalText = btnText ? btnText.textContent : (editingId ? 'Actualizar Tipo' : 'Guardar Tipo de Sesión');
+                if (btnGuardar) btnGuardar.disabled = true;
+                if (btnText) btnText.textContent = editingId ? 'Actualizando...' : 'Guardando...';
 
                 try {
                     const payload = {
@@ -17608,7 +17796,6 @@
                         capacidad_predeterminada: parseInt(capacidad) || 10,
                         stripe_product_id: stripeProductIds,
                         metodo_pago: metodoPago,
-                        metodos_pago: metodosPago,
                         especialidad,
                         categoria,
                         activo: true
@@ -17644,12 +17831,14 @@
                         }
                     }
 
-                    // Fallback para esquemas antiguos
+                    // Fallback para esquemas antiguos preservando siempre el producto Stripe
                     if (opError && (opError.message?.includes('capacidad_predeterminada') || opError.message?.includes('schema cache') || opError.message?.includes('especialidad') || opError.message?.includes('metodos_pago'))) {
-                        console.warn('Reintentando con esquema clásico...', opError);
+                        console.warn('Reintentando con esquema seguro...', opError);
                         const fallbackPayload = {
                             nombre,
                             duracion_predeterminada: parseInt(duracion) || 60,
+                            stripe_product_id: stripeProductIds,
+                            metodo_pago: metodoPago,
                             categoria,
                             activo: true
                         };
@@ -17662,15 +17851,20 @@
                     }
 
                     if (opError) {
+                        if (btnGuardar) btnGuardar.disabled = false;
+                        if (btnText) btnText.textContent = originalText;
                         const errMsg = String(opError.message || '');
                         Swal.fire('Error', 'No se pudo guardar el tipo: ' + errMsg, 'error');
                     } else {
+                        if (btnGuardar) btnGuardar.disabled = false;
                         cancelarEdicionTipoClase();
                         await renderTiposClases();
                         const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2200 });
                         toast.fire({ icon: 'success', title: targetId ? 'Tipo de sesión actualizado' : 'Tipo de sesión creado' });
                     }
                 } catch (err) {
+                    if (btnGuardar) btnGuardar.disabled = false;
+                    if (btnText) btnText.textContent = originalText;
                     console.error('Unexpected error in crearTipoClase:', err);
                     Swal.fire('Error inesperado', err.message, 'error');
                 }
@@ -20297,11 +20491,14 @@
 
             const customStripeKey = clase.stripe_lookup_key || clase.metodo_pago;
             if (customStripeKey && (customStripeKey.startsWith('prod_') || customStripeKey.startsWith('price_')) && !options.some(o => o.key === customStripeKey)) {
+                const pInfo = window.obtenerDetalleStripeProducto(customStripeKey);
+                const pTitle = (pInfo && pInfo.name && !pInfo.name.startsWith('prod_')) ? pInfo.name : (clase.nombre || 'Consulta');
+                const pPriceNum = pInfo?.precio ? parseFloat(pInfo.precio.replace('€', '').replace(',', '.').trim()) : 30;
                 options.unshift({
                     key: customStripeKey,
-                    title: `${clase.nombre || 'Consulta'} (${customStripeKey})`,
+                    title: pInfo?.label || pTitle,
                     desc: 'Producto Stripe vinculado a esta sesión',
-                    price: 30
+                    price: isNaN(pPriceNum) ? 30 : pPriceNum
                 });
             }
 
@@ -20741,9 +20938,7 @@
 
                     const isFree = esClaseElegibleBonoGratis(c);
                     const prodInfo = obtenerDetalleProductoConsulta(c.reservaConfirmada || c.miReserva, c);
-                    const tagOnlineBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-tag"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
-                    const tagLocalBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-storefront"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
-                    const tagBadge = prodInfo.esLocal ? tagLocalBadge : tagOnlineBadge;
+                    const tagBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-credit-card"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
 
                     let btnAction = '';
                     if (isAdmin) {
@@ -20998,9 +21193,7 @@
                     const reservada = !!c.miReserva;
                     const isFree = esClaseElegibleBonoGratis(c);
                     const prodInfo = obtenerDetalleProductoConsulta(c.reservaConfirmada || c.miReserva, c);
-                    const tagOnlineBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-tag"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
-                    const tagLocalBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-storefront"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`;
-                    const tagBadge = prodInfo.esLocal ? tagLocalBadge : tagOnlineBadge;
+                    const tagBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-credit-card"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
 
                     let btnAction = '';
                     if (isAdmin) {
@@ -23349,7 +23542,7 @@
 
                 <div class="space-y-1">
                     <label class="block text-xs font-bold text-cocoa/70 mb-1">
-                        <i class="ph-bold ph-tag text-olive mr-1"></i> Producto / Tarifa Stripe pagada en el local <span class="text-red-500">*</span>
+                        <i class="ph-bold ph-tag text-olive mr-1"></i> Producto / Tarifa Stripe asociada <span class="text-red-500">*</span>
                     </label>
                     <select id="swal-consulta-producto" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none text-cocoa font-medium">
                         ${productosStripe.map(p => `
@@ -23359,13 +23552,13 @@
                         `).join('')}
                     </select>
                     <p class="text-[11px] text-cocoa/50 mt-1">
-                        Selecciona el servicio de <strong>${escapeHtml(profNombre)}</strong> que el cliente ha abonado presencialmente en el local.
+                        Selecciona el servicio de <strong>${escapeHtml(profNombre)}</strong> contratado por el cliente.
                     </p>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-cocoa/60 mb-1">Notas / Motivo (opcional)</label>
-                    <input type="text" id="swal-temp-notas" placeholder="Ej: Primera consulta / Pago en efectivo en recepción"
+                    <input type="text" id="swal-temp-notas" placeholder="Ej: Primera consulta / Seguimiento"
                         class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none">
                 </div>
             </div>
@@ -23415,7 +23608,7 @@
                     const notas = (document.getElementById('swal-temp-notas')?.value || '').trim();
 
                     if (!selectedKey) {
-                        Swal.showValidationMessage('Debes seleccionar el producto o tarifa pagada en el local');
+                        Swal.showValidationMessage('Debes seleccionar el producto o tarifa contratada');
                         return false;
                     }
 
@@ -23588,8 +23781,8 @@
                     icon: 'success',
                     title: multiInfo.esMultiple ? 'Sesión múltiple asignada' : 'Cliente asignado',
                     html: multiInfo.esMultiple 
-                        ? `Se han asignado correctamente ambos turnos vinculados al cliente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pago en local:</b> ${escapeHtml(productoTitle)}</span>`
-                        : `El hueco queda reservado.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pago en local:</b> ${escapeHtml(productoTitle)}</span>`,
+                        ? `Se han asignado correctamente ambos turnos vinculados al cliente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Producto contratado:</b> ${escapeHtml(productoTitle)}</span>`
+                        : `El hueco queda reservado.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Producto contratado:</b> ${escapeHtml(productoTitle)}</span>`,
                     showConfirmButton: false,
                     timer: 2000
                 });
@@ -23724,8 +23917,7 @@
             }
 
             const extraOptions = `
-                <optgroup label="Otras Opciones de Pago">
-                    <option value="pago_centro">Pago en el centro / Local</option>
+                <optgroup label="Otras Opciones">
                     <option value="gratuita">Sesión Introductoria Gratuita (0 €)</option>
                 </optgroup>
             `;
@@ -23803,14 +23995,15 @@
             if (pagoDisp) {
                 if (pagoVal === 'gratuita' || metodoPago === 'gratuita') {
                     pagoDisp.value = 'Gratuita (0 €) · Fija';
-                } else if (pagoVal === 'prod_VDmmlmsGGhMebt' || stripeProductId === 'prod_VDmmlmsGGhMebt') {
-                    pagoDisp.value = 'Sesión Grupal Miriam (80 €) · Stripe';
-                } else if (stripeProductId) {
-                    pagoDisp.value = `${stripeProductId} · Stripe`;
-                } else if (pagoVal === 'local' || !pagoVal) {
-                    pagoDisp.value = 'Pago en local · Fija';
                 } else {
-                    pagoDisp.value = `${pagoVal} · Fija`;
+                    const pInfo = window.obtenerDetalleStripeProducto(pagoVal);
+                    if (pInfo && pInfo.name && !pInfo.name.startsWith('prod_')) {
+                        pagoDisp.value = `${pInfo.label} · Stripe`;
+                    } else if (pagoVal === 'local' || !pagoVal) {
+                        pagoDisp.value = 'Stripe Online';
+                    } else {
+                        pagoDisp.value = `${pagoVal} · Fija`;
+                    }
                 }
             }
 
@@ -25219,9 +25412,7 @@
                             const reservaId = safePositiveInteger(reserva.id) || 0;
                             const prodInfo = obtenerDetalleProductoConsulta(reserva, c);
 
-                            const badgePago = prodInfo.esLocal
-                                ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-storefront text-xs text-amber-600"></i> Pago en local: ${escapeHtml(prodInfo.nombre)}</span>`
-                                : `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-credit-card text-xs text-blue-600"></i> Pagado online: ${escapeHtml(prodInfo.nombre)}</span>`;
+                            const badgePago = `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-credit-card text-xs text-blue-600"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
 
                             let contactDetails = '';
                             if (contact.cleanTel) {
@@ -26480,13 +26671,17 @@
         </label>` : '';
 
             const { value: packType } = await Swal.fire({
-                title: 'Elige tu opción de reserva',
+                title: 'Packs de Clases de Yoga (Bonos)',
                 html: `
             <div class="grid gap-2.5 text-left font-sans">
                 ${promoOptionHtml}
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>4 clases</b><small class="block text-gray-500">60 días de validez</small></span><span><input type="radio" name="swal-pack" value="pack_4" ${hasPromo50 ? '' : 'checked'}> 50 €</span></label>
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>6 clases</b><small class="block text-gray-500">60 días de validez</small></span><span><input type="radio" name="swal-pack" value="pack_6"> 65 €</span></label>
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>10 clases</b><small class="block text-gray-500">60 días de validez</small></span><span><input type="radio" name="swal-pack" value="pack_10"> 95 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>4 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_4" ${hasPromo50 ? '' : 'checked'}> 50 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>6 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_6"> 65 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>10 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_10"> 95 €</span></label>
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-[11px] leading-relaxed mt-1 flex items-start gap-2">
+                    <i class="ph-bold ph-info text-amber-700 text-sm mt-0.5 shrink-0"></i>
+                    <span><b>Información importante:</b> Los packs compran bonos de asistencia para <b>clases regulares de yoga</b>. No sirven para reservar talleres ni eventos especiales, que cuentan con su propia compra directa de entrada.</span>
+                </div>
             </div>`,
                 showCancelButton: true,
                 confirmButtonText: 'Continuar',

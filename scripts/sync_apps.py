@@ -16,7 +16,9 @@ IOS_WWW = os.path.join(BASE_DIR, "app ios", "www")
 IOS_ASSETS = os.path.join(BASE_DIR, "app ios", "ios", "App", "App", "public")
 ULTIMA_VERSION = os.path.join(BASE_DIR, "ultima version")
 ULTIMA_ANDROID_WWW = os.path.join(BASE_DIR, "ultima version", "app android", "www")
+ULTIMA_ANDROID_ASSETS = os.path.join(BASE_DIR, "ultima version", "app android", "android", "app", "src", "main", "assets", "public")
 ULTIMA_IOS_WWW = os.path.join(BASE_DIR, "ultima version", "app ios", "www")
+ULTIMA_IOS_ASSETS = os.path.join(BASE_DIR, "ultima version", "app ios", "ios", "App", "App", "public")
 
 EXCLUDED_DIRS = {
     '.git', '.github', 'node_modules', 'android', 'ios', 'build', '.gradle',
@@ -43,8 +45,10 @@ def sync_web_assets():
         ("iOS WWW", IOS_WWW),
         ("iOS Assets", IOS_ASSETS),
         ("Ultima Version", ULTIMA_VERSION),
-        ("Ultima Version Android", ULTIMA_ANDROID_WWW),
-        ("Ultima Version iOS", ULTIMA_IOS_WWW)
+        ("Ultima Version Android WWW", ULTIMA_ANDROID_WWW),
+        ("Ultima Version Android Assets", ULTIMA_ANDROID_ASSETS),
+        ("Ultima Version iOS WWW", ULTIMA_IOS_WWW),
+        ("Ultima Version iOS Assets", ULTIMA_IOS_ASSETS)
     ]
 
     for label, target_path in targets:

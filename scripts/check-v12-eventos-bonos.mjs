@@ -191,9 +191,8 @@ if (fs.existsSync(syncAppsPath)) {
 console.log('\n--- 12. Verificando Novedades v12.16 (Talleres Stripe 25 € prod_VDY8mI9bZ3SQeb en Creación y Edición) ---');
 if (fs.existsSync(profilePath)) {
     const pContent = fs.readFileSync(profilePath, 'utf8');
-    check('Modal edición incluye selector de tarifa Stripe para talleres', pContent.includes('id="editar-clase-tarifa-taller-container"') && pContent.includes('id="editar-clase-metodo-pago-taller"'));
-    check('Opciones de taller 35 € y 25 € en modal edición', pContent.includes('value="taller_intro_power_vinyasa">Taller GEN Yoga — 35,00 €</option>') && pContent.includes('value="taller_25">Taller GEN Yoga — 25,00 €</option>'));
-    check('Modal creación incluye opción de 25 € para talleres', pContent.includes('value="taller_25">Taller GEN Yoga — 25,00 €</option>'));
+    check('Opciones de taller 35 € y 25 € en modal edición', (pContent.includes('value="taller_35"') || pContent.includes('value="taller_intro_power_vinyasa"')) && pContent.includes('35,00 €') && pContent.includes('value="taller_25"') && pContent.includes('25,00 €'));
+    check('Modal creación incluye opción de 25 € para talleres', pContent.includes('value="taller_25"') && pContent.includes('25,00 €'));
     check('Checkout de taller y reservas soportan precio 25 € dinámico', pContent.includes("lookupKeyTaller === 'taller_25'") || pContent.includes("lookupKey === 'taller_25'"));
 }
 

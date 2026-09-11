@@ -34,7 +34,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '13.2'
+const APP_RELEASE = '13.1'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -250,7 +250,7 @@ serve(async (req) => {
           {
             price_data: {
               currency: 'eur',
-              unit_amount: details.amount || 2500,
+              unit_amount: details.amount || 2000,
               product: details.productId,
             },
             quantity: 1,
