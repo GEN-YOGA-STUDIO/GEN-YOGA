@@ -646,11 +646,11 @@
 
         @media (min-width: 1024px) {
             .profile-calendar-main {
-                grid-column: span 8 / span 8;
+                width: 100%;
             }
 
             .profile-calendar-side {
-                grid-column: span 4 / span 4;
+                width: 100%;
             }
         }
 
@@ -1821,17 +1821,17 @@
                         <!-- Separador vertical visible e inamovible entre perfil y bonos -->
                         <div class="h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
 
-                        <div id="header-bonos-container" class="flex items-center gap-2 min-w-0 overflow-x-auto py-1" style="scrollbar-width: none;">
-                            <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-2">
+                        <div id="header-bonos-container" class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto py-1" style="scrollbar-width: none;">
+                            <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-1.5 shrink-0">
                                 <!-- Rellenado dinámicamente en JS -->
                             </div>
-                            <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                class="inline-flex items-center justify-center w-7 h-7 rounded-xl text-cocoa/60 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer"
-                                title="Guía de bonos y saldos"
-                                aria-label="Información de bonos y saldos">
-                                <i class="ph-bold ph-info text-base"></i>
-                            </button>
                         </div>
+                        <button type="button" onclick="mostrarInfoBonosSaldos(event)"
+                            class="inline-flex items-center justify-center w-7 h-7 rounded-xl text-cocoa/60 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer ml-0.5"
+                            title="Guía de bonos y saldos"
+                            aria-label="Información de bonos y saldos">
+                            <i class="ph-bold ph-info text-base"></i>
+                        </button>
                         <div class="h-8 w-px bg-cocoa/10 shrink-0"></div>
 
                         <button type="button" onclick="logout()" aria-label="Cerrar sesión"
@@ -1893,7 +1893,7 @@
                     </button>
                     <button id="nav-public-especiales" onclick="switchPublicView('especiales')"
                         class="px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
-                        <i class="ph-bold ph-calendar-star mr-1 text-sm"></i><span data-i18n="profile_tab_specials">EVENTOS</span>
+                        <span data-i18n="profile_tab_specials">EVENTOS</span>
                     </button>
                     <button id="nav-public-nutricion" onclick="switchPublicView('nutricion')"
                         class="hidden px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
@@ -1915,103 +1915,81 @@
 
                 <!-- 1. VISTA INICIO -->
                 <div id="view-inicio" class="fade-in">
-                    <!-- Panel de Bonos y Saldos del Alumno -->
-                    <div id="section-mis-saldos-cliente" class="client-only mb-4">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-                            <div>
-                                <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa flex items-center gap-2">
-                                    <i class="ph-duotone ph-wallet text-olive text-xl sm:text-2xl"></i>
-                                    <span data-i18n="profile_saldos_heading">Mis Bonos y Saldos Disponibles</span>
+                    <!-- Layout 50/50: Izquierda Calendario y Citas, Derecha Bonos y Saldos en Matriz 2x2 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        
+                        <!-- Columna Izquierda (50% en desktop): Calendario y Próximas Citas -->
+                        <div class="lg:col-span-6 space-y-6">
+                            <!-- Calendario de Clases y Reservas -->
+                            <div class="profile-calendar-main">
+                                <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa mb-3 flex items-center gap-2 pl-1">
+                                    <i class="ph-bold ph-calendar text-olive"></i> <span
+                                        data-i18n="profile_classes_bookings_calendar">Calendario de Clases y Reservas</span>
                                 </h3>
-                                <p class="text-xs text-cocoa/60 mt-0.5" data-i18n="profile_saldos_subheading">
-                                    Consulta tus packs activos, meses ilimitados comprados y bonos gratuitos
-                                    disponibles.
-                                </p>
+                                <div class="profile-calendar-card bg-ivory rounded-3xl shadow-md border border-cocoa/10 p-5 sm:p-6">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <button type="button" onclick="cambiarMesInicio(-1)" aria-label="Mes anterior"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                class="ph-bold ph-caret-left text-lg"></i></button>
+                                        <div class="text-center">
+                                            <h3 id="inicio-calendar-month-year"
+                                                class="brand-font text-lg sm:text-xl font-bold text-cocoa">
+                                            </h3>
+                                            <p class="text-[10px] text-cocoa/40 uppercase tracking-wider mt-0.5"
+                                                data-i18n="profile_general_calendar">Calendario
+                                                General</p>
+                                        </div>
+                                        <button type="button" onclick="cambiarMesInicio(1)" aria-label="Mes siguiente"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                class="ph-bold ph-caret-right text-lg"></i></button>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-2">
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">L</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">M</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">X</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">J</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">V</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">S</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">D</div>
+                                    </div>
+                                    <div id="inicio-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+
+                                    <div
+                                        class="mt-4 pt-4 border-t border-cocoa/10 flex flex-row flex-wrap gap-4 justify-center">
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block"></span>
+                                            <span data-i18n="common_classes">Clases</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6] inline-block"></span>
+                                            <span data-i18n="common_psychology">Psicología</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#8B5CF6] inline-block"></span>
+                                            <span data-i18n="common_nutrition">Nutrición</span>
+                                        </div>
+                                    </div>
+
+                                    <button onclick="limpiarFiltroFechaInicio()"
+                                        class="mt-4 w-full bg-sand/20 text-cocoa/70 py-2.5 rounded-xl text-xs font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
+                                        <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_bookings">Ver
+                                            todas las reservas</span>
+                                    </button>
+                                </div>
                             </div>
-                            <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-olive/10 hover:bg-olive text-olive hover:text-white border border-olive/20 text-xs font-bold transition shadow-xs cursor-pointer shrink-0">
-                                <i class="ph-bold ph-info text-sm"></i>
-                                <span data-i18n="profile_btn_guide_bonos">¿Cómo funcionan mis bonos?</span>
-                            </button>
-                        </div>
-                        <div id="profile-saldos-wrapper" class="flex flex-col lg:flex-row gap-5">
-                            <!-- Rellenado dinámicamente por renderSaldosClienteV69() -->
-                        </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <!-- Left Column: Calendar (Big) -->
-                        <div class="profile-calendar-main">
-                            <h3 class="brand-font text-2xl font-bold text-cocoa mb-4 flex items-center gap-2 pl-2">
-                                <i class="ph-bold ph-calendar text-olive"></i> <span
-                                    data-i18n="profile_classes_bookings_calendar">Calendario de Clases y Reservas</span>
-                            </h3>
-                            <div
-                                class="profile-calendar-card bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
-                                <div class="flex items-center justify-between mb-6">
-                                    <button type="button" onclick="cambiarMesInicio(-1)" aria-label="Mes anterior"
-                                        class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
-                                            class="ph-bold ph-caret-left text-lg"></i></button>
-                                    <div class="text-center">
-                                        <h3 id="inicio-calendar-month-year"
-                                            class="brand-font text-xl font-bold text-cocoa">
-                                        </h3>
-                                        <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5"
-                                            data-i18n="profile_general_calendar">Calendario
-                                            General</p>
-                                    </div>
-                                    <button type="button" onclick="cambiarMesInicio(1)" aria-label="Mes siguiente"
-                                        class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
-                                            class="ph-bold ph-caret-right text-lg"></i></button>
-                                </div>
-                                <div class="grid grid-cols-7 gap-1 mb-2">
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
-                                </div>
-                                <div id="inicio-calendar-grid" class="grid grid-cols-7 gap-1"></div>
-
-                                <div
-                                    class="mt-6 pt-6 border-t border-cocoa/10 flex flex-row flex-wrap gap-6 justify-center">
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
-                                        <span class="w-3 h-3 rounded-full bg-[#10B981] inline-block"></span>
-                                        <span data-i18n="common_classes">Clases</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
-                                        <span class="w-3 h-3 rounded-full bg-[#3B82F6] inline-block"></span>
-                                        <span data-i18n="common_psychology">Psicología</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
-                                        <span class="w-3 h-3 rounded-full bg-[#8B5CF6] inline-block"></span>
-                                        <span data-i18n="common_nutrition">Nutrición</span>
-                                    </div>
-                                </div>
-
-                                <button onclick="limpiarFiltroFechaInicio()"
-                                    class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
-                                    <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_bookings">Ver
-                                        todas las reservas</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Upcoming sessions list -->
-                        <div class="profile-calendar-side">
-                            <div class="sticky top-24">
-                                <h3 class="brand-font text-2xl font-bold text-cocoa mb-6 flex items-center gap-2">
+                            <!-- Mis Próximas Citas y Clases -->
+                            <div class="profile-calendar-side">
+                                <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa mb-3 flex items-center gap-2 pl-1">
                                     <i class="ph-bold ph-calendar-check text-olive"></i> <span
                                         data-i18n="profile_upcoming_title">Mis Próximas Citas y Clases</span>
                                 </h3>
-                                <div id="inicio-consolidado-container" class="space-y-6"></div>
+                                <div id="inicio-consolidado-container" class="space-y-3"></div>
                                 <div id="inicio-empty-state"
-                                    class="hidden flex flex-col items-center justify-center py-10 text-center bg-white/50 border border-cocoa/10 rounded-3xl p-6">
-                                    <div class="bg-white p-6 rounded-full mb-4 shadow-sm border border-cocoa/10"><i
-                                            class="ph-duotone ph-calendar-blank text-4xl text-cocoa/30"></i></div>
-                                    <h4 class="brand-font text-xl font-bold text-cocoa mb-2"
+                                    class="hidden flex flex-col items-center justify-center py-8 text-center bg-white/50 border border-cocoa/10 rounded-3xl p-5">
+                                    <div class="bg-white p-4 rounded-full mb-3 shadow-xs border border-cocoa/10"><i
+                                            class="ph-duotone ph-calendar-blank text-3xl text-cocoa/30"></i></div>
+                                    <h4 class="brand-font text-lg font-bold text-cocoa mb-1"
                                         data-i18n="profile_no_bookings_title">No tienes reservas</h4>
                                     <p class="text-cocoa/60 text-xs font-light max-w-xs mx-auto"
                                         data-i18n="profile_no_bookings_desc">Navega por las pestañas
@@ -2019,6 +1997,29 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Columna Derecha (50% en desktop): Bonos y Saldos en Matriz 2 Columnas -->
+                        <div class="lg:col-span-6 client-only">
+                            <div id="section-mis-saldos-cliente" class="mb-2">
+                                <div class="flex items-center justify-between gap-2 mb-3 pl-1">
+                                    <div>
+                                        <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa flex items-center gap-2">
+                                            <i class="ph-duotone ph-wallet text-olive text-xl sm:text-2xl"></i>
+                                            <span data-i18n="profile_saldos_heading">Mis Bonos y Saldos</span>
+                                        </h3>
+                                    </div>
+                                    <button type="button" onclick="mostrarInfoBonosSaldos(event)"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-olive/10 hover:bg-olive text-olive hover:text-white border border-olive/20 text-[11px] font-bold transition shadow-2xs cursor-pointer shrink-0">
+                                        <i class="ph-bold ph-info text-xs"></i>
+                                        <span data-i18n="profile_btn_guide_bonos">¿Cómo funcionan?</span>
+                                    </button>
+                                </div>
+                                <div id="profile-saldos-wrapper" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                    <!-- Rellenado dinámicamente por renderSaldosClienteV69() -->
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -2315,32 +2316,6 @@
 
                 <!-- 3. VISTA CLASES ESPECIALES / TALLERES -->
                 <div id="view-especiales" class="hidden fade-in">
-                    <div
-                        class="flex flex-col md:flex-row justify-between items-start md:items-end mb-3 gap-3 pb-3 border-b border-cocoa/10">
-                        <div>
-                            <span
-                                class="inline-block py-0.5 px-2.5 rounded-full bg-slate-100 text-slate-800 font-bold tracking-widest text-[10px] uppercase mb-1.5 border border-slate-300"
-                                data-i18n="profile_specials_badge">Experiencias únicas</span>
-                            <h2 class="text-2xl md:text-3xl brand-font font-bold text-cocoa mb-1"
-                                data-i18n="profile_specials_title">Eventos: Clases Especiales y Talleres</h2>
-                            <p class="text-cocoa/60 font-light text-xs max-w-2xl leading-relaxed"
-                                data-i18n="profile_specials_desc">
-                                Actividades independientes del horario habitual. Las Clases Especiales se reservan con el Bono de Clase Especial (incluido 1 gratis con Bono Ilimitado o 20 €) y los Talleres mediante plaza individual.
-                            </p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" id="btn-comprar-bono-especial" onclick="comprarBonoEspecialStripe(event)"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md hover:shadow-lg transition cursor-pointer hover:scale-105 active:scale-95"
-                                style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important; color: #ffffff !important;"
-                                title="Comprar Clase Especial por 20 € en Stripe">
-                                <i class="ph-fill ph-sparkle text-amber-300 text-sm"></i> <span>+ Clase Especial</span>
-                            </button>
-                            <button type="button" id="btn-especiales-bono-ilimitado" onclick="comprarBonoMensual(event)"
-                                class="inline-flex items-center gap-2 bg-cocoa hover:bg-black text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md transition">
-                                <i class="ph-bold ph-infinity"></i> <span data-i18n="profile_specials_unlimited">VER BONO ILIMITADO</span>
-                            </button>
-                        </div>
-                    </div>
                     <!-- Selector de sub-pestañas: Todos / Clases Especiales / Talleres -->
                     <div class="flex justify-center gap-2.5 mb-4 border-b border-cocoa/10 pb-3 max-w-md mx-auto">
                         <button id="btn-subtab-eventos-todos" onclick="switchEventosSubTab('todos')"
@@ -2359,9 +2334,7 @@
                             <span>Talleres</span>
                         </button>
                     </div>
-                    <div id="special-classes-benefit"
-                        class="mb-3 rounded-2xl border border-slate-300/60 bg-gradient-to-r from-slate-50 to-sand/20 px-4 py-3 text-xs text-cocoa/80 shadow-2xs">
-                    </div>
+                    <div id="special-classes-benefit" class="hidden mb-3"></div>
                     <div id="special-classes-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
                     <div id="special-classes-empty"
                         class="hidden bg-white/70 rounded-3xl p-8 text-center border border-cocoa/10">
@@ -2375,84 +2348,53 @@
 
                 <!-- 4. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
                 <div id="view-psicologia" class="hidden fade-in">
-                    <!-- Selector de sub-pestañas: Psicología / Nutrición -->
-                    <div class="flex justify-center gap-3 mb-3 border-b border-cocoa/10 pb-3 max-w-md mx-auto">
-                        <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"
-                            class="filtro-prof-btn active flex items-center gap-2">
-                            <i class="ph-bold ph-brain text-base"></i>
-                            <span data-i18n="common_psychology">Psicología</span>
-                        </button>
-                        <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"
-                            class="filtro-prof-btn flex items-center gap-2">
-                            <i class="ph-bold ph-apple text-base"></i>
-                            <span data-i18n="common_nutrition">Nutrición</span>
-                        </button>
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.2 para simplificación) -->
+                    <div class="hidden" id="consultas-subtabs-wrapper">
+                        <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"></button>
+                        <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"></button>
                     </div>
 
                     <!-- SUB-VISTA PSICOLOGÍA -->
                     <div id="sub-view-psicologia" class="fade-in">
-                        <div
-                            class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3 pb-3 border-b border-cocoa/10">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 flex-wrap">
-                                    <span
-                                        class="inline-block py-0.5 px-2.5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] font-bold tracking-widest text-[10px] uppercase border border-[#3B82F6]/20"
-                                        data-i18n="profile_mental_wellbeing">
-                                        Bienestar Mental
-                                    </span>
-                                    <h2 class="text-2xl md:text-3xl brand-font font-bold text-cocoa"
-                                        data-i18n="profile_psychology_title">Consultas de
-                                        Psicología</h2>
-                                </div>
-                                <p class="text-cocoa/70 font-light text-sm max-w-xl mt-1"
-                                    data-i18n="profile_psychology_desc">
-                                    Reserva tus consultas individuales de gestión emocional y desarrollo personal con
-                                    nuestro equipo experto.
-                                </p>
-                            </div>
-                            <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
-                                <button onclick="abrirModalComprarConsultas('psicologia')"
-                                    class="flex bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition items-center gap-2">
-                                    <i class="ph-bold ph-shopping-bag text-lg"></i> Comprar Sesión o Bono
-                                </button>
-                                <div class="admin-only">
-                                    <button onclick="abrirModalCrearConsulta('psicologia')"
-                                        class="flex bg-[#3B82F6] hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
-                                        <i class="ph-bold ph-plus-circle text-lg"></i> Crear Consulta Psicológica
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="admin-only hidden mb-2.5">
+                            <button onclick="abrirModalCrearConsulta('psicologia')"
+                                class="flex bg-[#3B82F6] hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition items-center gap-2">
+                                <i class="ph-bold ph-plus-circle text-base"></i> Crear Consulta Psicológica
+                            </button>
                         </div>
 
-                        <div class="flex flex-wrap gap-2 mb-6" id="psicologia-filtros">
-                            <button id="psico-filtro-todas" onclick="filtrarConsultasUsuario('psicologia', 'todas')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-blue-200 bg-[#3B82F6] text-white shadow-sm transition flex items-center gap-1.5">
-                                <span data-i18n="profile_filter_all_consultations">Todas las consultas</span>
-                            </button>
-                            <button id="psico-filtro-isabel" onclick="filtrarConsultasUsuario('psicologia', 'isabel')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-heart text-[#8f6b2d]"></i> <span>Isabel (PNI)</span>
-                            </button>
-                            <button id="psico-filtro-miriam" onclick="filtrarConsultasUsuario('psicologia', 'miriam')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Psicología)</span>
-                            </button>
-                            <button id="psico-filtro-introductorias"
-                                onclick="filtrarConsultasUsuario('psicologia', 'introductorias')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-gift text-[#3B82F6]"></i> <span>Sesiones introductorias</span>
-                            </button>
-                            <button id="psico-filtro-disponibles"
-                                onclick="filtrarConsultasUsuario('psicologia', 'disponibles')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <span data-i18n="profile_filter_available_consultations">Disponibles</span>
-                            </button>
-                            <button id="psico-filtro-mis-reservas"
-                                onclick="filtrarConsultasUsuario('psicologia', 'mis-reservas')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-bookmark-simple text-[#3B82F6]"></i> <span
-                                    data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</span>
-                            </button>
+                        <!-- Filtros de Consultas (Limpio y contenido en tarjeta estilo Clases) -->
+                        <div class="bg-white/80 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 mb-3 border border-cocoa/10 shadow-2xs" id="psicologia-filtros">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button id="psico-filtro-todas" onclick="filtrarConsultasUsuario('psicologia', 'todas')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-blue-200 bg-[#3B82F6] text-white shadow-xs transition flex items-center gap-1.5">
+                                    <span data-i18n="profile_filter_all_consultations">Todas las consultas</span>
+                                </button>
+                                <button id="psico-filtro-isabel" onclick="filtrarConsultasUsuario('psicologia', 'isabel')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-heart text-[#8f6b2d]"></i> <span>Isabel (PNI)</span>
+                                </button>
+                                <button id="psico-filtro-miriam" onclick="filtrarConsultasUsuario('psicologia', 'miriam')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Psicología)</span>
+                                </button>
+                                <button id="psico-filtro-introductorias"
+                                    onclick="filtrarConsultasUsuario('psicologia', 'introductorias')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-gift text-[#3B82F6]"></i> <span>Sesiones introductorias</span>
+                                </button>
+                                <button id="psico-filtro-disponibles"
+                                    onclick="filtrarConsultasUsuario('psicologia', 'disponibles')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <span data-i18n="profile_filter_available_consultations">Disponibles</span>
+                                </button>
+                                <button id="psico-filtro-mis-reservas"
+                                    onclick="filtrarConsultasUsuario('psicologia', 'mis-reservas')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-bookmark-simple text-[#3B82F6]"></i> <span
+                                        data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -7408,88 +7350,100 @@
             const userTotalTalleresDisponibles = userTalleresCreditos + userSaldoTalleres;
             const userCreditosReprogConsulta = (userCreditosReprogramacion || []).filter(c => c.tipo === 'consulta' && c.estado === 'disponible').length;
 
+            const totalBadgesCount = 3 + 
+                (userTotalTalleresDisponibles > 0 ? 1 : 0) +
+                (userCreditosReprogConsulta > 0 ? 1 : 0) +
+                (userSaldoClasesGratis > 0 ? 1 : 0) +
+                (userSaldoConsultasGratis > 0 ? 1 : 0);
+
+            const isCompactMode = totalBadgesCount >= 4;
+            const bPad = isCompactMode ? 'px-2 py-1' : 'px-2.5 py-1.5';
+            const bGap = isCompactMode ? 'gap-1.5' : 'gap-2';
+            const iconBox = isCompactMode ? 'w-5 h-5 rounded-md text-[10px]' : 'w-6 h-6 rounded-lg text-xs';
+            const titleTxt = isCompactMode ? 'text-[7.5px]' : 'text-[8px]';
+            const countTxt = isCompactMode ? 'text-[11px]' : 'text-xs';
+
             if (headerWrapper) {
                 headerWrapper.innerHTML = `
             <!-- 1. CLASES NORMALES (BRONCE METÁLICO) -->
-            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 2px 8px rgba(196, 130, 77, 0.2);" title="Comprar más packs de clases">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">
-                    <i class="ph-fill ph-ticket text-xs"></i>
+            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 1px 4px rgba(196, 130, 77, 0.15);" title="Comprar más packs de clases">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">
+                    <i class="ph-fill ph-ticket"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-black uppercase tracking-wider text-[#874113]">Clases</span>
-                    <span class="text-xs font-black text-[#5e2704]">${userBonos} disp.</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#874113]">Clases</span>
+                    <span class="${countTxt} font-black text-[#5e2704] mt-0.5">${userBonos} disp.</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">+ Packs</span>
             </div>
 
             <!-- 2. CLASE ESPECIAL (PLATEADA METÁLICA) -->
-            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 2px 8px rgba(148, 163, 184, 0.25);" title="Comprar Bono Clase Especial">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
-                    <i class="ph-fill ph-sparkle text-xs text-amber-300"></i>
+            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.18);" title="Comprar Bono Clase Especial">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
+                    <i class="ph-fill ph-sparkle text-amber-300"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-black uppercase tracking-wider text-[#334155]">Clase especial</span>
-                    <span class="text-xs font-black text-[#0f172a]">${userSpecialBonosMes} disp.</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#334155]">Clase especial</span>
+                    <span class="${countTxt} font-black text-[#0f172a] mt-0.5">${userSpecialBonosMes} disp.</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">+ Especial</span>
             </div>
 
             ${userTotalTalleresDisponibles > 0 ? `
             <!-- 3. TALLERES (DORADA METÁLICA - A LA DERECHA DE LA PLATEADA) -->
-            <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);" title="Ver y reservar talleres temáticos">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
-                    <i class="ph-fill ph-chalkboard-teacher text-xs"></i>
+            <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);" title="Ver y reservar talleres temáticos">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                    <i class="ph-fill ph-chalkboard-teacher"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-black uppercase tracking-wider text-[#92400e]">Taller</span>
-                    <span class="text-xs font-black text-[#78350f]">${userTotalTalleresDisponibles} disp.</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#92400e]">Taller</span>
+                    <span class="${countTxt} font-black text-[#78350f] mt-0.5">${userTotalTalleresDisponibles} disp.</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);">+ Taller</span>
             </div>` : ''}
 
             <!-- 4. BONO ILIMITADO (MENSUAL) -->
-            <div role="button" tabindex="0" onclick="comprarBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar mes ilimitado">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-2xs ${userBonoMensualActivo ? 'bg-emerald-600 text-white' : 'bg-cocoa/10 text-cocoa/50'}">
-                    <i class="ph-fill ph-infinity text-xs"></i>
+            <div role="button" tabindex="0" onclick="comprarBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar mes ilimitado">
+                <div class="${iconBox} flex items-center justify-center shrink-0 shadow-2xs ${userBonoMensualActivo ? 'bg-emerald-600 text-white' : 'bg-cocoa/10 text-cocoa/50'}">
+                    <i class="ph-fill ph-infinity"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">Ilimitado</span>
-                    <span class="text-xs font-black ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próx: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes')}</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">Ilimitado</span>
+                    <span class="${countTxt} font-black ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'} mt-0.5">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próx: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes')}</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-bold uppercase bg-terracotta group-hover:bg-black text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none">+ Mes</span>
             </div>
 
             ${userCreditosReprogConsulta > 0 ? `
             <!-- 5. CRÉDITO CONSULTA REPROGRAMADA -->
-            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y agendar consultas disponibles">
-                <i class="ph-bold ph-arrows-clockwise text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Crédito</span>
-                    <span class="text-xs font-black text-emerald-700">${userCreditosReprogConsulta} disp.</span>
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y agendar consultas disponibles">
+                <div class="${iconBox} flex items-center justify-center bg-emerald-100 text-emerald-700 shrink-0">
+                    <i class="ph-bold ph-arrows-clockwise"></i>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-emerald-600">+ Citas</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider text-emerald-800">Crédito</span>
+                    <span class="${countTxt} font-black text-emerald-700 mt-0.5">${userCreditosReprogConsulta} disp.</span>
+                </div>
             </div>` : ''}
 
             ${userSaldoClasesGratis > 0 ? `
             <!-- 6. BONO BIENVENIDA -->
-            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar más packs de clases">
-                <i class="ph-fill ph-sparkle text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Bienvenida</span>
-                    <span class="text-xs font-black text-emerald-700">${userSaldoClasesGratis} disp.</span>
+            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Bono de bienvenida disponible">
+                <div class="${iconBox} flex items-center justify-center bg-emerald-100 text-emerald-700 shrink-0">
+                    <i class="ph-fill ph-sparkle"></i>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-emerald-600">+ Packs</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider text-emerald-800">Bienvenida</span>
+                    <span class="${countTxt} font-black text-emerald-700 mt-0.5">${userSaldoClasesGratis} disp.</span>
+                </div>
             </div>` : ''}
 
             ${userSaldoConsultasGratis > 0 ? `
             <!-- 7. CONSULTA GRATIS -->
-            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y reservar consultas">
-                <i class="ph-fill ph-gift text-base shrink-0 text-pink-600 group-hover:scale-110 transition-transform"></i>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-pink-800">Consulta Gratis</span>
-                    <span class="text-xs font-black text-pink-700">${userSaldoConsultasGratis} disp.</span>
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y reservar consultas">
+                <div class="${iconBox} flex items-center justify-center bg-pink-100 text-pink-700 shrink-0">
+                    <i class="ph-fill ph-gift"></i>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-pink-600">+ Cita</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider text-pink-800">Cita Gratis</span>
+                    <span class="${countTxt} font-black text-pink-700 mt-0.5">${userSaldoConsultasGratis} disp.</span>
+                </div>
             </div>` : ''}`;
             }
 
@@ -7593,41 +7547,31 @@
                         </div>
                         <span class="text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-full shrink-0">${userSaldoClasesGratis} disp.</span>
                     </div>
-                    <div class="mt-2.5 pt-2 border-t border-emerald-100 flex flex-wrap gap-2">
-                        <button type="button" onclick="switchPublicView('horarios')" class="px-4 py-1.5 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;">
-                            Ver Horarios y Reservar Plaza
+                    <div class="mt-2 pt-1.5 border-t border-emerald-100 flex flex-wrap gap-2">
+                        <button type="button" onclick="switchPublicView('horarios')" class="px-3 py-1.5 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;">
+                            Ver Horarios y Reservar
                         </button>
                     </div>
                 </div>` : ''}
 
                 ${showConsultaOferta ? `
                 <!-- 2. Consulta Gratuita -->
-                <div class="rounded-2xl border ${yaCanjeoConsultas ? 'border-pink-200 bg-pink-50/40' : 'border-pink-300 bg-pink-50/80 ring-1 ring-pink-200'} p-3.5 text-left transition shadow-xs">
-                    <div class="flex items-start justify-between gap-3">
+                <div class="rounded-xl border ${yaCanjeoConsultas ? 'border-pink-200 bg-pink-50/40' : 'border-pink-300 bg-pink-50/70'} p-2.5 text-left transition shadow-xs">
+                    <div class="flex items-center justify-between gap-2">
                         <div>
-                            <div class="flex items-center gap-1.5 mb-0.5">
-                                ${yaCanjeoConsultas 
-                                    ? '<span class="text-[9px] font-bold uppercase tracking-wider bg-white text-pink-900 border border-pink-200 px-2 py-0.5 rounded-full">✅ Oferta Canjeada (1/1)</span>'
-                                    : '<span class="text-[9px] font-black uppercase tracking-wider bg-pink-600 text-white px-2 py-0.5 rounded-full shadow-2xs animate-pulse">🎁 Oferta Disponible</span>'}
-                            </div>
-                            <p class="text-xs font-bold text-cocoa mt-1">🩺 Sesión Introductoria (PNI / Psicología · 0 €)</p>
-                            <p class="text-[11px] text-cocoa/70 mt-0.5">Sesión introductoria para conocer a Isabel o Miriam.</p>
+                            <p class="text-xs font-bold text-cocoa">🩺 Sesión Intro PNI / Psico</p>
+                            <p class="text-[10px] text-pink-800 font-bold">${yaCanjeoConsultas ? `${userSaldoConsultasGratis} disp. · 0 €` : 'Disponible para canjear · 0 €'}</p>
                         </div>
                         ${yaCanjeoConsultas 
-                            ? `<span class="text-xs font-black text-pink-700 bg-pink-100 px-2.5 py-1 rounded-full shrink-0">${userSaldoConsultasGratis} disp.</span>`
-                            : `<button type="button" onclick="canjearOfertaPromocional('consultas')" class="shrink-0 px-3.5 py-2 bg-pink-700 hover:bg-pink-800 text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg active:scale-95 flex items-center gap-1 cursor-pointer">
+                            ? (userSaldoConsultasGratis > 0 ? `
+                            <div class="flex gap-1 shrink-0">
+                                <button type="button" onclick="filtrarPorOferta('pni')" class="px-2 py-1 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-[9px] font-bold uppercase rounded-lg shadow-2xs cursor-pointer" title="Reservar PNI (Isabel)">PNI</button>
+                                <button type="button" onclick="filtrarPorOferta('psicologia')" class="px-2 py-1 bg-[#b45c47] hover:bg-[#8f4735] text-white text-[9px] font-bold uppercase rounded-lg shadow-2xs cursor-pointer" title="Reservar Psicología (Miriam)">Psico</button>
+                            </div>` : `<span class="text-[9px] font-bold text-pink-700 bg-pink-100 px-2 py-0.5 rounded-full shrink-0">Canjeada</span>`)
+                            : `<button type="button" onclick="canjearOfertaPromocional('consultas')" class="px-3 py-1.5 bg-pink-700 hover:bg-pink-800 text-white text-[10px] font-black uppercase tracking-wider rounded-lg shadow-2xs cursor-pointer shrink-0 flex items-center gap-1">
                                 <i class="ph-bold ph-heart"></i> Canjear
                                </button>`}
                     </div>
-                    ${yaCanjeoConsultas && userSaldoConsultasGratis > 0 ? `
-                    <div class="mt-2.5 pt-2 border-t border-pink-100 flex flex-wrap gap-2">
-                        <button type="button" onclick="filtrarPorOferta('pni')" class="px-3 py-1.5 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer">
-                            Reservar PNI (Isabel)
-                        </button>
-                        <button type="button" onclick="filtrarPorOferta('psicologia')" class="px-3 py-1.5 bg-[#b45c47] hover:bg-[#8f4735] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer">
-                            Reservar Psicología (Miriam)
-                        </button>
-                    </div>` : ''}
                 </div>` : ''}
             </div>
         </div>`;
@@ -7635,60 +7579,81 @@
 
             const hasPromo50Active = !!(currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo);
             const singleClassBtnHtml = hasPromo50Active
-                ? `<button onclick="comprarPack('promo_50_clase', event)" class="py-2.5 bg-amber-500 text-white hover:bg-black text-[10px] font-black uppercase rounded-xl shadow-2xs border border-amber-600 animate-pulse" title="1ª Clase con 50% DTO">1 · 7,50€ (DTO)</button>`
-                : `<button onclick="comprarClaseSuelta(event)" class="py-2.5 bg-white border border-cocoa/10 text-cocoa hover:bg-sand/20 text-[10px] font-bold uppercase rounded-xl">1 · 15€</button>`;
+                ? `<button onclick="comprarPack('promo_50_clase', event)" class="py-2 bg-amber-500 text-white hover:bg-black text-[10px] font-black uppercase rounded-xl shadow-2xs border border-amber-600 animate-pulse" title="1ª Clase con 50% DTO">1 · 7,50€ (DTO)</button>`
+                : `<button onclick="comprarClaseSuelta(event)" class="py-2 bg-white border border-cocoa/10 text-cocoa hover:bg-sand/20 text-[10px] font-bold uppercase rounded-xl">1 · 15€</button>`;
 
             profileWrapper.innerHTML = `
-        <div class="bg-white/95 p-5 rounded-3xl border border-cocoa/15 shadow-md min-w-[280px] flex-1">
-            <div class="flex items-center justify-between gap-4 mb-4">
-                <div><span class="block text-[10px] text-cocoa/50 font-bold uppercase tracking-wider">Tus packs de clases</span><p class="text-2xl font-black text-cocoa mt-1">${userBonos} clases vigentes</p></div>
-                <i class="ph-fill ph-ticket text-3xl text-olive"></i>
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-cocoa/15 shadow-2xs flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div><span class="block text-[10px] text-cocoa/50 font-bold uppercase tracking-wider">Tus packs de clases</span><p class="text-xl font-black text-cocoa mt-0.5">${userBonos} clases vigentes</p></div>
+                    <div class="w-9 h-9 rounded-xl bg-sand/30 text-olive flex items-center justify-center shadow-2xs shrink-0">
+                        <i class="ph-fill ph-ticket text-xl"></i>
+                    </div>
+                </div>
+                <div class="space-y-2 mb-3 max-h-36 overflow-y-auto pr-1">${packRows}</div>
+                ${userLegacyBonos > 0 ? `<p class="text-[10px] text-cocoa/50 mb-2">Además: ${userLegacyBonos} adicionales asignadas.</p>` : ''}
             </div>
-            <div class="space-y-2 mb-4">${packRows}</div>
-            ${userLegacyBonos > 0 ? `<p class="text-[10px] text-cocoa/50 mb-3">Además: ${userLegacyBonos} clases adicionales asignadas directamente.</p>` : ''}
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-cocoa/10">
                 ${singleClassBtnHtml}
-                <button onclick="comprarPack('pack_4', event)" class="py-2.5 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">4 · 50€</button>
-                <button onclick="comprarPack('pack_6', event)" class="py-2.5 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">6 · 65€</button>
+                <button onclick="comprarPack('pack_4', event)" class="py-2 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">4 · 50€</button>
+                <button onclick="comprarPack('pack_6', event)" class="py-2 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">6 · 65€</button>
             </div>
         </div>
-        <div class="bg-white/95 p-5 rounded-3xl border border-slate-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);">
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-slate-300 shadow-2xs flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);">
             <div>
-                <div class="flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
                         <span class="block text-[10px] text-slate-500 font-black uppercase tracking-wider">Bono de Clase Especial</span>
-                        <p class="text-xl font-black text-slate-900 mt-1">${userSpecialBonosMes} disp. este mes</p>
+                        <p class="text-xl font-black text-slate-900 mt-0.5">${userSpecialBonosMes} disp. este mes</p>
                     </div>
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
-                        <i class="ph-fill ph-sparkle text-2xl text-amber-300"></i>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-2xs shrink-0" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
+                        <i class="ph-fill ph-sparkle text-xl text-amber-300"></i>
                     </div>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed mb-3">
-                    Exclusivos para reservar <strong>Clases Especiales</strong>. Incluye 1 gratis por mes con el Bono Ilimitado o puedes comprar bonos adicionales por 20 €.
+                <p class="text-xs text-slate-600 leading-relaxed mb-2.5">
+                    Para reservar <strong>Clases Especiales</strong>. 1 gratis/mes con Bono Ilimitado o compra bonos por 20 €.
                 </p>
-                <div class="space-y-2 mb-4">
+                <div class="space-y-1.5 mb-3 max-h-28 overflow-y-auto pr-1">
                     ${userSpecialBonos.length ? userSpecialBonos.map(b => `
-                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
-                            <span class="font-bold text-slate-700 capitalize"><i class="ph-bold ph-calendar mr-1 text-slate-400"></i> ${escapeHtml(formatDisplayMonth(b.mes))}</span>
-                            <span class="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-300">${toSafeNumber(b.saldo)} ${toSafeNumber(b.saldo) === 1 ? 'bono' : 'bonos'}</span>
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs">
+                            <span class="font-bold text-slate-700 capitalize text-[11px]"><i class="ph-bold ph-calendar mr-1 text-slate-400"></i> ${escapeHtml(formatDisplayMonth(b.mes))}</span>
+                            <span class="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-300 text-[10px]">${toSafeNumber(b.saldo)} ${toSafeNumber(b.saldo) === 1 ? 'bono' : 'bonos'}</span>
                         </div>
-                    `).join('') : '<p class="text-xs text-slate-400 italic py-2">No tienes bonos especiales asignados para este mes.</p>'}
+                    `).join('') : '<p class="text-xs text-slate-400 italic py-1">Sin bonos especiales este mes.</p>'}
                 </div>
             </div>
-            <button onclick="comprarBonoEspecialStripe(event)" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #475569 0%, #1e293b 100%);">
-                <i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> Comprar Clase Especial (20 €)
+            <button id="btn-comprar-bono-especial" onclick="comprarBonoEspecialStripe(event)" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important;">
+                <i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> Comprar Especial (20 €)
             </button>
         </div>
-        ${userTotalTalleresDisponibles > 0 ? `
-        <div class="bg-white/95 p-5 rounded-3xl border border-amber-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #fffdf2 50%, #fef3c7 100%);">
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border ${userBonoMensualActivo ? 'border-emerald-300' : 'border-dashed border-terracotta/40'} shadow-2xs flex flex-col justify-between">
             <div>
-                <div class="flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div><span class="block text-[10px] ${userBonoMensualActivo ? 'text-emerald-600' : 'text-terracotta'} font-bold uppercase tracking-wider">Bono Ilimitado · mes natural</span><p class="text-lg font-black text-cocoa mt-0.5">90 € por mes</p></div>
+                    <div class="w-9 h-9 rounded-xl ${userBonoMensualActivo ? 'bg-emerald-50 text-emerald-600' : 'bg-terracotta/10 text-terracotta'} flex items-center justify-center shadow-2xs shrink-0">
+                        <i class="ph-fill ph-infinity text-xl"></i>
+                    </div>
+                </div>
+                <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${unlimitedRows}</div>
+                <div class="mb-2">${benefitBadge(userConsultationDiscountUsed, '30% primera consulta disponible', 'Descuento de consulta utilizado')}</div>
+            </div>
+            <div>
+                ${manageBillingButton}
+                <button onclick="comprarBonoMensual(event)" class="w-full mt-1.5 py-2.5 bg-terracotta text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition">Elegir y comprar un mes</button>
+            </div>
+        </div>
+        ${freeBalancesCard}
+        ${userTotalTalleresDisponibles > 0 ? `
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-amber-300 shadow-2xs flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #fffdf2 50%, #fef3c7 100%);">
+            <div>
+                <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
                         <span class="block text-[10px] text-amber-800 font-black uppercase tracking-wider">Talleres Temáticos</span>
-                        <p class="text-xl font-black text-amber-950 mt-1">${userTotalTalleresDisponibles} disponible${userTotalTalleresDisponibles > 1 ? 's' : ''}</p>
+                        <p class="text-xl font-black text-amber-950 mt-0.5">${userTotalTalleresDisponibles} disponible${userTotalTalleresDisponibles > 1 ? 's' : ''}</p>
                     </div>
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
-                        <i class="ph-fill ph-chalkboard-teacher text-2xl"></i>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-2xs shrink-0" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                        <i class="ph-fill ph-chalkboard-teacher text-xl"></i>
                     </div>
                 </div>
                 <p class="text-xs text-amber-900 leading-relaxed mb-3">
@@ -7700,15 +7665,15 @@
             </button>
         </div>` : ''}
         ${(userSaldoPsicologia > 0 || userSaldoNutricion > 0) ? `
-        <div class="bg-white/95 p-5 rounded-3xl border border-blue-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);">
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-blue-300 shadow-2xs flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);">
             <div>
-                <div class="flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
                         <span class="block text-[10px] text-blue-800 font-black uppercase tracking-wider">Consultas Individuales</span>
-                        <p class="text-xl font-black text-blue-950 mt-1">${userSaldoPsicologia + userSaldoNutricion} sesión${(userSaldoPsicologia + userSaldoNutricion) > 1 ? 'es' : ''} disp.</p>
+                        <p class="text-xl font-black text-blue-950 mt-0.5">${userSaldoPsicologia + userSaldoNutricion} sesión${(userSaldoPsicologia + userSaldoNutricion) > 1 ? 'es' : ''} disp.</p>
                     </div>
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-                        <i class="ph-bold ph-calendar-check text-2xl text-blue-200"></i>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-2xs shrink-0" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                        <i class="ph-bold ph-calendar-check text-xl text-blue-200"></i>
                     </div>
                 </div>
                 <p class="text-xs text-blue-900 leading-relaxed mb-3">
@@ -7720,19 +7685,7 @@
             <button onclick="switchPublicView('${userSaldoPsicologia > 0 ? 'psicologia' : 'nutricion'}')" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);">
                 <i class="ph-bold ph-calendar mr-1"></i> Agendar Cita Disponible (0 €)
             </button>
-        </div>` : ''}
-        <div class="bg-white/95 p-5 rounded-3xl border ${userBonoMensualActivo ? 'border-emerald-300' : 'border-dashed border-terracotta/40'} shadow-md min-w-[280px] flex-1">
-            <div class="flex items-center justify-between gap-4 mb-4">
-                <div><span class="block text-[10px] ${userBonoMensualActivo ? 'text-emerald-600' : 'text-terracotta'} font-bold uppercase tracking-wider">Bono Ilimitado · mes natural</span><p class="text-lg font-black text-cocoa mt-1">90 € por el mes elegido</p></div>
-                <i class="ph-fill ph-infinity text-3xl ${userBonoMensualActivo ? 'text-emerald-600' : 'text-terracotta'}"></i>
-            </div>
-            <p class="text-xs text-cocoa/60 leading-relaxed mb-4">Cada compra cubre del día 1 al último día del mes natural seleccionado. Puedes comprar meses futuros por adelantado.</p>
-            <div class="space-y-2 mb-4">${unlimitedRows}</div>
-            <div class="mb-3">${benefitBadge(userConsultationDiscountUsed, '30% primera consulta disponible', 'Descuento de consulta utilizado')}</div>
-            ${manageBillingButton}
-            <button onclick="comprarBonoMensual(event)" class="w-full mt-2 py-2.5 bg-terracotta text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition">Elegir y comprar un mes</button>
-        </div>
-        ${freeBalancesCard}`;
+        </div>` : ''}`;
         }
 
         async function checkProfile() {
@@ -9364,25 +9317,8 @@
             }
 
             if (benefit) {
-                if (!isAdmin && esTrabajador()) {
-                    benefit.classList.add('hidden');
-                } else {
-                    benefit.classList.remove('hidden');
-                    const monthName = formatDisplayMonth(new Date());
-                    benefit.innerHTML = `
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                            <div class="flex items-center gap-2.5 text-xs text-slate-800">
-                                <i class="ph-fill ph-sparkle text-slate-600 text-lg shrink-0"></i>
-                                <div>
-                                    <strong class="text-slate-900 block font-black">Eventos GEN Yoga (${escapeHtml(monthName)})</strong>
-                                    <span class="text-slate-600">Las <strong>Clases Especiales</strong> se reservan con su propio saldo (1 gratis al mes con Bono Ilimitado o 20 €). Los <strong>Talleres</strong> se reservan por plaza individual (25 €) o reprogramación.</span>
-                                </div>
-                            </div>
-                            <button type="button" onclick="comprarBonoEspecialStripe(event)" class="shrink-0 px-3.5 py-2 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-xs transition hover:scale-105 active:scale-95 cursor-pointer" style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important; color: #ffffff !important;">
-                                <i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> + Clase Especial
-                            </button>
-                        </div>`;
-                }
+                benefit.classList.add('hidden');
+                benefit.innerHTML = '';
             }
 
             // Filtrado según sub-pestaña activa (todos, clases_especiales, talleres)
