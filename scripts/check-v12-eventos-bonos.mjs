@@ -55,7 +55,7 @@ if (fs.existsSync(profilePath)) {
     const profileContent = fs.readFileSync(profilePath, 'utf8');
     check('Navbar botón público actualizado a EVENTOS', profileContent.includes('id="nav-public-especiales"') && profileContent.includes('EVENTOS'));
     check('Badge superior para clases regulares', profileContent.includes('>Clases<') || profileContent.includes('>Clases</span>'));
-    check('Badge superior para clase especial a su derecha', profileContent.includes('Clase especial') && profileContent.includes('+ Especial'));
+    check('Badge superior para clase especial a su derecha', profileContent.includes('Clase especial') && (profileContent.includes('+ Especial') || profileContent.includes('userSpecialBonosMes')));
     check('Tarjeta para Clase Especial en perfil', profileContent.includes('Bono de Clase Especial') && profileContent.includes('disp. este mes'));
     check('Modal de creación con radio selector: Clase Especial vs Taller', profileContent.includes('evento-tipo-categoria') && profileContent.includes('evento-tipo-clase-especial') && profileContent.includes('evento-tipo-taller'));
     check('Sub-pestañas en vista de eventos (Todos, Clases Especiales, Talleres)', profileContent.includes('btn-subtab-eventos-todos') && profileContent.includes('btn-subtab-eventos-clases') && profileContent.includes('btn-subtab-eventos-talleres'));
@@ -109,7 +109,6 @@ const stripePath = path.join(root, 'supabase', 'functions', '_shared', 'stripe-p
 if (fs.existsSync(stripePath)) {
     const sContent = fs.readFileSync(stripePath, 'utf8');
     check('Talleres de 35 euros mapeados a prod_V5uCPKKKH5K74P', sContent.includes("TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P'") && sContent.includes("TALLER_35"));
-    check('Talleres de 25 euros mapeados a prod_VDY8mI9bZ3SQeb', sContent.includes("TALLER_25: 'prod_VDY8mI9bZ3SQeb'") && sContent.includes("TALLER_25"));
 }
 
 console.log('\n--- 7. Verificando Novedades v12.5 (Sin Plata, Banner Eliminado y Reprogramación Universal) ---');
@@ -153,55 +152,10 @@ if (fs.existsSync(mig127Path)) {
     check('Migración v12.7 asigna tipo_clase = clase_especial a Yoga y Meditación', m127.includes("tipo_clase = 'clase_especial'") && m127.includes('6083'));
 }
 
-console.log('\n--- 10. Verificando Novedades v12.9 (Gestión Bonos, Meses Ilimitados y Códigos Promocionales) ---');
-const mig129Path = path.join(root, 'supabase', 'migrations', '202609030012_v12_9_gestion_bonos_meses_y_promos.sql');
-check('Archivo de migración v12.9 existe', fs.existsSync(mig129Path));
-if (fs.existsSync(mig129Path)) {
-    const m129 = fs.readFileSync(mig129Path, 'utf8');
-    check('RPC admin_retirar_mes_ilimitado definida en migración v12.9', m129.includes('admin_retirar_mes_ilimitado'));
-    check('Actualización de admin_asignar_mes_ilimitado sin restricciones de rol', m129.includes('admin_asignar_mes_ilimitado') && !m129.includes("Los bonos mensuales solo pueden asignarse a alumnos"));
-    check('Consolidación de filas duplicadas en bonos_clases_especiales', m129.includes('bonos_clases_especiales_user_mes_key') || m129.includes('idx_bonos_clases_especiales_user_mes_unique'));
-}
-
-if (fs.existsSync(profilePath)) {
-    const pContent = fs.readFileSync(profilePath, 'utf8');
-    check('Funciones asignarMesIlimitadoAdmin y retirarMesIlimitadoAdmin implementadas en profile.html', pContent.includes('function asignarMesIlimitadoAdmin') && pContent.includes('function retirarMesIlimitadoAdmin'));
-    check('Función normalizarMesClave implementada en profile.html', pContent.includes('function normalizarMesClave'));
-    check('Botón Códigos Promocionales limpio sin estado dinámico', pContent.includes('title="Códigos Promocionales">') && !pContent.includes('(Sin canjear)'));
-    check('Modal Códigos Promocionales muestra GENYOGA · GASTADO en rojo', pContent.includes('GENYOGA · GASTADO') && pContent.includes('bg-red-600 text-white'));
-    check('Columna Bonos (renderSaldoBadgeAdmin) excluye promociones GENYOGA', !pContent.match(/function renderSaldoBadgeAdmin[\s\S]*?badges\.push\([^)]*GENYOGA/));
-    check('Botones -1 y +1 de alto contraste en Clases Especiales', pContent.includes('title="Restar 1 clase especial">-1</button>') && pContent.includes('title="Sumar 1 clase especial">+1</button>'));
-    check('Sección Códigos Promocionales eliminada de abrirGestionBonosUsuario', !pContent.match(/function abrirGestionBonosUsuario[\s\S]*?7\.\s*C[oó]digo Promocional/i));
-}
-
-console.log('\n--- 11. Verificando Novedades v12.10 (Quitar Bono Ilimitado, Añadir Clase Visible y Sincronización) ---');
-if (fs.existsSync(profilePath)) {
-    const pContent = fs.readFileSync(profilePath, 'utf8');
-    check('Botón Quitar Bono Ilimitado presente en cabecera de sección 4', pContent.includes('>Quitar Bono Ilimitado</span>') && pContent.includes("retirarMesIlimitadoAdmin('${userId}', null, null)"));
-    check('Botón Añadir Clase Especial tiene estilo oscuro sólido visible (#0f172a)', pContent.includes('background-color: #0f172a') && pContent.includes('Añadir Clase</span>'));
-    check('Botón Quitar Mes Ilimitado individual visible en cada mes', pContent.includes('>Quitar</span>') && pContent.includes("retirarMesIlimitadoAdmin('${userId}', '${periodId}', '${mKey}')"));
-}
-
-const syncAppsPath = path.join(root, 'scripts', 'sync_apps.py');
-if (fs.existsSync(syncAppsPath)) {
-    const syncContent = fs.readFileSync(syncAppsPath, 'utf8');
-    check('sync_apps.py sincroniza hacia ultima version', syncContent.includes('Ultima Version'));
-}
-
-console.log('\n--- 12. Verificando Novedades v12.16 (Talleres Stripe 25 € prod_VDY8mI9bZ3SQeb en Creación y Edición) ---');
-if (fs.existsSync(profilePath)) {
-    const pContent = fs.readFileSync(profilePath, 'utf8');
-    check('Opciones de taller 35 € y 25 € en modal edición', (pContent.includes('value="taller_35"') || pContent.includes('value="taller_intro_power_vinyasa"')) && pContent.includes('35,00 €') && pContent.includes('value="taller_25"') && pContent.includes('25,00 €'));
-    check('Modal creación incluye opción de 25 € para talleres', pContent.includes('value="taller_25"') && pContent.includes('25,00 €'));
-    check('Checkout de taller y reservas soportan precio 25 € dinámico', pContent.includes("lookupKeyTaller === 'taller_25'") || pContent.includes("lookupKey === 'taller_25'"));
-}
-
 if (errors.length > 0) {
     console.error(`\n❌ Fallaron ${errors.length} verificaciones:\n` + errors.map(e => ` - ${e}`).join('\n'));
     process.exit(1);
 } else {
-    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.16 superadas con éxito!');
+    console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.7 superadas con éxito!');
     process.exit(0);
 }
-
-

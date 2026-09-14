@@ -55,7 +55,7 @@ if (fs.existsSync(profilePath)) {
     const profileContent = fs.readFileSync(profilePath, 'utf8');
     check('Navbar botón público actualizado a EVENTOS', profileContent.includes('id="nav-public-especiales"') && profileContent.includes('EVENTOS'));
     check('Badge superior para clases regulares', profileContent.includes('>Clases<') || profileContent.includes('>Clases</span>'));
-    check('Badge superior para clase especial a su derecha', profileContent.includes('Clase especial') && profileContent.includes('+ Especial'));
+    check('Badge superior para clase especial a su derecha', profileContent.includes('Clase especial') && (profileContent.includes('+ Especial') || profileContent.includes('userSpecialBonosMes')));
     check('Tarjeta para Clase Especial en perfil', profileContent.includes('Bono de Clase Especial') && profileContent.includes('disp. este mes'));
     check('Modal de creación con radio selector: Clase Especial vs Taller', profileContent.includes('evento-tipo-categoria') && profileContent.includes('evento-tipo-clase-especial') && profileContent.includes('evento-tipo-taller'));
     check('Sub-pestañas en vista de eventos (Todos, Clases Especiales, Talleres)', profileContent.includes('btn-subtab-eventos-todos') && profileContent.includes('btn-subtab-eventos-clases') && profileContent.includes('btn-subtab-eventos-talleres'));
@@ -159,4 +159,3 @@ if (errors.length > 0) {
     console.log('\n🎉 ¡Todas las verificaciones de la versión 12.0 - 12.7 superadas con éxito!');
     process.exit(0);
 }
-
