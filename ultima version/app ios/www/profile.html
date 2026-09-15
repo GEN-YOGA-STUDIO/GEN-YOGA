@@ -4,26 +4,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="application-version" content="13.4" />
+    <meta name="application-version" content="13.5" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.4" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.4" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.5" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.5" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.4">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.5">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
-    <script src="teacher-profiles.js?v=13.4"></script>
+    <script src="teacher-profiles.js?v=13.5"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=13.4"></script>
+    <script src="i18n.js?v=13.5"></script>
     <script>
         (function () {
             try {
@@ -242,6 +242,12 @@
         html.is-admin #public-nav,
         .is-admin #header-bonos-container,
         html.is-admin #header-bonos-container,
+        .is-profesor #header-bonos-container,
+        html.is-profesor #header-bonos-container,
+        .is-admin #header-btn-info-bonos,
+        html.is-admin #header-btn-info-bonos,
+        .is-profesor #header-btn-info-bonos,
+        html.is-profesor #header-btn-info-bonos,
         .is-admin #view-inicio,
         html.is-admin #view-inicio {
             display: none !important;
@@ -1136,16 +1142,18 @@
                 display: grid;
                 grid-template-columns: auto minmax(0, 1fr) auto;
                 grid-template-areas:
-                    "logo profile logout"
+                    "logo profile actions"
                     "balances balances balances";
                 gap: 0.625rem 0.75rem;
                 height: auto;
                 min-height: 0;
                 padding: 0.75rem 1rem;
+                align-items: center;
             }
 
             .profile-header-inner>a {
                 grid-area: logo;
+                flex-shrink: 0;
             }
 
             .profile-header-actions {
@@ -1155,6 +1163,22 @@
             #header-profile-summary {
                 grid-area: profile;
                 justify-self: end;
+                min-width: 0;
+            }
+
+            .profile-header-user-actions {
+                grid-area: actions;
+                justify-self: end;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                flex-shrink: 0;
+                position: static !important;
+            }
+
+            .profile-header-user-actions>button {
+                flex-shrink: 0 !important;
+                position: static !important;
             }
 
             #header-bonos-container {
@@ -1176,16 +1200,25 @@
             }
 
             .profile-header-actions>.h-8 {
-                display: none;
+                display: none !important;
             }
 
-            .profile-header-actions>button {
-                grid-area: logout;
+            /* Prevenir solapamiento de barras adhesivas sobre las tarjetas de clases y huecos en móvil */
+            #sticky-days-bar-container,
+            #sticky-days-bar-container-psicologia,
+            #asistencias-days-bar-container,
+            div[id^="sticky-days-bar-"],
+            div[id^="asistencias-days-bar"] {
+                position: static !important;
+                top: auto !important;
+                z-index: 10 !important;
+                margin-bottom: 1rem !important;
             }
 
             #public-nav {
-                top: 0;
-                margin-bottom: 1rem;
+                position: static !important;
+                top: auto !important;
+                margin-bottom: 1rem !important;
             }
 
             body:not(.is-admin):not(.is-profesor) .profile-nav-list {
@@ -1860,24 +1893,26 @@
                         <!-- Separador vertical visible e inamovible entre perfil y bonos -->
                         <div class="client-only h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
 
-                        <div id="header-bonos-container" class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto py-1" style="scrollbar-width: none;">
+                        <div id="header-bonos-container" class="client-only flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto py-1" style="scrollbar-width: none;">
                             <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-1.5 shrink-0">
                                 <!-- Rellenado dinámicamente en JS -->
                             </div>
                         </div>
-                        <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                            class="client-only inline-flex items-center justify-center w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl text-cocoa/70 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer ml-0.5 active:scale-95"
-                            title="Guía de bonos y saldos"
-                            aria-label="Información de bonos y saldos">
-                            <i class="ph-bold ph-info text-lg"></i>
-                        </button>
-                        <div class="client-only h-8 w-px bg-cocoa/10 shrink-0"></div>
 
-                        <button type="button" onclick="logout()" aria-label="Cerrar sesión"
-                            class="text-cocoa/40 hover:text-red-500 transition p-2.5 hover:bg-red-50 rounded-full group shrink-0"
-                            title="Cerrar Sesión">
-                            <i class="ph-bold ph-sign-out text-xl group-hover:-translate-x-0.5 transition"></i>
-                        </button>
+                        <!-- Acciones fijas de usuario (info bonos + logout) completamente aisladas sin solapamiento -->
+                        <div class="profile-header-user-actions flex items-center gap-2 shrink-0">
+                            <button id="header-btn-info-bonos" type="button" onclick="mostrarInfoBonosSaldos(event)"
+                                class="client-only inline-flex items-center justify-center w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl text-cocoa/70 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
+                                title="Guía de bonos y saldos"
+                                aria-label="Información de bonos y saldos">
+                                <i class="ph-bold ph-info text-lg"></i>
+                            </button>
+                            <button id="header-btn-logout" type="button" onclick="logout()" aria-label="Cerrar sesión"
+                                class="inline-flex items-center justify-center w-10 h-10 min-w-[40px] min-h-[40px] text-cocoa/60 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-xl border border-cocoa/15 bg-white/90 shadow-2xs group shrink-0 active:scale-95"
+                                title="Cerrar Sesión">
+                                <i class="ph-bold ph-sign-out text-xl group-hover:-translate-x-0.5 transition"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -2399,7 +2434,7 @@
 
                 <!-- 4. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
                 <div id="view-psicologia" class="hidden fade-in">
-                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.4 para simplificación) -->
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.5 para simplificación) -->
                     <div class="hidden" id="consultas-subtabs-wrapper">
                         <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"></button>
                         <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"></button>
@@ -3862,7 +3897,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v13.4. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v13.5. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -3941,7 +3976,7 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.4: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.5: Todas las clases son regulares) -->
                     <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4250,7 +4285,7 @@
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.4: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.5: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4866,7 +4901,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '13.4';
+        const APP_VERSION = '13.5';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -6135,6 +6170,8 @@
                     if (pubNav) pubNav.classList.add('hidden');
                     const bonosHeader = document.getElementById('header-bonos-container');
                     if (bonosHeader) bonosHeader.classList.add('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.add('hidden');
                     const vInicio = document.getElementById('view-inicio');
                     if (vInicio) vInicio.classList.add('hidden');
                 }
@@ -7589,7 +7626,7 @@
             const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
             const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
 
-            // Regla v13.4: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
+            // Regla v13.5: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
             const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
@@ -7822,6 +7859,8 @@
 
                     const bonosHeader = document.getElementById('header-bonos-container');
                     if (bonosHeader) bonosHeader.classList.add('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.add('hidden');
 
                     const vInicio = document.getElementById('view-inicio');
                     if (vInicio) vInicio.classList.add('hidden');
@@ -7850,7 +7889,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v13.4: Cargar ofertas promocionales canjeadas por este usuario
+                // v13.5: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -7889,6 +7928,8 @@
 
                     const bonosHeader = document.getElementById('header-bonos-container');
                     if (bonosHeader) bonosHeader.classList.add('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.add('hidden');
 
                     ['nav-public-inicio', 'nav-public-psicologia', 'nav-public-nutricion', 'nav-public-profesores'].forEach(id => {
                         const el = document.getElementById(id);
@@ -7926,6 +7967,8 @@
 
                     const bonosHeader = document.getElementById('header-bonos-container');
                     if (bonosHeader) bonosHeader.classList.remove('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.remove('hidden');
 
                     const btnMisClases = document.getElementById('nav-public-mis-clases');
                     if (btnMisClases) btnMisClases.classList.add('hidden');
@@ -7974,7 +8017,7 @@
                 comprarBonoMensual();
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v13.4)
+            // Comprobar si el usuario llega con una oferta para canjear (v13.5)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -10206,12 +10249,12 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = esClaseEspecialTipo(clase) || esTallerTipo(clase);
 
-            // v13.4: Yoga en Compañía inactivado al 100%
+            // v13.5: Yoga en Compañía inactivado al 100%
             const modalityCompania = '';
             const esCompania = false;
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = false;
-            // v13.4: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
+            // v13.5: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
             const esSesionGratuita = !esEspecial;
             const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
             const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
@@ -14187,7 +14230,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v13.4: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v13.5: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {

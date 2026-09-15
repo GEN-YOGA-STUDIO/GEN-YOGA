@@ -55,11 +55,11 @@ def build_android():
     try:
         # Build AAB for Google Play
         print("📦 Generando Android App Bundle (.aab)...")
-        subprocess.run([gradle_cmd, "bundleRelease"], cwd=ANDROID_DIR, check=True)
+        subprocess.run([gradle_cmd, "bundleRelease", "--no-daemon"], cwd=ANDROID_DIR, check=True)
         
         # Build APK for Direct Install
         print("📦 Generando APK firmado (.apk)...")
-        subprocess.run([gradle_cmd, "assembleRelease"], cwd=ANDROID_DIR, check=True)
+        subprocess.run([gradle_cmd, "assembleRelease", "--no-daemon"], cwd=ANDROID_DIR, check=True)
 
         if os.path.exists(OUTPUT_AAB):
             shutil.copy2(OUTPUT_AAB, DEST_AAB)
