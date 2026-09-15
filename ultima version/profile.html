@@ -4,26 +4,38 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="13.2" />
+    <meta name="application-version" content="13.3" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.2" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.3" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.3" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.2">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.3">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
-    <script src="teacher-profiles.js?v=13.2"></script>
+    <script src="teacher-profiles.js?v=13.3"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=13.2"></script>
+    <script src="i18n.js?v=13.3"></script>
+    <script>
+        (function () {
+            try {
+                var cachedRole = localStorage.getItem('gen_cached_role');
+                if (cachedRole === 'admin') {
+                    document.documentElement.classList.add('is-admin');
+                } else if (cachedRole && ['profesor', 'psicologo', 'nutricionista', 'ayurveda'].indexOf(cachedRole) !== -1) {
+                    document.documentElement.classList.add('is-profesor');
+                }
+            } catch (e) { }
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <style>
@@ -126,11 +138,11 @@
 
         .asistencias-filtros-grid {
             display: grid !important;
-            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
             gap: 6px !important;
             align-items: center !important;
             width: 100% !important;
-            min-width: 520px !important;
+            min-width: 440px !important;
         }
 
         .asistencias-filtro-item {
@@ -191,7 +203,9 @@
         }
 
         .is-admin .admin-only,
-        .is-admin .staff-only {
+        .is-admin .staff-only,
+        html.is-admin .admin-only,
+        html.is-admin .staff-only {
             display: block !important;
         }
 
@@ -199,21 +213,37 @@
         .is-admin .admin-only.flex,
         .is-admin .admin-flex,
         .is-admin .staff-only.flex,
-        .is-admin .staff-flex {
+        .is-admin .staff-flex,
+        html.is-admin div.admin-only.flex,
+        html.is-admin .admin-only.flex,
+        html.is-admin .admin-flex,
+        html.is-admin .staff-only.flex,
+        html.is-admin .staff-flex {
             display: flex !important;
         }
 
-        .is-profesor .staff-only {
+        .is-profesor .staff-only,
+        html.is-profesor .staff-only {
             display: block !important;
         }
 
         .is-profesor .staff-only.flex,
-        .is-profesor .staff-flex {
+        .is-profesor .staff-flex,
+        html.is-profesor .staff-only.flex,
+        html.is-profesor .staff-flex {
             display: flex !important;
         }
 
         .is-admin .client-only,
-        .is-profesor .client-only {
+        .is-profesor .client-only,
+        html.is-admin .client-only,
+        html.is-profesor .client-only,
+        .is-admin #public-nav,
+        html.is-admin #public-nav,
+        .is-admin #header-bonos-container,
+        html.is-admin #header-bonos-container,
+        .is-admin #view-inicio,
+        html.is-admin #view-inicio {
             display: none !important;
         }
 
@@ -1429,6 +1459,13 @@
 
 <body
     class="subpixel-antialiased min-h-screen w-full overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans">
+    <script>
+        if (document.documentElement.classList.contains('is-admin')) {
+            document.body.classList.add('is-admin');
+        } else if (document.documentElement.classList.contains('is-profesor')) {
+            document.body.classList.add('is-profesor');
+        }
+    </script>
 
 
     <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
@@ -1819,7 +1856,7 @@
                         </div>
 
                         <!-- Separador vertical visible e inamovible entre perfil y bonos -->
-                        <div class="h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
+                        <div class="client-only h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
 
                         <div id="header-bonos-container" class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto py-1" style="scrollbar-width: none;">
                             <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-1.5 shrink-0">
@@ -1827,12 +1864,12 @@
                             </div>
                         </div>
                         <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                            class="inline-flex items-center justify-center w-7 h-7 rounded-xl text-cocoa/60 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer ml-0.5"
+                            class="client-only inline-flex items-center justify-center w-7 h-7 rounded-xl text-cocoa/60 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer ml-0.5"
                             title="Guía de bonos y saldos"
                             aria-label="Información de bonos y saldos">
                             <i class="ph-bold ph-info text-base"></i>
                         </button>
-                        <div class="h-8 w-px bg-cocoa/10 shrink-0"></div>
+                        <div class="client-only h-8 w-px bg-cocoa/10 shrink-0"></div>
 
                         <button type="button" onclick="logout()" aria-label="Cerrar sesión"
                             class="text-cocoa/40 hover:text-red-500 transition p-2.5 hover:bg-red-50 rounded-full group shrink-0"
@@ -2245,16 +2282,28 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span id="sticky-days-title-text">Días de práctica:</span>
+                                        <span id="sticky-days-title-text">Días con clases</span>
                                     </div>
                                 </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="sticky-days-list"
-                                        class="relative flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Generado dinámicamente -->
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-dias-prev" onclick="scrollDiasRapidos(-1, 'sticky-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="sticky-days-list"
+                                            class="relative flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
                                     </div>
+                                    <button type="button" id="btn-scroll-dias-next" onclick="scrollDiasRapidos(1, 'sticky-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -2348,7 +2397,7 @@
 
                 <!-- 4. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
                 <div id="view-psicologia" class="hidden fade-in">
-                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.2 para simplificación) -->
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.3 para simplificación) -->
                     <div class="hidden" id="consultas-subtabs-wrapper">
                         <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"></button>
                         <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"></button>
@@ -2579,37 +2628,9 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         <div class="lg:col-span-8">
-                            <!-- BARRA HORIZONTAL DE DÍAS PARA FILTRAR ASISTENCIAS -->
-                            <div id="asistencias-days-bar-container"
-                                class="sticky top-20 z-30 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-2.5 shadow-md mb-3 max-w-full overflow-hidden box-border">
-                                <div class="flex items-center justify-between gap-2 mb-2 px-1">
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
-                                        <div class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
-                                            <i class="ph-bold ph-calendar-blank text-sm"></i>
-                                        </div>
-                                        <span>Días con sesiones:</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="limpiarFiltroFechaAsistencias()"
-                                            id="btn-ver-todas-asistencias-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Ver todas las fechas
-                                        </button>
-                                    </div>
-                                </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="asistencias-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Se generará dinámicamente -->
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- FILTROS DE ASISTENCIAS (Sesión, Profesor, Yoga, Horario, Plazas) - Compacto 1 Línea -->
+                            <!-- FILTROS DE ASISTENCIAS (Sesión, Profesor, Estilo, Plazas) - Compacto Arriba -->
                             <div id="asistencias-filtros-container"
-                                class="bg-white/95 backdrop-blur-md rounded-xl border border-cocoa/15 shadow-2xs">
+                                class="bg-white/95 backdrop-blur-md rounded-xl border border-cocoa/15 shadow-2xs mb-4 p-2.5">
                                 <div class="asistencias-filtros-grid">
                                     <!-- 1. Filtro por Tipo de Sesión -->
                                     <div class="asistencias-filtro-item">
@@ -2656,25 +2677,7 @@
                                         </select>
                                     </div>
 
-                                    <!-- 4. Filtro por Horario -->
-                                    <div class="asistencias-filtro-item">
-                                        <label for="filtro-asistencias-horario"
-                                            class="asistencias-filtro-label"
-                                            title="Franja Horaria">
-                                            <i class="ph-bold ph-clock text-olive text-[11px] shrink-0"></i>
-                                            <span class="truncate">Horario</span>
-                                        </label>
-                                        <select id="filtro-asistencias-horario" onchange="aplicarFiltrosAsistencias()"
-                                            class="asistencias-filtro-select">
-                                            <option value="todos">Cualquier hora</option>
-                                            <option value="manana">Mañana (07-12h)</option>
-                                            <option value="mediodia">Mediodía (12-16h)</option>
-                                            <option value="tarde">Tarde (16-20h)</option>
-                                            <option value="noche">Noche (20-23h)</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- 5. Filtro por Disponibilidad -->
+                                    <!-- 4. Filtro por Disponibilidad -->
                                     <div class="asistencias-filtro-item">
                                         <label for="filtro-asistencias-disponibilidad"
                                             class="asistencias-filtro-label"
@@ -2691,6 +2694,40 @@
                                             <option value="vacias">⚪ Sin inscritos (0)</option>
                                         </select>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- BARRA SUPERIOR DESPLAZABLE DE DÍAS (ASISTENCIAS) -->
+                            <div id="asistencias-days-bar-container"
+                                class="sticky top-20 z-20 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-3 shadow-md mb-6 max-w-full overflow-hidden box-border">
+                                <div class="flex items-center justify-between gap-2 mb-2 px-1">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
+                                        <div
+                                            class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
+                                            <i class="ph-bold ph-calendar-blank text-sm"></i>
+                                        </div>
+                                        <span id="asistencias-days-title-text">Días con sesiones</span>
+                                    </div>
+                                </div>
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-asistencias-prev" onclick="scrollDiasRapidos(-1, 'asistencias-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="asistencias-days-list"
+                                            class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
+                                    </div>
+                                    <button type="button" id="btn-scroll-asistencias-next" onclick="scrollDiasRapidos(1, 'asistencias-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -2730,12 +2767,6 @@
                                         <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
                                     </div>
                                     <div id="asistencias-calendar-grid" class="grid grid-cols-7 gap-1"></div>
-                                    <div class="mt-6 pt-4 border-t border-cocoa/10">
-                                        <button type="button" onclick="limpiarFiltroFechaAsistencias()"
-                                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-olive hover:text-cocoa hover:bg-olive/10 border border-olive/20 transition flex items-center justify-center gap-2 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Ver todas las sesiones
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3656,23 +3687,28 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span id="admin-consultas-days-title-text">Días con consultas:</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()"
-                                            id="btn-ver-todas-consultas-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Todas las fechas
-                                        </button>
+                                        <span id="admin-consultas-days-title-text">Días con consultas</span>
                                     </div>
                                 </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="admin-consultas-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Generado dinámicamente -->
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-consultas-prev" onclick="scrollDiasRapidos(-1, 'admin-consultas-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="admin-consultas-days-list"
+                                            class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
                                     </div>
+                                    <button type="button" id="btn-scroll-consultas-next" onclick="scrollDiasRapidos(1, 'admin-consultas-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -3737,23 +3773,28 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span id="admin-talleres-days-title-text">Días con eventos:</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="limpiarFiltroFechaTalleresAdmin()"
-                                            id="btn-ver-todas-talleres-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Todos los eventos
-                                        </button>
+                                        <span id="admin-talleres-days-title-text">Días con eventos</span>
                                     </div>
                                 </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="admin-talleres-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Generado dinámicamente -->
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-talleres-prev" onclick="scrollDiasRapidos(-1, 'admin-talleres-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="admin-talleres-days-list"
+                                            class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
                                     </div>
+                                    <button type="button" id="btn-scroll-talleres-next" onclick="scrollDiasRapidos(1, 'admin-talleres-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -3819,7 +3860,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v13.2. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v13.3. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -3898,7 +3939,7 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.2: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.3: Todas las clases son regulares) -->
                     <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4207,7 +4248,7 @@
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.2: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.3: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4823,7 +4864,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '13.2';
+        const APP_VERSION = '13.3';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -5043,10 +5084,11 @@
         }
 
 
+        const genCachedRoleInit = (typeof safeGetItem === 'function' ? safeGetItem('gen_cached_role', '') : '');
         let currentUser = null;
         let currentUserProfile = null;
-        let isAdmin = false;
-        let currentUserRole = '';
+        let isAdmin = genCachedRoleInit === 'admin';
+        let currentUserRole = genCachedRoleInit;
         let currentProfessionalProfile = null;
         let userBonos = 0;
         let userLegacyBonos = 0;
@@ -5617,12 +5659,9 @@
                 return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Mensual Ilimitado', 'ph-infinity', 'text-emerald-900 bg-emerald-100 border border-emerald-300');
             }
 
-            // 5. Clase suelta o Pack de clases (prioridad absoluta para reservas abonadas con bono regular o pack)
+            // 5. Bono de Clases (Pack de clases o Clase suelta unificados)
             if (r.bono_descontado || r.class_pack_id || String(r.tipo_reserva || '').toLowerCase() === 'pack_normal' || String(r.tipo_reserva || '').toLowerCase() === 'clase_suelta') {
-                if (r.class_pack_id) {
-                    return renderPagoBadge('Pack de clases', 'Pagado con: Pack de clases', 'ph-stack', 'text-olive bg-olive/10 border border-olive/30');
-                }
-                return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta', 'ph-ticket', 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]');
+                return renderPagoBadge('Bono de Clases', 'Pagado con: Bono de Clases', 'ph-ticket', 'text-olive bg-olive/10 border border-olive/30');
             }
 
             // 6. Pase de Invitado (Bono Ilimitado)
@@ -5630,9 +5669,9 @@
                 return renderPagoBadge('Pase Invitado', 'Invitado/a por alumno con Bono Ilimitado', 'ph-user-plus', 'text-teal-800 bg-teal-50 border border-teal-200');
             }
 
-            // 7. Bono de Bienvenida
+            // 7. Bono de Bienvenida (diferenciado en índigo/morado para no confundir con ilimitado)
             if (r.saldo_gratis_descontado || String(r.tipo_reserva || '').toLowerCase() === 'bienvenida') {
-                return renderPagoBadge('Bono Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)', 'ph-sparkle', 'text-emerald-800 bg-emerald-50 border border-emerald-200');
+                return renderPagoBadge('Bono Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)', 'ph-sparkle', 'text-indigo-900 bg-indigo-100 border border-indigo-300');
             }
 
             // 8. Yoga en Compañía (SOLO si fue reservado explícitamente como modalidad compañía y no como bono normal/ilimitado)
@@ -5644,13 +5683,18 @@
                 return renderPagoBadge('Yoga en Compañía', 'Pagado con: Bono de Yoga en Compañía', 'ph-handshake', 'text-amber-900 bg-amber-100 border border-amber-300');
             }
 
-            // 9. Clase abierta o gratuita
+            // 9. Inscripción manual directa por administración o profesor
+            if (r.tipo_reserva === 'manual_admin') {
+                return renderPagoBadge('Inscripción Manual', 'Inscripción manual directa de mostrador / administración', 'ph-user-check', 'text-teal-900 bg-teal-100 border border-teal-300');
+            }
+
+            // 10. Clase abierta o gratuita
             if (c.es_gratuita) {
                 return renderPagoBadge('Clase Gratuita', 'Clase abierta sin coste', 'ph-gift', 'text-emerald-800 bg-emerald-50 border border-emerald-200');
             }
 
-            // 10. Fallback estándar resiliente: Clase suelta
-            return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta', 'ph-ticket', 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]');
+            // 11. Fallback estándar resiliente: Bono de Clases
+            return renderPagoBadge('Bono de Clases', 'Pagado con: Bono de Clases', 'ph-ticket', 'text-olive bg-olive/10 border border-olive/30');
         }
 
         async function mostrarBonosAlumnoPopup(userId) {
@@ -6077,9 +6121,26 @@
                 auth.classList.add('hidden');
                 app.classList.remove('hidden');
                 currentUser = session.user;
+                const cachedUid = safeGetItem('gen_cached_user_id', '');
+                const cachedRole = safeGetItem('gen_cached_role', '');
+                if (session.user?.id === cachedUid && cachedRole === 'admin') {
+                    isAdmin = true;
+                    currentUserRole = 'admin';
+                    document.documentElement.classList.add('is-admin');
+                    document.body.classList.add('is-admin');
+                    document.body.classList.remove('is-profesor');
+                    const pubNav = document.getElementById('public-nav');
+                    if (pubNav) pubNav.classList.add('hidden');
+                    const bonosHeader = document.getElementById('header-bonos-container');
+                    if (bonosHeader) bonosHeader.classList.add('hidden');
+                    const vInicio = document.getElementById('view-inicio');
+                    if (vInicio) vInicio.classList.add('hidden');
+                }
                 renderProfileCard(session.user?.user_metadata || currentUserProfile || {});
                 void initializeAuthenticatedApp(session.user);
             } else {
+                safeRemoveItem('gen_cached_role');
+                safeRemoveItem('gen_cached_user_id');
                 app.classList.add('hidden');
                 auth.classList.remove('hidden');
                 currentUser = null;
@@ -6338,6 +6399,8 @@
         });
 
         async function logout() {
+            safeRemoveItem('gen_cached_role');
+            safeRemoveItem('gen_cached_user_id');
             safeRemoveItem('activeAdminTab');
             safeRemoveItem('activeAdminCrearSubTab');
             safeRemoveItem('activePublicView');
@@ -6756,8 +6819,19 @@
                 console.warn('Error al cargar checkProfile:', e);
             }
 
+            if (isAdmin) {
+                try {
+                    const savedTab = safeGetItem('activeAdminTab', 'crear');
+                    await switchTab(savedTab);
+                } catch (eTab) {
+                    console.warn('Error al activar tab admin:', eTab);
+                }
+            }
+
             // Load data from Supabase without letting a single failure block the entire view
-            await cargarMisReservasUsuario();
+            if (!isAdmin) {
+                await cargarMisReservasUsuario();
+            }
             await Promise.allSettled([
                 cargarHorarios(),
                 cargarClasesEspeciales(),
@@ -6768,8 +6842,7 @@
             // Initial render of calendars and content
             try {
                 if (isAdmin) {
-                    const savedTab = safeGetItem('activeAdminTab', 'crear');
-                    await switchTab(savedTab);
+                    // Tab de administración ya activado prioritariamente sin parpadeo
                 } else if (esTrabajador()) {
                     const savedPublicView = safeGetItem('activePublicView', 'profesor-calendario');
                     switchPublicView(savedPublicView);
@@ -7514,7 +7587,7 @@
             const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
             const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
 
-            // Regla v13.2: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
+            // Regla v13.3: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
             const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
@@ -7731,6 +7804,42 @@
 
             if (data) {
                 currentUserProfile = data;
+                const rol = (data.rol || '').toLowerCase().trim();
+                currentUserRole = rol;
+                safeSetItem('gen_cached_role', rol);
+                safeSetItem('gen_cached_user_id', currentUser.id);
+
+                if (rol === 'admin') {
+                    isAdmin = true;
+                    document.documentElement.classList.add('is-admin');
+                    document.body.classList.add('is-admin');
+                    document.body.classList.remove('is-profesor');
+
+                    const pubNav = document.getElementById('public-nav');
+                    if (pubNav) pubNav.classList.add('hidden');
+
+                    const bonosHeader = document.getElementById('header-bonos-container');
+                    if (bonosHeader) bonosHeader.classList.add('hidden');
+
+                    const vInicio = document.getElementById('view-inicio');
+                    if (vInicio) vInicio.classList.add('hidden');
+
+                    // Mostrar todos los tabs
+                    ['tab-crear', 'tab-gestion-alumnos', 'tab-usuarios', 'tab-dashboard', 'tab-admin-profesores', 'tab-configuracion'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove('hidden');
+                    });
+
+                    const btnMisClases = document.getElementById('nav-public-mis-clases');
+                    if (btnMisClases) btnMisClases.classList.add('hidden');
+
+                    const adminBar = document.querySelector('.admin-only');
+                    if (adminBar) adminBar.style.removeProperty('display');
+
+                    renderProfileCard(data);
+                    return;
+                }
+
                 userLegacyBonos = toSafeNumber(data.bonos);
                 userBonos = userLegacyBonos;
                 userSaldoPsicologia = toSafeNumber(data.saldo_psicologia);
@@ -7739,7 +7848,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v13.2: Cargar ofertas promocionales canjeadas por este usuario
+                // v13.3: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -7766,34 +7875,7 @@
                 renderSaldosClienteV69();
                 renderProfileCard(data);
 
-                // Normalizar rol
-                const rol = (data.rol || '').toLowerCase().trim();
-                currentUserRole = rol;
-
-                if (rol === 'admin') {
-                    isAdmin = true;
-                    document.body.classList.add('is-admin');
-                    document.body.classList.remove('is-profesor');
-
-                    const pubNav = document.getElementById('public-nav');
-                    if (pubNav) pubNav.classList.add('hidden');
-
-                    const bonosHeader = document.getElementById('header-bonos-container');
-                    if (bonosHeader) bonosHeader.classList.add('hidden');
-
-                    // Mostrar todos los tabs
-                    ['tab-crear', 'tab-gestion-alumnos', 'tab-usuarios', 'tab-dashboard', 'tab-admin-profesores', 'tab-configuracion'].forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.classList.remove('hidden');
-                    });
-
-                    const btnMisClases = document.getElementById('nav-public-mis-clases');
-                    if (btnMisClases) btnMisClases.classList.add('hidden');
-
-                    const adminBar = document.querySelector('.admin-only');
-                    if (adminBar) adminBar.style.removeProperty('display');
-
-                } else if (STAFF_ROLES.includes(rol)) {
+                if (STAFF_ROLES.includes(rol)) {
                     isAdmin = false;
                     document.body.classList.remove('is-admin');
                     document.body.classList.add('is-profesor');
@@ -7890,7 +7972,7 @@
                 comprarBonoMensual();
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v13.2)
+            // Comprobar si el usuario llega con una oferta para canjear (v13.3)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -8502,29 +8584,31 @@
             }
         }
 
-        function inicializarEventosBarraDias() {
-            const list = document.getElementById('sticky-days-list');
+        function inicializarEventosBarraDias(listId = 'sticky-days-list') {
+            const list = document.getElementById(listId);
             if (!list || list.dataset.eventsAttached === 'true') return;
             list.dataset.eventsAttached = 'true';
 
-            // Conectar listeners directos en los botones de flecha
-            const btnPrev = document.getElementById('btn-scroll-dias-prev');
-            const btnNext = document.getElementById('btn-scroll-dias-next');
-            if (btnPrev && !btnPrev.dataset.listenerAttached) {
-                btnPrev.dataset.listenerAttached = 'true';
-                btnPrev.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    scrollDiasRapidos(-1);
-                });
-            }
-            if (btnNext && !btnNext.dataset.listenerAttached) {
-                btnNext.dataset.listenerAttached = 'true';
-                btnNext.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    scrollDiasRapidos(1);
-                });
+            // Conectar listeners directos en los botones de flecha si existen
+            if (listId === 'sticky-days-list') {
+                const btnPrev = document.getElementById('btn-scroll-dias-prev');
+                const btnNext = document.getElementById('btn-scroll-dias-next');
+                if (btnPrev && !btnPrev.dataset.listenerAttached) {
+                    btnPrev.dataset.listenerAttached = 'true';
+                    btnPrev.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        scrollDiasRapidos(-1, listId);
+                    });
+                }
+                if (btnNext && !btnNext.dataset.listenerAttached) {
+                    btnNext.dataset.listenerAttached = 'true';
+                    btnNext.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        scrollDiasRapidos(1, listId);
+                    });
+                }
             }
 
             // Scroll con rueda de ratón (soporte tanto horizontal nativo como vertical)
@@ -8588,97 +8672,11 @@
             }, true);
         }
 
-        let currentScrollTargetIndex = null;
-        let scrollAnimFrame = null;
-
-        function scrollDiasRapidos(direction) {
-            const list = document.getElementById('sticky-days-list');
+        function scrollDiasRapidos(direction, listId = 'sticky-days-list') {
+            const list = document.getElementById(listId);
             if (!list) return;
-
-            const listRect = list.getBoundingClientRect();
-            const allButtons = Array.from(list.querySelectorAll('button'));
-            const botonesDias = allButtons.filter(b => !b.textContent.includes('Todas'));
-
-            if (botonesDias.length === 0) return;
-
-            // Determinar el índice base del día visible actualmente más a la izquierda
-            let baseIndex = 0;
-            if (currentScrollTargetIndex !== null) {
-                baseIndex = currentScrollTargetIndex;
-            } else {
-                for (let i = 0; i < botonesDias.length; i++) {
-                    const bRect = botonesDias[i].getBoundingClientRect();
-                    // Si el botón está visible en el viewport del contenedor
-                    if (bRect.right >= listRect.left + 35) {
-                        baseIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            let targetIndex;
-            if (direction > 0) {
-                // Avanzar exactamente 7 días de práctica hacia la derecha
-                targetIndex = Math.min(botonesDias.length - 1, baseIndex + 7);
-            } else {
-                // Retroceder exactamente 7 días de práctica hacia la izquierda
-                targetIndex = Math.max(0, baseIndex - 7);
-            }
-
-            currentScrollTargetIndex = targetIndex;
-
-            let targetScrollLeft = 0;
-            if (targetIndex === 0 && direction < 0) {
-                targetScrollLeft = 0;
-            } else {
-                const targetBtn = botonesDias[targetIndex];
-                const btnRect = targetBtn.getBoundingClientRect();
-                targetScrollLeft = Math.max(0, btnRect.left - listRect.left + list.scrollLeft - 8);
-            }
-
-            const maxScroll = Math.max(0, list.scrollWidth - list.clientWidth);
-            targetScrollLeft = Math.min(maxScroll, targetScrollLeft);
-
-            if (scrollAnimFrame) {
-                cancelAnimationFrame(scrollAnimFrame);
-                scrollAnimFrame = null;
-            }
-
-            const startScrollLeft = list.scrollLeft;
-            const distance = targetScrollLeft - startScrollLeft;
-
-            if (Math.abs(distance) < 2) {
-                currentScrollTargetIndex = null;
-                return;
-            }
-
-            // Desactivar temporalmente scroll-behavior CSS para interpolar fluidamente por frames
-            list.style.scrollBehavior = 'auto';
-
-            const duration = 280;
-            const startTime = performance.now();
-
-            function stepAnimation(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                // Easing suave easeInOutQuad
-                const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-                list.scrollLeft = startScrollLeft + distance * ease;
-
-                if (progress < 1) {
-                    scrollAnimFrame = requestAnimationFrame(stepAnimation);
-                } else {
-                    list.scrollLeft = targetScrollLeft;
-                    list.style.scrollBehavior = 'smooth';
-                    scrollAnimFrame = null;
-                    setTimeout(() => {
-                        currentScrollTargetIndex = null;
-                    }, 50);
-                }
-            }
-
-            scrollAnimFrame = requestAnimationFrame(stepAnimation);
+            const scrollDistance = Math.max(200, Math.round(list.clientWidth * 0.75)) * direction;
+            list.scrollBy({ left: scrollDistance, behavior: 'smooth' });
         }
 
         window.scrollDiasRapidos = scrollDiasRapidos;
@@ -8702,7 +8700,7 @@
 
             const titleEl = document.getElementById('sticky-days-title-text');
             if (titleEl) {
-                titleEl.innerHTML = `Días de práctica: <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
+                titleEl.innerHTML = `Días con clases <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
             }
 
             allClasesCache.forEach(c => {
@@ -8720,7 +8718,7 @@
             if (dKeys.length === 0) {
                 bar.innerHTML = `
                     <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
-                        <span class="italic">No hay más clases restantes en ${monthNames[targetMonth]}.</span>
+                        <span class="italic">No hay clases programadas en ${monthNames[targetMonth]}.</span>
                         <button type="button" onclick="cambiarMes(1)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             Ver ${monthNames[(targetMonth + 1) % 12]} <i class="ph-bold ph-caret-right"></i>
                         </button>
@@ -8729,23 +8727,14 @@
                 return;
             }
 
-            const totalClasesMes = Array.from(fechasConClases.values()).reduce((a, b) => a + b, 0);
             const hoyKey = formatDateLocal(new Date());
 
-            // Solo inicializar por defecto en la carga inicial si aún es null
-            if (selectedDate === null) {
-                selectedDate = fechasConClases.has(hoyKey) ? hoyKey : 'todas';
+            // Seleccionar por defecto hoy si existe, o el próximo día disponible
+            if (selectedDate === null || selectedDate === 'todas') {
+                selectedDate = fechasConClases.has(hoyKey) ? hoyKey : (dKeys.find(k => k >= hoyKey) || dKeys[0] || hoyKey);
             }
 
-            const isAll = selectedDate === 'todas';
-
-            let html = `
-        <button type="button" onclick="limpiarFiltroFecha()" 
-            class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isAll ? 'bg-cocoa text-white shadow-xs ring-2 ring-cocoa/30' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${totalClasesMes})
-        </button>
-    `;
-
+            let html = '';
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -8755,42 +8744,54 @@
                 const diaSemana = diasSemanaCorta[fecha.getDay()];
                 const mesNombre = mesesCorta[m - 1];
                 const numClases = fechasConClases.get(dKey) || 0;
-                const isSelected = !isAll && selectedDate === dKey;
+                const isSelected = selectedDate === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
-            <button type="button" onclick="filtrarPorFechaYScroll('${dKey}')" 
-                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] cursor-pointer ${btnClass}">
-                ${topLabel}
-                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numClases} clase${numClases > 1 ? 's' : ''}</span>
-            </button>
-        `;
+                    <button type="button" onclick="filtrarPorFechaYScroll('${dKey}')" 
+                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
+                        ${topLabel}
+                        <span class="${textClass}">${d} ${mesNombre}</span>
+                        <span class="${countClass}">${numClases} clase${numClases > 1 ? 's' : ''}</span>
+                    </button>
+                `;
             });
 
             bar.innerHTML = html;
 
-            // Auto-scroll chip activo al centro (o al inicio si Todas está seleccionado)
             setTimeout(() => {
-                if (isAll) {
-                    bar.scrollTo({ left: 0, behavior: 'smooth' });
-                } else {
-                    const activeBtn = bar.querySelector('.bg-olive');
-                    if (activeBtn) {
-                        activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    }
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function aplicarFiltrosClases() {
@@ -10203,12 +10204,12 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = esClaseEspecialTipo(clase) || esTallerTipo(clase);
 
-            // v13.2: Yoga en Compañía inactivado al 100%
+            // v13.3: Yoga en Compañía inactivado al 100%
             const modalityCompania = '';
             const esCompania = false;
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = false;
-            // v13.2: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
+            // v13.3: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
             const esSesionGratuita = !esEspecial;
             const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
             const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
@@ -11062,6 +11063,7 @@
                 await cargarConsultasAdmin();
             } else if (tabName === 'gestion-alumnos') {
                 selectedAsistenciaFecha = formatDateLocal(new Date());
+                currentAsistenciasMonth = new Date();
                 selectedAsistenciaClaseId = 'todas';
                 mostrarDiasPasadosAsistencias = false;
                 await cargarAsistenciasPorClase();
@@ -11675,6 +11677,8 @@
             return true;
         }
 
+        let currentAsistenciasMonth = new Date();
+
         async function cargarAsistenciasPorClase() {
             const cont = document.getElementById('asistencias-container');
             const empty = document.getElementById('asistencias-empty');
@@ -11689,60 +11693,82 @@
                 await cargarPerfilProfesionalActual(currentUserProfile);
             }
 
-            if (!mostrarDiasPasadosAsistencias && selectedAsistenciaFecha !== 'todas') {
-                const hoyKeyActual = formatDateLocal(new Date());
-                if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKeyActual) {
-                    selectedAsistenciaFecha = hoyKeyActual;
-                }
-            }
-
             cont.innerHTML = `
         <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
             <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
             <span class="text-xs uppercase tracking-widest font-bold text-gray-400">Cargando asistencias...</span>
         </div>`;
 
-            // 1. Cargar clases con objeto profesional unificado
-            const clases = await cargarTodasLasClasesConProfesionales();
+            // 1. Rango exacto del mes seleccionado (evita consultas masivas)
+            const anio = currentAsistenciasMonth.getFullYear();
+            const mes = currentAsistenciasMonth.getMonth();
+            const inicioMes = new Date(anio, mes, 1, 0, 0, 0, 0).toISOString();
+            const finMes = new Date(anio, mes + 1, 0, 23, 59, 59, 999).toISOString();
 
-            // 2. Filtrar clases del periodo
-            let clasesFuturas = (clases || []).filter(c => {
-                if (!claseEsFutura(c)) return false;
+            let query = client
+                .from('clases')
+                .select('*, profesionales(*)')
+                .gte('fecha_inicio', inicioMes)
+                .lte('fecha_inicio', finMes)
+                .order('fecha_inicio', { ascending: true });
+
+            if (!isAdmin && esTrabajador()) {
+                const pIds = Array.from(getProfesorIdsActuales());
+                if (pIds.length > 0) {
+                    query = query.in('profesor_id', pIds);
+                }
+            }
+
+            let clases = [];
+            try {
+                const { data: monthClases, error: errClases } = await query;
+                if (errClases) throw errClases;
+                clases = monthClases || [];
+            } catch (e) {
+                console.warn('Error al cargar clases con join:', e);
+                try {
+                    const { data: fallbackClases } = await client
+                        .from('clases')
+                        .select('*')
+                        .gte('fecha_inicio', inicioMes)
+                        .lte('fecha_inicio', finMes)
+                        .order('fecha_inicio', { ascending: true });
+                    clases = fallbackClases || [];
+                } catch (e2) {
+                    console.error('Error en fallback de clases asistencias:', e2);
+                }
+            }
+
+            // Asociar objeto profesional desde cache si no viene en el join
+            const profMap = {};
+            (allProfesionalesCache || []).forEach(p => {
+                if (p?.id != null) profMap[String(p.id)] = p;
+            });
+            clases.forEach(c => {
+                if (!c.profesionales && c.profesor_id && profMap[String(c.profesor_id)]) {
+                    c.profesionales = profMap[String(c.profesor_id)];
+                }
+            });
+
+            // 2. Filtrar clases válidas
+            let clasesValidas = (clases || []).filter(c => {
                 const tipo = normalizarTipoClase(c.tipo_clase);
                 if (tipo === 'psicologia' || tipo === 'nutricion') return esHorarioValidoConsulta(c);
                 return esClaseValidaYoga(c);
             });
 
             if (!isAdmin && esTrabajador()) {
-                clasesFuturas = clasesFuturas.filter(esClaseDelProfesionalActual);
+                clasesValidas = clasesValidas.filter(esClaseDelProfesionalActual);
             }
 
-            // Si no encontramos clases filtrando, intentar query directa por profesor_id
-            if (esTrabajador() && (!clasesFuturas || clasesFuturas.length === 0)) {
-                const pIds = Array.from(getProfesorIdsActuales());
-                if (pIds.length > 0) {
-                    try {
-                        const { data: directClases } = await client
-                            .from('clases')
-                            .select('*, profesionales(*)')
-                            .in('profesor_id', pIds)
-                            .order('fecha_inicio', { ascending: true });
-                        if (Array.isArray(directClases) && directClases.length > 0) {
-                            clasesFuturas = directClases.filter(claseEsFutura);
-                        }
-                    } catch (e) {
-                        console.warn('Error en fallback directo de asistencias:', e);
-                    }
-                }
-            }
-
-            if (!clasesFuturas || clasesFuturas.length === 0) {
+            if (!clasesValidas || clasesValidas.length === 0) {
                 cont.innerHTML = '';
                 empty.classList.remove('hidden');
                 allAsistenciasClaseCache = [];
                 allAsistenciasReservasMap = {};
                 poblarFiltrosAsistencias();
                 renderizarBarraDiasAsistencias();
+                renderizarCalendarioAsistencias();
                 if (filtro) {
                     filtro.innerHTML = '<option value="todas">Sin clases disponibles</option>';
                     filtro.disabled = true;
@@ -11750,17 +11776,17 @@
                 return;
             }
 
-            // 3. Cargar reservas exclusivamente de las clases filtradas
-            const claseIds = clasesFuturas.map(c => c.id);
+            // 3. Cargar reservas exclusivamente de las clases filtradas de este mes
+            const claseIds = clasesValidas.map(c => c.id);
             const { reservasPorClase } = await cargarReservasTodasLasAreas(claseIds);
 
-            allAsistenciasClaseCache = clasesFuturas;
+            allAsistenciasClaseCache = clasesValidas;
             allAsistenciasReservasMap = reservasPorClase || {};
 
             if (filtro) {
                 filtro.disabled = false;
-                filtro.innerHTML = `<option value="todas">${isAdmin ? 'Todas las clases' : 'Todas mis sesiones'}</option>`;
-                clasesFuturas.forEach(c => {
+                filtro.innerHTML = `<option value="todas">${isAdmin ? 'Todas las clases del mes' : 'Todas mis sesiones del mes'}</option>`;
+                clasesValidas.forEach(c => {
                     const option = document.createElement('option');
                     const fecha = new Date(c.fecha_inicio);
                     const tipoMeta = getTipoClaseMeta(c.tipo_clase);
@@ -11769,7 +11795,7 @@
                     filtro.appendChild(option);
                 });
 
-                if (selectedAsistenciaClaseId !== 'todas' && !clasesFuturas.some(c => String(c.id) === String(selectedAsistenciaClaseId))) {
+                if (selectedAsistenciaClaseId !== 'todas' && !clasesValidas.some(c => String(c.id) === String(selectedAsistenciaClaseId))) {
                     selectedAsistenciaClaseId = 'todas';
                 }
                 filtro.value = selectedAsistenciaClaseId;
@@ -11781,11 +11807,12 @@
             renderizarAsistenciasPorClase();
         }
 
-        let currentAsistenciasMonth = new Date();
-
-        function cambiarMesAsistencias(delta) {
+        async function cambiarMesAsistencias(delta) {
             currentAsistenciasMonth = new Date(currentAsistenciasMonth.getFullYear(), currentAsistenciasMonth.getMonth() + delta, 1);
+            selectedAsistenciaFecha = null;
+            selectedAsistenciaClaseId = 'todas';
             renderizarCalendarioAsistencias();
+            await cargarAsistenciasPorClase();
         }
 
         function renderizarCalendarioAsistencias() {
@@ -11833,7 +11860,6 @@
                 const dateObj = new Date(year, month, day);
                 const dateKey = formatDateLocal(dateObj);
                 const isToday = dateKey === hoyKey;
-                const isPast = dateKey < hoyKey;
                 const hasSesiones = fechasConSesiones.has(dateKey);
                 const isSelected = selectedAsistenciaFecha === dateKey;
 
@@ -11846,9 +11872,6 @@
                 if (isSelected) div.classList.add('selected');
 
                 div.onclick = () => {
-                    if (isPast && !mostrarDiasPasadosAsistencias) {
-                        mostrarDiasPasadosAsistencias = true;
-                    }
                     filtrarAsistenciaPorFecha(dateKey);
                 };
 
@@ -11874,49 +11897,58 @@
         }
 
         function toggleDiasPasadosAsistencias() {
-            mostrarDiasPasadosAsistencias = !mostrarDiasPasadosAsistencias;
             renderizarBarraDiasAsistencias();
             renderizarCalendarioAsistencias();
-            if (selectedAsistenciaFecha === 'todas') {
+            renderizarAsistenciasPorClase();
+        }
+
+        async function filtrarAsistenciaPorFecha(dateKey) {
+            selectedAsistenciaFecha = dateKey;
+            selectedAsistenciaClaseId = 'todas';
+            let monthChanged = false;
+            if (dateKey && dateKey !== 'todas') {
+                const parts = dateKey.split('-').map(Number);
+                if (parts.length >= 2 && parts[0] && parts[1]) {
+                    const targetYear = parts[0];
+                    const targetMonth = parts[1] - 1;
+                    if (targetYear !== currentAsistenciasMonth.getFullYear() || targetMonth !== currentAsistenciasMonth.getMonth()) {
+                        currentAsistenciasMonth = new Date(targetYear, targetMonth, 1);
+                        monthChanged = true;
+                    }
+                }
+            }
+            if (monthChanged) {
+                await cargarAsistenciasPorClase();
+            } else {
+                renderizarBarraDiasAsistencias();
+                renderizarCalendarioAsistencias();
                 renderizarAsistenciasPorClase();
             }
         }
 
-        function filtrarAsistenciaPorFecha(dateKey) {
-            selectedAsistenciaFecha = dateKey;
-            selectedAsistenciaClaseId = 'todas';
-            if (dateKey && dateKey !== 'todas') {
-                const parts = dateKey.split('-').map(Number);
-                if (parts.length >= 2 && parts[0] && parts[1]) {
-                    currentAsistenciasMonth = new Date(parts[0], parts[1] - 1, 1);
-                }
-            }
-            renderizarBarraDiasAsistencias();
-            renderizarCalendarioAsistencias();
-            renderizarAsistenciasPorClase();
-        }
-
         function limpiarFiltroFechaAsistencias() {
-            selectedAsistenciaFecha = 'todas';
+            selectedAsistenciaFecha = null;
             selectedAsistenciaClaseId = 'todas';
             renderizarBarraDiasAsistencias();
             renderizarCalendarioAsistencias();
             renderizarAsistenciasPorClase();
         }
 
-        function filtrarAsistenciaClase(claseId) {
+        async function filtrarAsistenciaClase(claseId) {
             selectedAsistenciaClaseId = claseId || 'todas';
             if (claseId && claseId !== 'todas') {
                 const foundClase = (allAsistenciasClaseCache || []).find(c => String(c.id) === String(claseId));
                 if (foundClase) {
                     selectedAsistenciaFecha = formatDateLocal(foundClase.fecha_inicio);
-                    const hoyKey = formatDateLocal(new Date());
-                    if (selectedAsistenciaFecha < hoyKey) {
-                        mostrarDiasPasadosAsistencias = true;
-                    }
                     const parts = selectedAsistenciaFecha.split('-').map(Number);
                     if (parts.length >= 2 && parts[0] && parts[1]) {
-                        currentAsistenciasMonth = new Date(parts[0], parts[1] - 1, 1);
+                        const targetYear = parts[0];
+                        const targetMonth = parts[1] - 1;
+                        if (targetYear !== currentAsistenciasMonth.getFullYear() || targetMonth !== currentAsistenciasMonth.getMonth()) {
+                            currentAsistenciasMonth = new Date(targetYear, targetMonth, 1);
+                            await cargarAsistenciasPorClase();
+                            return;
+                        }
                     }
                 }
             }
@@ -11929,76 +11961,55 @@
             const bar = document.getElementById('asistencias-days-list');
             if (!bar) return;
 
+            inicializarEventosBarraDias('asistencias-days-list');
+
             const hoyKey = formatDateLocal(new Date());
+            const targetYear = currentAsistenciasMonth.getFullYear();
+            const targetMonth = currentAsistenciasMonth.getMonth();
+
+            const monthFallback = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
+
+            const titleEl = document.getElementById('asistencias-days-title-text');
+            if (titleEl) {
+                titleEl.innerHTML = `Días con sesiones <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
+            }
+
             let clases = (allAsistenciasClaseCache || []).filter(filtrarClaseSegunFiltrosAsistencias);
             const fechasConSesiones = new Map();
 
             clases.forEach(c => {
-                const dKey = formatDateLocal(c.fecha_inicio);
-                if (dKey) {
-                    fechasConSesiones.set(dKey, (fechasConSesiones.get(dKey) || 0) + 1);
+                const fechaObj = new Date(c.fecha_inicio);
+                if (fechaObj.getFullYear() === targetYear && fechaObj.getMonth() === targetMonth) {
+                    const dKey = formatDateLocal(fechaObj);
+                    if (dKey) {
+                        fechasConSesiones.set(dKey, (fechasConSesiones.get(dKey) || 0) + 1);
+                    }
                 }
             });
 
-            const allDKeys = Array.from(fechasConSesiones.keys()).sort();
-            if (allDKeys.length === 0) {
-                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay sesiones que coincidan con los filtros</span>';
+            const dKeys = Array.from(fechasConSesiones.keys()).sort();
+            if (dKeys.length === 0) {
+                bar.innerHTML = `
+                    <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
+                        <span class="italic">No hay sesiones en ${monthNames[targetMonth]}.</span>
+                        <button type="button" onclick="cambiarMesAsistencias(1)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                            Ver ${monthNames[(targetMonth + 1) % 12]} <i class="ph-bold ph-caret-right"></i>
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
-            const pastKeys = allDKeys.filter(k => k < hoyKey);
-            const currentAndFutureKeys = allDKeys.filter(k => k >= hoyKey);
-
-            // Si no estamos en modo explícito de ver días pasados, bajo ningún concepto seleccionar un día pasado
-            if (!mostrarDiasPasadosAsistencias) {
-                if (selectedAsistenciaFecha !== 'todas') {
-                    if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKey || !fechasConSesiones.has(selectedAsistenciaFecha)) {
-                        if (fechasConSesiones.has(hoyKey)) {
-                            selectedAsistenciaFecha = hoyKey;
-                        } else {
-                            const prox = currentAndFutureKeys[0];
-                            selectedAsistenciaFecha = prox || hoyKey;
-                        }
-                    }
-                }
-            } else {
-                if (!selectedAsistenciaFecha || (!fechasConSesiones.has(selectedAsistenciaFecha) && selectedAsistenciaFecha !== 'todas')) {
-                    if (fechasConSesiones.has(hoyKey)) {
-                        selectedAsistenciaFecha = hoyKey;
-                    } else {
-                        const prox = allDKeys.find(k => k >= hoyKey);
-                        selectedAsistenciaFecha = prox || allDKeys[allDKeys.length - 1] || hoyKey;
-                    }
-                }
-            }
-
-            // Por defecto, mostrar días desde HOY en adelante (no mostrar días pasados al entrar)
-            let dKeys = mostrarDiasPasadosAsistencias ? allDKeys : currentAndFutureKeys;
-            if (dKeys.length === 0 && !mostrarDiasPasadosAsistencias) {
-                dKeys = fechasConSesiones.has(hoyKey) ? [hoyKey] : (allDKeys.length > 0 ? [allDKeys[allDKeys.length - 1]] : [hoyKey]);
-            }
-
-            const isTodasActive = selectedAsistenciaFecha === 'todas';
-            let html = `
-        <button type="button" onclick="limpiarFiltroFechaAsistencias()" 
-            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${clases.length})
-        </button>
-    `;
-
-            if (pastKeys.length > 0) {
-                html += `
-        <button type="button" onclick="toggleDiasPasadosAsistencias()" 
-            class="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${mostrarDiasPasadosAsistencias ? 'bg-cocoa/80 text-white shadow-xs' : 'bg-sand/15 text-cocoa/70 hover:bg-sand/30 border border-cocoa/10'}"
-            title="${mostrarDiasPasadosAsistencias ? 'Ocultar sesiones de días pasados' : 'Ver sesiones de días anteriores'}">
-            <i class="ph-bold ph-clock-counter-clockwise"></i> ${mostrarDiasPasadosAsistencias ? 'Ocultar pasadas' : 'Anteriores (' + pastKeys.length + ')'}
-        </button>
-    `;
+            // Seleccionar por defecto hoy si está presente y no hay fecha seleccionada, o el próximo día disponible
+            if (!selectedAsistenciaFecha || selectedAsistenciaFecha === 'todas' || !fechasConSesiones.has(selectedAsistenciaFecha)) {
+                selectedAsistenciaFecha = fechasConSesiones.has(hoyKey) ? hoyKey : (dKeys.find(k => k >= hoyKey) || dKeys[0] || hoyKey);
             }
 
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+            let html = '';
             dKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
                 const fecha = new Date(y, m - 1, d);
@@ -12008,22 +12019,39 @@
                 const isSelected = selectedAsistenciaFecha === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
             <button type="button" onclick="filtrarAsistenciaPorFecha('${dKey}')" 
-                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
+                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
                 ${topLabel}
-                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
+                <span class="${textClass}">${d} ${mesNombre}</span>
+                <span class="${countClass}">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
             </button>
         `;
             });
@@ -12031,11 +12059,11 @@
             bar.innerHTML = html;
 
             setTimeout(() => {
-                const activeBtn = bar.querySelector('.bg-olive');
-                if (activeBtn) {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function agruparReservasAsistencias(listadoReservas) {
@@ -12135,21 +12163,17 @@
             if (contact.cleanTel) {
                 contactHtml += `
             <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap">
-                <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
+                <span class="inline-flex items-center gap-1 font-medium text-gray-700">
                     <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
-                </a>
-                ${contact.waUrl ? `
-                <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="Abrir chat de WhatsApp">
-                    <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
-                </a>` : ''}
+                </span>
             </div>`;
             }
             if (contact.realEmail) {
                 contactHtml += `
             <div class="flex items-center gap-1 text-[11px] text-gray-500 truncate mt-0.5">
-                <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
+                <span class="inline-flex items-center gap-1 text-gray-500 truncate" title="${escapeHtml(contact.realEmail)}">
                     <i class="ph-bold ph-envelope text-gray-400"></i> <span class="truncate">${escapeHtml(contact.realEmail)}</span>
-                </a>
+                </span>
             </div>`;
             }
             if (!contact.cleanTel && !contact.realEmail) {
@@ -12242,20 +12266,12 @@
             const hoyKey = formatDateLocal(new Date());
             let clasesFuturas = (allAsistenciasClaseCache || []).filter(filtrarClaseSegunFiltrosAsistencias);
 
-            // Si no estamos en modo ver días pasados, asegurar que la fecha activa no sea un día pasado
-            if (!mostrarDiasPasadosAsistencias && selectedAsistenciaFecha !== 'todas') {
-                if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKey) {
-                    selectedAsistenciaFecha = hoyKey;
-                }
-            }
-
             if (selectedAsistenciaFecha && selectedAsistenciaFecha !== 'todas') {
                 clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAsistenciaFecha);
-            } else if (!selectedAsistenciaFecha) {
-                selectedAsistenciaFecha = hoyKey;
-                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === hoyKey);
-            } else if (selectedAsistenciaFecha === 'todas' && !mostrarDiasPasadosAsistencias) {
-                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) >= hoyKey);
+            } else {
+                const fechasDisponibles = Array.from(new Set(clasesFuturas.map(c => formatDateLocal(c.fecha_inicio)))).sort();
+                selectedAsistenciaFecha = fechasDisponibles.includes(hoyKey) ? hoyKey : (fechasDisponibles.find(k => k >= hoyKey) || fechasDisponibles[0] || hoyKey);
+                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAsistenciaFecha);
             }
 
             if (selectedAsistenciaClaseId !== 'todas') {
@@ -12342,7 +12358,7 @@
                         alumnosHTML = renderizarListaAlumnosConectados(listadoReservas, c, tipoNormalizado, isAdmin, false);
                     }
 
-                    const asignarBtn = isAdmin && totalReservas < capacidadMax
+                    const asignarBtn = (isAdmin || esTrabajador()) && totalReservas < capacidadMax
                         ? `
                     <div class="mt-3 flex justify-end">
                         <button onclick="abrirModalAsignarPlazaAdmin(${inlineJsString(tipoNormalizado)}, ${safePositiveInteger(c.id) || 0})"
@@ -14169,7 +14185,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v13.2: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v13.3: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
@@ -20528,6 +20544,7 @@
                 renderProfesoresPublic();
             } else if (viewName === 'mis-clases') {
                 selectedAsistenciaFecha = formatDateLocal(new Date());
+                currentAsistenciasMonth = new Date();
                 selectedAsistenciaClaseId = 'todas';
                 mostrarDiasPasadosAsistencias = false;
                 cargarAsistenciasPorClase();
@@ -25598,7 +25615,6 @@
                 if (isToday) div.classList.add('today');
                 if (hasConsultas) div.classList.add('has-classes');
                 if (isSelected) div.classList.add('selected');
-                if (isPast && !mostrarDiasPasadosConsultasAdmin) div.classList.add('disabled');
 
                 div.onclick = () => {
                     filtrarConsultaAdminPorFecha(dateKey);
@@ -25619,10 +25635,7 @@
         }
 
         function scrollConsultasAdminDias(direction) {
-            const list = document.getElementById('admin-consultas-days-list');
-            if (!list) return;
-            const step = Math.max(220, Math.round(list.clientWidth * 0.75));
-            list.scrollBy({ left: direction * step, behavior: 'smooth' });
+            scrollDiasRapidos(direction, 'admin-consultas-days-list');
         }
 
         function filtrarConsultaAdminPorFecha(dateKey) {
@@ -25650,6 +25663,8 @@
             const bar = document.getElementById('admin-consultas-days-list');
             const titleEl = document.getElementById('admin-consultas-days-title-text');
             if (!bar || !window.allConsultasAdminCache) return;
+
+            inicializarEventosBarraDias('admin-consultas-days-list');
 
             const hoyKey = formatDateLocal(new Date());
 
@@ -25687,44 +25702,17 @@
             const allDKeys = Array.from(fechasConConsultas.keys()).sort();
             if (allDKeys.length === 0) {
                 bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas que coincidan con los filtros</span>';
-                if (titleEl) titleEl.textContent = 'Días con consultas:';
+                if (titleEl) titleEl.textContent = 'Días con consultas';
                 return;
             }
 
-            const pastKeys = allDKeys.filter(k => k < hoyKey);
-            const currentAndFutureKeys = allDKeys.filter(k => k >= hoyKey);
-
-            // Si el usuario no está en modo explícito de ver pasadas, bajo ningún concepto seleccionar un día pasado
-            if (!mostrarDiasPasadosConsultasAdmin) {
-                if (selectedAdminConsultaFecha !== 'todas') {
-                    if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha < hoyKey || !fechasConConsultas.has(selectedAdminConsultaFecha)) {
-                        if (fechasConConsultas.has(hoyKey)) {
-                            selectedAdminConsultaFecha = hoyKey;
-                        } else {
-                            const prox = currentAndFutureKeys[0];
-                            selectedAdminConsultaFecha = prox || hoyKey;
-                        }
-                    }
-                }
-            } else {
-                if (!selectedAdminConsultaFecha || (!fechasConConsultas.has(selectedAdminConsultaFecha) && selectedAdminConsultaFecha !== 'todas')) {
-                    if (fechasConConsultas.has(hoyKey)) {
-                        selectedAdminConsultaFecha = hoyKey;
-                    } else {
-                        const prox = allDKeys.find(k => k >= hoyKey);
-                        selectedAdminConsultaFecha = prox || allDKeys[allDKeys.length - 1] || hoyKey;
-                    }
-                }
-            }
-
-            // Días a renderizar en la barra: por defecto desde HOY en adelante
-            let dKeys = mostrarDiasPasadosConsultasAdmin ? allDKeys : currentAndFutureKeys;
-            if (dKeys.length === 0 && !mostrarDiasPasadosConsultasAdmin) {
-                dKeys = fechasConConsultas.has(hoyKey) ? [hoyKey] : (allDKeys.length > 0 ? [allDKeys[allDKeys.length - 1]] : [hoyKey]);
+            // Seleccionar por defecto hoy si existe en la lista, o la próxima consulta disponible
+            if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha === 'todas' || !fechasConConsultas.has(selectedAdminConsultaFecha)) {
+                selectedAdminConsultaFecha = fechasConConsultas.has(hoyKey) ? hoyKey : (allDKeys.find(k => k >= hoyKey) || allDKeys[0] || hoyKey);
             }
 
             if (titleEl) {
-                let txtFiltro = selectedAdminConsultaFecha === 'todas' ? 'Todas las fechas' : '';
+                let txtFiltro = '';
                 if (selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas') {
                     const [y, m, d] = selectedAdminConsultaFecha.split('-').map(Number);
                     const dObj = new Date(y, m - 1, d);
@@ -25733,28 +25721,11 @@
                 titleEl.innerHTML = `Días con consultas ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
             }
 
-            const isTodasActive = selectedAdminConsultaFecha === 'todas';
-            let html = `
-        <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()" 
-            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${filtradas.length})
-        </button>
-    `;
-
-            if (pastKeys.length > 0) {
-                html += `
-        <button type="button" onclick="toggleDiasPasadosConsultasAdmin()" 
-            class="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${mostrarDiasPasadosConsultasAdmin ? 'bg-cocoa/80 text-white shadow-xs' : 'bg-sand/15 text-cocoa/70 hover:bg-sand/30 border border-cocoa/10'}"
-            title="${mostrarDiasPasadosConsultasAdmin ? 'Ocultar consultas de fechas pasadas' : 'Ver consultas de fechas anteriores'}">
-            <i class="ph-bold ph-clock-counter-clockwise"></i> ${mostrarDiasPasadosConsultasAdmin ? 'Ocultar pasadas' : 'Anteriores (' + pastKeys.length + ')'}
-        </button>
-    `;
-            }
-
+            let html = '';
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-            dKeys.forEach(dKey => {
+            allDKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
                 const fecha = new Date(y, m - 1, d);
                 const diaSemana = diasSemanaCorta[fecha.getDay()];
@@ -25763,34 +25734,51 @@
                 const isSelected = selectedAdminConsultaFecha === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
-            <button type="button" onclick="filtrarConsultaAdminPorFecha('${dKey}')" 
-                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
-                ${topLabel}
-                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numConsultas} turno${numConsultas > 1 ? 's' : ''}</span>
-            </button>
-        `;
+                    <button type="button" onclick="filtrarConsultaAdminPorFecha('${dKey}')" 
+                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
+                        ${topLabel}
+                        <span class="${textClass}">${d} ${mesNombre}</span>
+                        <span class="${countClass}">${numConsultas} turno${numConsultas > 1 ? 's' : ''}</span>
+                    </button>
+                `;
             });
 
             bar.innerHTML = html;
 
             setTimeout(() => {
-                const activeBtn = bar.querySelector('.bg-olive');
-                if (activeBtn) {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function renderizarConsultasAdmin() {
@@ -25801,12 +25789,6 @@
             container.innerHTML = '';
 
             const hoyKey = formatDateLocal(new Date());
-
-            if (!mostrarDiasPasadosConsultasAdmin && selectedAdminConsultaFecha !== 'todas') {
-                if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha < hoyKey) {
-                    selectedAdminConsultaFecha = hoyKey;
-                }
-            }
 
             let filtradas = window.allConsultasAdminCache.filter(c => {
                 const reservas = window.allConsultasAdminReservasMap[c.id] || [];
@@ -25836,8 +25818,6 @@
             } else if (!selectedAdminConsultaFecha) {
                 selectedAdminConsultaFecha = hoyKey;
                 filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) === hoyKey);
-            } else if (selectedAdminConsultaFecha === 'todas' && !mostrarDiasPasadosConsultasAdmin) {
-                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) >= hoyKey);
             }
 
             if (filtradas.length === 0) {
@@ -26178,6 +26158,8 @@
             const titleEl = document.getElementById('admin-talleres-days-title-text');
             if (!bar) return;
 
+            inicializarEventosBarraDias('admin-talleres-days-list');
+
             const hoyKey = formatDateLocal(new Date());
             const talleres = window.allTalleresAdminCache || [];
 
@@ -26192,28 +26174,26 @@
             const allDKeys = Array.from(fechasConTalleres.keys()).sort();
             if (allDKeys.length === 0) {
                 bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay talleres programados</span>';
-                if (titleEl) titleEl.textContent = 'Días con talleres:';
+                if (titleEl) titleEl.textContent = 'Días con eventos';
                 return;
             }
 
+            // Seleccionar por defecto hoy si existe en la lista, o el próximo evento disponible
+            if (!selectedAdminTallerFecha || selectedAdminTallerFecha === 'todas' || !fechasConTalleres.has(selectedAdminTallerFecha)) {
+                selectedAdminTallerFecha = fechasConTalleres.has(hoyKey) ? hoyKey : (allDKeys.find(k => k >= hoyKey) || allDKeys[0] || hoyKey);
+            }
+
             if (titleEl) {
-                let txtFiltro = selectedAdminTallerFecha === 'todas' ? 'Todos los talleres' : '';
+                let txtFiltro = '';
                 if (selectedAdminTallerFecha && selectedAdminTallerFecha !== 'todas') {
                     const [y, m, d] = selectedAdminTallerFecha.split('-').map(Number);
                     const dObj = new Date(y, m - 1, d);
                     txtFiltro = `${formatDisplayWeekday(dObj)}, ${d} de ${formatDisplayMonth(dObj)}`;
                 }
-                titleEl.innerHTML = `Días con talleres ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
+                titleEl.innerHTML = `Días con eventos ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
             }
 
-            const isTodasActive = selectedAdminTallerFecha === 'todas';
-            let html = `
-                <button type="button" onclick="limpiarFiltroFechaTalleresAdmin()" 
-                    class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-                    <i class="ph-bold ph-squares-four"></i> Todos (${talleres.length})
-                </button>
-            `;
-
+            let html = '';
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -26226,22 +26206,39 @@
                 const isSelected = selectedAdminTallerFecha === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
                     <button type="button" onclick="filtrarTalleresAdminPorFecha('${dKey}')" 
-                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
+                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
                         ${topLabel}
-                        <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                        <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numTalleres} taller${numTalleres > 1 ? 'es' : ''}</span>
+                        <span class="${textClass}">${d} ${mesNombre}</span>
+                        <span class="${countClass}">${numTalleres} taller${numTalleres > 1 ? 'es' : ''}</span>
                     </button>
                 `;
             });
@@ -26249,11 +26246,11 @@
             bar.innerHTML = html;
 
             setTimeout(() => {
-                const activeBtn = bar.querySelector('.bg-olive');
-                if (activeBtn) {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function renderizarTalleresAdminList() {
@@ -26262,6 +26259,11 @@
             if (!container) return;
 
             let talleres = window.allTalleresAdminCache || [];
+            const hoyKey = formatDateLocal(new Date());
+            if (!selectedAdminTallerFecha) {
+                selectedAdminTallerFecha = hoyKey;
+            }
+
             if (selectedAdminTallerFecha && selectedAdminTallerFecha !== 'todas') {
                 talleres = talleres.filter(c => formatDateLocal(c.fecha_inicio) === selectedAdminTallerFecha);
             }
@@ -26272,9 +26274,7 @@
                     emptyState.classList.remove('hidden');
                     const emptyP = emptyState.querySelector('p');
                     if (emptyP) {
-                        emptyP.textContent = selectedAdminTallerFecha !== 'todas'
-                            ? 'No hay talleres programados para este día.'
-                            : 'No hay clases especiales ni talleres registrados.';
+                        emptyP.textContent = 'No hay talleres ni eventos programados para este día.';
                     }
                 }
                 return;
