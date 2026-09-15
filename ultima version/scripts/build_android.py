@@ -19,6 +19,8 @@ def configure_java_home():
     is_valid = current_java and os.path.exists(os.path.join(current_java, "bin", "java.exe" if os.name == 'nt' else "java"))
     if not is_valid:
         candidates = [
+            "/Library/Java/JavaVirtualMachines/temurin-24.jdk/Contents/Home",
+            "/Applications/Android Studio.app/Contents/jbr/Contents/Home",
             r"C:\Program Files\Android\Android Studio\jbr",
             r"C:\Program Files\Java\jdk-25",
             r"C:\Program Files\Java\latest",
@@ -28,6 +30,14 @@ def configure_java_home():
                 os.environ["JAVA_HOME"] = c
                 print(f"☕ Configurado JAVA_HOME automáticamente: {c}")
                 break
+
+    # Asegurar local.properties para Android SDK
+    local_prop = os.path.join(ANDROID_DIR, "local.properties")
+    mac_sdk = os.path.expanduser("~/Library/Android/sdk")
+    if not os.path.exists(local_prop) and os.path.exists(mac_sdk):
+        with open(local_prop, "w", encoding="utf-8") as f:
+            f.write(f"sdk.dir={mac_sdk}\n")
+        print(f"📱 Configurado Android SDK automáticamente: {mac_sdk}")
 
 def build_android():
     print("=" * 60)
