@@ -2,11 +2,11 @@
 <html lang="es" class="scroll-smooth">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="application-version" content="13.2" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="application-version" content="13.6" />
         <meta name="description" content="Conoce al equipo de profesionales de yoga, psicología, nutrición y talleres de GEN Yoga." />
-        <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.2" />
-        <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.2" />
+        <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.6" />
+        <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.6" />
         <title>GEN Yoga | Maestros</title>
         <!-- Rendimiento, SEO y tarjetas sociales -->
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -24,7 +24,7 @@
         <meta name="twitter:card" content="summary_large_image" />
         <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-        <script src="teacher-profiles.js?v=13.2"></script>
+        <script src="teacher-profiles.js?v=13.6"></script>
 
         <style>
             :root {
@@ -185,24 +185,25 @@
 
             .teachers-hero__home {
                 position: absolute;
-                z-index: 8;
-                top: clamp(18px, 3vw, 42px);
+                z-index: 40;
+                top: calc(var(--gy-notch-shield-height, 64px) + 12px);
                 left: clamp(18px, 3.5vw, 58px);
                 display: inline-flex;
                 align-items: center;
                 gap: 0.6rem;
-                padding: 0.72rem 1.05rem;
-                border: 1px solid rgba(106, 101, 64, 0.24);
+                min-height: 48px;
+                padding: 0.75rem 1.25rem;
+                border: 1px solid rgba(106, 101, 64, 0.32);
                 border-radius: 999px;
                 color: var(--masters-green);
-                background: rgba(248, 246, 242, 0.82);
-                box-shadow: 0 8px 28px rgba(38, 22, 12, 0.08);
-                font-size: 0.72rem;
-                font-weight: 700;
+                background: rgba(248, 246, 242, 0.95);
+                box-shadow: 0 8px 28px rgba(38, 22, 12, 0.12);
+                font-size: 0.75rem;
+                font-weight: 800;
                 letter-spacing: 0.14em;
                 text-decoration: none;
                 text-transform: uppercase;
-                backdrop-filter: blur(8px);
+                backdrop-filter: blur(12px);
                 transition: transform 180ms ease, color 180ms ease, border-color 180ms ease;
             }
 
@@ -726,6 +727,7 @@
                 .teacher-modal-overlay {
                     align-items: center;
                     padding: 8px;
+                    padding-top: max(calc(var(--gy-notch-shield-height, 64px) + 12px), 70px) !important;
                 }
 
                 .teacher-modal {
@@ -896,6 +898,7 @@
             @media (max-width: 640px) {
                 .teachers-hero {
                     min-height: 720px;
+                    padding-top: calc(var(--gy-notch-shield-height, 64px) + 1rem);
                 }
 
                 .teachers-hero__title {
@@ -933,8 +936,11 @@
                 }
 
                 .teachers-hero__home {
-                    width: 42px;
-                    height: 42px;
+                    top: calc(var(--gy-notch-shield-height, 64px) + 12px);
+                    width: 48px;
+                    height: 48px;
+                    min-width: 48px;
+                    min-height: 48px;
                     justify-content: center;
                     padding: 0;
                 }
@@ -959,16 +965,18 @@
             }
         </style>
 
-        <script src="i18n.js?v=13.2"></script>
+        <script src="i18n.js?v=13.6"></script>
         <script>
         function escapeHtmlPublic(str) {
             if (!str) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
         </script>
-        <link rel="stylesheet" href="tailwind-compiled.css?v=13.2" />
+        <link rel="stylesheet" href="tailwind-compiled.css?v=13.6" />
     </head>
     <body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
+        <!-- ESCUDO SUPERIOR ANTI-NOTCH (iOS / Android Safe-Area Protector) -->
+        <div id="gy-notch-shield" class="gy-notch-shield" aria-hidden="true"></div>
 
         <section class="teachers-hero" aria-labelledby="teachers-hero-title">
             <a class="teachers-hero__home" href="index.html" aria-label="Volver a la página de inicio">
@@ -1029,7 +1037,7 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span class="opacity-60 text-[10px]">v13.2</span>
+                <span class="opacity-60 text-[10px]">v13.6</span>
             </div>
         </footer>
 

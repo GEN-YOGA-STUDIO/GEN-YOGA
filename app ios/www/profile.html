@@ -3,27 +3,39 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="application-version" content="13.2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="application-version" content="13.6" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.2" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.6" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.6" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#26160C" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.2">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.6">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
-    <script src="teacher-profiles.js?v=13.2"></script>
+    <script src="teacher-profiles.js?v=13.6"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=13.2"></script>
+    <script src="i18n.js?v=13.6"></script>
+    <script>
+        (function () {
+            try {
+                var cachedRole = localStorage.getItem('gen_cached_role');
+                if (cachedRole === 'admin') {
+                    document.documentElement.classList.add('is-admin');
+                } else if (cachedRole && ['profesor', 'psicologo', 'nutricionista', 'ayurveda'].indexOf(cachedRole) !== -1) {
+                    document.documentElement.classList.add('is-profesor');
+                }
+            } catch (e) { }
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 
     <style>
@@ -40,8 +52,8 @@
 
 
             /* Variables de entorno para el Notch (iOS/Android) */
-            /* En web esto vale 0, en móvil se ajusta automáticamente */
-            padding-top: env(safe-area-inset-top);
+            /* En web esto vale 0, en móvil se ajusta automáticamente con el escudo Notch Shield */
+            padding-top: var(--gy-notch-shield-height, 64px);
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
@@ -126,11 +138,11 @@
 
         .asistencias-filtros-grid {
             display: grid !important;
-            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
             gap: 6px !important;
             align-items: center !important;
             width: 100% !important;
-            min-width: 520px !important;
+            min-width: 440px !important;
         }
 
         .asistencias-filtro-item {
@@ -191,7 +203,9 @@
         }
 
         .is-admin .admin-only,
-        .is-admin .staff-only {
+        .is-admin .staff-only,
+        html.is-admin .admin-only,
+        html.is-admin .staff-only {
             display: block !important;
         }
 
@@ -199,21 +213,43 @@
         .is-admin .admin-only.flex,
         .is-admin .admin-flex,
         .is-admin .staff-only.flex,
-        .is-admin .staff-flex {
+        .is-admin .staff-flex,
+        html.is-admin div.admin-only.flex,
+        html.is-admin .admin-only.flex,
+        html.is-admin .admin-flex,
+        html.is-admin .staff-only.flex,
+        html.is-admin .staff-flex {
             display: flex !important;
         }
 
-        .is-profesor .staff-only {
+        .is-profesor .staff-only,
+        html.is-profesor .staff-only {
             display: block !important;
         }
 
         .is-profesor .staff-only.flex,
-        .is-profesor .staff-flex {
+        .is-profesor .staff-flex,
+        html.is-profesor .staff-only.flex,
+        html.is-profesor .staff-flex {
             display: flex !important;
         }
 
         .is-admin .client-only,
-        .is-profesor .client-only {
+        .is-profesor .client-only,
+        html.is-admin .client-only,
+        html.is-profesor .client-only,
+        .is-admin #public-nav,
+        html.is-admin #public-nav,
+        .is-admin #header-bonos-container,
+        html.is-admin #header-bonos-container,
+        .is-profesor #header-bonos-container,
+        html.is-profesor #header-bonos-container,
+        .is-admin #header-btn-info-bonos,
+        html.is-admin #header-btn-info-bonos,
+        .is-profesor #header-btn-info-bonos,
+        html.is-profesor #header-btn-info-bonos,
+        .is-admin #view-inicio,
+        html.is-admin #view-inicio {
             display: none !important;
         }
 
@@ -646,11 +682,11 @@
 
         @media (min-width: 1024px) {
             .profile-calendar-main {
-                grid-column: span 8 / span 8;
+                width: 100%;
             }
 
             .profile-calendar-side {
-                grid-column: span 4 / span 4;
+                width: 100%;
             }
         }
 
@@ -1087,9 +1123,10 @@
             }
         }
 
-        @media (max-width: 767px) {
+        @media (max-width: 1023px) {
             body {
                 width: 100%;
+                padding-top: var(--gy-notch-shield-height, 58px) !important;
             }
 
             #app-view {
@@ -1099,31 +1136,80 @@
 
             #app-view header {
                 position: static;
+                padding-top: 0 !important;
             }
 
             .profile-header-inner {
                 display: grid;
-                grid-template-columns: auto minmax(0, 1fr) auto;
+                grid-template-columns: auto 1fr;
                 grid-template-areas:
-                    "logo profile logout"
-                    "balances balances balances";
+                    "logo actions"
+                    "balances balances";
                 gap: 0.625rem 0.75rem;
                 height: auto;
                 min-height: 0;
                 padding: 0.75rem 1rem;
+                align-items: center;
             }
 
             .profile-header-inner>a {
                 grid-area: logo;
+                flex-shrink: 0;
             }
 
             .profile-header-actions {
-                display: contents;
+                grid-area: actions;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 0.5rem;
+                min-width: 0;
             }
 
             #header-profile-summary {
-                grid-area: profile;
-                justify-self: end;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+                min-width: 0;
+                flex-shrink: 1;
+            }
+
+            #header-profile-summary .profile-header-avatar {
+                width: 36px;
+                height: 36px;
+                min-width: 36px;
+                min-height: 36px;
+                border-radius: 0.75rem;
+            }
+
+            #header-profile-summary .profile-header-meta {
+                min-width: 0;
+                max-width: 95px;
+            }
+
+            #header-profile-summary #profile-nombre-full {
+                font-size: 0.75rem;
+                line-height: 1rem;
+            }
+
+            .profile-header-user-actions {
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+                flex-shrink: 0;
+            }
+
+            .profile-header-user-actions>button {
+                width: 36px !important;
+                height: 36px !important;
+                min-width: 36px !important;
+                min-height: 36px !important;
+                padding: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 0.75rem !important;
+                flex-shrink: 0 !important;
             }
 
             #header-bonos-container {
@@ -1145,16 +1231,31 @@
             }
 
             .profile-header-actions>.h-8 {
-                display: none;
+                display: none !important;
             }
 
-            .profile-header-actions>button {
-                grid-area: logout;
+            /* Prevenir solapamiento de barras adhesivas sobre las tarjetas de clases y huecos en móvil */
+            #sticky-days-bar-container,
+            #sticky-days-bar-container-psicologia,
+            #asistencias-days-bar-container,
+            div[id^="sticky-days-bar-"],
+            div[id^="asistencias-days-bar"] {
+                position: static !important;
+                top: auto !important;
+                z-index: 10 !important;
+                margin-bottom: 1rem !important;
             }
 
             #public-nav {
-                top: 0;
-                margin-bottom: 1rem;
+                position: static !important;
+                top: auto !important;
+                margin-bottom: 1rem !important;
+            }
+
+            .swal2-container,
+            div[id^="modal-"],
+            .modal-backdrop {
+                padding-top: calc(var(--gy-notch-shield-height, 58px) + 0.5rem) !important;
             }
 
             body:not(.is-admin):not(.is-profesor) .profile-nav-list {
@@ -1429,6 +1530,16 @@
 
 <body
     class="subpixel-antialiased min-h-screen w-full overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans">
+    <!-- ESCUDO SUPERIOR ANTI-NOTCH (iOS / Android Safe-Area Protector) -->
+    <div id="gy-notch-shield" class="gy-notch-shield" aria-hidden="true"></div>
+
+    <script>
+        if (document.documentElement.classList.contains('is-admin')) {
+            document.body.classList.add('is-admin');
+        } else if (document.documentElement.classList.contains('is-profesor')) {
+            document.body.classList.add('is-profesor');
+        }
+    </script>
 
 
     <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
@@ -1455,9 +1566,10 @@
     <div id="auth-container"
         class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative z-10 w-full">
 
-        <!-- Button completely loose on the left (matches classes.html and screenshot) -->
+        <!-- Button completely loose on the left con protección Notch Shield y touch target amplio -->
         <a href="index.html" id="btn-inicio"
-            class="absolute left-4 md:left-12 top-4 md:top-8 bg-[#e06b53] border border-[#e06b53] text-white px-6 py-2.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-md z-40">
+            style="top: calc(var(--gy-notch-shield-height, 64px) + 12px);"
+            class="absolute left-4 md:left-12 bg-[#e06b53] border border-[#e06b53] text-white px-6 py-3 md:py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg z-50 min-h-[48px] min-w-[100px]">
             &larr; INICIO
         </a>
 
@@ -1794,51 +1906,54 @@
         <div
             class="profile-shell w-full max-w-[1400px] bg-white/80 backdrop-blur-2xl md:rounded-[2.5rem] shadow-2xl flex flex-col min-h-screen md:min-h-[90vh] overflow-hidden border border-cocoa/10 relative">
             <header class="bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-cocoa/10 shadow-sm">
-                <div class="profile-header-inner max-w-7xl mx-auto px-4 h-20 flex justify-between items-center gap-4">
+                <div class="profile-header-inner max-w-7xl mx-auto px-4 h-auto sm:h-20 flex justify-between items-center gap-4">
                     <a href="index.html" class="flex items-center gap-3 group shrink-0">
                         <img src="img/logo1.webp" alt="GEN Yoga Logo"
-                            class="h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition duration-300 brightness-0">
+                            class="h-9 sm:h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition duration-300 brightness-0">
                     </a>
 
-                    <div class="profile-header-actions flex items-center justify-end gap-3 min-w-0 flex-1">
-                        <div id="header-profile-summary" class="client-only flex items-center gap-2.5 shrink-0">
+                    <div class="profile-header-actions flex items-center justify-end gap-2.5 sm:gap-3 min-w-0 flex-1">
+                        <div id="header-profile-summary" class="client-only flex items-center gap-2 shrink-0">
                             <div
-                                class="profile-header-avatar w-10 h-10 rounded-2xl bg-olive/10 border border-olive/20 items-center justify-center text-olive shrink-0">
-                                <i class="ph-fill ph-user text-xl"></i>
+                                class="profile-header-avatar w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-olive/10 border border-olive/20 items-center justify-center text-olive shrink-0 flex">
+                                <i class="ph-fill ph-user text-lg sm:text-xl"></i>
                             </div>
-                            <div class="profile-header-meta shrink-0 max-w-[130px] sm:max-w-[170px]">
+                            <div class="profile-header-meta shrink-0 max-w-[95px] sm:max-w-[170px]">
                                 <span id="profile-nombre-full"
-                                    class="profile-header-name block font-serif font-black text-cocoa tracking-tight truncate">--</span>
-                                <button onclick="abrirEditarPerfil()"
-                                    class="mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-cocoa/45 hover:text-olive transition"
-                                    title="Ajustes de Perfil">
-                                    <i class="ph-bold ph-gear text-xs"></i>
-                                    <span data-i18n="profile_btn_edit_profile">Editar perfil</span>
-                                </button>
+                                    class="profile-header-name block font-serif font-black text-cocoa tracking-tight truncate text-xs sm:text-sm">--</span>
                             </div>
                         </div>
 
                         <!-- Separador vertical visible e inamovible entre perfil y bonos -->
-                        <div class="h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
+                        <div class="client-only h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
 
-                        <div id="header-bonos-container" class="flex items-center gap-2 min-w-0 overflow-x-auto py-1" style="scrollbar-width: none;">
-                            <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-2">
+                        <div id="header-bonos-container" class="client-only flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto py-1" style="scrollbar-width: none;">
+                            <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-1.5 shrink-0">
                                 <!-- Rellenado dinámicamente en JS -->
                             </div>
-                            <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                class="inline-flex items-center justify-center w-7 h-7 rounded-xl text-cocoa/60 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer"
+                        </div>
+
+                        <!-- Acciones fijas de usuario (ajustes + info bonos + logout) completamente aisladas sin solapamiento -->
+                        <div class="profile-header-user-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
+                            <button id="header-btn-edit-profile" type="button" onclick="abrirEditarPerfil()"
+                                class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl text-cocoa/75 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
+                                title="Ajustes de Perfil"
+                                aria-label="Ajustes de Perfil">
+                                <i class="ph-bold ph-gear text-base sm:text-lg"></i>
+                                <span class="sr-only" data-i18n="profile_btn_edit_profile">Editar perfil</span>
+                            </button>
+                            <button id="header-btn-info-bonos" type="button" onclick="mostrarInfoBonosSaldos(event)"
+                                class="client-only inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl text-cocoa/70 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
                                 title="Guía de bonos y saldos"
                                 aria-label="Información de bonos y saldos">
-                                <i class="ph-bold ph-info text-base"></i>
+                                <i class="ph-bold ph-info text-base sm:text-lg"></i>
+                            </button>
+                            <button id="header-btn-logout" type="button" onclick="logout()" aria-label="Cerrar sesión"
+                                class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] text-cocoa/60 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-xl border border-cocoa/15 bg-white/90 shadow-2xs group shrink-0 active:scale-95"
+                                title="Cerrar Sesión">
+                                <i class="ph-bold ph-sign-out text-base sm:text-lg group-hover:-translate-x-0.5 transition"></i>
                             </button>
                         </div>
-                        <div class="h-8 w-px bg-cocoa/10 shrink-0"></div>
-
-                        <button type="button" onclick="logout()" aria-label="Cerrar sesión"
-                            class="text-cocoa/40 hover:text-red-500 transition p-2.5 hover:bg-red-50 rounded-full group shrink-0"
-                            title="Cerrar Sesión">
-                            <i class="ph-bold ph-sign-out text-xl group-hover:-translate-x-0.5 transition"></i>
-                        </button>
                     </div>
                 </div>
 
@@ -1893,7 +2008,7 @@
                     </button>
                     <button id="nav-public-especiales" onclick="switchPublicView('especiales')"
                         class="px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
-                        <i class="ph-bold ph-calendar-star mr-1 text-sm"></i><span data-i18n="profile_tab_specials">EVENTOS</span>
+                        <span data-i18n="profile_tab_specials">EVENTOS</span>
                     </button>
                     <button id="nav-public-nutricion" onclick="switchPublicView('nutricion')"
                         class="hidden px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold tracking-widest border-b-2 border-transparent text-cocoa/60 transition hover:bg-cocoa/5 hover:text-cocoa">
@@ -1915,103 +2030,81 @@
 
                 <!-- 1. VISTA INICIO -->
                 <div id="view-inicio" class="fade-in">
-                    <!-- Panel de Bonos y Saldos del Alumno -->
-                    <div id="section-mis-saldos-cliente" class="client-only mb-4">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-                            <div>
-                                <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa flex items-center gap-2">
-                                    <i class="ph-duotone ph-wallet text-olive text-xl sm:text-2xl"></i>
-                                    <span data-i18n="profile_saldos_heading">Mis Bonos y Saldos Disponibles</span>
+                    <!-- Layout 50/50: Izquierda Calendario y Citas, Derecha Bonos y Saldos en Matriz 2x2 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        
+                        <!-- Columna Izquierda (50% en desktop): Calendario y Próximas Citas -->
+                        <div class="lg:col-span-6 space-y-6">
+                            <!-- Calendario de Clases y Reservas -->
+                            <div class="profile-calendar-main">
+                                <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa mb-3 flex items-center gap-2 pl-1">
+                                    <i class="ph-bold ph-calendar text-olive"></i> <span
+                                        data-i18n="profile_classes_bookings_calendar">Calendario de Clases y Reservas</span>
                                 </h3>
-                                <p class="text-xs text-cocoa/60 mt-0.5" data-i18n="profile_saldos_subheading">
-                                    Consulta tus packs activos, meses ilimitados comprados y bonos gratuitos
-                                    disponibles.
-                                </p>
+                                <div class="profile-calendar-card bg-ivory rounded-3xl shadow-md border border-cocoa/10 p-5 sm:p-6">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <button type="button" onclick="cambiarMesInicio(-1)" aria-label="Mes anterior"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                class="ph-bold ph-caret-left text-lg"></i></button>
+                                        <div class="text-center">
+                                            <h3 id="inicio-calendar-month-year"
+                                                class="brand-font text-lg sm:text-xl font-bold text-cocoa">
+                                            </h3>
+                                            <p class="text-[10px] text-cocoa/40 uppercase tracking-wider mt-0.5"
+                                                data-i18n="profile_general_calendar">Calendario
+                                                General</p>
+                                        </div>
+                                        <button type="button" onclick="cambiarMesInicio(1)" aria-label="Mes siguiente"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
+                                                class="ph-bold ph-caret-right text-lg"></i></button>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-2">
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">L</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">M</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">X</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">J</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">V</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">S</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-1.5">D</div>
+                                    </div>
+                                    <div id="inicio-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+
+                                    <div
+                                        class="mt-4 pt-4 border-t border-cocoa/10 flex flex-row flex-wrap gap-4 justify-center">
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block"></span>
+                                            <span data-i18n="common_classes">Clases</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6] inline-block"></span>
+                                            <span data-i18n="common_psychology">Psicología</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#8B5CF6] inline-block"></span>
+                                            <span data-i18n="common_nutrition">Nutrición</span>
+                                        </div>
+                                    </div>
+
+                                    <button onclick="limpiarFiltroFechaInicio()"
+                                        class="mt-4 w-full bg-sand/20 text-cocoa/70 py-2.5 rounded-xl text-xs font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
+                                        <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_bookings">Ver
+                                            todas las reservas</span>
+                                    </button>
+                                </div>
                             </div>
-                            <button type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-olive/10 hover:bg-olive text-olive hover:text-white border border-olive/20 text-xs font-bold transition shadow-xs cursor-pointer shrink-0">
-                                <i class="ph-bold ph-info text-sm"></i>
-                                <span data-i18n="profile_btn_guide_bonos">¿Cómo funcionan mis bonos?</span>
-                            </button>
-                        </div>
-                        <div id="profile-saldos-wrapper" class="flex flex-col lg:flex-row gap-5">
-                            <!-- Rellenado dinámicamente por renderSaldosClienteV69() -->
-                        </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <!-- Left Column: Calendar (Big) -->
-                        <div class="profile-calendar-main">
-                            <h3 class="brand-font text-2xl font-bold text-cocoa mb-4 flex items-center gap-2 pl-2">
-                                <i class="ph-bold ph-calendar text-olive"></i> <span
-                                    data-i18n="profile_classes_bookings_calendar">Calendario de Clases y Reservas</span>
-                            </h3>
-                            <div
-                                class="profile-calendar-card bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
-                                <div class="flex items-center justify-between mb-6">
-                                    <button type="button" onclick="cambiarMesInicio(-1)" aria-label="Mes anterior"
-                                        class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
-                                            class="ph-bold ph-caret-left text-lg"></i></button>
-                                    <div class="text-center">
-                                        <h3 id="inicio-calendar-month-year"
-                                            class="brand-font text-xl font-bold text-cocoa">
-                                        </h3>
-                                        <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5"
-                                            data-i18n="profile_general_calendar">Calendario
-                                            General</p>
-                                    </div>
-                                    <button type="button" onclick="cambiarMesInicio(1)" aria-label="Mes siguiente"
-                                        class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60"><i
-                                            class="ph-bold ph-caret-right text-lg"></i></button>
-                                </div>
-                                <div class="grid grid-cols-7 gap-1 mb-2">
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
-                                    <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
-                                </div>
-                                <div id="inicio-calendar-grid" class="grid grid-cols-7 gap-1"></div>
-
-                                <div
-                                    class="mt-6 pt-6 border-t border-cocoa/10 flex flex-row flex-wrap gap-6 justify-center">
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
-                                        <span class="w-3 h-3 rounded-full bg-[#10B981] inline-block"></span>
-                                        <span data-i18n="common_classes">Clases</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
-                                        <span class="w-3 h-3 rounded-full bg-[#3B82F6] inline-block"></span>
-                                        <span data-i18n="common_psychology">Psicología</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa/60">
-                                        <span class="w-3 h-3 rounded-full bg-[#8B5CF6] inline-block"></span>
-                                        <span data-i18n="common_nutrition">Nutrición</span>
-                                    </div>
-                                </div>
-
-                                <button onclick="limpiarFiltroFechaInicio()"
-                                    class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
-                                    <i class="ph-bold ph-x-circle"></i> <span data-i18n="profile_view_all_bookings">Ver
-                                        todas las reservas</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Upcoming sessions list -->
-                        <div class="profile-calendar-side">
-                            <div class="sticky top-24">
-                                <h3 class="brand-font text-2xl font-bold text-cocoa mb-6 flex items-center gap-2">
+                            <!-- Mis Próximas Citas y Clases -->
+                            <div class="profile-calendar-side">
+                                <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa mb-3 flex items-center gap-2 pl-1">
                                     <i class="ph-bold ph-calendar-check text-olive"></i> <span
                                         data-i18n="profile_upcoming_title">Mis Próximas Citas y Clases</span>
                                 </h3>
-                                <div id="inicio-consolidado-container" class="space-y-6"></div>
+                                <div id="inicio-consolidado-container" class="space-y-3"></div>
                                 <div id="inicio-empty-state"
-                                    class="hidden flex flex-col items-center justify-center py-10 text-center bg-white/50 border border-cocoa/10 rounded-3xl p-6">
-                                    <div class="bg-white p-6 rounded-full mb-4 shadow-sm border border-cocoa/10"><i
-                                            class="ph-duotone ph-calendar-blank text-4xl text-cocoa/30"></i></div>
-                                    <h4 class="brand-font text-xl font-bold text-cocoa mb-2"
+                                    class="hidden flex flex-col items-center justify-center py-8 text-center bg-white/50 border border-cocoa/10 rounded-3xl p-5">
+                                    <div class="bg-white p-4 rounded-full mb-3 shadow-xs border border-cocoa/10"><i
+                                            class="ph-duotone ph-calendar-blank text-3xl text-cocoa/30"></i></div>
+                                    <h4 class="brand-font text-lg font-bold text-cocoa mb-1"
                                         data-i18n="profile_no_bookings_title">No tienes reservas</h4>
                                     <p class="text-cocoa/60 text-xs font-light max-w-xs mx-auto"
                                         data-i18n="profile_no_bookings_desc">Navega por las pestañas
@@ -2019,6 +2112,29 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Columna Derecha (50% en desktop): Bonos y Saldos en Matriz 2 Columnas -->
+                        <div class="lg:col-span-6 client-only">
+                            <div id="section-mis-saldos-cliente" class="mb-2">
+                                <div class="flex items-center justify-between gap-2 mb-3 pl-1">
+                                    <div>
+                                        <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa flex items-center gap-2">
+                                            <i class="ph-duotone ph-wallet text-olive text-xl sm:text-2xl"></i>
+                                            <span data-i18n="profile_saldos_heading">Mis Bonos y Saldos</span>
+                                        </h3>
+                                    </div>
+                                    <button type="button" onclick="mostrarInfoBonosSaldos(event)"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-olive/10 hover:bg-olive text-olive hover:text-white border border-olive/20 text-[11px] font-bold transition shadow-2xs cursor-pointer shrink-0">
+                                        <i class="ph-bold ph-info text-xs"></i>
+                                        <span data-i18n="profile_btn_guide_bonos">¿Cómo funcionan?</span>
+                                    </button>
+                                </div>
+                                <div id="profile-saldos-wrapper" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                    <!-- Rellenado dinámicamente por renderSaldosClienteV69() -->
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -2244,16 +2360,28 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span id="sticky-days-title-text">Días de práctica:</span>
+                                        <span id="sticky-days-title-text">Días con clases</span>
                                     </div>
                                 </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="sticky-days-list"
-                                        class="relative flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Generado dinámicamente -->
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-dias-prev" onclick="scrollDiasRapidos(-1, 'sticky-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="sticky-days-list"
+                                            class="relative flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
                                     </div>
+                                    <button type="button" id="btn-scroll-dias-next" onclick="scrollDiasRapidos(1, 'sticky-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -2315,32 +2443,6 @@
 
                 <!-- 3. VISTA CLASES ESPECIALES / TALLERES -->
                 <div id="view-especiales" class="hidden fade-in">
-                    <div
-                        class="flex flex-col md:flex-row justify-between items-start md:items-end mb-3 gap-3 pb-3 border-b border-cocoa/10">
-                        <div>
-                            <span
-                                class="inline-block py-0.5 px-2.5 rounded-full bg-slate-100 text-slate-800 font-bold tracking-widest text-[10px] uppercase mb-1.5 border border-slate-300"
-                                data-i18n="profile_specials_badge">Experiencias únicas</span>
-                            <h2 class="text-2xl md:text-3xl brand-font font-bold text-cocoa mb-1"
-                                data-i18n="profile_specials_title">Eventos: Clases Especiales y Talleres</h2>
-                            <p class="text-cocoa/60 font-light text-xs max-w-2xl leading-relaxed"
-                                data-i18n="profile_specials_desc">
-                                Actividades independientes del horario habitual. Las Clases Especiales se reservan con el Bono de Clase Especial (incluido 1 gratis con Bono Ilimitado o 20 €) y los Talleres mediante plaza individual.
-                            </p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" id="btn-comprar-bono-especial" onclick="comprarBonoEspecialStripe(event)"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md hover:shadow-lg transition cursor-pointer hover:scale-105 active:scale-95"
-                                style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important; color: #ffffff !important;"
-                                title="Comprar Clase Especial por 20 € en Stripe">
-                                <i class="ph-fill ph-sparkle text-amber-300 text-sm"></i> <span>+ Clase Especial</span>
-                            </button>
-                            <button type="button" id="btn-especiales-bono-ilimitado" onclick="comprarBonoMensual(event)"
-                                class="inline-flex items-center gap-2 bg-cocoa hover:bg-black text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md transition">
-                                <i class="ph-bold ph-infinity"></i> <span data-i18n="profile_specials_unlimited">VER BONO ILIMITADO</span>
-                            </button>
-                        </div>
-                    </div>
                     <!-- Selector de sub-pestañas: Todos / Clases Especiales / Talleres -->
                     <div class="flex justify-center gap-2.5 mb-4 border-b border-cocoa/10 pb-3 max-w-md mx-auto">
                         <button id="btn-subtab-eventos-todos" onclick="switchEventosSubTab('todos')"
@@ -2359,9 +2461,7 @@
                             <span>Talleres</span>
                         </button>
                     </div>
-                    <div id="special-classes-benefit"
-                        class="mb-3 rounded-2xl border border-slate-300/60 bg-gradient-to-r from-slate-50 to-sand/20 px-4 py-3 text-xs text-cocoa/80 shadow-2xs">
-                    </div>
+                    <div id="special-classes-benefit" class="hidden mb-3"></div>
                     <div id="special-classes-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
                     <div id="special-classes-empty"
                         class="hidden bg-white/70 rounded-3xl p-8 text-center border border-cocoa/10">
@@ -2375,84 +2475,53 @@
 
                 <!-- 4. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
                 <div id="view-psicologia" class="hidden fade-in">
-                    <!-- Selector de sub-pestañas: Psicología / Nutrición -->
-                    <div class="flex justify-center gap-3 mb-3 border-b border-cocoa/10 pb-3 max-w-md mx-auto">
-                        <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"
-                            class="filtro-prof-btn active flex items-center gap-2">
-                            <i class="ph-bold ph-brain text-base"></i>
-                            <span data-i18n="common_psychology">Psicología</span>
-                        </button>
-                        <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"
-                            class="filtro-prof-btn flex items-center gap-2">
-                            <i class="ph-bold ph-apple text-base"></i>
-                            <span data-i18n="common_nutrition">Nutrición</span>
-                        </button>
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.6 para simplificación) -->
+                    <div class="hidden" id="consultas-subtabs-wrapper">
+                        <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"></button>
+                        <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"></button>
                     </div>
 
                     <!-- SUB-VISTA PSICOLOGÍA -->
                     <div id="sub-view-psicologia" class="fade-in">
-                        <div
-                            class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3 pb-3 border-b border-cocoa/10">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 flex-wrap">
-                                    <span
-                                        class="inline-block py-0.5 px-2.5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] font-bold tracking-widest text-[10px] uppercase border border-[#3B82F6]/20"
-                                        data-i18n="profile_mental_wellbeing">
-                                        Bienestar Mental
-                                    </span>
-                                    <h2 class="text-2xl md:text-3xl brand-font font-bold text-cocoa"
-                                        data-i18n="profile_psychology_title">Consultas de
-                                        Psicología</h2>
-                                </div>
-                                <p class="text-cocoa/70 font-light text-sm max-w-xl mt-1"
-                                    data-i18n="profile_psychology_desc">
-                                    Reserva tus consultas individuales de gestión emocional y desarrollo personal con
-                                    nuestro equipo experto.
-                                </p>
-                            </div>
-                            <div class="w-full md:w-auto flex flex-col md:items-end gap-3">
-                                <button onclick="abrirModalComprarConsultas('psicologia')"
-                                    class="flex bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition items-center gap-2">
-                                    <i class="ph-bold ph-shopping-bag text-lg"></i> Comprar Sesión o Bono
-                                </button>
-                                <div class="admin-only">
-                                    <button onclick="abrirModalCrearConsulta('psicologia')"
-                                        class="flex bg-[#3B82F6] hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition items-center gap-2">
-                                        <i class="ph-bold ph-plus-circle text-lg"></i> Crear Consulta Psicológica
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="admin-only hidden mb-2.5">
+                            <button onclick="abrirModalCrearConsulta('psicologia')"
+                                class="flex bg-[#3B82F6] hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition items-center gap-2">
+                                <i class="ph-bold ph-plus-circle text-base"></i> Crear Consulta Psicológica
+                            </button>
                         </div>
 
-                        <div class="flex flex-wrap gap-2 mb-6" id="psicologia-filtros">
-                            <button id="psico-filtro-todas" onclick="filtrarConsultasUsuario('psicologia', 'todas')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-blue-200 bg-[#3B82F6] text-white shadow-sm transition flex items-center gap-1.5">
-                                <span data-i18n="profile_filter_all_consultations">Todas las consultas</span>
-                            </button>
-                            <button id="psico-filtro-isabel" onclick="filtrarConsultasUsuario('psicologia', 'isabel')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-heart text-[#8f6b2d]"></i> <span>Isabel (PNI)</span>
-                            </button>
-                            <button id="psico-filtro-miriam" onclick="filtrarConsultasUsuario('psicologia', 'miriam')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Psicología)</span>
-                            </button>
-                            <button id="psico-filtro-introductorias"
-                                onclick="filtrarConsultasUsuario('psicologia', 'introductorias')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-gift text-[#3B82F6]"></i> <span>Sesiones introductorias</span>
-                            </button>
-                            <button id="psico-filtro-disponibles"
-                                onclick="filtrarConsultasUsuario('psicologia', 'disponibles')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <span data-i18n="profile_filter_available_consultations">Disponibles</span>
-                            </button>
-                            <button id="psico-filtro-mis-reservas"
-                                onclick="filtrarConsultasUsuario('psicologia', 'mis-reservas')"
-                                class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                <i class="ph-bold ph-bookmark-simple text-[#3B82F6]"></i> <span
-                                    data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</span>
-                            </button>
+                        <!-- Filtros de Consultas (Limpio y contenido en tarjeta estilo Clases) -->
+                        <div class="bg-white/80 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 mb-3 border border-cocoa/10 shadow-2xs" id="psicologia-filtros">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button id="psico-filtro-todas" onclick="filtrarConsultasUsuario('psicologia', 'todas')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-blue-200 bg-[#3B82F6] text-white shadow-xs transition flex items-center gap-1.5">
+                                    <span data-i18n="profile_filter_all_consultations">Todas las consultas</span>
+                                </button>
+                                <button id="psico-filtro-isabel" onclick="filtrarConsultasUsuario('psicologia', 'isabel')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-heart text-[#8f6b2d]"></i> <span>Isabel (PNI)</span>
+                                </button>
+                                <button id="psico-filtro-miriam" onclick="filtrarConsultasUsuario('psicologia', 'miriam')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Psicología)</span>
+                                </button>
+                                <button id="psico-filtro-introductorias"
+                                    onclick="filtrarConsultasUsuario('psicologia', 'introductorias')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-gift text-[#3B82F6]"></i> <span>Sesiones introductorias</span>
+                                </button>
+                                <button id="psico-filtro-disponibles"
+                                    onclick="filtrarConsultasUsuario('psicologia', 'disponibles')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <span data-i18n="profile_filter_available_consultations">Disponibles</span>
+                                </button>
+                                <button id="psico-filtro-mis-reservas"
+                                    onclick="filtrarConsultasUsuario('psicologia', 'mis-reservas')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-bookmark-simple text-[#3B82F6]"></i> <span
+                                        data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -2637,37 +2706,9 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         <div class="lg:col-span-8">
-                            <!-- BARRA HORIZONTAL DE DÍAS PARA FILTRAR ASISTENCIAS -->
-                            <div id="asistencias-days-bar-container"
-                                class="sticky top-20 z-30 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-2.5 shadow-md mb-3 max-w-full overflow-hidden box-border">
-                                <div class="flex items-center justify-between gap-2 mb-2 px-1">
-                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
-                                        <div class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
-                                            <i class="ph-bold ph-calendar-blank text-sm"></i>
-                                        </div>
-                                        <span>Días con sesiones:</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="limpiarFiltroFechaAsistencias()"
-                                            id="btn-ver-todas-asistencias-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Ver todas las fechas
-                                        </button>
-                                    </div>
-                                </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="asistencias-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Se generará dinámicamente -->
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- FILTROS DE ASISTENCIAS (Sesión, Profesor, Yoga, Horario, Plazas) - Compacto 1 Línea -->
+                            <!-- FILTROS DE ASISTENCIAS (Sesión, Profesor, Estilo, Plazas) - Compacto Arriba -->
                             <div id="asistencias-filtros-container"
-                                class="bg-white/95 backdrop-blur-md rounded-xl border border-cocoa/15 shadow-2xs">
+                                class="bg-white/95 backdrop-blur-md rounded-xl border border-cocoa/15 shadow-2xs mb-4 p-2.5">
                                 <div class="asistencias-filtros-grid">
                                     <!-- 1. Filtro por Tipo de Sesión -->
                                     <div class="asistencias-filtro-item">
@@ -2714,25 +2755,7 @@
                                         </select>
                                     </div>
 
-                                    <!-- 4. Filtro por Horario -->
-                                    <div class="asistencias-filtro-item">
-                                        <label for="filtro-asistencias-horario"
-                                            class="asistencias-filtro-label"
-                                            title="Franja Horaria">
-                                            <i class="ph-bold ph-clock text-olive text-[11px] shrink-0"></i>
-                                            <span class="truncate">Horario</span>
-                                        </label>
-                                        <select id="filtro-asistencias-horario" onchange="aplicarFiltrosAsistencias()"
-                                            class="asistencias-filtro-select">
-                                            <option value="todos">Cualquier hora</option>
-                                            <option value="manana">Mañana (07-12h)</option>
-                                            <option value="mediodia">Mediodía (12-16h)</option>
-                                            <option value="tarde">Tarde (16-20h)</option>
-                                            <option value="noche">Noche (20-23h)</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- 5. Filtro por Disponibilidad -->
+                                    <!-- 4. Filtro por Disponibilidad -->
                                     <div class="asistencias-filtro-item">
                                         <label for="filtro-asistencias-disponibilidad"
                                             class="asistencias-filtro-label"
@@ -2749,6 +2772,40 @@
                                             <option value="vacias">⚪ Sin inscritos (0)</option>
                                         </select>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- BARRA SUPERIOR DESPLAZABLE DE DÍAS (ASISTENCIAS) -->
+                            <div id="asistencias-days-bar-container"
+                                class="sticky top-20 z-20 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-3 shadow-md mb-6 max-w-full overflow-hidden box-border">
+                                <div class="flex items-center justify-between gap-2 mb-2 px-1">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
+                                        <div
+                                            class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
+                                            <i class="ph-bold ph-calendar-blank text-sm"></i>
+                                        </div>
+                                        <span id="asistencias-days-title-text">Días con sesiones</span>
+                                    </div>
+                                </div>
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-asistencias-prev" onclick="scrollDiasRapidos(-1, 'asistencias-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="asistencias-days-list"
+                                            class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
+                                    </div>
+                                    <button type="button" id="btn-scroll-asistencias-next" onclick="scrollDiasRapidos(1, 'asistencias-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -2788,12 +2845,6 @@
                                         <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
                                     </div>
                                     <div id="asistencias-calendar-grid" class="grid grid-cols-7 gap-1"></div>
-                                    <div class="mt-6 pt-4 border-t border-cocoa/10">
-                                        <button type="button" onclick="limpiarFiltroFechaAsistencias()"
-                                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-olive hover:text-cocoa hover:bg-olive/10 border border-olive/20 transition flex items-center justify-center gap-2 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Ver todas las sesiones
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3714,23 +3765,28 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span id="admin-consultas-days-title-text">Días con consultas:</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()"
-                                            id="btn-ver-todas-consultas-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Todas las fechas
-                                        </button>
+                                        <span id="admin-consultas-days-title-text">Días con consultas</span>
                                     </div>
                                 </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="admin-consultas-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Generado dinámicamente -->
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-consultas-prev" onclick="scrollDiasRapidos(-1, 'admin-consultas-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="admin-consultas-days-list"
+                                            class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
                                     </div>
+                                    <button type="button" id="btn-scroll-consultas-next" onclick="scrollDiasRapidos(1, 'admin-consultas-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -3795,23 +3851,28 @@
                                             class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
                                             <i class="ph-bold ph-calendar-blank text-sm"></i>
                                         </div>
-                                        <span id="admin-talleres-days-title-text">Días con eventos:</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <button type="button" onclick="limpiarFiltroFechaTalleresAdmin()"
-                                            id="btn-ver-todas-talleres-fechas"
-                                            class="text-[11px] font-bold text-olive hover:text-cocoa hover:underline flex items-center gap-1 pl-1 cursor-pointer">
-                                            <i class="ph-bold ph-squares-four"></i> Todos los eventos
-                                        </button>
+                                        <span id="admin-talleres-days-title-text">Días con eventos</span>
                                     </div>
                                 </div>
-                                <div
-                                    class="relative w-full max-w-full overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
-                                    <div id="admin-talleres-days-list"
-                                        class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
-                                        style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                                        <!-- Generado dinámicamente -->
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" id="btn-scroll-talleres-prev" onclick="scrollDiasRapidos(-1, 'admin-talleres-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div
+                                        class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="admin-talleres-days-list"
+                                            class="flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Generado dinámicamente -->
+                                        </div>
                                     </div>
+                                    <button type="button" id="btn-scroll-talleres-next" onclick="scrollDiasRapidos(1, 'admin-talleres-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -3877,7 +3938,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v13.2. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v13.6. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -3956,7 +4017,7 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.2: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.6: Todas las clases son regulares) -->
                     <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4265,7 +4326,7 @@
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.2: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.6: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4881,7 +4942,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '13.2';
+        const APP_VERSION = '13.6';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -5101,10 +5162,11 @@
         }
 
 
+        const genCachedRoleInit = (typeof safeGetItem === 'function' ? safeGetItem('gen_cached_role', '') : '');
         let currentUser = null;
         let currentUserProfile = null;
-        let isAdmin = false;
-        let currentUserRole = '';
+        let isAdmin = genCachedRoleInit === 'admin';
+        let currentUserRole = genCachedRoleInit;
         let currentProfessionalProfile = null;
         let userBonos = 0;
         let userLegacyBonos = 0;
@@ -5675,12 +5737,9 @@
                 return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Mensual Ilimitado', 'ph-infinity', 'text-emerald-900 bg-emerald-100 border border-emerald-300');
             }
 
-            // 5. Clase suelta o Pack de clases (prioridad absoluta para reservas abonadas con bono regular o pack)
+            // 5. Bono de Clases (Pack de clases o Clase suelta unificados)
             if (r.bono_descontado || r.class_pack_id || String(r.tipo_reserva || '').toLowerCase() === 'pack_normal' || String(r.tipo_reserva || '').toLowerCase() === 'clase_suelta') {
-                if (r.class_pack_id) {
-                    return renderPagoBadge('Pack de clases', 'Pagado con: Pack de clases', 'ph-stack', 'text-olive bg-olive/10 border border-olive/30');
-                }
-                return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta', 'ph-ticket', 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]');
+                return renderPagoBadge('Bono de Clases', 'Pagado con: Bono de Clases', 'ph-ticket', 'text-olive bg-olive/10 border border-olive/30');
             }
 
             // 6. Pase de Invitado (Bono Ilimitado)
@@ -5688,9 +5747,9 @@
                 return renderPagoBadge('Pase Invitado', 'Invitado/a por alumno con Bono Ilimitado', 'ph-user-plus', 'text-teal-800 bg-teal-50 border border-teal-200');
             }
 
-            // 7. Bono de Bienvenida
+            // 7. Bono de Bienvenida (diferenciado en índigo/morado para no confundir con ilimitado)
             if (r.saldo_gratis_descontado || String(r.tipo_reserva || '').toLowerCase() === 'bienvenida') {
-                return renderPagoBadge('Bono Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)', 'ph-sparkle', 'text-emerald-800 bg-emerald-50 border border-emerald-200');
+                return renderPagoBadge('Bono Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)', 'ph-sparkle', 'text-indigo-900 bg-indigo-100 border border-indigo-300');
             }
 
             // 8. Yoga en Compañía (SOLO si fue reservado explícitamente como modalidad compañía y no como bono normal/ilimitado)
@@ -5702,13 +5761,18 @@
                 return renderPagoBadge('Yoga en Compañía', 'Pagado con: Bono de Yoga en Compañía', 'ph-handshake', 'text-amber-900 bg-amber-100 border border-amber-300');
             }
 
-            // 9. Clase abierta o gratuita
+            // 9. Inscripción manual directa por administración o profesor
+            if (r.tipo_reserva === 'manual_admin') {
+                return renderPagoBadge('Inscripción Manual', 'Inscripción manual directa de mostrador / administración', 'ph-user-check', 'text-teal-900 bg-teal-100 border border-teal-300');
+            }
+
+            // 10. Clase abierta o gratuita
             if (c.es_gratuita) {
                 return renderPagoBadge('Clase Gratuita', 'Clase abierta sin coste', 'ph-gift', 'text-emerald-800 bg-emerald-50 border border-emerald-200');
             }
 
-            // 10. Fallback estándar resiliente: Clase suelta
-            return renderPagoBadge('Clase suelta', 'Pagado con: Clase suelta', 'ph-ticket', 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]');
+            // 11. Fallback estándar resiliente: Bono de Clases
+            return renderPagoBadge('Bono de Clases', 'Pagado con: Bono de Clases', 'ph-ticket', 'text-olive bg-olive/10 border border-olive/30');
         }
 
         async function mostrarBonosAlumnoPopup(userId) {
@@ -6135,9 +6199,28 @@
                 auth.classList.add('hidden');
                 app.classList.remove('hidden');
                 currentUser = session.user;
+                const cachedUid = safeGetItem('gen_cached_user_id', '');
+                const cachedRole = safeGetItem('gen_cached_role', '');
+                if (session.user?.id === cachedUid && cachedRole === 'admin') {
+                    isAdmin = true;
+                    currentUserRole = 'admin';
+                    document.documentElement.classList.add('is-admin');
+                    document.body.classList.add('is-admin');
+                    document.body.classList.remove('is-profesor');
+                    const pubNav = document.getElementById('public-nav');
+                    if (pubNav) pubNav.classList.add('hidden');
+                    const bonosHeader = document.getElementById('header-bonos-container');
+                    if (bonosHeader) bonosHeader.classList.add('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.add('hidden');
+                    const vInicio = document.getElementById('view-inicio');
+                    if (vInicio) vInicio.classList.add('hidden');
+                }
                 renderProfileCard(session.user?.user_metadata || currentUserProfile || {});
                 void initializeAuthenticatedApp(session.user);
             } else {
+                safeRemoveItem('gen_cached_role');
+                safeRemoveItem('gen_cached_user_id');
                 app.classList.add('hidden');
                 auth.classList.remove('hidden');
                 currentUser = null;
@@ -6396,6 +6479,8 @@
         });
 
         async function logout() {
+            safeRemoveItem('gen_cached_role');
+            safeRemoveItem('gen_cached_user_id');
             safeRemoveItem('activeAdminTab');
             safeRemoveItem('activeAdminCrearSubTab');
             safeRemoveItem('activePublicView');
@@ -6814,8 +6899,19 @@
                 console.warn('Error al cargar checkProfile:', e);
             }
 
+            if (isAdmin) {
+                try {
+                    const savedTab = safeGetItem('activeAdminTab', 'crear');
+                    await switchTab(savedTab);
+                } catch (eTab) {
+                    console.warn('Error al activar tab admin:', eTab);
+                }
+            }
+
             // Load data from Supabase without letting a single failure block the entire view
-            await cargarMisReservasUsuario();
+            if (!isAdmin) {
+                await cargarMisReservasUsuario();
+            }
             await Promise.allSettled([
                 cargarHorarios(),
                 cargarClasesEspeciales(),
@@ -6826,8 +6922,7 @@
             // Initial render of calendars and content
             try {
                 if (isAdmin) {
-                    const savedTab = safeGetItem('activeAdminTab', 'crear');
-                    await switchTab(savedTab);
+                    // Tab de administración ya activado prioritariamente sin parpadeo
                 } else if (esTrabajador()) {
                     const savedPublicView = safeGetItem('activePublicView', 'profesor-calendario');
                     switchPublicView(savedPublicView);
@@ -7408,88 +7503,100 @@
             const userTotalTalleresDisponibles = userTalleresCreditos + userSaldoTalleres;
             const userCreditosReprogConsulta = (userCreditosReprogramacion || []).filter(c => c.tipo === 'consulta' && c.estado === 'disponible').length;
 
+            const totalBadgesCount = 3 + 
+                (userTotalTalleresDisponibles > 0 ? 1 : 0) +
+                (userCreditosReprogConsulta > 0 ? 1 : 0) +
+                (userSaldoClasesGratis > 0 ? 1 : 0) +
+                (userSaldoConsultasGratis > 0 ? 1 : 0);
+
+            const isCompactMode = totalBadgesCount >= 4;
+            const bPad = isCompactMode ? 'px-2 py-1' : 'px-2.5 py-1.5';
+            const bGap = isCompactMode ? 'gap-1.5' : 'gap-2';
+            const iconBox = isCompactMode ? 'w-5 h-5 rounded-md text-[10px]' : 'w-6 h-6 rounded-lg text-xs';
+            const titleTxt = isCompactMode ? 'text-[7.5px]' : 'text-[8px]';
+            const countTxt = isCompactMode ? 'text-[11px]' : 'text-xs';
+
             if (headerWrapper) {
                 headerWrapper.innerHTML = `
             <!-- 1. CLASES NORMALES (BRONCE METÁLICO) -->
-            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 2px 8px rgba(196, 130, 77, 0.2);" title="Comprar más packs de clases">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">
-                    <i class="ph-fill ph-ticket text-xs"></i>
+            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 1px 4px rgba(196, 130, 77, 0.15);" title="Comprar más packs de clases">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">
+                    <i class="ph-fill ph-ticket"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-black uppercase tracking-wider text-[#874113]">Clases</span>
-                    <span class="text-xs font-black text-[#5e2704]">${userBonos} disp.</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#874113]">Clases</span>
+                    <span class="${countTxt} font-black text-[#5e2704] mt-0.5">${userBonos} disp.</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">+ Packs</span>
             </div>
 
             <!-- 2. CLASE ESPECIAL (PLATEADA METÁLICA) -->
-            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 2px 8px rgba(148, 163, 184, 0.25);" title="Comprar Bono Clase Especial">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
-                    <i class="ph-fill ph-sparkle text-xs text-amber-300"></i>
+            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.18);" title="Comprar Bono Clase Especial">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
+                    <i class="ph-fill ph-sparkle text-amber-300"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-black uppercase tracking-wider text-[#334155]">Clase especial</span>
-                    <span class="text-xs font-black text-[#0f172a]">${userSpecialBonosMes} disp.</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#334155]">Clase especial</span>
+                    <span class="${countTxt} font-black text-[#0f172a] mt-0.5">${userSpecialBonosMes} disp.</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">+ Especial</span>
             </div>
 
             ${userTotalTalleresDisponibles > 0 ? `
             <!-- 3. TALLERES (DORADA METÁLICA - A LA DERECHA DE LA PLATEADA) -->
-            <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);" title="Ver y reservar talleres temáticos">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
-                    <i class="ph-fill ph-chalkboard-teacher text-xs"></i>
+            <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);" title="Ver y reservar talleres temáticos">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                    <i class="ph-fill ph-chalkboard-teacher"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-black uppercase tracking-wider text-[#92400e]">Taller</span>
-                    <span class="text-xs font-black text-[#78350f]">${userTotalTalleresDisponibles} disp.</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#92400e]">Taller</span>
+                    <span class="${countTxt} font-black text-[#78350f] mt-0.5">${userTotalTalleresDisponibles} disp.</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);">+ Taller</span>
             </div>` : ''}
 
             <!-- 4. BONO ILIMITADO (MENSUAL) -->
-            <div role="button" tabindex="0" onclick="comprarBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar mes ilimitado">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-2xs ${userBonoMensualActivo ? 'bg-emerald-600 text-white' : 'bg-cocoa/10 text-cocoa/50'}">
-                    <i class="ph-fill ph-infinity text-xs"></i>
+            <div role="button" tabindex="0" onclick="comprarBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border ${userBonoMensualActivo ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400' : 'border-cocoa/15 hover:border-cocoa/40'} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar mes ilimitado">
+                <div class="${iconBox} flex items-center justify-center shrink-0 shadow-2xs ${userBonoMensualActivo ? 'bg-emerald-600 text-white' : 'bg-cocoa/10 text-cocoa/50'}">
+                    <i class="ph-fill ph-infinity"></i>
                 </div>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">Ilimitado</span>
-                    <span class="text-xs font-black ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próx: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes')}</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'}">Ilimitado</span>
+                    <span class="${countTxt} font-black ${userBonoMensualActivo ? 'text-emerald-700' : 'text-cocoa/50'} mt-0.5">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `Próx: ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : 'Sin mes')}</span>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-bold uppercase bg-terracotta group-hover:bg-black text-white rounded-md transition shadow-2xs group-hover:scale-105 pointer-events-none leading-none">+ Mes</span>
             </div>
 
             ${userCreditosReprogConsulta > 0 ? `
             <!-- 5. CRÉDITO CONSULTA REPROGRAMADA -->
-            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y agendar consultas disponibles">
-                <i class="ph-bold ph-arrows-clockwise text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Crédito</span>
-                    <span class="text-xs font-black text-emerald-700">${userCreditosReprogConsulta} disp.</span>
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y agendar consultas disponibles">
+                <div class="${iconBox} flex items-center justify-center bg-emerald-100 text-emerald-700 shrink-0">
+                    <i class="ph-bold ph-arrows-clockwise"></i>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-emerald-600">+ Citas</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider text-emerald-800">Crédito</span>
+                    <span class="${countTxt} font-black text-emerald-700 mt-0.5">${userCreditosReprogConsulta} disp.</span>
+                </div>
             </div>` : ''}
 
             ${userSaldoClasesGratis > 0 ? `
             <!-- 6. BONO BIENVENIDA -->
-            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Comprar más packs de clases">
-                <i class="ph-fill ph-sparkle text-base shrink-0 text-emerald-600 group-hover:scale-110 transition-transform"></i>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-800">Bienvenida</span>
-                    <span class="text-xs font-black text-emerald-700">${userSaldoClasesGratis} disp.</span>
+            <div role="button" tabindex="0" onclick="abrirCompraPacks(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border border-emerald-300 bg-emerald-50/50 hover:border-emerald-400 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Bono de bienvenida disponible">
+                <div class="${iconBox} flex items-center justify-center bg-emerald-100 text-emerald-700 shrink-0">
+                    <i class="ph-fill ph-sparkle"></i>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-emerald-600">+ Packs</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider text-emerald-800">Bienvenida</span>
+                    <span class="${countTxt} font-black text-emerald-700 mt-0.5">${userSaldoClasesGratis} disp.</span>
+                </div>
             </div>` : ''}
 
             ${userSaldoConsultasGratis > 0 ? `
             <!-- 7. CONSULTA GRATIS -->
-            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2 bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 px-3 py-1.5 rounded-xl shadow-xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y reservar consultas">
-                <i class="ph-fill ph-gift text-base shrink-0 text-pink-600 group-hover:scale-110 transition-transform"></i>
-                <div class="flex flex-col text-left leading-tight">
-                    <span class="text-[8px] font-bold uppercase tracking-wider text-pink-800">Consulta Gratis</span>
-                    <span class="text-xs font-black text-pink-700">${userSaldoConsultasGratis} disp.</span>
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y reservar consultas">
+                <div class="${iconBox} flex items-center justify-center bg-pink-100 text-pink-700 shrink-0">
+                    <i class="ph-fill ph-gift"></i>
                 </div>
-                <span class="ml-1 px-2.5 py-0.5 text-[9px] font-black uppercase text-white rounded-md transition shadow-2xs pointer-events-none leading-none bg-pink-600">+ Cita</span>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-bold uppercase tracking-wider text-pink-800">Cita Gratis</span>
+                    <span class="${countTxt} font-black text-pink-700 mt-0.5">${userSaldoConsultasGratis} disp.</span>
+                </div>
             </div>` : ''}`;
             }
 
@@ -7560,7 +7667,7 @@
             const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
             const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
 
-            // Regla v13.2: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
+            // Regla v13.6: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
             const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
@@ -7593,41 +7700,31 @@
                         </div>
                         <span class="text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-full shrink-0">${userSaldoClasesGratis} disp.</span>
                     </div>
-                    <div class="mt-2.5 pt-2 border-t border-emerald-100 flex flex-wrap gap-2">
-                        <button type="button" onclick="switchPublicView('horarios')" class="px-4 py-1.5 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;">
-                            Ver Horarios y Reservar Plaza
+                    <div class="mt-2 pt-1.5 border-t border-emerald-100 flex flex-wrap gap-2">
+                        <button type="button" onclick="switchPublicView('horarios')" class="px-3 py-1.5 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer" style="background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;">
+                            Ver Horarios y Reservar
                         </button>
                     </div>
                 </div>` : ''}
 
                 ${showConsultaOferta ? `
                 <!-- 2. Consulta Gratuita -->
-                <div class="rounded-2xl border ${yaCanjeoConsultas ? 'border-pink-200 bg-pink-50/40' : 'border-pink-300 bg-pink-50/80 ring-1 ring-pink-200'} p-3.5 text-left transition shadow-xs">
-                    <div class="flex items-start justify-between gap-3">
+                <div class="rounded-xl border ${yaCanjeoConsultas ? 'border-pink-200 bg-pink-50/40' : 'border-pink-300 bg-pink-50/70'} p-2.5 text-left transition shadow-xs">
+                    <div class="flex items-center justify-between gap-2">
                         <div>
-                            <div class="flex items-center gap-1.5 mb-0.5">
-                                ${yaCanjeoConsultas 
-                                    ? '<span class="text-[9px] font-bold uppercase tracking-wider bg-white text-pink-900 border border-pink-200 px-2 py-0.5 rounded-full">✅ Oferta Canjeada (1/1)</span>'
-                                    : '<span class="text-[9px] font-black uppercase tracking-wider bg-pink-600 text-white px-2 py-0.5 rounded-full shadow-2xs animate-pulse">🎁 Oferta Disponible</span>'}
-                            </div>
-                            <p class="text-xs font-bold text-cocoa mt-1">🩺 Sesión Introductoria (PNI / Psicología · 0 €)</p>
-                            <p class="text-[11px] text-cocoa/70 mt-0.5">Sesión introductoria para conocer a Isabel o Miriam.</p>
+                            <p class="text-xs font-bold text-cocoa">🩺 Sesión Intro PNI / Psico</p>
+                            <p class="text-[10px] text-pink-800 font-bold">${yaCanjeoConsultas ? `${userSaldoConsultasGratis} disp. · 0 €` : 'Disponible para canjear · 0 €'}</p>
                         </div>
                         ${yaCanjeoConsultas 
-                            ? `<span class="text-xs font-black text-pink-700 bg-pink-100 px-2.5 py-1 rounded-full shrink-0">${userSaldoConsultasGratis} disp.</span>`
-                            : `<button type="button" onclick="canjearOfertaPromocional('consultas')" class="shrink-0 px-3.5 py-2 bg-pink-700 hover:bg-pink-800 text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg active:scale-95 flex items-center gap-1 cursor-pointer">
+                            ? (userSaldoConsultasGratis > 0 ? `
+                            <div class="flex gap-1 shrink-0">
+                                <button type="button" onclick="filtrarPorOferta('pni')" class="px-2 py-1 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-[9px] font-bold uppercase rounded-lg shadow-2xs cursor-pointer" title="Reservar PNI (Isabel)">PNI</button>
+                                <button type="button" onclick="filtrarPorOferta('psicologia')" class="px-2 py-1 bg-[#b45c47] hover:bg-[#8f4735] text-white text-[9px] font-bold uppercase rounded-lg shadow-2xs cursor-pointer" title="Reservar Psicología (Miriam)">Psico</button>
+                            </div>` : `<span class="text-[9px] font-bold text-pink-700 bg-pink-100 px-2 py-0.5 rounded-full shrink-0">Canjeada</span>`)
+                            : `<button type="button" onclick="canjearOfertaPromocional('consultas')" class="px-3 py-1.5 bg-pink-700 hover:bg-pink-800 text-white text-[10px] font-black uppercase tracking-wider rounded-lg shadow-2xs cursor-pointer shrink-0 flex items-center gap-1">
                                 <i class="ph-bold ph-heart"></i> Canjear
                                </button>`}
                     </div>
-                    ${yaCanjeoConsultas && userSaldoConsultasGratis > 0 ? `
-                    <div class="mt-2.5 pt-2 border-t border-pink-100 flex flex-wrap gap-2">
-                        <button type="button" onclick="filtrarPorOferta('pni')" class="px-3 py-1.5 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer">
-                            Reservar PNI (Isabel)
-                        </button>
-                        <button type="button" onclick="filtrarPorOferta('psicologia')" class="px-3 py-1.5 bg-[#b45c47] hover:bg-[#8f4735] text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-xs cursor-pointer">
-                            Reservar Psicología (Miriam)
-                        </button>
-                    </div>` : ''}
                 </div>` : ''}
             </div>
         </div>`;
@@ -7635,60 +7732,81 @@
 
             const hasPromo50Active = !!(currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo);
             const singleClassBtnHtml = hasPromo50Active
-                ? `<button onclick="comprarPack('promo_50_clase', event)" class="py-2.5 bg-amber-500 text-white hover:bg-black text-[10px] font-black uppercase rounded-xl shadow-2xs border border-amber-600 animate-pulse" title="1ª Clase con 50% DTO">1 · 7,50€ (DTO)</button>`
-                : `<button onclick="comprarClaseSuelta(event)" class="py-2.5 bg-white border border-cocoa/10 text-cocoa hover:bg-sand/20 text-[10px] font-bold uppercase rounded-xl">1 · 15€</button>`;
+                ? `<button onclick="comprarPack('promo_50_clase', event)" class="py-2 bg-amber-500 text-white hover:bg-black text-[10px] font-black uppercase rounded-xl shadow-2xs border border-amber-600 animate-pulse" title="1ª Clase con 50% DTO">1 · 7,50€ (DTO)</button>`
+                : `<button onclick="comprarClaseSuelta(event)" class="py-2 bg-white border border-cocoa/10 text-cocoa hover:bg-sand/20 text-[10px] font-bold uppercase rounded-xl">1 · 15€</button>`;
 
             profileWrapper.innerHTML = `
-        <div class="bg-white/95 p-5 rounded-3xl border border-cocoa/15 shadow-md min-w-[280px] flex-1">
-            <div class="flex items-center justify-between gap-4 mb-4">
-                <div><span class="block text-[10px] text-cocoa/50 font-bold uppercase tracking-wider">Tus packs de clases</span><p class="text-2xl font-black text-cocoa mt-1">${userBonos} clases vigentes</p></div>
-                <i class="ph-fill ph-ticket text-3xl text-olive"></i>
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-cocoa/15 shadow-2xs flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div><span class="block text-[10px] text-cocoa/50 font-bold uppercase tracking-wider">Tus packs de clases</span><p class="text-xl font-black text-cocoa mt-0.5">${userBonos} clases vigentes</p></div>
+                    <div class="w-9 h-9 rounded-xl bg-sand/30 text-olive flex items-center justify-center shadow-2xs shrink-0">
+                        <i class="ph-fill ph-ticket text-xl"></i>
+                    </div>
+                </div>
+                <div class="space-y-2 mb-3 max-h-36 overflow-y-auto pr-1">${packRows}</div>
+                ${userLegacyBonos > 0 ? `<p class="text-[10px] text-cocoa/50 mb-2">Además: ${userLegacyBonos} adicionales asignadas.</p>` : ''}
             </div>
-            <div class="space-y-2 mb-4">${packRows}</div>
-            ${userLegacyBonos > 0 ? `<p class="text-[10px] text-cocoa/50 mb-3">Además: ${userLegacyBonos} clases adicionales asignadas directamente.</p>` : ''}
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-cocoa/10">
                 ${singleClassBtnHtml}
-                <button onclick="comprarPack('pack_4', event)" class="py-2.5 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">4 · 50€</button>
-                <button onclick="comprarPack('pack_6', event)" class="py-2.5 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">6 · 65€</button>
+                <button onclick="comprarPack('pack_4', event)" class="py-2 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">4 · 50€</button>
+                <button onclick="comprarPack('pack_6', event)" class="py-2 bg-sand/20 text-cocoa hover:bg-sand/40 text-[10px] font-bold uppercase rounded-xl">6 · 65€</button>
             </div>
         </div>
-        <div class="bg-white/95 p-5 rounded-3xl border border-slate-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);">
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-slate-300 shadow-2xs flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);">
             <div>
-                <div class="flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
                         <span class="block text-[10px] text-slate-500 font-black uppercase tracking-wider">Bono de Clase Especial</span>
-                        <p class="text-xl font-black text-slate-900 mt-1">${userSpecialBonosMes} disp. este mes</p>
+                        <p class="text-xl font-black text-slate-900 mt-0.5">${userSpecialBonosMes} disp. este mes</p>
                     </div>
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
-                        <i class="ph-fill ph-sparkle text-2xl text-amber-300"></i>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-2xs shrink-0" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
+                        <i class="ph-fill ph-sparkle text-xl text-amber-300"></i>
                     </div>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed mb-3">
-                    Exclusivos para reservar <strong>Clases Especiales</strong>. Incluye 1 gratis por mes con el Bono Ilimitado o puedes comprar bonos adicionales por 20 €.
+                <p class="text-xs text-slate-600 leading-relaxed mb-2.5">
+                    Para reservar <strong>Clases Especiales</strong>. 1 gratis/mes con Bono Ilimitado o compra bonos por 20 €.
                 </p>
-                <div class="space-y-2 mb-4">
+                <div class="space-y-1.5 mb-3 max-h-28 overflow-y-auto pr-1">
                     ${userSpecialBonos.length ? userSpecialBonos.map(b => `
-                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
-                            <span class="font-bold text-slate-700 capitalize"><i class="ph-bold ph-calendar mr-1 text-slate-400"></i> ${escapeHtml(formatDisplayMonth(b.mes))}</span>
-                            <span class="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-300">${toSafeNumber(b.saldo)} ${toSafeNumber(b.saldo) === 1 ? 'bono' : 'bonos'}</span>
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs">
+                            <span class="font-bold text-slate-700 capitalize text-[11px]"><i class="ph-bold ph-calendar mr-1 text-slate-400"></i> ${escapeHtml(formatDisplayMonth(b.mes))}</span>
+                            <span class="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-300 text-[10px]">${toSafeNumber(b.saldo)} ${toSafeNumber(b.saldo) === 1 ? 'bono' : 'bonos'}</span>
                         </div>
-                    `).join('') : '<p class="text-xs text-slate-400 italic py-2">No tienes bonos especiales asignados para este mes.</p>'}
+                    `).join('') : '<p class="text-xs text-slate-400 italic py-1">Sin bonos especiales este mes.</p>'}
                 </div>
             </div>
-            <button onclick="comprarBonoEspecialStripe(event)" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #475569 0%, #1e293b 100%);">
-                <i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> Comprar Clase Especial (20 €)
+            <button id="btn-comprar-bono-especial" onclick="comprarBonoEspecialStripe(event)" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important;">
+                <i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> Comprar Especial (20 €)
             </button>
         </div>
-        ${userTotalTalleresDisponibles > 0 ? `
-        <div class="bg-white/95 p-5 rounded-3xl border border-amber-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #fffdf2 50%, #fef3c7 100%);">
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border ${userBonoMensualActivo ? 'border-emerald-300' : 'border-dashed border-terracotta/40'} shadow-2xs flex flex-col justify-between">
             <div>
-                <div class="flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div><span class="block text-[10px] ${userBonoMensualActivo ? 'text-emerald-600' : 'text-terracotta'} font-bold uppercase tracking-wider">Bono Ilimitado · mes natural</span><p class="text-lg font-black text-cocoa mt-0.5">90 € por mes</p></div>
+                    <div class="w-9 h-9 rounded-xl ${userBonoMensualActivo ? 'bg-emerald-50 text-emerald-600' : 'bg-terracotta/10 text-terracotta'} flex items-center justify-center shadow-2xs shrink-0">
+                        <i class="ph-fill ph-infinity text-xl"></i>
+                    </div>
+                </div>
+                <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${unlimitedRows}</div>
+                <div class="mb-2">${benefitBadge(userConsultationDiscountUsed, '30% primera consulta disponible', 'Descuento de consulta utilizado')}</div>
+            </div>
+            <div>
+                ${manageBillingButton}
+                <button onclick="comprarBonoMensual(event)" class="w-full mt-1.5 py-2.5 bg-terracotta text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition">Elegir y comprar un mes</button>
+            </div>
+        </div>
+        ${freeBalancesCard}
+        ${userTotalTalleresDisponibles > 0 ? `
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-amber-300 shadow-2xs flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #fffdf2 50%, #fef3c7 100%);">
+            <div>
+                <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
                         <span class="block text-[10px] text-amber-800 font-black uppercase tracking-wider">Talleres Temáticos</span>
-                        <p class="text-xl font-black text-amber-950 mt-1">${userTotalTalleresDisponibles} disponible${userTotalTalleresDisponibles > 1 ? 's' : ''}</p>
+                        <p class="text-xl font-black text-amber-950 mt-0.5">${userTotalTalleresDisponibles} disponible${userTotalTalleresDisponibles > 1 ? 's' : ''}</p>
                     </div>
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
-                        <i class="ph-fill ph-chalkboard-teacher text-2xl"></i>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-2xs shrink-0" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                        <i class="ph-fill ph-chalkboard-teacher text-xl"></i>
                     </div>
                 </div>
                 <p class="text-xs text-amber-900 leading-relaxed mb-3">
@@ -7700,15 +7818,15 @@
             </button>
         </div>` : ''}
         ${(userSaldoPsicologia > 0 || userSaldoNutricion > 0) ? `
-        <div class="bg-white/95 p-5 rounded-3xl border border-blue-300 shadow-md min-w-[280px] flex-1 flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);">
+        <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-blue-300 shadow-2xs flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);">
             <div>
-                <div class="flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
                         <span class="block text-[10px] text-blue-800 font-black uppercase tracking-wider">Consultas Individuales</span>
-                        <p class="text-xl font-black text-blue-950 mt-1">${userSaldoPsicologia + userSaldoNutricion} sesión${(userSaldoPsicologia + userSaldoNutricion) > 1 ? 'es' : ''} disp.</p>
+                        <p class="text-xl font-black text-blue-950 mt-0.5">${userSaldoPsicologia + userSaldoNutricion} sesión${(userSaldoPsicologia + userSaldoNutricion) > 1 ? 'es' : ''} disp.</p>
                     </div>
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-                        <i class="ph-bold ph-calendar-check text-2xl text-blue-200"></i>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-2xs shrink-0" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                        <i class="ph-bold ph-calendar-check text-xl text-blue-200"></i>
                     </div>
                 </div>
                 <p class="text-xs text-blue-900 leading-relaxed mb-3">
@@ -7720,19 +7838,7 @@
             <button onclick="switchPublicView('${userSaldoPsicologia > 0 ? 'psicologia' : 'nutricion'}')" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);">
                 <i class="ph-bold ph-calendar mr-1"></i> Agendar Cita Disponible (0 €)
             </button>
-        </div>` : ''}
-        <div class="bg-white/95 p-5 rounded-3xl border ${userBonoMensualActivo ? 'border-emerald-300' : 'border-dashed border-terracotta/40'} shadow-md min-w-[280px] flex-1">
-            <div class="flex items-center justify-between gap-4 mb-4">
-                <div><span class="block text-[10px] ${userBonoMensualActivo ? 'text-emerald-600' : 'text-terracotta'} font-bold uppercase tracking-wider">Bono Ilimitado · mes natural</span><p class="text-lg font-black text-cocoa mt-1">90 € por el mes elegido</p></div>
-                <i class="ph-fill ph-infinity text-3xl ${userBonoMensualActivo ? 'text-emerald-600' : 'text-terracotta'}"></i>
-            </div>
-            <p class="text-xs text-cocoa/60 leading-relaxed mb-4">Cada compra cubre del día 1 al último día del mes natural seleccionado. Puedes comprar meses futuros por adelantado.</p>
-            <div class="space-y-2 mb-4">${unlimitedRows}</div>
-            <div class="mb-3">${benefitBadge(userConsultationDiscountUsed, '30% primera consulta disponible', 'Descuento de consulta utilizado')}</div>
-            ${manageBillingButton}
-            <button onclick="comprarBonoMensual(event)" class="w-full mt-2 py-2.5 bg-terracotta text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition">Elegir y comprar un mes</button>
-        </div>
-        ${freeBalancesCard}`;
+        </div>` : ''}`;
         }
 
         async function checkProfile() {
@@ -7778,6 +7884,44 @@
 
             if (data) {
                 currentUserProfile = data;
+                const rol = (data.rol || '').toLowerCase().trim();
+                currentUserRole = rol;
+                safeSetItem('gen_cached_role', rol);
+                safeSetItem('gen_cached_user_id', currentUser.id);
+
+                if (rol === 'admin') {
+                    isAdmin = true;
+                    document.documentElement.classList.add('is-admin');
+                    document.body.classList.add('is-admin');
+                    document.body.classList.remove('is-profesor');
+
+                    const pubNav = document.getElementById('public-nav');
+                    if (pubNav) pubNav.classList.add('hidden');
+
+                    const bonosHeader = document.getElementById('header-bonos-container');
+                    if (bonosHeader) bonosHeader.classList.add('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.add('hidden');
+
+                    const vInicio = document.getElementById('view-inicio');
+                    if (vInicio) vInicio.classList.add('hidden');
+
+                    // Mostrar todos los tabs
+                    ['tab-crear', 'tab-gestion-alumnos', 'tab-usuarios', 'tab-dashboard', 'tab-admin-profesores', 'tab-configuracion'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove('hidden');
+                    });
+
+                    const btnMisClases = document.getElementById('nav-public-mis-clases');
+                    if (btnMisClases) btnMisClases.classList.add('hidden');
+
+                    const adminBar = document.querySelector('.admin-only');
+                    if (adminBar) adminBar.style.removeProperty('display');
+
+                    renderProfileCard(data);
+                    return;
+                }
+
                 userLegacyBonos = toSafeNumber(data.bonos);
                 userBonos = userLegacyBonos;
                 userSaldoPsicologia = toSafeNumber(data.saldo_psicologia);
@@ -7786,7 +7930,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v13.2: Cargar ofertas promocionales canjeadas por este usuario
+                // v13.6: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -7813,34 +7957,7 @@
                 renderSaldosClienteV69();
                 renderProfileCard(data);
 
-                // Normalizar rol
-                const rol = (data.rol || '').toLowerCase().trim();
-                currentUserRole = rol;
-
-                if (rol === 'admin') {
-                    isAdmin = true;
-                    document.body.classList.add('is-admin');
-                    document.body.classList.remove('is-profesor');
-
-                    const pubNav = document.getElementById('public-nav');
-                    if (pubNav) pubNav.classList.add('hidden');
-
-                    const bonosHeader = document.getElementById('header-bonos-container');
-                    if (bonosHeader) bonosHeader.classList.add('hidden');
-
-                    // Mostrar todos los tabs
-                    ['tab-crear', 'tab-gestion-alumnos', 'tab-usuarios', 'tab-dashboard', 'tab-admin-profesores', 'tab-configuracion'].forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.classList.remove('hidden');
-                    });
-
-                    const btnMisClases = document.getElementById('nav-public-mis-clases');
-                    if (btnMisClases) btnMisClases.classList.add('hidden');
-
-                    const adminBar = document.querySelector('.admin-only');
-                    if (adminBar) adminBar.style.removeProperty('display');
-
-                } else if (STAFF_ROLES.includes(rol)) {
+                if (STAFF_ROLES.includes(rol)) {
                     isAdmin = false;
                     document.body.classList.remove('is-admin');
                     document.body.classList.add('is-profesor');
@@ -7852,6 +7969,8 @@
 
                     const bonosHeader = document.getElementById('header-bonos-container');
                     if (bonosHeader) bonosHeader.classList.add('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.add('hidden');
 
                     ['nav-public-inicio', 'nav-public-psicologia', 'nav-public-nutricion', 'nav-public-profesores'].forEach(id => {
                         const el = document.getElementById(id);
@@ -7889,6 +8008,8 @@
 
                     const bonosHeader = document.getElementById('header-bonos-container');
                     if (bonosHeader) bonosHeader.classList.remove('hidden');
+                    const btnInfo = document.getElementById('header-btn-info-bonos');
+                    if (btnInfo) btnInfo.classList.remove('hidden');
 
                     const btnMisClases = document.getElementById('nav-public-mis-clases');
                     if (btnMisClases) btnMisClases.classList.add('hidden');
@@ -7937,7 +8058,7 @@
                 comprarBonoMensual();
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v13.2)
+            // Comprobar si el usuario llega con una oferta para canjear (v13.6)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -8549,29 +8670,31 @@
             }
         }
 
-        function inicializarEventosBarraDias() {
-            const list = document.getElementById('sticky-days-list');
+        function inicializarEventosBarraDias(listId = 'sticky-days-list') {
+            const list = document.getElementById(listId);
             if (!list || list.dataset.eventsAttached === 'true') return;
             list.dataset.eventsAttached = 'true';
 
-            // Conectar listeners directos en los botones de flecha
-            const btnPrev = document.getElementById('btn-scroll-dias-prev');
-            const btnNext = document.getElementById('btn-scroll-dias-next');
-            if (btnPrev && !btnPrev.dataset.listenerAttached) {
-                btnPrev.dataset.listenerAttached = 'true';
-                btnPrev.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    scrollDiasRapidos(-1);
-                });
-            }
-            if (btnNext && !btnNext.dataset.listenerAttached) {
-                btnNext.dataset.listenerAttached = 'true';
-                btnNext.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    scrollDiasRapidos(1);
-                });
+            // Conectar listeners directos en los botones de flecha si existen
+            if (listId === 'sticky-days-list') {
+                const btnPrev = document.getElementById('btn-scroll-dias-prev');
+                const btnNext = document.getElementById('btn-scroll-dias-next');
+                if (btnPrev && !btnPrev.dataset.listenerAttached) {
+                    btnPrev.dataset.listenerAttached = 'true';
+                    btnPrev.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        scrollDiasRapidos(-1, listId);
+                    });
+                }
+                if (btnNext && !btnNext.dataset.listenerAttached) {
+                    btnNext.dataset.listenerAttached = 'true';
+                    btnNext.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        scrollDiasRapidos(1, listId);
+                    });
+                }
             }
 
             // Scroll con rueda de ratón (soporte tanto horizontal nativo como vertical)
@@ -8635,97 +8758,11 @@
             }, true);
         }
 
-        let currentScrollTargetIndex = null;
-        let scrollAnimFrame = null;
-
-        function scrollDiasRapidos(direction) {
-            const list = document.getElementById('sticky-days-list');
+        function scrollDiasRapidos(direction, listId = 'sticky-days-list') {
+            const list = document.getElementById(listId);
             if (!list) return;
-
-            const listRect = list.getBoundingClientRect();
-            const allButtons = Array.from(list.querySelectorAll('button'));
-            const botonesDias = allButtons.filter(b => !b.textContent.includes('Todas'));
-
-            if (botonesDias.length === 0) return;
-
-            // Determinar el índice base del día visible actualmente más a la izquierda
-            let baseIndex = 0;
-            if (currentScrollTargetIndex !== null) {
-                baseIndex = currentScrollTargetIndex;
-            } else {
-                for (let i = 0; i < botonesDias.length; i++) {
-                    const bRect = botonesDias[i].getBoundingClientRect();
-                    // Si el botón está visible en el viewport del contenedor
-                    if (bRect.right >= listRect.left + 35) {
-                        baseIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            let targetIndex;
-            if (direction > 0) {
-                // Avanzar exactamente 7 días de práctica hacia la derecha
-                targetIndex = Math.min(botonesDias.length - 1, baseIndex + 7);
-            } else {
-                // Retroceder exactamente 7 días de práctica hacia la izquierda
-                targetIndex = Math.max(0, baseIndex - 7);
-            }
-
-            currentScrollTargetIndex = targetIndex;
-
-            let targetScrollLeft = 0;
-            if (targetIndex === 0 && direction < 0) {
-                targetScrollLeft = 0;
-            } else {
-                const targetBtn = botonesDias[targetIndex];
-                const btnRect = targetBtn.getBoundingClientRect();
-                targetScrollLeft = Math.max(0, btnRect.left - listRect.left + list.scrollLeft - 8);
-            }
-
-            const maxScroll = Math.max(0, list.scrollWidth - list.clientWidth);
-            targetScrollLeft = Math.min(maxScroll, targetScrollLeft);
-
-            if (scrollAnimFrame) {
-                cancelAnimationFrame(scrollAnimFrame);
-                scrollAnimFrame = null;
-            }
-
-            const startScrollLeft = list.scrollLeft;
-            const distance = targetScrollLeft - startScrollLeft;
-
-            if (Math.abs(distance) < 2) {
-                currentScrollTargetIndex = null;
-                return;
-            }
-
-            // Desactivar temporalmente scroll-behavior CSS para interpolar fluidamente por frames
-            list.style.scrollBehavior = 'auto';
-
-            const duration = 280;
-            const startTime = performance.now();
-
-            function stepAnimation(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                // Easing suave easeInOutQuad
-                const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-                list.scrollLeft = startScrollLeft + distance * ease;
-
-                if (progress < 1) {
-                    scrollAnimFrame = requestAnimationFrame(stepAnimation);
-                } else {
-                    list.scrollLeft = targetScrollLeft;
-                    list.style.scrollBehavior = 'smooth';
-                    scrollAnimFrame = null;
-                    setTimeout(() => {
-                        currentScrollTargetIndex = null;
-                    }, 50);
-                }
-            }
-
-            scrollAnimFrame = requestAnimationFrame(stepAnimation);
+            const scrollDistance = Math.max(200, Math.round(list.clientWidth * 0.75)) * direction;
+            list.scrollBy({ left: scrollDistance, behavior: 'smooth' });
         }
 
         window.scrollDiasRapidos = scrollDiasRapidos;
@@ -8749,7 +8786,7 @@
 
             const titleEl = document.getElementById('sticky-days-title-text');
             if (titleEl) {
-                titleEl.innerHTML = `Días de práctica: <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
+                titleEl.innerHTML = `Días con clases <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
             }
 
             allClasesCache.forEach(c => {
@@ -8767,7 +8804,7 @@
             if (dKeys.length === 0) {
                 bar.innerHTML = `
                     <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
-                        <span class="italic">No hay más clases restantes en ${monthNames[targetMonth]}.</span>
+                        <span class="italic">No hay clases programadas en ${monthNames[targetMonth]}.</span>
                         <button type="button" onclick="cambiarMes(1)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             Ver ${monthNames[(targetMonth + 1) % 12]} <i class="ph-bold ph-caret-right"></i>
                         </button>
@@ -8776,23 +8813,14 @@
                 return;
             }
 
-            const totalClasesMes = Array.from(fechasConClases.values()).reduce((a, b) => a + b, 0);
             const hoyKey = formatDateLocal(new Date());
 
-            // Solo inicializar por defecto en la carga inicial si aún es null
-            if (selectedDate === null) {
-                selectedDate = fechasConClases.has(hoyKey) ? hoyKey : 'todas';
+            // Seleccionar por defecto hoy si existe, o el próximo día disponible
+            if (selectedDate === null || selectedDate === 'todas') {
+                selectedDate = fechasConClases.has(hoyKey) ? hoyKey : (dKeys.find(k => k >= hoyKey) || dKeys[0] || hoyKey);
             }
 
-            const isAll = selectedDate === 'todas';
-
-            let html = `
-        <button type="button" onclick="limpiarFiltroFecha()" 
-            class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isAll ? 'bg-cocoa text-white shadow-xs ring-2 ring-cocoa/30' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${totalClasesMes})
-        </button>
-    `;
-
+            let html = '';
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -8802,42 +8830,54 @@
                 const diaSemana = diasSemanaCorta[fecha.getDay()];
                 const mesNombre = mesesCorta[m - 1];
                 const numClases = fechasConClases.get(dKey) || 0;
-                const isSelected = !isAll && selectedDate === dKey;
+                const isSelected = selectedDate === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
-            <button type="button" onclick="filtrarPorFechaYScroll('${dKey}')" 
-                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] cursor-pointer ${btnClass}">
-                ${topLabel}
-                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numClases} clase${numClases > 1 ? 's' : ''}</span>
-            </button>
-        `;
+                    <button type="button" onclick="filtrarPorFechaYScroll('${dKey}')" 
+                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
+                        ${topLabel}
+                        <span class="${textClass}">${d} ${mesNombre}</span>
+                        <span class="${countClass}">${numClases} clase${numClases > 1 ? 's' : ''}</span>
+                    </button>
+                `;
             });
 
             bar.innerHTML = html;
 
-            // Auto-scroll chip activo al centro (o al inicio si Todas está seleccionado)
             setTimeout(() => {
-                if (isAll) {
-                    bar.scrollTo({ left: 0, behavior: 'smooth' });
-                } else {
-                    const activeBtn = bar.querySelector('.bg-olive');
-                    if (activeBtn) {
-                        activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    }
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function aplicarFiltrosClases() {
@@ -9364,25 +9404,8 @@
             }
 
             if (benefit) {
-                if (!isAdmin && esTrabajador()) {
-                    benefit.classList.add('hidden');
-                } else {
-                    benefit.classList.remove('hidden');
-                    const monthName = formatDisplayMonth(new Date());
-                    benefit.innerHTML = `
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                            <div class="flex items-center gap-2.5 text-xs text-slate-800">
-                                <i class="ph-fill ph-sparkle text-slate-600 text-lg shrink-0"></i>
-                                <div>
-                                    <strong class="text-slate-900 block font-black">Eventos GEN Yoga (${escapeHtml(monthName)})</strong>
-                                    <span class="text-slate-600">Las <strong>Clases Especiales</strong> se reservan con su propio saldo (1 gratis al mes con Bono Ilimitado o 20 €). Los <strong>Talleres</strong> se reservan por plaza individual (25 €) o reprogramación.</span>
-                                </div>
-                            </div>
-                            <button type="button" onclick="comprarBonoEspecialStripe(event)" class="shrink-0 px-3.5 py-2 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-xs transition hover:scale-105 active:scale-95 cursor-pointer" style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%) !important; color: #ffffff !important;">
-                                <i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> + Clase Especial
-                            </button>
-                        </div>`;
-                }
+                benefit.classList.add('hidden');
+                benefit.innerHTML = '';
             }
 
             // Filtrado según sub-pestaña activa (todos, clases_especiales, talleres)
@@ -10267,12 +10290,12 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = esClaseEspecialTipo(clase) || esTallerTipo(clase);
 
-            // v13.2: Yoga en Compañía inactivado al 100%
+            // v13.6: Yoga en Compañía inactivado al 100%
             const modalityCompania = '';
             const esCompania = false;
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = false;
-            // v13.2: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
+            // v13.6: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
             const esSesionGratuita = !esEspecial;
             const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
             const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
@@ -11126,6 +11149,7 @@
                 await cargarConsultasAdmin();
             } else if (tabName === 'gestion-alumnos') {
                 selectedAsistenciaFecha = formatDateLocal(new Date());
+                currentAsistenciasMonth = new Date();
                 selectedAsistenciaClaseId = 'todas';
                 mostrarDiasPasadosAsistencias = false;
                 await cargarAsistenciasPorClase();
@@ -11739,6 +11763,8 @@
             return true;
         }
 
+        let currentAsistenciasMonth = new Date();
+
         async function cargarAsistenciasPorClase() {
             const cont = document.getElementById('asistencias-container');
             const empty = document.getElementById('asistencias-empty');
@@ -11753,60 +11779,82 @@
                 await cargarPerfilProfesionalActual(currentUserProfile);
             }
 
-            if (!mostrarDiasPasadosAsistencias && selectedAsistenciaFecha !== 'todas') {
-                const hoyKeyActual = formatDateLocal(new Date());
-                if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKeyActual) {
-                    selectedAsistenciaFecha = hoyKeyActual;
-                }
-            }
-
             cont.innerHTML = `
         <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
             <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
             <span class="text-xs uppercase tracking-widest font-bold text-gray-400">Cargando asistencias...</span>
         </div>`;
 
-            // 1. Cargar clases con objeto profesional unificado
-            const clases = await cargarTodasLasClasesConProfesionales();
+            // 1. Rango exacto del mes seleccionado (evita consultas masivas)
+            const anio = currentAsistenciasMonth.getFullYear();
+            const mes = currentAsistenciasMonth.getMonth();
+            const inicioMes = new Date(anio, mes, 1, 0, 0, 0, 0).toISOString();
+            const finMes = new Date(anio, mes + 1, 0, 23, 59, 59, 999).toISOString();
 
-            // 2. Filtrar clases del periodo
-            let clasesFuturas = (clases || []).filter(c => {
-                if (!claseEsFutura(c)) return false;
+            let query = client
+                .from('clases')
+                .select('*, profesionales(*)')
+                .gte('fecha_inicio', inicioMes)
+                .lte('fecha_inicio', finMes)
+                .order('fecha_inicio', { ascending: true });
+
+            if (!isAdmin && esTrabajador()) {
+                const pIds = Array.from(getProfesorIdsActuales());
+                if (pIds.length > 0) {
+                    query = query.in('profesor_id', pIds);
+                }
+            }
+
+            let clases = [];
+            try {
+                const { data: monthClases, error: errClases } = await query;
+                if (errClases) throw errClases;
+                clases = monthClases || [];
+            } catch (e) {
+                console.warn('Error al cargar clases con join:', e);
+                try {
+                    const { data: fallbackClases } = await client
+                        .from('clases')
+                        .select('*')
+                        .gte('fecha_inicio', inicioMes)
+                        .lte('fecha_inicio', finMes)
+                        .order('fecha_inicio', { ascending: true });
+                    clases = fallbackClases || [];
+                } catch (e2) {
+                    console.error('Error en fallback de clases asistencias:', e2);
+                }
+            }
+
+            // Asociar objeto profesional desde cache si no viene en el join
+            const profMap = {};
+            (allProfesionalesCache || []).forEach(p => {
+                if (p?.id != null) profMap[String(p.id)] = p;
+            });
+            clases.forEach(c => {
+                if (!c.profesionales && c.profesor_id && profMap[String(c.profesor_id)]) {
+                    c.profesionales = profMap[String(c.profesor_id)];
+                }
+            });
+
+            // 2. Filtrar clases válidas
+            let clasesValidas = (clases || []).filter(c => {
                 const tipo = normalizarTipoClase(c.tipo_clase);
                 if (tipo === 'psicologia' || tipo === 'nutricion') return esHorarioValidoConsulta(c);
                 return esClaseValidaYoga(c);
             });
 
             if (!isAdmin && esTrabajador()) {
-                clasesFuturas = clasesFuturas.filter(esClaseDelProfesionalActual);
+                clasesValidas = clasesValidas.filter(esClaseDelProfesionalActual);
             }
 
-            // Si no encontramos clases filtrando, intentar query directa por profesor_id
-            if (esTrabajador() && (!clasesFuturas || clasesFuturas.length === 0)) {
-                const pIds = Array.from(getProfesorIdsActuales());
-                if (pIds.length > 0) {
-                    try {
-                        const { data: directClases } = await client
-                            .from('clases')
-                            .select('*, profesionales(*)')
-                            .in('profesor_id', pIds)
-                            .order('fecha_inicio', { ascending: true });
-                        if (Array.isArray(directClases) && directClases.length > 0) {
-                            clasesFuturas = directClases.filter(claseEsFutura);
-                        }
-                    } catch (e) {
-                        console.warn('Error en fallback directo de asistencias:', e);
-                    }
-                }
-            }
-
-            if (!clasesFuturas || clasesFuturas.length === 0) {
+            if (!clasesValidas || clasesValidas.length === 0) {
                 cont.innerHTML = '';
                 empty.classList.remove('hidden');
                 allAsistenciasClaseCache = [];
                 allAsistenciasReservasMap = {};
                 poblarFiltrosAsistencias();
                 renderizarBarraDiasAsistencias();
+                renderizarCalendarioAsistencias();
                 if (filtro) {
                     filtro.innerHTML = '<option value="todas">Sin clases disponibles</option>';
                     filtro.disabled = true;
@@ -11814,17 +11862,17 @@
                 return;
             }
 
-            // 3. Cargar reservas exclusivamente de las clases filtradas
-            const claseIds = clasesFuturas.map(c => c.id);
+            // 3. Cargar reservas exclusivamente de las clases filtradas de este mes
+            const claseIds = clasesValidas.map(c => c.id);
             const { reservasPorClase } = await cargarReservasTodasLasAreas(claseIds);
 
-            allAsistenciasClaseCache = clasesFuturas;
+            allAsistenciasClaseCache = clasesValidas;
             allAsistenciasReservasMap = reservasPorClase || {};
 
             if (filtro) {
                 filtro.disabled = false;
-                filtro.innerHTML = `<option value="todas">${isAdmin ? 'Todas las clases' : 'Todas mis sesiones'}</option>`;
-                clasesFuturas.forEach(c => {
+                filtro.innerHTML = `<option value="todas">${isAdmin ? 'Todas las clases del mes' : 'Todas mis sesiones del mes'}</option>`;
+                clasesValidas.forEach(c => {
                     const option = document.createElement('option');
                     const fecha = new Date(c.fecha_inicio);
                     const tipoMeta = getTipoClaseMeta(c.tipo_clase);
@@ -11833,7 +11881,7 @@
                     filtro.appendChild(option);
                 });
 
-                if (selectedAsistenciaClaseId !== 'todas' && !clasesFuturas.some(c => String(c.id) === String(selectedAsistenciaClaseId))) {
+                if (selectedAsistenciaClaseId !== 'todas' && !clasesValidas.some(c => String(c.id) === String(selectedAsistenciaClaseId))) {
                     selectedAsistenciaClaseId = 'todas';
                 }
                 filtro.value = selectedAsistenciaClaseId;
@@ -11845,11 +11893,12 @@
             renderizarAsistenciasPorClase();
         }
 
-        let currentAsistenciasMonth = new Date();
-
-        function cambiarMesAsistencias(delta) {
+        async function cambiarMesAsistencias(delta) {
             currentAsistenciasMonth = new Date(currentAsistenciasMonth.getFullYear(), currentAsistenciasMonth.getMonth() + delta, 1);
+            selectedAsistenciaFecha = null;
+            selectedAsistenciaClaseId = 'todas';
             renderizarCalendarioAsistencias();
+            await cargarAsistenciasPorClase();
         }
 
         function renderizarCalendarioAsistencias() {
@@ -11897,7 +11946,6 @@
                 const dateObj = new Date(year, month, day);
                 const dateKey = formatDateLocal(dateObj);
                 const isToday = dateKey === hoyKey;
-                const isPast = dateKey < hoyKey;
                 const hasSesiones = fechasConSesiones.has(dateKey);
                 const isSelected = selectedAsistenciaFecha === dateKey;
 
@@ -11910,9 +11958,6 @@
                 if (isSelected) div.classList.add('selected');
 
                 div.onclick = () => {
-                    if (isPast && !mostrarDiasPasadosAsistencias) {
-                        mostrarDiasPasadosAsistencias = true;
-                    }
                     filtrarAsistenciaPorFecha(dateKey);
                 };
 
@@ -11938,49 +11983,58 @@
         }
 
         function toggleDiasPasadosAsistencias() {
-            mostrarDiasPasadosAsistencias = !mostrarDiasPasadosAsistencias;
             renderizarBarraDiasAsistencias();
             renderizarCalendarioAsistencias();
-            if (selectedAsistenciaFecha === 'todas') {
+            renderizarAsistenciasPorClase();
+        }
+
+        async function filtrarAsistenciaPorFecha(dateKey) {
+            selectedAsistenciaFecha = dateKey;
+            selectedAsistenciaClaseId = 'todas';
+            let monthChanged = false;
+            if (dateKey && dateKey !== 'todas') {
+                const parts = dateKey.split('-').map(Number);
+                if (parts.length >= 2 && parts[0] && parts[1]) {
+                    const targetYear = parts[0];
+                    const targetMonth = parts[1] - 1;
+                    if (targetYear !== currentAsistenciasMonth.getFullYear() || targetMonth !== currentAsistenciasMonth.getMonth()) {
+                        currentAsistenciasMonth = new Date(targetYear, targetMonth, 1);
+                        monthChanged = true;
+                    }
+                }
+            }
+            if (monthChanged) {
+                await cargarAsistenciasPorClase();
+            } else {
+                renderizarBarraDiasAsistencias();
+                renderizarCalendarioAsistencias();
                 renderizarAsistenciasPorClase();
             }
         }
 
-        function filtrarAsistenciaPorFecha(dateKey) {
-            selectedAsistenciaFecha = dateKey;
-            selectedAsistenciaClaseId = 'todas';
-            if (dateKey && dateKey !== 'todas') {
-                const parts = dateKey.split('-').map(Number);
-                if (parts.length >= 2 && parts[0] && parts[1]) {
-                    currentAsistenciasMonth = new Date(parts[0], parts[1] - 1, 1);
-                }
-            }
-            renderizarBarraDiasAsistencias();
-            renderizarCalendarioAsistencias();
-            renderizarAsistenciasPorClase();
-        }
-
         function limpiarFiltroFechaAsistencias() {
-            selectedAsistenciaFecha = 'todas';
+            selectedAsistenciaFecha = null;
             selectedAsistenciaClaseId = 'todas';
             renderizarBarraDiasAsistencias();
             renderizarCalendarioAsistencias();
             renderizarAsistenciasPorClase();
         }
 
-        function filtrarAsistenciaClase(claseId) {
+        async function filtrarAsistenciaClase(claseId) {
             selectedAsistenciaClaseId = claseId || 'todas';
             if (claseId && claseId !== 'todas') {
                 const foundClase = (allAsistenciasClaseCache || []).find(c => String(c.id) === String(claseId));
                 if (foundClase) {
                     selectedAsistenciaFecha = formatDateLocal(foundClase.fecha_inicio);
-                    const hoyKey = formatDateLocal(new Date());
-                    if (selectedAsistenciaFecha < hoyKey) {
-                        mostrarDiasPasadosAsistencias = true;
-                    }
                     const parts = selectedAsistenciaFecha.split('-').map(Number);
                     if (parts.length >= 2 && parts[0] && parts[1]) {
-                        currentAsistenciasMonth = new Date(parts[0], parts[1] - 1, 1);
+                        const targetYear = parts[0];
+                        const targetMonth = parts[1] - 1;
+                        if (targetYear !== currentAsistenciasMonth.getFullYear() || targetMonth !== currentAsistenciasMonth.getMonth()) {
+                            currentAsistenciasMonth = new Date(targetYear, targetMonth, 1);
+                            await cargarAsistenciasPorClase();
+                            return;
+                        }
                     }
                 }
             }
@@ -11993,76 +12047,55 @@
             const bar = document.getElementById('asistencias-days-list');
             if (!bar) return;
 
+            inicializarEventosBarraDias('asistencias-days-list');
+
             const hoyKey = formatDateLocal(new Date());
+            const targetYear = currentAsistenciasMonth.getFullYear();
+            const targetMonth = currentAsistenciasMonth.getMonth();
+
+            const monthFallback = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
+
+            const titleEl = document.getElementById('asistencias-days-title-text');
+            if (titleEl) {
+                titleEl.innerHTML = `Días con sesiones <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
+            }
+
             let clases = (allAsistenciasClaseCache || []).filter(filtrarClaseSegunFiltrosAsistencias);
             const fechasConSesiones = new Map();
 
             clases.forEach(c => {
-                const dKey = formatDateLocal(c.fecha_inicio);
-                if (dKey) {
-                    fechasConSesiones.set(dKey, (fechasConSesiones.get(dKey) || 0) + 1);
+                const fechaObj = new Date(c.fecha_inicio);
+                if (fechaObj.getFullYear() === targetYear && fechaObj.getMonth() === targetMonth) {
+                    const dKey = formatDateLocal(fechaObj);
+                    if (dKey) {
+                        fechasConSesiones.set(dKey, (fechasConSesiones.get(dKey) || 0) + 1);
+                    }
                 }
             });
 
-            const allDKeys = Array.from(fechasConSesiones.keys()).sort();
-            if (allDKeys.length === 0) {
-                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay sesiones que coincidan con los filtros</span>';
+            const dKeys = Array.from(fechasConSesiones.keys()).sort();
+            if (dKeys.length === 0) {
+                bar.innerHTML = `
+                    <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
+                        <span class="italic">No hay sesiones en ${monthNames[targetMonth]}.</span>
+                        <button type="button" onclick="cambiarMesAsistencias(1)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                            Ver ${monthNames[(targetMonth + 1) % 12]} <i class="ph-bold ph-caret-right"></i>
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
-            const pastKeys = allDKeys.filter(k => k < hoyKey);
-            const currentAndFutureKeys = allDKeys.filter(k => k >= hoyKey);
-
-            // Si no estamos en modo explícito de ver días pasados, bajo ningún concepto seleccionar un día pasado
-            if (!mostrarDiasPasadosAsistencias) {
-                if (selectedAsistenciaFecha !== 'todas') {
-                    if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKey || !fechasConSesiones.has(selectedAsistenciaFecha)) {
-                        if (fechasConSesiones.has(hoyKey)) {
-                            selectedAsistenciaFecha = hoyKey;
-                        } else {
-                            const prox = currentAndFutureKeys[0];
-                            selectedAsistenciaFecha = prox || hoyKey;
-                        }
-                    }
-                }
-            } else {
-                if (!selectedAsistenciaFecha || (!fechasConSesiones.has(selectedAsistenciaFecha) && selectedAsistenciaFecha !== 'todas')) {
-                    if (fechasConSesiones.has(hoyKey)) {
-                        selectedAsistenciaFecha = hoyKey;
-                    } else {
-                        const prox = allDKeys.find(k => k >= hoyKey);
-                        selectedAsistenciaFecha = prox || allDKeys[allDKeys.length - 1] || hoyKey;
-                    }
-                }
-            }
-
-            // Por defecto, mostrar días desde HOY en adelante (no mostrar días pasados al entrar)
-            let dKeys = mostrarDiasPasadosAsistencias ? allDKeys : currentAndFutureKeys;
-            if (dKeys.length === 0 && !mostrarDiasPasadosAsistencias) {
-                dKeys = fechasConSesiones.has(hoyKey) ? [hoyKey] : (allDKeys.length > 0 ? [allDKeys[allDKeys.length - 1]] : [hoyKey]);
-            }
-
-            const isTodasActive = selectedAsistenciaFecha === 'todas';
-            let html = `
-        <button type="button" onclick="limpiarFiltroFechaAsistencias()" 
-            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${clases.length})
-        </button>
-    `;
-
-            if (pastKeys.length > 0) {
-                html += `
-        <button type="button" onclick="toggleDiasPasadosAsistencias()" 
-            class="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${mostrarDiasPasadosAsistencias ? 'bg-cocoa/80 text-white shadow-xs' : 'bg-sand/15 text-cocoa/70 hover:bg-sand/30 border border-cocoa/10'}"
-            title="${mostrarDiasPasadosAsistencias ? 'Ocultar sesiones de días pasados' : 'Ver sesiones de días anteriores'}">
-            <i class="ph-bold ph-clock-counter-clockwise"></i> ${mostrarDiasPasadosAsistencias ? 'Ocultar pasadas' : 'Anteriores (' + pastKeys.length + ')'}
-        </button>
-    `;
+            // Seleccionar por defecto hoy si está presente y no hay fecha seleccionada, o el próximo día disponible
+            if (!selectedAsistenciaFecha || selectedAsistenciaFecha === 'todas' || !fechasConSesiones.has(selectedAsistenciaFecha)) {
+                selectedAsistenciaFecha = fechasConSesiones.has(hoyKey) ? hoyKey : (dKeys.find(k => k >= hoyKey) || dKeys[0] || hoyKey);
             }
 
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+            let html = '';
             dKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
                 const fecha = new Date(y, m - 1, d);
@@ -12072,22 +12105,39 @@
                 const isSelected = selectedAsistenciaFecha === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
             <button type="button" onclick="filtrarAsistenciaPorFecha('${dKey}')" 
-                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
+                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
                 ${topLabel}
-                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
+                <span class="${textClass}">${d} ${mesNombre}</span>
+                <span class="${countClass}">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
             </button>
         `;
             });
@@ -12095,11 +12145,11 @@
             bar.innerHTML = html;
 
             setTimeout(() => {
-                const activeBtn = bar.querySelector('.bg-olive');
-                if (activeBtn) {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function agruparReservasAsistencias(listadoReservas) {
@@ -12199,21 +12249,17 @@
             if (contact.cleanTel) {
                 contactHtml += `
             <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap">
-                <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
+                <span class="inline-flex items-center gap-1 font-medium text-gray-700">
                     <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
-                </a>
-                ${contact.waUrl ? `
-                <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="Abrir chat de WhatsApp">
-                    <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
-                </a>` : ''}
+                </span>
             </div>`;
             }
             if (contact.realEmail) {
                 contactHtml += `
             <div class="flex items-center gap-1 text-[11px] text-gray-500 truncate mt-0.5">
-                <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
+                <span class="inline-flex items-center gap-1 text-gray-500 truncate" title="${escapeHtml(contact.realEmail)}">
                     <i class="ph-bold ph-envelope text-gray-400"></i> <span class="truncate">${escapeHtml(contact.realEmail)}</span>
-                </a>
+                </span>
             </div>`;
             }
             if (!contact.cleanTel && !contact.realEmail) {
@@ -12306,20 +12352,12 @@
             const hoyKey = formatDateLocal(new Date());
             let clasesFuturas = (allAsistenciasClaseCache || []).filter(filtrarClaseSegunFiltrosAsistencias);
 
-            // Si no estamos en modo ver días pasados, asegurar que la fecha activa no sea un día pasado
-            if (!mostrarDiasPasadosAsistencias && selectedAsistenciaFecha !== 'todas') {
-                if (!selectedAsistenciaFecha || selectedAsistenciaFecha < hoyKey) {
-                    selectedAsistenciaFecha = hoyKey;
-                }
-            }
-
             if (selectedAsistenciaFecha && selectedAsistenciaFecha !== 'todas') {
                 clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAsistenciaFecha);
-            } else if (!selectedAsistenciaFecha) {
-                selectedAsistenciaFecha = hoyKey;
-                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === hoyKey);
-            } else if (selectedAsistenciaFecha === 'todas' && !mostrarDiasPasadosAsistencias) {
-                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) >= hoyKey);
+            } else {
+                const fechasDisponibles = Array.from(new Set(clasesFuturas.map(c => formatDateLocal(c.fecha_inicio)))).sort();
+                selectedAsistenciaFecha = fechasDisponibles.includes(hoyKey) ? hoyKey : (fechasDisponibles.find(k => k >= hoyKey) || fechasDisponibles[0] || hoyKey);
+                clasesFuturas = clasesFuturas.filter(c => formatDateLocal(c.fecha_inicio) === selectedAsistenciaFecha);
             }
 
             if (selectedAsistenciaClaseId !== 'todas') {
@@ -12406,7 +12444,7 @@
                         alumnosHTML = renderizarListaAlumnosConectados(listadoReservas, c, tipoNormalizado, isAdmin, false);
                     }
 
-                    const asignarBtn = isAdmin && totalReservas < capacidadMax
+                    const asignarBtn = (isAdmin || esTrabajador()) && totalReservas < capacidadMax
                         ? `
                     <div class="mt-3 flex justify-end">
                         <button onclick="abrirModalAsignarPlazaAdmin(${inlineJsString(tipoNormalizado)}, ${safePositiveInteger(c.id) || 0})"
@@ -14233,7 +14271,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v13.2: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v13.6: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
@@ -20592,6 +20630,7 @@
                 renderProfesoresPublic();
             } else if (viewName === 'mis-clases') {
                 selectedAsistenciaFecha = formatDateLocal(new Date());
+                currentAsistenciasMonth = new Date();
                 selectedAsistenciaClaseId = 'todas';
                 mostrarDiasPasadosAsistencias = false;
                 cargarAsistenciasPorClase();
@@ -24284,9 +24323,10 @@
                         console.warn('Error comprobando sesión múltiple en asignación admin:', eCheck);
                     }
 
+                    const claseId = numericClaseId;
                     const res = await client.rpc('reservar_consulta_atomica', {
                         p_tipo: tipo,
-                        p_clase_id: numericClaseId,
+                        p_clase_id: claseId,
                         p_user_id: userId,
                         p_cobrar_saldo: false,
                         p_producto_contratado: productoTitle,
@@ -25662,7 +25702,6 @@
                 if (isToday) div.classList.add('today');
                 if (hasConsultas) div.classList.add('has-classes');
                 if (isSelected) div.classList.add('selected');
-                if (isPast && !mostrarDiasPasadosConsultasAdmin) div.classList.add('disabled');
 
                 div.onclick = () => {
                     filtrarConsultaAdminPorFecha(dateKey);
@@ -25683,10 +25722,7 @@
         }
 
         function scrollConsultasAdminDias(direction) {
-            const list = document.getElementById('admin-consultas-days-list');
-            if (!list) return;
-            const step = Math.max(220, Math.round(list.clientWidth * 0.75));
-            list.scrollBy({ left: direction * step, behavior: 'smooth' });
+            scrollDiasRapidos(direction, 'admin-consultas-days-list');
         }
 
         function filtrarConsultaAdminPorFecha(dateKey) {
@@ -25714,6 +25750,8 @@
             const bar = document.getElementById('admin-consultas-days-list');
             const titleEl = document.getElementById('admin-consultas-days-title-text');
             if (!bar || !window.allConsultasAdminCache) return;
+
+            inicializarEventosBarraDias('admin-consultas-days-list');
 
             const hoyKey = formatDateLocal(new Date());
 
@@ -25751,44 +25789,17 @@
             const allDKeys = Array.from(fechasConConsultas.keys()).sort();
             if (allDKeys.length === 0) {
                 bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas que coincidan con los filtros</span>';
-                if (titleEl) titleEl.textContent = 'Días con consultas:';
+                if (titleEl) titleEl.textContent = 'Días con consultas';
                 return;
             }
 
-            const pastKeys = allDKeys.filter(k => k < hoyKey);
-            const currentAndFutureKeys = allDKeys.filter(k => k >= hoyKey);
-
-            // Si el usuario no está en modo explícito de ver pasadas, bajo ningún concepto seleccionar un día pasado
-            if (!mostrarDiasPasadosConsultasAdmin) {
-                if (selectedAdminConsultaFecha !== 'todas') {
-                    if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha < hoyKey || !fechasConConsultas.has(selectedAdminConsultaFecha)) {
-                        if (fechasConConsultas.has(hoyKey)) {
-                            selectedAdminConsultaFecha = hoyKey;
-                        } else {
-                            const prox = currentAndFutureKeys[0];
-                            selectedAdminConsultaFecha = prox || hoyKey;
-                        }
-                    }
-                }
-            } else {
-                if (!selectedAdminConsultaFecha || (!fechasConConsultas.has(selectedAdminConsultaFecha) && selectedAdminConsultaFecha !== 'todas')) {
-                    if (fechasConConsultas.has(hoyKey)) {
-                        selectedAdminConsultaFecha = hoyKey;
-                    } else {
-                        const prox = allDKeys.find(k => k >= hoyKey);
-                        selectedAdminConsultaFecha = prox || allDKeys[allDKeys.length - 1] || hoyKey;
-                    }
-                }
-            }
-
-            // Días a renderizar en la barra: por defecto desde HOY en adelante
-            let dKeys = mostrarDiasPasadosConsultasAdmin ? allDKeys : currentAndFutureKeys;
-            if (dKeys.length === 0 && !mostrarDiasPasadosConsultasAdmin) {
-                dKeys = fechasConConsultas.has(hoyKey) ? [hoyKey] : (allDKeys.length > 0 ? [allDKeys[allDKeys.length - 1]] : [hoyKey]);
+            // Seleccionar por defecto hoy si existe en la lista, o la próxima consulta disponible
+            if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha === 'todas' || !fechasConConsultas.has(selectedAdminConsultaFecha)) {
+                selectedAdminConsultaFecha = fechasConConsultas.has(hoyKey) ? hoyKey : (allDKeys.find(k => k >= hoyKey) || allDKeys[0] || hoyKey);
             }
 
             if (titleEl) {
-                let txtFiltro = selectedAdminConsultaFecha === 'todas' ? 'Todas las fechas' : '';
+                let txtFiltro = '';
                 if (selectedAdminConsultaFecha && selectedAdminConsultaFecha !== 'todas') {
                     const [y, m, d] = selectedAdminConsultaFecha.split('-').map(Number);
                     const dObj = new Date(y, m - 1, d);
@@ -25797,28 +25808,11 @@
                 titleEl.innerHTML = `Días con consultas ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
             }
 
-            const isTodasActive = selectedAdminConsultaFecha === 'todas';
-            let html = `
-        <button type="button" onclick="limpiarFiltroFechaConsultasAdmin()" 
-            class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-            <i class="ph-bold ph-squares-four"></i> Todas (${filtradas.length})
-        </button>
-    `;
-
-            if (pastKeys.length > 0) {
-                html += `
-        <button type="button" onclick="toggleDiasPasadosConsultasAdmin()" 
-            class="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${mostrarDiasPasadosConsultasAdmin ? 'bg-cocoa/80 text-white shadow-xs' : 'bg-sand/15 text-cocoa/70 hover:bg-sand/30 border border-cocoa/10'}"
-            title="${mostrarDiasPasadosConsultasAdmin ? 'Ocultar consultas de fechas pasadas' : 'Ver consultas de fechas anteriores'}">
-            <i class="ph-bold ph-clock-counter-clockwise"></i> ${mostrarDiasPasadosConsultasAdmin ? 'Ocultar pasadas' : 'Anteriores (' + pastKeys.length + ')'}
-        </button>
-    `;
-            }
-
+            let html = '';
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-            dKeys.forEach(dKey => {
+            allDKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
                 const fecha = new Date(y, m - 1, d);
                 const diaSemana = diasSemanaCorta[fecha.getDay()];
@@ -25827,34 +25821,51 @@
                 const isSelected = selectedAdminConsultaFecha === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
-            <button type="button" onclick="filtrarConsultaAdminPorFecha('${dKey}')" 
-                class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
-                ${topLabel}
-                <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numConsultas} turno${numConsultas > 1 ? 's' : ''}</span>
-            </button>
-        `;
+                    <button type="button" onclick="filtrarConsultaAdminPorFecha('${dKey}')" 
+                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
+                        ${topLabel}
+                        <span class="${textClass}">${d} ${mesNombre}</span>
+                        <span class="${countClass}">${numConsultas} turno${numConsultas > 1 ? 's' : ''}</span>
+                    </button>
+                `;
             });
 
             bar.innerHTML = html;
 
             setTimeout(() => {
-                const activeBtn = bar.querySelector('.bg-olive');
-                if (activeBtn) {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function renderizarConsultasAdmin() {
@@ -25865,12 +25876,6 @@
             container.innerHTML = '';
 
             const hoyKey = formatDateLocal(new Date());
-
-            if (!mostrarDiasPasadosConsultasAdmin && selectedAdminConsultaFecha !== 'todas') {
-                if (!selectedAdminConsultaFecha || selectedAdminConsultaFecha < hoyKey) {
-                    selectedAdminConsultaFecha = hoyKey;
-                }
-            }
 
             let filtradas = window.allConsultasAdminCache.filter(c => {
                 const reservas = window.allConsultasAdminReservasMap[c.id] || [];
@@ -25900,8 +25905,6 @@
             } else if (!selectedAdminConsultaFecha) {
                 selectedAdminConsultaFecha = hoyKey;
                 filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) === hoyKey);
-            } else if (selectedAdminConsultaFecha === 'todas' && !mostrarDiasPasadosConsultasAdmin) {
-                filtradas = filtradas.filter(c => formatDateLocal(c.fecha_inicio) >= hoyKey);
             }
 
             if (filtradas.length === 0) {
@@ -26242,6 +26245,8 @@
             const titleEl = document.getElementById('admin-talleres-days-title-text');
             if (!bar) return;
 
+            inicializarEventosBarraDias('admin-talleres-days-list');
+
             const hoyKey = formatDateLocal(new Date());
             const talleres = window.allTalleresAdminCache || [];
 
@@ -26256,28 +26261,26 @@
             const allDKeys = Array.from(fechasConTalleres.keys()).sort();
             if (allDKeys.length === 0) {
                 bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay talleres programados</span>';
-                if (titleEl) titleEl.textContent = 'Días con talleres:';
+                if (titleEl) titleEl.textContent = 'Días con eventos';
                 return;
             }
 
+            // Seleccionar por defecto hoy si existe en la lista, o el próximo evento disponible
+            if (!selectedAdminTallerFecha || selectedAdminTallerFecha === 'todas' || !fechasConTalleres.has(selectedAdminTallerFecha)) {
+                selectedAdminTallerFecha = fechasConTalleres.has(hoyKey) ? hoyKey : (allDKeys.find(k => k >= hoyKey) || allDKeys[0] || hoyKey);
+            }
+
             if (titleEl) {
-                let txtFiltro = selectedAdminTallerFecha === 'todas' ? 'Todos los talleres' : '';
+                let txtFiltro = '';
                 if (selectedAdminTallerFecha && selectedAdminTallerFecha !== 'todas') {
                     const [y, m, d] = selectedAdminTallerFecha.split('-').map(Number);
                     const dObj = new Date(y, m - 1, d);
                     txtFiltro = `${formatDisplayWeekday(dObj)}, ${d} de ${formatDisplayMonth(dObj)}`;
                 }
-                titleEl.innerHTML = `Días con talleres ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
+                titleEl.innerHTML = `Días con eventos ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
             }
 
-            const isTodasActive = selectedAdminTallerFecha === 'todas';
-            let html = `
-                <button type="button" onclick="limpiarFiltroFechaTalleresAdmin()" 
-                    class="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${isTodasActive ? 'bg-cocoa text-white shadow-xs' : 'bg-sand/20 text-cocoa hover:bg-sand/35 border border-cocoa/10'}">
-                    <i class="ph-bold ph-squares-four"></i> Todos (${talleres.length})
-                </button>
-            `;
-
+            let html = '';
             const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -26290,22 +26293,39 @@
                 const isSelected = selectedAdminTallerFecha === dKey;
                 const isToday = dKey === hoyKey;
 
-                const btnClass = isSelected
-                    ? 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive'
-                    : (isToday
-                        ? 'bg-olive/10 text-olive border-2 border-olive/30 hover:bg-olive/20 shadow-2xs'
-                        : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
 
-                const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
-                    : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
 
                 html += `
                     <button type="button" onclick="filtrarTalleresAdminPorFecha('${dKey}')" 
-                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[4.2rem] cursor-pointer ${btnClass}">
+                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
                         ${topLabel}
-                        <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                        <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numTalleres} taller${numTalleres > 1 ? 'es' : ''}</span>
+                        <span class="${textClass}">${d} ${mesNombre}</span>
+                        <span class="${countClass}">${numTalleres} taller${numTalleres > 1 ? 'es' : ''}</span>
                     </button>
                 `;
             });
@@ -26313,11 +26333,11 @@
             bar.innerHTML = html;
 
             setTimeout(() => {
-                const activeBtn = bar.querySelector('.bg-olive');
-                if (activeBtn) {
-                    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }, 50);
+            }, 60);
         }
 
         function renderizarTalleresAdminList() {
@@ -26326,6 +26346,11 @@
             if (!container) return;
 
             let talleres = window.allTalleresAdminCache || [];
+            const hoyKey = formatDateLocal(new Date());
+            if (!selectedAdminTallerFecha) {
+                selectedAdminTallerFecha = hoyKey;
+            }
+
             if (selectedAdminTallerFecha && selectedAdminTallerFecha !== 'todas') {
                 talleres = talleres.filter(c => formatDateLocal(c.fecha_inicio) === selectedAdminTallerFecha);
             }
@@ -26336,9 +26361,7 @@
                     emptyState.classList.remove('hidden');
                     const emptyP = emptyState.querySelector('p');
                     if (emptyP) {
-                        emptyP.textContent = selectedAdminTallerFecha !== 'todas'
-                            ? 'No hay talleres programados para este día.'
-                            : 'No hay clases especiales ni talleres registrados.';
+                        emptyP.textContent = 'No hay talleres ni eventos programados para este día.';
                     }
                 }
                 return;

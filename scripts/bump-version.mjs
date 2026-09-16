@@ -84,29 +84,63 @@ for (const rel of files) {
   console.log(`✅ Actualizado ${rel}`);
 }
 
-// 4. Android build.gradle
-const gradlePath = path.join(root, 'app android', 'android', 'app', 'build.gradle');
-let nextBuild = 61;
-if (fs.existsSync(gradlePath)) {
-  let gradle = fs.readFileSync(gradlePath, 'utf8');
-  const vcMatch = gradle.match(/versionCode\s+(\d+)/);
-  const currentBuild = vcMatch ? parseInt(vcMatch[1], 10) : 60;
-  nextBuild = buildArg && buildArg.trim() !== '' ? parseInt(buildArg, 10) : currentBuild + 1;
+// 4. Android build.gradle (tanto en 'app android' como en 'ultima version/app android')
+const androidGradlePaths = [
+  path.join(root, 'app android', 'android', 'app', 'build.gradle'),
+  path.join(root, 'ultima version', 'app android', 'android', 'app', 'build.gradle')
+];
 
-  gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${nextBuild}`);
-  gradle = gradle.replace(/versionName\s+"[^"]+"/, `versionName "${targetShort}"`);
-  fs.writeFileSync(gradlePath, gradle, 'utf8');
-  console.log(`✅ Actualizado Android build.gradle (versionName "${targetShort}", versionCode ${nextBuild})`);
+let currentAndroidBuild = 60;
+for (const gp of androidGradlePaths) {
+  if (fs.existsSync(gp)) {
+    const m = fs.readFileSync(gp, 'utf8').match(/versionCode\s+(\d+)/);
+    if (m) {
+      const v = parseInt(m[1], 10);
+      if (v > currentAndroidBuild) currentAndroidBuild = v;
+    }
+  }
+}
+const nextAndroidBuild = buildArg && buildArg.trim() !== '' && parseInt(buildArg, 10) < 200 ? parseInt(buildArg, 10) : currentAndroidBuild + 1;
+
+for (const gp of androidGradlePaths) {
+  if (fs.existsSync(gp)) {
+    let gradle = fs.readFileSync(gp, 'utf8');
+    gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${nextAndroidBuild}`);
+    gradle = gradle.replace(/versionName\s+"[^"]+"/, `versionName "${targetShort}"`);
+    fs.writeFileSync(gp, gradle, 'utf8');
+    console.log(`✅ Actualizado Android (${path.relative(root, gp)}): versionName "${targetShort}", versionCode ${nextAndroidBuild}`);
+  }
 }
 
-// 5. iOS project.pbxproj
-const pbxPath = path.join(root, 'app ios', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj');
-if (fs.existsSync(pbxPath)) {
-  let pbx = fs.readFileSync(pbxPath, 'utf8');
-  pbx = pbx.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${targetShort};`);
-  pbx = pbx.replace(/CURRENT_PROJECT_VERSION = \d+;/g, `CURRENT_PROJECT_VERSION = ${nextBuild};`);
-  fs.writeFileSync(pbxPath, pbx, 'utf8');
-  console.log(`✅ Actualizado iOS project.pbxproj (MARKETING_VERSION = ${targetShort}, CURRENT_PROJECT_VERSION = ${nextBuild})`);
+// 5. iOS project.pbxproj (tanto en 'app ios' como en 'ultima version/app ios')
+const iosPbxPaths = [
+  path.join(root, 'app ios', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj'),
+  path.join(root, 'ultima version', 'app ios', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj')
+];
+
+let currentIosBuild = 242; // Base mínima conocida en App Store Connect (Build 242 ya fue subida)
+for (const p of iosPbxPaths) {
+  if (fs.existsSync(p)) {
+    const matches = fs.readFileSync(p, 'utf8').match(/CURRENT_PROJECT_VERSION = (\d+);/g);
+    if (matches) {
+      for (const m of matches) {
+        const val = parseInt(m.replace(/\D/g, ''), 10);
+        if (val > currentIosBuild) currentIosBuild = val;
+      }
+    }
+  }
 }
 
-console.log(`\n🎉 ¡Versión v${targetShort} (Build #${nextBuild}) actualizada en todas las plataformas!\n`);
+const nextIosBuild = buildArg && parseInt(buildArg, 10) >= 200 ? parseInt(buildArg, 10) : currentIosBuild + 1;
+
+for (const p of iosPbxPaths) {
+  if (fs.existsSync(p)) {
+    let pbx = fs.readFileSync(p, 'utf8');
+    pbx = pbx.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${targetShort};`);
+    pbx = pbx.replace(/CURRENT_PROJECT_VERSION = \d+;/g, `CURRENT_PROJECT_VERSION = ${nextIosBuild};`);
+    fs.writeFileSync(p, pbx, 'utf8');
+    console.log(`✅ Actualizado iOS (${path.relative(root, p)}): MARKETING_VERSION = ${targetShort}, CURRENT_PROJECT_VERSION = ${nextIosBuild}`);
+  }
+}
+
+console.log(`\n🎉 ¡Versión v${targetShort} (Android Build #${nextAndroidBuild} | iOS Build #${nextIosBuild}) actualizada en todas las plataformas!\n`);

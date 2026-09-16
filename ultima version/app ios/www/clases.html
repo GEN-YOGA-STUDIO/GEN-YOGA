@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="13.5">
+    <meta name="application-version" content="13.6">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.5">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.5">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.6">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.6">
     <title>GEN Yoga | Clases</title>
 
     <!-- Rendimiento, SEO y tarjetas sociales -->
@@ -25,9 +25,9 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-    <script src="i18n.js?v=13.5"></script>
+    <script src="i18n.js?v=13.6"></script>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.5" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.6" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -57,9 +57,15 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: max(calc(env(safe-area-inset-top, 0px) + 5.75rem), 7.25rem) 1.25rem max(calc(env(safe-area-inset-bottom, 0px) + 1rem), 1.25rem) 1.25rem;
+            padding: max(calc(var(--gy-notch-shield-height, 64px) + 1.25rem), 5.5rem) 1.25rem max(calc(env(safe-area-inset-bottom, 0px) + 1rem), 1.25rem) 1.25rem;
             box-sizing: border-box;
             z-index: 10;
+        }
+
+        @media (max-width: 1023px) {
+            #sticky-header {
+                margin-top: 3.5rem !important;
+            }
         }
 
         @media (min-width: 768px) {
@@ -174,7 +180,7 @@
 
         @media (max-width: 767px) {
             .fixed-viewport {
-                padding: 4.75rem 1rem 1rem 1rem !important;
+                padding: max(calc(var(--gy-notch-shield-height, 64px) + 1.25rem), 5.5rem) 1rem 1rem 1rem !important;
             }
             #sticky-header {
                 padding-bottom: 0.25rem !important;
@@ -489,9 +495,11 @@
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
-    <link rel="stylesheet" href="public-calendar.css?v=13.5">
+    <link rel="stylesheet" href="public-calendar.css?v=13.6">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
+    <!-- ESCUDO SUPERIOR ANTI-NOTCH (iOS / Android Safe-Area Protector) -->
+    <div id="gy-notch-shield" class="gy-notch-shield" aria-hidden="true"></div>
 
     <!-- Backgrounds (Fades in/out behind the cards) -->
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
@@ -509,9 +517,9 @@
 
     <!-- Fixed Presentation Layer (Viewport containing Title and Folders Deck) -->
     <div class="fixed-viewport">
-        <!-- Button completely loose on the left con protección Notch Safe-Area y touch target amplio -->
+        <!-- Button completely loose on the left con protección Notch Shield y touch target amplio -->
         <button id="btn-inicio" onclick="handleNavClick(this, 'index.html')"
-            style="top: max(calc(env(safe-area-inset-top, 0px) + 14px), 52px);"
+            style="top: calc(var(--gy-notch-shield-height, 64px) + 12px);"
             class="absolute left-4 md:left-12 bg-[#795244] border border-[#795244] text-[#f8f6f2] px-5 py-3 md:px-6 md:py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg group z-50 min-h-[48px] min-w-[100px]">
             <svg class="w-4 h-4 text-current" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19.45 12c-3 0.5-9 0.5-13.5 0M9 6c-1.5 2-3.5 4.5-5 6 1.5 1.5 3.5 4 5 6"></path>
@@ -983,7 +991,7 @@
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                 <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">Política de privacidad</a>
-                <span class="opacity-60 text-[10px]">v13.5 | @2026 Gen Yoga</span>
+                <span class="opacity-60 text-[10px]">v13.6 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
@@ -1520,8 +1528,8 @@ window.switchCategoryDeck = function(cat) {
 };
 
 </script>
-    <script src="public-calendar.js?v=13.5"></script>
-    <script src="facilities-carousel.js?v=13.5"></script>
+    <script src="public-calendar.js?v=13.6"></script>
+    <script src="facilities-carousel.js?v=13.6"></script>
     <script>
         window.GENPublicCalendar?.init({ client });
     </script>
