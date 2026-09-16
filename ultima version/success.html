@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="13.6">
+    <meta name="application-version" content="13.7">
     <meta name="robots" content="noindex,nofollow">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.6">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.6">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.7">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.7">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
     <!-- Sugerencias de rendimiento -->
-    <meta name="theme-color" content="#26160C" />
+    <meta name="theme-color" content="#f8f6f2" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
@@ -24,13 +24,30 @@
                     || window.location.protocol === 'capacitor:'
                     || window.location.protocol === 'ionic:'
                     || (window.location.hostname === 'localhost' && !window.location.port && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-                if (isNative && document.documentElement) {
-                    document.documentElement.classList.add('is-native-app');
+                if (isNative) {
+                    if (document.documentElement) {
+                        document.documentElement.classList.add('is-native-app');
+                    }
+                    var metaTheme = document.querySelector('meta[name="theme-color"]');
+                    if (metaTheme) metaTheme.setAttribute('content', '#26160c');
+                    var ensureShield = function() {
+                        if (document.body && !document.getElementById('gy-notch-shield')) {
+                            var shield = document.createElement('div');
+                            shield.id = 'gy-notch-shield';
+                            shield.className = 'gy-notch-shield';
+                            shield.setAttribute('aria-hidden', 'true');
+                            document.body.prepend(shield);
+                        }
+                    };
+                    if (document.body) { ensureShield(); } else { document.addEventListener('DOMContentLoaded', ensureShield); }
+                } else {
+                    var existing = document.getElementById('gy-notch-shield');
+                    if (existing) existing.remove();
                 }
             } catch (e) {}
         })();
     </script>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.6">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.7">
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
@@ -47,8 +64,6 @@
     </style>
 </head>
 <body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden relative flex items-center justify-center p-4 selection:bg-mutedgold selection:text-cocoa">
-    <!-- ESCUDO SUPERIOR ANTI-NOTCH (iOS / Android Safe-Area Protector) -->
-    <div id="gy-notch-shield" class="gy-notch-shield" aria-hidden="true"></div>
     
     <!-- Background Gradient: Matches profile page -->
     <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"></div>
@@ -185,7 +200,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-60 flex flex-col items-center gap-1.5 text-xs text-cocoa">
-            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v13.6</span>
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v13.7</span>
             <a href="politica-privacidad.html" class="hover:underline transition text-[11px] text-cocoa/70">Política de privacidad</a>
         </div>
     </div>

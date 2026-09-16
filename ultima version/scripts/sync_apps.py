@@ -45,6 +45,10 @@ def sync_web_assets():
     parent_root = os.path.dirname(BASE_DIR) if is_subfolder else None
     if is_subfolder and parent_root:
         targets.append(("Repo Root", parent_root))
+        targets.append(("Parent Android WWW", os.path.join(parent_root, "app android", "www")))
+        targets.append(("Parent Android Assets", os.path.join(parent_root, "app android", "android", "app", "src", "main", "assets", "public")))
+        targets.append(("Parent iOS WWW", os.path.join(parent_root, "app ios", "www")))
+        targets.append(("Parent iOS Assets", os.path.join(parent_root, "app ios", "ios", "App", "App", "public")))
 
     for label, target_path in targets:
         os.makedirs(target_path, exist_ok=True)

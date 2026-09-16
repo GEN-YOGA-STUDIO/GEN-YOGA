@@ -8,8 +8,33 @@
                 || window.location.protocol === 'capacitor:'
                 || window.location.protocol === 'ionic:'
                 || (window.location.hostname === 'localhost' && !window.location.port && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-            if (isNative && document.documentElement) {
-                document.documentElement.classList.add('is-native-app');
+            if (isNative) {
+                if (document.documentElement) {
+                    document.documentElement.classList.add('is-native-app');
+                }
+                var metaTheme = document.querySelector('meta[name="theme-color"]');
+                if (metaTheme) {
+                    metaTheme.setAttribute('content', '#26160c');
+                }
+                var ensureShield = function() {
+                    if (document.body && !document.getElementById('gy-notch-shield')) {
+                        var shield = document.createElement('div');
+                        shield.id = 'gy-notch-shield';
+                        shield.className = 'gy-notch-shield';
+                        shield.setAttribute('aria-hidden', 'true');
+                        document.body.prepend(shield);
+                    }
+                };
+                if (document.body) {
+                    ensureShield();
+                } else {
+                    document.addEventListener('DOMContentLoaded', ensureShield);
+                }
+            } else {
+                var existing = document.getElementById('gy-notch-shield');
+                if (existing) {
+                    existing.remove();
+                }
             }
         } catch (e) {}
     }

@@ -1,7 +1,49 @@
 
-// GEN Yoga shared internationalization module.
-// Loaded by the public pages and the client profile to avoid duplicating the
-// same translations and language-switching logic in every HTML document.
+// GEN Yoga shared internationalization & native platform detector.
+// Loaded by public pages and client profile.
+(function() {
+    function detectNativeApp() {
+        try {
+            var isNative = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : (window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web')))
+                || window.location.protocol === 'capacitor:'
+                || window.location.protocol === 'ionic:'
+                || (window.location.hostname === 'localhost' && !window.location.port && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+            if (isNative) {
+                if (document.documentElement) {
+                    document.documentElement.classList.add('is-native-app');
+                }
+                var metaTheme = document.querySelector('meta[name="theme-color"]');
+                if (metaTheme) {
+                    metaTheme.setAttribute('content', '#26160c');
+                }
+                var ensureShield = function() {
+                    if (document.body && !document.getElementById('gy-notch-shield')) {
+                        var shield = document.createElement('div');
+                        shield.id = 'gy-notch-shield';
+                        shield.className = 'gy-notch-shield';
+                        shield.setAttribute('aria-hidden', 'true');
+                        document.body.prepend(shield);
+                    }
+                };
+                if (document.body) {
+                    ensureShield();
+                } else {
+                    document.addEventListener('DOMContentLoaded', ensureShield);
+                }
+            } else {
+                var existing = document.getElementById('gy-notch-shield');
+                if (existing) {
+                    existing.remove();
+                }
+            }
+        } catch (e) {}
+    }
+    detectNativeApp();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', detectNativeApp);
+    }
+    window.addEventListener('load', detectNativeApp);
+})();
 
 const translations = {
     es: {
