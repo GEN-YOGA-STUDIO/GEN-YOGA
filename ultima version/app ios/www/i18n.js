@@ -1,7 +1,24 @@
 
-// GEN Yoga shared internationalization module.
-// Loaded by the public pages and the client profile to avoid duplicating the
-// same translations and language-switching logic in every HTML document.
+// GEN Yoga shared internationalization & native platform detector.
+// Loaded by public pages and client profile.
+(function() {
+    function detectNativeApp() {
+        try {
+            var isNative = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : (window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web')))
+                || window.location.protocol === 'capacitor:'
+                || window.location.protocol === 'ionic:'
+                || (window.location.hostname === 'localhost' && !window.location.port && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+            if (isNative && document.documentElement) {
+                document.documentElement.classList.add('is-native-app');
+            }
+        } catch (e) {}
+    }
+    detectNativeApp();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', detectNativeApp);
+    }
+    window.addEventListener('load', detectNativeApp);
+})();
 
 const translations = {
     es: {

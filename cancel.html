@@ -16,6 +16,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
+    <script>
+        (function() {
+            try {
+                var isNative = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : (window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web')))
+                    || window.location.protocol === 'capacitor:'
+                    || window.location.protocol === 'ionic:'
+                    || (window.location.hostname === 'localhost' && !window.location.port && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+                if (isNative && document.documentElement) {
+                    document.documentElement.classList.add('is-native-app');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <link rel="stylesheet" href="tailwind-compiled.css?v=13.6">
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     

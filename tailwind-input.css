@@ -479,49 +479,70 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     --gy-notch-bg: #26160c;
 }
 
+/* ENTORNO WEB ESTÁNDAR: El escudo superior marrón queda 100% oculto y desactivado */
 .gy-notch-shield {
-    display: none;
+    display: none !important;
+}
+
+body {
+    padding-top: 0;
 }
 
 @media (max-width: 1023px) {
-    :root {
-        /* Hueco protector garantizado (~1 cm) para esquivar el notch en iOS (iPhone) y Android */
-        --gy-notch-shield-height: max(calc(env(safe-area-inset-top, 0px) + 16px), 64px);
-    }
-
-    /* Escudo físico superior que cubre la zona del notch / Dynamic Island */
     .gy-notch-shield {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: var(--gy-notch-shield-height);
-        background-color: var(--gy-notch-bg, #26160c);
-        z-index: 999999;
-        pointer-events: none;
-        display: block;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+        display: none !important;
     }
-
-    /* Todo el contenido de la aplicación y sus pestañas se desplaza estrictamente por debajo del notch */
-    body {
-        padding-top: var(--gy-notch-shield-height) !important;
-    }
-
     .safe-notch-top {
-        padding-top: var(--gy-notch-shield-height) !important;
+        padding-top: max(env(safe-area-inset-top, 0px), 0px) !important;
     }
     .safe-notch-margin-top {
-        margin-top: var(--gy-notch-shield-height) !important;
+        margin-top: max(env(safe-area-inset-top, 0px), 0px) !important;
     }
     .safe-notch-top-button {
-        top: calc(var(--gy-notch-shield-height) + 12px) !important;
+        top: max(calc(env(safe-area-inset-top, 0px) + 14px), 24px) !important;
     }
     .touch-target-safe {
         min-height: 48px !important;
         min-width: 48px !important;
     }
+}
+
+/* EXCLUSIVAMENTE PARA APPS NATIVAS (iOS / Android empaquetadas con Capacitor):
+   Protección contra notch / Dynamic Island / recorte físico de cámara */
+html.is-native-app {
+    --gy-notch-shield-height: max(calc(env(safe-area-inset-top, 0px) + 16px), 52px);
+}
+
+html.is-native-app .gy-notch-shield {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--gy-notch-shield-height);
+    background-color: var(--gy-notch-bg, #26160c);
+    z-index: 999999;
+    pointer-events: none;
+    display: block !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+}
+
+html.is-native-app body {
+    padding-top: var(--gy-notch-shield-height) !important;
+}
+
+html.is-native-app #sticky-header {
+    margin-top: 3.5rem !important;
+}
+
+html.is-native-app .safe-notch-top {
+    padding-top: var(--gy-notch-shield-height) !important;
+}
+html.is-native-app .safe-notch-margin-top {
+    margin-top: var(--gy-notch-shield-height) !important;
+}
+html.is-native-app .safe-notch-top-button {
+    top: calc(var(--gy-notch-shield-height) + 12px) !important;
 }
 
 @tailwind base;

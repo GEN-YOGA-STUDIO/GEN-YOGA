@@ -475,22 +475,74 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     --gy-safe-bottom: env(safe-area-inset-bottom, 0px);
     --gy-safe-left: env(safe-area-inset-left, 0px);
     --gy-safe-right: env(safe-area-inset-right, 0px);
+    --gy-notch-shield-height: 0px;
+    --gy-notch-bg: #26160c;
+}
+
+/* ENTORNO WEB ESTÁNDAR: El escudo superior marrón queda 100% oculto y desactivado */
+.gy-notch-shield {
+    display: none !important;
+}
+
+body {
+    padding-top: 0;
 }
 
 @media (max-width: 1023px) {
+    .gy-notch-shield {
+        display: none !important;
+    }
     .safe-notch-top {
-        padding-top: max(env(safe-area-inset-top, 0px), 52px) !important;
+        padding-top: max(env(safe-area-inset-top, 0px), 0px) !important;
     }
     .safe-notch-margin-top {
-        margin-top: max(env(safe-area-inset-top, 0px), 52px) !important;
+        margin-top: max(env(safe-area-inset-top, 0px), 0px) !important;
     }
     .safe-notch-top-button {
-        top: max(calc(env(safe-area-inset-top, 0px) + 14px), 54px) !important;
+        top: max(calc(env(safe-area-inset-top, 0px) + 14px), 24px) !important;
     }
     .touch-target-safe {
         min-height: 48px !important;
         min-width: 48px !important;
     }
+}
+
+/* EXCLUSIVAMENTE PARA APPS NATIVAS (iOS / Android empaquetadas con Capacitor):
+   Protección contra notch / Dynamic Island / recorte físico de cámara */
+html.is-native-app {
+    --gy-notch-shield-height: max(calc(env(safe-area-inset-top, 0px) + 16px), 52px);
+}
+
+html.is-native-app .gy-notch-shield {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--gy-notch-shield-height);
+    background-color: var(--gy-notch-bg, #26160c);
+    z-index: 999999;
+    pointer-events: none;
+    display: block !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+}
+
+html.is-native-app body {
+    padding-top: var(--gy-notch-shield-height) !important;
+}
+
+html.is-native-app #sticky-header {
+    margin-top: 3.5rem !important;
+}
+
+html.is-native-app .safe-notch-top {
+    padding-top: var(--gy-notch-shield-height) !important;
+}
+html.is-native-app .safe-notch-margin-top {
+    margin-top: var(--gy-notch-shield-height) !important;
+}
+html.is-native-app .safe-notch-top-button {
+    top: calc(var(--gy-notch-shield-height) + 12px) !important;
 }
 
 @tailwind base;
