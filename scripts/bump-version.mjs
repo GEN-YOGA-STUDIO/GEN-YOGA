@@ -100,7 +100,8 @@ for (const gp of androidGradlePaths) {
     }
   }
 }
-const nextAndroidBuild = buildArg && buildArg.trim() !== '' && parseInt(buildArg, 10) < 200 ? parseInt(buildArg, 10) : currentAndroidBuild + 1;
+const explicitBuild = buildArg && buildArg.trim() !== '' ? parseInt(buildArg, 10) : null;
+const nextAndroidBuild = explicitBuild || currentAndroidBuild + 1;
 
 for (const gp of androidGradlePaths) {
   if (fs.existsSync(gp)) {
@@ -131,7 +132,7 @@ for (const p of iosPbxPaths) {
   }
 }
 
-const nextIosBuild = buildArg && parseInt(buildArg, 10) >= 200 ? parseInt(buildArg, 10) : currentIosBuild + 1;
+const nextIosBuild = explicitBuild || currentIosBuild + 1;
 
 for (const p of iosPbxPaths) {
   if (fs.existsSync(p)) {

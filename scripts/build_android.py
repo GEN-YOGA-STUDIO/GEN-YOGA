@@ -13,6 +13,8 @@ OUTPUT_AAB = os.path.join(ANDROID_DIR, "app", "build", "outputs", "bundle", "rel
 OUTPUT_APK = os.path.join(ANDROID_DIR, "app", "build", "outputs", "apk", "release", "app-release.apk")
 DEST_AAB = os.path.join(BASE_DIR, "app android", "app-release.aab")
 DEST_APK = os.path.join(BASE_DIR, "app android", "app-release.apk")
+DEST_AAB_ULTIMA = os.path.join(BASE_DIR, "ultima version", "app android", "app-release.aab")
+DEST_APK_ULTIMA = os.path.join(BASE_DIR, "ultima version", "app android", "app-release.apk")
 
 def configure_java_home():
     current_java = os.environ.get("JAVA_HOME", "")
@@ -47,19 +49,27 @@ def build_android():
         print("📦 Generando Android App Bundle (.aab)...")
         subprocess.run([gradle_cmd, "bundleRelease"], cwd=ANDROID_DIR, check=True)
         
-        # Build APK for Direct Install
-        print("📦 Generando APK firmado (.apk)...")
-        subprocess.run([gradle_cmd, "assembleRelease"], cwd=ANDROID_DIR, check=True)
-
         if os.path.exists(OUTPUT_AAB):
             shutil.copy2(OUTPUT_AAB, DEST_AAB)
+            os.makedirs(os.path.dirname(DEST_AAB_ULTIMA), exist_ok=True)
+            shutil.copy2(OUTPUT_AAB, DEST_AAB_ULTIMA)
             size_mb = os.path.getsize(DEST_AAB) / (1024 * 1024)
             print(f"✅ App Bundle (.aab) generado con exito: {DEST_AAB} ({size_mb:.2f} MB)")
+            print(f"✅ App Bundle (.aab) copiado a 'ultima version': {DEST_AAB_ULTIMA}")
 
-        if os.path.exists(OUTPUT_APK):
-            shutil.copy2(OUTPUT_APK, DEST_APK)
-            size_mb = os.path.getsize(DEST_APK) / (1024 * 1024)
-            print(f"✅ APK listo para instalacion: {DEST_APK} ({size_mb:.2f} MB)")
+        # Build APK for Direct Install
+        print("📦 Generando APK firmado (.apk)...")
+        try:
+            subprocess.run([gradle_cmd, "assembleRelease"], cwd=ANDROID_DIR, check=True)
+            if os.path.exists(OUTPUT_APK):
+                shutil.copy2(OUTPUT_APK, DEST_APK)
+                os.makedirs(os.path.dirname(DEST_APK_ULTIMA), exist_ok=True)
+                shutil.copy2(OUTPUT_APK, DEST_APK_ULTIMA)
+                size_mb = os.path.getsize(DEST_APK) / (1024 * 1024)
+                print(f"✅ APK listo para instalacion: {DEST_APK} ({size_mb:.2f} MB)")
+                print(f"✅ APK copiado a 'ultima version': {DEST_APK_ULTIMA}")
+        except subprocess.CalledProcessError as apk_err:
+            print(f"⚠️ Aviso al generar APK (opcional, el .aab para Play Store se generó correctamente): {apk_err}")
 
         return True
     except subprocess.CalledProcessError as e:
