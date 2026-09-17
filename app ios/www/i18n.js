@@ -1010,12 +1010,22 @@ function setLanguage(lang) {
     const btnEn = document.getElementById('lang-btn-en');
     
     if (btnEs && btnEn) {
+        const isNative = !!(document.documentElement && document.documentElement.classList && document.documentElement.classList.contains('is-native-app'));
         [btnEs, btnEn].forEach(btn => {
             btn.style.cursor = 'pointer';
             btn.style.fontFamily = 'system-ui, -apple-system, sans-serif';
             btn.style.border = 'none';
             btn.style.background = 'none';
-            btn.style.padding = '2px 6px';
+            btn.style.padding = isNative ? '4px 10px' : '2px 6px';
+            if (isNative) {
+                btn.style.minWidth = '34px';
+                btn.style.minHeight = '32px';
+                btn.style.display = 'inline-flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                btn.style.touchAction = 'manipulation';
+                btn.style.webkitTapHighlightColor = 'transparent';
+            }
             btn.style.outline = 'none';
             btn.style.transition = 'all 0.2s ease';
         });
@@ -1233,20 +1243,32 @@ document.addEventListener('DOMContentLoaded', () => {
             marqueeHeight = marquee.getBoundingClientRect().height;
         }
         
+        const isNative = !!(document.documentElement && document.documentElement.classList && document.documentElement.classList.contains('is-native-app'));
         const isProfilePage = window.location.pathname.includes('profile.html');
         if (isProfilePage) {
+            langDiv.classList.add('is-profile-lang');
             langDiv.style.top = 'auto';
             langDiv.style.right = 'auto';
-            langDiv.style.bottom = '18px';
+            langDiv.style.bottom = isNative ? 'max(calc(env(safe-area-inset-bottom, 0px) + 12px), 18px)' : '18px';
             langDiv.style.left = '18px';
         } else if (marqueeHeight > 0) {
-            langDiv.style.top = (marqueeHeight + 16) + 'px'; // Positioned mathematically below the marquee banner
-            langDiv.style.right = '24px';
+            if (isNative) {
+                langDiv.style.top = `calc(var(--gy-notch-shield-height, 42px) + ${marqueeHeight + 10}px)`;
+                langDiv.style.right = '16px';
+            } else {
+                langDiv.style.top = (marqueeHeight + 16) + 'px'; // Positioned mathematically below the marquee banner
+                langDiv.style.right = '24px';
+            }
             langDiv.style.bottom = 'auto';
             langDiv.style.left = 'auto';
         } else {
-            langDiv.style.top = '16px';
-            langDiv.style.right = '24px';
+            if (isNative) {
+                langDiv.style.top = 'calc(var(--gy-notch-shield-height, 42px) + 14px)';
+                langDiv.style.right = '16px';
+            } else {
+                langDiv.style.top = '16px';
+                langDiv.style.right = '24px';
+            }
             langDiv.style.bottom = 'auto';
             langDiv.style.left = 'auto';
         }
@@ -1255,21 +1277,25 @@ document.addEventListener('DOMContentLoaded', () => {
         langDiv.style.backgroundColor = '#795244'; // Elegant brand brown
         langDiv.style.border = '1px solid rgba(248, 246, 242, 0.15)';
         langDiv.style.borderRadius = '9999px';
-        langDiv.style.padding = '4px 10px';
+        langDiv.style.padding = isNative ? '4px 8px' : '4px 10px';
         langDiv.style.display = 'flex';
         langDiv.style.alignItems = 'center';
-        langDiv.style.gap = '4px';
-        langDiv.style.fontSize = '11px';
+        langDiv.style.gap = isNative ? '2px' : '4px';
+        langDiv.style.fontSize = isNative ? '12px' : '11px';
         langDiv.style.color = '#f8f6f2'; // Brand cream text
-        langDiv.style.boxShadow = '0 6px 16px rgba(38, 22, 12, 0.2)';
+        langDiv.style.boxShadow = isNative ? '0 4px 14px rgba(38, 22, 12, 0.35)' : '0 6px 16px rgba(38, 22, 12, 0.2)';
         langDiv.style.userSelect = 'none';
         langDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
         langDiv.style.pointerEvents = 'auto'; // Ensure clicks are always received
+        if (isNative) {
+            langDiv.style.touchAction = 'manipulation';
+            langDiv.style.webkitTapHighlightColor = 'transparent';
+        }
         
         langDiv.innerHTML = `
-            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1;">ES</button>
+            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '2px 6px'}; min-width:${isNative ? '34px' : 'auto'}; min-height:${isNative ? '32px' : 'auto'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">ES</button>
             <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none; user-select:none;">/</span>
-            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5;">EN</button>
+            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '2px 6px'}; min-width:${isNative ? '34px' : 'auto'}; min-height:${isNative ? '32px' : 'auto'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">EN</button>
         `;
         document.body.appendChild(langDiv);
     }
