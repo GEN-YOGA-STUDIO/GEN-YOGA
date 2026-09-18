@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+    <script>window.isNativeApp=true;document.documentElement.classList.add("is-native-app");</script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="application-version" content="13.9" />
@@ -1126,7 +1127,11 @@
         @media (max-width: 1023px) {
             body {
                 width: 100%;
-                padding-top: var(--gy-notch-shield-height, 0px) !important;
+                padding-top: 0 !important;
+            }
+
+            html.is-native-app body {
+                padding-top: var(--gy-notch-shield-height, 44px) !important;
             }
 
             #app-view {
@@ -1139,31 +1144,37 @@
                 padding-top: 0 !important;
             }
 
-            .profile-header-inner {
-                display: grid;
-                grid-template-columns: auto 1fr;
-                grid-template-areas:
-                    "logo actions"
-                    "balances balances";
-                gap: 0.625rem 0.75rem;
-                height: auto;
-                min-height: 0;
-                padding: 0.75rem 1rem;
-                align-items: center;
+            html.is-native-app #app-view header {
+                position: sticky !important;
+                top: var(--gy-notch-shield-height, 44px) !important;
+                z-index: 50 !important;
             }
 
-            .profile-header-inner>a {
-                grid-area: logo;
-                flex-shrink: 0;
+            .profile-header-inner {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                gap: 0.35rem;
+                height: auto;
+                min-height: 0;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .profile-header-top-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                gap: 0.5rem;
             }
 
             .profile-header-actions {
-                grid-area: actions;
                 display: flex;
                 align-items: center;
                 justify-content: flex-end;
-                gap: 0.5rem;
+                gap: 0.35rem;
                 min-width: 0;
+                flex-shrink: 0;
             }
 
             #header-profile-summary {
@@ -1171,15 +1182,16 @@
                 align-items: center;
                 gap: 0.35rem;
                 min-width: 0;
+                max-width: 135px;
                 flex-shrink: 1;
             }
 
             #header-profile-summary .profile-header-avatar {
-                width: 36px;
-                height: 36px;
-                min-width: 36px;
-                min-height: 36px;
-                border-radius: 0.75rem;
+                width: 30px;
+                height: 30px;
+                min-width: 30px;
+                min-height: 30px;
+                border-radius: 0.5rem;
             }
 
             #header-profile-summary .profile-header-meta {
@@ -1195,39 +1207,50 @@
             .profile-header-user-actions {
                 display: flex;
                 align-items: center;
-                gap: 0.35rem;
+                gap: 0.25rem;
                 flex-shrink: 0;
             }
 
             .profile-header-user-actions>button {
-                width: 36px !important;
-                height: 36px !important;
-                min-width: 36px !important;
-                min-height: 36px !important;
+                width: 34px !important;
+                height: 34px !important;
+                min-width: 34px !important;
+                min-height: 34px !important;
                 padding: 0 !important;
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                border-radius: 0.75rem !important;
+                border-radius: 0.65rem !important;
                 flex-shrink: 0 !important;
             }
 
             #header-bonos-container {
-                grid-area: balances;
-                align-items: stretch;
+                display: flex;
+                align-items: center;
                 width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            #header-bonos-container::-webkit-scrollbar {
+                display: none;
             }
 
             #header-saldos-wrapper {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                display: flex;
+                align-items: center;
+                flex-wrap: nowrap;
                 gap: 0.5rem;
-                width: 100%;
+                width: max-content;
+                min-width: 100%;
+                padding-bottom: 2px;
             }
 
             #header-saldos-wrapper>* {
                 width: auto !important;
-                min-width: 0 !important;
+                min-width: max-content !important;
+                flex-shrink: 0 !important;
             }
 
             .profile-header-actions>.h-8 {
@@ -1902,54 +1925,55 @@
         <!-- Main Application Card (Zen Garden Container) -->
         <div
             class="profile-shell w-full max-w-[1400px] bg-white/80 backdrop-blur-2xl md:rounded-[2.5rem] shadow-2xl flex flex-col min-h-screen md:min-h-[90vh] overflow-hidden border border-cocoa/10 relative">
-            <header class="bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-cocoa/10 shadow-sm">
-                <div class="profile-header-inner max-w-7xl mx-auto px-4 h-auto sm:h-20 flex justify-between items-center gap-4">
-                    <a href="index.html" class="flex items-center gap-3 group shrink-0">
-                        <img src="img/logo1.webp" alt="GEN Yoga Logo"
-                            class="h-9 sm:h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition duration-300 brightness-0">
-                    </a>
+            <header class="bg-white/85 backdrop-blur-md sticky top-0 z-50 border-b border-cocoa/10 shadow-xs">
+                <div class="profile-header-inner max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5">
+                    <!-- Fila 1: Logo a la izquierda, Usuario y Acciones a la derecha -->
+                    <div class="profile-header-top-row flex items-center justify-between gap-2.5 sm:gap-4 min-w-0">
+                        <a href="index.html" class="flex items-center gap-2 group shrink-0" aria-label="Inicio GEN Yoga">
+                            <img src="img/logo1.webp" alt="GEN Yoga Logo"
+                                class="h-8 sm:h-11 w-auto object-contain drop-shadow-xs group-hover:scale-105 transition duration-200 brightness-0">
+                        </a>
 
-                    <div class="profile-header-actions flex items-center justify-end gap-2.5 sm:gap-3 min-w-0 flex-1">
-                        <div id="header-profile-summary" class="client-only flex items-center gap-2 shrink-0">
-                            <div
-                                class="profile-header-avatar w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-olive/10 border border-olive/20 items-center justify-center text-olive shrink-0 flex">
-                                <i class="ph-fill ph-user text-lg sm:text-xl"></i>
+                        <div class="profile-header-actions flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink-0">
+                            <!-- Resumen de Perfil (Avatar + Nombre) -->
+                            <div id="header-profile-summary" class="client-only flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-xl bg-cocoa/5 border border-cocoa/10 shrink-0 max-w-[130px] sm:max-w-[210px]">
+                                <div class="profile-header-avatar w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-olive/15 border border-olive/30 flex items-center justify-center text-olive shrink-0">
+                                    <i class="ph-fill ph-user text-sm sm:text-base"></i>
+                                </div>
+                                <div class="profile-header-meta min-w-0 flex-1">
+                                    <span id="profile-nombre-full"
+                                        class="profile-header-name block font-serif font-black text-cocoa tracking-tight truncate text-xs sm:text-sm leading-tight">--</span>
+                                </div>
                             </div>
-                            <div class="profile-header-meta shrink-0 max-w-[95px] sm:max-w-[170px]">
-                                <span id="profile-nombre-full"
-                                    class="profile-header-name block font-serif font-black text-cocoa tracking-tight truncate text-xs sm:text-sm">--</span>
+
+                            <!-- Botones fijos de usuario: Editar Perfil, Info Bonos, Cerrar Sesión -->
+                            <div class="profile-header-user-actions flex items-center gap-1 sm:gap-1.5 shrink-0">
+                                <button id="header-btn-edit-profile" type="button" onclick="abrirEditarPerfil()"
+                                    class="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 min-w-[32px] min-h-[32px] rounded-xl text-cocoa/75 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
+                                    title="Ajustes de Perfil"
+                                    aria-label="Ajustes de Perfil">
+                                    <i class="ph-bold ph-gear text-sm sm:text-base"></i>
+                                    <span class="sr-only" data-i18n="profile_btn_edit_profile">Editar perfil</span>
+                                </button>
+                                <button id="header-btn-info-bonos" type="button" onclick="mostrarInfoBonosSaldos(event)"
+                                    class="client-only inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 min-w-[32px] min-h-[32px] rounded-xl text-cocoa/70 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
+                                    title="Guía de bonos y saldos"
+                                    aria-label="Información de bonos y saldos">
+                                    <i class="ph-bold ph-info text-sm sm:text-base"></i>
+                                </button>
+                                <button id="header-btn-logout" type="button" onclick="logout()" aria-label="Cerrar sesión"
+                                    class="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 min-w-[32px] min-h-[32px] text-cocoa/60 hover:text-red-600 transition hover:bg-red-50 rounded-xl border border-cocoa/15 bg-white shadow-2xs group shrink-0 active:scale-95"
+                                    title="Cerrar Sesión">
+                                    <i class="ph-bold ph-sign-out text-sm sm:text-base group-hover:-translate-x-0.5 transition"></i>
+                                </button>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Separador vertical visible e inamovible entre perfil y bonos -->
-                        <div class="client-only h-8 w-px bg-cocoa/15 shrink-0 mx-1"></div>
-
-                        <div id="header-bonos-container" class="client-only flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto py-1" style="scrollbar-width: none;">
-                            <div id="header-saldos-wrapper" class="flex items-center flex-nowrap gap-1.5 shrink-0">
-                                <!-- Rellenado dinámicamente en JS -->
-                            </div>
-                        </div>
-
-                        <!-- Acciones fijas de usuario (ajustes + info bonos + logout) completamente aisladas sin solapamiento -->
-                        <div class="profile-header-user-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
-                            <button id="header-btn-edit-profile" type="button" onclick="abrirEditarPerfil()"
-                                class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl text-cocoa/75 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
-                                title="Ajustes de Perfil"
-                                aria-label="Ajustes de Perfil">
-                                <i class="ph-bold ph-gear text-base sm:text-lg"></i>
-                                <span class="sr-only" data-i18n="profile_btn_edit_profile">Editar perfil</span>
-                            </button>
-                            <button id="header-btn-info-bonos" type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                class="client-only inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl text-cocoa/70 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
-                                title="Guía de bonos y saldos"
-                                aria-label="Información de bonos y saldos">
-                                <i class="ph-bold ph-info text-base sm:text-lg"></i>
-                            </button>
-                            <button id="header-btn-logout" type="button" onclick="logout()" aria-label="Cerrar sesión"
-                                class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] text-cocoa/60 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-xl border border-cocoa/15 bg-white/90 shadow-2xs group shrink-0 active:scale-95"
-                                title="Cerrar Sesión">
-                                <i class="ph-bold ph-sign-out text-base sm:text-lg group-hover:-translate-x-0.5 transition"></i>
-                            </button>
+                    <!-- Fila 2: Carrusel / Fila de Bonos Exclusiva del Alumno -->
+                    <div id="header-bonos-container" class="client-only w-full mt-2 pt-1.5 border-t border-cocoa/10 overflow-x-auto" style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                        <div id="header-saldos-wrapper" class="flex items-center gap-1.5 sm:gap-2 pb-0.5 flex-nowrap w-max min-w-full">
+                            <!-- Rellenado dinámicamente en JS -->
                         </div>
                     </div>
                 </div>
@@ -7499,12 +7523,11 @@
                 (userSaldoClasesGratis > 0 ? 1 : 0) +
                 (userSaldoConsultasGratis > 0 ? 1 : 0);
 
-            const isCompactMode = totalBadgesCount >= 4;
-            const bPad = isCompactMode ? 'px-2 py-1' : 'px-2.5 py-1.5';
-            const bGap = isCompactMode ? 'gap-1.5' : 'gap-2';
-            const iconBox = isCompactMode ? 'w-5 h-5 rounded-md text-[10px]' : 'w-6 h-6 rounded-lg text-xs';
-            const titleTxt = isCompactMode ? 'text-[7.5px]' : 'text-[8px]';
-            const countTxt = isCompactMode ? 'text-[11px]' : 'text-xs';
+            const bPad = 'px-3 py-1.5';
+            const bGap = 'gap-2';
+            const iconBox = 'w-6 h-6 rounded-lg text-xs';
+            const titleTxt = 'text-[9px]';
+            const countTxt = 'text-xs';
 
             if (headerWrapper) {
                 headerWrapper.innerHTML = `

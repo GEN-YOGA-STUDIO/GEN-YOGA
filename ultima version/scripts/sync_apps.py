@@ -76,7 +76,16 @@ def sync_web_assets():
                     except Exception:
                         pass
                 try:
-                    shutil.copy2(src_file, dst_file)
+                    if ext == '.html' and ('Android' in label or 'iOS' in label):
+                        with open(src_file, 'r', encoding='utf-8') as sf:
+                            content = sf.read()
+                        native_tag = '<script>window.isNativeApp=true;document.documentElement.classList.add("is-native-app");</script>'
+                        if native_tag not in content:
+                            content = content.replace('<head>', f'<head>\n    {native_tag}', 1)
+                        with open(dst_file, 'w', encoding='utf-8') as df:
+                            df.write(content)
+                    else:
+                        shutil.copy2(src_file, dst_file)
                     copied_count += 1
                 except Exception:
                     pass

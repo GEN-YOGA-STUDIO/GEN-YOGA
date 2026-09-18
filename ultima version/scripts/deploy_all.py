@@ -11,6 +11,7 @@ from sync_apps import sync_web_assets, bump_version
 from build_android import build_android
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.environ["PATH"] = f"/Library/Developer/CommandLineTools/usr/bin:{os.environ.get('PATH', '')}"
 
 def run_git(cmd):
     return subprocess.run(cmd, cwd=BASE_DIR, shell=True, check=True)

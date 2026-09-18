@@ -1,5 +1,7 @@
 import { execSync } from 'node:child_process';
 
+process.env.PATH = `/Library/Developer/CommandLineTools/usr/bin:${process.env.PATH || ''}`;
+
 console.log('\n📱 =========================================');
 console.log('🚀 Actualizando versión y recursos de APPS (iOS / Android)...');
 console.log('=========================================');
