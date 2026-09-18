@@ -4,7 +4,8 @@
 (function() {
     function detectNativeApp() {
         try {
-            var isNative = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : (window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web')))
+            var isNative = !!(window.isNativeApp)
+                || !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : (window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web')))
                 || window.location.protocol === 'capacitor:'
                 || window.location.protocol === 'ionic:'
                 || (window.location.hostname === 'localhost' && !window.location.port && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
@@ -31,6 +32,9 @@
                     document.addEventListener('DOMContentLoaded', ensureShield);
                 }
             } else {
+                if (document.documentElement) {
+                    document.documentElement.classList.remove('is-native-app');
+                }
                 var existing = document.getElementById('gy-notch-shield');
                 if (existing) {
                     existing.remove();

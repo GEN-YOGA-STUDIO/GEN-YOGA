@@ -518,7 +518,7 @@ body {
 /* EXCLUSIVAMENTE PARA APPS NATIVAS (iOS / Android empaquetadas con Capacitor):
    Protección contra notch / Dynamic Island / recorte físico de cámara */
 html.is-native-app {
-    --gy-notch-shield-height: max(calc(env(safe-area-inset-top, 0px) + 6px), 42px);
+    --gy-notch-shield-height: max(env(safe-area-inset-top, 0px), 44px);
 }
 
 html.is-native-app .gy-notch-shield {
@@ -532,15 +532,21 @@ html.is-native-app .gy-notch-shield {
     z-index: 999999;
     pointer-events: none;
     display: block !important;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 html.is-native-app body {
     padding-top: var(--gy-notch-shield-height) !important;
 }
 
+html.is-native-app header.sticky,
+html.is-native-app .sticky.top-0,
+html.is-native-app #app-view header {
+    top: var(--gy-notch-shield-height) !important;
+}
+
 html.is-native-app #sticky-header {
-    margin-top: 3.5rem !important;
+    margin-top: calc(var(--gy-notch-shield-height) + 0.5rem) !important;
 }
 
 html.is-native-app .safe-notch-top {
@@ -553,31 +559,10 @@ html.is-native-app .safe-notch-top-button {
     top: calc(var(--gy-notch-shield-height) + 12px) !important;
 }
 
-/* Selector de idioma en apps móviles nativas: despejado del notch y de la barra marrón */
-html.is-native-app #floating-lang-selector {
-    position: fixed !important;
-    top: calc(var(--gy-notch-shield-height) + 42px) !important;
-    right: 16px !important;
-    z-index: 99998 !important;
-}
-
-/* En subpáginas sin marquesina superior (clases, tarifas, maestros, etc.) */
-html.is-native-app:not(:has(.custom-marquee-bg)) #floating-lang-selector {
-    top: calc(var(--gy-notch-shield-height) + 14px) !important;
-    right: 16px !important;
-}
-
-/* En perfil de usuario se mantiene en la esquina inferior */
-html.is-native-app #floating-lang-selector.is-profile-lang {
-    top: auto !important;
-    right: auto !important;
-    bottom: max(calc(env(safe-area-inset-bottom, 0px) + 12px), 18px) !important;
-    left: 18px !important;
-}
-
-/* En apps nativas, la marquesina superior fluye directamente bajo el notch shield sin margen superior redundante */
-html.is-native-app .custom-marquee-bg {
-    padding-top: 0.375rem !important;
+html.is-native-app .swal2-container,
+html.is-native-app div[id^="modal-"],
+html.is-native-app .modal-backdrop {
+    padding-top: max(calc(var(--gy-notch-shield-height) + 8px), 16px) !important;
 }
 
 @tailwind base;
