@@ -31,12 +31,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Instalar dependencias y sincronizar Capacitor
+      - name: Instalar dependencias y sincronizar Capacitor (Android)
+        working-directory: app android
         run: |
-          npm ci --prefix "app android" --no-audit --no-fund
-          npm ci --prefix "app ios" --no-audit --no-fund
-          npx --prefix "app android" cap sync android
-          npx --prefix "app ios" cap sync ios
+          npm ci --no-audit --no-fund
+          npx cap sync android
+      - name: Instalar dependencias y sincronizar Capacitor (iOS)
+        working-directory: app ios
+        run: |
+          npm ci --no-audit --no-fund
+          npx cap sync ios
       - name: Batería completa de checks
         run: npm test
 
@@ -54,6 +58,12 @@ jobs:
         run: |
           npm ci --prefix "app android" --no-audit --no-fund
           npx --prefix "app android" cap sync android
+
+      - name: Instalar dependencias y sincronizar Capacitor
+        working-directory: app android
+        run: |
+          npm ci --no-audit --no-fund
+          npx cap sync android
 
       - uses: actions/setup-java@v4
         with:
