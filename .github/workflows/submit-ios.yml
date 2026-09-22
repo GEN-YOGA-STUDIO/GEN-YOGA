@@ -1,0 +1,41 @@
+name: Submit iOS to Review
+
+# Automatiza el proceso post-TestFlight de App Store Connect:
+#   versión (crear/reutilizar) → esperar build → asociar → novedades → enviar a revisión.
+# Se lanza a mano cuando el build ya está subido (o el script espera hasta 40 min):
+#   gh workflow run submit-ios --ref main -f version=13.13 -f build=252
+# Usa el secreto existente APP_STORE_CONNECT_PRIVATE_KEY (misma clave que deploy-ios).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión de App Store (p. ej. 13.13)'
+        required: true
+      build:
+        description: 'Build number (p. ej. 252)'
+        required: true
+      whats-new:
+        description: 'Novedades para la ficha'
+        required: false
+        default: 'Correcciones y mejoras'
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enviar versión a revisión
+        env:
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          node scripts/submit-testflight.mjs \
+            --version "${{ inputs.version }}" \
+            --build "${{ inputs.build }}" \
+            --whats-new "${{ inputs.whats-new }}"

@@ -1,11 +1,13 @@
 import { execSync } from 'node:child_process';
+import fs from 'node:fs';
 
-// Uso: node scripts/ship.mjs 13.14 [--aab] [--no-push] [-m "mensaje"]
+// Uso: node scripts/ship.mjs 13.14 [--aab] [--submit-ios] [--no-push] [-m "mensaje"]
 // Pipeline completo de subida de versión:
 //   bump → CSS → sync web → cap sync → batería de checks → commit+push → (AAB)
 const args = process.argv.slice(2);
 const version = args.find((a) => !a.startsWith('-'));
 const buildAab = args.includes('--aab');
+const submitIos = args.includes('--submit-ios');
 const noPush = args.includes('--no-push');
 const msgIndex = args.findIndex((a) => a === '-m' || a === '--message');
 const message = msgIndex >= 0 ? args[msgIndex + 1] : `release(apps): sincronizar nueva versión y recursos nativos`;
@@ -56,6 +58,15 @@ try {
   if (buildAab) {
     console.log('\n━━━ 7/7 AAB/APK Android ━━━');
     run('python scripts/build_android.py');
+  }
+
+  if (submitIos) {
+    const short = version.split('.').slice(0, 2).join('.');
+    const buildCode = fs
+      .readFileSync('app android/android/app/build.gradle', 'utf8')
+      .match(/versionCode\s+(\d+)/)[1];
+    console.log(`\n━━━ 8/8 Submit iOS v${short} (build ${buildCode}) a revisión ━━━`);
+    run(`gh workflow run submit-ios --ref main -f version=${short} -f build=${buildCode} -f whats-new="${message.replace(/"/g, "'")}"`);
   }
 
   console.log('\n🎉 SHIP completado.');
