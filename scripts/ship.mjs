@@ -1,7 +1,9 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 
-// Uso: node scripts/ship.mjs [version] [--aab] [--submit-ios] [--upload-android] [--no-push] [-m "mensaje"]
+// Uso: node scripts/ship.mjs [version] [--aab] [--submit-ios] [--upload-android] [--release] [--no-push] [-m "mensaje"]
+// --release = orden única gemela: pipeline local + push + lanza deploy-ios y deploy-android en CI
+//   (el submit a revisión se encadena solo al terminar deploy-ios).
 // Sin <version> sube automáticamente la siguiente (minor+1).
 // Pipeline completo de subida de versión:
 //   bump → CSS → sync web → cap sync → batería de checks → commit+push → (AAB)
@@ -10,6 +12,7 @@ const version = args.find((a) => !a.startsWith('-'));
 const buildAab = args.includes('--aab');
 const submitIos = args.includes('--submit-ios');
 const uploadAndroid = args.includes('--upload-android');
+const release = args.includes('--release');
 const noPush = args.includes('--no-push');
 const msgIndex = args.findIndex((a) => a === '-m' || a === '--message');
 const message = msgIndex >= 0 ? args[msgIndex + 1] : `release(apps): sincronizar nueva versión y recursos nativos`;
@@ -72,9 +75,14 @@ try {
     run(`gh workflow run submit-ios --ref main -f version=${short} -f build=${buildCode} -f whats-new="${message.replace(/"/g, "'")}"`);
   }
 
-  if (uploadAndroid) {
+  if (uploadAndroid || release) {
     console.log('\n━━━ 9/9 Distribución Android (AAB + Play) ━━━');
-    run('gh workflow run deploy-android --ref main -f track=internal');
+    run('gh workflow run 364162657 --ref main -f track=internal');
+  }
+
+  if (release) {
+    console.log('\n━━━ 10/10 Distribución iOS (TestFlight; el submit se encadena solo) ━━━');
+    run('gh workflow run 337680267 --ref main');
   }
 
   console.log('\n🎉 SHIP completado.');

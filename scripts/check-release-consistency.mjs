@@ -70,15 +70,18 @@ check(`iOS MARKETING_VERSION = ${short} (Debug y Release)`, marketing.length >= 
 check('iOS CURRENT_PROJECT_VERSION único', builds.length >= 2 && new Set(builds).size === 1, `visto: ${[...new Set(builds)].join(', ')}`);
 check(`Build Android (${versionCode}) = build iOS (${builds[0]})`, versionCode === builds[0], 'los stores deben publicar el mismo build');
 
-console.log('\n--- 6. Identidad de app unificada (appId) ---');
+console.log('\n--- 6. Identidad de app por plataforma (gemelas salvo package) ---');
+// Android conserva gen.yoga.app por el historial de Play Store; iOS usa
+// com.genyoga.app. Gemelas en todo lo visible; distinto solo el identificador.
+const ANDROID_APP_ID = 'gen.yoga.app';
+const IOS_APP_ID = 'com.genyoga.app';
 const capacitorPaths = [
-  'app android/capacitor.config.json',
-  'app ios/capacitor.config.json',
-  'app android/android/app/src/main/assets/capacitor.config.json',
-  'app ios/ios/App/App/capacitor.config.json',
+  ['app android/capacitor.config.json', ANDROID_APP_ID],
+  ['app ios/capacitor.config.json', IOS_APP_ID],
+  ['app android/android/app/src/main/assets/capacitor.config.json', ANDROID_APP_ID],
+  ['app ios/ios/App/App/capacitor.config.json', IOS_APP_ID],
 ];
-const appIds = [];
-for (const p of capacitorPaths) {
+for (const [p, expected] of capacitorPaths) {
   let cfg;
   try {
     cfg = JSON.parse(await read(p));
@@ -86,23 +89,21 @@ for (const p of capacitorPaths) {
     fail(`${p}: ilegible o ausente — ejecuta 'npx cap sync' en su plataforma y repite`);
     continue;
   }
-  appIds.push(cfg.appId);
-  check(`${p}: appId = ${appIds[0]}`, cfg.appId === appIds[0], `visto: ${cfg.appId}`);
+  check(`${p}: appId = ${expected}`, cfg.appId === expected, `visto: ${cfg.appId}`);
 }
-const appId = appIds[0];
-check('appId con formato reverse-DNS', /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$/.test(appId), `visto: ${appId}`);
-check('Android namespace = appId', gradle.includes(`namespace = "${appId}"`));
-check('Android applicationId = appId', gradle.includes(`applicationId "${appId}"`));
-const mainActivity = await read('app android/android/app/src/main/java/com/genyoga/app/MainActivity.java').catch(() => '');
-check('MainActivity en paquete del appId', mainActivity.includes(`package ${appId};`));
+check('appIds con formato reverse-DNS', [ANDROID_APP_ID, IOS_APP_ID].every((id) => /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$/.test(id)));
+check('Android namespace = appId Android', gradle.includes(`namespace = "${ANDROID_APP_ID}"`));
+check('Android applicationId = appId Android', gradle.includes(`applicationId "${ANDROID_APP_ID}"`));
+const mainActivity = await read('app android/android/app/src/main/java/gen/yoga/app/MainActivity.java').catch(() => '');
+check('MainActivity en paquete Android', mainActivity.includes(`package ${ANDROID_APP_ID};`));
 const stringsXml = await read('app android/android/app/src/main/res/values/strings.xml');
-check('strings.xml package_name = appId', stringsXml.includes(`<string name="package_name">${appId}</string>`));
+check('strings.xml package_name = appId Android', stringsXml.includes(`<string name="package_name">${ANDROID_APP_ID}</string>`));
 const manifest = await read('app android/android/app/src/main/AndroidManifest.xml');
-check('Manifest deep-link scheme = appId', manifest.includes(`<data android:scheme="${appId}"`));
+check('Manifest deep-link scheme = appId Android', manifest.includes(`<data android:scheme="${ANDROID_APP_ID}"`));
 const infoPlist = await read('app ios/ios/App/App/Info.plist');
-check('Info.plist CFBundleURLSchemes incluye appId', infoPlist.includes('<key>CFBundleURLSchemes</key>') && infoPlist.includes(`<string>${appId}</string>`));
+check('Info.plist CFBundleURLSchemes incluye appId iOS', infoPlist.includes('<key>CFBundleURLSchemes</key>') && infoPlist.includes(`<string>${IOS_APP_ID}</string>`));
 const bundleIds = [...pbxproj.matchAll(/PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);/g)].map((m) => m[1].trim());
-check('iOS PRODUCT_BUNDLE_IDENTIFIER = appId', bundleIds.length >= 2 && new Set(bundleIds).size === 1 && bundleIds[0] === appId, `visto: ${[...new Set(bundleIds)].join(', ')}`);
+check('iOS PRODUCT_BUNDLE_IDENTIFIER = appId iOS', bundleIds.length >= 2 && new Set(bundleIds).size === 1 && bundleIds[0] === IOS_APP_ID, `visto: ${[...new Set(bundleIds)].join(', ')}`);
 
 console.log('\n--- 7. Proyecto Supabase coherente ---');
 const configToml = await read('supabase/config.toml');

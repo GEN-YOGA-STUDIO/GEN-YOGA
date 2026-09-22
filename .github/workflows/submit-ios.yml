@@ -10,18 +10,25 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Versión de App Store (p. ej. 13.13)'
-        required: true
+        description: 'Versión de App Store (p. ej. 13.13; vacío = la del repo)'
+        required: false
+        default: ''
       build:
-        description: 'Build number (p. ej. 252)'
-        required: true
+        description: 'Build number (vacío = el del repo)'
+        required: false
+        default: ''
       whats-new:
         description: 'Novedades para la ficha'
         required: false
         default: 'Correcciones y mejoras'
+  workflow_run:
+    workflows: ['Deploy iOS App to App Store Connect']
+    types: [completed]
 
 jobs:
   submit:
+    # En cadena automática solo si el deploy fue verde; manual siempre.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -29,6 +36,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Resolver versión/build (auto si viene encadenado)
+        id: ver
+        run: |
+          VERSION="${{ inputs.version }}"
+          [ -z "$VERSION" ] && VERSION=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          BUILD="${{ inputs.build }}"
+          [ -z "$BUILD" ] && BUILD=$(grep -m1 'versionCode' "app android/android/app/build.gradle" | grep -o '[0-9]*')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "📦 Submit v$VERSION (build $BUILD)"
       - name: Enviar versión a revisión
         env:
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
@@ -36,6 +53,6 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           node scripts/submit-testflight.mjs \
-            --version "${{ inputs.version }}" \
-            --build "${{ inputs.build }}" \
-            --whats-new "${{ inputs.whats-new }}"
+            --version "${{ steps.ver.outputs.version }}" \
+            --build "${{ steps.ver.outputs.build }}" \
+            --whats-new "${{ inputs.whats-new || 'Correcciones y mejoras' }}"

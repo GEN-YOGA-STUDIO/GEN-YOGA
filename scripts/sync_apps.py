@@ -96,8 +96,8 @@ def sync_web_assets():
     well_known_src = os.path.join(SRC_DIR, '.well-known')
     if os.path.isdir(well_known_src):
         well_known_dst = os.path.join(ULTIMA_VERSION, '.well-known')
-        shutil.rmtree(well_known_dst, ignore_errors=True)
-        shutil.copytree(well_known_src, well_known_dst)
+        # dirs_exist_ok: en OneDrive el rmtree previo puede fallar por bloqueos.
+        shutil.copytree(well_known_src, well_known_dst, dirs_exist_ok=True)
         print("✅ .well-known sincronizado a 'ultima version' (fuente del deploy).")
 
     print(f"✅ Sincronizacion completada: {copied_count} archivos actualizados en todas las plataformas.")

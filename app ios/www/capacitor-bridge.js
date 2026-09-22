@@ -186,7 +186,7 @@
           var raw = event && event.url;
           if (!raw) return;
           var url = new URL(raw);
-          var isOurs = url.protocol === 'com.genyoga.app:' ||
+          var isOurs = url.protocol === 'com.genyoga.app:' || url.protocol === 'gen.yoga.app:' ||
             url.hostname === 'genyoga.studio' || url.hostname.endsWith('.genyoga.studio');
           if (!isOurs) return;
           var path = url.pathname || '/index.html';
