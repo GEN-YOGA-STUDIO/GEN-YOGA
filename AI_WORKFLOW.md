@@ -67,7 +67,7 @@ node scripts/ship.mjs --release
 ```
 
 (Sin versión = auto minor+1. Flags: `--aab` compila Android en local, `--submit-ios` / `--upload-android` lanzan solo esa pata.)
-`ship` ejecuta en orden: bump → CSS → `sync_apps.py` → `cap sync` (android+ios) → `npm test` (18 checks, bloqueante) → commit+push → dispara `deploy-ios` y `deploy-android` en CI. El `submit-ios` a revisión se encadena solo al terminar `deploy-ios` en verde.
+`ship` ejecuta en orden: bump → CSS → `sync_apps.py` → `cap sync` (android+ios) → `npm test` (suite completa, bloqueante: incluye regresión contra la versión anterior y E2E pre-subida con clics reales, Supabase en vivo y presupuestos de rendimiento) → commit+push → dispara `deploy-ios` y `deploy-android` en CI. El `submit-ios` a revisión se encadena solo al terminar `deploy-ios` en verde.
 
 Workflows (todos con acciones fijadas por SHA para reproducibilidad):
 - `deploy-ios.yml` (dispatch): gate de checks → archive en macOS → TestFlight vía `altool` (firma automática con API key; secreto `APP_STORE_CONNECT_PRIVATE_KEY` ya puesto).

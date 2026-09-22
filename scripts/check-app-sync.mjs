@@ -30,7 +30,7 @@ const tracked = [
   'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
   'profile.html', 'politica-privacidad.html', 'success.html', 'cancel.html',
   'capacitor-bridge.js', 'i18n.js', 'public-calendar.js', 'public-calendar.css',
-  'teacher-profiles.js', 'facilities-carousel.js', 'tailwind-compiled.css',
+  'teacher-profiles.js', 'facilities-carousel.js', 'marketing-report.js', 'tailwind-compiled.css',
 ];
 
 const targets = [

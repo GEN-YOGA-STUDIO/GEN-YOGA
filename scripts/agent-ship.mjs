@@ -72,7 +72,7 @@ try {
   run(`${pythonCmd} scripts/sync_apps.py`, 'Sincronizando assets con Android, iOS y raíz');
 
   // Paso 4: Batería completa de pruebas de calidad
-  run('npm test', 'Ejecutando suite de 9 pruebas de calidad');
+  run('npm test', 'Ejecutando suite completa de pruebas de calidad (incluye regresión vs versión anterior)');
 
   // Paso 5: Preparar cambios para control de versiones
   console.log(`\n📦 Preparando commit: "${commitMessage}"...`);

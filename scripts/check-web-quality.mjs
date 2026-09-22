@@ -17,6 +17,7 @@ const expectedPages = [
 const browserJavaScriptFiles = [
   'facilities-carousel.js',
   'i18n.js',
+  'marketing-report.js',
   'public-calendar.js',
   'teacher-profiles.js',
 ];
@@ -112,14 +113,27 @@ function compileInlineScripts(fileName, source) {
   }
 }
 
-function checkInlineHandlers(fileName, source) {
-  const scripts = [...source.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
-    .map((match) => match[1])
-    .join('\n');
+async function checkInlineHandlers(fileName, source) {
   const defined = new Set();
-  for (const match of scripts.matchAll(/\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)) defined.add(match[1]);
-  for (const match of scripts.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/g)) defined.add(match[1]);
-  for (const match of scripts.matchAll(/\bwindow\.([A-Za-z_$][\w$]*)\s*=/g)) defined.add(match[1]);
+  const collect = (code) => {
+    for (const match of code.matchAll(/\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)) defined.add(match[1]);
+    for (const match of code.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/g)) defined.add(match[1]);
+    for (const match of code.matchAll(/\bwindow\.([A-Za-z_$][\w$]*)\s*=/g)) defined.add(match[1]);
+  };
+  for (const match of source.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)) {
+    collect(match[1]);
+  }
+  // Funciones definidas en los <script src="..."> locales de la página
+  // (p. ej. marketing-report.js define descargarInformeMarketing para profile.html).
+  for (const tag of source.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)) {
+    const src = tag[1].split(/[?#]/, 1)[0];
+    if (/^(?:https?:)?\/\//i.test(src) || src.startsWith('/')) continue;
+    try {
+      collect(await readFile(path.join(root, path.dirname(fileName), src), 'utf8'));
+    } catch {
+      /* el src inexistente ya lo denuncia checkLocalReference */
+    }
+  }
 
   const ignored = new Set([
     'if', 'for', 'while', 'switch', 'return', 'typeof',
@@ -222,7 +236,7 @@ for (const fileName of actualPages) {
   }
 
   compileInlineScripts(fileName, source);
-  checkInlineHandlers(fileName, source);
+  await checkInlineHandlers(fileName, source);
 
   const ids = new Map();
   for (const match of markup.matchAll(/\bid=["']([^"']+)["']/gi)) {
