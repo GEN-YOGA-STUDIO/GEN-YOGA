@@ -115,19 +115,18 @@ if (version) {
     console.log(`  ✅ Versión ${VERSION} creada (${version.id})`);
   } catch (e) {
     if (!String(e.message).includes('409')) throw e;
-    // Solo cabe una versión editable a la vez: si hay otra en PREPARE
-    // (p. ej. una 13.13 que nunca se envió), se elimina y se reintenta.
-    // Jamás se toca nada en revisión/aprobado/publicado.
-    const stale = (versions?.data || []).filter(
+    // Solo cabe una versión editable: si la que ocupa el hueco está en
+    // PREPARE (p. ej. una 13.13 que nunca se envió y Apple no deja borrar
+    // porque ya tiene builds), se ABSORBE renombrándola a la objetivo.
+    const stale = (versions?.data || []).find(
       (v) => v.attributes?.versionString !== VERSION && v.attributes?.appStoreState === 'PREPARE_FOR_SUBMISSION',
     );
-    if (stale.length === 0) throw e;
-    for (const s of stale) {
-      await auth('DELETE', `/v1/appStoreVersions/${s.id}`);
-      console.log(`  🧹 Versión obsoleta ${s.attributes?.versionString} eliminada (${s.id})`);
-    }
-    version = (await create()).data;
-    console.log(`  ✅ Versión ${VERSION} creada (${version.id})`);
+    if (!stale) throw e;
+    const patched = await auth('PATCH', `/v1/appStoreVersions/${stale.id}`, {
+      data: { type: 'appStoreVersions', id: stale.id, attributes: { versionString: VERSION } },
+    });
+    version = patched.data;
+    console.log(`  ♻️ Versión ${stale.attributes?.versionString} absorbida → ${VERSION} (${version.id})`);
   }
 }
 
@@ -161,11 +160,27 @@ for (const loc of locales?.data || []) {
   console.log(`  ✅ Novedades en locale ${loc.attributes?.locale}`);
 }
 
-// 5. Enviar a revisión (con limpieza de submission atascada y reintento)
+// 5. Enviar a revisión.
+// Si la versión arrastra una submission previa atascada, Apple devuelve 403
+// en el POST: hay que borrarla primero (GET relationship → DELETE → POST).
 async function trySubmit() {
   return await auth('POST', '/v1/appStoreVersionSubmissions', {
     data: { type: 'appStoreVersionSubmissions', relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: version.id } } } },
   });
+}
+
+async function clearStaleSubmission() {
+  try {
+    const rel = await auth('GET', `/v1/appStoreVersions/${version.id}/relationships/appStoreVersionSubmission`);
+    const staleId = rel?.data?.id;
+    if (!staleId) return false;
+    await auth('DELETE', `/v1/appStoreVersionSubmissions/${staleId}`);
+    console.log(`  🧹 submission previa atascada eliminada (${staleId})`);
+    return true;
+  } catch (e) {
+    console.log(`  ⚠️ no se pudo inspeccionar/limpiar submissions: ${String(e.message).slice(0, 140)}`);
+    return false;
+  }
 }
 
 let submission = null;
@@ -173,18 +188,9 @@ try {
   submission = await trySubmit();
 } catch (e) {
   console.log(`  ⚠️ primer intento: ${String(e.message).slice(0, 160)}`);
-  // Si hay una submission previa colgada, se borra y se reintenta (solo en PREPARE).
-  try {
-    const existing = await auth('GET', `/v1/appStoreVersions/${version.id}/appStoreVersionSubmission`);
-    if (existing?.data?.id && version.attributes?.appStoreState === 'PREPARE_FOR_SUBMISSION') {
-      await auth('DELETE', `/v1/appStoreVersionSubmissions/${existing.data.id}`);
-      console.log('  🧹 submission previa atascada eliminada, reintentando...');
-      await sleep(15000);
-      submission = await trySubmit();
-    } else throw e;
-  } catch (e2) {
-    throw new Error(`${e.message} || reintento: ${e2.message}`);
-  }
+  await clearStaleSubmission();
+  await sleep(10000);
+  submission = await trySubmit();
 }
 console.log(`  ✅ Enviada a revisión (submission ${submission?.data?.id})`);
 console.log('\n🎉 La versión está en cola de revisión de Apple. Te avisarán por email.');
