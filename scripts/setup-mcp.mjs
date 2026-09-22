@@ -1,24 +1,23 @@
 import { execSync, spawnSync } from 'node:child_process';
-import { createWriteStream } from 'node:fs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import https from 'node:https';
 import { fileURLToPath } from 'node:url';
+import { GH_VERSION, githubMcpPaths, ensureGithubMcpBinary } from './mcp-github.mjs';
 
 // Autoconexión de MCPs: deja operativos supabase, github, stripe, context7 y
 // playwright en CUALQUIER máquina (Windows/macOS/Linux) sin pasos manuales,
 // salvo los OAuth de navegador que exigen un clic del usuario.
-// Uso: node scripts/setup-mcp.mjs [--check]   (--check solo diagnostica)
+// Uso: node scripts/setup-mcp.mjs [--check] [--force]   (--check solo diagnostica)
+// El binario de GitHub y su lanzador viven en scripts/mcp-github.mjs, que se
+// autodescarga en la primera conexión: la config nunca depende de que el
+// binario ya esté bajado ni de rutas absolutas de otra máquina.
 
 const CHECK_ONLY = process.argv.includes('--check');
-const GH_VERSION = 'v1.12.2';
 const PROJECT_REF = 'jkjifmrrlyncuwpjhxvk';
 const HOME = os.homedir();
-const CONFIG_DIR = process.env.XDG_CONFIG_HOME
-  ? path.join(process.env.XDG_CONFIG_HOME, 'opencode')
-  : path.join(HOME, '.config', 'opencode');
-const BIN_DIR = path.join(CONFIG_DIR, 'bin');
+const { configDir: CONFIG_DIR, binDir: BIN_DIR, launcherPath: LAUNCHER_PATH, exePath } = githubMcpPaths();
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const IS_WIN = process.platform === 'win32';
 
@@ -60,31 +59,6 @@ function fetchJson(url) {
   });
 }
 
-function download(url, dest) {
-  return new Promise((resolve, reject) => {
-    const file = createWriteStream(dest);
-    https.get(url, { headers: { 'User-Agent': 'genyoga-setup-mcp' } }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        file.close();
-        fs.unlinkSync(dest);
-        download(res.headers.location, dest).then(resolve, reject);
-        return;
-      }
-      if (res.statusCode !== 200) {
-        reject(new Error(`HTTP ${res.statusCode}`));
-        return;
-      }
-      res.pipe(file);
-      file.on('finish', () => file.close(resolve));
-    }).on('error', (e) => {
-      try {
-        fs.unlinkSync(dest);
-      } catch {}
-      reject(e);
-    });
-  });
-}
-
 function endpointAlive(url) {
   return new Promise((resolve) => {
     const req = https.request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, timeout: 15000 }, (res) => {
@@ -117,40 +91,18 @@ fs.mkdirSync(BIN_DIR, { recursive: true });
 ok('config dir', CONFIG_DIR);
 ok('bin dir', BIN_DIR);
 
-// 3. Binario oficial de GitHub MCP (por plataforma)
+// 3. Binario oficial de GitHub MCP (por plataforma; si falta, se autodescarga)
 console.log('\n--- 3. Binario GitHub MCP ---');
-const arch = os.arch();
-const platformMap = {
-  'win32-x64': 'Windows_x86_64.zip',
-  'win32-arm64': 'Windows_arm64.zip',
-  'darwin-arm64': 'Darwin_arm64.tar.gz',
-  'darwin-x64': 'Darwin_x86_64.tar.gz',
-  'linux-x64': 'Linux_x86_64.tar.gz',
-  'linux-arm64': 'Linux_arm64.tar.gz',
-  'linux-arm': 'Linux_armv6.tar.gz',
-};
-const asset = platformMap[`${process.platform}-${arch}`];
-const exeName = IS_WIN ? 'github-mcp-server.exe' : 'github-mcp-server';
-const exePath = path.join(BIN_DIR, exeName);
-if (!asset) {
-  bad('plataforma', `${process.platform}-${arch} sin binario oficial; usa Docker o avisa`);
-} else if (fs.existsSync(exePath) && fs.statSync(exePath).size > 1_000_000 && !process.argv.includes('--force')) {
-  ok('github-mcp-server', `ya descargado (${GH_VERSION})`);
-} else if (!CHECK_ONLY) {
+if (CHECK_ONLY) {
+  if (fs.existsSync(exePath) && fs.statSync(exePath).size > 1_000_000) ok('github-mcp-server', `present (${GH_VERSION})`);
+  else warn('github-mcp-server', 'no descargado (modo --check); el lanzador lo bajaría en la primera conexión');
+} else {
   try {
-    const url = `https://github.com/github/github-mcp-server/releases/download/${GH_VERSION}/github-mcp-server_${asset}`;
-    const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ghmcp-')), `pkg${asset.endsWith('.zip') ? '.zip' : '.tgz'}`);
-    console.log(`  ⬇️ descargando ${asset}...`);
-    await download(url, tmp);
-    if (IS_WIN) execSync(`powershell -NoProfile -Command "Expand-Archive '${tmp}' '${BIN_DIR}' -Force"`, { stdio: 'pipe' });
-    else execSync(`tar -xzf "${tmp}" -C "${BIN_DIR}"`, { stdio: 'pipe' });
-    if (!IS_WIN) fs.chmodSync(exePath, 0o755);
-    ok('github-mcp-server', GH_VERSION);
+    await ensureGithubMcpBinary({ force: process.argv.includes('--force') });
+    ok('github-mcp-server', `${GH_VERSION} → ${exePath}`);
   } catch (e) {
     bad('github-mcp-server', `descarga fallida: ${e.message}`);
   }
-} else {
-  warn('github-mcp-server', 'no descargado (modo --check)');
 }
 
 // 4. Auth de GitHub: reutiliza gh (cero navegador)
@@ -185,18 +137,21 @@ if (gh.ok) {
   } else warn('gh sin login', 'ejecuta: gh auth login (una vez por máquina)');
 } else warn('gh ausente', 'sin gh no hay auto-auth; instala GitHub CLI');
 
-// 5. Escribir opencode.json (proyecto + global), preservando lo existente
+// 5. Escribir opencode.json (proyecto + global), preservando lo existente.
+//    Proyecto → lanzador relativo (portátil entre máquinas, se sincroniza con
+//    OneDrive); global → copia del lanzador con ruta absoluta de ESTA máquina.
 console.log('\n--- 5. opencode.json ---');
-const servers = {
+try {
+  fs.mkdirSync(BIN_DIR, { recursive: true });
+  fs.copyFileSync(path.join(ROOT, 'scripts', 'mcp-github.mjs'), LAUNCHER_PATH);
+  ok('lanzador github-mcp', LAUNCHER_PATH);
+} catch (e) {
+  bad('lanzador github-mcp', `no se pudo copiar: ${e.message}`);
+}
+const remoteServers = {
   supabase: {
     type: 'remote',
     url: `https://mcp.supabase.com/mcp?project_ref=${PROJECT_REF}&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching`,
-  },
-  github: {
-    type: 'local',
-    command: [exePath, 'stdio', '--toolsets', 'repos,issues,pull_requests,actions'],
-    environment: { GITHUB_PERSONAL_ACCESS_TOKEN: '{env:GITHUB_PERSONAL_ACCESS_TOKEN}' },
-    timeout: { startup: 60000 },
   },
   stripe: { type: 'remote', url: 'https://mcp.stripe.com/' },
   context7: { type: 'remote', url: 'https://mcp.context7.com/mcp/' },
@@ -206,17 +161,31 @@ const servers = {
     timeout: { startup: 90000 },
   },
 };
-for (const file of [path.join(ROOT, 'opencode.json'), path.join(CONFIG_DIR, 'opencode.json')]) {
+const serversFor = (githubCommand) => ({
+  ...remoteServers,
+  github: {
+    type: 'local',
+    command: githubCommand,
+    cwd: '.',
+    environment: { GITHUB_PERSONAL_ACCESS_TOKEN: '{env:GITHUB_PERSONAL_ACCESS_TOKEN}' },
+    timeout: { startup: 60000 },
+  },
+});
+const targets = [
+  { file: path.join(ROOT, 'opencode.json'), command: ['node', 'scripts/mcp-github.mjs'] },
+  { file: path.join(CONFIG_DIR, 'opencode.json'), command: ['node', LAUNCHER_PATH] },
+];
+for (const { file, command } of targets) {
   let cfg = {};
   try {
     cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {}
   cfg.$schema = 'https://opencode.ai/config.json';
   cfg.mcp = cfg.mcp || {};
-  cfg.mcp.servers = { ...(cfg.mcp.servers || {}), ...servers };
+  cfg.mcp.servers = { ...(cfg.mcp.servers || {}), ...serversFor(command) };
   if (!CHECK_ONLY) {
     fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + '\n');
-    ok(path.relative(ROOT, file) || file, '5 servidores');
+    ok(path.relative(ROOT, file) || file, '5 servidores (github vía lanzador portátil)');
   } else warn(file, 'se escribiría sin --check');
 }
 
