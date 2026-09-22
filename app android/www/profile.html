@@ -6694,6 +6694,36 @@
             return `${year}-${month}-${day}`;
         }
 
+        // Hora de negocio: las clases se imparten en Madrid y Supabase guarda
+        // timestamptz en UTC. Recortar el ISO en crudo (substring) MUESTRA LA
+        // HORA UTC E INVENTA HORARIOS (ej. 05:00 en vez de 07:00 en verano).
+        // Todo el dashboard (y el informe marketing) debe usar estos helpers.
+        function madridShifted(iso) {
+            const d = safeParseDate(iso);
+            if (!d) return null;
+            return new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Madrid' }));
+        }
+        function madridDateKey(iso) {
+            const m = madridShifted(iso);
+            return m ? formatDateLocal(m) : '';
+        }
+        function madridTime(iso) {
+            const d = safeParseDate(iso);
+            if (!d) return '--:--';
+            return d.toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+        function madridWeekdayIdx(iso) {
+            // 0=Lunes..6=Domingo en Europe/Madrid.
+            const m = madridShifted(iso);
+            if (!m) return -1;
+            const js = m.getDay();
+            return js === 0 ? 6 : js - 1;
+        }
+        function madridHour(iso) {
+            const m = madridShifted(iso);
+            return m ? m.getHours() : NaN;
+        }
+
         function getCurrentLang() {
             try {
                 return window.currentLang || localStorage.getItem('yoga-lang') || 'es';
@@ -13542,13 +13572,28 @@
             const reservasPsico = (reservasPsicoRes.status === 'fulfilled' && reservasPsicoRes.value.data) ? reservasPsicoRes.value.data : [];
             const reservasNutri = (reservasNutriRes.status === 'fulfilled' && reservasNutriRes.value.data) ? reservasNutriRes.value.data : [];
 
+            // Ocupación REAL vía RPC (SECURITY DEFINER): el dashboard calcula la
+            // suya en vez de heredar c.ocupadas de cachés de otras vistas
+            // (podía venir rancia, ajena o vacía e inventar plazas).
+            try {
+                if (typeof obtenerOcupacionClasesMap === 'function' && clases.length > 0) {
+                    const occMap = await obtenerOcupacionClasesMap(clases.map(c => c.id));
+                    if (occMap) {
+                        clases.forEach(c => {
+                            if (occMap[c.id] != null) c.ocupadas = occMap[c.id];
+                            else if (c.ocupadas == null) c.ocupadas = 0;
+                        });
+                    }
+                }
+            } catch (_) { /* fallback al valor de caché */ }
+
             // Separación de Clases de Yoga vs Consultas
             const yogaClases = clases.filter(c => c.tipo_clase !== 'psicologia' && c.tipo_clase !== 'nutricion');
             const consultaClases = clases.filter(c => c.tipo_clase === 'psicologia' || c.tipo_clase === 'nutricion');
 
             // Fechas y Rango
             const ahora = new Date();
-            const hoyStr = formatDateLocal(ahora);
+            const hoyStr = madridDateKey(ahora);
             let diasAtras = 14;
             if (rango === '7d') diasAtras = 7;
             else if (rango === '30d') diasAtras = 30;
@@ -13578,7 +13623,7 @@
 
             const clasesHoy = clases.filter(c => {
                 if (!c.fecha_inicio) return false;
-                const cDate = c.fecha_inicio.substring(0, 10);
+                const cDate = madridDateKey(c.fecha_inicio);
                 return cDate === hoyStr && c.activa !== false;
             }).sort((a, b) => (a.fecha_inicio || '').localeCompare(b.fecha_inicio || ''));
 
@@ -13614,8 +13659,8 @@
                 </div>`;
                 } else {
                     todayClassesListEl.innerHTML = clasesHoy.map(c => {
-                        const horaInicio = c.fecha_inicio ? c.fecha_inicio.substring(11, 16) : '--:--';
-                        const horaFin = c.fecha_fin ? c.fecha_fin.substring(11, 16) : '';
+                        const horaInicio = c.fecha_inicio ? madridTime(c.fecha_inicio) : '--:--';
+                        const horaFin = c.fecha_fin ? madridTime(c.fecha_fin) : '';
                         const cap = safePositiveInteger(c.capacidad_max) || 10;
                         const ocup = safePositiveInteger(c.ocupadas) || 0;
                         const percent = cap > 0 ? Math.round((ocup / cap) * 100) : 0;
@@ -13689,8 +13734,8 @@
             const dailyRegistrationsMap = {};
             clients.forEach(u => {
                 if (!u.created_at) return;
-                const d = new Date(u.created_at);
-                const dKey = formatDateLocal(d);
+                const dKey = madridDateKey(u.created_at);
+                if (!dKey) return;
                 dailyRegistrationsMap[dKey] = (dailyRegistrationsMap[dKey] || 0) + 1;
             });
 
@@ -13792,9 +13837,8 @@
 
             clases.forEach(c => {
                 if (!c.fecha_inicio) return;
-                const d = new Date(c.fecha_inicio);
-                let dayIdx = d.getDay() - 1;
-                if (dayIdx === -1) dayIdx = 6;
+                const dayIdx = madridWeekdayIdx(c.fecha_inicio);
+                if (dayIdx < 0) return;
                 const cap = safePositiveInteger(c.capacidad_max) || 10;
                 const ocup = safePositiveInteger(c.ocupadas) || 0;
                 weekdayCapacity[dayIdx] += cap;
@@ -13899,13 +13943,13 @@
 
             // Lista de clases de yoga hoy
             const gymTodayListEl = document.getElementById('gym-today-classes-list');
-            const yogaHoy = yogaClases.filter(c => c.fecha_inicio && c.fecha_inicio.substring(0, 10) === hoyStr && c.activa !== false);
+            const yogaHoy = yogaClases.filter(c => c.fecha_inicio && madridDateKey(c.fecha_inicio) === hoyStr && c.activa !== false);
             if (gymTodayListEl) {
                 if (yogaHoy.length === 0) {
                     gymTodayListEl.innerHTML = '<div class="col-span-full py-6 text-center text-cocoa/40 italic">No hay clases colectivas de yoga hoy.</div>';
                 } else {
                     gymTodayListEl.innerHTML = yogaHoy.map(c => {
-                        const hora = c.fecha_inicio ? c.fecha_inicio.substring(11, 16) : '--:--';
+                        const hora = c.fecha_inicio ? madridTime(c.fecha_inicio) : '--:--';
                         const cap = safePositiveInteger(c.capacidad_max) || 10;
                         const ocup = safePositiveInteger(c.ocupadas) || 0;
                         const prof = profesionales.find(p => p.id === c.profesor_id);
@@ -13926,7 +13970,8 @@
             let slotsManana = 0, slotsMediodia = 0, slotsTarde = 0;
             yogaClases.forEach(c => {
                 if (!c.fecha_inicio) return;
-                const h = parseInt(c.fecha_inicio.substring(11, 13), 10);
+                const h = madridHour(c.fecha_inicio);
+                if (!Number.isFinite(h)) return;
                 const asist = safePositiveInteger(c.ocupadas) || 0;
                 if (h < 12) slotsManana += asist;
                 else if (h < 16) slotsMediodia += asist;
@@ -14027,7 +14072,7 @@
                     consultasListEl.innerHTML = '<div class="col-span-full py-6 text-center text-cocoa/40 italic">No hay consultas individuales programadas próximas.</div>';
                 } else {
                     consultasListEl.innerHTML = proximasConsultas.map(c => {
-                        const fechaFmt = new Date(c.fecha_inicio).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                        const fechaFmt = new Date(c.fecha_inicio).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                         const prof = profesionales.find(p => p.id === c.profesor_id);
                         return `
                     <div class="bg-white rounded-2xl p-4 border border-blue-200/70 shadow-2xs">

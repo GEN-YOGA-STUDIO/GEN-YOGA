@@ -28,11 +28,9 @@
     return null;
   }
 
+  // Informe ÚNICO: siempre los últimos 30 días a fecha de generación.
+  // No depende del filtro del dashboard (7/14/30/todo) a propósito.
   function getRange() {
-    try {
-      // eslint-disable-next-line no-undef
-      if (typeof currentDashboardRange === 'string') return currentDashboardRange;
-    } catch (_) { /* noop */ }
     return '30d';
   }
 
@@ -45,37 +43,55 @@
     return d;
   }
 
+  // Negocio en Madrid, BD en UTC: formateo explícito Europe/Madrid
+  // (recortar el ISO en crudo mostraría la hora UTC: 05:00 en vez de 07:00).
+  var MADRID_TZ = 'Europe/Madrid';
+
+  function madridShifted(iso) {
+    if (!iso) return null;
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return new Date(d.toLocaleString('en-US', { timeZone: MADRID_TZ }));
+  }
+
   function fmtDate(iso) {
     if (!iso) return '';
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString('es-ES', { timeZone: MADRID_TZ, day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   function fmtMonth(iso) {
     if (!iso) return '';
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return d.toLocaleDateString('es-ES', { timeZone: MADRID_TZ, month: 'long', year: 'numeric' });
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return '--:--';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '--:--';
+    return d.toLocaleTimeString('es-ES', { timeZone: MADRID_TZ, hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   function monthKey(iso) {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    var m = madridShifted(iso);
+    if (!m) return '';
+    return m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
   }
 
   function weekdayEs(iso) {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    var s = d.toLocaleDateString('es-ES', { weekday: 'long' });
+    var m = madridShifted(iso);
+    if (!m) return '';
+    var s = m.toLocaleDateString('es-ES', { weekday: 'long' });
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
   function slotEs(iso) {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    var h = d.getHours();
+    var m = madridShifted(iso);
+    if (!m) return '';
+    var h = m.getHours();
     if (h < 13) return 'Mañana';
     if (h < 19) return 'Tarde';
     return 'Noche';
@@ -220,7 +236,7 @@
       var ocu = Number(c.plazas_reservadas || 0);
       var pct = cap > 0 ? Math.round((ocu / cap) * 100) : 0;
       ocupSum += pct; ocupN++;
-      ocupRows.push([fmtDate(c.fecha_inicio), String(c.fecha_inicio).substring(11, 16), c.nombre || 'Sesión', profName[c.profesor_id] || '—', v, cap, ocu, pct + ' %']);
+      ocupRows.push([fmtDate(c.fecha_inicio), fmtTime(c.fecha_inicio), c.nombre || 'Sesión', profName[c.profesor_id] || '—', v, cap, ocu, pct + ' %']);
     });
     ocupRows.sort(function (a, b) { return b[7] - a[7]; });
     var ocupMedia = ocupN > 0 ? Math.round(ocupSum / ocupN) : 0;
@@ -341,8 +357,8 @@
   // ------------------------------------------------------------------
   // Salida Excel (SheetJS) con fallback CSV.
   // ------------------------------------------------------------------
-  function downloadExcel(report, range) {
-    var fname = 'GEN-Yoga-Informe-Marketing-' + range + '-' + fileStamp() + '.xlsx';
+  function downloadExcel(report) {
+    var fname = 'GEN-Yoga-Informe-Marketing-' + fileStamp() + '.xlsx';
     if (window.XLSX && window.XLSX.utils) {
       var wb = window.XLSX.utils.book_new();
       report.sheets.forEach(function (sh) {
@@ -481,7 +497,7 @@
       var data = await fetchReportData(range);
       var report = buildReport(data, range);
       var failed = Object.keys(data).filter(function (t) { return data[t].status !== 'ok'; });
-      var res = formato === 'pdf' ? downloadPdf(report) : downloadExcel(report, range);
+      var res = formato === 'pdf' ? downloadPdf(report) : downloadExcel(report);
       if (window.Swal && window.Swal.fire) {
         window.Swal.fire({
           icon: failed.length ? 'warning' : 'success',
@@ -500,5 +516,9 @@
   }
 
   window.descargarInformeMarketing = descargarInformeMarketing;
-  window.GENMarketingReport = { version: REPORT_VERSION, descargarInformeMarketing: descargarInformeMarketing };
+  window.GENMarketingReport = {
+    version: REPORT_VERSION,
+    descargarInformeMarketing: descargarInformeMarketing,
+    _helpers: { fmtDate: fmtDate, fmtMonth: fmtMonth, fmtTime: fmtTime, monthKey: monthKey, weekdayEs: weekdayEs, slotEs: slotEs }
+  };
 })();
