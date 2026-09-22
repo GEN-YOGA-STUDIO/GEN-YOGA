@@ -493,6 +493,35 @@ await section('clientes', async () => {
       if (!txt.trim()) fail(`clientes: #${id} visible pero vacía (¿contenido dinámico roto?)`);
     }
   }
+  // Recuperación con código: identificador falso → mensaje genérico, sin crash.
+  // (No crea códigos ni toca cuentas: el servidor responde ok sin hacer nada.)
+  await page.evaluate(() => toggleAuth('recover'));
+  await page.waitForTimeout(600);
+  await page.locator('#recover-identifier').fill('nadie-inexistente-xyz@genyoga.studio');
+  await page.locator('#btn-recover-verify').click({ timeout: 8000 });
+  try {
+    await page.locator('.swal2-popup', { hasText: /Revisa tu correo/i }).first().waitFor({ state: 'visible', timeout: 15000 });
+    pass('clientes: recuperación con cuenta inexistente responde genérico (anti-enumeración)');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+  } catch {
+    fail('clientes: el paso 1 de recuperación no muestra el mensaje genérico');
+  }
+  // Código falso → error genérico, sin cambios.
+  await page.locator('#recover-code').fill('000000');
+  await page.locator('#recover-new-password').fill('ContrasenaFalsa123!');
+  const recConfirm = page.locator('#recover-confirm-password');
+  if ((await recConfirm.count()) > 0) await recConfirm.fill('ContrasenaFalsa123!');
+  await page.locator('#btn-recover-submit').click({ timeout: 8000 });
+  try {
+    await page.locator('.swal2-popup', { hasText: /Código incorrecto o caducado/i }).first().waitFor({ state: 'visible', timeout: 15000 });
+    pass('clientes: código falso rechazado con mensaje genérico');
+    await page.keyboard.press('Escape');
+  } catch {
+    fail('clientes: el código falso no es rechazado con el mensaje esperado');
+  }
+  await page.evaluate(() => toggleAuth('login'));
+  await page.waitForTimeout(600);
   const testEmail = process.env.GEN_YOGA_TEST_EMAIL;
   const testPass = process.env.GEN_YOGA_TEST_PASSWORD;
   if (testEmail && testPass && live) {
@@ -511,6 +540,10 @@ await section('clientes', async () => {
   } else {
     info('clientes: login con usuario real omitido (define GEN_YOGA_TEST_EMAIL/PASSWORD para activarlo)');
   }
+  // Los 400 de token (login fallido) y de reset-password-with-code (código
+  // falso a propósito) son respuestas ESPERADAS: se descuentan del ruido.
+  st.errors = st.errors.filter((e) => !e.includes('status of 400'));
+  st.externalFailed = st.externalFailed.filter((u) => !u.includes('/auth/v1/token') && !u.includes('/functions/v1/reset-password-with-code'));
   assertClean('clientes', st);
   } finally {
     await ctx.close();

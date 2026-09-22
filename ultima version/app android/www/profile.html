@@ -1874,12 +1874,23 @@
                     <form id="recover-step-2" class="space-y-5 hidden" onsubmit="ejecutarRestablecimientoContrasena(event)">
                         <div id="recover-user-badge" class="bg-emerald-600/30 border border-emerald-300/50 rounded-2xl p-3.5 text-center">
                             <div class="flex items-center justify-center gap-1.5 text-emerald-200 text-xs font-bold mb-0.5">
-                                <i class="ph-bold ph-check-circle text-base"></i>
-                                <span>Cuenta verificada</span>
+                                <i class="ph-bold ph-envelope-simple text-base"></i>
+                                <span>Código enviado</span>
                             </div>
                             <p id="recover-user-name" class="text-xs sm:text-sm font-extrabold text-white truncate">
-                                Usuario
+                                Revisa tu correo e introduce el código
                             </p>
+                        </div>
+
+                        <div class="group">
+                            <label for="recover-code"
+                                class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-2 ml-1 text-left">
+                                Código de 6 dígitos
+                            </label>
+                            <input type="text" id="recover-code" name="recover-code" inputmode="numeric"
+                                autocomplete="one-time-code" maxlength="6"
+                                class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold box-border max-w-full tracking-[0.5em] text-center"
+                                placeholder="······" required>
                         </div>
 
                         <div class="group">
@@ -6028,9 +6039,12 @@
                     confirmButtonColor: '#D27D60'
                 });
             }
+            if (!client) {
+                return Swal.fire({ icon: 'error', title: 'Sin conexión', text: 'No hay conexión con el servidor. Inténtalo de nuevo.', confirmButtonColor: '#D27D60' });
+            }
 
             Swal.fire({
-                title: 'Comprobando cuenta...',
+                title: 'Enviando código...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
                 background: '#fff',
@@ -6038,58 +6052,55 @@
             });
 
             try {
-                let { data, error } = await client.rpc('verificar_usuario_recuperacion', {
-                    p_identificador: rawId
+                // El servidor responde SIEMPRE ok exista o no la cuenta (anti-enumeración).
+                const { error } = await client.functions.invoke('request-recovery-code', {
+                    body: { identifier: rawId }
                 });
-
-                if (error) {
-                    throw new Error(error.message || 'No se encontró ninguna cuenta registrada.');
-                }
-
+                if (error) throw new Error(error.message || 'No se pudo enviar el código.');
                 Swal.close();
 
-                // Mostrar paso 2
+                // Mostrar paso 2 (código + nueva contraseña).
                 document.getElementById('recover-step-1')?.classList.add('hidden');
                 const step2 = document.getElementById('recover-step-2');
                 if (step2) {
                     step2.classList.remove('hidden');
                     step2.classList.add('fade-in');
                 }
-                const nameBadge = document.getElementById('recover-user-name');
-                if (nameBadge) {
-                    nameBadge.textContent = (data && data.nombre) ? data.nombre : 'Cuenta encontrada';
-                }
-                document.getElementById('recover-new-password')?.focus();
-
+                document.getElementById('recover-code')?.focus();
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Revisa tu correo',
+                    html: 'Si existe una cuenta con estos datos, te hemos enviado un código de 6 dígitos (caduca en 15 minutos).<br><br>¿Teléfono sin email? Pide el reseteo en recepción.',
+                    confirmButtonColor: '#D27D60'
+                });
             } catch (err) {
-                console.error('Error al verificar identificador de recuperación:', err);
-                const msg = String(err?.message || '');
-                if (msg.includes('schema cache') || msg.includes('Could not find the function') || msg.includes('verificar_usuario_recuperacion')) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Migración Pendiente en Supabase',
-                        html: 'La función de base de datos para recuperar contraseñas aún no se ha ejecutado en Supabase.<br><br>Por favor, ejecuta la migración <b>202609090001_recuperar_contrasena_usuario.sql</b> en el <b>SQL Editor</b> de tu panel de Supabase.',
-                        confirmButtonColor: '#D27D60'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Cuenta no encontrada',
-                        text: 'No encontramos ninguna cuenta con este email o teléfono exacto. Comprueba los datos introducidos.',
-                        confirmButtonColor: '#D27D60'
-                    });
-                }
+                console.error('Error al solicitar código de recuperación:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo enviar',
+                    text: 'Comprueba tu conexión e inténtalo de nuevo.',
+                    confirmButtonColor: '#D27D60'
+                });
             }
         }
 
         async function ejecutarRestablecimientoContrasena(e) {
             if (e && typeof e.preventDefault === 'function') e.preventDefault();
             const rawId = document.getElementById('recover-identifier')?.value?.trim();
+            const code = document.getElementById('recover-code')?.value?.trim() || '';
             const newPwd = document.getElementById('recover-new-password')?.value || '';
             const confirmPwd = document.getElementById('recover-confirm-password')?.value || '';
 
             if (!rawId) {
                 return Swal.fire('Error', 'Falta el identificador de cuenta.', 'warning');
+            }
+            if (!/^\d{6}$/.test(code)) {
+                return Swal.fire({
+                    icon: 'warning',
+                    title: 'Código incompleto',
+                    text: 'Introduce el código de 6 dígitos que te hemos enviado por email.',
+                    confirmButtonColor: '#D27D60'
+                });
             }
             if (newPwd.length < 6) {
                 return Swal.fire({
@@ -6107,9 +6118,12 @@
                     confirmButtonColor: '#D27D60'
                 });
             }
+            if (!client) {
+                return Swal.fire({ icon: 'error', title: 'Sin conexión', text: 'No hay conexión con el servidor.', confirmButtonColor: '#D27D60' });
+            }
 
             Swal.fire({
-                title: 'Actualizando contraseña...',
+                title: 'Verificando código...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
                 background: '#fff',
@@ -6117,38 +6131,36 @@
             });
 
             try {
-                let { data, error } = await client.rpc('restablecer_contrasena_usuario', {
-                    p_identificador: rawId,
-                    p_nueva_contrasena: newPwd
+                const { data, error } = await client.functions.invoke('reset-password-with-code', {
+                    body: { identifier: rawId, code, newPassword: newPwd }
                 });
-
-                if (error) {
-                    throw new Error(error.message || 'No se pudo actualizar la contraseña.');
+                if (error || !data?.ok) {
+                    throw new Error('Código incorrecto o caducado. Pide uno nuevo e inténtalo de nuevo.');
                 }
 
                 // Éxito: Preparar login con las nuevas credenciales
                 const loginEmailInput = document.getElementById('login-email');
                 const loginPasswordInput = document.getElementById('login-password');
+                const cleanDigits = (rawId || '').replace(/\D/g, '');
+                let loginEmail = (rawId || '').toLowerCase();
+                if (!rawId.includes('@') && cleanDigits.length >= 9) {
+                    loginEmail = `movil.${cleanDigits.slice(-9)}@genyoga.studio`;
+                }
                 if (loginEmailInput) loginEmailInput.value = rawId;
                 if (loginPasswordInput) loginPasswordInput.value = newPwd;
 
                 Swal.fire({
                     icon: 'success',
                     title: '¡Contraseña restablecida!',
-                    text: 'Tu contraseña se ha actualizado correctamente en el sistema. Ya puedes acceder con ella.',
+                    text: 'Tu contraseña se ha actualizado correctamente. Ya puedes acceder con ella.',
                     confirmButtonText: 'Entrar ahora',
                     confirmButtonColor: '#D27D60'
                 }).then(async () => {
                     toggleAuth('login');
                     if (client && rawId) {
                         try {
-                            const cleanDigits = rawId.replace(/\D/g, '');
-                            let loginEmail = rawId.toLowerCase();
-                            if (!rawId.includes('@') && cleanDigits.length >= 9) {
-                                loginEmail = `movil.${cleanDigits.slice(-9)}@genyoga.studio`;
-                            }
                             const resLogin = await client.auth.signInWithPassword({
-                                email: data?.email_login || loginEmail,
+                                email: loginEmail,
                                 password: newPwd
                             });
                             if (resLogin?.data?.session) {
@@ -6161,25 +6173,18 @@
                 });
 
             } catch (err) {
-                console.error('Error al restablecer contraseña:', err);
-                const msg = String(err?.message || '');
-                if (msg.includes('schema cache') || msg.includes('Could not find the function') || msg.includes('restablecer_contrasena_usuario')) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Migración Pendiente en Supabase',
-                        html: 'La función de base de datos para restablecer contraseñas aún no se ha ejecutado en Supabase.<br><br>Por favor, ejecuta la migración <b>202609090001_recuperar_contrasena_usuario.sql</b> en el <b>SQL Editor</b> de tu panel de Supabase.',
-                        confirmButtonColor: '#D27D60'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al actualizar',
-                        text: msg || 'Ocurrió un error al actualizar la contraseña. Comprueba los datos e inténtalo de nuevo.',
-                        confirmButtonColor: '#D27D60'
-                    });
-                }
+                // Ruta esperada (código mal/caducado): aviso, no error.
+                console.warn('Recuperación no completada:', String(err?.message || err));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo completar',
+                    text: String(err?.message || 'Código incorrecto o caducado. Pide uno nuevo e inténtalo de nuevo.'),
+                    confirmButtonColor: '#D27D60'
+                });
             }
         }
+
+        
 
         // Comprobar si un visitante nuevo llega desde el calendario para registrarse o con reserva pendiente u oferta para canjear
         document.addEventListener('DOMContentLoaded', () => {
