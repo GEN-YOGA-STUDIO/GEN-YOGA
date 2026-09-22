@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 
-// Uso: node scripts/ship.mjs [version] [--aab] [--submit-ios] [--no-push] [-m "mensaje"]
+// Uso: node scripts/ship.mjs [version] [--aab] [--submit-ios] [--upload-android] [--no-push] [-m "mensaje"]
 // Sin <version> sube automáticamente la siguiente (minor+1).
 // Pipeline completo de subida de versión:
 //   bump → CSS → sync web → cap sync → batería de checks → commit+push → (AAB)
@@ -9,6 +9,7 @@ const args = process.argv.slice(2);
 const version = args.find((a) => !a.startsWith('-'));
 const buildAab = args.includes('--aab');
 const submitIos = args.includes('--submit-ios');
+const uploadAndroid = args.includes('--upload-android');
 const noPush = args.includes('--no-push');
 const msgIndex = args.findIndex((a) => a === '-m' || a === '--message');
 const message = msgIndex >= 0 ? args[msgIndex + 1] : `release(apps): sincronizar nueva versión y recursos nativos`;
@@ -71,9 +72,14 @@ try {
     run(`gh workflow run submit-ios --ref main -f version=${short} -f build=${buildCode} -f whats-new="${message.replace(/"/g, "'")}"`);
   }
 
+  if (uploadAndroid) {
+    console.log('\n━━━ 9/9 Distribución Android (AAB + Play) ━━━');
+    run('gh workflow run deploy-android --ref main -f track=internal');
+  }
+
   console.log('\n🎉 SHIP completado.');
-  console.log('   Play Store: sube app android/app-release.aab (necesitas cuenta + service account para automatizarlo con supply).');
-  console.log('   App Store: requiere Mac con Xcode (npx cap open ios) o CI con runner macos; este Windows no puede firmarlo.');
+  console.log('   Play Store: canal internal automático si existe PLAY_SERVICE_ACCOUNT_JSON; si no, el AAB queda como artefacto.');
+  console.log('   App Store: TestFlight vía deploy-ios + revisión vía submit-ios, todo en CI.');
 } catch (e) {
   console.error(`\n⛔ SHIP abortado en un paso anterior. Corrige el error y repite.`);
   process.exit(1);
