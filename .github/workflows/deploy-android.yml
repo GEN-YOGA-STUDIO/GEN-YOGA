@@ -81,7 +81,9 @@ jobs:
           GENYOGA_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           GENYOGA_KEY_ALIAS: yoga-key
           GENYOGA_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease
 
       - name: Subir AAB como artefacto
         uses: actions/upload-artifact@ea165f8d65b6 # v4
