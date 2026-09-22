@@ -1,12 +1,11 @@
 import { execSync } from 'node:child_process';
 
-// Uso: node scripts/ship.mjs 13.14 [--aab] [--tag-ios] [--no-push] [-m "mensaje"]
+// Uso: node scripts/ship.mjs 13.14 [--aab] [--no-push] [-m "mensaje"]
 // Pipeline completo de subida de versión:
 //   bump → CSS → sync web → cap sync → batería de checks → commit+push → (AAB)
 const args = process.argv.slice(2);
 const version = args.find((a) => !a.startsWith('-'));
 const buildAab = args.includes('--aab');
-const tagIos = args.includes('--tag-ios');
 const noPush = args.includes('--no-push');
 const msgIndex = args.findIndex((a) => a === '-m' || a === '--message');
 const message = msgIndex >= 0 ? args[msgIndex + 1] : `release(apps): sincronizar nueva versión y recursos nativos`;
@@ -57,18 +56,6 @@ try {
   if (buildAab) {
     console.log('\n━━━ 7/7 AAB/APK Android ━━━');
     run('python scripts/build_android.py');
-  }
-
-  if (tagIos) {
-    const short = JSON.parse(
-      execSync('node -p "require(\'./package.json\').version"', { encoding: 'utf8' }),
-    )
-      .split('.')
-      .slice(0, 2)
-      .join('.');
-    console.log(`\n━━━ 8/8 Tag ios-v${short} → dispara la subida a TestFlight ━━━`);
-    run(`git tag ios-v${short}`);
-    if (!noPush) run(`git push origin ios-v${short}`);
   }
 
   console.log('\n🎉 SHIP completado.');
