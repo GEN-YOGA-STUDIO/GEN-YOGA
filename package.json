@@ -3,10 +3,13 @@
   "version": "13.13.0",
   "description": "Sitio web de GEN Yoga y verificaciones de calidad para la versión 13.13",
   "scripts": {
-    "test": "npm run check:release && npm run check:web && npm run check:teachers && npm run check:calendar && npm run check:overlaps && npm run check:stripe && npm run check:cursor && npm run check:talleres && npm run check:welcome && npm run check:v12 && npm run check:links && npm run check:sync",
+    "test": "npm run check:release && npm run check:web && npm run check:teachers && npm run check:calendar && npm run check:overlaps && npm run check:stripe && npm run check:cursor && npm run check:talleres && npm run check:welcome && npm run check:v12 && npm run check:i18n && npm run check:deploy && npm run check:runtime && npm run check:links && npm run check:sync",
     "check:release": "node scripts/check-release-consistency.mjs",
     "check:links": "node scripts/check-native-links.mjs",
     "check:sync": "node scripts/check-app-sync.mjs",
+    "check:i18n": "node scripts/check-i18n-coverage.mjs",
+    "check:deploy": "node scripts/check-deploy-source.mjs",
+    "check:runtime": "node scripts/check-runtime.mjs",
     "check:web": "node scripts/check-web-quality.mjs",
     "check:teachers": "node scripts/check-teacher-profiles.mjs",
     "check:calendar": "node scripts/check-public-calendar.mjs",
@@ -21,6 +24,8 @@
     "bump": "node scripts/bump-version.mjs",
     "deploy:web": "node scripts/deploy-web.mjs",
     "update:apps": "node scripts/update-apps.mjs",
+    "ship": "node scripts/ship.mjs",
+    "setup:mcp": "node scripts/setup-mcp.mjs",
     "ship": "node scripts/agent-ship.mjs",
     "test:quick": "node scripts/check-web-quality.mjs",
     "dev": "npx -y live-server --port=5500"
@@ -30,6 +35,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "playwright-core": "^1.63.0",
     "tailwindcss": "3.4.19"
   }
 }

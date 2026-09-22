@@ -1,0 +1,142 @@
+name: Release iOS to TestFlight
+
+# Subida automatizada a App Store Connect (TestFlight).
+# Se lanza de dos formas:
+#   1. Manual: Actions → Release iOS to TestFlight → Run workflow
+#   2. Con tag: git tag ios-v13.13 && git push origin ios-v13.13
+#      (o local: node scripts/ship.mjs 13.14 --tag-ios)
+#
+# Secretos necesarios (repo → Settings → Secrets → Actions), crear UNA vez:
+#   APP_STORE_CONNECT_KEY_ID        → Key ID de la API key (App Store Connect → Users and Access → Integrations)
+#   APP_STORE_CONNECT_ISSUER_ID     → Issuer ID de la misma página
+#   APP_STORE_CONNECT_P8            → contenido del .p8 descargado (solo se descarga una vez)
+#   IOS_DIST_P12_BASE64             → certificado Apple Distribution (.p12) en base64
+#   IOS_DIST_P12_PASSWORD           → contraseña del .p12
+#   IOS_PROVISIONING_PROFILE_BASE64 → perfil App Store de com.genyoga.app en base64
+#   IOS_PROVISIONING_PROFILE_NAME   → nombre exacto del perfil (como aparece en developer.apple.com)
+
+on:
+  workflow_dispatch:
+    inputs:
+      changelog:
+        description: 'Notas para los testers de TestFlight'
+        required: false,
+        default: 'Correcciones y mejoras'
+  push:
+    tags: ['ios-v*']
+
+concurrency:
+  group: ios-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Puerta de calidad (checks bloqueantes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Batería completa de checks
+        run: npm test
+
+  build-upload:
+    name: Archive + TestFlight
+    needs: validate
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      BUNDLE_ID: com.genyoga.app
+      TEAM_ID: YLP3L4G7F3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Xcode más reciente del runner
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort | tail -1)" && xcodebuild -version
+
+      - name: Instalar dependencias y sincronizar Capacitor
+        run: |
+          npm ci --prefix "app ios" --no-audit --no-fund
+          npx --prefix "app ios" cap sync ios
+
+      - name: Importar certificado de distribución
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DIST_P12_BASE64 }}
+          p12-password: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+
+      - name: Instalar provisioning profile
+        run: |
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/GenYoga.mobileprovision"
+
+      - name: ExportOptions.plist (firma manual determinista)
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${TEAM_ID}</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key>
+              <string>${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}</string>
+            </dict>
+            <key>destination</key>
+            <string>export</string>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Archive (Release)
+        working-directory: app ios/ios
+        run: |
+          xcodebuild \
+            -project App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/GenYoga.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="${TEAM_ID}" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}" \
+            CURRENT_PROJECT_VERSION="$(grep -m1 'CURRENT_PROJECT_VERSION = ' App/App.xcodeproj/project.pbxproj | grep -o '[0-9]*')" \
+            archive
+
+      - name: Exportar IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/GenYoga.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+          ls -la "$RUNNER_TEMP/export"
+
+      - name: Clave API de App Store Connect
+        run: |
+          printf '%s' '${{ secrets.APP_STORE_CONNECT_P8 }}' > "$RUNNER_TEMP/api_key.p8"
+          chmod 600 "$RUNNER_TEMP/api_key.p8"
+          cat > "$RUNNER_TEMP/api_key.json" <<EOF
+          {"key_id":"${{ secrets.APP_STORE_CONNECT_KEY_ID }}","issuer_id":"${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}","key_filepath":"$RUNNER_TEMP/api_key.p8","in_house":false}
+          EOF
+
+      - name: Subir a TestFlight
+        run: |
+          gem install fastlane -N --no-document
+          IPA_PATH="$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)"
+          fastlane pilot upload \
+            --api_key_path "$RUNNER_TEMP/api_key.json" \
+            --ipa "$IPA_PATH" \
+            --changelog "${{ inputs.changelog || 'Correcciones y mejoras' }}" \
+            --distribute_external false

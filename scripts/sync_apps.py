@@ -90,6 +90,16 @@ def sync_web_assets():
                 shutil.copy2(src_file, dst_file)
                 copied_count += 1
 
+    # .well-known/ (App Links / Universal Links) debe publicarse con la web:
+    # se refleja solo en la raíz de 'ultima version' (fuente del deploy),
+    # nunca dentro de los bundles de las apps.
+    well_known_src = os.path.join(SRC_DIR, '.well-known')
+    if os.path.isdir(well_known_src):
+        well_known_dst = os.path.join(ULTIMA_VERSION, '.well-known')
+        shutil.rmtree(well_known_dst, ignore_errors=True)
+        shutil.copytree(well_known_src, well_known_dst)
+        print("✅ .well-known sincronizado a 'ultima version' (fuente del deploy).")
+
     print(f"✅ Sincronizacion completada: {copied_count} archivos actualizados en todas las plataformas.")
 
 def bump_version(new_version=None, new_build_number=None):
