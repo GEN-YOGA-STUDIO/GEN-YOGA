@@ -134,14 +134,25 @@
     var startIso = start ? start.toISOString() : null;
 
     function q(table, select, orderCol, dateCol) {
-      var query = sb.from(table).select(select).limit(FETCH_LIMIT);
-      if (dateCol && startIso) query = query.gte(dateCol, startIso);
-      if (orderCol) query = query.order(orderCol, { ascending: true });
-      return query.then(
-        function (res) {
+      // Paginado: PostgREST/Supabase topa en 1000 filas por petición; sin
+      // paginar, las tablas grandes (clases) salían TRUNCADAS y todos los
+      // agregados por clase/profesora quedaban mal.
+      var pageSize = 1000;
+      var all = [];
+      var fetchPage = function (offset) {
+        var query = sb.from(table).select(select);
+        if (dateCol && startIso) query = query.gte(dateCol, startIso);
+        if (orderCol) query = query.order(orderCol, { ascending: true });
+        return query.range(offset, offset + pageSize - 1).then(function (res) {
           if (res.error) throw res.error;
-          return { table: table, rows: res.data || [], status: 'ok' };
-        },
+          var rows = res.data || [];
+          all = all.concat(rows);
+          if (rows.length === pageSize) return fetchPage(offset + pageSize);
+          return { table: table, rows: all, status: 'ok' };
+        });
+      };
+      return fetchPage(0).then(
+        function (ok) { return ok; },
         function (err) {
           return { table: table, rows: [], status: 'error: ' + ((err && err.message) || err) };
         }
@@ -149,13 +160,13 @@
     }
 
     var jobs = [
-      q('profiles', 'id,created_at,rol', 'created_at', 'created_at'),
-      q('clases', 'id,nombre,fecha_inicio,fecha_fin,capacidad_max,plazas_reservadas,profesor_id,tipo_clase,activa,es_especial', 'fecha_inicio', 'fecha_inicio'),
+      q('profiles', 'id,created_at,rol,oferta_bienvenida_canjeada,codigo_promo_usado,bono_mensual_activo,stripe_subscription_status', 'created_at', 'created_at'),
+      q('clases', 'id,nombre,fecha_inicio,fecha_fin,capacidad_max,profesor_id,tipo_clase,activa,es_especial', 'fecha_inicio', 'fecha_inicio'),
       q('profesionales', 'id,nombre,apellidos,especialidad', 'nombre', null),
       q('reservas_yoga', 'id,clase_id,user_id,created_at,estado,num_plazas', 'created_at', 'created_at'),
-      q('reservas_psicologia', 'id,clase_id,created_at,estado', 'created_at', 'created_at'),
-      q('reservas_nutricion', 'id,clase_id,created_at,estado', 'created_at', 'created_at'),
-      q('reservas_talleres', 'id,clase_id,created_at,estado', 'created_at', 'created_at'),
+      q('reservas_psicologia', 'id,clase_id,user_id,created_at,estado', 'created_at', 'created_at'),
+      q('reservas_nutricion', 'id,clase_id,user_id,created_at,estado', 'created_at', 'created_at'),
+      q('reservas_talleres', 'id,clase_id,user_id,created_at,estado', 'created_at', 'created_at'),
       q('stripe_purchases', 'purchase_type,price_id,amount_total,currency,payment_status,fulfilled_at,created_at,is_guest', 'created_at', 'created_at'),
       q('class_credit_packs', 'pack_type,credits_total,credits_remaining,purchased_at,expires_at', 'purchased_at', 'purchased_at'),
       q('unlimited_membership_periods', 'membership_month,starts_at,ends_at,purchased_at', 'membership_month', 'purchased_at'),
@@ -193,6 +204,45 @@
     var resPsi = get('reservas_psicologia');
     var resNut = get('reservas_nutricion');
     var resTal = get('reservas_talleres');
+
+    // VERDAD TERRENA: la ocupación sale de las reservas confirmadas, NO de la
+    // columna clases.plazas_reservadas (no se mantiene: sale 0 en clases con
+    // 8 reservas reales). Mapa clase_id -> plazas confirmadas.
+    var occPlazas = {};
+    resYoga.forEach(function (r) {
+      if (String(r.estado || 'confirmada') === 'cancelada' || r.clase_id == null) return;
+      occPlazas[r.clase_id] = (occPlazas[r.clase_id] || 0) + Number(r.num_plazas || 1);
+    });
+    var occCountPsi = {}, occCountNut = {}, occCountTal = {};
+    resPsi.forEach(function (r) {
+      if (String(r.estado || 'confirmada') !== 'cancelada' && r.clase_id != null) {
+        occCountPsi[r.clase_id] = (occCountPsi[r.clase_id] || 0) + 1;
+      }
+    });
+    resNut.forEach(function (r) {
+      if (String(r.estado || 'confirmada') !== 'cancelada' && r.clase_id != null) {
+        occCountNut[r.clase_id] = (occCountNut[r.clase_id] || 0) + 1;
+      }
+    });
+    resTal.forEach(function (r) {
+      if (String(r.estado || 'confirmada') !== 'cancelada' && r.clase_id != null) {
+        occCountTal[r.clase_id] = (occCountTal[r.clase_id] || 0) + Number(r.num_plazas || 1);
+      }
+    });
+
+    // Retención y funnel por clienta (todas las verticales).
+    var userConf = {};
+    [resYoga, resPsi, resNut, resTal].forEach(function (rows) {
+      rows.forEach(function (r) {
+        if (String(r.estado || 'confirmada') === 'cancelada' || r.user_id == null) return;
+        userConf[r.user_id] = (userConf[r.user_id] || 0) + 1;
+      });
+    });
+    var idsActivas = Object.keys(userConf);
+    var rep2 = idsActivas.filter(function (id) { return userConf[id] >= 2; }).length;
+    var n1 = idsActivas.filter(function (id) { return userConf[id] === 1; }).length;
+    var n24 = idsActivas.filter(function (id) { return userConf[id] >= 2 && userConf[id] <= 4; }).length;
+    var n5 = idsActivas.filter(function (id) { return userConf[id] >= 5; }).length;
 
     function splitEstado(rows) {
       var conf = 0, canc = 0, plazas = 0;
@@ -233,7 +283,7 @@
       var v = verticalOfClase(c);
       if (v === 'Psicología' || v === 'Nutrición') return;
       var cap = Number(c.capacidad_max || 10);
-      var ocu = Number(c.plazas_reservadas || 0);
+      var ocu = occPlazas[c.id] || 0;
       var pct = cap > 0 ? Math.round((ocu / cap) * 100) : 0;
       ocupSum += pct; ocupN++;
       ocupRows.push([fmtDate(c.fecha_inicio), fmtTime(c.fecha_inicio), c.nombre || 'Sesión', profName[c.profesor_id] || '—', v, cap, ocu, pct + ' %']);
@@ -259,11 +309,14 @@
       return d !== 0 ? d : b[2] - a[2];
     });
 
-    // Profesoras.
+    // Profesoras (ocupación desde reservas reales).
     var profRows = profes.map(function (p) {
       var mine = clases.filter(function (c) { return c.profesor_id === p.id && c.fecha_inicio; });
       var plazas = 0, cap = 0;
-      mine.forEach(function (c) { plazas += Number(c.plazas_reservadas || 0); cap += Number(c.capacidad_max || 10); });
+      mine.forEach(function (c) {
+        plazas += occPlazas[c.id] || 0;
+        cap += Number(c.capacidad_max || 10);
+      });
       return [((p.nombre || '') + ' ' + (p.apellidos || '')).trim(), p.especialidad || '—', mine.length, plazas + '/' + cap, cap > 0 ? Math.round((plazas / cap) * 100) + ' %' : '—'];
     });
 
@@ -275,6 +328,37 @@
       if (paid) { ingresosCents += Number(s.amount_total || 0); ingresosN++; }
       return [fmtDate(s.fulfilled_at || s.created_at), s.purchase_type || '—', euros(s.amount_total), s.currency || 'eur', paid ? 'Cobrado' : String(s.payment_status || '—'), s.is_guest ? 'Invitada' : 'Clienta'];
     });
+    // Ingresos por tipo + ticket medio.
+    var revByType = {};
+    purchases.forEach(function (s) {
+      if (String(s.payment_status || '').toLowerCase() !== 'paid') return;
+      var k = s.purchase_type || '—';
+      revByType[k] = revByType[k] || { n: 0, cents: 0 };
+      revByType[k].n++;
+      revByType[k].cents += Number(s.amount_total || 0);
+    });
+    var revTipoRows = Object.keys(revByType).map(function (k) {
+      return [k, revByType[k].n, euros(revByType[k].cents), euros(revByType[k].cents / revByType[k].n)];
+    }).sort(function (a, b) { return revByType[b[0]].cents - revByType[a[0]].cents; });
+    var ticketMedio = ingresosN > 0 ? ingresosCents / ingresosN : 0;
+
+    // Consultas por profesional (quién atrae cada especialidad).
+    var consProMap = {};
+    function addCons(rows, esp) {
+      rows.forEach(function (r) {
+        if (String(r.estado || 'confirmada') === 'cancelada') return;
+        var c = claseById[r.clase_id];
+        if (!c) return;
+        var key = (profName[c.profesor_id] || '—') + '|' + esp;
+        consProMap[key] = (consProMap[key] || 0) + 1;
+      });
+    }
+    addCons(resPsi, 'Psicología');
+    addCons(resNut, 'Nutrición');
+    var consProRows = Object.keys(consProMap).map(function (k) {
+      var parts = k.split('|');
+      return [parts[0], parts[1], consProMap[k]];
+    }).sort(function (a, b) { return b[2] - a[2]; });
 
     // Packs y membresías.
     var packs = get('class_credit_packs');
@@ -307,6 +391,25 @@
       ['Nutrición', nutSt.conf, nutSt.canc]
     ];
 
+    // Retención y funnel (marketing: ¿vuelven? ¿por dónde entran?).
+    var pctOf = function (n, d) { return d > 0 ? Math.round((n / d) * 100) + ' %' : '—'; };
+    var retRows = [
+      ['Sin reservas', clients.length - idsActivas.length, pctOf(clients.length - idsActivas.length, clients.length)],
+      ['Con 1 reserva', n1, pctOf(n1, clients.length)],
+      ['Con 2-4 reservas', n24, pctOf(n24, clients.length)],
+      ['Con 5 o más', n5, pctOf(n5, clients.length)]
+    ];
+    var flagCount = function (f) { return clients.filter(function (u) { return u[f] === true; }).length; };
+    var funnelRows = [
+      ['Clientas totales', clients.length, '—'],
+      ['Con al menos 1 reserva', idsActivas.length, pctOf(idsActivas.length, clients.length)],
+      ['Repetidoras (2+ reservas)', rep2, pctOf(rep2, clients.length)],
+      ['Bienvenida canjeada', flagCount('oferta_bienvenida_canjeada'), pctOf(flagCount('oferta_bienvenida_canjeada'), clients.length)],
+      ['Promo canjeada', flagCount('codigo_promo_usado'), pctOf(flagCount('codigo_promo_usado'), clients.length)],
+      ['Bono mensual activo', flagCount('bono_mensual_activo'), pctOf(flagCount('bono_mensual_activo'), clients.length)],
+      ['Suscripción Stripe activa', clients.filter(function (u) { return String(u.stripe_subscription_status || '') === 'active'; }).length, pctOf(clients.filter(function (u) { return String(u.stripe_subscription_status || '') === 'active'; }).length, clients.length)]
+    ];
+
     // Reservas por vertical.
     var vertRows = [
       ['Yoga', yogaSt.conf, yogaSt.canc, yogaSt.plazas],
@@ -320,11 +423,14 @@
       ['Periodo del informe', rangeLabel],
       ['Generado', new Date().toLocaleString('es-ES')],
       ['Clientas totales', clients.length],
+      ['Clientas activas (≥1 reserva)', idsActivas.length + ' (' + pctOf(idsActivas.length, clients.length) + ')'],
+      ['Retención (2+ reservas)', rep2 + ' (' + pctOf(rep2, clients.length) + ')'],
       ['Reservas confirmadas (periodo)', totalConf],
       ['Reservas canceladas (periodo)', totalCanc],
       ['Tasa de cancelación', (totalConf + totalCanc) > 0 ? Math.round((totalCanc / (totalConf + totalCanc)) * 100) + ' %' : '—'],
-      ['Ocupación media (yoga/talleres)', ocupMedia + ' %'],
+      ['Ocupación media (plazas reservadas, yoga/talleres)', ocupMedia + ' %'],
       ['Ingresos cobrados (periodo)', euros(ingresosCents) + ' (' + ingresosN + ' cobros)'],
+      ['Ticket medio', euros(ticketMedio)],
       ['Packs vendidos (periodo)', packs.length],
       ['Membresías ilimitadas activas', membAct],
       ['Ofertas canjeadas (periodo)', ofertas.length]
@@ -346,6 +452,10 @@
         { name: 'Horarios estrella', head: ['Día', 'Franja', 'Plazas reservadas'], rows: heatRows },
         { name: 'Profesoras', head: ['Profesora', 'Especialidad', 'Clases', 'Plazas (ocup/cap)', 'Ocupación'], rows: profRows },
         { name: 'Ventas', head: ['Fecha', 'Tipo', 'Importe', 'Moneda', 'Estado', 'Canal'], rows: ventasRows },
+        { name: 'Ingresos por tipo', head: ['Tipo', 'Cobros', 'Total', 'Ticket medio'], rows: revTipoRows },
+        { name: 'Retencion', head: ['Tramo', 'Clientas', '%'], rows: retRows },
+        { name: 'Funnel', head: ['Etapa', 'Clientas', '%'], rows: funnelRows },
+        { name: 'Consultas por profesional', head: ['Profesional', 'Especialidad', 'Reservas'], rows: consProRows },
         { name: 'Packs', head: ['Tipo de pack', 'Vendidos', 'Créditos', 'Disponibles'], rows: packsRows },
         { name: 'Consultas', head: ['Especialidad', 'Confirmadas', 'Canceladas'], rows: consRows },
         { name: 'Ofertas', head: ['Tipo de oferta', 'Canjes'], rows: ofertasRows },
@@ -461,6 +571,8 @@
       tableHtml('Horarios estrella (cuándo publicar)', byName['Horarios estrella'].head, byName['Horarios estrella'].rows, 21) +
       tableHtml('Ocupación por clase (top)', byName['Ocupacion por clase'].head, byName['Ocupacion por clase'].rows.slice(0, 20), 20) +
       tableHtml('Reservas por vertical', byName['Reservas por vertical'].head, byName['Reservas por vertical'].rows, 10) +
+      tableHtml('Retención (¿vuelven?)', byName['Retencion'].head, byName['Retencion'].rows, 10) +
+      tableHtml('Ingresos por tipo', byName['Ingresos por tipo'].head, byName['Ingresos por tipo'].rows, 10) +
       tableHtml('Altas por mes', byName['Altas por mes'].head, byName['Altas por mes'].rows.slice(-12), 12) +
       (charts ? '<h2>Gráficas del dashboard</h2>' + charts : '');
     document.body.appendChild(div);

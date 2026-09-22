@@ -62,6 +62,10 @@ const mutations = ['.insert(', '.update(', '.upsert(', '.delete(', '.rpc(', 'cre
 const foundMut = mutations.filter((m) => report.toLowerCase().includes(m));
 check('solo lectura (sin insert/update/upsert/delete/rpc/DDL)', foundMut.length === 0, `vistos: ${foundMut.join(', ')}`);
 check('lee con .select(', report.includes('.select('));
+// Ocupación desde reservas reales: la columna plazas_reservadas no se mantiene.
+const reportCode = report.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+check('ocupación desde reservas (no de plazas_reservadas)', !reportCode.includes('plazas_reservadas'), 'esa columna sale 0 con reservas reales');
+check('paginado .range() (sin tope 1000 filas)', report.includes('.range('), 'clases tiene 3000+ filas');
 // Sin PII: en profiles no se seleccionan email/teléfono/nombres.
 const profilesSelects = [...report.matchAll(/\.from\('profiles'\)\.select\('([^']+)'\)/g)].map((m) => m[1]);
 const pii = ['email', 'telefono', 'nombre', 'apellidos', 'fecha_nacimiento'];
