@@ -23,7 +23,12 @@ ULTIMA_IOS_ASSETS = os.path.join(BASE_DIR, "ultima version", "app ios", "ios", "
 EXCLUDED_DIRS = {
     '.git', '.github', 'node_modules', 'android', 'ios', 'build', '.gradle',
     'app android', 'app ios', 'control de versiones web', 'docs', 'ultima version',
-    '.cursor', '.gemini', 'scratch', 'scripts', '.idea', '.temp'
+    '.cursor', '.gemini', 'scratch', 'scripts', '.idea', '.temp',
+    # Backend Supabase (migraciones, funciones, config): nunca va en los bundles
+    # de las apps — el WebView lo consume por CDN/red, no por fichero local.
+    'supabase',
+    # Restos sin referenciar (también en .gitignore).
+    'vibe_images',
 }
 EXCLUDED_EXTS = {
     '.aab', '.apk', '.zip', '.rar', '.p8', '.keystore', '.jks', '.log',

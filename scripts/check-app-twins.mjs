@@ -54,6 +54,9 @@ const plugI = Object.keys(iosCfg.plugins || {}).sort();
 check('mismos plugins', JSON.stringify(plugA) === JSON.stringify(plugI), `${plugA.join(',')} vs ${plugI.join(',')}`);
 
 console.log('\n--- 3. Contenido web idéntico byte a byte ---');
+// Solo lo visible por el usuario (html/js/css/img/fonts). El resto
+// (p. ej. supabase/ backend) no viaja en los bundles.
+const WEB_EXTS = new Set(['.html', '.js', '.css']);
 const pairs = [
   ['app android/www', 'app ios/www'],
   ['app android/android/app/src/main/assets/public', 'app ios/ios/App/App/public'],
@@ -69,8 +72,11 @@ const collect = async (dir) => {
           for (const f of await readdir(a, { withFileTypes: true })) {
             if (f.isFile()) out.set(`${r}/${f.name}`, sha256(await readFile(path.join(a, f.name))));
           }
-        } else await walk(a, r);
-      } else if (entry.isFile()) out.set(r, sha256(await readFile(a)));
+        } else if (r === '') await walk(a, r);
+        // Otros directorios (supabase/, etc.) no forman parte de la app visible.
+      } else if (entry.isFile() && WEB_EXTS.has(path.extname(entry.name).toLowerCase())) {
+        out.set(r, sha256(await readFile(a)));
+      }
     }
   };
   await walk(path.join(root, dir), '');

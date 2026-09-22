@@ -78,6 +78,13 @@ for (const target of targets) {
   } else {
     pass(`${target}: sin scripts/`);
   }
+  for (const dead of ['supabase', 'vibe_images']) {
+    if (await exists(path.join(root, target, dead))) {
+      fail(`${target}: contiene ${dead}/ (no forma parte de la app)`);
+    } else {
+      pass(`${target}: sin ${dead}/`);
+    }
+  }
 }
 
 console.log('\n--- 3. Sin vídeos huérfanos pesados ---');
