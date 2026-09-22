@@ -40,13 +40,19 @@ function base64url(input) {
   return Buffer.from(input).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function jwt() {
+function jwt(privateKey, keyId, issuerId) {
   const now = Math.floor(Date.now() / 1000);
-  const header = base64url(JSON.stringify({ alg: 'ES256', kid: KEY_ID, typ: 'JWT' }));
-  const payload = base64url(JSON.stringify({ iss: ISSUER_ID, iat: now - 60, exp: now + 15 * 60, aud: 'appstoreconnect-v1' }));
-  const signer = crypto.createSign('SHA256');
-  signer.update(`${header}.${payload}`);
-  const signature = signer.sign({ key: P8.trim() + '\n', format: 'pem' }, 'base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const header = base64url(JSON.stringify({ alg: 'ES256', kid: keyId, typ: 'JWT' }));
+  const payload = base64url(JSON.stringify({ iss: issuerId, iat: now - 60, exp: now + 15 * 60, aud: 'appstoreconnect-v1' }));
+  const data = Buffer.from(`${header}.${payload}`);
+  // ES256 en JWT exige firma cruda R||S (ieee-p1363), NO DER.
+  const keyObject = crypto.createPrivateKey({ key: privateKey.trim() + '\n', format: 'pem' });
+  const signature = crypto
+    .sign('SHA256', data, { key: keyObject, dsaEncoding: 'ieee-p1363' })
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
   return `${header}.${payload}.${signature}`;
 }
 
@@ -69,13 +75,13 @@ async function api(method, path, body = null, token) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let token = jwt();
+let token = jwt(P8, KEY_ID, ISSUER_ID);
 const auth = async (method, path, body = null) => {
   try {
     return await api(method, path, body, token);
   } catch (e) {
     if (String(e.message).includes('401')) {
-      token = jwt();
+      token = jwt(P8, KEY_ID, ISSUER_ID);
       return await api(method, path, body, token);
     }
     throw e;

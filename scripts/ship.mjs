@@ -1,7 +1,8 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 
-// Uso: node scripts/ship.mjs 13.14 [--aab] [--submit-ios] [--no-push] [-m "mensaje"]
+// Uso: node scripts/ship.mjs [version] [--aab] [--submit-ios] [--no-push] [-m "mensaje"]
+// Sin <version> sube automáticamente la siguiente (minor+1).
 // Pipeline completo de subida de versión:
 //   bump → CSS → sync web → cap sync → batería de checks → commit+push → (AAB)
 const args = process.argv.slice(2);
@@ -12,9 +13,9 @@ const noPush = args.includes('--no-push');
 const msgIndex = args.findIndex((a) => a === '-m' || a === '--message');
 const message = msgIndex >= 0 ? args[msgIndex + 1] : `release(apps): sincronizar nueva versión y recursos nativos`;
 
-if (!version || !/^\d+\.\d+(\.\d+)?$/.test(version)) {
-  console.error('\n❌ Uso: node scripts/ship.mjs <version> [--aab] [--no-push] [-m "mensaje"]');
-  console.error('   Ejemplo: node scripts/ship.mjs 13.14 --aab\n');
+if (version && !/^\d+\.\d+(\.\d+)?$/.test(version)) {
+  console.error('\n❌ Uso: node scripts/ship.mjs [version] [--aab] [--submit-ios] [--no-push] [-m "mensaje"]');
+  console.error('   Ejemplos: node scripts/ship.mjs   |   node scripts/ship.mjs 13.14 --aab\n');
   process.exit(1);
 }
 
@@ -24,10 +25,10 @@ function run(cmd, options = {}) {
 }
 
 try {
-  console.log(`\n🚀 SHIP v${version}${buildAab ? ' + AAB' : ''}${noPush ? ' (sin push)' : ''}`);
+  console.log(`\n🚀 SHIP${version ? ` v${version}` : ' (versión auto)'}${buildAab ? ' + AAB' : ''}${noPush ? ' (sin push)' : ''}`);
 
   console.log('\n━━━ 1/7 Versión y builds ━━━');
-  run(`node scripts/bump-version.mjs ${version}`);
+  run(`node scripts/bump-version.mjs${version ? ` ${version}` : ''}`);
 
   console.log('\n━━━ 2/7 CSS ━━━');
   try {
@@ -61,7 +62,8 @@ try {
   }
 
   if (submitIos) {
-    const short = version.split('.').slice(0, 2).join('.');
+    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    const short = (version || pkg.version).split('.').slice(0, 2).join('.');
     const buildCode = fs
       .readFileSync('app android/android/app/build.gradle', 'utf8')
       .match(/versionCode\s+(\d+)/)[1];
