@@ -48,33 +48,38 @@ La IA se encarga de:
    - Utilizar siempre `replace_file_content` indicando el bloque exacto a modificar, o scripts Node auxiliares si se trata de reemplazos regex globales.
 2. **Búsquedas Precisas**:
    - Usar `grep_search` con patrones claros en lugar de inspeccionar archivos línea por línea.
-3. **Versionado Atómico**:
+3. **Versionado Atómico y Gemelo**:
    - Para cambiar la versión de la app, **NO** editar los 8 HTML a mano. Ejecutar:
      ```bash
      node scripts/bump-version.mjs <nueva_version>
      ```
-     Esto actualiza en milisegundos los 8 archivos HTML, favicons, meta tags, `package.json`, Gradle Android y Xcode iOS.
+     Esto actualiza en milisegundos los 8 archivos HTML, favicons, meta tags, `package.json` (raíz + apps), Gradle Android y Xcode iOS.
+   - iOS y Android son **GEMELAS**: mismo `appId` (`com.genyoga.app`), misma versión, mismo build, mismo contenido web byte a byte. Lo verifica `npm run check:twins`. No introducir divergencias (una config por plataforma solo en lo estrictamente nativo).
 
 ---
 
-## 4. Pipeline de Validación y Despliegue (`npm run ship`)
+## 4. Pipeline de Validación y Despliegue (orden única)
 
-Para entregar cualquier tarea, se debe ejecutar el script centralizado:
+La orden canónica para una release completa y gemela es:
 
 ```bash
-npm run ship -- "tipo(alcance): descripción del cambio"
-```
-O si se incrementa versión:
-```bash
-npm run ship -- 13.3 "feat: nueva versión 13.3 con soporte de bonos ampliado"
+node scripts/ship.mjs --release
 ```
 
-El pipeline ejecuta automáticamente:
-1. `bump-version.mjs` (si se especifica nueva versión).
-2. `npm run build:css` (recompilación y minificación de Tailwind CSS).
-3. `sync_apps.py` (sincronización de ficheros web con `app android`, `app ios` y raíz del repositorio).
-4. `npm test` (ejecución de las 9 suites de pruebas de calidad).
-5. `git add`, `git commit` y notificación/empuje a GitHub.
+(Sin versión = auto minor+1. Flags: `--aab` compila Android en local, `--submit-ios` / `--upload-android` lanzan solo esa pata.)
+`ship` ejecuta en orden: bump → CSS → `sync_apps.py` → `cap sync` (android+ios) → `npm test` (18 checks, bloqueante) → commit+push → dispara `deploy-ios` y `deploy-android` en CI. El `submit-ios` a revisión se encadena solo al terminar `deploy-ios` en verde.
+
+Workflows (todos con acciones fijadas por SHA para reproducibilidad):
+- `deploy-ios.yml` (dispatch): gate de checks → archive en macOS → TestFlight vía `altool` (firma automática con API key; secreto `APP_STORE_CONNECT_PRIVATE_KEY` ya puesto).
+- `submit-ios.yml` (auto tras deploy-ios verde o dispatch): crea/reutiliza versión, espera build, asocia, novedades, envía a revisión.
+- `deploy-android.yml` (dispatch, track `internal`): gate → AAB firmado en CI → subida a Play si existe `PLAY_SERVICE_ACCOUNT_JSON` (si no, deja el AAB como artefacto).
+- `deploy-pages.yml` (auto en push a main): publica la web desde `ultima version/` (incluye `.well-known`).
+
+Reglas:
+- NO usar `npx cap` con `--prefix` (no cambia el CWD del binario); usar `working-directory` en CI.
+- NO ejecutar `node`/`npm` en el equipo corporativo con Panda: toda validación corre en CI.
+- MCPs del proyecto (`opencode.json` + `npm run setup:mcp` / `SETUP_MCP.bat`): supabase, github, stripe, context7, playwright.
+- Tras cambios en `scripts/sync_apps.py`, `capacitor-bridge.js`, `exportOptions.plist`, manifiestos o entitlements, revalidar con `npm test` (o dejar que el gate de CI lo haga).
 
 ---
 
