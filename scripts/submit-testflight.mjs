@@ -114,12 +114,15 @@ if (version) {
 }
 
 // 3. Esperar build procesado (hasta ~40 min)
+// NOTA: /v1/apps/{id}/builds no admite filter ni sort → se filtra en cliente.
 console.log(`  ⏳ Esperando build ${BUILD} procesado en TestFlight...`);
 let build = null;
 const deadline = Date.now() + 40 * 60 * 1000;
 for (;;) {
-  const builds = await auth('GET', `/v1/apps/${app.id}/builds?filter[version]=${encodeURIComponent(BUILD)}&limit=10&sort=-uploadedDate`);
-  build = (builds?.data || [])[0];
+  const builds = await auth('GET', `/v1/builds?filter[app]=${app.id}&limit=200`);
+  const candidates = (builds?.data || []).filter((b) => String(b.attributes?.version) === String(BUILD));
+  candidates.sort((a, b) => new Date(b.attributes?.uploadedDate) - new Date(a.attributes?.uploadedDate));
+  build = candidates[0] || null;
   const state = build?.attributes?.processingState;
   if (build && (state === 'VALID' || state === 'INVALID')) break;
   if (Date.now() > deadline) throw new Error(`Build ${BUILD} no apareció/validó en 40 min (último estado: ${state || 'ausente'}).`);
