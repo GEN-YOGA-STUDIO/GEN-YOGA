@@ -23,7 +23,7 @@ const BUILD = get('build');
 const WHATS_NEW = get('whats-new', 'Correcciones y mejoras');
 const PLATFORM = get('platform', 'IOS');
 const BUNDLE_ID = get('bundle-id', 'com.genyoga.app');
-const KEY_ID = process.env.APP_STORE_CONNECT_KEY_ID || 'GUZVXW5P4X';
+const KEY_ID = process.env.APP_STORE_CONNECT_KEY_ID || 'W475U96PNK';
 const ISSUER_ID = process.env.APP_STORE_CONNECT_ISSUER_ID || 'c8f0f943-872c-4153-b89a-86fb7cc78b8f';
 const P8 = process.env.APP_STORE_CONNECT_P8 || process.env.APP_STORE_CONNECT_PRIVATE_KEY;
 
