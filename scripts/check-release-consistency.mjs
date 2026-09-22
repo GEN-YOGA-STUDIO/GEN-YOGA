@@ -79,7 +79,13 @@ const capacitorPaths = [
 ];
 const appIds = [];
 for (const p of capacitorPaths) {
-  const cfg = JSON.parse(await read(p));
+  let cfg;
+  try {
+    cfg = JSON.parse(await read(p));
+  } catch {
+    fail(`${p}: ilegible o ausente — ejecuta 'npx cap sync' en su plataforma y repite`);
+    continue;
+  }
   appIds.push(cfg.appId);
   check(`${p}: appId = ${appIds[0]}`, cfg.appId === appIds[0], `visto: ${cfg.appId}`);
 }

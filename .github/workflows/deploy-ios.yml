@@ -9,7 +9,25 @@ on:
         default: 'Release v13.4: Blindaje Notch Safe-Area y unificación completa de clases, eventos y bonos'
 
 jobs:
+  validate:
+    name: Puerta de calidad (checks bloqueantes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependencias y sincronizar Capacitor
+        run: |
+          npm ci --prefix "app android" --no-audit --no-fund
+          npm ci --prefix "app ios" --no-audit --no-fund
+          npx --prefix "app android" cap sync android
+          npx --prefix "app ios" cap sync ios
+      - name: Batería completa de checks
+        run: npm test
+
   build-and-deploy:
+    needs: validate
     runs-on: macos-15
     timeout-minutes: 45
 
