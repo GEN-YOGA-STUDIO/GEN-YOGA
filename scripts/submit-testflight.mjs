@@ -102,15 +102,33 @@ let version = (versions?.data || []).find((v) => v.attributes?.versionString ===
 if (version) {
   console.log(`  ✅ Versión ${VERSION} ya existe (${version.id}, estado: ${version.attributes?.appStoreState})`);
 } else {
-  const created = await auth('POST', '/v1/appStoreVersions', {
-    data: {
-      type: 'appStoreVersions',
-      attributes: { platform: PLATFORM, versionString: VERSION },
-      relationships: { app: { data: { type: 'apps', id: app.id } } },
-    },
-  });
-  version = created.data;
-  console.log(`  ✅ Versión ${VERSION} creada (${version.id})`);
+  const create = () =>
+    auth('POST', '/v1/appStoreVersions', {
+      data: {
+        type: 'appStoreVersions',
+        attributes: { platform: PLATFORM, versionString: VERSION },
+        relationships: { app: { data: { type: 'apps', id: app.id } } },
+      },
+    });
+  try {
+    version = (await create()).data;
+    console.log(`  ✅ Versión ${VERSION} creada (${version.id})`);
+  } catch (e) {
+    if (!String(e.message).includes('409')) throw e;
+    // Solo cabe una versión editable a la vez: si hay otra en PREPARE
+    // (p. ej. una 13.13 que nunca se envió), se elimina y se reintenta.
+    // Jamás se toca nada en revisión/aprobado/publicado.
+    const stale = (versions?.data || []).filter(
+      (v) => v.attributes?.versionString !== VERSION && v.attributes?.appStoreState === 'PREPARE_FOR_SUBMISSION',
+    );
+    if (stale.length === 0) throw e;
+    for (const s of stale) {
+      await auth('DELETE', `/v1/appStoreVersions/${s.id}`);
+      console.log(`  🧹 Versión obsoleta ${s.attributes?.versionString} eliminada (${s.id})`);
+    }
+    version = (await create()).data;
+    console.log(`  ✅ Versión ${VERSION} creada (${version.id})`);
+  }
 }
 
 // 3. Esperar build procesado (hasta ~40 min)
