@@ -22,6 +22,10 @@ function check(desc, condition, hint = '') {
 
 const androidCfg = JSON.parse(await read('app android/capacitor.config.json'));
 const appId = androidCfg.appId;
+// Los Universal Links son de iOS: el appID esperado usa el bundle iOS,
+// no el package Android (difieren por el historial de Play Store).
+const iosCfg = JSON.parse(await read('app ios/capacitor.config.json'));
+const iosAppId = iosCfg.appId;
 const manifest = await read('app android/android/app/src/main/AndroidManifest.xml');
 const pbxproj = await read('app ios/ios/App/App.xcodeproj/project.pbxproj');
 const teams = [...new Set([...pbxproj.matchAll(/DEVELOPMENT_TEAM = ([^;]+);/g)].map((m) => m[1].trim()))];
@@ -47,7 +51,7 @@ console.log('\n--- 2. iOS Universal Links ---');
 const aasa = JSON.parse(await read('.well-known/apple-app-site-association'));
 const applinks = aasa?.applinks?.details?.[0];
 check('TEAM único en el proyecto iOS', teams.length === 1 && /^[A-Z0-9]{10}$/.test(team), `visto: ${teams.join(', ')}`);
-const expectedAppId = `${team}.${appId}`;
+const expectedAppId = `${team}.${iosAppId}`;
 check(`AASA applinks incluye ${expectedAppId}`, (applinks?.appIDs || []).includes(expectedAppId), `visto: ${(applinks?.appIDs || []).join(', ')}`);
 check('AASA cubre success/cancel (retorno de Stripe)', (applinks?.paths || []).some((p) => p.includes('success.html')) && (applinks?.paths || []).some((p) => p.includes('cancel.html')), `paths: ${(applinks?.paths || []).join(', ')}`);
 check('AASA webcredentials incluye la app', (aasa?.webcredentials?.apps || []).includes(expectedAppId));
