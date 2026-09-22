@@ -42,6 +42,17 @@ check(
   profile.includes(`src="marketing-report.js?v=${short}"`),
   'pin de versión',
 );
+// Coherencia del interruptor: flag apagado => botones ocultos; flag
+// encendido => botones visibles. Así "actívala" no puede quedar a medias.
+const flagOn = /var INFORME_MARKETING_ENABLED\s*=\s*true/.test(report);
+const btnExcelHidden = /id="btn-informe-excel"[^>]*class="[^"]*\bhidden\b/.test(profile);
+const btnPdfHidden = /id="btn-informe-pdf"[^>]*class="[^"]*\bhidden\b/.test(profile);
+check(
+  `interruptor coherente (flag ${flagOn ? 'ON' : 'OFF'})`,
+  (flagOn && !btnExcelHidden && !btnPdfHidden) || (!flagOn && btnExcelHidden && btnPdfHidden),
+  'flag y clases hidden de los botones deben ir juntos',
+);
+check('descarga bloqueada sin flag', report.includes('if (!INFORME_MARKETING_ENABLED)')); 
 check(
   'SheetJS por CDN con versión exacta',
   /cdn\.jsdelivr\.net\/npm\/xlsx@\d+\.\d+\.\d+\/dist\/xlsx\.full\.min\.js/.test(profile),

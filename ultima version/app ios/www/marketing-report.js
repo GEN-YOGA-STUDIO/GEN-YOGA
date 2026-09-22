@@ -11,6 +11,10 @@
   var REPORT_VERSION = '15.0';
   var FETCH_LIMIT = 10000;
 
+  // Interruptor del informe marketing: en false los botones están ocultos y la
+  // descarga bloqueada (ni siquiera por consola). Para activarlo, poner true.
+  var INFORME_MARKETING_ENABLED = false;
+
   // Tablas que el informe puede leer. El resto está prohibido por construcción.
   var ALLOWED_SOURCES = [
     'profiles', 'clases', 'profesionales', 'tipos_clases',
@@ -584,6 +588,10 @@
   // Entrada principal (global: la llaman los botones del dashboard).
   // ------------------------------------------------------------------
   async function descargarInformeMarketing(formato) {
+    if (!INFORME_MARKETING_ENABLED) {
+      swalError('No disponible', 'La descarga de informes está desactivada actualmente.');
+      return;
+    }
     try {
       // eslint-disable-next-line no-undef
       if (typeof isAdmin !== 'undefined' && !isAdmin) {
@@ -633,4 +641,15 @@
     descargarInformeMarketing: descargarInformeMarketing,
     _helpers: { fmtDate: fmtDate, fmtMonth: fmtMonth, fmtTime: fmtTime, monthKey: monthKey, weekdayEs: weekdayEs, slotEs: slotEs }
   };
+
+  // Los botones nacen ocultos; solo se muestran con el interruptor activo.
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!INFORME_MARKETING_ENABLED) return;
+      ['btn-informe-excel', 'btn-informe-pdf'].forEach(function (id) {
+        var b = document.getElementById(id);
+        if (b) b.classList.remove('hidden');
+      });
+    });
+  }
 })();
