@@ -2,29 +2,29 @@
 <html lang="es">
 
 <head>
-    <script>window.isNativeApp=true;document.documentElement.classList.add("is-native-app");</script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="application-version" content="13.10" />
+    <meta name="application-version" content="13.13" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.10" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.10" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=13.13" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=13.13" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#f8f6f2" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=13.10">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=13.13">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
-    <script src="teacher-profiles.js?v=13.10"></script>
+    <script src="teacher-profiles.js?v=13.13"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=13.10"></script>
+    <script src="i18n.js?v=13.13"></script>
+    <script src="capacitor-bridge.js?v=13.13" defer></script>
     <script>
         (function () {
             try {
@@ -122,6 +122,20 @@
             margin-left: auto;
             padding-right: 4px;
             filter: invert(34%) sepia(21%) saturate(928%) hue-rotate(330deg) brightness(95%) contrast(88%);
+        }
+
+        /* ======================================================= */
+        /* 1.5. CABECERA EN MOVIL: sin solapes ni recortes        */
+        /* ======================================================= */
+        @media (max-width: 639px) {
+            /* Píldora solo-avatar: el nombre ya aparece en el cuerpo del perfil.
+               Libera ~90px para que los botones de acción no se recorten en pantallas de 360px. */
+            .profile-header-meta { display: none !important; }
+            #header-profile-summary { padding-left: 6px !important; padding-right: 6px !important; }
+        }
+        @media (max-width: 359px) {
+            /* iPhone SE 1ª gen. y similares: encoger logo para no recortar "Cerrar sesión" */
+            .profile-header-top-row a[aria-label] img { height: 1.5rem !important; width: auto !important; }
         }
 
         /* ======================================================= */
@@ -1949,20 +1963,20 @@
                             <!-- Botones fijos de usuario: Editar Perfil, Info Bonos, Cerrar Sesión -->
                             <div class="profile-header-user-actions flex items-center gap-1 sm:gap-1.5 shrink-0">
                                 <button id="header-btn-edit-profile" type="button" onclick="abrirEditarPerfil()"
-                                    class="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 min-w-[32px] min-h-[32px] rounded-xl text-cocoa/75 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
+                                    class="inline-flex items-center justify-center w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl text-cocoa/75 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
                                     title="Ajustes de Perfil"
                                     aria-label="Ajustes de Perfil">
                                     <i class="ph-bold ph-gear text-sm sm:text-base"></i>
                                     <span class="sr-only" data-i18n="profile_btn_edit_profile">Editar perfil</span>
                                 </button>
                                 <button id="header-btn-info-bonos" type="button" onclick="mostrarInfoBonosSaldos(event)"
-                                    class="client-only inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 min-w-[32px] min-h-[32px] rounded-xl text-cocoa/70 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
+                                    class="client-only inline-flex items-center justify-center w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl text-cocoa/70 hover:text-olive hover:bg-olive/10 border border-cocoa/15 bg-white shadow-2xs transition shrink-0 cursor-pointer active:scale-95"
                                     title="Guía de bonos y saldos"
                                     aria-label="Información de bonos y saldos">
                                     <i class="ph-bold ph-info text-sm sm:text-base"></i>
                                 </button>
                                 <button id="header-btn-logout" type="button" onclick="logout()" aria-label="Cerrar sesión"
-                                    class="inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 min-w-[32px] min-h-[32px] text-cocoa/60 hover:text-red-600 transition hover:bg-red-50 rounded-xl border border-cocoa/15 bg-white shadow-2xs group shrink-0 active:scale-95"
+                                    class="inline-flex items-center justify-center w-10 h-10 min-w-[40px] min-h-[40px] text-cocoa/60 hover:text-red-600 transition hover:bg-red-50 rounded-xl border border-cocoa/15 bg-white shadow-2xs group shrink-0 active:scale-95"
                                     title="Cerrar Sesión">
                                     <i class="ph-bold ph-sign-out text-sm sm:text-base group-hover:-translate-x-0.5 transition"></i>
                                 </button>
@@ -1978,7 +1992,7 @@
                     </div>
                 </div>
 
-                <div class="admin-only w-full bg-cocoa text-ivory text-xm font-medium shadow-inner">
+                <div class="admin-only w-full bg-cocoa text-ivory text-xs font-medium shadow-inner">
                     <div class="max-w-7xl mx-auto flex flex-wrap">
                         <button onclick="switchTab('crear')" id="tab-crear"
                             class="px-7 py-4 border-b-2 border-sand bg-cocoa/80 flex items-center gap-2 transition hover:bg-cocoa">
@@ -2496,7 +2510,7 @@
 
                 <!-- 4. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
                 <div id="view-psicologia" class="hidden fade-in">
-                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.10 para simplificación) -->
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v13.13 para simplificación) -->
                     <div class="hidden" id="consultas-subtabs-wrapper">
                         <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"></button>
                         <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"></button>
@@ -2924,6 +2938,11 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap w-full md:w-auto justify-end">
+                            <button type="button" id="btn-fusionar-par-banner" onclick="abrirModalFusionarParActual()"
+                                style="background-color: #d97706; color: #ffffff;"
+                                class="hidden px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer hover:bg-amber-700">
+                                <i class="ph-bold ph-arrows-merge"></i> Fusionar este par
+                            </button>
                             <button type="button" onclick="abrirModalDetalleDuplicados()"
                                 class="px-3 py-2 bg-cocoa text-white hover:bg-black rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer">
                                 <i class="ph-bold ph-list-magnifying-glass"></i> Ver comparativa
@@ -3959,7 +3978,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v13.10. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v13.13. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4038,7 +4057,7 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.10: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.13: Todas las clases son regulares) -->
                     <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4347,7 +4366,7 @@
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.10: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v13.13: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4963,7 +4982,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '13.10';
+        const APP_VERSION = '13.13';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -7343,7 +7362,7 @@
                 const expiry = Date.parse(pack.expires_at);
                 return total + (Number.isFinite(expiry) && expiry > now ? toSafeNumber(pack.credits_remaining) : 0);
             }, 0);
-            // v13.10: Fuente canónica e inmutable de la verdad: la celda profiles.bonos de la base de datos
+            // v13.13: Fuente canónica e inmutable de la verdad: la celda profiles.bonos de la base de datos
             const dbBonos = toSafeNumber(currentUserProfile?.bonos !== undefined ? currentUserProfile.bonos : userLegacyBonos);
             userBonos = dbBonos;
             userLegacyBonos = Math.max(0, dbBonos - activePackCredits);
@@ -7363,7 +7382,7 @@
         }
 
         function getAvailableClassCreditsForDate(value) {
-            // v13.10: El saldo real disponible viene determinado estrictamente por la celda 'bonos' de profiles
+            // v13.13: El saldo real disponible viene determinado estrictamente por la celda 'bonos' de profiles
             return toSafeNumber(currentUserProfile?.bonos !== undefined ? currentUserProfile.bonos : userLegacyBonos);
         }
 
@@ -7620,7 +7639,7 @@
             if (!profileWrapper) return;
 
             const packLabels = { clase_suelta: 'Clase suelta', pack_4: 'Pack 4', pack_6: 'Pack 6', pack_10: 'Pack 10' };
-            // v13.10: Reconciliar los créditos restantes mostrados en los packs con el saldo real userBonos
+            // v13.13: Reconciliar los créditos restantes mostrados en los packs con el saldo real userBonos
             let bonosRestantesPresupuesto = userBonos;
             const packRows = userClassPacks.length
                 ? userClassPacks.map(pack => {
@@ -7688,7 +7707,7 @@
             const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
             const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
 
-            // Regla v13.10: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
+            // Regla v13.13: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
             const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
@@ -7863,7 +7882,7 @@
         }
 
         async function checkProfile() {
-            // v13.10: Consultar '*' prioritariamente como en la vista admin, y asegurar bonos y saldo_clases_gratis en todas las variantes
+            // v13.13: Consultar '*' prioritariamente como en la vista admin, y asegurar bonos y saldo_clases_gratis en todas las variantes
             const profileSelectVariants = [
                 '*',
                 'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status, oferta_compania_canjeada, oferta_consultas_canjeada',
@@ -7952,7 +7971,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v13.10: Cargar ofertas promocionales canjeadas por este usuario
+                // v13.13: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -8080,7 +8099,7 @@
                 comprarBonoMensual();
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v13.10)
+            // Comprobar si el usuario llega con una oferta para canjear (v13.13)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -10312,12 +10331,12 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = esClaseEspecialTipo(clase) || esTallerTipo(clase);
 
-            // v13.10: Yoga en Compañía inactivado al 100%
+            // v13.13: Yoga en Compañía inactivado al 100%
             const modalityCompania = '';
             const esCompania = false;
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = false;
-            // v13.10: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
+            // v13.13: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
             const esSesionGratuita = !esEspecial;
             const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
             const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
@@ -14293,7 +14312,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v13.10: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v13.13: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
@@ -14977,9 +14996,24 @@
         function renderActionsAdmin(u) {
             const uId = escapeHtml(String(u.id || ''));
             const isDupe = Boolean(duplicateUserIds && duplicateUserIds.has(String(u.id)));
+            let btnFusionarDirectoHtml = '';
+            if (filtroDuplicadosParActual && Array.isArray(filtroDuplicadosParActual) && filtroDuplicadosParActual.length === 2 && filtroDuplicadosParActual.map(String).includes(String(u.id))) {
+                const otherId = filtroDuplicadosParActual.find(id => String(id) !== String(u.id));
+                if (otherId) {
+                    btnFusionarDirectoHtml = `
+                    <button type="button" onclick="abrirModalFusionarPerfiles('${uId}', '${escapeHtml(String(otherId))}')"
+                        style="background-color: #d97706; color: #ffffff;"
+                        class="px-2.5 py-1.5 hover:bg-amber-700 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
+                        title="Fusionar con el otro perfil duplicado">
+                        <i class="ph-bold ph-arrows-merge"></i> Fusionar
+                    </button>
+                    `;
+                }
+            }
 
             return `
                 <div class="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
+                    ${btnFusionarDirectoHtml}
                     ${isDupe ? `
                     <button type="button" onclick="abrirComparativaParaUsuario('${uId}')"
                         class="px-2 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
@@ -16165,6 +16199,7 @@
             const badge = document.getElementById('duplicate-count-badge');
             const desc = document.getElementById('duplicate-banner-desc');
             const btnTodos = document.getElementById('btn-mostrar-todos-dupes');
+            const btnFusionarPar = document.getElementById('btn-fusionar-par-banner');
             if (!banner) return;
 
             if (!filtroDuplicadosActivo) {
@@ -16174,14 +16209,16 @@
 
             banner.classList.remove('hidden');
 
-            if (filtroDuplicadosParActual && Array.isArray(filtroDuplicadosParActual)) {
+            if (filtroDuplicadosParActual && Array.isArray(filtroDuplicadosParActual) && filtroDuplicadosParActual.length === 2) {
                 if (badge) badge.textContent = '1 par seleccionado';
-                if (desc) desc.textContent = 'Mostrando únicamente el par de clientes en comparación.';
+                if (desc) desc.textContent = 'Mostrando únicamente el par de clientes en comparación para revisar o fusionar.';
                 if (btnTodos) btnTodos.classList.remove('hidden');
+                if (btnFusionarPar) btnFusionarPar.classList.remove('hidden');
             } else {
                 if (badge) badge.textContent = `${duplicatePairsFound.length} posibles pares (${duplicateUserIds.size} clientes)`;
                 if (desc) desc.textContent = 'Mostrando todos los perfiles de clientes sospechosos de duplicidad.';
                 if (btnTodos) btnTodos.classList.add('hidden');
+                if (btnFusionarPar) btnFusionarPar.classList.add('hidden');
             }
         }
 
@@ -16281,6 +16318,11 @@
                                 ${crossOrigin ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200">⚡ Mixto: Mostrador + Online</span>' : ''}
                             </div>
                             <div class="flex items-center gap-2">
+                                <button type="button" onclick="abrirModalFusionarPerfiles('${escapeHtml(String(u1.id))}', '${escapeHtml(String(u2.id))}')"
+                                    style="background-color: #d97706; color: #ffffff;"
+                                    class="px-3 py-1.5 hover:bg-amber-700 rounded-xl text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
+                                    <i class="ph-bold ph-arrows-merge"></i> Fusionar
+                                </button>
                                 <button type="button" onclick="filtrarSoloParDuplicado('${escapeHtml(String(u1.id))}', '${escapeHtml(String(u2.id))}')"
                                     class="px-3 py-1.5 bg-cocoa text-white hover:bg-black rounded-xl text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
                                     <i class="ph-bold ph-faders"></i> Ver en tabla
@@ -16373,6 +16415,475 @@
                 }
             });
         }
+
+        let modalFusionState = null;
+
+        function abrirModalFusionarParActual() {
+            if (filtroDuplicadosParActual && Array.isArray(filtroDuplicadosParActual) && filtroDuplicadosParActual.length === 2) {
+                abrirModalFusionarPerfiles(filtroDuplicadosParActual[0], filtroDuplicadosParActual[1]);
+            }
+        }
+
+        async function abrirModalFusionarPerfiles(u1Id, u2Id) {
+            Swal.close();
+
+            let u1 = (allUsersCache || []).find(u => String(u.id) === String(u1Id));
+            let u2 = (allUsersCache || []).find(u => String(u.id) === String(u2Id));
+
+            if (!u1 || !u2) {
+                try {
+                    const { data: fetchedUsers, error } = await client.from('profiles').select('*').in('id', [u1Id, u2Id]);
+                    if (error || !fetchedUsers || fetchedUsers.length < 2) {
+                        return Swal.fire('Error', 'No se pudieron recuperar los datos de los usuarios a fusionar.', 'error');
+                    }
+                    u1 = fetchedUsers.find(u => String(u.id) === String(u1Id));
+                    u2 = fetchedUsers.find(u => String(u.id) === String(u2Id));
+                } catch (e) {
+                    return Swal.fire('Error', 'Error al consultar perfiles: ' + (e.message || e), 'error');
+                }
+            }
+
+            if (!u1 || !u2) {
+                return Swal.fire('Error', 'No se encontraron ambos perfiles para realizar la fusión.', 'error');
+            }
+
+            if (String(u1.id) === String(u2.id)) {
+                return Swal.fire('Aviso', 'No se puede fusionar un perfil consigo mismo.', 'warning');
+            }
+
+            // Consultar reservas de ambos perfiles
+            let resCounts1 = { yoga: 0, psico: 0, nutri: 0, talleres: 0 };
+            let resCounts2 = { yoga: 0, psico: 0, nutri: 0, talleres: 0 };
+
+            try {
+                const [y1, p1, n1, t1, y2, p2, n2, t2] = await Promise.all([
+                    client.from('reservas_yoga').select('id', { count: 'exact', head: true }).eq('user_id', u1.id),
+                    client.from('reservas_psicologia').select('id', { count: 'exact', head: true }).eq('user_id', u1.id),
+                    client.from('reservas_nutricion').select('id', { count: 'exact', head: true }).eq('user_id', u1.id),
+                    client.from('reservas_talleres').select('id', { count: 'exact', head: true }).eq('user_id', u1.id),
+                    client.from('reservas_yoga').select('id', { count: 'exact', head: true }).eq('user_id', u2.id),
+                    client.from('reservas_psicologia').select('id', { count: 'exact', head: true }).eq('user_id', u2.id),
+                    client.from('reservas_nutricion').select('id', { count: 'exact', head: true }).eq('user_id', u2.id),
+                    client.from('reservas_talleres').select('id', { count: 'exact', head: true }).eq('user_id', u2.id)
+                ]);
+                resCounts1 = { yoga: y1?.count || 0, psico: p1?.count || 0, nutri: n1?.count || 0, talleres: t1?.count || 0 };
+                resCounts2 = { yoga: y2?.count || 0, psico: p2?.count || 0, nutri: n2?.count || 0, talleres: t2?.count || 0 };
+            } catch (err) {
+                console.warn('Error contando reservas para modal de fusión:', err);
+            }
+
+            const totalRes1 = resCounts1.yoga + resCounts1.psico + resCounts1.nutri + resCounts1.talleres;
+            const totalRes2 = resCounts2.yoga + resCounts2.psico + resCounts2.nutri + resCounts2.talleres;
+
+            const isMostrador1 = esClienteMostrador(u1);
+            const isMostrador2 = esClienteMostrador(u2);
+
+            let defaultKeepId = String(u1.id);
+            let recommendBadge1 = '';
+            let recommendBadge2 = '';
+
+            if (!isMostrador1 && isMostrador2) {
+                defaultKeepId = String(u1.id);
+                recommendBadge1 = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 border border-amber-300">⭐ Sugerido (Cuenta Online con Login)</span>';
+            } else if (isMostrador1 && !isMostrador2) {
+                defaultKeepId = String(u2.id);
+                recommendBadge2 = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 border border-amber-300">⭐ Sugerido (Cuenta Online con Login)</span>';
+            } else {
+                if (totalRes1 >= totalRes2) {
+                    defaultKeepId = String(u1.id);
+                    if (totalRes1 > totalRes2) {
+                        recommendBadge1 = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">⭐ Mayor actividad (${totalRes1} reservas)</span>`;
+                    }
+                } else {
+                    defaultKeepId = String(u2.id);
+                    recommendBadge2 = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">⭐ Mayor actividad (${totalRes2} reservas)</span>`;
+                }
+            }
+
+            const c1 = obtenerDatosContactoPerfil(u1);
+            const c2 = obtenerDatosContactoPerfil(u2);
+            const saldo1 = formatSaldoResumenCliente(u1);
+            const saldo2 = formatSaldoResumenCliente(u2);
+
+            function formatDetalleRes(counts) {
+                const total = (counts.yoga || 0) + (counts.psico || 0) + (counts.nutri || 0) + (counts.talleres || 0);
+                if (total === 0) return '<span class="text-gray-400 italic">0 reservas</span>';
+                const parts = [];
+                if (counts.yoga) parts.push(`${counts.yoga} yoga`);
+                if (counts.psico) parts.push(`${counts.psico} psico`);
+                if (counts.nutri) parts.push(`${counts.nutri} nutrición`);
+                if (counts.talleres) parts.push(`${counts.talleres} talleres`);
+                return `<strong>${total} reservas</strong> <span class="text-cocoa/60">(${parts.join(', ')})</span>`;
+            }
+
+            function formatFechaReg(dStr) {
+                if (!dStr) return '<span class="text-gray-400 italic">Sin fecha</span>';
+                try {
+                    const d = new Date(dStr);
+                    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+                } catch {
+                    return escapeHtml(dStr);
+                }
+            }
+
+            modalFusionState = {
+                u1,
+                u2,
+                c1,
+                c2,
+                totalRes1,
+                totalRes2,
+                resCounts1,
+                resCounts2,
+                selectedKeepId: defaultKeepId
+            };
+
+            const origin1Badge = isMostrador1
+                ? '<span class="bg-olive/15 text-olive font-bold text-[10px] px-2 py-0.5 rounded-full border border-olive/30">Mostrador (Sin login)</span>'
+                : '<span class="bg-blue-50 text-blue-800 font-bold text-[10px] px-2 py-0.5 rounded-full border border-blue-200">Cuenta Online</span>';
+
+            const origin2Badge = isMostrador2
+                ? '<span class="bg-olive/15 text-olive font-bold text-[10px] px-2 py-0.5 rounded-full border border-olive/30">Mostrador (Sin login)</span>'
+                : '<span class="bg-blue-50 text-blue-800 font-bold text-[10px] px-2 py-0.5 rounded-full border border-blue-200">Cuenta Online</span>';
+
+            const modalHtml = `
+                <div class="space-y-4 max-h-[75vh] overflow-y-auto pr-1 text-left font-sans">
+                    <p class="text-xs text-cocoa/75 leading-relaxed">
+                        Selecciona a continuación cuál de los dos perfiles deseas <strong>CONSERVAR</strong>. 
+                        Todas las reservas, compras, bonos y notas del perfil que se elimine 
+                        <strong>se traspasarán automáticamente</strong> al perfil conservado para que ninguna clase quede suelta.
+                    </p>
+
+                    <!-- Selector de los 2 perfiles -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+                        <!-- Tarjeta Perfil A -->
+                        <div id="card-fusion-u1" onclick="actualizarSeleccionFusionModal('${escapeHtml(String(u1.id))}')"
+                            class="p-4 rounded-2xl border-2 transition cursor-pointer relative shadow-2xs space-y-2.5">
+                            <div class="flex items-center justify-between gap-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-[10px] font-bold uppercase text-cocoa/50 tracking-wider">Perfil A</span>
+                                    ${origin1Badge}
+                                </div>
+                                <div id="badge-decision-u1"></div>
+                            </div>
+                            ${recommendBadge1 ? `<div>${recommendBadge1}</div>` : ''}
+                            <div>
+                                <div class="font-bold text-sm text-cocoa">${escapeHtml(c1.nombreCompleto)}</div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1 mt-0.5">
+                                    <span>📱</span>
+                                    <span>${c1.cleanTel ? escapeHtml(c1.cleanTel) : '<em class="text-cocoa/40">Sin teléfono</em>'}</span>
+                                </div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1 truncate mt-0.5" title="${escapeHtml(u1.email || '')}">
+                                    <span>✉️</span>
+                                    <span>${c1.realEmail ? escapeHtml(c1.realEmail) : `<em class="text-cocoa/40">${escapeHtml(u1.email || 'Sin email')}</em>`}</span>
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-cocoa/80 bg-sand/20 rounded-xl p-2.5 space-y-1 border border-cocoa/10">
+                                <div><i class="ph-bold ph-calendar-check text-olive"></i> ${formatDetalleRes(resCounts1)}</div>
+                                <div><i class="ph-bold ph-wallet text-olive"></i> <strong>Saldos:</strong> ${escapeHtml(saldo1)}</div>
+                                <div class="text-[10px] text-cocoa/60"><i class="ph-bold ph-clock"></i> Alta: ${formatFechaReg(u1.created_at)}</div>
+                            </div>
+                            ${u1.notas ? `<div class="text-[10px] text-amber-900 bg-amber-50 rounded-lg p-1.5 truncate border border-amber-200" title="Notas: ${escapeHtml(u1.notas)}">📝 ${escapeHtml(u1.notas)}</div>` : ''}
+                            <input type="radio" name="radio_perfil_conservar" value="${escapeHtml(String(u1.id))}" class="hidden">
+                        </div>
+
+                        <!-- Tarjeta Perfil B -->
+                        <div id="card-fusion-u2" onclick="actualizarSeleccionFusionModal('${escapeHtml(String(u2.id))}')"
+                            class="p-4 rounded-2xl border-2 transition cursor-pointer relative shadow-2xs space-y-2.5">
+                            <div class="flex items-center justify-between gap-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-[10px] font-bold uppercase text-cocoa/50 tracking-wider">Perfil B</span>
+                                    ${origin2Badge}
+                                </div>
+                                <div id="badge-decision-u2"></div>
+                            </div>
+                            ${recommendBadge2 ? `<div>${recommendBadge2}</div>` : ''}
+                            <div>
+                                <div class="font-bold text-sm text-cocoa">${escapeHtml(c2.nombreCompleto)}</div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1 mt-0.5">
+                                    <span>📱</span>
+                                    <span>${c2.cleanTel ? escapeHtml(c2.cleanTel) : '<em class="text-cocoa/40">Sin teléfono</em>'}</span>
+                                </div>
+                                <div class="text-xs text-cocoa/70 flex items-center gap-1 truncate mt-0.5" title="${escapeHtml(u2.email || '')}">
+                                    <span>✉️</span>
+                                    <span>${c2.realEmail ? escapeHtml(c2.realEmail) : `<em class="text-cocoa/40">${escapeHtml(u2.email || 'Sin email')}</em>`}</span>
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-cocoa/80 bg-sand/20 rounded-xl p-2.5 space-y-1 border border-cocoa/10">
+                                <div><i class="ph-bold ph-calendar-check text-olive"></i> ${formatDetalleRes(resCounts2)}</div>
+                                <div><i class="ph-bold ph-wallet text-olive"></i> <strong>Saldos:</strong> ${escapeHtml(saldo2)}</div>
+                                <div class="text-[10px] text-cocoa/60"><i class="ph-bold ph-clock"></i> Alta: ${formatFechaReg(u2.created_at)}</div>
+                            </div>
+                            ${u2.notas ? `<div class="text-[10px] text-amber-900 bg-amber-50 rounded-lg p-1.5 truncate border border-amber-200" title="Notas: ${escapeHtml(u2.notas)}">📝 ${escapeHtml(u2.notas)}</div>` : ''}
+                            <input type="radio" name="radio_perfil_conservar" value="${escapeHtml(String(u2.id))}" class="hidden">
+                        </div>
+                    </div>
+
+                    <!-- Resumen dinámico de la acción -->
+                    <div id="fusion-summary-callout" class="rounded-2xl p-3.5 text-xs transition border"></div>
+
+                    <!-- Opciones de traspaso -->
+                    <div class="bg-sand/15 rounded-xl p-3 space-y-2 border border-cocoa/10">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-cocoa">
+                            <input type="checkbox" id="check-sumar-saldos-fusion" checked
+                                class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-cocoa/30">
+                            <span>Sumar los bonos y saldos restantes al perfil conservado</span>
+                        </label>
+                        <p class="text-[11px] text-cocoa/60 ml-6">
+                            Si se desmarca, el perfil conservado mantendrá únicamente sus saldos actuales.
+                        </p>
+                    </div>
+
+                    <!-- Advertencia de seguridad -->
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-[11px] flex items-start gap-2">
+                        <i class="ph-bold ph-shield-check text-base shrink-0 mt-0.5 text-amber-700"></i>
+                        <span>
+                            <strong>Garantía de reservas:</strong> Ninguna reserva se perderá. Todas las reservas activas y pasadas del usuario eliminado se reasignarán automáticamente en la base de datos al usuario conservado antes de eliminar la ficha duplicada.
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            await Swal.fire({
+                title: `<div class="text-cocoa font-bold text-lg md:text-xl flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-arrows-merge text-amber-600"></i> Fusión de Perfiles Duplicados
+                </div>`,
+                html: modalHtml,
+                width: '780px',
+                showConfirmButton: true,
+                confirmButtonText: 'Confirmar Fusión y Traspaso',
+                confirmButtonColor: '#d97706',
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                cancelButtonColor: '#78716c',
+                customClass: {
+                    popup: 'rounded-3xl p-5 sm:p-7 border border-cocoa/10 shadow-2xl'
+                },
+                didOpen: () => {
+                    actualizarSeleccionFusionModal(defaultKeepId);
+                },
+                preConfirm: () => {
+                    const keepId = modalFusionState?.selectedKeepId;
+                    if (!keepId) {
+                        Swal.showValidationMessage('Debes seleccionar qué perfil deseas conservar.');
+                        return false;
+                    }
+                    const removeId = (String(keepId) === String(u1.id)) ? String(u2.id) : String(u1.id);
+                    const sumarSaldos = Boolean(document.getElementById('check-sumar-saldos-fusion')?.checked);
+                    return { keepId, removeId, sumarSaldos };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    const { keepId, removeId, sumarSaldos } = result.value;
+                    await ejecutarFusionPerfiles(keepId, removeId, sumarSaldos);
+                }
+            });
+        }
+
+        function actualizarSeleccionFusionModal(conservarId) {
+            if (!modalFusionState) return;
+            modalFusionState.selectedKeepId = String(conservarId);
+
+            const { u1, u2, c1, c2, totalRes1, totalRes2 } = modalFusionState;
+            const isKeep1 = (String(conservarId) === String(u1.id));
+
+            const card1 = document.getElementById('card-fusion-u1');
+            const card2 = document.getElementById('card-fusion-u2');
+            const badge1 = document.getElementById('badge-decision-u1');
+            const badge2 = document.getElementById('badge-decision-u2');
+            const callout = document.getElementById('fusion-summary-callout');
+
+            if (!card1 || !card2 || !badge1 || !badge2) return;
+
+            if (isKeep1) {
+                // u1 es el que se conserva
+                card1.className = 'p-4 rounded-2xl border-2 transition cursor-pointer relative shadow-sm space-y-2.5 border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20';
+                card2.className = 'p-4 rounded-2xl border-2 transition cursor-pointer relative shadow-2xs space-y-2.5 border-rose-300 bg-rose-50/30 opacity-90';
+
+                badge1.innerHTML = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white shadow-xs flex items-center gap-1"><i class="ph-bold ph-check-circle"></i> CONSERVAR</span>';
+                badge2.innerHTML = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-600 text-white shadow-xs flex items-center gap-1"><i class="ph-bold ph-trash"></i> ELIMINAR</span>';
+
+                if (callout) {
+                    callout.className = 'rounded-2xl p-3.5 text-xs transition border bg-emerald-50/70 border-emerald-300 text-emerald-950 space-y-1';
+                    callout.innerHTML = `
+                        <div class="font-bold flex items-center gap-1.5 text-emerald-900">
+                            <i class="ph-bold ph-arrows-merge text-sm"></i> Acción que se llevará a cabo:
+                        </div>
+                        <div class="text-[11px] leading-relaxed">
+                            Se <strong>conservará</strong> la cuenta de <strong>${escapeHtml(c1.nombreCompleto)}</strong>. 
+                            Las <strong>${totalRes2} reservas</strong>, saldos y notas de <strong>${escapeHtml(c2.nombreCompleto)}</strong> se traspasarán a esta cuenta. 
+                            El perfil duplicado de <strong>${escapeHtml(c2.nombreCompleto)}</strong> será eliminado permanentemente.
+                        </div>
+                    `;
+                }
+            } else {
+                // u2 es el que se conserva
+                card2.className = 'p-4 rounded-2xl border-2 transition cursor-pointer relative shadow-sm space-y-2.5 border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20';
+                card1.className = 'p-4 rounded-2xl border-2 transition cursor-pointer relative shadow-2xs space-y-2.5 border-rose-300 bg-rose-50/30 opacity-90';
+
+                badge2.innerHTML = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white shadow-xs flex items-center gap-1"><i class="ph-bold ph-check-circle"></i> CONSERVAR</span>';
+                badge1.innerHTML = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-600 text-white shadow-xs flex items-center gap-1"><i class="ph-bold ph-trash"></i> ELIMINAR</span>';
+
+                if (callout) {
+                    callout.className = 'rounded-2xl p-3.5 text-xs transition border bg-emerald-50/70 border-emerald-300 text-emerald-950 space-y-1';
+                    callout.innerHTML = `
+                        <div class="font-bold flex items-center gap-1.5 text-emerald-900">
+                            <i class="ph-bold ph-arrows-merge text-sm"></i> Acción que se llevará a cabo:
+                        </div>
+                        <div class="text-[11px] leading-relaxed">
+                            Se <strong>conservará</strong> la cuenta de <strong>${escapeHtml(c2.nombreCompleto)}</strong>. 
+                            Las <strong>${totalRes1} reservas</strong>, saldos y notas de <strong>${escapeHtml(c1.nombreCompleto)}</strong> se traspasarán a esta cuenta. 
+                            El perfil duplicado de <strong>${escapeHtml(c1.nombreCompleto)}</strong> será eliminado permanentemente.
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        async function ejecutarFusionPerfiles(conservarId, eliminarId, sumarSaldos = true) {
+            if (!conservarId || !eliminarId || String(conservarId) === String(eliminarId)) {
+                return Swal.fire('Error', 'Parámetros de fusión no válidos.', 'error');
+            }
+
+            const uKeep = (allUsersCache || []).find(u => String(u.id) === String(conservarId));
+            const uDel = (allUsersCache || []).find(u => String(u.id) === String(eliminarId));
+
+            const nombreConservar = uKeep ? `${uKeep.nombre || ''} ${uKeep.apellidos || ''}`.trim() : 'Perfil conservado';
+            const nombreEliminar = uDel ? `${uDel.nombre || ''} ${uDel.apellidos || ''}`.trim() : 'Perfil duplicado';
+
+            const confirmRes = await Swal.fire({
+                title: '¿Confirmar fusión definitiva?',
+                html: `
+                    <div class="text-left text-xs space-y-2.5 text-cocoa/90 font-sans">
+                        <p class="leading-relaxed">Estás a punto de transferir todas las reservas, saldos y notas del usuario duplicado hacia el perfil canónico:</p>
+                        <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-rose-900">
+                            <span class="font-bold text-[10px] uppercase tracking-wider block text-rose-700">🗑️ Se eliminará:</span>
+                            <span class="font-bold text-sm">${escapeHtml(nombreEliminar)}</span>
+                            <div class="text-[11px] text-rose-800/80">${escapeHtml(uDel?.email || uDel?.telefono || '')}</div>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-emerald-900">
+                            <span class="font-bold text-[10px] uppercase tracking-wider block text-emerald-700">✅ Se conservará (recibirá los datos):</span>
+                            <span class="font-bold text-sm">${escapeHtml(nombreConservar)}</span>
+                            <div class="text-[11px] text-emerald-800/80">${escapeHtml(uKeep?.email || uKeep?.telefono || '')}</div>
+                        </div>
+                        <p class="text-amber-800 text-[11px] font-semibold bg-amber-50 rounded-lg p-2 border border-amber-200">
+                            ⚠️ Esta acción no se puede deshacer. Las reservas se reasignarán y el perfil duplicado será eliminado.
+                        </p>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, fusionar y eliminar duplicado',
+                confirmButtonColor: '#d97706',
+                cancelButtonText: 'Cancelar',
+                cancelButtonColor: '#78716c',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-3xl p-5 sm:p-7 border border-cocoa/10 shadow-2xl'
+                }
+            });
+
+            if (!confirmRes.isConfirmed) return;
+
+            Swal.fire({
+                title: 'Fusionando perfiles...',
+                html: '<div class="text-xs text-cocoa/80">Reasignando reservas, compras y saldos en la base de datos.<br>Por favor, espera unos instantes.</div>',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            try {
+                const { data, error } = await client.rpc('admin_fusionar_perfiles', {
+                    p_perfil_conservar_id: conservarId,
+                    p_perfil_eliminar_id: eliminarId,
+                    p_sumar_saldos: Boolean(sumarSaldos)
+                });
+
+                if (error) {
+                    console.error('Error al llamar admin_fusionar_perfiles:', error);
+                    return Swal.fire('Error en la fusión', error.message || 'No se pudo completar la fusión de perfiles.', 'error');
+                }
+
+                // Obtener perfil conservado actualizado de la base de datos
+                let updatedProfile = null;
+                try {
+                    const { data: profData } = await client.from('profiles').select('*').eq('id', conservarId).maybeSingle();
+                    updatedProfile = profData;
+                } catch (fetchErr) {
+                    console.warn('Error recuperando perfil conservado:', fetchErr);
+                }
+
+                // Actualizar caché de usuarios
+                allUsersCache = (allUsersCache || []).filter(u => String(u.id) !== String(eliminarId));
+                if (updatedProfile) {
+                    const idx = allUsersCache.findIndex(u => String(u.id) === String(conservarId));
+                    if (idx !== -1) {
+                        allUsersCache[idx] = updatedProfile;
+                    } else {
+                        allUsersCache.push(updatedProfile);
+                    }
+                }
+
+                // Re-ejecutar detección de duplicados
+                const { pairs, userIdSet } = detectarDuplicadosUsuarios(allUsersCache);
+                duplicatePairsFound = pairs;
+                duplicateUserIds = userIdSet;
+
+                // Si se estaba filtrando por este par específico, limpiar el par
+                if (filtroDuplicadosParActual && Array.isArray(filtroDuplicadosParActual)) {
+                    filtroDuplicadosParActual = null;
+                }
+
+                if (duplicatePairsFound.length === 0) {
+                    filtroDuplicadosActivo = false;
+                }
+
+                actualizarBannerDuplicados();
+                filtrarUsuarios();
+
+                const yCnt = data?.reservas_yoga_trasladadas || 0;
+                const pCnt = data?.reservas_psicologia_trasladadas || 0;
+                const nCnt = data?.reservas_nutricion_trasladadas || 0;
+                const tCnt = data?.reservas_talleres_trasladadas || 0;
+                const totalTrasladadas = yCnt + pCnt + nCnt + tCnt;
+
+                await Swal.fire({
+                    title: '¡Perfiles fusionados con éxito!',
+                    html: `
+                        <div class="text-left space-y-2.5 text-xs text-cocoa/80 font-sans">
+                            <p class="font-bold text-sm text-emerald-800">✅ La fusión y reasignación se completó correctamente.</p>
+                            <div class="bg-sand/20 rounded-xl p-3 space-y-1.5 border border-cocoa/10">
+                                <div><strong>Perfil conservado:</strong> ${escapeHtml(nombreConservar)}</div>
+                                <div><strong>Perfil eliminado:</strong> ${escapeHtml(nombreEliminar)}</div>
+                                <div><strong>Reservas traspasadas:</strong> <span class="font-bold text-cocoa">${totalTrasladadas}</span> (${yCnt} yoga, ${pCnt} psicología, ${nCnt} nutrición${tCnt > 0 ? `, ${tCnt} talleres` : ''})</div>
+                                ${data?.bonos_trasladados ? `<div><strong>Bonos sumados:</strong> +${data.bonos_trasladados}</div>` : ''}
+                                ${data?.packs_trasladados ? `<div><strong>Packs transferidos:</strong> ${data.packs_trasladados}</div>` : ''}
+                            </div>
+                            <p class="text-[11px] text-cocoa/60">
+                                Ninguna reserva ha quedado suelta. Todas están ahora asignadas al perfil conservado y la ficha duplicada ha sido eliminada.
+                            </p>
+                        </div>
+                    `,
+                    icon: 'success',
+                    confirmButtonColor: '#26160C',
+                    confirmButtonText: 'Aceptar',
+                    customClass: {
+                        popup: 'rounded-3xl p-5 sm:p-7 border border-cocoa/10 shadow-2xl'
+                    }
+                });
+            } catch (err) {
+                console.error('Error inesperado durante fusión de perfiles:', err);
+                Swal.fire('Error inesperado', 'Ocurrió un problema inesperado: ' + (err.message || err), 'error');
+            }
+        }
+
+        window.abrirModalFusionarParActual = abrirModalFusionarParActual;
+        window.abrirModalFusionarPerfiles = abrirModalFusionarPerfiles;
+        window.actualizarSeleccionFusionModal = actualizarSeleccionFusionModal;
+        window.ejecutarFusionPerfiles = ejecutarFusionPerfiles;
 
         function filtrarUsuarios() {
             const term = (document.getElementById('user-search')?.value || '').toLowerCase().trim();
@@ -23809,7 +24320,35 @@
                     setExpanded(true);
                 },
                 getSelectedId() {
-                    return selectedId;
+                    if (selectedId) return selectedId;
+                    if (activeIndex >= 0 && visibleRecords[activeIndex]) {
+                        selectRecord(visibleRecords[activeIndex]);
+                        return selectedId;
+                    }
+                    if (visibleRecords.length === 1) {
+                        selectRecord(visibleRecords[0]);
+                        return selectedId;
+                    }
+                    const rawVal = (input.value || '').trim();
+                    if (rawVal) {
+                        const query = normalizarBusquedaAlumnosAdmin(rawVal);
+                        if (query) {
+                            const exact = records.find(r => 
+                                normalizarBusquedaAlumnosAdmin(r.label) === query || 
+                                normalizarBusquedaAlumnosAdmin(r.selectionText) === query ||
+                                normalizarBusquedaAlumnosAdmin(r.identifier) === query
+                            );
+                            if (exact) {
+                                selectRecord(exact);
+                                return selectedId;
+                            }
+                            if (visibleRecords.length > 0) {
+                                selectRecord(visibleRecords[0]);
+                                return selectedId;
+                            }
+                        }
+                    }
+                    return '';
                 }
             };
         }
@@ -24192,9 +24731,12 @@
 
                 <div class="space-y-1">
                     <label class="block text-xs font-bold text-cocoa/70 mb-1">
-                        <i class="ph-bold ph-tag text-olive mr-1"></i> Producto / Tarifa Stripe asociada <span class="text-red-500">*</span>
+                        <i class="ph-bold ph-tag text-olive mr-1"></i> Tarifa / Modalidad de pago (informativo)
                     </label>
                     <select id="swal-consulta-producto" class="w-full px-3 py-2 text-sm bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive outline-none text-cocoa font-medium">
+                        <option value="mostrador_presencial" data-title="Pago presencial en mostrador" data-price="0" selected>
+                            Pago presencial en mostrador (Efectivo / Tarjeta / Ya abonado)
+                        </option>
                         ${productosStripe.map(p => `
                             <option value="${escapeHtml(p.key)}" data-title="${escapeHtml(p.title)}" data-price="${p.price}">
                                 ${escapeHtml(p.title)} ${p.price > 0 ? `(${p.price} €)` : ''} ${p.desc ? `— ${p.desc}` : ''}
@@ -24202,7 +24744,7 @@
                         `).join('')}
                     </select>
                     <p class="text-[11px] text-cocoa/50 mt-1">
-                        Selecciona el servicio de <strong>${escapeHtml(profNombre)}</strong> contratado por el cliente.
+                        Asignación directa desde mostrador. No procesa ningún cobro online automático.
                     </p>
                 </div>
 
@@ -24253,14 +24795,9 @@
                 preConfirm: async () => {
                     const selectElem = document.getElementById('swal-consulta-producto');
                     const selectedOption = selectElem?.options[selectElem.selectedIndex];
-                    const selectedKey = selectElem?.value || '';
-                    const selectedTitle = selectedOption?.getAttribute('data-title') || selectedKey;
+                    const selectedKey = selectElem?.value || 'mostrador_presencial';
+                    const selectedTitle = selectedOption?.getAttribute('data-title') || selectedKey || 'Pago presencial en mostrador';
                     const notas = (document.getElementById('swal-temp-notas')?.value || '').trim();
-
-                    if (!selectedKey) {
-                        Swal.showValidationMessage('Debes seleccionar el producto o tarifa contratada');
-                        return false;
-                    }
 
                     let clienteId = null;
                     if (activeAssignMode === 'existente') {
@@ -24288,6 +24825,7 @@
                                 p_telefono: telefono || null
                             });
                             if (createErr) throw createErr;
+                            if (!newUserId) throw new Error('No se pudo generar el usuario temporal');
                             clienteId = newUserId;
                         } catch (err) {
                             Swal.showValidationMessage(err.message || 'Error al crear usuario temporal');
@@ -24316,9 +24854,18 @@
             const tipoRpc = (tipo === 'psicologia') ? 'psicologia' : 'nutricion';
             try {
                 isReserving = true;
+                Swal.fire({
+                    title: 'Asignando consulta...',
+                    html: '<p class="text-xs text-cocoa/70">Registrando la reserva en el sistema...</p>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
                 const userId = typeof assignData === 'object' ? assignData.userId : assignData;
-                const productoTitle = assignData?.productoTitle || 'Consulta ' + (tipo === 'psicologia' ? 'Psicología' : (tipo === 'ayurveda' ? 'Ayurveda' : 'Nutrición'));
+                const productoTitle = assignData?.productoTitle || 'Pago presencial en mostrador';
                 const lookupKey = assignData?.lookupKey || null;
                 const notas = assignData?.notas || '';
 
@@ -24369,10 +24916,10 @@
                         console.warn('Error comprobando sesión múltiple en asignación admin:', eCheck);
                     }
 
-                    const claseId = numericClaseId;
+                    const claseIdNum = numericClaseId;
                     const res = await client.rpc('reservar_consulta_atomica', {
                         p_tipo: tipoRpc,
-                        p_clase_id: claseId,
+                        p_clase_id: claseIdNum,
                         p_user_id: userId,
                         p_cobrar_saldo: false,
                         p_producto_contratado: productoTitle,
@@ -24431,18 +24978,23 @@
 
                 Swal.fire({
                     icon: 'success',
-                    title: multiInfo.esMultiple ? 'Sesión múltiple asignada' : 'Cliente asignado',
+                    title: multiInfo.esMultiple ? 'Sesión múltiple asignada' : '¡Consulta asignada!',
                     html: multiInfo.esMultiple 
-                        ? `Se han asignado correctamente ambos turnos vinculados al cliente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Producto contratado:</b> ${escapeHtml(productoTitle)}</span>`
-                        : `El hueco queda reservado.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Producto contratado:</b> ${escapeHtml(productoTitle)}</span>`,
-                    showConfirmButton: false,
-                    timer: 2000
+                        ? `Se han asignado correctamente ambos turnos vinculados al paciente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Concepto:</b> ${escapeHtml(productoTitle)}</span>`
+                        : `El turno ha quedado reservado para el paciente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Concepto:</b> ${escapeHtml(productoTitle)}</span>`,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: config.color,
+                    timer: 3500
                 });
                 await refrescarConsultas(tipo);
                 await cargarConsultasAdmin();
                 if (typeof cargarAsistenciasPorClase === 'function') {
                     await cargarAsistenciasPorClase();
                 }
+            } catch (fatalErr) {
+                console.error('Error fatal asignando consulta:', fatalErr);
+                Swal.fire('Error inesperado', fatalErr.message || 'No se pudo completar la asignación.', 'error');
             } finally {
                 isReserving = false;
             }

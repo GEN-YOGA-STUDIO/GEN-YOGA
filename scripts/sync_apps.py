@@ -31,8 +31,19 @@ EXCLUDED_EXTS = {
 }
 EXCLUDED_FILES = {
     'package.json', 'package-lock.json', 'tailwind.config.js', 'deno.lock',
-    'tailwind-input.css', 'CNAME', '.gitignore'
+    'tailwind-input.css', 'CNAME', '.gitignore',
+    'opencode.json', 'opencode.jsonc',
+    '-Jaime\u2019s Mac mini.gitignore', "-Jaime's Mac mini.gitignore",
+    'package-Jaime\u2019s Mac mini.json', "package-Jaime's Mac mini.json",
 }
+# Cualquier resto con "mac mini" en el nombre tampoco debe entrar en las apps.
+EXCLUDED_SUBSTRINGS = {'mac mini'}
+
+
+def is_excluded_file(filename):
+    if filename in EXCLUDED_FILES or filename.startswith('.'):
+        return True
+    return any(sub in filename.lower() for sub in EXCLUDED_SUBSTRINGS)
 
 def sync_web_assets():
     print("=" * 60)
@@ -60,7 +71,7 @@ def sync_web_assets():
         rel_path = os.path.relpath(root, SRC_DIR)
 
         for file in files:
-            if file in EXCLUDED_FILES or file.startswith('.'):
+            if is_excluded_file(file):
                 continue
             ext = os.path.splitext(file)[1].lower()
             if ext in EXCLUDED_EXTS:

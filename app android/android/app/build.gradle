@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "gen.yoga.app"
+    namespace = "com.genyoga.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "gen.yoga.app"
+        applicationId "com.genyoga.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 247
-        versionName "13.9"
+        versionCode 252
+        versionName "13.13"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,10 +18,28 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('release-key.jks')
-            storePassword 'yoga123'
-            keyAlias 'yoga-key'
-            keyPassword 'yoga123'
+            // Credenciales fuera del repo: local.properties (storeFile/storePassword/keyAlias/keyPassword)
+            // o variables de entorno GENYOGA_STORE_FILE / GENYOGA_STORE_PASSWORD / GENYOGA_KEY_ALIAS / GENYOGA_KEY_PASSWORD.
+            def props = new Properties()
+            def localProps = file('../local.properties')
+            // ../local.properties es el del proyecto android; app/local.properties como alternativa.
+            def appLocalProps = file('local.properties')
+            if (localProps.exists()) { localProps.withInputStream { props.load(it) } }
+            if (appLocalProps.exists()) { appLocalProps.withInputStream { props.load(it) } }
+            def envOrProp = { envKey, propKey ->
+                def v = System.getenv(envKey)
+                if (v != null && v != '') return v
+                return props.getProperty(propKey, '')
+            }
+            def relOrAbs = { p ->
+                if (p == null || p == '') return file('release-key.jks')
+                def f = file(p.toString())
+                return f.isAbsolute() ? f : file(p.toString())
+            }
+            storeFile relOrAbs(envOrProp('GENYOGA_STORE_FILE', 'genyoga.storeFile'))
+            storePassword envOrProp('GENYOGA_STORE_PASSWORD', 'genyoga.storePassword')
+            keyAlias envOrProp('GENYOGA_KEY_ALIAS', 'genyoga.keyAlias') ?: 'yoga-key'
+            keyPassword envOrProp('GENYOGA_KEY_PASSWORD', 'genyoga.keyPassword')
         }
     }
     buildTypes {

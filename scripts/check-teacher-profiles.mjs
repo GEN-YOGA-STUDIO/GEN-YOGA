@@ -121,6 +121,9 @@ for (const page of [maestros, profile]) {
 }
 
 // Check teacher image cutouts and assets
+// Solo assets referenciados por las páginas (cutouts recortada + tarjetas).
+// NOTA: img/profes/* se eliminó el 2026-09-22 por no estar referenciado en
+// ningún HTML/JS/CSS (las tarjetas usan los cutouts recortada).
 const requiredImages = [
   'maestra-isabel-recortada.webp',
   'maestro-angel-recortado.webp',
@@ -130,11 +133,6 @@ const requiredImages = [
   'isabel-pni.jpg',
   'clases-hombres.jpg',
   'clases-para-todos.jpg',
-  'profes/isabel-pni.jpg',
-  'profes/angel-upavistha.jpg',
-  'profes/angel-handstand.jpg',
-  'profes/angel-sarvangasana.jpg',
-  'profes/angel-supta-virasana.jpg',
 ];
 
 for (const imgName of requiredImages) {
