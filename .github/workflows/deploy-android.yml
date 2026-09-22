@@ -41,6 +41,12 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npx cap sync ios
+      - name: Instalar dependencias raíz (checks runtime)
+        run: npm ci --no-audit --no-fund
+      - name: Instalar Chromium (checks runtime)
+        run: |
+          CORE_VER=$(node -p "require('./node_modules/playwright-core/package.json').version")
+          npx -y playwright@$CORE_VER install --only-shell chromium
       - name: Batería completa de checks
         run: npm test
 
