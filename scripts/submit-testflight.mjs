@@ -143,9 +143,30 @@ for (const loc of locales?.data || []) {
   console.log(`  ✅ Novedades en locale ${loc.attributes?.locale}`);
 }
 
-// 5. Enviar a revisión
-const submission = await auth('POST', '/v1/appStoreVersionSubmissions', {
-  data: { type: 'appStoreVersionSubmissions', relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: version.id } } } },
-});
+// 5. Enviar a revisión (con limpieza de submission atascada y reintento)
+async function trySubmit() {
+  return await auth('POST', '/v1/appStoreVersionSubmissions', {
+    data: { type: 'appStoreVersionSubmissions', relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: version.id } } } },
+  });
+}
+
+let submission = null;
+try {
+  submission = await trySubmit();
+} catch (e) {
+  console.log(`  ⚠️ primer intento: ${String(e.message).slice(0, 160)}`);
+  // Si hay una submission previa colgada, se borra y se reintenta (solo en PREPARE).
+  try {
+    const existing = await auth('GET', `/v1/appStoreVersions/${version.id}/appStoreVersionSubmission`);
+    if (existing?.data?.id && version.attributes?.appStoreState === 'PREPARE_FOR_SUBMISSION') {
+      await auth('DELETE', `/v1/appStoreVersionSubmissions/${existing.data.id}`);
+      console.log('  🧹 submission previa atascada eliminada, reintentando...');
+      await sleep(15000);
+      submission = await trySubmit();
+    } else throw e;
+  } catch (e2) {
+    throw new Error(`${e.message} || reintento: ${e2.message}`);
+  }
+}
 console.log(`  ✅ Enviada a revisión (submission ${submission?.data?.id})`);
 console.log('\n🎉 La versión está en cola de revisión de Apple. Te avisarán por email.');
