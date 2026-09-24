@@ -13,7 +13,7 @@
 
   // Interruptor del informe marketing: en false los botones están ocultos y la
   // descarga bloqueada (ni siquiera por consola). Para activarlo, poner true.
-  var INFORME_MARKETING_ENABLED = false;
+  var INFORME_MARKETING_ENABLED = true;
 
   // Tablas que el informe puede leer. El resto está prohibido por construcción.
   var ALLOWED_SOURCES = [
