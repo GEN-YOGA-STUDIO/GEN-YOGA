@@ -522,6 +522,20 @@ await section('clientes', async () => {
   }
   await page.evaluate(() => toggleAuth('login'));
   await page.waitForTimeout(600);
+  // Login con prefijo internacional: normaliza a 9 dígitos sin crashear.
+  await page.evaluate(() => toggleAuth('login'));
+  await page.waitForTimeout(400);
+  await page.locator('#login-email').fill('+34 600 000 001');
+  await page.locator('#login-password').fill('ContrasenaFalsa123!');
+  await page.locator('#form-login button[type="submit"]').click({ timeout: 8000 });
+  try {
+    await page.locator('.swal2-popup', { hasText: /Ups|Credenciales incorrectas/i }).first().waitFor({ state: 'visible', timeout: 15000 });
+    pass('clientes: login con +34 falla con elegancia (prefijo normalizado, sin crash)');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(400);
+  } catch {
+    fail('clientes: login con prefijo internacional rompe el flujo');
+  }
   const testEmail = process.env.GEN_YOGA_TEST_EMAIL;
   const testPass = process.env.GEN_YOGA_TEST_PASSWORD;
   if (testEmail && testPass && live) {

@@ -16,10 +16,15 @@ function cors(req: Request): Record<string, string> {
 
 const GENERIC_FAIL = 'Código incorrecto o caducado. Pide uno nuevo e inténtalo de nuevo.'
 const MAX_ATTEMPTS = 5
+const MIN_PASSWORD_LEN = 8
 
 async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+function escapeLike(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
 }
 
 serve(async (req: Request) => {
@@ -35,7 +40,7 @@ serve(async (req: Request) => {
     const rawId = String(body.identifier || '').trim().slice(0, 254)
     const code = String(body.code || '').trim()
     const pwd = String(body.newPassword || '')
-    if (!rawId || !/^\d{6}$/.test(code) || pwd.length < 6 || pwd.length > 72) return deny()
+    if (!rawId || !/^\d{6}$/.test(code) || pwd.length < MIN_PASSWORD_LEN || pwd.length > 72) return deny()
 
     const admin = createClient(Deno.env.get('SUPABASE_URL') || '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '')
     const clean = rawId.toLowerCase()
@@ -50,7 +55,7 @@ serve(async (req: Request) => {
       if (data) userId = data.id
     } else if (clean.includes('@')) {
       const { data } = await admin.from('profiles')
-        .select('id').ilike('email', clean)
+        .select('id').ilike('email', escapeLike(clean))
         .order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (data) userId = data.id
       if (!userId) {

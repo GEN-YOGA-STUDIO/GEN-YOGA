@@ -1901,7 +1901,7 @@
                             <div class="relative">
                                 <input type="password" id="recover-new-password" name="recover-new-password" autocomplete="new-password"
                                     class="w-full px-6 py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold box-border max-w-full pr-12"
-                                    placeholder="Mínimo 6 caracteres" minlength="6" required>
+                                    placeholder="Mínimo 8 caracteres" minlength="8" required>
                                 <button type="button" onclick="togglePasswordVisibility('recover-new-password', 'recover-eye-icon-1')"
                                     class="absolute right-4 top-1/2 -translate-y-1/2 text-[#795244]/70 hover:text-[#795244] text-xl p-1 cursor-pointer">
                                     <i id="recover-eye-icon-1" class="ph-bold ph-eye"></i>
@@ -6102,11 +6102,11 @@
                     confirmButtonColor: '#D27D60'
                 });
             }
-            if (newPwd.length < 6) {
+            if (newPwd.length < 8) {
                 return Swal.fire({
                     icon: 'warning',
                     title: 'Contraseña débil',
-                    text: 'La nueva contraseña debe tener al menos 6 caracteres.',
+                    text: 'La nueva contraseña debe tener al menos 8 caracteres.',
                     confirmButtonColor: '#D27D60'
                 });
             }
@@ -6372,16 +6372,16 @@
             const cleanDigits = rawIdentifier.replace(/\D/g, '');
             let loginEmail = rawIdentifier.toLowerCase();
 
-            // Si introduce 9 dígitos numéricos (o prefijo con 9 dígitos) y no tiene @, es un teléfono
-            if (!rawIdentifier.includes('@') && cleanDigits.length === 9) {
-                loginEmail = `movil.${cleanDigits}@genyoga.studio`;
+            // Teléfono: 9 últimos dígitos (acepta +34, 0034, espacios y guiones).
+            if (!rawIdentifier.includes('@') && cleanDigits.length >= 9) {
+                loginEmail = `movil.${cleanDigits.slice(-9)}@genyoga.studio`;
             }
 
             let { data, error } = await client.auth.signInWithPassword({ email: loginEmail, password });
 
             // Fallback: si falla y era teléfono, intentar alias de compatibilidad
-            if (error && !rawIdentifier.includes('@') && cleanDigits.length === 9) {
-                const fallback1 = await client.auth.signInWithPassword({ email: `telefono.${cleanDigits}@genyoga.studio`, password });
+            if (error && !rawIdentifier.includes('@') && cleanDigits.length >= 9) {
+                const fallback1 = await client.auth.signInWithPassword({ email: `telefono.${cleanDigits.slice(-9)}@genyoga.studio`, password });
                 if (!fallback1.error) {
                     error = null;
                     data = fallback1.data;
@@ -7399,7 +7399,7 @@
             if (!bonosEspecialesResult.error) userSpecialBonos = bonosEspecialesResult.data || [];
             if (!reprogResult.error) userCreditosReprogramacion = reprogResult.data || [];
 
-            const currentMonthPrefix = new Date().toISOString().slice(0, 7);
+            const currentMonthPrefix = madridDateKey(new Date()).slice(0, 7);
             userSpecialBonosMes = userSpecialBonos
                 .filter(b => b.mes && String(b.mes).slice(0, 7) === currentMonthPrefix)
                 .reduce((acc, b) => acc + toSafeNumber(b.saldo), 0);
@@ -8144,6 +8144,25 @@
             } else if (buyParam === 'bono_ilimitado' || buyParam === 'bono_mensual') {
                 window.history.replaceState({}, document.title, window.location.pathname);
                 comprarBonoMensual();
+            } else if (buyParam) {
+                // BUG-15: retomar compra de consulta/taller tras el login. Sin
+                // sesión se conserva ?buy= (el login recarga y se reintenta
+                // ya autenticado); con sesión se retoma la compra pedida.
+                let loggedNow = false;
+                try { loggedNow = !!(currentUser && currentUser.id); } catch (_) { loggedNow = false; }
+                if (loggedNow) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    const resumeKey = buyParam;
+                    setTimeout(() => {
+                        try {
+                            if (/taller|especial/i.test(resumeKey) && typeof iniciarCheckoutTallerStripe === 'function') {
+                                iniciarCheckoutTallerStripe(resumeKey);
+                            } else if (typeof iniciarCheckoutConsultaStripe === 'function') {
+                                iniciarCheckoutConsultaStripe(resumeKey);
+                            }
+                        } catch (_) { /* las funciones informan con Swal */ }
+                    }, 900);
+                }
             }
 
             // Comprobar si el usuario llega con una oferta para canjear (v15.1)
@@ -9525,7 +9544,7 @@
                 const start = new Date(c.fecha_inicio);
                 const isClaseEspecial = esClaseEspecialTipo(c);
                 const isTaller = !isClaseEspecial;
-                const startMonthKey = start.toISOString().slice(0, 7) + '-01';
+                const startMonthKey = madridDateKey(start).slice(0, 7) + '-01';
                 const monthFriendlyName = formatDisplayMonth(start);
 
                 const full = toSafeNumber(c.ocupadas) >= toSafeNumber(c.capacidad_max);
@@ -9621,7 +9640,7 @@
                 return;
             }
 
-            const targetMonth = (monthStr && String(monthStr).trim()) ? String(monthStr).trim() : new Date().toISOString().slice(0, 7) + '-01';
+            const targetMonth = (monthStr && String(monthStr).trim()) ? String(monthStr).trim() : madridDateKey(new Date()).slice(0, 7) + '-01';
             const monthName = formatDisplayMonth(targetMonth);
 
             const result = await Swal.fire({
@@ -10833,7 +10852,7 @@
             const isTaller = !isClaseEspecial && esTallerTipo(clase);
             const isExplicitFreeClass = !isClaseEspecial && !isTaller && (clase.es_gratuita === true || /introductor/i.test(clase.nombre || ''));
             const canUseFree = !esCompania && !isClaseEspecial && !isTaller && esSesionGratuita && tieneBonoBienvenida && !forceRegular;
-            const mesActividadStr = fechaClase.toISOString().slice(0, 7) + '-01';
+            const mesActividadStr = madridDateKey(fechaClase).slice(0, 7) + '-01';
             const mesNombre = formatDisplayMonth(fechaClase);
 
             // 4. Comprobación de saldo disponible para reservar
@@ -17134,7 +17153,7 @@
             const modal = document.getElementById('modal-crear-clase');
             modal.classList.remove('hidden');
 
-            const hoy = new Date().toISOString().split('T')[0];
+            const hoy = madridDateKey(new Date());
 
             // Reset modalidad y selectores
             const radioRegular = document.querySelector('input[name="clase-acceso-tipo"][value="regular"]');
@@ -20355,7 +20374,7 @@
                                 tipo: 'consulta',
                                 subtipo: 'general',
                                 estado: 'disponible',
-                                mes: new Date().toISOString().slice(0, 7) + '-01'
+                                mes: madridDateKey(new Date()).slice(0, 7) + '-01'
                             });
                         }
                         const { error: insErr } = await client.from('creditos_reprogramacion').insert(toInsert);
@@ -20468,7 +20487,7 @@
                     tipo: formValues.tipo,
                     subtipo: formValues.subtipo,
                     estado: 'disponible',
-                    mes: new Date().toISOString().slice(0, 7) + '-01'
+                    mes: madridDateKey(new Date()).slice(0, 7) + '-01'
                 }]);
                 if (error) throw error;
             } catch (err) {
@@ -27440,7 +27459,7 @@
             if (repEnabled) repEnabled.checked = false;
             if (repOptions) repOptions.classList.add('hidden');
 
-            const hoy = new Date().toISOString().split('T')[0];
+            const hoy = madridDateKey(new Date());
             if (datePickerTallerInstance) {
                 datePickerTallerInstance.set('minDate', hoy);
                 datePickerTallerInstance.setDate(hoy);

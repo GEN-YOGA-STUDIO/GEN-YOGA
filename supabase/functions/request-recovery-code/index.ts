@@ -27,6 +27,12 @@ function isAliasEmail(email: string): boolean {
   return e.startsWith('movil.') || e.startsWith('telefono.') || e.endsWith('@genyoga.studio')
 }
 
+// Los comodines de LIKE (%, _) en el identificador coincidirían con cualquier
+// cuenta: se escapan para que la búsqueda sea literal.
+function escapeLike(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
+}
+
 serve(async (req: Request) => {
   const headers = cors(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers })
@@ -63,7 +69,7 @@ serve(async (req: Request) => {
     } else if (clean.includes('@')) {
       const { data } = await admin.from('profiles')
         .select('id,email')
-        .ilike('email', clean)
+        .ilike('email', escapeLike(clean))
         .order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (data) {
         userId = data.id
@@ -87,7 +93,7 @@ serve(async (req: Request) => {
       .eq('user_id', userId).gte('created_at', since)
     if ((count || 0) >= MAX_CODES_PER_HOUR) return finish()
 
-    const code = String(Math.floor(100000 + Math.random() * 900000))
+    const code = String(Math.floor(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296) * 900000))
     const { error: insErr } = await admin.from('password_reset_codes').insert({
       user_id: userId,
       code_hash: await sha256Hex(`gen-rec:${userId}:${code}`),
