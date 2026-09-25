@@ -14,9 +14,9 @@ alter table public.unlimited_membership_periods
   drop constraint if exists unlimited_membership_periods_checkout_session_id_key;
 
 -- Add a new unique constraint that only applies when checkout_session_id is not null
-alter table public.unlimited_membership_periods 
-  add constraint unlimited_membership_periods_checkout_session_id_unique 
-  unique (checkout_session_id) 
+-- NOTA: ADD CONSTRAINT no admite parciales; índice único parcial equivalente.
+create unique index if not exists unlimited_membership_periods_checkout_session_id_unique
+  on public.unlimited_membership_periods (checkout_session_id)
   where checkout_session_id is not null;
 
 -- Update the admin function to also insert into unlimited_membership_periods when activating manually

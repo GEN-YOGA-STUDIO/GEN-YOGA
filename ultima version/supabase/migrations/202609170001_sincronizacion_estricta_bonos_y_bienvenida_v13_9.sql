@@ -13,7 +13,7 @@
 BEGIN;
 
 -- 1. AUTO-RECONCILIACIÓN RETROACTIVA DE class_credit_packs CON profiles.bonos
-DO \$\$
+DO $$
 DECLARE
   v_user record;
   v_surplus integer;
@@ -55,7 +55,7 @@ BEGIN
     RAISE NOTICE 'Auto-reconciliado usuario %: saldo real = %, excedente ajustado = %',
       v_user.user_id, v_user.saldo_real, (v_user.pack_total - v_user.saldo_real);
   END LOOP;
-END \$\$;
+END $$;
 
 
 -- 2. ACTUALIZAR ajustar_saldo_usuario PARA MANTENER COHERENCIA ATÓMICA
@@ -68,7 +68,7 @@ RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public', 'pg_temp'
-AS \$\$
+AS $$
 DECLARE
   v_actor_id uuid := auth.uid();
   v_actor_role text;
@@ -175,7 +175,7 @@ BEGIN
 
   RETURN v_new_balance;
 END;
-\$\$;
+$$;
 
 GRANT EXECUTE ON FUNCTION public.ajustar_saldo_usuario(uuid, text, integer)
   TO anon, authenticated, service_role;

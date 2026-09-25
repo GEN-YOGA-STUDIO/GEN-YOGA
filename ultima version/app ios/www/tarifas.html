@@ -1624,6 +1624,20 @@
             }
         };
 
+        // B2: sin onclick inline (las entidades HTML se decodifican antes de
+        // ejecutar el JS y romperían títulos con comillas). Delegación con
+        // data-* escapados en contexto atributo.
+        document.getElementById('talleres-cards-container')?.addEventListener('click', (e) => {
+            const btn = e.target?.closest?.('[data-taller-reserva]');
+            if (!btn || typeof window.gestionarReservaTallerDinamico !== 'function') return;
+            window.gestionarReservaTallerDinamico(
+                btn.dataset.lookup || null,
+                btn.dataset.title || '',
+                btn.dataset.precio || '',
+                Number(btn.dataset.clase) || 0
+            );
+        });
+
         let talleresDinamicosCache = null;
         let cargandoTalleresDinamicos = false;
 
@@ -1838,10 +1852,6 @@
                 }
             }
 
-            const lookupKeyParam = lookupKey ? `'${lookupKey}'` : 'null';
-            const safeTitleJs = escapeHtml(title).replace(/'/g, "\\'");
-            const onclickAction = `gestionarReservaTallerDinamico(${lookupKeyParam}, '${safeTitleJs}', '${precio}', ${taller.id})`;
-
             const enlaceHorario = isTaller
                 ? 'Ver detalles en el calendario →'
                 : 'Ver próximas fechas en horario →';
@@ -1886,7 +1896,7 @@
                         </ul>
                     </div>
                     <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
-                        <button onclick="${onclickAction}"
+                        <button type="button" data-taller-reserva data-lookup="${escapeHtml(lookupKey || '')}" data-title="${escapeHtml(title || '')}" data-precio="${escapeHtml(precio || '')}" data-clase="${Number(taller.id) || 0}"
                             class="block w-full py-3.5 text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
                             style="background-color: ${themeColor};">
                             Reservar Plaza (${escapeHtml(precio)} €)

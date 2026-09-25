@@ -19665,6 +19665,25 @@
                 });
             }
 
+            // BUG-7: si ya dispone del saldo, no intentar el canje (la BD lo
+            // rechazaría con un error técnico de restricción).
+            if (tipoNorm === 'bienvenida' && toSafeNumber(userSaldoClasesGratis) > 0) {
+                return Swal.fire({
+                    icon: 'info',
+                    title: 'Ya tienes tu clase gratis',
+                    text: 'Tu clase de bienvenida ya está en tu saldo: no necesitas canjearla de nuevo.',
+                    confirmButtonColor: '#8C8658'
+                });
+            }
+            if (tipoNorm === 'consultas' && toSafeNumber(userSaldoConsultasGratis) > 0) {
+                return Swal.fire({
+                    icon: 'info',
+                    title: 'Ya tienes tu consulta gratis',
+                    text: 'Tu consulta de bienvenida ya está en tu saldo: no necesitas canjearla de nuevo.',
+                    confirmButtonColor: '#8C8658'
+                });
+            }
+
             const confirmRes = await Swal.fire({
                 title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">🎁 Canjear Oferta</div>`,
                 html: `
@@ -19693,10 +19712,15 @@
                 const { data, error } = await client.rpc('canjear_oferta_promocional', { p_oferta: tipoNorm });
 
                 if (error) {
+                    const rawMsg = error.message || 'Ocurrió un error al canjear la oferta.';
+                    // BUG-7: traducir errores técnicos de restricción a lenguaje humano.
+                    const friendlyMsg = /check constraint|welcome_range|violates/i.test(rawMsg)
+                        ? 'Ya dispones de esa oferta en tu saldo: no es necesario canjearla de nuevo.'
+                        : rawMsg;
                     return Swal.fire({
                         icon: 'error',
                         title: 'No se pudo canjear',
-                        text: error.message || 'Ocurrió un error al canjear la oferta.',
+                        text: friendlyMsg,
                         confirmButtonColor: '#D27D60'
                     });
                 }
