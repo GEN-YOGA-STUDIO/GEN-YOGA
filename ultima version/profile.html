@@ -5374,6 +5374,28 @@
             animateValue(id, parseInt(el.innerText, 10) || 0, toSafeNumber(value), 500);
         }
 
+
+        // BUG-14: traduce errores técnicos (Postgres/PostgREST/inglés) a
+        // lenguaje humano. Si no reconoce el patrón, devuelve el original.
+        function amableError(msg, fallback) {
+            const m = String(msg || '');
+            const map = [
+                [/insufficient.*credit|saldo.*insuficiente|no.+bonos?\b|sin saldo/i, 'No tienes saldo suficiente para esta acción. Compra un bono o contacta con recepción.'],
+                [/class.+full|clase.+completa|aforo completo|capacidad (máxima|excedida)|llena/i, 'Esa clase ya está completa. Elige otra.'],
+                [/slot.*(not found|invalid)|hueco no disponible/i, 'Ese hueco ya no está disponible. Elige otro.'],
+                [/check constraint|violates/i, 'Esa acción no es posible con tu saldo actual. Contacta con recepción.'],
+                [/duplicate|ya existe|already exists|unique/i, 'Ese registro ya existe.'],
+                [/schema cache|could not find the function|does not exist/i, 'Estamos actualizando el sistema. Inténtalo en unos minutos.'],
+                [/network|fetch|timeout|failed to fetch|load failed|sin conexi/i, 'Sin conexión. Comprueba tu internet e inténtalo de nuevo.'],
+                [/permission denied|not allowed|42501/i, 'No tienes permiso para esa acción.'],
+                [/invalid.+email|email.+invalid/i, 'Revisa el email introducido.']
+            ];
+            for (const [re, txt] of map) {
+                if (re.test(m)) return txt;
+            }
+            return m || fallback || 'Ocurrió un error. Inténtalo de nuevo.';
+        }
+
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, (char) => ({
                 '&': '&amp;',
@@ -6496,7 +6518,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'No se pudo crear la cuenta',
-                        text: error.message || 'Comprueba los datos e inténtalo de nuevo.',
+                        text: amableError(error.message, 'Comprueba los datos e inténtalo de nuevo.'),
                         confirmButtonColor: '#D27D60'
                     });
                     return;
@@ -9405,6 +9427,20 @@
         }
         window.resolverPrecioYTallerLookup = resolverPrecioYTallerLookup;
 
+        // N10: sin onclick inline con el nombre (las entidades HTML se decodifican
+        // antes de ejecutar el JS y un título con comillas rompería/inyectaría).
+        // Delegación a nivel documento con data-* escapados en contexto atributo.
+        document.addEventListener('click', (e) => {
+            const btn = e.target?.closest?.('[data-checkout-taller]');
+            if (!btn || typeof window.iniciarCheckoutTallerStripe !== 'function') return;
+            window.iniciarCheckoutTallerStripe(
+                btn.dataset.lookup || null,
+                btn.dataset.title || '',
+                btn.dataset.precio || '',
+                Number(btn.dataset.clase) || 0
+            );
+        });
+
         async function cargarClasesEspeciales() {
             const container = document.getElementById('special-classes-container');
             const emptyState = document.getElementById('special-classes-empty');
@@ -9590,7 +9626,7 @@
                             action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 bg-emerald-600 hover:bg-emerald-700"><i class="ph-bold ph-arrows-clockwise mr-1"></i> RESERVAR CON BONO / CRÉDITO (0 €)</button>`;
                         } else {
                             const { lookupKey, precio } = resolverPrecioYTallerLookup(c);
-                            action = `<button onclick="iniciarCheckoutTallerStripe('${lookupKey}', '${escapeHtml(c.nombre)}', '${precio}', ${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">RESERVAR PLAZA (${precio} €)</button>`;
+                            action = `<button type="button" data-checkout-taller data-lookup="${escapeHtml(lookupKey || '')}" data-title="${escapeHtml(c.nombre || '')}" data-precio="${escapeHtml(precio || '')}" data-clase="${Number(claseId) || 0}" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">RESERVAR PLAZA (${precio} €)</button>`;
                         }
                         aforoOEstadoTaller = `<span class="text-xs font-bold text-[#AB593D] flex items-center gap-1"><i class="ph-bold ph-barbell"></i> Taller (Plaza Individual)</span>`;
                     }
@@ -10271,7 +10307,7 @@
                 await cargarHorarios();
                 await Swal.fire({ icon: 'success', title: 'Invitado reservado', text: 'La plaza gratuita ha quedado confirmada.', confirmButtonColor: '#047857' });
             } catch (error) {
-                await Swal.fire('No se pudo reservar', error.message || 'Inténtalo de nuevo.', 'error');
+                await Swal.fire('No se pudo reservar', amableError(error.message, 'Inténtalo de nuevo.'), 'error');
             }
         }
 
@@ -15722,7 +15758,7 @@
 
             const { error } = await client.from('profesionales').insert([formValues]);
             if (error) {
-                Swal.fire('Error', error.message, 'error');
+                Swal.fire('Error', amableError(error.message), 'error');
             } else {
                 await cargarProfesionalesCache();
                 Swal.fire({ icon: 'success', title: 'Profesional creado con éxito', timer: 1500, showConfirmButton: false });
@@ -15980,7 +16016,7 @@
 
                 const { error } = await client.from('profesionales').update(formValues).eq('id', id);
                 if (error) {
-                    Swal.fire('Error', error.message, 'error');
+                    Swal.fire('Error', amableError(error.message), 'error');
                 } else {
                     Swal.fire({
                         icon: 'success',
@@ -16007,7 +16043,7 @@
 
             if (res.isConfirmed) {
                 const { error } = await client.from('profesionales').delete().eq('id', id);
-                if (error) Swal.fire('Error', error.message, 'error');
+                if (error) Swal.fire('Error', amableError(error.message), 'error');
                 else {
                     await cargarProfesionalesCache();
                     cargarProfesoresAdmin();
@@ -16885,7 +16921,7 @@
 
                 if (error) {
                     console.error('Error al llamar admin_fusionar_perfiles:', error);
-                    return Swal.fire('Error en la fusión', error.message || 'No se pudo completar la fusión de perfiles.', 'error');
+                    return Swal.fire('Error en la fusión', amableError(error.message, 'No se pudo completar la fusión de perfiles.'), 'error');
                 }
 
                 // Obtener perfil conservado actualizado de la base de datos
@@ -17132,7 +17168,7 @@
                 await Swal.fire('Cuenta eliminada', 'El perfil, sus reservas y su acceso han sido eliminados de la base de datos.', 'success');
             } catch (error) {
                 console.error('Error al eliminar una cuenta desde administración:', error);
-                await Swal.fire('No se pudo eliminar', error.message || 'La cuenta no se eliminó.', 'error');
+                await Swal.fire('No se pudo eliminar', amableError(error.message, 'La cuenta no se eliminó.'), 'error');
             }
         }
 
@@ -17827,14 +17863,14 @@
                             return {
                                 valid: false,
                                 reason: 'same_batch_teacher',
-                                message: `<strong>Conflicto en el lote:</strong> El mismo profesor tiene dos sesiones programadas a la misma hora: <strong>"${a.nombre}"</strong> (${aStartStr} - ${aEndStr}) y <strong>"${b.nombre}"</strong> (${bStartStr} - ${bEndStr}).`
+                                message: `<strong>Conflicto en el lote:</strong> El mismo profesor tiene dos sesiones programadas a la misma hora: <strong>"${escapeHtml(a.nombre)}"</strong> (${aStartStr} - ${aEndStr}) y <strong>"${escapeHtml(b.nombre)}"</strong> (${bStartStr} - ${bEndStr}).`
                             };
                         }
                         if (aIsStudio && bIsStudio) {
                             return {
                                 valid: false,
                                 reason: 'same_batch_studio',
-                                message: `<strong>Conflicto en el lote:</strong> Hay dos clases presenciales de sala programadas a la misma hora: <strong>"${a.nombre}"</strong> (${aStartStr} - ${aEndStr}) y <strong>"${b.nombre}"</strong> (${bStartStr} - ${bEndStr}).`
+                                message: `<strong>Conflicto en el lote:</strong> Hay dos clases presenciales de sala programadas a la misma hora: <strong>"${escapeHtml(a.nombre)}"</strong> (${aStartStr} - ${aEndStr}) y <strong>"${escapeHtml(b.nombre)}"</strong> (${bStartStr} - ${bEndStr}).`
                             };
                         }
                     }
@@ -17899,7 +17935,7 @@
                                 reason: 'teacher_conflict',
                                 conflictClass: exist,
                                 newClass: newClass,
-                                message: `<strong>Conflicto de horario del profesor/a:</strong><br>${profName} ya tiene programada la sesión <strong>"${exist.nombre}"</strong> (${eStartStr} - ${eEndStr}) que coincide con <strong>"${newClass.nombre}"</strong> (${nStartStr} - ${nEndStr}).<br><br>Por favor, ajusta la hora para que no se solapen.`
+                                message: `<strong>Conflicto de horario del profesor/a:</strong><br>${escapeHtml(profName)} ya tiene programada la sesión <strong>"${escapeHtml(exist.nombre)}"</strong> (${eStartStr} - ${eEndStr}) que coincide con <strong>"${escapeHtml(newClass.nombre)}"</strong> (${nStartStr} - ${nEndStr}).<br><br>Por favor, ajusta la hora para que no se solapen.`
                             };
                         }
 
@@ -17910,7 +17946,7 @@
                                 reason: 'studio_conflict',
                                 conflictClass: exist,
                                 newClass: newClass,
-                                message: `<strong>Conflicto de sala en el estudio:</strong><br>Ya existe una clase de estudio programada: <strong>"${exist.nombre}"</strong> (con ${profName}, de ${eStartStr} a ${eEndStr}), la cual coincide con <strong>"${newClass.nombre}"</strong> (${nStartStr} - ${nEndStr}).<br><br>Por favor, selecciona una hora libre para la sala.`
+                                message: `<strong>Conflicto de sala en el estudio:</strong><br>Ya existe una clase de estudio programada: <strong>"${escapeHtml(exist.nombre)}"</strong> (con ${escapeHtml(profName)}, de ${eStartStr} a ${eEndStr}), la cual coincide con <strong>"${escapeHtml(newClass.nombre)}"</strong> (${nStartStr} - ${nEndStr}).<br><br>Por favor, selecciona una hora libre para la sala.`
                             };
                         }
                     }
@@ -18092,7 +18128,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al crear clase',
-                    text: error.message,
+                    text: amableError(error.message),
                     confirmButtonColor: '#1a4d4f'
                 });
                 return;
@@ -18251,7 +18287,7 @@
 
                 if (error) {
                     Swal.close();
-                    Swal.fire('Error al eliminar', error.message || 'No se pudo eliminar la clase.', 'error');
+                    Swal.fire('Error al eliminar', amableError(error.message, 'No se pudo eliminar la clase.'), 'error');
                     return;
                 } else {
                     devueltos = data?.alumnos_reembolsados || (typeof data === 'number' ? data : 0);
@@ -19447,7 +19483,7 @@
 
             if (formValues) {
                 const { error } = await client.from('configuracion').insert([formValues]);
-                if (error) Swal.fire('Error', error.message, 'error');
+                if (error) Swal.fire('Error', amableError(error.message), 'error');
                 else {
                     Swal.fire({ icon: 'success', title: 'Parámetro creado', showConfirmButton: false, timer: 1500 });
                     cargarConfiguracion();
@@ -21613,7 +21649,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'No se pudo iniciar el pago',
-                    text: error.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.',
+                    text: amableError(error.message, 'La pasarela no respondió correctamente. Inténtalo de nuevo.'),
                     confirmButtonColor: '#D27D60'
                 });
             }
@@ -25720,7 +25756,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al crear consulta',
-                    text: error.message
+                    text: amableError(error.message)
                 });
             } else {
                 if (data && data.length > 0 && metodoPagoConsulta) {
@@ -26196,7 +26232,7 @@
                 }
             } catch (error) {
                 console.error('Error al eliminar consulta:', error);
-                Swal.fire('Error', error.message || 'No se pudo eliminar el turno.', 'error');
+                Swal.fire('Error', amableError(error.message, 'No se pudo eliminar el turno.'), 'error');
             }
         }
 
@@ -27377,7 +27413,7 @@
                 });
                 Swal.close();
                 if (error) {
-                    Swal.fire('Error', error.message, 'error');
+                    Swal.fire('Error', amableError(error.message), 'error');
                 } else {
                     Swal.fire({ icon: 'success', title: 'Reserva cancelada', showConfirmButton: false, timer: 1500 });
                     await cargarTalleresAdmin();
@@ -27676,7 +27712,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al crear taller',
-                    text: error.message
+                    text: amableError(error.message)
                 });
             } else {
                 if (data && data.length > 0 && metodoPagoTaller) {
@@ -27782,7 +27818,7 @@
                 const { error } = await client.from('clases').delete().eq('id', normalizedClassId);
                 Swal.close();
                 if (error) {
-                    Swal.fire('Error', error.message, 'error');
+                    Swal.fire('Error', amableError(error.message), 'error');
                 } else {
                     Swal.fire({ icon: 'success', title: 'Taller eliminado', showConfirmButton: false, timer: 1500 });
                     await cargarTodasLasClasesConProfesionales({ force: true });
@@ -27937,7 +27973,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'No se pudo iniciar el pago',
-                    text: error.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.',
+                    text: amableError(error.message, 'La pasarela no respondió correctamente. Inténtalo de nuevo.'),
                     confirmButtonColor: '#D27D60'
                 });
             }
@@ -28176,7 +28212,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'No se pudo iniciar el pago',
-                    text: error.message || 'La pasarela no respondió correctamente. Inténtalo de nuevo.',
+                    text: amableError(error.message, 'La pasarela no respondió correctamente. Inténtalo de nuevo.'),
                     confirmButtonColor: '#D27D60'
                 });
             }
@@ -28251,7 +28287,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'No se pudo abrir la facturación',
-                    text: error.message || 'Inténtalo de nuevo más tarde.',
+                    text: amableError(error.message, 'Inténtalo de nuevo más tarde.'),
                     confirmButtonColor: '#D27D60'
                 });
             }
