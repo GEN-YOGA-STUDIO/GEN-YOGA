@@ -180,6 +180,7 @@ requireText(webhook, 'charge.dispute.created', 'Registro de disputas (S1)');
 requireText(shared, 'purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL &&', 'Mes natural admitido en clase especial (BUG-36)');
 requireText(checkout, '!profile.descuento_promo_50_activo', 'Promo exige código canjeado (M9)');
 requireText(checkout, "'Canjea el código GENYOGA", 'Aviso de canje previo (M9)');
+requireText(checkout, "'Ese producto debe comprarse por su flujo habitual.'", 'Dinámicos no pisan catálogo fijo (M8)');
 requireText(deleteAccount, 'getAuthenticatedUser(req, supabase, true)', 'Autenticación de eliminación de cuenta');
 requireText(deleteAccount, 'createAdminClient(config)', 'Service role aislado en eliminación de cuenta');
 requireText(deleteAccount, 'actorIsAdmin', 'Autorización administrativa de eliminación de cuenta');

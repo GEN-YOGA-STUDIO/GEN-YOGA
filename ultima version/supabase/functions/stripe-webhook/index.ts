@@ -36,8 +36,8 @@ serve(async (req) => {
 
     const stripe = createStripeClient(config)
     const supabase = createAdminClient(config)
-    const catalog = await getValidatedCatalog(stripe, config)
 
+    // M10: la firma se verifica ANTES de gastar cuota de la API de Stripe.
     let event: Stripe.Event
     try {
       event = await stripe.webhooks.constructEventAsync(
@@ -51,6 +51,8 @@ serve(async (req) => {
     }
 
     if (!event.livemode) throw new HttpError(400, 'Solo se aceptan eventos LIVE.')
+
+    const catalog = await getValidatedCatalog(stripe, config)
 
     if (event.type === 'checkout.session.completed') {
       const eventSession = event.data.object as Stripe.Checkout.Session
@@ -133,6 +135,25 @@ serve(async (req) => {
         catalog,
         event.type !== 'customer.subscription.deleted' && subscriptionIsEntitled(subscription.status),
       )
+    } else if (event.type === 'charge.refunded') {
+      // S1: un reembolso en Stripe anula automáticamente los créditos que
+      // entregó esa compra (antes se quedaban vivos para siempre).
+      await applyChargeRefund(supabase, event)
+    } else if (
+      event.type === 'charge.dispute.created' ||
+      event.type === 'charge.dispute.closed' ||
+      event.type === 'charge.dispute.funds_withdrawn'
+    ) {
+      // Disputas: solo se registran (decide una persona; ver S1).
+      const dispute = event.data.object as Stripe.Dispute
+      console.warn('Disputa Stripe:', event.type, dispute.id, dispute.amount, dispute.currency)
+      await supabase.from('stripe_webhook_events').insert({
+        event_id: event.id,
+        event_type: event.type,
+        livemode: true,
+        checkout_session_id: null,
+        object_id: dispute.id,
+      })
     }
 
     return jsonResponse({ received: true }, 200)
@@ -144,6 +165,79 @@ serve(async (req) => {
     return jsonResponse({ error: 'No se pudo procesar el evento Stripe.' }, 500)
   }
 })
+
+async function applyChargeRefund(
+  supabase: ReturnType<typeof createAdminClient>,
+  event: Stripe.Event,
+): Promise<void> {
+  const charge = event.data.object as Stripe.Charge
+  const pi = stripeObjectId(charge.payment_intent)
+  const refundId =
+    (charge as unknown as { refunds?: { data?: Array<{ id?: string }> } }).refunds?.data?.[0]?.id || charge.id
+  const refunded = charge.amount_refunded || 0
+
+  const { data: purchases } = await supabase
+    .from('stripe_purchases')
+    .select('checkout_session_id,amount_total,user_id,payment_status')
+    .eq('payment_intent_id', pi || 'pi_none_')
+    .eq('payment_status', 'paid')
+  for (const p of purchases || []) {
+    await supabase
+      .from('stripe_purchases')
+      .update({ refunded_at: new Date().toISOString(), refund_id: refundId })
+      .eq('checkout_session_id', p.checkout_session_id)
+    // Reembolso total: anular solo lo que aportaron sus packs (sin tocar
+    // bonos manuales: se resta, no se recalcula).
+    if ((p.amount_total || 0) > 0 && refunded >= (p.amount_total || 0)) {
+      const { data: packs } = await supabase
+        .from('class_credit_packs')
+        .select('id,credits_remaining,user_id')
+        .eq('checkout_session_id', p.checkout_session_id)
+      let voided = 0
+      for (const pack of packs || []) {
+        voided += Number(pack.credits_remaining) || 0
+      }
+      if (voided > 0) {
+        await supabase
+          .from('class_credit_packs')
+          .update({ credits_remaining: 0 })
+          .eq('checkout_session_id', p.checkout_session_id)
+      }
+      if (voided > 0 && p.user_id) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('bonos')
+          .eq('id', p.user_id)
+          .maybeSingle()
+        if (prof) {
+          await supabase
+            .from('profiles')
+            .update({ bonos: Math.max(0, (Number(prof.bonos) || 0) - voided) })
+            .eq('id', p.user_id)
+        }
+      }
+    } else {
+      console.warn('Reembolso parcial, revisión humana:', refundId, refunded, p.checkout_session_id)
+    }
+    await supabase.from('stripe_webhook_events').insert({
+      event_id: `${event.id}:${p.checkout_session_id}`,
+      event_type: event.type,
+      livemode: true,
+      checkout_session_id: p.checkout_session_id,
+      object_id: charge.id,
+    })
+  }
+  if (!purchases || purchases.length === 0) {
+    console.warn('Reembolso sin compra registrada:', refundId, pi)
+    await supabase.from('stripe_webhook_events').insert({
+      event_id: event.id,
+      event_type: event.type,
+      livemode: true,
+      checkout_session_id: null,
+      object_id: charge.id,
+    })
+  }
+}
 
 async function syncSubscriptionEvent(
   supabase: ReturnType<typeof createAdminClient>,

@@ -5,6 +5,11 @@ import {
   WORKSHOP_CATALOG,
   PROMO_CATALOG,
   PURCHASE_TYPES,
+  PACK_PRODUCT_IDS,
+  PROMO_PRODUCT_IDS,
+  MIRIAM_PRODUCT_IDS,
+  ISABEL_PRODUCT_IDS,
+  WORKSHOP_PRODUCT_IDS,
   HttpError,
   assertAllowedOrigin,
   assertPaymentOrigin,
@@ -287,6 +292,30 @@ serve(async (req) => {
       const dynamicResolved = await resolveDynamicStripePrice(stripe, purchaseType)
       if (!dynamicResolved) {
         throw new HttpError(400, 'No se pudo resolver el precio activo en Stripe para el producto seleccionado.')
+      }
+      // M8: un id dinámico que resuelve a un producto/precio FIJO debe usar su
+      // flujo (si no, el pago quedaría sin entrega por desajuste de metadatos).
+      // Solo los productos genuinamente ad-hoc (eventos) siguen por aquí.
+      // (SESION_GRUPAL excluida a propósito: pendiente decisión de precio BUG-37.)
+      const dynPriceId = dynamicResolved.price.id
+      const dynProd = dynamicResolved.product as Stripe.Product | string
+      const dynProductId = typeof dynProd === 'string' ? dynProd : dynProd.id
+      const fixedPriceIds = new Set([
+        catalog.claseSuelta.id, catalog.pack4.id, catalog.pack6.id,
+        catalog.pack10.id, catalog.bonoIlimitado.id, catalog.bonoMensual.id,
+      ])
+      const fixedProductIds = new Set<string>([
+        ...Object.values(PACK_PRODUCT_IDS),
+        PROMO_PRODUCT_IDS.PROMO_50_CLASE,
+        MIRIAM_PRODUCT_IDS.INDIVIDUAL_1A, MIRIAM_PRODUCT_IDS.INDIVIDUAL_SIG,
+        MIRIAM_PRODUCT_IDS.PAREJA_1A, MIRIAM_PRODUCT_IDS.PAREJA_SIG,
+        ISABEL_PRODUCT_IDS.PNI_1A, ISABEL_PRODUCT_IDS.PNI_SIG,
+        WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL,
+        WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
+        WORKSHOP_PRODUCT_IDS.TALLER_25,
+      ])
+      if (fixedPriceIds.has(dynPriceId) || fixedProductIds.has(dynProductId)) {
+        throw new HttpError(400, 'Ese producto debe comprarse por su flujo habitual.')
       }
       lineItems = [{ price: dynamicResolved.price.id, quantity: 1 }]
     } else {
