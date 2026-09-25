@@ -1023,12 +1023,13 @@ export function validateCheckoutPurchase(
 
   const membershipMonth = metadata.membership_month?.trim() || null
   if (
-    purchaseType === PURCHASE_TYPES.BONO_ILIMITADO &&
+    (purchaseType === PURCHASE_TYPES.BONO_ILIMITADO ||
+      purchaseType === PURCHASE_TYPES.CLASE_ESPECIAL) &&
     (!membershipMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth))
   ) {
     throw new HttpError(400, 'La sesión no contiene un mes natural válido.')
   }
-  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && membershipMonth) {
+  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL && membershipMonth) {
     throw new HttpError(400, 'El producto no admite un mes natural seleccionado.')
   }
 

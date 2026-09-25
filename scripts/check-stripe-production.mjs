@@ -173,6 +173,13 @@ requireText(webhook, "supabase.rpc('stripe_fulfill_checkout'", 'Fulfillment ató
 requireText(webhook, "event.type === 'invoice.paid'", 'Renovaciones');
 requireText(webhook, 'parent?.subscription_details?.subscription', 'Compatibilidad Invoice Basil');
 requireText(webhook, "event.type === 'customer.subscription.deleted'", 'Cancelaciones');
+requireBefore(webhook, 'constructEventAsync(', 'getValidatedCatalog(stripe, config)', 'Firma antes que catálogo (M10)');
+requireText(webhook, "event.type === 'charge.refunded'", 'Anulación automática por reembolso (S1)');
+requireText(webhook, 'applyChargeRefund', 'Void de packs reembolsados (S1)');
+requireText(webhook, 'charge.dispute.created', 'Registro de disputas (S1)');
+requireText(shared, 'purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL &&', 'Mes natural admitido en clase especial (BUG-36)');
+requireText(checkout, '!profile.descuento_promo_50_activo', 'Promo exige código canjeado (M9)');
+requireText(checkout, "'Canjea el código GENYOGA", 'Aviso de canje previo (M9)');
 requireText(deleteAccount, 'getAuthenticatedUser(req, supabase, true)', 'Autenticación de eliminación de cuenta');
 requireText(deleteAccount, 'createAdminClient(config)', 'Service role aislado en eliminación de cuenta');
 requireText(deleteAccount, 'actorIsAdmin', 'Autorización administrativa de eliminación de cuenta');
@@ -329,6 +336,7 @@ requireText(frontendSources[1], 'membership_month: membershipMonth', 'Mes natura
 requireText(frontendSources[0], '60 días naturales desde la compra', 'Caducidad de clase suelta visible en tarifas');
 requireText(migration, 'enable row level security', 'RLS Stripe');
 requireText(config, '[functions.stripe-webhook]', 'Configuración webhook');
+requireText(config, '[functions.reconcile-stripe]', 'Configuración conciliación (S6)');
 requireText(config, 'verify_jwt = false', 'Configuración JWT');
 const deleteAccountConfig = config.match(/\[functions\.delete-account\][\s\S]*?(?=\n\[|$)/)?.[0] || '';
 requireText(deleteAccountConfig, 'verify_jwt = true', 'JWT obligatorio para eliminar cuentas');

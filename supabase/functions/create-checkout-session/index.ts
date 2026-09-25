@@ -158,6 +158,9 @@ serve(async (req) => {
       if (profile.account_deletion_pending) {
         throw new HttpError(409, 'La cuenta se está eliminando y no puede iniciar nuevos pagos.')
       }
+      if (isPromo && !profile.descuento_promo_50_activo) {
+        throw new HttpError(400, 'Canjea el código GENYOGA antes de usar la promoción del 50%.')
+      }
       if (isPromo && profile.codigo_promo_usado) {
         throw new HttpError(400, 'Ya has utilizado la promoción del 50% de descuento en tu 1ª clase.')
       }

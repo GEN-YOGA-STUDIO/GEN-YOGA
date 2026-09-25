@@ -3106,6 +3106,11 @@
                                 title="Descargar informe marketing en PDF">
                                 <i class="ph-bold ph-file-pdf text-base"></i> PDF
                             </button>
+                            <button id="btn-conciliar-pagos" onclick="ejecutarConciliacionPagos()"
+                                class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-white border border-cocoa/15 text-cocoa/70 hover:text-cocoa hover:bg-sand/20 text-xs font-bold uppercase tracking-wider transition shadow-2xs"
+                                title="Conciliar pagos Stripe con la base de datos">
+                                <i class="ph-bold ph-scales text-base"></i> Conciliar
+                            </button>
                             <div
                                 class="flex items-center gap-1 bg-white/90 border border-cocoa/15 p-1 rounded-xl shadow-xs">
                                 <button id="dashboard-range-7d" onclick="cambiarRangoDashboard('7d')"
@@ -17687,7 +17692,7 @@
             const tipoClaseId = (rawTipoVal && rawTipoVal !== 'custom')
                 ? (safePositiveInteger(rawTipoVal) || null)
                 : (safePositiveInteger(currentEditingClass?.tipo_clase_id) || null);
-            const nombre = (selectedOpt?.text || currentEditingClass?.nombre || (isConsulta ? 'Consulta Individual' : 'Yoga')).trim();
+            const nombre = (selectedOpt?.dataset?.nombre || ((selectedOpt && !/^cargando/i.test(selectedOpt.text || '')) ? selectedOpt.text : '') || currentEditingClass?.nombre || (isConsulta ? 'Consulta Individual' : 'Yoga')).trim();
 
             const fecha = document.getElementById('editar-clase-fecha').value;
             const horaInicio = document.getElementById('editar-clase-hora-inicio').value;

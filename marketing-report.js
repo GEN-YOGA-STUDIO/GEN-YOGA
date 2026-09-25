@@ -636,6 +636,59 @@
   }
 
   window.descargarInformeMarketing = descargarInformeMarketing;
+  window.ejecutarConciliacionPagos = ejecutarConciliacionPagos;
+  // ------------------------------------------------------------------
+  // Conciliación Stripe <-> BD (S6): solo lectura, vía edge function admin.
+  // ------------------------------------------------------------------
+  async function ejecutarConciliacionPagos() {
+    try {
+      // eslint-disable-next-line no-undef
+      if (typeof isAdmin !== 'undefined' && !isAdmin) {
+        swalError('Sin permiso', 'La conciliación solo está disponible para administración.');
+        return;
+      }
+    } catch (_) { /* noop */ }
+    var sb = getClient();
+    if (!sb) {
+      swalError('Sin conexión', 'No hay conexión con la base de datos.');
+      return;
+    }
+    if (window.Swal && window.Swal.fire) {
+      window.Swal.fire({
+        title: 'Conciliando pagos…',
+        text: 'Cruzando Stripe con la base de datos (solo lectura).',
+        allowOutsideClick: false,
+        didOpen: function () { window.Swal.showLoading(); }
+      });
+    }
+    try {
+      var res = await sb.functions.invoke('reconcile-stripe', {});
+      if (res.error) throw res.error;
+      var d = res.data || {};
+      var bad = (d.paid_sin_fila || []).length + (d.filas_sin_stripe || []).length + (d.reembolsos_sin_anular || []).length;
+      var line = function (x) {
+        return '<div>· ' + escHtml(x.session || x.refund || '?') + ' — ' + escHtml(String(x.total != null ? (x.total / 100) + ' €' : (x.amount != null ? (x.amount / 100) + ' €' : ''))) + (x.type ? ' (' + escHtml(x.type) + ')' : '') + '</div>';
+      };
+      var html = '<p><strong>' + d.stripe_paid + '</strong> cobros en Stripe · <strong>' + d.db_rows + '</strong> filas en BD.</p>';
+      html += '<p class="rpt-note">Pagados sin fila: ' + (d.paid_sin_fila || []).length +
+        ' · Filas sin Stripe: ' + (d.filas_sin_stripe || []).length +
+        ' · Reembolsos sin anular: ' + (d.reembolsos_sin_anular || []).length + '</p>';
+      (d.paid_sin_fila || []).slice(0, 20).forEach(function (x) { html += line(x); });
+      (d.filas_sin_stripe || []).slice(0, 20).forEach(function (x) { html += line(x); });
+      (d.reembolsos_sin_anular || []).slice(0, 20).forEach(function (x) { html += line(x); });
+      if (window.Swal && window.Swal.fire) {
+        window.Swal.fire({
+          icon: bad === 0 ? 'success' : 'warning',
+          title: bad === 0 ? 'Conciliación limpia' : bad + ' descuadre(s)',
+          html: html,
+          confirmButtonColor: '#795244'
+        });
+      }
+    } catch (err) {
+      swalError('No se pudo conciliar', (err && err.message) || String(err));
+    }
+  }
+
   window.GENMarketingReport = {
     version: REPORT_VERSION,
     descargarInformeMarketing: descargarInformeMarketing,
