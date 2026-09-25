@@ -304,6 +304,32 @@ if (online) {
       clearTimeout(timer);
     }
   }
+  // RPCs sensibles: ni anon ni (por diseño) un alumno pueden ejecutarlas.
+  // Argumentos inocuos: p_livemode=false hace fallar fulfill antes de
+  // escribir; ids -999 no tocan filas aunque se ejecutaran.
+  const rpcProbes = [
+    ['rpc/stripe_fulfill_checkout', { p_event_id: 'probe', p_event_type: 'checkout.session.completed', p_event_created: 1, p_checkout_session_id: 'cs_probe', p_user_id: '00000000-0000-0000-0000-000000000000', p_is_guest: false, p_purchase_type: 'pack_10', p_price_id: 'x', p_payment_intent_id: 'x', p_subscription_id: null, p_customer_id: 'x', p_amount_total: 9500, p_currency: 'eur', p_payment_status: 'paid', p_membership_month: null, p_period_start: null, p_period_end: null, p_subscription_status: null, p_cancel_at_period_end: false, p_livemode: false }, 'fulfill anon'],
+    ['rpc/admin_actualizar_clase_simple', { p_clase_id: -999, p_nombre: 'ZZZ', p_tipo_clase_id: null, p_fecha_inicio: null, p_fecha_fin: null, p_duracion_minutos: null, p_capacidad_max: null, p_profesor_id: null, p_es_gratuita: false, p_companion_modality: null, p_descripcion: null }, 'clase_simple anon'],
+    ['rpc/admin_configurar_bono_mensual', { p_user_id: '00000000-0000-0000-0000-000000000000', p_activo: false }, 'bono_mensual anon'],
+  ];
+  for (const [rpc, body, label] of rpcProbes) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/${rpc}`, {
+        method: 'POST',
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+      if (res.status === 401 || res.status === 403 || res.status === 404) pass(`${label}: denegada sin sesión (HTTP ${res.status})`);
+      else fail(`${label}: NO denegada sin sesión (HTTP ${res.status}) — ¡revisar!`);
+    } catch (e) {
+      needLive(`L8 ${label}`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 }
 
 console.log('');
