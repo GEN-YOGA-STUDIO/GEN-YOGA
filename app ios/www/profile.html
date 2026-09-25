@@ -8178,12 +8178,13 @@
                 let loggedNow = false;
                 try { loggedNow = !!(currentUser && currentUser.id); } catch (_) { loggedNow = false; }
                 if (loggedNow) {
+                    const claseResume = safePositiveInteger(urlParams.get('clase')) || null;
                     window.history.replaceState({}, document.title, window.location.pathname);
                     const resumeKey = buyParam;
                     setTimeout(() => {
                         try {
                             if (/taller|especial/i.test(resumeKey) && typeof iniciarCheckoutTallerStripe === 'function') {
-                                iniciarCheckoutTallerStripe(resumeKey);
+                                iniciarCheckoutTallerStripe(resumeKey, /taller/i.test(resumeKey) ? 'Taller' : 'Clase Especial', undefined, claseResume);
                             } else if (typeof iniciarCheckoutConsultaStripe === 'function') {
                                 iniciarCheckoutConsultaStripe(resumeKey);
                             }
@@ -9783,7 +9784,8 @@
                         user_id: currentUser.id,
                         from: 'profile',
                         app_version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : '12.1.0',
-                        checkout_attempt_id: checkoutAttemptId
+                        checkout_attempt_id: checkoutAttemptId,
+                        clase_id: claseId || null
                     }
                 });
 

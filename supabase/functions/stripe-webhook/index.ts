@@ -3,10 +3,12 @@ import Stripe from "https://esm.sh/stripe@14.22.0?target=deno"
 import {
   PURCHASE_TYPES,
   HttpError,
+  bookPaidTallerClass,
   createAdminClient,
   createStripeClient,
   getValidatedCatalog,
   jsonResponse,
+  metadataClaseId,
   readProductionConfig,
   stripeObjectId,
   subscriptionIsEntitled,
@@ -95,6 +97,19 @@ serve(async (req) => {
         p_livemode: true,
       })
       if (error) throw new Error(`Fallo de fulfillment transaccional: ${error.message}`)
+
+      // BUG-1: si el taller trae clase, reservar la plaza en el servidor
+      // (el cliente puede no volver en el mismo navegador). Nunca falla el pago.
+      try {
+        const booked = await bookPaidTallerClass(supabase, {
+          userId: purchase.appUserId === 'guest' ? null : purchase.appUserId,
+          purchaseType: purchase.purchaseType,
+          paymentStatus: session.payment_status,
+          claseId: metadataClaseId(session.metadata),
+        })
+        if (booked !== 'skipped') console.log('bookPaidTallerClass:', booked, session.id)
+      } catch (_) { /* la entrega ya está consolidada; la plaza se revisa a mano */ }
+    } else if (event.type === 'invoice.paid' || event.type === 'invoice.payment_failed') {
     } else if (event.type === 'invoice.paid' || event.type === 'invoice.payment_failed') {
       const invoice = event.data.object as Stripe.Invoice
       if (!invoice.livemode || invoice.currency.toLowerCase() !== 'eur') {

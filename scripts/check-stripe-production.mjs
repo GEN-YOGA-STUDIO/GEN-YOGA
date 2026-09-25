@@ -181,6 +181,10 @@ requireText(shared, 'purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL &&', 'Mes na
 requireText(checkout, '!profile.descuento_promo_50_activo', 'Promo exige código canjeado (M9)');
 requireText(checkout, "'Canjea el código GENYOGA", 'Aviso de canje previo (M9)');
 requireText(checkout, "'Ese producto debe comprarse por su flujo habitual.'", 'Dinámicos no pisan catálogo fijo (M8)');
+requireText(checkout, 'metadata.clase_id = claseIdMeta', 'Clase sellada en metadatos (BUG-1)');
+requireText(webhook, 'bookPaidTallerClass(supabase', 'Reserva servidora de taller (BUG-1)');
+requireText(getSession, 'bookPaidTallerClass(supabase', 'Reserva servidora al retorno (BUG-1)');
+requireText(shared, 'export async function bookPaidTallerClass', 'Helper de reserva servidora (BUG-1)');
 requireText(deleteAccount, 'getAuthenticatedUser(req, supabase, true)', 'Autenticación de eliminación de cuenta');
 requireText(deleteAccount, 'createAdminClient(config)', 'Service role aislado en eliminación de cuenta');
 requireText(deleteAccount, 'actorIsAdmin', 'Autorización administrativa de eliminación de cuenta');

@@ -683,6 +683,57 @@ export function stripeObjectId(value: string | { id: string } | null | undefined
   return typeof value === 'string' ? value : value.id
 }
 
+// BUG-1: al cobrar un taller hay que dejar la plaza reservada en el servidor
+// (el cliente puede no volver en el mismo navegador). Solo lectura+1 insert
+// idempotente; nunca falla la entrega: devuelve el resultado para logs.
+export function metadataClaseId(metadata: unknown): number | null {
+  const raw = (metadata as Record<string, unknown> | null)?.clase_id
+  const n = typeof raw === 'number' ? raw : parseInt(String(raw || ''), 10)
+  return Number.isInteger(n) && (n as number) > 0 ? (n as number) : null
+}
+
+export async function bookPaidTallerClass(
+  supabase: { from: (table: string) => any },
+  args: { userId: string | null; purchaseType: string; paymentStatus: string; claseId: number | null },
+): Promise<'booked' | 'skipped' | 'failed'> {
+  const { userId, purchaseType, paymentStatus, claseId } = args
+  if (!userId || paymentStatus !== 'paid' || !claseId) return 'skipped'
+  const t = String(purchaseType || '').toLowerCase()
+  if (!(t === 'taller' || t.includes('taller'))) return 'skipped'
+  try {
+    const { data: clase } = await supabase
+      .from('clases')
+      .select('id,fecha_inicio,capacidad_max,tipo_clase,activa')
+      .eq('id', claseId)
+      .maybeSingle()
+    if (!clase || (clase as { activa?: boolean }).activa === false) return 'skipped'
+    if (!clase.fecha_inicio || new Date(clase.fecha_inicio).getTime() <= Date.now()) return 'skipped'
+    if (String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase() !== 'taller') return 'skipped'
+    const { data: existing } = await supabase
+      .from('reservas_yoga')
+      .select('id')
+      .eq('clase_id', claseId)
+      .eq('user_id', userId)
+      .eq('estado', 'confirmada')
+      .limit(1)
+    if (existing && (existing as unknown[]).length > 0) return 'skipped'
+    const { data: occ } = await supabase
+      .from('reservas_yoga')
+      .select('id')
+      .eq('clase_id', claseId)
+      .eq('estado', 'confirmada')
+    const cap = Number((clase as { capacidad_max?: number }).capacidad_max) || 10
+    if (((occ as unknown[]) || []).length >= cap) return 'skipped'
+    const { error } = await supabase
+      .from('reservas_yoga')
+      .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada' })
+    if (error) return 'failed'
+    return 'booked'
+  } catch (_) {
+    return 'failed'
+  }
+}
+
 function consultationPriceMatches(
   price: Stripe.Price,
   details: ConsultationDetails,

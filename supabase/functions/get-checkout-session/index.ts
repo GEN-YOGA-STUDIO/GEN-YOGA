@@ -4,6 +4,7 @@ import {
   HttpError,
   assertAllowedOrigin,
   assertPaymentOrigin,
+  bookPaidTallerClass,
   corsHeaders,
   createAdminClient,
   createStripeClient,
@@ -13,6 +14,7 @@ import {
   isSingleConsultation,
   isWorkshopPurchase,
   jsonResponse,
+  metadataClaseId,
   readCorsConfig,
   readProductionConfig,
   requirePost,
@@ -101,6 +103,15 @@ serve(async (req) => {
       if (fulfillError) {
         throw new Error(`No se pudo consolidar la compra verificada: ${fulfillError.message}`)
       }
+      // BUG-1: reserva servidora del taller (idempotente; nunca falla la entrega).
+      try {
+        await bookPaidTallerClass(supabase, {
+          userId: isGuest ? null : purchase.appUserId,
+          purchaseType: purchase.purchaseType,
+          paymentStatus: session.payment_status,
+          claseId: metadataClaseId(session.metadata),
+        })
+      } catch (_) { /* consolidado; la plaza se revisa a mano */ }
     }
 
     let alreadyRedeemed = false
