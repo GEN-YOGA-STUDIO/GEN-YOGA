@@ -13,7 +13,9 @@ from build_android import build_android
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def run_git(cmd):
-    return subprocess.run(cmd, cwd=BASE_DIR, shell=True, check=True)
+    if isinstance(cmd, str):
+        return subprocess.run(cmd, cwd=BASE_DIR, shell=True, check=True)
+    return subprocess.run(cmd, cwd=BASE_DIR, check=True)
 
 def main():
     print("=" * 70)
@@ -63,7 +65,7 @@ def main():
     print("\n📤 Subiendo cambios a GitHub...")
     try:
         run_git("git add .")
-        run_git(f'git commit -m "{commit_msg}"')
+        run_git(["git", "commit", "-m", commit_msg])
         run_git("git push origin main")
         print("✅ Cambios subidos correctamente a GitHub.")
     except Exception as e:

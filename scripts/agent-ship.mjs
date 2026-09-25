@@ -9,7 +9,7 @@
  *   npm run ship -- 13.3 "feat: nueva funcionalidad v13.3"
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -84,7 +84,7 @@ try {
     if (!staged) {
       console.log('ℹ️  No hay archivos modificados pendientes de commit.');
     } else {
-      execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, { cwd: rootDir, stdio: 'inherit' });
+      execFileSync('git', ['commit', '-m', commitMessage], { cwd: rootDir, stdio: 'inherit' });
       console.log('✅  Commit local creado con éxito.');
 
       // Intentar git push local

@@ -274,6 +274,38 @@ if (online) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// L8. Escrituras anónimas denegadas. Sondas con valores que violan un CHECK
+// o una FK a propósito: si RLS niega -> 401; si la policy regresara, la
+// restricción daría 400 SIN escribir nada ( Tripwire seguro, 0 escrituras).
+// ---------------------------------------------------------------------------
+console.log('\n--- L8. Escrituras anónimas denegadas ---');
+if (online) {
+  const probes = [
+    [`tipos_clases`, `{"nombre":"ZZZ_PROBE","categoria":"zz_invalid_cat_xyz"}`, 'tipos_clases'],
+    [`grupos_profesionales`, `{"profesional_id":-999,"alumno_id":"00000000-0000-0000-0000-000000000000"}`, 'grupos_profesionales'],
+    [`configuracion`, `{"clave":"zz_probe_xyz","valor":"x","tipo":"zz_bad"}`, 'configuracion'],
+  ];
+  for (const [table, body, label] of probes) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/${table}`, {
+        method: 'POST',
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body,
+        signal: ctrl.signal,
+      });
+      if (res.status === 401 || res.status === 403) pass(`${label}: escritura anónima denegada (HTTP ${res.status})`);
+      else fail(`${label}: escritura anónima NO denegada (HTTP ${res.status}) — ¡revisar RLS!`);
+    } catch (e) {
+      needLive(`L8 ${label}`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+}
+
 console.log('');
 if (skipped && !REQUIRE_LIVE) console.log('  ℹ️ Parte verificada con red; sin red degrada a aviso (E2E_REQUIRE_LIVE=1 para exigirlo).');
 if (errors.length > 0) {

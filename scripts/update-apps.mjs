@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 
 console.log('\n📱 =========================================');
 console.log('🚀 Actualizando versión y recursos de APPS (iOS / Android)...');
@@ -22,7 +22,7 @@ try {
   execSync('git add -A', { stdio: 'inherit' });
   
   try {
-    execSync(`git commit -m "${msg}"`, { stdio: 'inherit' });
+    execFileSync('git', ['commit', '-m', msg], { stdio: 'inherit' });
     execSync('git push origin main', { stdio: 'inherit' });
   } catch (err) {
     console.log('ℹ️ No había cambios pendientes para commitear o ya estaban al día.');

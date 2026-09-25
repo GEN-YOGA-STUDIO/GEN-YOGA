@@ -54,7 +54,7 @@ La IA se encarga de:
      node scripts/bump-version.mjs <nueva_version>
      ```
      Esto actualiza en milisegundos los 8 archivos HTML, favicons, meta tags, `package.json` (raíz + apps), Gradle Android y Xcode iOS.
-   - iOS y Android son **GEMELAS**: mismo `appId` (`com.genyoga.app`), misma versión, mismo build, mismo contenido web byte a byte. Lo verifica `npm run check:twins`. No introducir divergencias (una config por plataforma solo en lo estrictamente nativo).
+   - iOS y Android son **GEMELAS**: mismo contenido web byte a byte, misma versión y mismo build (B7: los appId difieren por historial de tiendas — Android `gen.yoga.app`, iOS `com.genyoga.app`). Lo verifica `npm run check:twins`. No introducir divergencias (una config por plataforma solo en lo estrictamente nativo).
 
 ---
 
