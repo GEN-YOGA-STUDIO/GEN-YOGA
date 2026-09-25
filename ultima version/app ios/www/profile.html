@@ -7293,9 +7293,9 @@
                 const start = Date.parse(period.starts_at);
                 const end = Date.parse(period.ends_at);
                 if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
-                // Si end cae a las 00:00:00 del último día, extenderlo hasta el final del día
-                const inclusiveEnd = end + (end % 86400000 === 0 ? 86400000 : 0);
-                return timestamp >= start && timestamp < inclusiveEnd;
+                // BUG-17: regla estricta igual que el servidor (sin día extra):
+                // starts_at <= clase AND ends_at > clase.
+                return timestamp >= start && timestamp < end;
             });
             if (naturalMonth) return naturalMonth;
 
@@ -7313,8 +7313,8 @@
                 const legacyStart = Date.parse(userLegacyUnlimitedStart);
                 const legacyEnd = Date.parse(userLegacyUnlimitedEnd);
                 if (Number.isFinite(legacyStart) && Number.isFinite(legacyEnd)) {
-                    const inclusiveLegacyEnd = legacyEnd + 86400000;
-                    if (timestamp >= legacyStart && timestamp < inclusiveLegacyEnd) {
+                    // BUG-17: estricto como el servidor (sin día extra).
+                    if (timestamp >= legacyStart && timestamp < legacyEnd) {
                         return {
                             membership_month: `${classYearMonth}-01`,
                             starts_at: userLegacyUnlimitedStart,
@@ -7322,14 +7322,10 @@
                             legacy: true
                         };
                     }
-                } else {
-                    return {
-                        membership_month: `${classYearMonth}-01`,
-                        starts_at: new Date().toISOString(),
-                        ends_at: new Date(Date.now() + 31 * 86400000).toISOString(),
-                        legacy: true
-                    };
                 }
+                // Sin fechas válidas no hay cobertura (antes se fabricaba una
+                // de 31 días que el servidor jamás aceptaría).
+                return null;
             }
             return null;
         }
@@ -17784,6 +17780,29 @@
                 updatePayload.companion_modality = companionModality;
             }
 
+            // BUG-25: avisar si la clase tiene reservas (se verán afectadas y
+            // nadie es notificado automáticamente). Sin conteo no se bloquea.
+            try {
+                const [ry25, rp25, rn25] = await Promise.all([
+                    client.from('reservas_yoga').select('id', { count: 'exact', head: true }).eq('clase_id', cid).eq('estado', 'confirmada'),
+                    client.from('reservas_psicologia').select('id', { count: 'exact', head: true }).eq('clase_id', cid).eq('estado', 'confirmada'),
+                    client.from('reservas_nutricion').select('id', { count: 'exact', head: true }).eq('clase_id', cid).eq('estado', 'confirmada')
+                ]);
+                const nRes25 = (ry25?.count || 0) + (rp25?.count || 0) + (rn25?.count || 0);
+                if (nRes25 > 0) {
+                    const ok25 = await Swal.fire({
+                        icon: 'warning',
+                        title: `Esta clase tiene ${nRes25} reserva(s)`,
+                        text: 'Si cambias fecha, hora o aforo, esas reservas se verán afectadas y nadie será avisado automáticamente. ¿Guardar de todos modos?',
+                        showCancelButton: true,
+                        confirmButtonText: 'Guardar igualmente',
+                        cancelButtonText: 'Revisar',
+                        confirmButtonColor: '#D27D60'
+                    });
+                    if (!ok25.isConfirmed) return;
+                }
+            } catch (_) { /* sin conteo no se bloquea el guardado */ }
+
             // Actualizar en base de datos
             let { error: updateErr } = await client.from('clases').update(updatePayload).eq('id', cid);
             if (updateErr && (updateErr.message?.includes('metodo_pago') || updateErr.message?.includes('stripe_lookup_key') || updateErr.message?.includes('schema cache'))) {
@@ -18038,8 +18057,14 @@
                 }
             } else if (repeatEvery === 'mensual') {
                 for (let i = 0; i < repeatCount; i++) {
+                    // BUG-27: sin clamp, el 31 de enero + 1 mes = 3 de marzo
+                    // (setMonth desborda). Se fija al último día del mes destino.
                     const start = new Date(fechaInicio.getTime());
-                    start.setMonth(start.getMonth() + i);
+                    const origDay = fechaInicio.getDate();
+                    start.setDate(1);
+                    start.setMonth(fechaInicio.getMonth() + i);
+                    const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+                    start.setDate(Math.min(origDay, lastDay));
                     const end = new Date(start.getTime() + duracion * 60000);
                     inserts.push({
                         tipo_clase: 'yoga',

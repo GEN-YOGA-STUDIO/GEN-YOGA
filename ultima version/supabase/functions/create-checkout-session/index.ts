@@ -143,6 +143,14 @@ serve(async (req) => {
     }
     const checkoutAttemptId = requestedAttemptId || crypto.randomUUID()
 
+    // BUG-1: la clase del taller viaja en metadatos para que el fulfillment
+    // pueda reservar la plaza en el servidor (acepta clase_id o target_class_id).
+    const rawClaseId = body.clase_id ?? body.target_class_id ?? null
+    const claseIdNum = typeof rawClaseId === 'number'
+      ? rawClaseId
+      : (/^\d+$/.test(String(rawClaseId || '').trim()) ? parseInt(String(rawClaseId).trim(), 10) : NaN)
+    const claseIdMeta = Number.isInteger(claseIdNum) && (claseIdNum as number) > 0 ? String(claseIdNum) : null
+
     const stripe = createStripeClient(config)
     const supabase = createAdminClient(config)
 
@@ -211,6 +219,7 @@ serve(async (req) => {
       checkout_attempt_id: checkoutAttemptId,
     }
     if (membershipMonth) metadata.membership_month = membershipMonth
+    if (claseIdMeta) metadata.clase_id = claseIdMeta
 
     const returnBaseUrl = resolveReturnBaseUrl(req, config)
 

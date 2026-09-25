@@ -523,8 +523,19 @@
             };
 
             try {
-                // Enforce that guest classes must start in more than 12 hours
-                const minDateIso = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+                // BUG-20: el plazo sale de configuracion (horas_limite_reserva),
+                // no de un 12 fijo (antes ocultaba clases reservables).
+                let limiteHoras = 12;
+                try {
+                    const { data: cfg } = await client
+                        .from('configuracion')
+                        .select('valor')
+                        .eq('clave', 'horas_limite_reserva')
+                        .maybeSingle();
+                    const parsed = parseFloat(cfg?.valor);
+                    if (Number.isFinite(parsed) && parsed >= 0) limiteHoras = parsed;
+                } catch (_) { /* fallback 12 h */ }
+                const minDateIso = new Date(Date.now() + limiteHoras * 60 * 60 * 1000).toISOString();
                 const preferredClassRaw = safeStoredValue('preferred_guest_class_id');
                 const preferredClassId = safePositiveInteger(preferredClassRaw);
                 if (preferredClassRaw && !preferredClassId) {
