@@ -75,7 +75,7 @@ assert.match(angelEnglish.descripcion, /ABOUT ME:\nFor the past 6 years/);
 assert.doesNotMatch(angelEnglish.descripcion, /\bNone\b/);
 assert.doesNotMatch(angelEnglish.descripcion, /\bSeptember\b/);
 assert.match(angelEnglish.descripcion, /SESSION FOCUS:/);
-assert.equal(angelEnglish.especialidad, 'Yoga for Men & Yoga for Everyone | classes');
+assert.equal(angelEnglish.especialidad, 'Alignment Yoga & Yoga for Everyone | classes');
 
 
 const miriamEnglish = getEnglishProfile({ email: 'miriam_profesora@genyoga.studio' });
@@ -106,7 +106,7 @@ const parsedMiriam = parseBio(descriptions.miriam);
 assert.equal(parsedMiriam.lugar, 'Albacete (España)');
 assert.equal(parsedMiriam.titulos.length, 10);
 assert.ok(parsedMiriam.sobreMi.length >= 4);
-assert.equal(parsedMiriam.teAcompano.length, 10);
+assert.equal(parsedMiriam.teAcompano.length, 16);
 
 const [maestros, profile, clases, migration, mergeMigration] = await Promise.all([
   readFile(path.join(root, 'maestros.html'), 'utf8'),

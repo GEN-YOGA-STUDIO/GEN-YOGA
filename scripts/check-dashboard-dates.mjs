@@ -163,10 +163,20 @@ const VECTORS = [
     let ok = 0;
     for (const iso of VECTORS) {
       const ref = refParts(iso);
+      const slotInfo = helpers.getSlotInfo(iso);
+      // Límites de franja de getSlotInfo: 07-13 Mañana, 13-16 Mediodía,
+      // 16-19.5 Tarde (hora entera < 20), resto Noche.
+      const refSlot = ref.hour >= 7 && ref.hour < 13
+        ? 'Mañana'
+        : ref.hour >= 13 && ref.hour < 16
+          ? 'Mediodía'
+          : ref.hour >= 16 && ref.hour < 19.5
+            ? 'Tarde'
+            : 'Noche';
       const checks = [
         [helpers.fmtTime(iso), ref.time, 'hora'],
         [helpers.monthKey(iso), ref.month, 'mes'],
-        [helpers.slotEs(iso), ref.hour < 13 ? 'Mañana' : ref.hour < 19 ? 'Tarde' : 'Noche', 'franja'],
+        [String(slotInfo.slot).split(' ')[0], refSlot, 'franja'],
       ];
       const wdGot = helpers.weekdayEs(iso);
       const wdWant = ref.weekdayEs.charAt(0).toUpperCase() + ref.weekdayEs.slice(1);

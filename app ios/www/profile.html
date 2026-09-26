@@ -4,27 +4,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="application-version" content="15.1" />
+    <meta name="application-version" content="16.0" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=15.1" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=15.1" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=16.0" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=16.0" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#f8f6f2" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=15.1">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=16.0">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
-    <script src="teacher-profiles.js?v=15.1"></script>
+    <script src="teacher-profiles.js?v=16.0"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=15.1"></script>
-    <script src="capacitor-bridge.js?v=15.1" defer></script>
+    <script src="i18n.js?v=16.0"></script>
+    <script src="capacitor-bridge.js?v=16.0" defer></script>
     <script>
         (function () {
             try {
@@ -39,7 +39,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-    <script src="marketing-report.js?v=15.1" defer></script>
+    <script src="marketing-report.js?v=16.0" defer></script>
 
     <style>
         /* INLINED profile.css */
@@ -1785,24 +1785,6 @@
                                 data-i18n="register_birth_hint">Opcional. Lo usamos de forma privada para mejorar tu experiencia.</p>
                         </div>
                         <div class="w-full min-w-0">
-                            <label for="reg-codigo-promo"
-                                class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-1.5 ml-1 text-left">Código
-                                Promocional (opcional)</label>
-                            <div class="relative">
-                                <input type="text" id="reg-codigo-promo" name="reg-codigo-promo" maxlength="30"
-                                    class="w-full px-5 py-3.5 md:px-6 md:py-4 bg-[#ebd8cc] border-0 rounded-2xl focus:ring-2 focus:ring-white outline-none transition text-[#795244] text-base font-semibold uppercase tracking-wider placeholder:normal-case placeholder:text-[#795244]/40 box-border max-w-full min-w-0"
-                                    placeholder="">
-                                <div
-                                    class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#795244]/70 text-xs font-black bg-white/60 px-2.5 py-1 rounded-lg">
-                                    <i class="ph-bold ph-tag"></i> 50% DTO
-                                </div>
-                            </div>
-                            <p
-                                class="text-white/85 text-[11px] md:text-xs font-light mt-1.5 ml-1 text-left leading-relaxed">
-                                Si tienes un folleto o código del estudio, indícalo aquí para obtener un 50% de
-                                descuento en tu 1ª clase.</p>
-                        </div>
-                        <div class="w-full min-w-0">
                             <label for="reg-password"
                                 class="text-xs md:text-sm font-black uppercase tracking-wider text-white block mb-1.5 ml-1 text-left"
                                 data-i18n="login_password_label">Contraseña</label>
@@ -2265,8 +2247,12 @@
                 <div class="admin-only hidden mb-3.5 border-b border-cocoa/10 pb-3 w-full" id="admin-crear-tabs">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                            <button id="btn-admin-tab-clases" onclick="switchAdminCrearTab('clases')"
+                            <button id="btn-admin-tab-todas" onclick="switchAdminCrearTab('todas')"
                                 class="filtro-prof-btn active flex items-center gap-1.5 text-xs sm:text-sm">
+                                <i class="ph-bold ph-squares-four"></i> Todas
+                            </button>
+                            <button id="btn-admin-tab-clases" onclick="switchAdminCrearTab('clases')"
+                                class="filtro-prof-btn flex items-center gap-1.5 text-xs sm:text-sm">
                                 <i class="ph-bold ph-calendar"></i> Clases
                             </button>
                             <button id="btn-admin-tab-consultas" onclick="switchAdminCrearTab('consultas')"
@@ -2282,7 +2268,7 @@
                             <button type="button" id="btn-admin-crear-accion" onclick="ejecutarAccionCrearAdminActual()"
                                 class="flex items-center justify-center gap-1.5 bg-gradient-to-r from-cocoa to-olive hover:from-black hover:to-olive text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition active:scale-95 cursor-pointer shrink-0">
                                 <i class="ph-bold ph-plus-circle text-base"></i> <span id="lbl-admin-crear-accion">Crear
-                                    Clase</span>
+                                    Sesión</span>
                             </button>
                         </div>
                     </div>
@@ -2523,7 +2509,7 @@
 
                 <!-- 4. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
                 <div id="view-psicologia" class="hidden fade-in">
-                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v15.1 para simplificación) -->
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v16.0 para simplificación) -->
                     <div class="hidden" id="consultas-subtabs-wrapper">
                         <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"></button>
                         <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"></button>
@@ -2552,6 +2538,10 @@
                                 <button id="psico-filtro-miriam" onclick="filtrarConsultasUsuario('psicologia', 'miriam')"
                                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
                                     <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Psicología)</span>
+                                </button>
+                                <button id="psico-filtro-grupos" onclick="filtrarConsultasUsuario('psicologia', 'grupos')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-users-three text-[#8B5CF6]"></i> <span>Grupos (Miriam)</span>
                                 </button>
                                 <button id="psico-filtro-introductorias"
                                     onclick="filtrarConsultasUsuario('psicologia', 'introductorias')"
@@ -3098,12 +3088,12 @@
                             </button>
                             <button id="btn-informe-excel" onclick="descargarInformeMarketing('xlsx')"
                                 class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-olive text-white text-xs font-bold uppercase tracking-wider hover:brightness-110 transition shadow-2xs"
-                                title="Descargar informe marketing en Excel">
+                                title="Descargar informe estratégico integral en Excel (Histórico + 1 Año + 3 Meses + 1 Mes)">
                                 <i class="ph-bold ph-file-xls text-base"></i> Excel
                             </button>
                             <button id="btn-informe-pdf" onclick="descargarInformeMarketing('pdf')"
                                 class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-cocoa text-white text-xs font-bold uppercase tracking-wider hover:brightness-110 transition shadow-2xs"
-                                title="Descargar informe marketing en PDF">
+                                title="Descargar informe estratégico integral en PDF (Histórico + 1 Año + 3 Meses + 1 Mes)">
                                 <i class="ph-bold ph-file-pdf text-base"></i> PDF
                             </button>
                             <button id="btn-conciliar-pagos" onclick="ejecutarConciliacionPagos()"
@@ -3800,6 +3790,161 @@
                             </div>
                         </div>
                     </div>
+                <!-- VIEW ADMIN TODAS LAS SESIONES (PANEL GLOBAL DEL GIMNASIO) -->
+                <div id="view-admin-todas" class="hidden fade-in">
+                    <!-- Barra de Filtros Rápidos (Tipo de Sesión y Disponibilidad) -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="todas-filter-tipo-todas" onclick="filtrarAdminTodasPorTipo('todas')"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa bg-cocoa text-white shadow-2xs transition cursor-pointer">
+                                <i class="ph-bold ph-squares-four mr-1"></i> Todas
+                            </button>
+                            <button type="button" id="todas-filter-tipo-clases" onclick="filtrarAdminTodasPorTipo('clases')"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/15 bg-white/80 text-cocoa hover:bg-white hover:border-cocoa/30 shadow-2xs transition cursor-pointer">
+                                <i class="ph-bold ph-calendar mr-1"></i> Clases
+                            </button>
+                            <button type="button" id="todas-filter-tipo-consultas" onclick="filtrarAdminTodasPorTipo('consultas')"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/15 bg-white/80 text-cocoa hover:bg-white hover:border-cocoa/30 shadow-2xs transition cursor-pointer">
+                                <i class="ph-bold ph-brain mr-1"></i> Consultas
+                            </button>
+                            <button type="button" id="todas-filter-tipo-talleres" onclick="filtrarAdminTodasPorTipo('talleres')"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/15 bg-white/80 text-cocoa hover:bg-white hover:border-cocoa/30 shadow-2xs transition cursor-pointer">
+                                <i class="ph-bold ph-calendar-star mr-1"></i> Eventos
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="todas-filter-estado-todos" onclick="filtrarAdminTodasPorEstado('todos')"
+                                class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-cocoa/20 bg-cocoa/10 text-cocoa transition cursor-pointer">
+                                Todos los estados
+                            </button>
+                            <button type="button" id="todas-filter-estado-disponibles" onclick="filtrarAdminTodasPorEstado('disponibles')"
+                                class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-cocoa/10 bg-white/70 text-cocoa/70 hover:bg-white hover:text-cocoa transition cursor-pointer">
+                                Con plazas libres
+                            </button>
+                            <button type="button" id="todas-filter-estado-ocupadas" onclick="filtrarAdminTodasPorEstado('ocupadas')"
+                                class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-cocoa/10 bg-white/70 text-cocoa/70 hover:bg-white hover:text-cocoa transition cursor-pointer">
+                                Con reservas
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-1">
+                        <div class="lg:col-span-8 min-w-0 max-w-full">
+                            <!-- BARRA SUPERIOR PEGAJOSA DE DÍAS (TODAS LAS SESIONES) -->
+                            <div id="admin-todas-days-bar-container"
+                                class="sticky top-20 z-20 bg-white/95 backdrop-blur-md border border-cocoa/15 rounded-2xl p-3 shadow-md mb-6 max-w-full overflow-hidden box-border">
+                                <div class="flex items-center justify-between gap-2 mb-2 px-1">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-cocoa">
+                                        <div class="w-6 h-6 rounded-lg bg-olive/10 text-olive flex items-center justify-center">
+                                            <i class="ph-bold ph-calendar-check text-sm"></i>
+                                        </div>
+                                        <span id="admin-todas-days-title-text">Sesiones del gimnasio</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" onclick="limpiarFiltroFechaTodasAdmin()"
+                                            class="text-[11px] font-bold text-olive hover:text-cocoa transition flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-olive/10 border border-olive/20 cursor-pointer">
+                                            <i class="ph-bold ph-squares-four text-xs"></i> Ver todas las fechas
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="relative flex items-center gap-1.5 w-full max-w-full">
+                                    <button type="button" onclick="scrollDiasRapidos(-1, 'admin-todas-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días anteriores" aria-label="Días anteriores">
+                                        <i class="ph-bold ph-caret-left text-base"></i>
+                                    </button>
+                                    <div class="relative flex-1 min-w-0 overflow-hidden rounded-xl bg-sand/10 p-1.5 border border-cocoa/10 box-border">
+                                        <div id="admin-todas-days-list"
+                                            class="relative flex items-center gap-2 overflow-x-auto scroll-smooth py-1 px-1 select-none w-full max-w-full cursor-grab"
+                                            style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                                            <!-- Días generados dinámicamente -->
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="scrollDiasRapidos(1, 'admin-todas-days-list')"
+                                        class="shrink-0 w-8 h-11 sm:w-9 sm:h-12 flex items-center justify-center rounded-xl bg-white hover:bg-sand/30 text-cocoa/70 hover:text-cocoa border border-cocoa/15 shadow-2xs transition active:scale-95 cursor-pointer"
+                                        title="Días siguientes" aria-label="Días siguientes">
+                                        <i class="ph-bold ph-caret-right text-base"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- CONTENEDOR DE SESIONES (TODAS) -->
+                            <div id="admin-todas-container" class="space-y-6">
+                                <!-- Se rellena dinámicamente -->
+                            </div>
+
+                            <!-- ESTADO VACÍO -->
+                            <div id="admin-todas-empty"
+                                class="hidden text-center py-16 bg-white/60 backdrop-blur-sm rounded-3xl border border-cocoa/10 p-8 shadow-xs">
+                                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-sand/20 text-cocoa/40 flex items-center justify-center text-3xl">
+                                    <i class="ph-duotone ph-calendar-x"></i>
+                                </div>
+                                <h3 class="brand-font text-xl font-bold text-cocoa mb-1">Sin sesiones registradas</h3>
+                                <p class="text-sm text-cocoa/60 max-w-sm mx-auto mb-6">No hay sesiones programadas para el día o filtro seleccionado.</p>
+                                <div class="flex items-center justify-center gap-3">
+                                    <button type="button" onclick="limpiarFiltroFechaTodasAdmin()"
+                                        class="px-4 py-2 bg-sand/20 hover:bg-sand/30 text-cocoa text-xs font-bold rounded-xl transition cursor-pointer">
+                                        Ver todas las fechas
+                                    </button>
+                                    <button type="button" onclick="ejecutarAccionCrearAdminActual()"
+                                        class="px-4 py-2 bg-cocoa hover:bg-black text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                        <i class="ph-bold ph-plus-circle"></i> Crear Sesión
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar Calendario Filtro y Resumen Diario -->
+                        <div class="lg:col-span-4">
+                            <div class="sticky top-24 space-y-6">
+                                <div class="profile-calendar-card bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6">
+                                    <div class="flex items-center justify-between mb-6">
+                                        <button type="button" onclick="cambiarMesTodasAdmin(-1)" aria-label="Mes anterior"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60 cursor-pointer">
+                                            <i class="ph-bold ph-caret-left text-lg"></i>
+                                        </button>
+                                        <div class="text-center">
+                                            <h3 id="admin-todas-calendar-month-year" class="brand-font text-xl font-bold text-cocoa"></h3>
+                                            <p class="text-xs text-cocoa/40 uppercase tracking-wider mt-0.5">Calendario General</p>
+                                        </div>
+                                        <button type="button" onclick="cambiarMesTodasAdmin(1)" aria-label="Mes siguiente"
+                                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-mid-ivory transition text-cocoa/60 cursor-pointer">
+                                            <i class="ph-bold ph-caret-right text-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-7 gap-1 mb-2">
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">L</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">M</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">X</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">J</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">V</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">S</div>
+                                        <div class="text-center text-xs font-bold text-cocoa/40 py-2">D</div>
+                                    </div>
+                                    <div id="admin-todas-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                                    <div class="mt-6 pt-4 border-t border-cocoa/10">
+                                        <button type="button" onclick="limpiarFiltroFechaTodasAdmin()"
+                                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-olive hover:text-cocoa hover:bg-olive/10 border border-olive/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                                            <i class="ph-bold ph-squares-four"></i> Ver todas las sesiones
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Resumen Diario del Gimnasio -->
+                                <div id="admin-todas-resumen-card" class="bg-white/80 backdrop-blur-md rounded-3xl border border-cocoa/10 p-5 shadow-xs space-y-4">
+                                    <div class="flex items-center justify-between pb-3 border-b border-cocoa/10">
+                                        <h4 class="brand-font font-bold text-cocoa text-base flex items-center gap-2">
+                                            <i class="ph-fill ph-chart-donut text-olive"></i> Resumen del Día
+                                        </h4>
+                                        <span id="admin-todas-resumen-tag" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-sand/20 text-cocoa/70 border border-cocoa/10">Hoy</span>
+                                    </div>
+                                    <div id="admin-todas-resumen-content" class="space-y-3 text-xs">
+                                        <!-- Se actualiza dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- VIEW ADMIN CONSULTAS -->
@@ -3810,6 +3955,8 @@
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-cocoa text-white shadow-sm">Todas</button>
                         <button id="consulta-filter-psicologia" onclick="filtrarConsultasAdmin('psicologia')"
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Psicología</button>
+                        <button id="consulta-filter-grupos" onclick="filtrarConsultasAdmin('grupos')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition"><i class="ph-bold ph-users-three mr-1"></i>Grupos (Miriam)</button>
                         <button id="consulta-filter-nutricion" onclick="filtrarConsultasAdmin('nutricion')"
                             class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition">Nutrición</button>
                         <button id="consulta-filter-ayurveda" onclick="filtrarConsultasAdmin('ayurveda')"
@@ -4006,7 +4153,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v15.1. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v16.0. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4085,7 +4232,7 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v15.1: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v16.0: Todas las clases son regulares) -->
                     <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4394,7 +4541,7 @@
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v15.1: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v16.0: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -5010,7 +5157,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '15.1';
+        const APP_VERSION = '16.0';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -5616,10 +5763,12 @@
 
             if (isMiriam) {
                 return [
-                    { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '60 min · Sesión inicial' },
-                    { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '60 min · Seguimiento' },
-                    { key: 'miriam_psico_pareja_1a', title: 'Terapia de pareja (1ª sesión)', price: 120, desc: '90 min · Sesión inicial pareja' },
-                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '90 min · Seguimiento pareja' }
+                    { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '50 min · Sesión inicial' },
+                    { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '50 min · Seguimiento' },
+                    { key: 'miriam_psico_pareja_1a', title: 'Terapia de pareja (1ª sesión)', price: 120, desc: '50 min · Sesión inicial pareja' },
+                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '50 min · Seguimiento pareja' },
+                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda', price: 30, desc: '2 h · Martes 11:30 (6 y 20 oct) · Temática concreta' },
+                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico', price: 30, desc: '2 h · Miércoles 11:30 (7 y 21 oct) · Multitemático y cerrado' }
                 ];
             }
             if (isIsabel) {
@@ -5638,8 +5787,12 @@
             }
             if (tipo === 'psicologia') {
                 return [
-                    { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '60 min · Sesión individual' },
-                    { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '60 min · Seguimiento' }
+                    { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '50 min · Sesión individual' },
+                    { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '50 min · Seguimiento' },
+                    { key: 'miriam_psico_pareja_1a', title: 'Terapia de pareja (1ª sesión)', price: 120, desc: '50 min · Pareja inicial' },
+                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '50 min · Pareja seguimiento' },
+                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda', price: 30, desc: '2 h · Martes 11:30 (6 y 20 oct) · Temática concreta' },
+                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico', price: 30, desc: '2 h · Miércoles 11:30 (7 y 21 oct) · Multitemático y cerrado' }
                 ];
             }
             return [
@@ -5649,7 +5802,7 @@
         }
 
         window.CATALOGO_STRIPE_PRODUCTOS_ESTATICO = {
-            'prod_VDmmlmsGGhMebt': { name: 'Sesión Grupal Miriam', precio: '80,00 €', unit_amount: 8000 },
+            'prod_VDmmlmsGGhMebt': { name: 'Sesión Grupal Miriam (Grupo Terapéutico / Autoayuda)', precio: '30,00 €', unit_amount: 3000 },
             'prod_VDY8mI9bZ3SQeb': { name: 'Taller con descuento', precio: '25,00 €', unit_amount: 2500 },
             'prod_V9eGZTzwCNJ55q': { name: 'Clase suelta PROMOCIÓN 50%', precio: '7,50 €', unit_amount: 750 },
             'prod_V5uCPKKKH5K74P': { name: 'Taller GEN Yoga', precio: '35,00 €', unit_amount: 3500 },
@@ -5874,7 +6027,7 @@
             let u = {};
             try {
                 const { data } = await client.from('profiles')
-                    .select('id, nombre, apellidos, email, bonos, saldo_clases_gratis, saldo_yoga_compania, saldo_consultas_gratis, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, descuento_promo_50_activo')
+                    .select('id, nombre, apellidos, email, bonos, saldo_clases_gratis, saldo_yoga_compania, saldo_consultas_gratis, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin')
                     .eq('id', userId).maybeSingle();
                 if (data) u = data;
             } catch (e) {
@@ -5932,13 +6085,6 @@
                 rows.push(`<div class="flex items-center justify-between py-2 border-b border-gray-100">
                     <span class="flex items-center gap-2 text-sm"><i class="ph-bold ph-sparkle text-pink-600"></i> Consultas Gratis</span>
                     <span class="text-sm font-bold text-pink-700">${consultasGratis}</span>
-                </div>`);
-            }
-
-            if (u.descuento_promo_50_activo) {
-                rows.push(`<div class="flex items-center justify-between py-2">
-                    <span class="flex items-center gap-2 text-sm"><i class="ph-bold ph-tag text-amber-600"></i> Promo 50% DTO</span>
-                    <span class="text-sm font-bold text-amber-700">Activo</span>
                 </div>`);
             }
 
@@ -6435,16 +6581,6 @@
             }
         });
 
-        function normalizarCodigoPromo(codigo) {
-            if (!codigo || typeof codigo !== 'string') return '';
-            return codigo.trim().toUpperCase().replace(/\s+/g, '');
-        }
-
-        function esCodigoPromoValido(codigo) {
-            const norm = normalizarCodigoPromo(codigo);
-            return norm === 'GENYOGA';
-        }
-
         document.getElementById('form-register').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!client) return;
@@ -6452,24 +6588,10 @@
             const nombre = document.getElementById('reg-nombre').value.trim().replace(/\s+/g, ' ');
             const apellidos = document.getElementById('reg-apellidos').value.trim().replace(/\s+/g, ' ');
             const fechaNacimiento = document.getElementById('reg-fecha-nacimiento')?.value || null;
-            const rawCodigoPromo = document.getElementById('reg-codigo-promo')?.value?.trim() || '';
 
             if (password.length < 6) return Swal.fire('Contraseña débil', 'Usa al menos 6 caracteres.', 'warning');
             if (!nombre || nombre.length > 80 || apellidos.length > 120 || /[<>&\u0000-\u001F\u007F]/.test(`${nombre}${apellidos}`)) {
                 return Swal.fire('Datos no válidos', 'Revisa el nombre y los apellidos.', 'warning');
-            }
-
-            let codigoPromoParam = undefined;
-            if (rawCodigoPromo) {
-                if (!esCodigoPromoValido(rawCodigoPromo)) {
-                    return Swal.fire({
-                        icon: 'warning',
-                        title: 'Código promocional no válido',
-                        text: 'El código promocional introducido no es válido. Deja el campo en blanco si no dispones de código.',
-                        confirmButtonColor: '#D27D60'
-                    });
-                }
-                codigoPromoParam = 'GEN YOGA';
             }
 
             let authEmail = '';
@@ -6513,8 +6635,7 @@
                             apellidos,
                             fecha_nacimiento: fechaNacimiento,
                             telefono: telefonoParam || undefined,
-                            auth_method: currentRegisterMethod,
-                            codigo_promo: codigoPromoParam
+                            auth_method: currentRegisterMethod
                         }
                     }
                 });
@@ -6537,9 +6658,6 @@
                             p_fecha_nacimiento: fechaNacimiento || null,
                             p_telefono: telefonoParam
                         });
-                        if (codigoPromoParam) {
-                            await client.rpc('canjear_codigo_promocional', { p_codigo: codigoPromoParam });
-                        }
                     } catch (errSync) {
                         console.warn('Sincronización inicial de perfil:', errSync);
                     }
@@ -7432,7 +7550,7 @@
                 const expiry = Date.parse(pack.expires_at);
                 return total + (Number.isFinite(expiry) && expiry > now ? toSafeNumber(pack.credits_remaining) : 0);
             }, 0);
-            // v15.1: Fuente canónica e inmutable de la verdad: la celda profiles.bonos de la base de datos
+            // v16.0: Fuente canónica e inmutable de la verdad: la celda profiles.bonos de la base de datos
             const dbBonos = toSafeNumber(currentUserProfile?.bonos !== undefined ? currentUserProfile.bonos : userLegacyBonos);
             userBonos = dbBonos;
             userLegacyBonos = Math.max(0, dbBonos - activePackCredits);
@@ -7452,7 +7570,7 @@
         }
 
         function getAvailableClassCreditsForDate(value) {
-            // v15.1: El saldo real disponible viene determinado estrictamente por la celda 'bonos' de profiles
+            // v16.0: El saldo real disponible viene determinado estrictamente por la celda 'bonos' de profiles
             return toSafeNumber(currentUserProfile?.bonos !== undefined ? currentUserProfile.bonos : userLegacyBonos);
         }
 
@@ -7709,7 +7827,7 @@
             if (!profileWrapper) return;
 
             const packLabels = { clase_suelta: 'Clase suelta', pack_4: 'Pack 4', pack_6: 'Pack 6', pack_10: 'Pack 10' };
-            // v15.1: Reconciliar los créditos restantes mostrados en los packs con el saldo real userBonos
+            // v16.0: Reconciliar los créditos restantes mostrados en los packs con el saldo real userBonos
             let bonosRestantesPresupuesto = userBonos;
             const packRows = userClassPacks.length
                 ? userClassPacks.map(pack => {
@@ -7777,7 +7895,7 @@
             const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
             const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
 
-            // Regla v15.1: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
+            // Regla v16.0: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
             const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
@@ -7840,10 +7958,7 @@
         </div>`;
             }
 
-            const hasPromo50Active = !!(currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo);
-            const singleClassBtnHtml = hasPromo50Active
-                ? `<button onclick="comprarPack('promo_50_clase', event)" class="py-2 bg-amber-500 text-white hover:bg-black text-[10px] font-black uppercase rounded-xl shadow-2xs border border-amber-600 animate-pulse" title="1ª Clase con 50% DTO">1 · 7,50€ (DTO)</button>`
-                : `<button onclick="comprarClaseSuelta(event)" class="py-2 bg-white border border-cocoa/10 text-cocoa hover:bg-sand/20 text-[10px] font-bold uppercase rounded-xl">1 · 15€</button>`;
+            const singleClassBtnHtml = `<button onclick="comprarClaseSuelta(event)" class="py-2 bg-white border border-cocoa/10 text-cocoa hover:bg-sand/20 text-[10px] font-bold uppercase rounded-xl">1 · 15€</button>`;
 
             profileWrapper.innerHTML = `
         <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-cocoa/15 shadow-2xs flex flex-col justify-between">
@@ -7952,7 +8067,7 @@
         }
 
         async function checkProfile() {
-            // v15.1: Consultar '*' prioritariamente como en la vista admin, y asegurar bonos y saldo_clases_gratis en todas las variantes
+            // v16.0: Consultar '*' prioritariamente como en la vista admin, y asegurar bonos y saldo_clases_gratis en todas las variantes
             const profileSelectVariants = [
                 '*',
                 'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status, oferta_compania_canjeada, oferta_consultas_canjeada',
@@ -8041,7 +8156,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v15.1: Cargar ofertas promocionales canjeadas por este usuario
+                // v16.0: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -8161,9 +8276,12 @@
             if (buyParam === 'clase_suelta') {
                 window.history.replaceState({}, document.title, window.location.pathname);
                 comprarClaseSuelta();
-            } else if (['pack_4', 'pack_6', 'pack_10', 'promo_50_clase', 'promo_50', 'promo'].includes(buyParam)) {
+            } else if (['pack_4', 'pack_6', 'pack_10'].includes(buyParam)) {
                 window.history.replaceState({}, document.title, window.location.pathname);
-                comprarPack(buyParam.startsWith('promo') ? 'promo_50_clase' : buyParam);
+                comprarPack(buyParam);
+            } else if (['promo_50_clase', 'promo_50', 'promo'].includes(buyParam)) {
+                // Octubre 2026: la promoción del 50% (GENYOGA) está retirada.
+                window.history.replaceState({}, document.title, window.location.pathname);
             } else if (buyParam === 'bono_ilimitado' || buyParam === 'bono_mensual') {
                 window.history.replaceState({}, document.title, window.location.pathname);
                 comprarBonoMensual();
@@ -8189,7 +8307,7 @@
                 }
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v15.1)
+            // Comprobar si el usuario llega con una oferta para canjear (v16.0)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -9161,7 +9279,7 @@
             const nombre = String(c.nombre || '').toLowerCase().trim();
             if (tipo === 'clase_especial' || tipo === 'especial') return true;
             if (nombre.includes('taller') || nombre.includes('masterclass')) return false;
-            if (nombre.includes('yoga y meditación') || nombre.includes('clase especial')) return true;
+            if (nombre.includes('flow y meditación') || nombre.includes('flow y meditacion') || nombre.includes('yoga y meditación') || nombre.includes('clase especial')) return true;
             if (c.es_especial && (Number(c.duracion_minutos) === 75 || tipo !== 'taller')) return true;
             return false;
         }
@@ -10436,12 +10554,12 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = esClaseEspecialTipo(clase) || esTallerTipo(clase);
 
-            // v15.1: Yoga en Compañía inactivado al 100%
+            // v16.0: Yoga en Compañía inactivado al 100%
             const modalityCompania = '';
             const esCompania = false;
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = false;
-            // v15.1: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
+            // v16.0: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
             const esSesionGratuita = !esEspecial;
             const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
             const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
@@ -10905,21 +11023,16 @@
                     });
                     return false;
                 }
-                const hasPromo50 = !!(currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo);
-                const promoHint = hasPromo50
-                    ? '<br><br><span class="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-300 text-xs"><i class="ph-bold ph-tag"></i> Tienes un 50% de descuento disponible (7,50 €) en tu 1ª clase.</span>'
-                    : '';
-
                 const result = await Swal.fire({
                     icon: 'warning',
                     title: 'Necesitas un bono o pack',
                     html: esSesionGratuita
-                        ? `No dispones de un bono de clase gratuita activo ni de un pack de clases.${promoHint}<br><br>Elige una opción para poder confirmar tu plaza.`
-                        : `No tienes clases disponibles para esta reserva.${promoHint}<br><br>Elige un pack de <strong>4, 6 o 10 clases</strong> o bono mensual para reservar este horario.`,
+                        ? `No dispones de un bono de clase gratuita activo ni de un pack de clases.<br><br>Elige una opción para poder confirmar tu plaza.`
+                        : `No tienes clases disponibles para esta reserva.<br><br>Elige un pack de <strong>4, 6 o 10 clases</strong> o bono mensual para reservar este horario.`,
                     showCancelButton: true,
-                    confirmButtonText: hasPromo50 ? 'Ver opciones (50% DTO)' : 'Ver tarifas y packs',
+                    confirmButtonText: 'Ver tarifas y packs',
                     cancelButtonText: 'Cancelar',
-                    confirmButtonColor: hasPromo50 ? '#b48a47' : '#D27D60',
+                    confirmButtonColor: '#D27D60',
                     cancelButtonColor: '#9ca3af'
                 });
                 if (result.isConfirmed) await abrirCompraPacks(null, claseId);
@@ -11263,7 +11376,7 @@
                 }
             });
             // Vistas legacy y nuevas que ahora se muestran dentro de "Crear"
-            ['view-admin-consultas', 'view-admin-talleres', 'view-admin-psicologia', 'view-admin-nutricion', 'view-inicio', 'view-especiales', 'view-profesores', 'view-psicologia', 'view-nutricion'].forEach(id => {
+            ['view-admin-todas', 'view-admin-consultas', 'view-admin-talleres', 'view-admin-psicologia', 'view-admin-nutricion', 'view-inicio', 'view-especiales', 'view-profesores', 'view-psicologia', 'view-nutricion'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el && (!active || active.view !== id)) el.classList.add('hidden');
             });
@@ -11283,7 +11396,7 @@
             if (tabName === 'crear') {
                 document.body.classList.add('tab-crear-active');
                 if (adminCrearTabsEl) adminCrearTabsEl.classList.remove('hidden');
-                const savedSubTab = safeGetItem('activeAdminCrearSubTab', 'clases');
+                const savedSubTab = safeGetItem('activeAdminCrearSubTab', 'todas');
                 await switchAdminCrearTab(savedSubTab);
             } else {
                 document.body.classList.remove('tab-crear-active');
@@ -11326,11 +11439,12 @@
             if (adminCrearTabsEl) adminCrearTabsEl.classList.remove('hidden');
 
             const subtabs = {
+                'todas': { btn: 'btn-admin-tab-todas', view: 'view-admin-todas' },
                 'clases': { btn: 'btn-admin-tab-clases', view: 'view-horarios' },
                 'consultas': { btn: 'btn-admin-tab-consultas', view: 'view-admin-consultas' },
                 'talleres': { btn: 'btn-admin-tab-talleres', view: 'view-admin-talleres' }
             };
-            if (!Object.prototype.hasOwnProperty.call(subtabs, type)) type = 'clases';
+            if (!Object.prototype.hasOwnProperty.call(subtabs, type)) type = 'todas';
             safeSetItem('activeAdminCrearSubTab', type);
             const active = subtabs[type];
 
@@ -11358,13 +11472,17 @@
                     lblCrearAccion.textContent = 'Crear Consulta';
                 } else if (type === 'talleres') {
                     lblCrearAccion.textContent = 'Crear Evento';
-                } else {
+                } else if (type === 'clases') {
                     lblCrearAccion.textContent = 'Crear Clase';
+                } else {
+                    lblCrearAccion.textContent = 'Crear Sesión';
                 }
             }
 
             // Load sub-tab specific data
-            if (type === 'clases') {
+            if (type === 'todas') {
+                await cargarTodasLasSesionesAdmin();
+            } else if (type === 'clases') {
                 if (!allClasesCache || allClasesCache.length === 0) {
                     await cargarHorarios();
                 } else {
@@ -11381,14 +11499,16 @@
         }
 
         function ejecutarAccionCrearAdminActual() {
-            const currentTab = safeGetItem('activeAdminCrearSubTab', 'clases');
+            const currentTab = safeGetItem('activeAdminCrearSubTab', 'todas');
             if (currentTab === 'consultas') {
                 const tipoInit = (filtroConsultasActual === 'ayurveda') ? 'ayurveda' : (filtroConsultasActual === 'nutricion' ? 'nutricion' : 'psicologia');
                 abrirModalCrearConsulta(tipoInit);
             } else if (currentTab === 'talleres') {
                 abrirModalCrearTaller();
-            } else {
+            } else if (currentTab === 'clases') {
                 abrirModalCrearClase();
+            } else {
+                abrirSelectorCrearSesionAdmin();
             }
         }
 
@@ -11398,6 +11518,9 @@
 
         function getTipoClaseMeta(tipo, nombre) {
             const tipoNormalizado = normalizarTipoClase(tipo);
+            if (tipoNormalizado === 'consulta_grupal' || (nombre && (String(nombre).toLowerCase().includes('autoayuda') || (String(nombre).toLowerCase().includes('grupo') && String(nombre).toLowerCase().includes('terap'))))) {
+                return { label: 'Grupo (Psicología)', colorClass: 'bg-purple-50 text-[#8B5CF6] border-purple-200', dotClass: 'psicologia', icon: 'ph-users-three' };
+            }
             if (tipoNormalizado === 'ayurveda' || (nombre && String(nombre).toLowerCase().includes('ayurveda'))) {
                 return { label: 'Ayurveda', colorClass: 'bg-amber-50 text-amber-800 border-amber-200', dotClass: 'ayurveda', icon: 'ph-sparkle' };
             }
@@ -11408,7 +11531,8 @@
                 psicologia: { label: 'Psicología', colorClass: 'bg-blue-50 text-[#3B82F6] border-blue-100', dotClass: 'psicologia', icon: 'ph-brain' },
                 nutricion: { label: 'Nutrición', colorClass: 'bg-purple-50 text-[#8B5CF6] border-purple-100', dotClass: 'nutricion', icon: 'ph-apple' },
                 ayurveda: { label: 'Ayurveda', colorClass: 'bg-amber-50 text-amber-800 border-amber-200', dotClass: 'ayurveda', icon: 'ph-sparkle' },
-                taller: { label: 'Taller', colorClass: 'bg-orange-50 text-[#F97316] border-orange-100', dotClass: 'taller', icon: 'ph-chalkboard-teacher' }
+                taller: { label: 'Taller', colorClass: 'bg-orange-50 text-[#F97316] border-orange-100', dotClass: 'taller', icon: 'ph-chalkboard-teacher' },
+                consulta_grupal: { label: 'Grupo (Psicología)', colorClass: 'bg-purple-50 text-[#8B5CF6] border-purple-200', dotClass: 'psicologia', icon: 'ph-users-three' }
             };
             return meta[tipoNormalizado] || meta.yoga;
         }
@@ -14432,7 +14556,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v15.1: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v16.0: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
@@ -14810,202 +14934,6 @@
         confirmButtonColor: '#9B7B37'
     });
 }
-        async function abrirCodigosPromocionalesUsuario(userId) {
-            if (!isAdmin && !esTrabajador()) return;
-
-            try {
-                let u = (allUsersCache || []).find(x => String(x.id) === String(userId)) || {};
-                try {
-                    const { data: freshUser } = await client.from('profiles').select('*').eq('id', userId).maybeSingle();
-                    if (freshUser) {
-                        u = { ...u, ...freshUser };
-                        const cacheIdx = (allUsersCache || []).findIndex(x => String(x.id) === String(userId));
-                        if (cacheIdx !== -1) allUsersCache[cacheIdx] = u;
-                    }
-                } catch (err) {
-                    console.warn('Error leyendo perfil para códigos promocionales:', err);
-                }
-
-                const nombre = `${u.nombre || ''} ${u.apellidos || ''}`.trim() || u.email || 'Cliente';
-                const email = u.email || '';
-
-                const isActivo = !!u.descuento_promo_50_activo;
-                const isGastado = !isActivo && (!!u.codigo_promo_usado || (!!u.codigo_promo_canjeado && !u.descuento_promo_50_activo));
-
-                let estadoBadge = '';
-                let estadoDescripcion = '';
-                let accionBtn = '';
-
-                let fechaCanjeStr = '';
-                if (u.codigo_promo_fecha_canje) {
-                    try {
-                        const d = safeParseDate(u.codigo_promo_fecha_canje);
-                        if (d) {
-                            fechaCanjeStr = d.toLocaleDateString(getCurrentLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
-                        }
-                    } catch (_) {}
-                }
-
-                if (isActivo) {
-                    estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
-                        <i class="ph-fill ph-check-circle text-emerald-600 text-sm"></i> Canjeado pero sin consumir
-                    </span>`;
-                    estadoDescripcion = `<p class="text-xs text-emerald-900 mt-2 font-medium">El cliente ha canjeado el código promocional y tiene disponible el <strong>50% de descuento</strong> activo para reservar su 1ª clase regular de yoga a 7,50 €.</p>`;
-                    if (fechaCanjeStr) {
-                        estadoDescripcion += `<p class="text-[11px] text-emerald-700/80 mt-1">Canjeado el: ${escapeHtml(fechaCanjeStr)}</p>`;
-                    }
-                    accionBtn = `
-                        <button type="button" onclick="adminTogglePromo50('${userId}', false, true)" class="px-3.5 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition cursor-pointer flex items-center gap-1.5">
-                            <i class="ph-bold ph-power"></i> Desactivar 50% DTO
-                        </button>
-                    `;
-                } else if (isGastado) {
-                    estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white border border-red-700 shadow-2xs">
-                        <i class="ph-fill ph-x-circle text-white text-sm"></i> Canjeado y consumido
-                    </span>`;
-                    estadoDescripcion = `<p class="text-xs text-red-900 mt-2 font-medium">El cliente ya canjeó y consumió este código promocional (GENYOGA · GASTADO) en su primera reserva con el 50% de descuento.</p>`;
-                    if (fechaCanjeStr) {
-                        estadoDescripcion += `<p class="text-[11px] text-red-700/80 mt-1">Fecha de canje: ${escapeHtml(fechaCanjeStr)}</p>`;
-                    }
-                    accionBtn = `
-                        <button type="button" onclick="adminReactivarPromo50('${userId}')" class="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs">
-                            <i class="ph-bold ph-arrow-counter-clockwise"></i> Reactivar 50% DTO
-                        </button>
-                    `;
-                } else {
-                    estadoBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300 shadow-2xs">
-                        <i class="ph-bold ph-minus-circle text-gray-400 text-sm"></i> No canjeado
-                    </span>`;
-                    estadoDescripcion = `<p class="text-xs text-gray-600 mt-2 font-medium">El cliente aún no ha introducido ni canjeado este código promocional en su cuenta.</p>`;
-                    accionBtn = `
-                        <button type="button" onclick="adminTogglePromo50('${userId}', true, true)" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs">
-                            <i class="ph-bold ph-tag"></i> Activar 50% DTO a este cliente
-                        </button>
-                    `;
-                }
-
-                await Swal.fire({
-                    title: `<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-xl"><i class="ph-duotone ph-tag text-amber-600"></i> Códigos Promocionales</div>`,
-                    html: `
-                <div class="text-left font-sans space-y-3.5 my-2">
-                    <div class="p-3 bg-cocoa/5 rounded-xl border border-cocoa/10">
-                        <p class="text-xs font-bold text-cocoa">${escapeHtml(nombre)}</p>
-                        <p class="text-[11px] text-cocoa/50">${escapeHtml(email)}</p>
-                    </div>
-
-                    <div class="p-4 rounded-2xl border ${isActivo ? 'border-emerald-300 bg-emerald-50/70' : (isGastado ? 'border-red-300 bg-red-50/80' : 'border-gray-200 bg-gray-50/80')} space-y-3 shadow-2xs">
-                        <div class="flex items-center justify-between gap-2 flex-wrap">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-cocoa/10 text-cocoa">Fila 1</span>
-                                <span class="text-xs font-bold text-cocoa">Código promocional 1: <strong class="font-mono text-sm tracking-wide text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-300">GENYOGA</strong></span>
-                            </div>
-                            ${estadoBadge}
-                        </div>
-                        ${estadoDescripcion}
-                        <div class="pt-2 flex items-center justify-between gap-2 border-t ${isActivo ? 'border-emerald-200' : (isGastado ? 'border-red-200' : 'border-gray-200')} flex-wrap">
-                            <span class="text-[11px] text-gray-500 font-medium">Promoción 50% DTO 1ª clase (7,50 €)</span>
-                            ${accionBtn}
-                        </div>
-                    </div>
-
-                    <p class="text-[11px] text-gray-400 italic text-center pt-1">Actualmente la plataforma dispone de 1 código promocional oficial activo (GENYOGA).</p>
-                </div>
-            `,
-                    showConfirmButton: true,
-                    confirmButtonText: 'Cerrar',
-                    confirmButtonColor: '#8C8658'
-                });
-            } catch (err) {
-                console.error('Error abriendo modal de códigos promocionales:', err);
-                Swal.fire('Error', 'No se pudo cargar la información de códigos promocionales.', 'error');
-            }
-        }
-
-        async function adminReactivarPromo50(userId) {
-            return adminTogglePromo50(userId, true, true);
-        }
-
-        async function adminTogglePromo50(userId, active, fromPromoModal = false) {
-            if (!isAdmin) return;
-            const actionText = active ? 'activar' : 'desactivar';
-            const res = await Swal.fire({
-                title: `¿${active ? 'Activar' : 'Desactivar'} 50% DTO?`,
-                text: `Se va a ${actionText} la promoción del 50% de descuento en la 1ª reserva para este usuario.`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: `Sí, ${actionText}`,
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#b48a47'
-            });
-            if (!res.isConfirmed) return;
-
-            Swal.fire({ title: 'Actualizando...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-            let updateSuccess = false;
-            let lastErrorMsg = '';
-
-            // 1. Intentar RPC
-            try {
-                const { data, error } = await client.rpc('admin_set_promo_50', { p_user_id: userId, p_active: active });
-                if (!error && (data?.success || data === true || data === null || !data?.error)) {
-                    updateSuccess = true;
-                } else if (error) {
-                    lastErrorMsg = error.message;
-                }
-            } catch (rpcErr) {
-                lastErrorMsg = rpcErr.message;
-            }
-
-            // 2. Si la RPC falló o no está en schema cache, llamar a la Edge Function administrativa
-            if (!updateSuccess) {
-                try {
-                    const { data: fnData, error: fnError } = await client.functions.invoke('redeem-promo-code', {
-                        body: {
-                            action: 'admin_set_promo_50',
-                            target_user_id: userId,
-                            active
-                        }
-                    });
-                    if (!fnError && fnData?.success) {
-                        updateSuccess = true;
-                    } else if (fnError) {
-                        let errMsg = fnError.message;
-                        try {
-                            const errJson = await fnError.context?.json?.();
-                            if (errJson?.error) errMsg = errJson.error;
-                        } catch (_) { }
-                        lastErrorMsg = errMsg || lastErrorMsg;
-                    } else if (fnData?.error) {
-                        lastErrorMsg = fnData.error;
-                    }
-                } catch (fnErr) {
-                    if (!lastErrorMsg) lastErrorMsg = fnErr.message;
-                }
-            }
-
-            Swal.close();
-
-            if (!updateSuccess) {
-                return Swal.fire('Error', lastErrorMsg || 'No se pudo actualizar el estado de la promoción.', 'error');
-            }
-
-            if (allUsersCache) {
-                const u = allUsersCache.find(x => x.id === userId);
-                if (u) {
-                    u.descuento_promo_50_activo = active;
-                    if (active) {
-                        u.codigo_promo_canjeado = 'GEN YOGA';
-                        u.codigo_promo_usado = false;
-                    }
-                }
-            }
-            const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 1500 });
-            Toast.fire({ icon: 'success', title: `50% DTO ${active ? 'activado' : 'desactivado'}` });
-            renderUsersTable(allUsersCache);
-
-            if (fromPromoModal) {
-                setTimeout(() => abrirCodigosPromocionalesUsuario(userId), 300);
-            }
-        }
 
         function normalizarMesClave(val) {
             if (!val) return null;
@@ -15104,8 +15032,6 @@
                 }
             }
 
-            // NOTA: Los códigos promocionales (GENYOGA) NO van aquí; van exclusivamente en el botón de Códigos Promocionales
-
             if (badges.length === 0) {
                 return '<span class="text-gray-400 text-xs italic">Sin bonos activos</span>';
             }
@@ -15145,11 +15071,6 @@
                         class="px-2.5 py-1.5 bg-olive text-white hover:bg-black rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
                         title="Gestionar Bonos y Saldos">
                         <i class="ph-bold ph-wallet"></i> Bonos
-                    </button>
-                    <button type="button" onclick="abrirCodigosPromocionalesUsuario('${uId}')"
-                        class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
-                        title="Códigos Promocionales">
-                        <i class="ph-bold ph-tag"></i> Cod. Prom.
                     </button>
                     <button type="button" onclick="abrirEditarUsuarioAdmin('${uId}')"
                         class="px-2.5 py-1.5 bg-sand/30 hover:bg-sand/60 text-cocoa rounded-lg text-xs font-bold border border-cocoa/15 transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
@@ -17849,6 +17770,7 @@
             if (typeof cargarConsultasAdmin === 'function') await cargarConsultasAdmin();
             if (typeof cargarNutricion === 'function') await cargarNutricion();
             if (typeof cargarPsicologia === 'function') await cargarPsicologia();
+            if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
             if (isAdmin || esTrabajador()) {
                 if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
             }
@@ -18284,6 +18206,7 @@
 
             await cargarTodasLasClasesConProfesionales({ force: true });
             await cargarHorarios();
+            if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
             if (isAdmin || esTrabajador()) await cargarAsistenciasPorClase();
         });
 
@@ -18341,6 +18264,7 @@
 
                 await cargarTodasLasClasesConProfesionales({ force: true });
                 await cargarHorarios();
+                if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
                 if (isAdmin || esTrabajador()) await cargarAsistenciasPorClase();
             }
         }
@@ -18514,7 +18438,7 @@
                                             </label>
                                             <label class="flex items-center gap-2.5 p-2 rounded-lg border border-gray-100 hover:bg-slate-50 cursor-pointer transition text-xs font-semibold text-gray-700">
                                                 <input type="checkbox" name="tipo-pago-checkbox" value="prod_VDmmlmsGGhMebt" class="w-4 h-4 text-blue-600 rounded cursor-pointer">
-                                                <span class="truncate" title="Sesión grupal Miriam (80 €)">Sesión grupal Miriam (80 €)</span>
+                                                <span class="truncate" title="Sesión grupal Miriam (30 €)">Sesión grupal Miriam (30 €)</span>
                                             </label>
                                         </div>
                                     </div>
@@ -19550,10 +19474,7 @@
                 nombre: String(nombre).trim(),
                 apellidos: String(apellidos).trim(),
                 telefono: String(telefono).trim(),
-                fecha_nacimiento: String(fechaNacimiento).trim(),
-                descuento_promo_50_activo: profile?.descuento_promo_50_activo !== undefined ? !!profile.descuento_promo_50_activo : (currentUserProfile?.descuento_promo_50_activo || false),
-                codigo_promo_canjeado: profile?.codigo_promo_canjeado ?? currentUserProfile?.codigo_promo_canjeado ?? null,
-                codigo_promo_usado: profile?.codigo_promo_usado !== undefined ? !!profile.codigo_promo_usado : (currentUserProfile?.codigo_promo_usado || false)
+                fecha_nacimiento: String(fechaNacimiento).trim()
             };
 
             let fullName = `${currentProfileFields.nombre} ${currentProfileFields.apellidos}`.trim();
@@ -19591,7 +19512,6 @@
                 }
                 let data = null;
                 const selectVariants = [
-                    'nombre, apellidos, telefono, fecha_nacimiento, descuento_promo_50_activo, codigo_promo_canjeado, codigo_promo_usado',
                     'nombre, apellidos, telefono, fecha_nacimiento',
                     'nombre, apellidos'
                 ];
@@ -19603,14 +19523,6 @@
                     }
                 }
                 if (data) {
-                    if (data.descuento_promo_50_activo !== undefined) currentProfileFields.descuento_promo_50_activo = !!data.descuento_promo_50_activo;
-                    if (data.codigo_promo_canjeado !== undefined) currentProfileFields.codigo_promo_canjeado = data.codigo_promo_canjeado;
-                    if (data.codigo_promo_usado !== undefined) currentProfileFields.codigo_promo_usado = !!data.codigo_promo_usado;
-                    if (currentUser) {
-                        if (data.descuento_promo_50_activo !== undefined) currentUser.descuento_promo_50_activo = !!data.descuento_promo_50_activo;
-                        if (data.codigo_promo_canjeado !== undefined) currentUser.codigo_promo_canjeado = data.codigo_promo_canjeado;
-                        if (data.codigo_promo_usado !== undefined) currentUser.codigo_promo_usado = !!data.codigo_promo_usado;
-                    }
                     currentUserProfile = Object.assign(currentUserProfile || {}, data);
                 }
                 renderProfileCard(data || currentUserProfile || {});
@@ -19618,95 +19530,6 @@
                 console.warn('Error al cargar profile card:', e);
                 renderProfileCard(currentUserProfile || {});
             }
-        }
-
-        async function ejecutarCanjeCodigo(codigoRaw) {
-            if (!codigoRaw) {
-                return Swal.fire('Introduce un código', 'Escribe el código promocional para canjearlo.', 'warning');
-            }
-            if (!esCodigoPromoValido(codigoRaw)) {
-                return Swal.fire('Código no válido', 'El código promocional introducido no es válido o ha caducado.', 'error');
-            }
-            Swal.fire({
-                title: 'Canjeando código...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            try {
-                let canjeExitoso = false;
-                let lastErrorMsg = '';
-
-                // 1. Intentar RPC en base de datos
-                try {
-                    const { data, error } = await client.rpc('canjear_codigo_promocional', { p_codigo: 'GEN YOGA' });
-                    if (!error && (data?.success || data === true || data === null || !data?.error)) {
-                        canjeExitoso = true;
-                    } else if (error) {
-                        lastErrorMsg = error.message || '';
-                    }
-                } catch (rpcErr) {
-                    lastErrorMsg = rpcErr.message || '';
-                }
-
-                // 2. Si la RPC no está en caché o falló, invocar Edge Function con service role
-                if (!canjeExitoso) {
-                    try {
-                        const { data: fnData, error: fnError } = await client.functions.invoke('redeem-promo-code', {
-                            body: { code: codigoRaw.trim() }
-                        });
-                        if (!fnError && fnData?.success) {
-                            canjeExitoso = true;
-                        } else if (fnError) {
-                            let errMsg = fnError.message;
-                            try {
-                                const errJson = await fnError.context?.json?.();
-                                if (errJson?.error) errMsg = errJson.error;
-                            } catch (_) { }
-                            lastErrorMsg = errMsg || lastErrorMsg;
-                        } else if (fnData?.error) {
-                            lastErrorMsg = fnData.error;
-                        }
-                    } catch (fnErr) {
-                        if (!lastErrorMsg) lastErrorMsg = fnErr.message;
-                    }
-                }
-
-                if (!canjeExitoso) {
-                    let msg = lastErrorMsg || 'No se pudo aplicar el código promocional.';
-                    if (msg.includes('schema cache') || msg.includes('not find')) {
-                        msg = 'La base de datos aún no ha cargado la función de promociones. Por favor, ejecuta la migración en Supabase o inténtalo en unos instantes.';
-                    }
-                    return Swal.fire('No se pudo canjear', msg, 'error');
-                }
-
-                currentProfileFields.descuento_promo_50_activo = true;
-                currentProfileFields.codigo_promo_canjeado = 'GEN YOGA';
-                if (currentUser) {
-                    currentUser.descuento_promo_50_activo = true;
-                    currentUser.codigo_promo_canjeado = 'GEN YOGA';
-                }
-                if (currentUserProfile) {
-                    currentUserProfile.descuento_promo_50_activo = true;
-                    currentUserProfile.codigo_promo_canjeado = 'GEN YOGA';
-                }
-                await loadProfileCard();
-
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Descuento activado!',
-                    text: 'Se ha aplicado el 50% de descuento en tu primera reserva.',
-                    confirmButtonColor: '#8C8658'
-                });
-            } catch (err) {
-                Swal.fire('Error', err.message || 'Ocurrió un error al canjear el código.', 'error');
-            }
-        }
-
-        function ejecutarCanjeCodigoDesdeSwal() {
-            const input = document.getElementById('swal-codigo-promo');
-            const val = input ? input.value : '';
-            ejecutarCanjeCodigo(val);
         }
 
         async function canjearOfertaPromocional(tipo) {
@@ -19851,39 +19674,6 @@
             const currentTelefono = currentProfileFields.telefono || currentUserProfile?.telefono || meta.telefono || currentUser?.phone || '';
             const currentFechaNac = currentProfileFields.fecha_nacimiento || currentUserProfile?.fecha_nacimiento || meta.fecha_nacimiento || '';
 
-            let promoSectionHtml = '';
-            if (currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo) {
-                promoSectionHtml = `
-            <div class="bg-amber-50/90 border border-amber-300 rounded-2xl p-3.5 flex items-center gap-3">
-                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-900 flex items-center justify-center shrink-0">
-                    <i class="ph-bold ph-tag text-base"></i>
-                </div>
-                <div class="min-w-0 flex-grow">
-                    <p class="text-xs font-black text-amber-950">Promo GEN YOGA Activa</p>
-                    <p class="text-[11px] text-amber-900/80 leading-tight mt-0.5">50% de descuento en tu 1ª reserva disponible.</p>
-                </div>
-            </div>`;
-            } else if (currentProfileFields.codigo_promo_usado || currentUser?.codigo_promo_usado) {
-                promoSectionHtml = `
-            <div class="bg-sand/15 border border-cocoa/10 rounded-2xl p-3 flex items-center gap-2.5 text-cocoa/70">
-                <i class="ph-bold ph-check-circle text-olive text-base shrink-0"></i>
-                <span class="text-xs font-semibold">Promoción GEN YOGA ya canjeada y disfrutada.</span>
-            </div>`;
-            } else {
-                promoSectionHtml = `
-            <div class="bg-sand/10 border border-cocoa/15 rounded-2xl p-3.5">
-                <label class="text-xs font-bold text-cocoa uppercase tracking-wider block mb-1.5 flex items-center gap-1.5">
-                    <i class="ph-bold ph-tag text-olive"></i> Canjear Código Promocional
-                </label>
-                <div class="flex gap-2">
-                    <input id="swal-codigo-promo" class="flex-grow px-3 py-2 border border-cocoa/15 rounded-xl bg-white text-cocoa font-bold text-xs uppercase placeholder:normal-case placeholder:font-normal focus:ring-2 focus:ring-olive outline-none" placeholder="">
-                    <button type="button" onclick="ejecutarCanjeCodigoDesdeSwal()" class="px-3 py-2 bg-olive hover:bg-olive/90 text-white font-bold text-xs rounded-xl transition shadow-2xs shrink-0 cursor-pointer">
-                        Canjear
-                    </button>
-                </div>
-                <p class="text-[10px] text-cocoa/60 mt-1.5 leading-tight">Introduce tu código o folleto para activar tu 50% de descuento en tu 1ª clase.</p>
-            </div>`;
-            }
 
             const { value: formValues } = await Swal.fire({
                 title: 'Ajustes de Perfil',
@@ -19905,7 +19695,6 @@
                     <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Fecha de Nacimiento</label>
                     <input id="swal-fecha-nac" type="date" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(currentFechaNac)}">
                 </div>
-                ${promoSectionHtml}
                 <div class="mt-2 pt-3 border-t border-cocoa/10">
                     <label class="text-xs font-bold text-red-500 uppercase tracking-wider block mb-2">Zona de Peligro</label>
                     <button type="button" onclick="Swal.close(); window.eliminarPropiaCuenta();" 
@@ -20986,8 +20775,6 @@
         }
 
         window.abrirGestionBonosUsuario = abrirGestionBonosUsuario;
-        window.abrirCodigosPromocionalesUsuario = abrirCodigosPromocionalesUsuario;
-        window.adminReactivarPromo50 = adminReactivarPromo50;
         window.cambiarClaseEspecialAdmin = cambiarClaseEspecialAdmin;
         window.asignarNuevaClaseEspecialAdmin = asignarNuevaClaseEspecialAdmin;
         window.sumarSaldoYRecargarModal = sumarSaldoYRecargarModal;
@@ -21696,12 +21483,13 @@
             let options = [];
             if (isPsico) {
                 options = [
-                    { key: 'prod_VDmmlmsGGhMebt', title: 'Miriam · Sesión Grupal (80 €)', desc: 'Sesión psicoterapéutica grupal en grupo', price: 80 },
-                    { key: 'miriam_psico_individual_1a', title: 'Miriam · 1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
-                    { key: 'miriam_psico_individual_sig', title: 'Miriam · Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
+                    { key: 'prod_VDmmlmsGGhMebt', title: 'Miriam · Sesión Grupal (30 €)', desc: 'Grupo Terapéutico / Autoayuda (120 min)', price: 30 },
+                    { key: 'miriam_psico_individual_1a', title: 'Miriam · 1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (50 min)', price: 75 },
+                    { key: 'miriam_psico_individual_sig', title: 'Miriam · Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (50 min)', price: 65 },
+                    { key: 'miriam_psico_pareja_1a', title: 'Miriam · Terapia de Pareja 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
+                    { key: 'miriam_psico_pareja_sig', title: 'Miriam · Terapia de Pareja Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 },
                     { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Psiconeuroinmunología Clínica inicial (60 min)', price: 80 },
-                    { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Consulta de seguimiento clínico (60 min)', price: 60 },
-                    { key: 'miriam_psico_pareja_1a', title: 'Miriam · Terapia de Pareja 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (90 min)', price: 120 }
+                    { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Consulta de seguimiento clínico (60 min)', price: 60 }
                 ];
             } else {
                 options = [
@@ -21771,16 +21559,22 @@
 
             let options = [];
             if (isMiriam) {
+                const isAutoayuda = (clase.nombre || '').toLowerCase().includes('autoayuda');
+                const isTerapeutico = (clase.nombre || '').toLowerCase().includes('terap');
                 options = [
-                    { key: 'prod_VDmmlmsGGhMebt', title: 'Sesión Grupal Miriam (80 €)', desc: 'Sesión psicoterapéutica grupal (60 min)', price: 80 },
-                    { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (60 min)', price: 75 },
-                    { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (60 min)', price: 65 },
-                    { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (90 min)', price: 120 },
-                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (90 min)', price: 100 }
+                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 },
+                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 },
+                    { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (50 min)', price: 75 },
+                    { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (50 min)', price: 65 },
+                    { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
+                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 }
                 ];
-                if (!esClaseGrupal && clase.stripe_lookup_key !== 'prod_VDmmlmsGGhMebt') {
-                    const grupalOpt = options.shift();
-                    options.splice(1, 0, grupalOpt);
+                if (isTerapeutico) {
+                    const terap = options.splice(1, 1)[0];
+                    options.unshift(terap);
+                } else if (!esClaseGrupal && clase.stripe_lookup_key !== 'prod_VDmmlmsGGhMebt') {
+                    const individual1 = options.splice(2, 1)[0];
+                    options.unshift(individual1);
                 }
             } else if (isIsabel) {
                 options = [
@@ -21884,7 +21678,7 @@
         function filtrarConsultasUsuario(tipo, filtro) {
             if (tipo === 'psicologia') {
                 filtroPsicologiaUsuario = filtro || 'todas';
-                ['todas', 'isabel', 'miriam', 'introductorias', 'disponibles', 'mis-reservas'].forEach(f => {
+                ['todas', 'isabel', 'miriam', 'grupos', 'introductorias', 'disponibles', 'mis-reservas'].forEach(f => {
                     const btn = document.getElementById(`psico-filtro-${f}`);
                     if (btn) {
                         if (f === filtroPsicologiaUsuario) {
@@ -21892,6 +21686,8 @@
                                 btn.className = "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-amber-300 bg-[#8f6b2d] text-white shadow-sm transition flex items-center gap-1.5";
                             } else if (f === 'miriam') {
                                 btn.className = "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-rose-300 bg-[#b45c47] text-white shadow-sm transition flex items-center gap-1.5";
+                            } else if (f === 'grupos') {
+                                btn.className = "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-purple-300 bg-[#8B5CF6] text-white shadow-sm transition flex items-center gap-1.5";
                             } else {
                                 btn.className = "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-blue-200 bg-[#3B82F6] text-white shadow-sm transition flex items-center gap-1.5";
                             }
@@ -21942,7 +21738,7 @@
             const { data: rawClases, error: errClases } =
                 await client.from('clases')
                     .select('*, profesionales(*)')
-                    .eq('tipo_clase', 'psicologia')
+                    .or('tipo_clase.eq.psicologia,tipo_clase.eq.consulta_grupal')
                     .gte('fecha_inicio', startQuery.toISOString())
                     .lte('fecha_inicio', endOfMonth.toISOString())
                     .order('fecha_inicio');
@@ -22125,6 +21921,13 @@
                     const pId = Number(c.profesionales?.id || c.profesor_id || 0);
                     return pId === 10 || pName.includes('miriam');
                 });
+            } else if (filtroPsicologiaUsuario === 'grupos') {
+                // Sesiones grupales de Miriam (Grupo de Autoayuda y Grupo Terapéutico)
+                clasesAMostrar = clasesAMostrar.filter(c => {
+                    const tipo = normalizarTipoClase(c.tipo_clase);
+                    const nom = String(c.nombre || '').toLowerCase();
+                    return tipo === 'consulta_grupal' || c.tipo_clase_id === 65 || c.tipo_clase_id === 66 || nom.includes('autoayuda') || (nom.includes('grupo') && nom.includes('terap'));
+                });
             }
 
             if (clasesAMostrar.length === 0) {
@@ -22170,6 +21973,18 @@
                     <i class="ph-duotone ph-brain text-5xl text-[#b45c47]/40 mb-4"></i>
                     <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin consultas disponibles con Miriam</h3>
                     <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay huecos disponibles para consultas con Miriam (Psicología) en este mes.</p>
+                    <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
+                        <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
+                    </button>
+                </div>`;
+                    return;
+                }
+                if (filtroPsicologiaUsuario === 'grupos') {
+                    container.innerHTML = `
+                <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
+                    <i class="ph-duotone ph-users-three text-5xl text-[#8B5CF6]/40 mb-4"></i>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin sesiones grupales este mes</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay sesiones de Grupo de Autoayuda o Grupo Terapéutico programadas para este mes.</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
                         <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
                     </button>
@@ -24217,8 +24032,19 @@
             if (!tieneAccesoGestionAlumnos()) return;
             const t = String(tipo || 'yoga').toLowerCase().trim();
 
-            if (t === 'psicologia' || t === 'nutricion' || t === 'ayurveda' || t === 'consulta') {
-                const tipoConsulta = (t === 'psicologia') ? 'psicologia' : (t === 'ayurveda' ? 'ayurveda' : 'nutricion');
+            if (t === 'psicologia' || t === 'nutricion' || t === 'ayurveda' || t === 'consulta' || t === 'consultas' || t === 'consulta_grupal') {
+                let tipoConsulta = (t === 'ayurveda') ? 'ayurveda' : (t === 'nutricion' ? 'nutricion' : 'psicologia');
+                if (t === 'consultas') {
+                    const cl = (typeof allClasesCache !== 'undefined' && allClasesCache ? allClasesCache.find(x => String(x.id) === String(claseId)) : null)
+                        || (typeof allAdminTodasCache !== 'undefined' && allAdminTodasCache ? allAdminTodasCache.find(x => String(x.id) === String(claseId)) : null);
+                    if (cl) {
+                        const tc = normalizarTipoClase(cl.tipo_clase);
+                        const n = String(cl.nombre || '').toLowerCase();
+                        if (tc === 'nutricion' || n.includes('nutrici')) tipoConsulta = 'nutricion';
+                        else if (tc === 'ayurveda' || n.includes('ayurveda')) tipoConsulta = 'ayurveda';
+                        else tipoConsulta = 'psicologia';
+                    }
+                }
                 return abrirModalAsignarConsulta(tipoConsulta, claseId);
             }
 
@@ -24228,7 +24054,7 @@
                 : null;
             if (claseAsistencia) {
                 const tipoAsist = String(claseAsistencia.tipo_clase || '').toLowerCase().trim();
-                if (tipoAsist === 'psicologia' || tipoAsist === 'nutricion' || tipoAsist === 'ayurveda' || tipoAsist === 'consulta') {
+                if (tipoAsist === 'psicologia' || tipoAsist === 'nutricion' || tipoAsist === 'ayurveda' || tipoAsist === 'consulta' || tipoAsist === 'consulta_grupal') {
                     const tipoConsulta = (tipoAsist === 'psicologia') ? 'psicologia' : (tipoAsist === 'ayurveda' ? 'ayurveda' : 'nutricion');
                     return abrirModalAsignarConsulta(tipoConsulta, claseId);
                 }
@@ -25233,7 +25059,7 @@
 
             // Nivel 3: Catálogo verificado con los 20 productos reales existentes en Stripe
             window.stripeProductsCache = [
-                { id: 'prod_VDmmlmsGGhMebt', name: 'Sesion grupal Miriam', formatted_price: '80,00 €', unit_amount: 8000, active: true, price: { unit_amount: 8000, formatted: '80,00 €' } },
+                { id: 'prod_VDmmlmsGGhMebt', name: 'Sesión Grupal Miriam (Grupo Terapéutico / Autoayuda)', formatted_price: '30,00 €', unit_amount: 3000, active: true, price: { unit_amount: 3000, formatted: '30,00 €' } },
                 { id: 'prod_VDY8mI9bZ3SQeb', name: 'Taller con descuento', formatted_price: '25,00 €', unit_amount: 2500, active: true, price: { unit_amount: 2500, formatted: '25,00 €' } },
                 { id: 'prod_V9eGZTzwCNJ55q', name: 'Clase suelta PROMOCION 50%', formatted_price: '7,50 €', unit_amount: 750, active: true, price: { unit_amount: 750, formatted: '7,50 €' } },
                 { id: 'prod_V5uCPKKKH5K74P', name: 'Taller Gen Yoga', formatted_price: '35,00 €', unit_amount: 3500, active: true, price: { unit_amount: 3500, formatted: '35,00 €' } },
@@ -25269,7 +25095,7 @@
             if (tipoNormalizado === 'psicologia') {
                 baseOptions = `
                     <optgroup label="Sesiones Grupales (Stripe)">
-                        <option value="prod_VDmmlmsGGhMebt" selected>Sesión Grupal Miriam — 80,00 € (prod_VDmmlmsGGhMebt)</option>
+                        <option value="prod_VDmmlmsGGhMebt" selected>Sesión Grupal Miriam (Grupo Terapéutico / Autoayuda) — 30,00 € (prod_VDmmlmsGGhMebt)</option>
                     </optgroup>
                     <optgroup label="Consultas Individuales (Stripe)">
                         <option value="miriam_psico_individual_1a">Acompañamiento psicoterapéutico (1ª sesión) — 75,00 €</option>
@@ -25343,7 +25169,7 @@
             const tipoId = opt.value;
             const nombre = opt.dataset.nombre || opt.text;
             const duracion = parseInt(opt.dataset.duracion, 10) || 60;
-            const capacidad = parseInt(opt.dataset.capacidad, 10) || (opt.dataset.categoria === 'consulta_grupal' ? 10 : 1);
+            const capacidad = parseInt(opt.dataset.capacidad, 10) || (opt.dataset.categoria === 'consulta_grupal' ? 7 : 1);
             const categoria = opt.dataset.categoria || 'consulta';
             const especialidad = opt.dataset.especialidad || 'psicologia';
             const metodoPago = opt.dataset.metodoPago || '';
@@ -25397,10 +25223,10 @@
                     capInput.classList.add('bg-sand/20', 'cursor-not-allowed');
                     if (capHelp) capHelp.textContent = 'Hueco individual: 1 plaza reservable.';
                 } else {
-                    capInput.value = capacidad || 10;
+                    capInput.value = capacidad || 7;
                     capInput.readOnly = false;
                     capInput.classList.remove('bg-sand/20', 'cursor-not-allowed');
-                    if (capHelp) capHelp.textContent = `Consulta en grupo: aforo predeterminado de ${capacidad || 10} plazas.`;
+                    if (capHelp) capHelp.textContent = `Consulta en grupo: aforo predeterminado de ${capacidad || 7} plazas.`;
                 }
             }
 
@@ -25470,12 +25296,12 @@
                         tipos.forEach(t => {
                             const opt = document.createElement('option');
                             opt.value = t.id;
-                            const catLabel = t.categoria === 'consulta_grupal' ? `Grupo · ${t.capacidad_predeterminada || 10} pl.` : 'Individual · 1 pl.';
+                            const catLabel = t.categoria === 'consulta_grupal' ? `Grupo · ${t.capacidad_predeterminada || 7} pl.` : 'Individual · 1 pl.';
                             const espLabel = t.especialidad ? ` [${t.especialidad.toUpperCase()}]` : '';
                             opt.textContent = `${t.nombre} (${catLabel})${espLabel}`;
                             opt.dataset.nombre = t.nombre;
                             opt.dataset.duracion = t.duracion_predeterminada || 60;
-                            opt.dataset.capacidad = t.capacidad_predeterminada || (t.categoria === 'consulta_grupal' ? 10 : 1);
+                            opt.dataset.capacidad = t.capacidad_predeterminada || (t.categoria === 'consulta_grupal' ? 7 : 1);
                             opt.dataset.categoria = t.categoria;
                             opt.dataset.especialidad = t.especialidad || 'psicologia';
                             opt.dataset.metodoPago = t.metodo_pago || '';
@@ -25626,8 +25452,8 @@
             const notas = document.getElementById('consulta-notas').value;
             const metodoPagoConsulta = document.getElementById('consulta-metodo-pago')?.value || '';
             const nombreIngresado = (document.getElementById('consulta-nombre')?.value || '').trim() || 'Consulta';
-            const capacidadIngresada = parseInt(document.getElementById('consulta-capacidad')?.value || '10', 10);
-            const capacidadFinal = Number.isFinite(capacidadIngresada) && capacidadIngresada > 0 ? capacidadIngresada : 10;
+            const capacidadIngresada = parseInt(document.getElementById('consulta-capacidad')?.value || '1', 10);
+            const capacidadFinal = Number.isFinite(capacidadIngresada) && capacidadIngresada > 0 ? capacidadIngresada : 1;
             const esGratuita = metodoPagoConsulta === 'gratuita' || metodoPagoConsulta === 'sesion_introductoria';
 
             if (!profesorId) {
@@ -25857,6 +25683,7 @@
                     await cargarNutricion();
                 }
                 await cargarConsultasAdmin();
+                if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
             }
         }
 
@@ -26149,7 +25976,7 @@
                 return;
             }
 
-            const tipoNormalizado = (tipo === 'ayurveda' || tipo === 'nutricion') ? 'nutricion' : (tipo === 'psicologia' ? 'psicologia' : '');
+            const tipoNormalizado = (tipo === 'ayurveda' || tipo === 'nutricion') ? 'nutricion' : ((tipo === 'psicologia' || tipo === 'consulta_grupal' || tipo === 'grupos') ? 'psicologia' : 'psicologia');
             const idNormalizado = Number(claseId);
             if (!tipoNormalizado || !Number.isSafeInteger(idNormalizado) || idNormalizado <= 0) {
                 Swal.fire('Error', 'El turno seleccionado no es válido.', 'error');
@@ -26161,7 +25988,7 @@
                 .from('clases')
                 .select('id, profesor_id, tipo_clase, profesionales(email)')
                 .eq('id', idNormalizado)
-                .in('tipo_clase', ['nutricion', 'psicologia', 'ayurveda', 'consulta'])
+                .in('tipo_clase', ['nutricion', 'psicologia', 'ayurveda', 'consulta', 'consulta_grupal'])
                 .maybeSingle();
 
             if (turnoError || !turno) {
@@ -26259,6 +26086,7 @@
                 }
                 await cargarConsultasAdmin();
                 await cargarHorarios();
+                if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
                 if (isAdmin || esTrabajador()) {
                     if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
                 }
@@ -26304,6 +26132,9 @@
             if (tipo === 'ayurveda') {
                 const silvia = filteredProfs.find(p => (p.nombre || '').toLowerCase().includes('silvia')) || filteredProfs[0];
                 if (silvia) select.value = silvia.id;
+            } else if (tipo === 'psicologia' || tipo === 'consulta_grupal' || tipo === 'grupos') {
+                const miriam = filteredProfs.find(p => (p.nombre || '').toLowerCase().includes('miriam')) || filteredProfs[0];
+                if (miriam) select.value = miriam.id;
             } else if (filteredProfs.length === 1 && !select.value) {
                 select.value = filteredProfs[0].id;
             }
@@ -26325,10 +26156,12 @@
             // Fuente única compartida de la base de datos (public.clases)
             const todasLasSesiones = await cargarTodasLasClasesConProfesionales();
 
-            // Filtrar consultas de psicología y nutrición válidas
+            // Filtrar consultas de psicología, nutrición, ayurveda y grupos válidas
             let consultas = (todasLasSesiones || []).filter(c => {
                 const tipo = normalizarTipoClase(c.tipo_clase);
-                return tipo === 'psicologia' || tipo === 'nutricion';
+                const nombre = String(c.nombre || '').toLowerCase();
+                const isGrupoMiriam = tipo === 'consulta_grupal' || c.tipo_clase_id === 65 || c.tipo_clase_id === 66 || nombre.includes('autoayuda') || (nombre.includes('grupo') && nombre.includes('terap'));
+                return tipo === 'psicologia' || tipo === 'nutricion' || tipo === 'ayurveda' || tipo === 'consulta' || isGrupoMiriam;
             });
 
             // Si es trabajador/profesor, aplicar filtro unificado de autorización
@@ -26535,12 +26368,15 @@
                 const ocupadas = reservas.length;
                 const estaLleno = ocupadas >= capacidad;
 
+                const isGrupo = c.tipo_clase === 'consulta_grupal' || c.tipo_clase_id === 65 || c.tipo_clase_id === 66 || (c.nombre && (c.nombre.toLowerCase().includes('autoayuda') || (c.nombre.toLowerCase().includes('grupo') && c.nombre.toLowerCase().includes('terap'))));
+
                 if (filtroConsultasActual === 'todas') return true;
-                if (filtroConsultasActual === 'psicologia') return c.tipo_clase === 'psicologia';
+                if (filtroConsultasActual === 'grupos') return isGrupo;
+                if (filtroConsultasActual === 'psicologia') return (c.tipo_clase === 'psicologia' || (c.nombre && c.nombre.toLowerCase().includes('psicolog'))) && !isGrupo;
                 if (filtroConsultasActual === 'nutricion') {
                     const nom = (c.nombre || '').toLowerCase();
                     const pNom = (c.profesionales?.nombre || '').toLowerCase();
-                    return c.tipo_clase === 'nutricion' && !nom.includes('ayurveda') && !pNom.includes('silvia');
+                    return c.tipo_clase === 'nutricion' && !nom.includes('ayurveda') && !pNom.includes('silvia') && !isGrupo;
                 }
                 if (filtroConsultasActual === 'ayurveda') {
                     const nom = (c.nombre || '').toLowerCase();
@@ -26657,12 +26493,15 @@
                 const ocupadas = reservas.length;
                 const estaLleno = ocupadas >= capacidad;
 
+                const isGrupo = c.tipo_clase === 'consulta_grupal' || c.tipo_clase_id === 65 || c.tipo_clase_id === 66 || (c.nombre && (c.nombre.toLowerCase().includes('autoayuda') || (c.nombre.toLowerCase().includes('grupo') && c.nombre.toLowerCase().includes('terap'))));
+
                 if (filtroConsultasActual === 'todas') return true;
-                if (filtroConsultasActual === 'psicologia') return c.tipo_clase === 'psicologia';
+                if (filtroConsultasActual === 'grupos') return isGrupo;
+                if (filtroConsultasActual === 'psicologia') return (c.tipo_clase === 'psicologia' || (c.nombre && c.nombre.toLowerCase().includes('psicolog'))) && !isGrupo;
                 if (filtroConsultasActual === 'nutricion') {
                     const nom = (c.nombre || '').toLowerCase();
                     const pNom = (c.profesionales?.nombre || '').toLowerCase();
-                    return c.tipo_clase === 'nutricion' && !nom.includes('ayurveda') && !pNom.includes('silvia');
+                    return c.tipo_clase === 'nutricion' && !nom.includes('ayurveda') && !pNom.includes('silvia') && !isGrupo;
                 }
                 if (filtroConsultasActual === 'ayurveda') {
                     const nom = (c.nombre || '').toLowerCase();
@@ -26739,6 +26578,7 @@
                     const rawId = c.id;
                     const claseId = safePositiveInteger(c.id) || 0;
                     const isAyurveda = (c.nombre && c.nombre.toLowerCase().includes('ayurveda')) || (c.profesionales?.nombre && c.profesionales.nombre.toLowerCase().includes('silvia'));
+                    const isGrupoMiriam = c.tipo_clase === 'consulta_grupal' || c.tipo_clase_id === 65 || c.tipo_clase_id === 66 || (c.nombre && (c.nombre.toLowerCase().includes('autoayuda') || (c.nombre.toLowerCase().includes('grupo') && c.nombre.toLowerCase().includes('terap'))));
                     const tipoConsulta = isAyurveda ? 'ayurveda' : (c.tipo_clase === 'nutricion' ? 'nutricion' : 'psicologia');
 
                     const reservas = window.allConsultasAdminReservasMap[c.id] || [];
@@ -26839,12 +26679,18 @@
                     </div>`;
                     }
 
-                    const tagColor = isAyurveda
-                        ? 'text-amber-800 bg-amber-50 border-amber-200'
-                        : (c.tipo_clase === 'psicologia'
-                            ? 'text-blue-600 bg-blue-50 border-blue-100'
-                            : 'text-purple-600 bg-purple-50 border-purple-100');
-                    const tagLabel = isAyurveda ? 'Ayurveda' : (c.tipo_clase === 'psicologia' ? 'Psicología' : 'Nutrición');
+                    let tagColor = 'text-blue-600 bg-blue-50 border-blue-100';
+                    let tagLabel = 'Psicología';
+                    if (isGrupoMiriam) {
+                        tagColor = 'text-purple-700 bg-purple-50 border-purple-200';
+                        tagLabel = (c.nombre && c.nombre.toLowerCase().includes('autoayuda')) ? 'Grupo Autoayuda' : ((c.nombre && c.nombre.toLowerCase().includes('terap')) ? 'Grupo Terapéutico' : 'Grupo (Miriam)');
+                    } else if (isAyurveda) {
+                        tagColor = 'text-amber-800 bg-amber-50 border-amber-200';
+                        tagLabel = 'Ayurveda';
+                    } else if (c.tipo_clase === 'nutricion') {
+                        tagColor = 'text-purple-600 bg-purple-50 border-purple-100';
+                        tagLabel = 'Nutrición';
+                    }
 
                     let badgeEstado = '';
                     if (capacidad > 1) {
@@ -26904,7 +26750,7 @@
         function filtrarConsultasAdmin(filtro) {
             filtroConsultasActual = filtro;
 
-            ['todas', 'psicologia', 'nutricion', 'ayurveda', 'disponibles', 'ocupadas'].forEach(f => {
+            ['todas', 'psicologia', 'grupos', 'nutricion', 'ayurveda', 'disponibles', 'ocupadas'].forEach(f => {
                 const btn = document.getElementById(`consulta-filter-${f}`);
                 if (btn) {
                     if (f === filtro) {
@@ -27806,6 +27652,7 @@
                 await cargarTodasLasClasesConProfesionales({ force: true });
                 await cargarTalleresAdmin();
                 await cargarClasesEspeciales();
+                if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
                 if (isAdmin || esTrabajador()) {
                     if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
                 }
@@ -27856,11 +27703,908 @@
                     await cargarTodasLasClasesConProfesionales({ force: true });
                     await cargarTalleresAdmin();
                     await cargarClasesEspeciales();
+                    if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
                     if (isAdmin || esTrabajador()) {
                         if (typeof cargarAsistenciasPorClase === 'function') await cargarAsistenciasPorClase();
                     }
                 }
             }
+        }
+
+        /* ==============================================================================
+         * GESTIÓN ADMIN: TODAS LAS SESIONES DEL GIMNASIO (VISTA UNIFICADA)
+         * ============================================================================== */
+
+        let selectedAdminTodasFecha = formatDateLocal(new Date());
+        let filtroAdminTodasTipo = 'todas'; // 'todas', 'clases', 'consultas', 'talleres', 'otros'
+        let filtroAdminTodasEstado = 'todos'; // 'todos', 'disponibles', 'ocupadas'
+        let currentTodasAdminMonth = new Date();
+        window.allAdminTodasCache = [];
+        window.allAdminTodasReservasMap = {};
+        window.allAdminTodasPerfilesMap = {};
+
+        function categorizarSesion(c) {
+            if (!c) return { categoria: 'otros', subtipo: 'otros', label: 'Sesión', badgeBg: 'bg-stone-100 text-stone-800 border-stone-300', dotColor: '#78716c', icon: 'ph-calendar-blank' };
+            const tipo = normalizarTipoClase(c.tipo_clase);
+            const nombre = String(c.nombre || '').toLowerCase();
+            const profNombre = String(c.profesionales?.nombre || '').toLowerCase();
+            const esEspecial = !!c.es_especial || tipo === 'clase_especial' || tipo === 'especial' || (typeof esClaseEspecialTipo === 'function' && esClaseEspecialTipo(c));
+            const esTaller = tipo === 'taller' || tipo === 'evento' || (typeof esTallerTipo === 'function' && esTallerTipo(c));
+            const isGrupoMiriam = tipo === 'consulta_grupal' || c.tipo_clase_id === 65 || c.tipo_clase_id === 66 || nombre.includes('autoayuda') || (nombre.includes('grupo') && nombre.includes('terap'));
+            const isAyurveda = tipo === 'ayurveda' || nombre.includes('ayurveda') || (profNombre.includes('silvia') && (tipo === 'nutricion' || nombre.includes('nutricion')));
+            const isPsicologia = tipo === 'psicologia' || nombre.includes('psicolog');
+            const isNutricion = tipo === 'nutricion' || nombre.includes('nutrici');
+
+            if (isGrupoMiriam) {
+                const labelGrupo = nombre.includes('autoayuda') ? 'Grupo Autoayuda' : (nombre.includes('terap') ? 'Grupo Terapéutico' : 'Grupo (Miriam)');
+                return {
+                    categoria: 'consultas',
+                    subtipo: 'grupos',
+                    label: labelGrupo,
+                    badgeBg: 'bg-purple-100 text-purple-900 border-purple-300',
+                    dotColor: '#7c3aed',
+                    icon: 'ph-users-three'
+                };
+            }
+            if (isAyurveda) {
+                return {
+                    categoria: 'consultas',
+                    subtipo: 'ayurveda',
+                    label: 'Consulta Ayurveda',
+                    badgeBg: 'bg-amber-100 text-amber-900 border-amber-300',
+                    dotColor: '#d97706',
+                    icon: 'ph-sparkle'
+                };
+            }
+            if (isPsicologia) {
+                return {
+                    categoria: 'consultas',
+                    subtipo: 'psicologia',
+                    label: 'Consulta Psicología',
+                    badgeBg: 'bg-blue-100 text-blue-900 border-blue-300',
+                    dotColor: '#2563eb',
+                    icon: 'ph-brain'
+                };
+            }
+            if (isNutricion) {
+                return {
+                    categoria: 'consultas',
+                    subtipo: 'nutricion',
+                    label: 'Consulta Nutrición',
+                    badgeBg: 'bg-purple-100 text-purple-900 border-purple-300',
+                    dotColor: '#7c3aed',
+                    icon: 'ph-apple'
+                };
+            }
+            if (esTaller) {
+                return {
+                    categoria: 'talleres',
+                    subtipo: 'taller',
+                    label: 'Taller / Evento',
+                    badgeBg: 'bg-orange-100 text-orange-900 border-orange-300',
+                    dotColor: '#ea580c',
+                    icon: 'ph-calendar-star'
+                };
+            }
+            if (esEspecial) {
+                return {
+                    categoria: 'clases',
+                    subtipo: 'especial',
+                    label: 'Clase Especial',
+                    badgeBg: 'bg-slate-100 text-slate-800 border-slate-300',
+                    dotColor: '#475569',
+                    icon: 'ph-sparkle'
+                };
+            }
+            if (tipo === 'yoga' || !c.tipo_clase) {
+                return {
+                    categoria: 'clases',
+                    subtipo: 'yoga',
+                    label: 'Clase de Yoga',
+                    badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+                    dotColor: '#059669',
+                    icon: 'ph-person-simple-tai-chi'
+                };
+            }
+            return {
+                categoria: 'otros',
+                subtipo: tipo,
+                label: c.tipo_clase || 'Sesión',
+                badgeBg: 'bg-stone-100 text-stone-800 border-stone-300',
+                dotColor: '#78716c',
+                icon: 'ph-calendar-blank'
+            };
+        }
+
+        async function abrirSelectorCrearSesionAdmin() {
+            if (typeof Swal === 'undefined') return;
+            Swal.fire({
+                title: '<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-xl"><i class="ph-bold ph-plus-circle text-olive"></i> Nueva Sesión en el Gimnasio</div>',
+                html: `
+                    <p class="text-xs text-cocoa/70 mb-4">Selecciona el tipo de sesión que deseas programar en GEN Yoga:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                        <button type="button" onclick="Swal.close(); abrirModalCrearClase();" 
+                            class="p-4 rounded-2xl border-2 border-emerald-200 hover:border-emerald-500 hover:bg-emerald-50/60 transition flex flex-col items-center text-center gap-2 group cursor-pointer bg-white shadow-2xs">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-xs">
+                                <i class="ph-bold ph-calendar"></i>
+                            </div>
+                            <div>
+                                <strong class="text-sm font-bold text-cocoa block">Clase Regular</strong>
+                                <span class="text-[11px] text-cocoa/60 leading-tight block mt-0.5">Yoga presencial en sala</span>
+                            </div>
+                        </button>
+                        <button type="button" onclick="Swal.close(); abrirModalCrearConsulta('psicologia');" 
+                            class="p-4 rounded-2xl border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50/60 transition flex flex-col items-center text-center gap-2 group cursor-pointer bg-white shadow-2xs">
+                            <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-xs">
+                                <i class="ph-bold ph-brain"></i>
+                            </div>
+                            <div>
+                                <strong class="text-sm font-bold text-cocoa block">Consulta</strong>
+                                <span class="text-[11px] text-cocoa/60 leading-tight block mt-0.5">Psicología, Nutrición, Ayurveda</span>
+                            </div>
+                        </button>
+                        <button type="button" onclick="Swal.close(); abrirModalCrearTaller();" 
+                            class="p-4 rounded-2xl border-2 border-orange-200 hover:border-orange-500 hover:bg-orange-50/60 transition flex flex-col items-center text-center gap-2 group cursor-pointer bg-white shadow-2xs">
+                            <div class="w-12 h-12 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-xs">
+                                <i class="ph-bold ph-calendar-star"></i>
+                            </div>
+                            <div>
+                                <strong class="text-sm font-bold text-cocoa block">Evento / Taller</strong>
+                                <span class="text-[11px] text-cocoa/60 leading-tight block mt-0.5">Inmersiones y talleres especiales</span>
+                            </div>
+                        </button>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cerrar',
+                cancelButtonColor: '#9ca3af'
+            });
+        }
+
+        async function borrarSesionAdminGenerica(id) {
+            const cid = safePositiveInteger(id);
+            if (!cid) return;
+
+            const s = (window.allAdminTodasCache || []).find(x => safePositiveInteger(x.id) === cid);
+            const cat = s ? categorizarSesion(s) : { categoria: 'clases' };
+
+            if (cat.categoria === 'consultas') {
+                await borrarConsultaAdmin(cat.subtipo || 'psicologia', cid);
+            } else if (cat.categoria === 'talleres') {
+                await borrarTallerAdmin(cid);
+            } else {
+                await borrarClase(cid);
+            }
+
+            if (typeof cargarTodasLasSesionesAdmin === 'function') {
+                await cargarTodasLasSesionesAdmin({ force: true });
+            }
+        }
+
+        function filtrarAdminTodasPorTipo(tipo) {
+            filtroAdminTodasTipo = tipo;
+            ['todas', 'clases', 'consultas', 'talleres'].forEach(t => {
+                const btn = document.getElementById(`todas-filter-tipo-${t}`);
+                if (btn) {
+                    if (t === tipo) {
+                        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa bg-cocoa text-white shadow-2xs transition cursor-pointer";
+                    } else {
+                        btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/15 bg-white/80 text-cocoa hover:bg-white hover:border-cocoa/30 shadow-2xs transition cursor-pointer";
+                    }
+                }
+            });
+            renderizarBarraDiasTodasAdmin();
+            renderizarTodasLasSesionesAdmin();
+        }
+
+        function filtrarAdminTodasPorEstado(estado) {
+            filtroAdminTodasEstado = estado;
+            ['todos', 'disponibles', 'ocupadas'].forEach(e => {
+                const btn = document.getElementById(`todas-filter-estado-${e}`);
+                if (btn) {
+                    if (e === estado) {
+                        btn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-cocoa/20 bg-cocoa/10 text-cocoa transition cursor-pointer";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-cocoa/10 bg-white/70 text-cocoa/70 hover:bg-white hover:text-cocoa transition cursor-pointer";
+                    }
+                }
+            });
+            renderizarBarraDiasTodasAdmin();
+            renderizarTodasLasSesionesAdmin();
+        }
+
+        function filtrarAdminTodasPorFecha(dKey) {
+            selectedAdminTodasFecha = dKey;
+            renderizarBarraDiasTodasAdmin();
+            renderizarCalendarioTodasAdmin();
+            renderizarTodasLasSesionesAdmin();
+        }
+
+        function limpiarFiltroFechaTodasAdmin() {
+            selectedAdminTodasFecha = 'todas';
+            renderizarBarraDiasTodasAdmin();
+            renderizarCalendarioTodasAdmin();
+            renderizarTodasLasSesionesAdmin();
+        }
+
+        function cambiarMesTodasAdmin(delta) {
+            currentTodasAdminMonth = new Date(currentTodasAdminMonth.getFullYear(), currentTodasAdminMonth.getMonth() + delta, 1);
+            renderizarCalendarioTodasAdmin();
+        }
+
+        async function cargarTodasLasSesionesAdmin(options = {}) {
+            const { force = false } = options;
+            const container = document.getElementById('admin-todas-container');
+            const emptyState = document.getElementById('admin-todas-empty');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+                    <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
+                    <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando sesiones del gimnasio...</span>
+                </div>`;
+
+            try {
+                // 1. Cargar todas las clases y sesiones registradas en la base de datos
+                const todasClases = await cargarTodasLasClasesConProfesionales({ force: force || true });
+                let sesiones = (todasClases || []).slice();
+
+                if (!isAdmin && esTrabajador()) {
+                    sesiones = sesiones.filter(esClaseDelProfesionalActual);
+                }
+
+                sesiones.sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
+                window.allAdminTodasCache = sesiones;
+
+                // 2. Traer reservas de todas las fuentes: yoga, psicología, nutrición
+                const claseIds = sesiones.map(s => s.id).filter(Boolean);
+                let rawResYoga = [];
+                let rawResPsico = [];
+                let rawResNutri = [];
+
+                if (claseIds.length > 0) {
+                    const [resY, resP, resN] = await Promise.all([
+                        client.from('reservas_yoga').select('*').eq('estado', 'confirmada').in('clase_id', claseIds),
+                        client.from('reservas_psicologia').select('*').eq('estado', 'confirmada').in('clase_id', claseIds),
+                        client.from('reservas_nutricion').select('*').eq('estado', 'confirmada').in('clase_id', claseIds)
+                    ]);
+                    rawResYoga = resY.data || [];
+                    rawResPsico = resP.data || [];
+                    rawResNutri = resN.data || [];
+                }
+
+                const reservasMap = {};
+                rawResYoga.forEach(r => {
+                    if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+                    reservasMap[r.clase_id].push({ ...r, tipoFuente: 'yoga' });
+                });
+                rawResPsico.forEach(r => {
+                    if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+                    reservasMap[r.clase_id].push({ ...r, tipoFuente: 'psicologia' });
+                });
+                rawResNutri.forEach(r => {
+                    if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+                    reservasMap[r.clase_id].push({ ...r, tipoFuente: 'nutricion' });
+                });
+                window.allAdminTodasReservasMap = reservasMap;
+
+                // 3. Perfiles de alumnos
+                const userIds = new Set();
+                [...rawResYoga, ...rawResPsico, ...rawResNutri].forEach(r => {
+                    if (r.user_id) userIds.add(r.user_id);
+                });
+
+                const perfilesMap = {};
+                if (window.allUsersCache && window.allUsersCache.length > 0) {
+                    window.allUsersCache.forEach(p => { if (p?.id) perfilesMap[p.id] = p; });
+                }
+
+                const missingUserIds = Array.from(userIds).filter(uid => !perfilesMap[uid]);
+                if (missingUserIds.length > 0) {
+                    const { data: pData } = await client.from('profiles')
+                        .select('id, nombre, apellidos, email, telefono, auth_method, fecha_nacimiento, rol')
+                        .in('id', missingUserIds);
+                    (pData || []).forEach(p => {
+                        if (p?.id) perfilesMap[p.id] = p;
+                        if (window.allUsersCache && !window.allUsersCache.some(x => x.id === p.id)) {
+                            window.allUsersCache.push(p);
+                        }
+                    });
+                }
+                window.allAdminTodasPerfilesMap = perfilesMap;
+
+                // 4. Renderizar UI
+                renderizarBarraDiasTodasAdmin();
+                renderizarCalendarioTodasAdmin();
+                renderizarTodasLasSesionesAdmin();
+
+            } catch (err) {
+                console.error('Error al cargar todas las sesiones de administración:', err);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="p-8 text-center bg-red-50 text-red-600 rounded-3xl border border-red-200">
+                            <p class="font-bold">Hubo un problema al cargar las sesiones.</p>
+                            <button onclick="cargarTodasLasSesionesAdmin({ force: true })" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition cursor-pointer">Reintentar</button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function renderizarBarraDiasTodasAdmin() {
+            const bar = document.getElementById('admin-todas-days-list');
+            const titleEl = document.getElementById('admin-todas-days-title-text');
+            if (!bar || !window.allAdminTodasCache) return;
+
+            inicializarEventosBarraDias('admin-todas-days-list');
+
+            const hoyKey = formatDateLocal(new Date());
+
+            const sesionesFiltradas = (window.allAdminTodasCache || []).filter(s => {
+                const cat = categorizarSesion(s);
+                if (filtroAdminTodasTipo !== 'todas') {
+                    if (filtroAdminTodasTipo === 'clases' && cat.categoria !== 'clases') return false;
+                    if (filtroAdminTodasTipo === 'consultas' && cat.categoria !== 'consultas') return false;
+                    if (filtroAdminTodasTipo === 'talleres' && cat.categoria !== 'talleres') return false;
+                    if (filtroAdminTodasTipo === 'otros' && cat.categoria !== 'otros') return false;
+                }
+
+                const reservas = (window.allAdminTodasReservasMap && window.allAdminTodasReservasMap[s.id]) || [];
+                const ocupadas = reservas.length;
+                const capacidad = Math.max(1, toSafeNumber(s.capacidad_max) || 1);
+                const estaLleno = ocupadas >= capacidad;
+
+                if (filtroAdminTodasEstado === 'disponibles' && estaLleno) return false;
+                if (filtroAdminTodasEstado === 'ocupadas' && ocupadas === 0) return false;
+
+                return true;
+            });
+
+            const fechasConSesiones = new Map();
+            sesionesFiltradas.forEach(s => {
+                const dKey = formatDateLocal(s.fecha_inicio);
+                if (dKey) {
+                    fechasConSesiones.set(dKey, (fechasConSesiones.get(dKey) || 0) + 1);
+                }
+            });
+
+            const allDKeys = Array.from(fechasConSesiones.keys()).sort();
+            if (allDKeys.length === 0) {
+                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay sesiones que coincidan con los filtros</span>';
+                if (titleEl) titleEl.textContent = 'Sesiones del gimnasio';
+                return;
+            }
+
+            if (!selectedAdminTodasFecha || (selectedAdminTodasFecha !== 'todas' && !fechasConSesiones.has(selectedAdminTodasFecha))) {
+                selectedAdminTodasFecha = fechasConSesiones.has(hoyKey) ? hoyKey : (allDKeys.find(k => k >= hoyKey) || allDKeys[0] || hoyKey);
+            }
+
+            if (titleEl) {
+                let txtFiltro = '';
+                if (selectedAdminTodasFecha && selectedAdminTodasFecha !== 'todas') {
+                    const [y, m, d] = selectedAdminTodasFecha.split('-').map(Number);
+                    const dObj = new Date(y, m - 1, d);
+                    txtFiltro = `${formatDisplayWeekday(dObj)}, ${d} de ${formatDisplayMonth(dObj)}`;
+                } else {
+                    txtFiltro = 'Todas las fechas';
+                }
+                titleEl.innerHTML = `Sesiones del gimnasio ${txtFiltro ? `<span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${txtFiltro})</span>` : ''}`;
+            }
+
+            let html = '';
+            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            allDKeys.forEach(dKey => {
+                const [y, m, d] = dKey.split('-').map(Number);
+                const fecha = new Date(y, m - 1, d);
+                const diaSemana = diasSemanaCorta[fecha.getDay()];
+                const mesNombre = mesesCorta[m - 1];
+                const numSesiones = fechasConSesiones.get(dKey) || 0;
+                const isSelected = selectedAdminTodasFecha === dKey;
+                const isToday = dKey === hoyKey;
+
+                let btnClass = '';
+                let topLabel = '';
+                let textClass = '';
+                let countClass = '';
+
+                if (isToday && isSelected) {
+                    btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else if (isToday && !isSelected) {
+                    btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
+                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
+                } else if (isSelected) {
+                    btnClass = 'bg-olive text-white shadow-sm ring-2 ring-olive/40 border-olive chip-selected';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-90 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
+                    countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
+                } else {
+                    btnClass = 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/15 shadow-2xs';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-semibold opacity-70 leading-none">${diaSemana}</span>`;
+                    textClass = 'text-xs sm:text-sm font-bold text-cocoa leading-tight mt-0.5';
+                    countClass = 'text-[8px] opacity-75 font-medium leading-none mt-0.5';
+                }
+
+                html += `
+                    <button type="button" onclick="filtrarAdminTodasPorFecha('${dKey}')" 
+                        class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
+                        ${topLabel}
+                        <span class="${textClass}">${d} ${mesNombre}</span>
+                        <span class="${countClass}">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
+                    </button>
+                `;
+            });
+
+            bar.innerHTML = html;
+
+            setTimeout(() => {
+                const targetChip = bar.querySelector('.chip-selected') || bar.querySelector('.chip-today') || bar.firstElementChild;
+                if (targetChip) {
+                    targetChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }, 60);
+        }
+
+        function renderizarCalendarioTodasAdmin() {
+            const grid = document.getElementById('admin-todas-calendar-grid');
+            const monthYearEl = document.getElementById('admin-todas-calendar-month-year');
+            if (!grid || !monthYearEl) return;
+
+            const year = currentTodasAdminMonth.getFullYear();
+            const month = currentTodasAdminMonth.getMonth();
+
+            const monthFallback = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
+            monthYearEl.textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const daysInMonth = lastDay.getDate();
+
+            grid.innerHTML = '';
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const hoyKey = formatDateLocal(new Date());
+
+            const fechasConSesiones = new Set();
+            (window.allAdminTodasCache || []).forEach(s => {
+                const dKey = formatDateLocal(s.fecha_inicio);
+                if (dKey) fechasConSesiones.add(dKey);
+            });
+
+            // Días del mes anterior
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                const day = prevMonthDays - i;
+                const div = document.createElement('div');
+                div.className = 'calendar-day other-month rounded-lg text-sm font-medium text-cocoa bg-white/40 border border-white/10';
+                div.textContent = day;
+                grid.appendChild(div);
+            }
+
+            // Días del mes actual
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateKey = formatDateLocal(dateObj);
+                const isToday = dateKey === hoyKey;
+                const hasSesiones = fechasConSesiones.has(dateKey);
+                const isSelected = selectedAdminTodasFecha === dateKey;
+
+                const div = document.createElement('div');
+                div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 transition cursor-pointer';
+                div.textContent = day;
+
+                if (isToday) div.classList.add('today');
+                if (hasSesiones) div.classList.add('has-classes');
+                if (isSelected) div.classList.add('selected');
+
+                div.onclick = () => {
+                    filtrarAdminTodasPorFecha(dateKey);
+                };
+
+                grid.appendChild(div);
+            }
+
+            // Días del mes siguiente
+            const totalCells = grid.children.length;
+            const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let day = 1; day <= remainingCells; day++) {
+                const div = document.createElement('div');
+                div.className = 'calendar-day other-month rounded-lg text-sm font-medium text-cocoa bg-white/40 border border-white/10';
+                div.textContent = day;
+                grid.appendChild(div);
+            }
+        }
+
+        function actualizarResumenDiaTodas(sesionesDelDia, fechaSeleccionada) {
+            const tagEl = document.getElementById('admin-todas-resumen-tag');
+            const contentEl = document.getElementById('admin-todas-resumen-content');
+            if (!contentEl) return;
+
+            const hoyKey = formatDateLocal(new Date());
+            const esHoy = fechaSeleccionada === hoyKey;
+
+            if (tagEl) {
+                if (fechaSeleccionada === 'todas') {
+                    tagEl.textContent = 'Global';
+                } else if (esHoy) {
+                    tagEl.textContent = 'Hoy';
+                } else {
+                    const [y, m, d] = fechaSeleccionada.split('-').map(Number);
+                    tagEl.textContent = `${d}/${m}`;
+                }
+            }
+
+            let numClases = 0;
+            let numConsultas = 0;
+            let numTalleres = 0;
+            let numOtros = 0;
+            let totalPlazas = 0;
+            let totalOcupadas = 0;
+
+            sesionesDelDia.forEach(s => {
+                const cat = categorizarSesion(s);
+                if (cat.categoria === 'clases') numClases++;
+                else if (cat.categoria === 'consultas') numConsultas++;
+                else if (cat.categoria === 'talleres') numTalleres++;
+                else numOtros++;
+
+                const cap = Math.max(1, toSafeNumber(s.capacidad_max) || 1);
+                const res = (window.allAdminTodasReservasMap && window.allAdminTodasReservasMap[s.id]) || [];
+                totalPlazas += cap;
+                totalOcupadas += res.length;
+            });
+
+            const totalSesiones = sesionesDelDia.length;
+            const pctOcupacion = totalPlazas > 0 ? Math.min(100, Math.round((totalOcupadas / totalPlazas) * 100)) : 0;
+
+            let fechaTituloStr = 'Todas las fechas';
+            if (fechaSeleccionada && fechaSeleccionada !== 'todas') {
+                const [y, m, d] = fechaSeleccionada.split('-').map(Number);
+                const dObj = new Date(y, m - 1, d);
+                fechaTituloStr = `${formatDisplayWeekday(dObj)}, ${d} de ${formatDisplayMonth(dObj)}`;
+            }
+
+            contentEl.innerHTML = `
+                <div>
+                    <span class="text-[11px] font-bold text-cocoa/50 uppercase tracking-wider block">Fecha seleccionada</span>
+                    <strong class="text-sm font-bold text-cocoa capitalize">${escapeHtml(fechaTituloStr)}</strong>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <div class="p-2.5 rounded-xl bg-sand/15 border border-cocoa/10 flex flex-col items-center justify-center text-center">
+                        <span class="text-xl font-black text-cocoa">${totalSesiones}</span>
+                        <span class="text-[10px] uppercase font-bold text-cocoa/60">Sesiones</span>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-olive/10 border border-olive/20 flex flex-col items-center justify-center text-center">
+                        <span class="text-xl font-black text-olive">${totalOcupadas} / ${totalPlazas}</span>
+                        <span class="text-[10px] uppercase font-bold text-olive/80">Plazas Ocupadas</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <div class="flex items-center justify-between text-[11px] text-cocoa/70">
+                        <span>Ocupación global</span>
+                        <span class="font-bold text-cocoa">${pctOcupacion}%</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-sand/20 overflow-hidden">
+                        <div class="h-full bg-olive rounded-full transition-all duration-300" style="width: ${pctOcupacion}%;"></div>
+                    </div>
+                </div>
+
+                <div class="border-t border-cocoa/10 pt-2 space-y-1.5 text-xs text-cocoa/80">
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="ph-bold ph-person-simple-tai-chi text-emerald-600"></i> Clases de Yoga</span>
+                        <span class="font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200 text-[11px]">${numClases}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="ph-bold ph-brain text-blue-600"></i> Consultas (Psico / Nutri / Ayur)</span>
+                        <span class="font-bold bg-blue-50 text-blue-800 px-2 py-0.5 rounded-md border border-blue-200 text-[11px]">${numConsultas}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="ph-bold ph-calendar-star text-orange-600"></i> Eventos y Talleres</span>
+                        <span class="font-bold bg-orange-50 text-orange-800 px-2 py-0.5 rounded-md border border-orange-200 text-[11px]">${numTalleres}</span>
+                    </div>
+                    ${numOtros > 0 ? `
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-500"></i> Otras sesiones</span>
+                        <span class="font-bold bg-gray-100 text-gray-800 px-2 py-0.5 rounded-md text-[11px]">${numOtros}</span>
+                    </div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderizarTodasLasSesionesAdmin() {
+            const container = document.getElementById('admin-todas-container');
+            const emptyState = document.getElementById('admin-todas-empty');
+            if (!container || !window.allAdminTodasCache) return;
+
+            container.innerHTML = '';
+
+            const hoyKey = formatDateLocal(new Date());
+
+            // 1. Filtrar sesiones
+            let filtradas = window.allAdminTodasCache.filter(s => {
+                const cat = categorizarSesion(s);
+
+                // Filtro por tipo
+                if (filtroAdminTodasTipo !== 'todas') {
+                    if (filtroAdminTodasTipo === 'clases' && cat.categoria !== 'clases') return false;
+                    if (filtroAdminTodasTipo === 'consultas' && cat.categoria !== 'consultas') return false;
+                    if (filtroAdminTodasTipo === 'talleres' && cat.categoria !== 'talleres') return false;
+                    if (filtroAdminTodasTipo === 'otros' && cat.categoria !== 'otros') return false;
+                }
+
+                const reservas = (window.allAdminTodasReservasMap && window.allAdminTodasReservasMap[s.id]) || [];
+                const ocupadas = reservas.length;
+                const capacidad = Math.max(1, toSafeNumber(s.capacidad_max) || 1);
+                const estaLleno = ocupadas >= capacidad;
+
+                // Filtro por disponibilidad
+                if (filtroAdminTodasEstado === 'disponibles' && estaLleno) return false;
+                if (filtroAdminTodasEstado === 'ocupadas' && ocupadas === 0) return false;
+
+                return true;
+            });
+
+            // Filtro por fecha
+            if (selectedAdminTodasFecha && selectedAdminTodasFecha !== 'todas') {
+                filtradas = filtradas.filter(s => formatDateLocal(s.fecha_inicio) === selectedAdminTodasFecha);
+            }
+
+            // Actualizar resumen en el sidebar derecho
+            actualizarResumenDiaTodas(filtradas, selectedAdminTodasFecha);
+
+            // Si no hay sesiones
+            if (filtradas.length === 0) {
+                if (emptyState) {
+                    emptyState.classList.remove('hidden');
+                    const emptyMsg = emptyState.querySelector('p');
+                    if (emptyMsg) {
+                        emptyMsg.textContent = (selectedAdminTodasFecha && selectedAdminTodasFecha !== 'todas')
+                            ? 'No hay clases, consultas ni eventos programados para este día.'
+                            : 'No hay sesiones registradas que coincidan con los filtros.';
+                    }
+                }
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            // 2. Agrupar por fecha
+            const gruposPorFecha = {};
+            filtradas.forEach(s => {
+                const dKey = formatDateLocal(s.fecha_inicio) || 'sin-fecha';
+                if (!gruposPorFecha[dKey]) gruposPorFecha[dKey] = [];
+                gruposPorFecha[dKey].push(s);
+            });
+
+            const allDateKeys = Object.keys(gruposPorFecha).sort();
+            allDateKeys.forEach(dateKey => {
+                const sesionesDelDia = gruposPorFecha[dateKey];
+                let diaTitulo = dateKey;
+                if (dateKey !== 'sin-fecha') {
+                    const [y, m, d] = dateKey.split('-').map(Number);
+                    const dateObj = new Date(y, m - 1, d);
+                    const diaNombre = formatDisplayWeekday(dateObj);
+                    const mes = formatDisplayMonth(dateObj);
+                    diaTitulo = `${diaNombre}, ${d} de ${mes}`;
+                }
+
+                const seccionDia = document.createElement('div');
+                seccionDia.className = 'space-y-4 mb-8';
+
+                const headerDia = document.createElement('div');
+                headerDia.className = 'flex items-center justify-between py-2.5 px-4 bg-sand/15 border border-cocoa/10 rounded-2xl sticky top-0 bg-ivory/95 backdrop-blur-md z-10 shadow-2xs';
+                headerDia.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-3 h-3 rounded-full bg-olive shadow-xs"></span>
+                        <h4 class="text-sm md:text-base font-bold text-cocoa capitalize tracking-wide">${escapeHtml(diaTitulo)}</h4>
+                    </div>
+                    <span class="text-xs font-bold text-cocoa/70 bg-white/80 border border-cocoa/10 px-3 py-1 rounded-xl shadow-2xs">
+                        ${sesionesDelDia.length} ${sesionesDelDia.length === 1 ? 'sesión' : 'sesiones'}
+                    </span>
+                `;
+                seccionDia.appendChild(headerDia);
+
+                const listaCards = document.createElement('div');
+                listaCards.className = 'space-y-4';
+
+                sesionesDelDia.forEach(s => {
+                    const horaInicio = formatDisplayTime(s.fecha_inicio);
+                    const horaFin = s.fecha_fin ? formatDisplayTime(s.fecha_fin) : '';
+                    const duracion = s.duracion_minutos || 60;
+                    const claseId = safePositiveInteger(s.id) || 0;
+                    const cat = categorizarSesion(s);
+
+                    const reservas = (window.allAdminTodasReservasMap && window.allAdminTodasReservasMap[s.id]) || [];
+                    const capacidad = Math.max(1, toSafeNumber(s.capacidad_max) || 1);
+                    const ocupadas = reservas.length;
+                    const tieneHueco = ocupadas < capacidad;
+
+                    const profName = String(s.profesionales?.nombre || 'Staff GEN');
+                    const profFoto = getTeacherPhotoFallback(s.profesionales) || getTeacherPhotoFallback(profName);
+
+                    // Badge de estado y capacidad
+                    let badgeCapacidad = '';
+                    if (ocupadas >= capacidad) {
+                        badgeCapacidad = `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-lg"><i class="ph-bold ph-lock-key"></i> Completa (${ocupadas}/${capacidad})</span>`;
+                    } else if (ocupadas > 0) {
+                        badgeCapacidad = `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-lg"><i class="ph-bold ph-users"></i> ${ocupadas}/${capacidad} plazas</span>`;
+                    } else {
+                        badgeCapacidad = `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg"><i class="ph-bold ph-check"></i> Disponible (${capacidad} plazas)</span>`;
+                    }
+
+                    // Renderizado de alumnos inscritos
+                    let alumnosHTML = '';
+                    if (ocupadas > 0) {
+                        const filasAlumnos = reservas.map(reserva => {
+                            const perfil = (window.allAdminTodasPerfilesMap && window.allAdminTodasPerfilesMap[reserva.user_id]) || {};
+                            const contact = obtenerDatosContactoPerfil(perfil);
+                            const reservaId = safePositiveInteger(reserva.id) || 0;
+
+                            let badgePago = '';
+                            if (cat.categoria === 'consultas') {
+                                const prodInfo = (typeof obtenerDetalleProductoConsulta === 'function')
+                                    ? obtenerDetalleProductoConsulta(reserva, s)
+                                    : { nombre: 'Consulta abonada' };
+                                badgePago = `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-credit-card text-xs"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
+                            } else if (cat.categoria === 'talleres') {
+                                badgePago = `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-ticket text-xs"></i> Plaza Taller</span>`;
+                            } else {
+                                const tipoRes = reserva.tipo_reserva || 'bono';
+                                badgePago = `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-ticket text-xs"></i> ${escapeHtml(tipoRes)}</span>`;
+                            }
+
+                            let contactDetails = '';
+                            if (contact.cleanTel) {
+                                contactDetails += `
+                                    <div class="flex items-center gap-1.5 text-xs text-gray-700 flex-wrap">
+                                        <a href="tel:${escapeHtml(contact.cleanTel)}" class="inline-flex items-center gap-1 font-bold text-gray-800 hover:text-olive transition" title="Llamar">
+                                            <i class="ph-bold ph-phone text-olive"></i> ${escapeHtml(contact.cleanTel)}
+                                        </a>
+                                        ${contact.waUrl ? `
+                                        <a href="${escapeHtml(contact.waUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition" title="WhatsApp">
+                                            <i class="ph-bold ph-whatsapp-logo text-xs"></i> WhatsApp
+                                        </a>` : ''}
+                                    </div>`;
+                            }
+                            if (contact.realEmail) {
+                                contactDetails += `
+                                    <div class="flex items-center gap-1 text-xs text-gray-500 truncate mt-0.5">
+                                        <a href="mailto:${escapeHtml(contact.realEmail)}" class="inline-flex items-center gap-1 hover:text-gray-900 truncate transition" title="${escapeHtml(contact.realEmail)}">
+                                            <i class="ph-bold ph-envelope text-gray-400"></i> ${escapeHtml(contact.realEmail)}
+                                        </a>
+                                    </div>`;
+                            }
+                            if (!contact.cleanTel && !contact.realEmail) {
+                                contactDetails = `<span class="text-xs text-gray-400 italic">Sin datos de contacto</span>`;
+                            }
+
+                            // Handler de cancelación según tipo
+                            let cancelJs = '';
+                            if (cat.categoria === 'consultas') {
+                                cancelJs = `cancelarConsulta('${cat.subtipo}', ${reservaId})`;
+                            } else if (cat.categoria === 'talleres') {
+                                cancelJs = `cancelarReservaTaller(${reservaId})`;
+                            } else {
+                                cancelJs = `cancelar(${reservaId})`;
+                            }
+
+                            return `
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-sand/10 border border-cocoa/10 rounded-xl gap-2.5">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-cocoa/10 text-cocoa font-bold text-xs shrink-0">
+                                            ${contact.inicial === '📱' ? '<i class="ph-bold ph-device-mobile"></i>' : escapeHtml(contact.inicial)}
+                                        </div>
+                                        <div class="flex flex-col min-w-0">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="text-xs font-bold text-gray-900 truncate">${escapeHtml(contact.nombreCompleto)}</span>
+                                                ${contact.edadStr ? `<span class="text-[9px] font-bold text-gray-400 bg-gray-100 border border-gray-200 px-1 rounded">${escapeHtml(contact.edadStr)}</span>` : ''}
+                                            </div>
+                                            <div class="mt-0.5">${contactDetails}</div>
+                                            <div class="mt-1">${badgePago}</div>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="${cancelJs}" class="text-[11px] font-bold text-red-500 hover:text-red-700 hover:underline shrink-0 self-end sm:self-center cursor-pointer">
+                                        Cancelar reserva
+                                    </button>
+                                </div>
+                            `;
+                        }).join('');
+
+                        const botonAsignarMas = tieneHueco ? `
+                            <div class="px-3.5 py-2 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
+                                <span class="font-medium text-cocoa/70"><i class="ph-bold ph-user-plus text-olive mr-1"></i> Plazas libres restantes: <strong>${capacidad - ocupadas}</strong></span>
+                                <button type="button" onclick="abrirModalAsignarPlazaAdmin('${cat.categoria}', ${claseId})" class="inline-flex items-center justify-center gap-1.5 bg-cocoa hover:bg-black text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer">
+                                    <i class="ph-bold ph-user-plus"></i> + Inscribir alumno
+                                </button>
+                            </div>
+                        ` : '';
+
+                        alumnosHTML = `
+                            <div class="mt-4 border-t border-cocoa/10 pt-3.5">
+                                <span class="text-[10px] font-black text-cocoa/50 uppercase tracking-widest block mb-2">
+                                    Alumnos Inscritos (${ocupadas}/${capacidad})
+                                </span>
+                                <div class="space-y-2">
+                                    ${filasAlumnos}
+                                </div>
+                                ${botonAsignarMas}
+                            </div>
+                        `;
+                    } else {
+                        alumnosHTML = `
+                            <div class="mt-4 px-4 py-3 bg-sand/10 border border-dashed border-cocoa/15 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="flex items-center gap-2 text-xs text-cocoa/70">
+                                    <i class="ph-bold ph-calendar-check text-olive text-base"></i>
+                                    <span>Sesión disponible sin reservas (${capacidad} plazas libres)</span>
+                                </div>
+                                <button type="button" onclick="abrirModalAsignarPlazaAdmin('${cat.categoria}', ${claseId})" class="inline-flex items-center justify-center gap-1.5 bg-cocoa hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer shrink-0">
+                                    <i class="ph-bold ph-user-plus"></i> Inscribir alumno
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-3xl border border-cocoa/15 p-5 sm:p-6 shadow-sm hover:shadow-md transition';
+
+                    card.innerHTML = `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-cocoa/10">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-xl border uppercase tracking-wider ${cat.badgeBg} shadow-2xs">
+                                    <i class="ph-bold ${cat.icon} text-sm"></i> ${escapeHtml(cat.label)}
+                                </span>
+                                <div class="inline-flex items-center gap-1.5 text-xs font-bold text-cocoa bg-sand/20 border border-cocoa/15 px-3 py-1 rounded-xl">
+                                    <i class="ph-bold ph-clock text-olive"></i> ${escapeHtml(horaInicio)}${horaFin ? ` - ${escapeHtml(horaFin)}` : ''} <span class="text-[10px] text-cocoa/60 font-medium">(${duracion} min)</span>
+                                </div>
+                                ${badgeCapacidad}
+                            </div>
+                            <div class="flex items-center gap-1 self-end sm:self-center shrink-0">
+                                <button type="button" onclick="abrirModalEditarClase(${claseId})" class="text-gray-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition cursor-pointer" title="Editar Sesión">
+                                    <i class="ph-bold ph-pencil-simple text-lg"></i>
+                                </button>
+                                <button type="button" onclick="borrarSesionAdminGenerica(${claseId})" class="text-gray-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition cursor-pointer" title="Eliminar Sesión">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-3.5 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="brand-font text-base sm:text-lg font-bold text-cocoa">${escapeHtml(s.nombre || 'Sesión')}</h3>
+                                <div class="flex items-center gap-2 mt-1.5 text-xs text-cocoa/70 flex-wrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-5 h-5 rounded-full overflow-hidden bg-sand/30 shrink-0">
+                                            <img src="${escapeHtml(profFoto)}" alt="" class="w-full h-full object-cover">
+                                        </div>
+                                        <span class="font-bold text-cocoa">${escapeHtml(profName)}</span>
+                                    </div>
+                                    ${s.sala ? `<span class="text-cocoa/40">·</span><span><i class="ph-bold ph-door text-olive mr-0.5"></i> ${escapeHtml(s.sala)}</span>` : ''}
+                                </div>
+                                ${s.descripcion ? `<p class="text-xs text-cocoa/60 mt-2 italic bg-sand/10 p-2 rounded-xl border border-cocoa/5">${escapeHtml(s.descripcion)}</p>` : ''}
+                            </div>
+                        </div>
+
+                        ${alumnosHTML}
+                    `;
+
+                    listaCards.appendChild(card);
+                });
+
+                seccionDia.appendChild(listaCards);
+                container.appendChild(seccionDia);
+            });
         }
 
         // React to language change dynamically
@@ -27929,11 +28673,6 @@
                     confirmButtonColor: '#795244'
                 });
                 return;
-            }
-
-            const hasPromo50 = !!(currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo);
-            if (hasPromo50) {
-                return comprarPack('promo_50_clase', event);
             }
 
             const { isConfirmed } = await Swal.fire({
@@ -28012,7 +28751,6 @@
         }
 
         const PACK_PURCHASE_OPTIONS = Object.freeze({
-            promo_50_clase: { title: '1ª Clase con 50% DTO (Promo GEN YOGA)', credits: 1, price: '7,50' },
             pack_4: { title: 'Pack de 4 clases', credits: 4, price: 50 },
             pack_6: { title: 'Pack de 6 clases', credits: 6, price: 65 },
             pack_10: { title: 'Pack de 10 clases', credits: 10, price: 95 }
@@ -28023,22 +28761,11 @@
                 event.preventDefault();
                 event.stopPropagation();
             }
-            const hasPromo50 = !!(currentProfileFields.descuento_promo_50_activo || currentUser?.descuento_promo_50_activo);
-            const promoOptionHtml = hasPromo50 ? `
-        <label class="flex items-center justify-between gap-3 border-2 border-amber-400 bg-amber-50/80 rounded-xl p-3 cursor-pointer shadow-2xs mb-1">
-            <span>
-                <b class="text-amber-950 flex items-center gap-1.5"><i class="ph-bold ph-tag text-amber-700"></i> 1ª Clase (50% DTO Promo)</b>
-                <small class="block text-amber-900/70 font-semibold">Código GEN YOGA aplicado</small>
-            </span>
-            <span class="font-black text-amber-950 text-sm"><input type="radio" name="swal-pack" value="promo_50_clase" checked> 7,50 €</span>
-        </label>` : '';
-
             const { value: packType } = await Swal.fire({
                 title: 'Packs de Clases de Yoga (Bonos)',
                 html: `
             <div class="grid gap-2.5 text-left font-sans">
-                ${promoOptionHtml}
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>4 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_4" ${hasPromo50 ? '' : 'checked'}> 50 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>4 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_4" checked> 50 €</span></label>
                 <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>6 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_6"> 65 €</span></label>
                 <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>10 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_10"> 95 €</span></label>
                 <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-[11px] leading-relaxed mt-1 flex items-start gap-2">
@@ -28070,19 +28797,14 @@
                 return;
             }
 
-            const isPromo50 = packType === 'promo_50_clase';
-            const modalHtml = isPromo50
-                ? `Vas a adquirir <strong>1 clase suelta con el 50% de descuento promocional (GEN YOGA)</strong> por <strong>7,50 €</strong>.<br><br>Válido para tu 1ª clase en el estudio.`
-                : `Vas a adquirir <strong>${pack.credits} clases</strong> por <strong>${pack.price},00 €</strong>.<br><br>El pack caduca 60 días después de la compra y es válido para clases no especiales.`;
-
             const { isConfirmed } = await Swal.fire({
                 title: pack.title,
-                html: modalHtml,
+                html: `Vas a adquirir <strong>${pack.credits} clases</strong> por <strong>${pack.price},00 €</strong>.<br><br>El pack caduca 60 días después de la compra y es válido para clases no especiales.`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Ir a pagar',
                 cancelButtonText: 'Cancelar',
-                confirmButtonColor: isPromo50 ? '#b48a47' : '#795244'
+                confirmButtonColor: '#795244'
             });
             if (!isConfirmed) return;
 

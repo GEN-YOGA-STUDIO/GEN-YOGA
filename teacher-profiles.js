@@ -32,6 +32,15 @@ Actualmente soy fundadora de Respira, un espacio de acompañamiento psicológico
 Además de la intervención individual, realizo charlas, talleres y actividades grupales, y divulgo contenidos sobre salud mental a través de redes sociales y del programa de radio y pódcast "Más allá de la comida". También he impulsado iniciativas comunitarias, como un club de lectura terapéutico, y participo activamente en jornadas sociales, encuentros de mujeres y actividades relacionadas con la promoción de la salud física, mental y emocional.
 
 TE ACOMPAÑO:
+Sesiones individuales y terapia de pareja
+
+🫂 GRUPOS TERAPÉUTICOS:
+Grupos cerrados y continuados, con un número reducido de personas, donde se construye un espacio de confianza y vínculo. No partimos de una única temática; a lo largo del proceso abordamos diferentes aspectos de interés para el propio grupo (emociones, autoestima, relaciones, límites, historia personal, pérdidas, cambios vitales…). Una vez iniciado el grupo, cuidamos la intimidad, la seguridad y los vínculos que se generen (Miércoles 11:30 h, 2 sesiones al mes, 2 h, 30 €/sesión).
+
+🌱 GRUPOS DE AUTOAYUDA:
+Espacios grupales centrados en una temática concreta y con un objetivo compartido. Desde nuestras experiencias, aprenderemos a comprender lo que nos ocurre y encontrar recursos para transitar ese proceso acompañados/as (Martes 11:30 h, 2 sesiones al mes, 2 h, 30 €/sesión).
+
+Talleres vivenciales y formativos
 Trastornos de la conducta alimentaria (TCA)
 Relación con la comida y la imagen corporal
 Autoestima y autoconfianza
@@ -121,7 +130,7 @@ ME DEFINE:
     const englishProfiles = Object.freeze({
         angel: Object.freeze({
             nombre: 'Ángel Javier',
-            especialidad: 'Yoga for Men & Yoga for Everyone | classes',
+            especialidad: 'Alignment Yoga & Yoga for Everyone | classes',
             descripcion: `ABOUT ME:
 For the past 6 years, I have dedicated myself to the study and practice of Yoga, focusing on the depth of physical work and the benefits it brings on all levels.
 Always as a student, I seek to share the teachings I receive and what I learn from my experience.
@@ -156,6 +165,15 @@ I am the founder of Respira, a psychological support space where I work mainly w
 Alongside individual sessions, I lead talks, workshops and group activities, and share mental-health content through social media and the radio programme and podcast "Más allá de la comida". I have also developed community initiatives such as a therapeutic book club and take part in social events, women's gatherings and activities that promote physical, mental and emotional health.
 
 I SUPPORT YOU:
+Individual sessions and couples therapy
+
+🫂 THERAPEUTIC GROUPS:
+Closed and ongoing small groups where an atmosphere of trust and connection is cultivated. We do not start from a single topic; throughout the process, we explore diverse aspects that matter to the group (emotions, self-esteem, relationships, healthy boundaries, personal history, grief, life changes…). Once the group begins, we safeguard safety, intimacy, and the bonds that emerge (Wednesdays 11:30, 2 sessions per month, 2 h, €30/session).
+
+🌱 SELF-HELP GROUPS:
+Group spaces centered on a specific theme with a shared objective. Grounded in our experiences, we learn to understand what we are going through and discover resources to walk the path accompanied (Tuesdays 11:30, 2 sessions per month, 2 h, €30/session).
+
+Experiential and training workshops
 Eating disorders
 Relationship with food and body image
 Self-esteem and self-confidence

@@ -17,6 +17,8 @@ export const PURCHASE_TYPES = {
   MIRIAM_PSICO_PAREJA_1A: 'miriam_psico_pareja_1a',
   MIRIAM_PSICO_PAREJA_SIG: 'miriam_psico_pareja_sig',
   MIRIAM_PSICO_GRUPAL: 'prod_VDmmlmsGGhMebt',
+  MIRIAM_GRUPO_TERAPEUTICO: 'miriam_grupo_terapeutico',
+  MIRIAM_GRUPO_AUTOAYUDA: 'miriam_grupo_autoayuda',
   SILVIA_AYURVEDA_1A: 'silvia_ayurveda_1a',
   SILVIA_AYURVEDA_SIG: 'silvia_ayurveda_sig',
   SILVIA_AYURVEDA_BONO3: 'silvia_ayurveda_bono3',
@@ -109,6 +111,18 @@ export const CONSULTATION_CATALOG: Partial<Record<PurchaseType, ConsultationDeta
   },
   [PURCHASE_TYPES.MIRIAM_PSICO_GRUPAL]: {
     name: 'Sesión Grupal Miriam',
+    amount: 3000,
+    productId: MIRIAM_PRODUCT_IDS.SESION_GRUPAL,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_GRUPO_TERAPEUTICO]: {
+    name: 'Grupo Terapéutico con Miriam',
+    amount: 3000,
+    productId: MIRIAM_PRODUCT_IDS.SESION_GRUPAL,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_GRUPO_AUTOAYUDA]: {
+    name: 'Grupo de Autoayuda con Miriam',
     amount: 3000,
     productId: MIRIAM_PRODUCT_IDS.SESION_GRUPAL,
     guestAllowed: true,
@@ -773,11 +787,6 @@ export async function resolveConsultationPrice(
   const matchingPrice = prices.data.find(
     (price: Stripe.Price) => consultationPriceMatches(price, details, true),
   ) || null
-  if (!matchingPrice && details.productId) {
-    throw new Error(
-      `El producto ${details.productId} no tiene un Price LIVE activo de ${details.amount} EUR céntimos.`,
-    )
-  }
   return matchingPrice
 }
 

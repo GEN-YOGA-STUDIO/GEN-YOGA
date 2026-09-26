@@ -3,7 +3,6 @@ import Stripe from "https://esm.sh/stripe@14.22.0?target=deno"
 import {
   CONSULTATION_CATALOG,
   WORKSHOP_CATALOG,
-  PROMO_CATALOG,
   PURCHASE_TYPES,
   PACK_PRODUCT_IDS,
   PROMO_PRODUCT_IDS,
@@ -19,7 +18,6 @@ import {
   getAuthenticatedUser,
   getConsultationDetails,
   getWorkshopDetails,
-  getPromoDetails,
   getValidatedCatalog,
   handleOptions,
   isUuid,
@@ -29,7 +27,6 @@ import {
   requirePost,
   resolveConsultationPrice,
   resolveWorkshopPrice,
-  resolvePromoPrice,
   resolveDynamicStripePrice,
   resolveReturnBaseUrl,
   safeErrorResponse,
@@ -39,7 +36,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '15.1'
+const APP_RELEASE = '16.0'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -110,6 +107,11 @@ serve(async (req) => {
 
     const rawLookupKey = String(body.lookup_key || '').trim()
     const lookupKey = normalizePromoPurchaseType(rawLookupKey)
+    // Promoción del 50% (código GENYOGA) retirada en octubre: los alias se
+    // normalizan primero para responder 410 explícito en lugar de 400 genérico.
+    if (isPromoPurchase(lookupKey)) {
+      throw new HttpError(410, 'La promoción del 50% de la primera clase ha finalizado. Consulta las tarifas actuales.')
+    }
     const allowedPurchaseTypes = new Set<string>([
       PURCHASE_TYPES.CLASE_SUELTA,
       PURCHASE_TYPES.PACK_4,
@@ -118,7 +120,6 @@ serve(async (req) => {
       PURCHASE_TYPES.BONO_ILIMITADO,
       ...Object.keys(CONSULTATION_CATALOG),
       ...Object.keys(WORKSHOP_CATALOG),
-      ...Object.keys(PROMO_CATALOG),
     ])
     const isDynamicStripe = lookupKey.startsWith('prod_') || lookupKey.startsWith('price_')
     if (!allowedPurchaseTypes.has(lookupKey) && !isDynamicStripe) {
@@ -132,7 +133,6 @@ serve(async (req) => {
     const isGuest = requestedUserId === 'guest'
     const isConsultationSingle = isSingleConsultation(lookupKey)
     const isWorkshop = isWorkshopPurchase(lookupKey)
-    const isPromo = isPromoPurchase(lookupKey)
 
     if (isGuest && (lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && !isConsultationSingle && (!isWorkshop || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL) && !isDynamicStripe)) {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta, consulta individual o taller.')
@@ -163,19 +163,13 @@ serve(async (req) => {
     if (user) {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('stripe_customer_id, account_deletion_pending, descuento_promo_50_activo, codigo_promo_usado')
+        .select('stripe_customer_id, account_deletion_pending')
         .eq('id', user.id)
         .single()
 
       if (error || !profile) throw new Error('No se pudo cargar el perfil del comprador.')
       if (profile.account_deletion_pending) {
         throw new HttpError(409, 'La cuenta se está eliminando y no puede iniciar nuevos pagos.')
-      }
-      if (isPromo && !profile.descuento_promo_50_activo) {
-        throw new HttpError(400, 'Canjea el código GENYOGA antes de usar la promoción del 50%.')
-      }
-      if (isPromo && profile.codigo_promo_usado) {
-        throw new HttpError(400, 'Ya has utilizado la promoción del 50% de descuento en tu 1ª clase.')
       }
 
       if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_ILIMITADO) {
@@ -234,6 +228,8 @@ serve(async (req) => {
       if (consultationPrice) {
         lineItems = [{ price: consultationPrice.id, quantity: 1 }]
       } else {
+        // Products canónicos: nunca se genera un producto/precio efímero; si no
+        // existe Price activo, se aborta para corregir el catálogo en Stripe.
         if (details.productId) {
           throw new Error(`No se pudo resolver el Price del producto ${details.productId}.`)
         }
@@ -268,29 +264,6 @@ serve(async (req) => {
             price_data: {
               currency: 'eur',
               unit_amount: details.amount || 2000,
-              product: details.productId,
-            },
-            quantity: 1,
-          },
-        ]
-      }
-    } else if (getPromoDetails(purchaseType)) {
-      const details = getPromoDetails(purchaseType)!
-      let promoPrice: Stripe.Price | null = null
-      try {
-        promoPrice = await resolvePromoPrice(stripe, purchaseType)
-      } catch (err) {
-        console.warn('resolvePromoPrice warning:', err)
-      }
-
-      if (promoPrice) {
-        lineItems = [{ price: promoPrice.id, quantity: 1 }]
-      } else {
-        lineItems = [
-          {
-            price_data: {
-              currency: 'eur',
-              unit_amount: details.amount || 750,
               product: details.productId,
             },
             quantity: 1,
@@ -368,31 +341,7 @@ serve(async (req) => {
       membershipMonth || 'no_month',
       checkoutAttemptId,
     ].join(':')
-    let session: Stripe.Checkout.Session
-    try {
-      session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
-    } catch (createErr) {
-      const details = getPromoDetails(purchaseType)
-      if (isPromo && details) {
-        console.warn('Reintentando creación de sesión promo con product_data fallback:', createErr)
-        sessionParams.line_items = [
-          {
-            price_data: {
-              currency: 'eur',
-              unit_amount: details.amount || 750,
-              product_data: {
-                name: details.name,
-                metadata: { lookup_key: lookupKey, product_id: details.productId },
-              },
-            },
-            quantity: 1,
-          },
-        ]
-        session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey: `${idempotencyKey}:fallback` })
-      } else {
-        throw createErr
-      }
-    }
+    const session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
     if (!session.livemode) {
       throw new Error('Stripe no devolvió una sesión LIVE válida.')
     }

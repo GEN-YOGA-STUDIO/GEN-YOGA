@@ -178,8 +178,9 @@ requireText(webhook, "event.type === 'charge.refunded'", 'Anulación automática
 requireText(webhook, 'applyChargeRefund', 'Void de packs reembolsados (S1)');
 requireText(webhook, 'charge.dispute.created', 'Registro de disputas (S1)');
 requireText(shared, 'purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL &&', 'Mes natural admitido en clase especial (BUG-36)');
-requireText(checkout, '!profile.descuento_promo_50_activo', 'Promo exige código canjeado (M9)');
-requireText(checkout, "'Canjea el código GENYOGA", 'Aviso de canje previo (M9)');
+requireText(checkout, 'isPromoPurchase(lookupKey)', 'Promo 50% detectada y retirada (oct)');
+requireText(checkout, "throw new HttpError(410, 'La promoción del 50%", 'Promo 50% responde 410 en Checkout (oct)');
+forbid(checkout, /PROMO_CATALOG|getPromoDetails|resolvePromoPrice|descuento_promo_50_activo/, 'Checkout sin catálogo ni guards de la promo 50% (oct)');
 requireText(checkout, "'Ese producto debe comprarse por su flujo habitual.'", 'Dinámicos no pisan catálogo fijo (M8)');
 requireText(checkout, 'metadata.clase_id = claseIdMeta', 'Clase sellada en metadatos (BUG-1)');
 requireText(webhook, 'bookPaidTallerClass(supabase', 'Reserva servidora de taller (BUG-1)');

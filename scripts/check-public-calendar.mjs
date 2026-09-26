@@ -119,7 +119,7 @@ const calendarApi = sandbox.GENPublicCalendar;
 assert.ok(calendarApi, 'El módulo no publica GENPublicCalendar');
 assert.equal(calendarApi.canonicalStyle('Power Vinyasa'), 'power-vinyasa');
 assert.equal(calendarApi.canonicalStyle('Yoga Restaurativa o Suave'), 'restaurativa');
-assert.equal(calendarApi.canonicalStyle('Yoga para Hombres'), 'yoga-para-hombres');
+assert.equal(calendarApi.canonicalStyle('Yoga para Hombres'), 'yoga-alineacion');
 assert.equal(calendarApi.canonicalStyle('Yoga para Todos'), 'yoga-para-todos');
 assert.equal(calendarApi.canonicalStyle('Yoga Aryuveda'), 'ayurveda');
 assert.equal(calendarApi.canonicalStyle('Clase Especial (Taller)'), 'taller');
