@@ -99,7 +99,7 @@ BEGIN
              email = 'retirado+' || md5(p_target_user_id::text) || '@genyoga.invalid'
        WHERE lower(trim(email)) = v_target_email;
     EXCEPTION WHEN undefined_table THEN NULL; WHEN OTHERS THEN NULL;
-    END IF;
+    END;
   END IF;
 
   -- 9. Limpiar bonos, pases de invitado, descuentos y creditos
