@@ -7776,6 +7776,9 @@
 
             const totalBadgesCount = 3 + 
                 (userTotalTalleresDisponibles > 0 ? 1 : 0) +
+                (userSaldoGrupal > 0 ? 1 : 0) +
+                (userSaldoPsicologia > 0 ? 1 : 0) +
+                (userSaldoNutricion > 0 ? 1 : 0) +
                 (userCreditosReprogConsulta > 0 ? 1 : 0) +
                 (userSaldoClasesGratis > 0 ? 1 : 0);
 
@@ -7818,6 +7821,42 @@
                 <div class="flex flex-col text-left leading-none">
                     <span class="${titleTxt} font-black uppercase tracking-wider text-[#92400e]">Taller</span>
                     <span class="${countTxt} font-black text-[#78350f] mt-0.5">${userTotalTalleresDisponibles} disp.</span>
+                </div>
+            </div>` : ''}
+
+            ${userSaldoGrupal > 0 ? `
+            <!-- 3b. SESIONES GRUPALES (VIOLETA METÁLICO) -->
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%); border: 1.5px solid #a855f7; box-shadow: 0 1px 4px rgba(168, 85, 247, 0.15);" title="Ver y agendar sesiones grupales disponibles">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);">
+                    <i class="ph-fill ph-users"></i>
+                </div>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#6b21a8]">Grupos</span>
+                    <span class="${countTxt} font-black text-[#581c87] mt-0.5">${userSaldoGrupal} disp.</span>
+                </div>
+            </div>` : ''}
+
+            ${userSaldoPsicologia > 0 ? `
+            <!-- 3c. PSICOLOGÍA (AZUL METÁLICO) -->
+            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%); border: 1.5px solid #3b82f6; box-shadow: 0 1px 4px rgba(59, 130, 246, 0.15);" title="Ver y agendar consultas de psicología disponibles">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);">
+                    <i class="ph-fill ph-brain"></i>
+                </div>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#1e40af]">Psicología</span>
+                    <span class="${countTxt} font-black text-[#172554] mt-0.5">${userSaldoPsicologia} disp.</span>
+                </div>
+            </div>` : ''}
+
+            ${userSaldoNutricion > 0 ? `
+            <!-- 3d. NUTRICIÓN (VERDE ESMERALDA METÁLICO) -->
+            <div role="button" tabindex="0" onclick="switchPublicView('nutricion')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%); border: 1.5px solid #10b981; box-shadow: 0 1px 4px rgba(16, 185, 129, 0.15);" title="Ver y agendar consultas de nutrición / PNI disponibles">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #059669 0%, #065f46 100%);">
+                    <i class="ph-fill ph-leaf"></i>
+                </div>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#065f46]">Nutrición</span>
+                    <span class="${countTxt} font-black text-[#022c22] mt-0.5">${userSaldoNutricion} disp.</span>
                 </div>
             </div>` : ''}
 
