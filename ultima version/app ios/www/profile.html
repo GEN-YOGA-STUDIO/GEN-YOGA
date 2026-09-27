@@ -5397,6 +5397,7 @@
         let userUnlimitedSpecialReservations = [];
         let userSaldoPsicologia = 0;
         let userSaldoNutricion = 0;
+        let userSaldoGrupal = 0;
         let userSaldoClasesGratis = 0;
         let userSaldoYogaCompania = 0;
         let userSaldoConsultasGratis = 0;
@@ -5460,7 +5461,9 @@
             yoga_compania: { field: 'saldo_yoga_compania', label: 'Yoga en Compañía', icon: 'ph-users-three', color: 'text-amber-800', badge: 'bg-amber-50 text-amber-900 border-amber-300' },
             consultas_gratis: { field: 'saldo_consultas_gratis', label: 'Consulta Gratis', icon: 'ph-gift', color: 'text-pink-600', badge: 'bg-pink-50 text-pink-600 border-pink-200' },
             psicologia: { field: 'saldo_psicologia', label: 'Psicología', icon: 'ph-brain', color: 'text-[#3B82F6]', badge: 'bg-blue-50 text-[#3B82F6] border-blue-100' },
-            nutricion: { field: 'saldo_nutricion', label: 'Nutrición', icon: 'ph-apple', color: 'text-[#8B5CF6]', badge: 'bg-purple-50 text-[#8B5CF6] border-purple-100' }
+            nutricion: { field: 'saldo_nutricion', label: 'Nutrición', icon: 'ph-apple', color: 'text-[#8B5CF6]', badge: 'bg-purple-50 text-[#8B5CF6] border-purple-100' },
+            grupos: { field: 'saldo_grupal', label: 'Sesiones Grupales', icon: 'ph-users', color: 'text-indigo-600', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+            grupal: { field: 'saldo_grupal', label: 'Sesiones Grupales', icon: 'ph-users', color: 'text-indigo-600', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' }
         };
         const CONSULTA_CONFIG = {
             psicologia: { table: 'reservas_psicologia', saldoField: 'saldo_psicologia', label: 'Psicología', color: '#3B82F6' },
@@ -5516,7 +5519,15 @@
             return CONSULTA_CONFIG[t] || CONSULTA_CONFIG.psicologia;
         }
 
-        function getSaldoConsultaActual(tipo) {
+        function getSaldoConsultaActual(tipo, esGrupal = false) {
+            if (esGrupal) {
+                const reprogGrupal = (userCreditosReprogramacion || []).filter(c =>
+                    c.tipo === 'consulta' &&
+                    c.estado === 'disponible' &&
+                    (c.subtipo === 'grupos' || c.subtipo === 'grupal' || c.metadata?.es_grupal)
+                ).length;
+                return Math.max(toSafeNumber(userSaldoGrupal), reprogGrupal);
+            }
             const directSaldo = tipo === 'psicologia' ? userSaldoPsicologia : userSaldoNutricion;
             const reprogCreditos = (userCreditosReprogramacion || []).filter(c =>
                 c.tipo === 'consulta' &&
@@ -6501,6 +6512,7 @@
                 userUnlimitedSpecialReservations = [];
                 userSaldoPsicologia = 0;
                 userSaldoNutricion = 0;
+                userSaldoGrupal = 0;
                 userBonoMensualActivo = false;
                 userBonoMensualInicio = null;
                 userBonoMensualFin = null;
@@ -7568,12 +7580,12 @@
             else if (!/does not exist|schema cache/i.test(periodsResult.error.message || '')) {
                 console.error('Error cargando meses del Bono Ilimitado:', periodsResult.error);
             }
-            if (!guestsResult.error) userUnlimitedGuestPasses = guestsResult.data || [];
-            if (!specialsResult.error) userUnlimitedSpecialReservations = specialsResult.data || [];
-            if (!bonosEspecialesResult.error) userSpecialBonos = bonosEspecialesResult.data || [];
+            const currentMonthPrefix = madridDateKey(new Date()).slice(0, 7);
+            if (!bonosEspecialesResult.error) {
+                userSpecialBonos = (bonosEspecialesResult.data || []).filter(b => b.mes && String(b.mes).slice(0, 7) >= currentMonthPrefix);
+            }
             if (!reprogResult.error) userCreditosReprogramacion = reprogResult.data || [];
 
-            const currentMonthPrefix = madridDateKey(new Date()).slice(0, 7);
             userSpecialBonosMes = userSpecialBonos
                 .filter(b => b.mes && String(b.mes).slice(0, 7) === currentMonthPrefix)
                 .reduce((acc, b) => acc + toSafeNumber(b.saldo), 0);
@@ -8075,25 +8087,26 @@
                 <i class="ph-bold ph-calendar-plus mr-1"></i> Ver Talleres y Reservar (0 €)
             </button>
         </div>` : ''}
-        ${(userSaldoPsicologia > 0 || userSaldoNutricion > 0) ? `
+        ${(userSaldoPsicologia > 0 || userSaldoNutricion > 0 || userSaldoGrupal > 0) ? `
         <div class="bg-white/95 p-4 sm:p-5 rounded-2xl border border-blue-300 shadow-2xs flex flex-col justify-between" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);">
             <div>
                 <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
-                        <span class="block text-[10px] text-blue-800 font-black uppercase tracking-wider">Consultas Individuales</span>
-                        <p class="text-xl font-black text-blue-950 mt-0.5">${userSaldoPsicologia + userSaldoNutricion} sesión${(userSaldoPsicologia + userSaldoNutricion) > 1 ? 'es' : ''} disp.</p>
+                        <span class="block text-[10px] text-blue-800 font-black uppercase tracking-wider">Consultas y Grupos</span>
+                        <p class="text-xl font-black text-blue-950 mt-0.5">${userSaldoPsicologia + userSaldoNutricion + userSaldoGrupal} sesión${(userSaldoPsicologia + userSaldoNutricion + userSaldoGrupal) > 1 ? 'es' : ''} disp.</p>
                     </div>
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-2xs shrink-0" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
                         <i class="ph-bold ph-calendar-check text-xl text-blue-200"></i>
                     </div>
                 </div>
                 <p class="text-xs text-blue-900 leading-relaxed mb-3">
-                    Sesiones de consulta en tu cuenta (adquiridas o devueltas por reprogramación >24h):<br>
+                    Sesiones disponibles en tu cuenta:<br>
                     ${userSaldoPsicologia > 0 ? `<strong>• ${userSaldoPsicologia} de Psicología / PNI</strong><br>` : ''}
-                    ${userSaldoNutricion > 0 ? `<strong>• ${userSaldoNutricion} de Nutrición / Ayurveda</strong>` : ''}
+                    ${userSaldoNutricion > 0 ? `<strong>• ${userSaldoNutricion} de Nutrición / Ayurveda</strong><br>` : ''}
+                    ${userSaldoGrupal > 0 ? `<strong>• ${userSaldoGrupal} de Grupos (Autoayuda / Terapéutico)</strong>` : ''}
                 </p>
             </div>
-            <button onclick="switchPublicView('${userSaldoPsicologia > 0 ? 'psicologia' : 'nutricion'}')" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);">
+            <button onclick="switchPublicView('${userSaldoPsicologia > 0 || userSaldoGrupal > 0 ? 'psicologia' : 'nutricion'}')" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);">
                 <i class="ph-bold ph-calendar mr-1"></i> Agendar Cita Disponible (0 €)
             </button>
         </div>` : ''}`;
@@ -8103,13 +8116,13 @@
             // v16.2: Consultar '*' prioritariamente como en la vista admin, y asegurar bonos y saldo_clases_gratis en todas las variantes
             const profileSelectVariants = [
                 '*',
-                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status, oferta_compania_canjeada, oferta_consultas_canjeada',
-                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
-                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
-                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
-                'id, email, nombre, apellidos, rol, bonos, saldo_clases_gratis, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
+                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_grupal, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status, oferta_compania_canjeada, oferta_consultas_canjeada',
+                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_grupal, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
+                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_grupal, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
+                'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_grupal, saldo_clases_gratis, saldo_consultas_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
+                'id, email, nombre, apellidos, rol, bonos, saldo_clases_gratis, saldo_psicologia, saldo_nutricion, saldo_grupal, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
                 'id, email, nombre, apellidos, rol, bonos, saldo_clases_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
-                'id, email, nombre, apellidos, rol, bonos, saldo_clases_gratis, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
+                'id, email, nombre, apellidos, rol, bonos, saldo_clases_gratis, saldo_psicologia, saldo_nutricion, saldo_grupal, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
                 'id, email, nombre, apellidos, rol, bonos, saldo_clases_gratis, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
                 'id, email, nombre, apellidos, rol, bonos, saldo_clases_gratis'
             ];
@@ -8126,7 +8139,7 @@
                 error = result.error;
                 if (!error) break;
 
-                const missingOptionalColumn = /saldo_clases_gratis|saldo_yoga_compania|saldo_consultas_gratis|saldo_psicologia|saldo_nutricion|bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin|stripe_customer_id|stripe_subscription_status|oferta_compania_canjeada|oferta_consultas_canjeada/i
+                const missingOptionalColumn = /saldo_clases_gratis|saldo_yoga_compania|saldo_consultas_gratis|saldo_psicologia|saldo_nutricion|saldo_grupal|bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin|stripe_customer_id|stripe_subscription_status|oferta_compania_canjeada|oferta_consultas_canjeada/i
                     .test(error.message || '');
                 if (!missingOptionalColumn) break;
             }
@@ -8185,6 +8198,7 @@
                 userBonos = userLegacyBonos;
                 userSaldoPsicologia = toSafeNumber(data.saldo_psicologia);
                 userSaldoNutricion = toSafeNumber(data.saldo_nutricion);
+                userSaldoGrupal = toSafeNumber(data.saldo_grupal);
                 userSaldoClasesGratis = toSafeNumber(data.saldo_clases_gratis);
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
@@ -15015,12 +15029,13 @@
                 badges.push(`<span class="bg-emerald-100 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-emerald-300 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-infinity text-emerald-700"></i> Mes Ilimitado${mesStr}</span>`);
             }
 
-            // 2. Clases Especiales: desglose por meses con saldo disponible
+            // 2. Clases Especiales: desglose por meses con saldo disponible (solo mes actual y futuros)
             if (u.special_passes && u.special_passes.length > 0) {
+                const currentMonthKey = madridDateKey(new Date()).slice(0, 7);
                 const specialsByMonth = new Map();
                 for (const s of u.special_passes) {
                     const mKey = normalizarMesClave(s.mes);
-                    if (!mKey) continue;
+                    if (!mKey || mKey < currentMonthKey) continue;
                     specialsByMonth.set(mKey, (specialsByMonth.get(mKey) || 0) + toSafeNumber(s.saldo));
                 }
                 for (const [mKey, saldo] of specialsByMonth.entries()) {
@@ -15047,7 +15062,7 @@
                 badges.push(`<span class="bg-pink-50 text-pink-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-pink-200 flex items-center gap-1"><i class="ph-bold ph-gift"></i> ${consultas} Consulta</span>`);
             }
 
-            // 6. Consultas Psicología y Nutrición
+            // 6. Consultas Psicología, Nutrición y Grupos
             const psic = toSafeNumber(u.saldo_psicologia);
             if (psic > 0) {
                 badges.push(`<span class="bg-blue-50 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-200 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-brain text-blue-600"></i> ${psic} Psicología</span>`);
@@ -15056,13 +15071,9 @@
             if (nutri > 0) {
                 badges.push(`<span class="bg-purple-50 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-purple-200 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-apple text-purple-600"></i> ${nutri} Nutrición</span>`);
             }
-
-            // 7. Créditos de Reprogramación disponibles
-            if (u.reprog_credits && u.reprog_credits.length > 0) {
-                const activeReprog = u.reprog_credits.filter(r => (r.estado || '').toLowerCase() === 'disponible');
-                if (activeReprog.length > 0) {
-                    badges.push(`<button type="button" onclick="abrirGestionBonosUsuario('${escapeHtml(String(u.id))}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1 shadow-2xs cursor-pointer transition" title="${activeReprog.length} créditos de reprogramación disponibles (Clic para gestionar)"><i class="ph-bold ph-arrow-counter-clockwise text-amber-700"></i> ${activeReprog.length} Reprog</button>`);
-                }
+            const grupal = toSafeNumber(u.saldo_grupal);
+            if (grupal > 0) {
+                badges.push(`<span class="bg-indigo-50 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-200 flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-users text-indigo-600"></i> ${grupal} Grupo${grupal > 1 ? 's' : ''}</span>`);
             }
 
             if (badges.length === 0) {
@@ -17012,6 +17023,7 @@
                     else if (tipo === 'consultas_gratis') userInCache.saldo_consultas_gratis = data;
                     else if (tipo === 'psicologia') userInCache.saldo_psicologia = data;
                     else if (tipo === 'nutricion') userInCache.saldo_nutricion = data;
+                    else if (tipo === 'grupos' || tipo === 'grupal' || tipo === 'consulta_grupal') userInCache.saldo_grupal = data;
                 }
 
                 if (showToast) {
@@ -19534,6 +19546,7 @@
             animateBalance("profile-bonos-count", userBonos);
             animateBalance("profile-saldo-psicologia-count", userSaldoPsicologia);
             animateBalance("profile-saldo-nutricion-count", userSaldoNutricion);
+            animateBalance("profile-saldo-grupos-count", userSaldoGrupal);
             if (wrapper) wrapper.classList.remove('hidden');
         }
 
@@ -19843,22 +19856,7 @@
             const consultaActual = toSafeNumber(u.saldo_consultas_gratis);
             const psicologiaActual = toSafeNumber(u.saldo_psicologia);
             const nutricionActual = toSafeNumber(u.saldo_nutricion);
-
-            // Consultar créditos de reprogramación del usuario
-            let userReprogCredits = [];
-            try {
-                const { data: rcData, error: rcErr } = await client.from('creditos_reprogramacion')
-                    .select('id, user_id, tipo, subtipo, mes, estado, created_at, utilizado_at')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false });
-                if (rcErr) {
-                    console.warn('Error leyendo creditos_reprogramacion en modal:', rcErr);
-                } else if (rcData && rcData.length > 0) {
-                    userReprogCredits = rcData;
-                }
-            } catch (err) {
-                console.warn('Error leyendo creditos_reprogramacion en modal:', err);
-            }
+            const grupalActual = toSafeNumber(u.saldo_grupal);
 
             // Consultar meses ilimitados del usuario
             let userMonths = [];
@@ -19890,12 +19888,13 @@
 
             const ilimitadoActivo = userMonths.length > 0 || !!u.bono_mensual_activo;
             const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const currentMonthKey = madridDateKey(new Date()).slice(0, 7);
 
-            // Agrupar bonos de clases especiales por mes de forma estricta (evitar duplicados)
+            // Agrupar bonos de clases especiales por mes de forma estricta (solo mes actual y futuros)
             const specialPassesByMonth = new Map();
             for (const b of userSpecialPasses) {
                 const mKey = normalizarMesClave(b.mes);
-                if (!mKey) continue;
+                if (!mKey || mKey < currentMonthKey) continue;
                 if (specialPassesByMonth.has(mKey)) {
                     const existing = specialPassesByMonth.get(mKey);
                     existing.saldo = toSafeNumber(existing.saldo) + toSafeNumber(b.saldo);
@@ -19904,10 +19903,10 @@
                 }
             }
 
-            // Asegurar que los meses del bono ilimitado figuren en el desglose de clases especiales
+            // Asegurar que los meses del bono ilimitado figuren en el desglose de clases especiales (solo mes actual y futuros)
             for (const period of userMonths) {
                 const pMes = normalizarMesClave(period.membership_month || period.starts_at);
-                if (!pMes) continue;
+                if (!pMes || pMes < currentMonthKey) continue;
                 if (!specialPassesByMonth.has(pMes)) {
                     specialPassesByMonth.set(pMes, { mes: pMes + '-01', saldo: 0 });
                 }
@@ -19981,40 +19980,6 @@
             }
 
             let htmlReprogList = '';
-            const activeReprog = userReprogCredits.filter(r => (r.estado || '').toLowerCase() === 'disponible');
-            const activeReprogCount = activeReprog.length;
-
-            if (userReprogCredits.length > 0) {
-                htmlReprogList = userReprogCredits.map(r => {
-                    const isDisp = (r.estado || '').toLowerCase() === 'disponible';
-                    const tipoLabel = r.tipo === 'consulta' ? `Consulta (${r.subtipo || 'General'})` : (r.tipo === 'taller' ? 'Taller / Especial' : (r.tipo || 'Clase'));
-                    const statusBadge = isDisp
-                        ? '<span class="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded border border-amber-300">Disponible</span>'
-                        : '<span class="text-[9px] bg-gray-100 text-gray-500 font-medium px-1.5 py-0.5 rounded border border-gray-200">Utilizado</span>';
-                    const fecha = r.created_at ? new Date(r.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
-                    return `
-                        <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200 text-xs shadow-2xs">
-                            <div class="flex items-center gap-2">
-                                <i class="ph-bold ph-arrow-counter-clockwise ${isDisp ? 'text-amber-600' : 'text-gray-400'}"></i>
-                                <div>
-                                    <p class="font-bold text-cocoa leading-tight text-[11px]">${escapeHtml(tipoLabel)} ${statusBadge}</p>
-                                    <p class="text-[9px] text-cocoa/50">${fecha ? 'Emitido el ' + fecha : ''}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <button type="button" onclick="retirarCreditoReprogramacionAdmin('${userId}', '${r.id}')"
-                                    class="px-2 py-1 rounded-lg text-[10px] font-black transition cursor-pointer active:scale-95 flex items-center gap-1"
-                                    style="background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fca5a5 !important;"
-                                    title="Eliminar este crédito de reprogramación">
-                                    <i class="ph-bold ph-trash"></i> Eliminar
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                htmlReprogList = '<p class="text-xs text-amber-800/60 italic py-1">Sin créditos de reprogramación pendientes</p>';
-            }
 
             await Swal.fire({
                 title: `<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-xl"><i class="ph-duotone ph-wallet text-olive"></i> Gestión de Bonos y Saldos</div>`,
@@ -20102,34 +20067,18 @@
                     </div>
                 </div>
 
-                <!-- 6. Créditos de Reprogramación -->
-                <div class="p-3.5 rounded-2xl border border-amber-300 bg-amber-50/70 space-y-2.5">
-                    <div class="flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center gap-2">
-                            <i class="ph-bold ph-arrow-counter-clockwise text-amber-700 text-xl"></i>
-                            <div>
-                                <p class="text-xs font-bold text-cocoa">6. Créditos de Reprogramación</p>
-                                <p class="text-[10px] text-amber-800">Saldo: <strong id="modal-saldo-reprog" class="text-amber-800 font-black">${activeReprogCount}</strong></p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #92400e !important; border: 1px solid #fde68a !important;" title="Restar 1 crédito de reprogramación">-1</button>
-                            <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'reprog', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important; box-shadow: 0 1px 2px rgba(217,119,6,0.2) !important;" title="Sumar 1 crédito de reprogramación">+1</button>
-                            ${activeReprogCount > 0 ? `
-                                <button type="button" onclick="vaciarCreditosReprogAdmin('${userId}')" class="px-2.5 h-8 rounded-lg text-[11px] font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs" style="background-color: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fca5a5 !important;" title="Eliminar todos los créditos de reprogramación">
-                                    <i class="ph-bold ph-trash text-xs"></i> <span>Vaciar</span>
-                                </button>
-                            ` : ''}
-                            <button type="button" onclick="asignarCreditoReprogramacionAdmin('${userId}')"
-                                class="px-2.5 h-8 rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
-                                style="background-color: #ffffff !important; color: #78350f !important; border: 1px solid #fcd34d !important;"
-                                title="Añadir con tipo y especialidad específica">
-                                <i class="ph-bold ph-plus text-xs"></i> <span>Detallado</span>
-                            </button>
+                <!-- 6. Bonos de Grupos -->
+                <div class="flex items-center justify-between p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-bold ph-users text-indigo-600 text-lg"></i>
+                        <div>
+                            <p class="text-xs font-bold text-cocoa">6. Bonos de Grupos</p>
+                            <p class="text-[10px] text-indigo-800">Saldo: <strong id="modal-saldo-grupos" class="text-indigo-700 font-black">${grupalActual}</strong></p>
                         </div>
                     </div>
-                    <div class="pt-2 space-y-2 border-t border-amber-200/70">
-                        ${htmlReprogList}
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'grupos', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #3730a3 !important; border: 1px solid #c7d2fe !important;">-1</button>
+                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'grupos', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-xs" style="background-color: #4f46e5 !important; color: #ffffff !important; border: 1px solid #4338ca !important; box-shadow: 0 1px 2px rgba(79,70,229,0.2) !important;">+1</button>
                     </div>
                 </div>
 
@@ -22253,14 +22202,14 @@
                             RESERVAR GRATIS (0 €)
                         </button>`;
                         } else {
-                            const saldo = getSaldoConsultaActual('psicologia');
+                            const esGrupal = esClaseGrupalConsulta(c);
+                            const saldo = getSaldoConsultaActual('psicologia', esGrupal);
                             if (saldo >= 1) {
                                 btnAction = `
-                            <button onclick="reservarConsulta('psicologia', ${inlineJsString(rawId)})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95 flex items-center gap-1.5 cursor-pointer">
-                                <i class="ph-bold ph-calendar-check text-xs"></i> RESERVAR CITA (SALDO 0 €)
+                            <button onclick="reservarConsulta('psicologia', ${inlineJsString(rawId)})" class="${esGrupal ? 'bg-[#7C3AED] hover:bg-purple-700' : 'bg-[#3B82F6] hover:bg-blue-600'} text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-calendar-check text-xs"></i> RESERVAR ${esGrupal ? 'GRUPO' : 'CITA'} (SALDO 0 €)
                             </button>`;
                             } else {
-                                const esGrupal = esClaseGrupalConsulta(c);
                                 btnAction = `
                             <button onclick="abrirCompraYReservaConsulta('psicologia', ${inlineJsString(rawId)})" class="${esGrupal ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
                                 <i class="ph-bold ph-calendar-plus"></i> COMPRAR Y RESERVAR
@@ -22785,11 +22734,11 @@
                     });
                     if (!confirmRes.isConfirmed) return;
                 } else if (!isAdmin && !esTrabajador()) {
-                    if (getSaldoConsultaActual(tipo) < 1) {
+                    const esGrupal = esClaseGrupalConsulta(clase);
+                    if (getSaldoConsultaActual(tipo, esGrupal) < 1) {
                         // Usuario sin saldo de consulta: derivar a compra y reserva
                         return abrirCompraYReservaConsulta(tipo, clase);
                     }
-                    const esGrupal = esClaseGrupalConsulta(clase);
                     const htmlConfirm = multiInfo?.esMultiple
                         ? `Esta consulta es <b>doble (2 citas vinculadas)</b>. Con <b>1 única sesión de tu saldo/bono de consulta</b> se reservarán ambos turnos de forma simétrica:<br><br>
                            <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1 mb-2">
@@ -22798,8 +22747,8 @@
                            </div>
                            ¿Deseas canjearla para confirmar tus citas a 0 €?`
                         : (esGrupal
-                            ? `Dispones de <b>1 sesión disponible</b> en tu cuenta.<br><br>¿Deseas canjearla para confirmar tu plaza en <b>${escapeHtml(clase?.nombre || 'Sesión Grupal')}</b> a 0 €?`
-                            : `Dispones de <b>1 sesión de consulta disponible</b> en tu cuenta (saldo adquirido o devuelto por reprogramación).<br><br>¿Deseas canjearla para confirmar tu cita para <b>${escapeHtml(clase?.nombre || config.nombre)}</b> a 0 €?`);
+                            ? `Dispones de <b>1 bono grupal</b> en tu cuenta.<br><br>¿Deseas canjearlo para confirmar tu plaza en <b>${escapeHtml(clase?.nombre || 'Sesión Grupal')}</b> a 0 €?`
+                            : `Dispones de <b>1 sesión de consulta disponible</b> en tu cuenta.<br><br>¿Deseas canjearla para confirmar tu cita para <b>${escapeHtml(clase?.nombre || config.nombre)}</b> a 0 €?`);
 
                     const confirmSaldo = await Swal.fire({
                         title: multiInfo?.esMultiple ? 'Confirmar Consulta Doble' : (esGrupal ? 'Confirmar Sesión Grupal' : 'Confirmar Cita'),
@@ -22808,7 +22757,7 @@
                         showCancelButton: true,
                         confirmButtonColor: esGrupal ? '#8B5CF6' : (config.color || '#3B82F6'),
                         cancelButtonColor: '#9ca3af',
-                        confirmButtonText: `<i class="ph-bold ph-calendar-check mr-1"></i> Sí, reservar ${esGrupal ? 'plaza' : 'cita'} (0 €)`,
+                        confirmButtonText: `<i class="ph-bold ph-calendar-check mr-1"></i> Sí, reservar ${esGrupal ? 'plaza (Bono Grupal 0 €)' : 'cita (0 €)'}`,
                         cancelButtonText: 'Cancelar'
                     });
                     if (!confirmSaldo.isConfirmed) return;
