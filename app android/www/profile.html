@@ -4,27 +4,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="application-version" content="16.1" />
+    <meta name="application-version" content="16.2" />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=16.1" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=16.1" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=16.2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=16.2" />
     <title>Mi perfil | GEN Yoga</title>
     <!-- Sugerencias de rendimiento -->
     <meta name="theme-color" content="#f8f6f2" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=16.1">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=16.2">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
-    <script src="teacher-profiles.js?v=16.1"></script>
+    <script src="teacher-profiles.js?v=16.2"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="i18n.js?v=16.1"></script>
-    <script src="capacitor-bridge.js?v=16.1" defer></script>
+    <script src="i18n.js?v=16.2"></script>
+    <script src="capacitor-bridge.js?v=16.2" defer></script>
     <script>
         (function () {
             try {
@@ -39,7 +39,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-    <script src="marketing-report.js?v=16.1" defer></script>
+    <script src="marketing-report.js?v=16.2" defer></script>
 
     <style>
         /* INLINED profile.css */
@@ -2509,7 +2509,7 @@
 
                 <!-- 4. VISTA CONSULTAS (PSICOLOGÍA Y NUTRICIÓN) -->
                 <div id="view-psicologia" class="hidden fade-in">
-                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v16.1 para simplificación) -->
+                    <!-- Selector de sub-pestañas: Psicología / Nutrición (oculto en v16.2 para simplificación) -->
                     <div class="hidden" id="consultas-subtabs-wrapper">
                         <button id="btn-subtab-psicologia" onclick="switchConsultasSubTab('psicologia')"></button>
                         <button id="btn-subtab-nutricion" onclick="switchConsultasSubTab('nutricion')"></button>
@@ -2531,17 +2531,21 @@
                                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-blue-200 bg-[#3B82F6] text-white shadow-xs transition flex items-center gap-1.5">
                                     <span data-i18n="profile_filter_all_consultations">Todas las consultas</span>
                                 </button>
+                                <button id="psico-filtro-individuales" onclick="filtrarConsultasUsuario('psicologia', 'individuales')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-user text-blue-600"></i> <span>Individuales</span>
+                                </button>
+                                <button id="psico-filtro-grupos" onclick="filtrarConsultasUsuario('psicologia', 'grupos')"
+                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
+                                    <i class="ph-bold ph-users-three text-[#8B5CF6]"></i> <span>Grupales (Miriam)</span>
+                                </button>
                                 <button id="psico-filtro-isabel" onclick="filtrarConsultasUsuario('psicologia', 'isabel')"
                                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
                                     <i class="ph-bold ph-heart text-[#8f6b2d]"></i> <span>Isabel (PNI)</span>
                                 </button>
                                 <button id="psico-filtro-miriam" onclick="filtrarConsultasUsuario('psicologia', 'miriam')"
                                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Psicología)</span>
-                                </button>
-                                <button id="psico-filtro-grupos" onclick="filtrarConsultasUsuario('psicologia', 'grupos')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-users-three text-[#8B5CF6]"></i> <span>Grupos (Miriam)</span>
+                                    <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Individual)</span>
                                 </button>
                                 <button id="psico-filtro-introductorias"
                                     onclick="filtrarConsultasUsuario('psicologia', 'introductorias')"
@@ -4155,7 +4159,7 @@
                         Cuidamos de ti desde el interior.
                     </p>
                     <div class="border-t border-cocoa/10 pt-8 mt-8 text-center text-xs text-cocoa/40">
-                        <span>© 2026 GEN Yoga • v16.1. Todos los derechos reservados. • <a
+                        <span>© 2026 GEN Yoga • v16.2. Todos los derechos reservados. • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition">Política de Privacidad</a></span>
                     </div>
@@ -4234,7 +4238,7 @@
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v16.1: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v16.2: Todas las clases son regulares) -->
                     <div class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -4543,7 +4547,7 @@
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
 
-                    <!-- Modalidad y Acceso a la Clase (Inactivado en v16.1: Todas las clases son regulares) -->
+                    <!-- Modalidad y Acceso a la Clase (Inactivado en v16.2: Todas las clases son regulares) -->
                     <div id="editar-clase-modalidad-card" class="md:col-span-2 bg-sand/15 border border-cocoa/15 p-4 rounded-2xl space-y-3" style="display: none !important;">
                         <div class="flex items-center justify-between">
                             <label
@@ -5159,7 +5163,7 @@
         // --- 1. CONFIGURACIÓN ---
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const APP_VERSION = '16.1';
+        const APP_VERSION = '16.2';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
         function closePaymentUiBeforeNavigation() {
@@ -5522,6 +5526,23 @@
             return Math.max(toSafeNumber(directSaldo), reprogCreditos);
         }
 
+        function esClaseGrupalConsulta(c) {
+            if (!c) return false;
+            const tipoNorm = normalizarTipoClase(c.tipo_clase);
+            const cat = String(c.categoria || '').toLowerCase();
+            const tipoId = Number(c.tipo_clase_id || 0);
+            const nom = String(c.nombre || '').toLowerCase();
+            const isAutoayuda = nom.includes('autoayuda');
+            const isTerapeutico = nom.includes('terap');
+            return tipoNorm === 'consulta_grupal' ||
+                cat === 'consulta_grupal' ||
+                tipoId === 44 || tipoId === 48 || tipoId === 65 || tipoId === 66 ||
+                isAutoayuda || isTerapeutico ||
+                nom.includes('grupo') ||
+                (toSafeNumber(c.capacidad_max) > 1);
+        }
+        window.esClaseGrupalConsulta = esClaseGrupalConsulta;
+
         function animateBalance(id, value) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -5754,7 +5775,7 @@
             };
         }
 
-        function getProductosStripeProfesional(profesorOrName, tipo = 'psicologia') {
+        function getProductosStripeProfesional(profesorOrName, tipo = 'psicologia', esGrupal = null) {
             const rawName = typeof profesorOrName === 'string'
                 ? profesorOrName
                 : String(profesorOrName?.nombre || profesorOrName?.profesor_nombre || '');
@@ -5764,14 +5785,19 @@
             const isSilvia = slug.includes('silvia') || slug.includes('ayurveda');
 
             if (isMiriam) {
-                return [
+                const individualOpts = [
                     { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '50 min · Sesión inicial' },
                     { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '50 min · Seguimiento' },
                     { key: 'miriam_psico_pareja_1a', title: 'Terapia de pareja (1ª sesión)', price: 120, desc: '50 min · Sesión inicial pareja' },
-                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '50 min · Seguimiento pareja' },
-                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda', price: 30, desc: '2 h · Martes 11:30 (6 y 20 oct) · Temática concreta' },
-                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico', price: 30, desc: '2 h · Miércoles 11:30 (7 y 21 oct) · Multitemático y cerrado' }
+                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '50 min · Seguimiento pareja' }
                 ];
+                const grupalOpts = [
+                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda', price: 30, desc: '2 h · Martes 11:30 · Temática concreta' },
+                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico', price: 30, desc: '2 h · Miércoles 11:30 · Multitemático y cerrado' }
+                ];
+                if (esGrupal === true) return grupalOpts;
+                if (esGrupal === false) return individualOpts;
+                return [...individualOpts, ...grupalOpts];
             }
             if (isIsabel) {
                 return [
@@ -5788,14 +5814,19 @@
                 ];
             }
             if (tipo === 'psicologia') {
-                return [
+                const individualOpts = [
                     { key: 'miriam_psico_individual_1a', title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: 75, desc: '50 min · Sesión individual' },
                     { key: 'miriam_psico_individual_sig', title: 'Acompañamiento psicoterapéutico (siguientes)', price: 65, desc: '50 min · Seguimiento' },
                     { key: 'miriam_psico_pareja_1a', title: 'Terapia de pareja (1ª sesión)', price: 120, desc: '50 min · Pareja inicial' },
-                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '50 min · Pareja seguimiento' },
-                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda', price: 30, desc: '2 h · Martes 11:30 (6 y 20 oct) · Temática concreta' },
-                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico', price: 30, desc: '2 h · Miércoles 11:30 (7 y 21 oct) · Multitemático y cerrado' }
+                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de pareja (siguientes)', price: 100, desc: '50 min · Pareja seguimiento' }
                 ];
+                const grupalOpts = [
+                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda', price: 30, desc: '2 h · Martes 11:30 · Temática concreta' },
+                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico', price: 30, desc: '2 h · Miércoles 11:30 · Multitemático y cerrado' }
+                ];
+                if (esGrupal === true) return grupalOpts;
+                if (esGrupal === false) return individualOpts;
+                return [...individualOpts, ...grupalOpts];
             }
             return [
                 { key: 'isabel_pni_1a', title: 'Consulta PNI Clínica (1ª sesión)', price: 80, desc: '60 min · Sesión individual' },
@@ -7552,7 +7583,7 @@
                 const expiry = Date.parse(pack.expires_at);
                 return total + (Number.isFinite(expiry) && expiry > now ? toSafeNumber(pack.credits_remaining) : 0);
             }, 0);
-            // v16.1: Fuente canónica e inmutable de la verdad: la celda profiles.bonos de la base de datos
+            // v16.2: Fuente canónica e inmutable de la verdad: la celda profiles.bonos de la base de datos
             const dbBonos = toSafeNumber(currentUserProfile?.bonos !== undefined ? currentUserProfile.bonos : userLegacyBonos);
             userBonos = dbBonos;
             userLegacyBonos = Math.max(0, dbBonos - activePackCredits);
@@ -7572,7 +7603,7 @@
         }
 
         function getAvailableClassCreditsForDate(value) {
-            // v16.1: El saldo real disponible viene determinado estrictamente por la celda 'bonos' de profiles
+            // v16.2: El saldo real disponible viene determinado estrictamente por la celda 'bonos' de profiles
             return toSafeNumber(currentUserProfile?.bonos !== undefined ? currentUserProfile.bonos : userLegacyBonos);
         }
 
@@ -7829,7 +7860,7 @@
             if (!profileWrapper) return;
 
             const packLabels = { clase_suelta: 'Clase suelta', pack_4: 'Pack 4', pack_6: 'Pack 6', pack_10: 'Pack 10' };
-            // v16.1: Reconciliar los créditos restantes mostrados en los packs con el saldo real userBonos
+            // v16.2: Reconciliar los créditos restantes mostrados en los packs con el saldo real userBonos
             let bonosRestantesPresupuesto = userBonos;
             const packRows = userClassPacks.length
                 ? userClassPacks.map(pack => {
@@ -7897,7 +7928,7 @@
             const yaCanjeoCompania = userOfertasCanjeadasCache.includes('compania') || !!(currentProfileFields?.oferta_compania_canjeada) || (userSaldoYogaCompania > 0);
             const yaCanjeoConsultas = userOfertasCanjeadasCache.includes('consultas') || !!(currentProfileFields?.oferta_consultas_canjeada) || (userSaldoConsultasGratis > 0);
 
-            // Regla v16.1: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
+            // Regla v16.2: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
             const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
@@ -8069,7 +8100,7 @@
         }
 
         async function checkProfile() {
-            // v16.1: Consultar '*' prioritariamente como en la vista admin, y asegurar bonos y saldo_clases_gratis en todas las variantes
+            // v16.2: Consultar '*' prioritariamente como en la vista admin, y asegurar bonos y saldo_clases_gratis en todas las variantes
             const profileSelectVariants = [
                 '*',
                 'id, email, nombre, apellidos, rol, bonos, saldo_psicologia, saldo_nutricion, saldo_clases_gratis, saldo_consultas_gratis, saldo_yoga_compania, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status, oferta_compania_canjeada, oferta_consultas_canjeada',
@@ -8158,7 +8189,7 @@
                 userSaldoYogaCompania = toSafeNumber(data.saldo_yoga_compania);
                 userSaldoConsultasGratis = toSafeNumber(data.saldo_consultas_gratis);
 
-                // v16.1: Cargar ofertas promocionales canjeadas por este usuario
+                // v16.2: Cargar ofertas promocionales canjeadas por este usuario
                 try {
                     const { data: ofClaimed } = await client.rpc('obtener_mis_ofertas_canjeadas');
                     userOfertasCanjeadasCache = Array.isArray(ofClaimed) ? ofClaimed : [];
@@ -8309,7 +8340,7 @@
                 }
             }
 
-            // Comprobar si el usuario llega con una oferta para canjear (v16.1)
+            // Comprobar si el usuario llega con una oferta para canjear (v16.2)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
             const canjearParam = (urlParams.get('canjear') || (actionParam === 'canjear' ? (urlParams.get('oferta') || urlParams.get('promo') || '') : '') || safeGetItem('pending_offer_redemption') || '').toLowerCase().trim();
             if (canjearParam) {
@@ -10556,12 +10587,12 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const esEspecial = esClaseEspecialTipo(clase) || esTallerTipo(clase);
 
-            // v16.1: Yoga en Compañía inactivado al 100%
+            // v16.2: Yoga en Compañía inactivado al 100%
             const modalityCompania = '';
             const esCompania = false;
             const tieneBonoBienvenida = userSaldoClasesGratis >= 1;
             const tieneBonoCompania = false;
-            // v16.1: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
+            // v16.2: El bono de bienvenida permite reservar cualquier clase regular normal de yoga
             const esSesionGratuita = !esEspecial;
             const hasRegularCredits = (getAvailableClassCreditsForDate(fechaClase) >= 1 || isAdmin);
             const canUseUnlimited = cubiertaPorIlimitado && !esEspecial;
@@ -14558,7 +14589,7 @@
                         .maybeSingle();
 
                     if (pCheck) {
-                        // v16.1: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
+                        // v16.2: Los bonos promocionales gratuitos se obtienen por canjeo voluntario de ofertas
                         // Asignar clases iniciales compradas si bonosIniciales > 0
                         if (bonosIniciales > 0 && toSafeNumber(pCheck.bonos) < bonosIniciales) {
                             await client.rpc('ajustar_saldo_usuario', {
@@ -21482,19 +21513,68 @@
             }
 
             const isPsico = tipo === 'psicologia';
-            let options = [];
+            let htmlContent = '';
+
             if (isPsico) {
-                options = [
-                    { key: 'prod_VDmmlmsGGhMebt', title: 'Miriam · Sesión Grupal (30 €)', desc: 'Grupo Terapéutico / Autoayuda (120 min)', price: 30 },
+                const groupOptions = [
+                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 },
+                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 }
+                ];
+                const individualOptions = [
                     { key: 'miriam_psico_individual_1a', title: 'Miriam · 1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (50 min)', price: 75 },
                     { key: 'miriam_psico_individual_sig', title: 'Miriam · Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (50 min)', price: 65 },
-                    { key: 'miriam_psico_pareja_1a', title: 'Miriam · Terapia de Pareja 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
-                    { key: 'miriam_psico_pareja_sig', title: 'Miriam · Terapia de Pareja Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 },
+                    { key: 'miriam_psico_pareja_1a', title: 'Miriam · Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
+                    { key: 'miriam_psico_pareja_sig', title: 'Miriam · Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 },
                     { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Psiconeuroinmunología Clínica inicial (60 min)', price: 80 },
                     { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Consulta de seguimiento clínico (60 min)', price: 60 }
                 ];
+
+                const renderOptCard = (opt, isDefault) => `
+                    <label class="consult-opt-label-modal flex items-start justify-between gap-3 p-3 rounded-2xl border-2 cursor-pointer transition ${isDefault ? 'border-purple-500 bg-purple-50/50 shadow-xs' : 'border-cocoa/10 hover:border-cocoa/30'}" onclick="document.querySelectorAll('.consult-opt-label-modal').forEach(l=>{ l.classList.remove('border-purple-500','bg-purple-50/50','border-blue-500','bg-blue-50/50','shadow-xs'); l.classList.add('border-cocoa/10'); }); this.classList.remove('border-cocoa/10'); this.classList.add('${opt.price === 30 ? 'border-purple-500 bg-purple-50/50' : 'border-blue-500 bg-blue-50/50'}','shadow-xs');">
+                        <div class="flex items-start gap-3">
+                            <input type="radio" name="consult-lookup-general" value="${opt.key}" ${isDefault ? 'checked' : ''} class="mt-1 accent-purple-600">
+                            <div class="text-left">
+                                <span class="block font-bold text-cocoa text-sm">${escapeHtml(opt.title)}</span>
+                                <span class="block text-xs text-cocoa/60 font-light mt-0.5">${escapeHtml(opt.desc)}</span>
+                            </div>
+                        </div>
+                        <span class="font-black ${opt.price === 30 ? 'text-purple-700' : 'text-blue-700'} text-sm whitespace-nowrap">${opt.price} €</span>
+                    </label>
+                `;
+
+                htmlContent = `
+                    <div class="text-left max-h-[65vh] overflow-y-auto pr-1">
+                        <p class="text-xs text-cocoa/60 mb-3">Elige la sesión o bono que deseas adquirir. Se asignará a tu cuenta para reservar en la fecha que elijas.</p>
+                        
+                        <!-- Categoría: Sesiones Grupales -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-purple-200">
+                                <span class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                                    <i class="ph-bold ph-users-three text-sm"></i> Sesiones Grupales (Miriam)
+                                </span>
+                                <span class="text-[10px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">30 € / sesión</span>
+                            </div>
+                            <div class="space-y-2">
+                                ${groupOptions.map((opt, idx) => renderOptCard(opt, idx === 0)).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Categoría: Consultas Individuales -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-blue-200">
+                                <span class="text-xs font-black uppercase tracking-wider text-[#3B82F6] flex items-center gap-1.5">
+                                    <i class="ph-bold ph-user text-sm"></i> Consultas Individuales (Psicología y PNI)
+                                </span>
+                                <span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Desde 60 €</span>
+                            </div>
+                            <div class="space-y-2">
+                                ${individualOptions.map((opt) => renderOptCard(opt, false)).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
             } else {
-                options = [
+                const nutriOptions = [
                     { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Valoración clínica integral de PNI (60 min)', price: 80 },
                     { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Revisión y evolución (60 min)', price: 60 },
                     { key: 'silvia_ayurveda_1a', title: 'Silvia · 1ª Consulta Ayurveda (80 €)', desc: 'Diagnóstico doshas y nutrición consciente (90 min)', price: 80 },
@@ -21502,31 +21582,33 @@
                     { key: 'silvia_ayurveda_bono3', title: 'Silvia · Bono 3 Sesiones Ayurveda (170 €)', desc: 'Bono 3 consultas individuales (Ahorro 10 €)', price: 170 },
                     { key: 'silvia_ayurveda_bono6', title: 'Silvia · Bono 6 Sesiones Ayurveda (280 €)', desc: 'Bono 6 consultas individuales (Ahorro 80 €)', price: 280 }
                 ];
+
+                const htmlNutri = nutriOptions.map((opt, idx) => `
+                    <label class="consult-opt-label-modal flex items-start justify-between gap-3 p-3 rounded-2xl border-2 cursor-pointer transition ${idx === 0 ? 'border-purple-500 bg-purple-50/50 shadow-xs' : 'border-cocoa/10 hover:border-cocoa/30'}" onclick="document.querySelectorAll('.consult-opt-label-modal').forEach(l=>{ l.classList.remove('border-purple-500','bg-purple-50/50','shadow-xs'); l.classList.add('border-cocoa/10'); }); this.classList.remove('border-cocoa/10'); this.classList.add('border-purple-500','bg-purple-50/50','shadow-xs');">
+                        <div class="flex items-start gap-3">
+                            <input type="radio" name="consult-lookup-general" value="${opt.key}" ${idx === 0 ? 'checked' : ''} class="mt-1 accent-purple-600">
+                            <div class="text-left">
+                                <span class="block font-bold text-cocoa text-sm">${escapeHtml(opt.title)}</span>
+                                <span class="block text-xs text-cocoa/60 font-light mt-0.5">${escapeHtml(opt.desc)}</span>
+                            </div>
+                        </div>
+                        <span class="font-bold text-purple-700 text-sm whitespace-nowrap">${opt.price} €</span>
+                    </label>
+                `).join('');
+
+                htmlContent = `
+                    <div class="text-left max-h-[65vh] overflow-y-auto pr-1">
+                        <p class="text-xs text-cocoa/60 mb-3">Elige la consulta o bono de nutrición y salud integrativa que deseas adquirir.</p>
+                        <div class="space-y-2.5">
+                            ${htmlNutri}
+                        </div>
+                    </div>
+                `;
             }
 
-            const htmlOptions = options.map((opt, idx) => `
-        <label class="flex items-start justify-between gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition ${idx === 0 ? 'border-olive bg-olive/5 shadow-sm' : 'border-cocoa/10 hover:border-cocoa/30'}" onclick="document.querySelectorAll('.consult-opt-label-modal').forEach(l=>l.classList.remove('border-olive','bg-olive/5','shadow-sm')); this.classList.add('border-olive','bg-olive/5','shadow-sm');">
-            <div class="flex items-start gap-3">
-                <input type="radio" name="consult-lookup-general" value="${opt.key}" ${idx === 0 ? 'checked' : ''} class="mt-1 accent-[#8C8658]">
-                <div class="text-left">
-                    <span class="block font-bold text-cocoa text-sm">${escapeHtml(opt.title)}</span>
-                    <span class="block text-xs text-cocoa/60 font-light mt-0.5">${escapeHtml(opt.desc)}</span>
-                </div>
-            </div>
-            <span class="font-bold text-olive text-sm whitespace-nowrap">${opt.price} €</span>
-        </label>
-    `).join('');
-
             const { isConfirmed } = await Swal.fire({
-                title: isPsico ? 'Comprar Consultas de Psicología' : 'Comprar Consultas de Nutrición',
-                html: `
-            <div class="text-left">
-                <p class="text-xs text-cocoa/60 mb-3">Elige la sesión o bono que deseas adquirir. Las sesiones se añadirán a tu cuenta inmediatamente tras el pago para reservar cuando quieras.</p>
-                <div class="space-y-2.5">
-                    ${htmlOptions}
-                </div>
-            </div>
-        `,
+                title: isPsico ? 'Comprar Consultas y Sesiones Grupales' : 'Comprar Consultas de Nutrición',
+                html: htmlContent,
                 showCancelButton: true,
                 confirmButtonText: 'Ir a Pagar con Stripe',
                 cancelButtonText: 'Cancelar',
@@ -21557,90 +21639,117 @@
             const isMiriam = profSlug.includes('miriam');
             const isIsabel = profSlug.includes('isabel');
             const isSilvia = profSlug.includes('silvia');
-            const esClaseGrupal = (clase.capacidad_max && clase.capacidad_max > 1) || (clase.nombre || '').toLowerCase().includes('grupo');
+            const esClaseGrupal = esClaseGrupalConsulta(clase);
 
             let options = [];
-            if (isMiriam) {
-                const isAutoayuda = (clase.nombre || '').toLowerCase().includes('autoayuda');
-                const isTerapeutico = (clase.nombre || '').toLowerCase().includes('terap');
-                options = [
-                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 },
-                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 },
-                    { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (50 min)', price: 75 },
-                    { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (50 min)', price: 65 },
-                    { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
-                    { key: 'miriam_psico_pareja_sig', title: 'Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 }
-                ];
-                if (isTerapeutico) {
-                    const terap = options.splice(1, 1)[0];
-                    options.unshift(terap);
-                } else if (!esClaseGrupal && clase.stripe_lookup_key !== 'prod_VDmmlmsGGhMebt') {
-                    const individual1 = options.splice(2, 1)[0];
-                    options.unshift(individual1);
+            let modalTitle = 'Reservar y Comprar Consulta';
+            let modalSubtitle = 'Selecciona el tipo de sesión:';
+
+            if (esClaseGrupal) {
+                modalTitle = 'Reservar y Comprar Sesión Grupal';
+                modalSubtitle = 'Selecciona el tipo de sesión grupal:';
+                const nomLower = (clase.nombre || '').toLowerCase();
+                const isAutoayuda = nomLower.includes('autoayuda') || clase.tipo_clase_id === 65;
+                const isTerapeutico = nomLower.includes('terap') || clase.tipo_clase_id === 66;
+
+                if (isAutoayuda) {
+                    options = [
+                        { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 }
+                    ];
+                } else if (isTerapeutico) {
+                    options = [
+                        { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 }
+                    ];
+                } else {
+                    options = [
+                        { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 },
+                        { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 }
+                    ];
                 }
-            } else if (isIsabel) {
-                options = [
-                    { key: 'isabel_pni_1a', title: '1ª Consulta PNI (80 €)', desc: 'Valoración clínica integral y pautas iniciales (60 min)', price: 80 },
-                    { key: 'isabel_pni_sig', title: 'Consulta de Seguimiento PNI (60 €)', desc: 'Evolución clínica y ajustes personalizados (60 min)', price: 60 }
-                ];
-            } else if (isSilvia) {
-                options = [
-                    { key: 'silvia_ayurveda_1a', title: '1ª Consulta Ayurveda (65 €)', desc: 'Diagnóstico doshas y estilo de vida (90 min)', price: 65 },
-                    { key: 'silvia_ayurveda_sig', title: 'Consulta Seguimiento Ayurveda (50 €)', desc: 'Revisión y evolución de pautas (60 min)', price: 50 },
-                    { key: 'silvia_ayurveda_bono3', title: 'Bono 3 Sesiones Ayurveda (135 €)', desc: 'Ahorro 15 € · Validez 6 meses', price: 135 },
-                    { key: 'silvia_ayurveda_bono6', title: 'Bono 6 Sesiones Ayurveda (240 €)', desc: 'Ahorro 60 € · Validez 6 meses', price: 240 }
-                ];
             } else {
-                options = [
-                    { key: tipo === 'psicologia' ? 'miriam_psico_individual_1a' : 'silvia_ayurveda_1a', title: `1ª Sesión de ${tipo === 'psicologia' ? 'Psicología' : 'Nutrición'}`, desc: 'Consulta individual', price: 65 }
-                ];
+                modalTitle = 'Reservar y Comprar Consulta Individual';
+                modalSubtitle = 'Selecciona el tipo de consulta:';
+
+                if (isMiriam) {
+                    options = [
+                        { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (50 min)', price: 75 },
+                        { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (50 min)', price: 65 },
+                        { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
+                        { key: 'miriam_psico_pareja_sig', title: 'Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 }
+                    ];
+                } else if (isIsabel) {
+                    options = [
+                        { key: 'isabel_pni_1a', title: '1ª Consulta PNI (80 €)', desc: 'Valoración clínica integral y pautas iniciales (60 min)', price: 80 },
+                        { key: 'isabel_pni_sig', title: 'Consulta de Seguimiento PNI (60 €)', desc: 'Evolución clínica y ajustes personalizados (60 min)', price: 60 }
+                    ];
+                } else if (isSilvia) {
+                    options = [
+                        { key: 'silvia_ayurveda_1a', title: '1ª Consulta Ayurveda (80 €)', desc: 'Diagnóstico doshas y estilo de vida (90 min)', price: 80 },
+                        { key: 'silvia_ayurveda_sig', title: 'Consulta Seguimiento Ayurveda (60 €)', desc: 'Revisión y evolución de pautas (60 min)', price: 60 },
+                        { key: 'silvia_ayurveda_bono3', title: 'Bono 3 Sesiones Ayurveda (170 €)', desc: 'Ahorro 10 € · Validez 6 meses', price: 170 },
+                        { key: 'silvia_ayurveda_bono6', title: 'Bono 6 Sesiones Ayurveda (280 €)', desc: 'Ahorro 80 € · Validez 6 meses', price: 280 }
+                    ];
+                } else {
+                    options = [
+                        { key: tipo === 'psicologia' ? 'miriam_psico_individual_1a' : 'silvia_ayurveda_1a', title: `1ª Sesión de ${tipo === 'psicologia' ? 'Psicología' : 'Nutrición'}`, desc: 'Consulta individual', price: 75 }
+                    ];
+                }
             }
 
             const customStripeKey = clase.stripe_lookup_key || clase.metodo_pago;
             if (customStripeKey && (customStripeKey.startsWith('prod_') || customStripeKey.startsWith('price_')) && !options.some(o => o.key === customStripeKey)) {
-                const pInfo = window.obtenerDetalleStripeProducto(customStripeKey);
-                const pTitle = (pInfo && pInfo.name && !pInfo.name.startsWith('prod_')) ? pInfo.name : (clase.nombre || 'Consulta');
-                const pPriceNum = pInfo?.precio ? parseFloat(pInfo.precio.replace('€', '').replace(',', '.').trim()) : 30;
-                options.unshift({
-                    key: customStripeKey,
-                    title: pInfo?.label || pTitle,
-                    desc: 'Producto Stripe vinculado a esta sesión',
-                    price: isNaN(pPriceNum) ? 30 : pPriceNum
-                });
+                const isGroupKey = customStripeKey === 'prod_VDmmlmsGGhMebt';
+                if (!isGroupKey && (!esClaseGrupal || customStripeKey !== 'prod_VDmmlmsGGhMebt')) {
+                    const pInfo = window.obtenerDetalleStripeProducto(customStripeKey);
+                    const pTitle = (pInfo && pInfo.name && !pInfo.name.startsWith('prod_')) ? pInfo.name : (clase.nombre || 'Consulta');
+                    const pPriceNum = pInfo?.precio ? parseFloat(pInfo.precio.replace('€', '').replace(',', '.').trim()) : 30;
+                    options.unshift({
+                        key: customStripeKey,
+                        title: pInfo?.label || pTitle,
+                        desc: 'Producto Stripe vinculado a esta sesión',
+                        price: isNaN(pPriceNum) ? 30 : pPriceNum
+                    });
+                }
             }
 
             const fechaFormat = formatDisplayLongDate(clase.fecha_inicio);
             const horaFormat = formatDisplayTime(clase.fecha_inicio);
 
+            const themeBorder = esClaseGrupal ? 'border-purple-500 bg-purple-50/50' : 'border-blue-500 bg-blue-50/50';
+            const themeText = esClaseGrupal ? 'text-purple-700' : 'text-blue-700';
+
             const htmlOptions = options.map((opt, idx) => `
-        <label class="flex items-start justify-between gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition ${idx === 0 ? 'border-olive bg-olive/5 shadow-sm' : 'border-cocoa/10 hover:border-cocoa/30'}" onclick="document.querySelectorAll('.consult-opt-label-modal').forEach(l=>l.classList.remove('border-olive','bg-olive/5','shadow-sm')); this.classList.add('border-olive','bg-olive/5','shadow-sm');">
+        <label class="consult-opt-label-modal flex items-start justify-between gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition ${idx === 0 ? `${themeBorder} shadow-xs` : 'border-cocoa/10 hover:border-cocoa/30'}" onclick="document.querySelectorAll('.consult-opt-label-modal').forEach(l=>{ l.classList.remove('border-purple-500','bg-purple-50/50','border-blue-500','bg-blue-50/50','shadow-xs'); l.classList.add('border-cocoa/10'); }); this.classList.remove('border-cocoa/10'); this.classList.add('${themeBorder}','shadow-xs');">
             <div class="flex items-start gap-3">
-                <input type="radio" name="consultation-lookup" value="${opt.key}" ${idx === 0 ? 'checked' : ''} class="mt-1 accent-[#8C8658]">
+                <input type="radio" name="consultation-lookup" value="${opt.key}" ${idx === 0 ? 'checked' : ''} class="mt-1 ${esClaseGrupal ? 'accent-purple-600' : 'accent-blue-600'}">
                 <div class="text-left">
                     <span class="block font-bold text-cocoa text-sm">${escapeHtml(opt.title)}</span>
                     <span class="block text-xs text-cocoa/60 font-light mt-0.5">${escapeHtml(opt.desc)}</span>
                 </div>
             </div>
-            <span class="font-bold text-olive text-sm whitespace-nowrap">${opt.price} €</span>
+            <span class="font-black ${themeText} text-sm whitespace-nowrap">${opt.price} €</span>
         </label>
     `).join('');
 
             const profPhoto = getTeacherPhotoFallback(prof);
 
             const { isConfirmed } = await Swal.fire({
-                title: 'Reservar y Comprar Consulta',
+                title: modalTitle,
                 html: `
             <div class="text-left">
                 <div class="bg-sand/20 rounded-2xl p-4 mb-4 border border-cocoa/10 flex items-center gap-3">
                     <div class="w-12 h-12 rounded-full overflow-hidden border border-cocoa/10 flex-shrink-0">
-                        ${profPhoto ? `<img src="${escapeHtml(profPhoto)}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-olive/10 flex items-center justify-center font-bold text-olive">${escapeHtml(profName.charAt(0))}</div>`}
+                        ${profPhoto ? `<img src="${escapeHtml(profPhoto)}" class="w-full h-full object-cover">` : `<div class="w-full h-full ${esClaseGrupal ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} flex items-center justify-center font-bold">${escapeHtml(profName.charAt(0))}</div>`}
                     </div>
                     <div>
-                        <p class="font-bold text-cocoa text-sm">${escapeHtml(profName)}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="font-bold text-cocoa text-sm">${escapeHtml(profName)}</p>
+                            <span class="text-[10px] font-bold ${esClaseGrupal ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-blue-100 text-blue-800 border-blue-200'} border px-2 py-0.2 rounded-full uppercase tracking-wider">${esClaseGrupal ? 'Sesión Grupal' : 'Individual'}</span>
+                        </div>
                         <p class="text-xs text-cocoa/70"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fechaFormat)} a las <strong>${horaFormat}</strong></p>
                     </div>
                 </div>
-                <p class="text-xs font-bold uppercase tracking-wider text-cocoa/50 mb-2">Selecciona el tipo de sesión:</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-cocoa/50 mb-2">${escapeHtml(modalSubtitle)}</p>
                 <div class="space-y-2.5">
                     ${htmlOptions}
                 </div>
@@ -21649,7 +21758,7 @@
                 showCancelButton: true,
                 confirmButtonText: 'Proceder al Pago Seguro',
                 cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#795244',
+                confirmButtonColor: esClaseGrupal ? '#8B5CF6' : '#795244',
                 cancelButtonColor: '#9ca3af'
             });
 
@@ -21680,7 +21789,7 @@
         function filtrarConsultasUsuario(tipo, filtro) {
             if (tipo === 'psicologia') {
                 filtroPsicologiaUsuario = filtro || 'todas';
-                ['todas', 'isabel', 'miriam', 'grupos', 'introductorias', 'disponibles', 'mis-reservas'].forEach(f => {
+                ['todas', 'individuales', 'isabel', 'miriam', 'grupos', 'introductorias', 'disponibles', 'mis-reservas'].forEach(f => {
                     const btn = document.getElementById(`psico-filtro-${f}`);
                     if (btn) {
                         if (f === filtroPsicologiaUsuario) {
@@ -21909,6 +22018,9 @@
                     const isMiriam = pId === 10 || pName.includes('miriam');
                     return isMiriam && esClaseElegibleBonoGratis(c);
                 });
+            } else if (filtroPsicologiaUsuario === 'individuales') {
+                // Consultas individuales (Miriam e Isabel)
+                clasesAMostrar = clasesAMostrar.filter(c => !esClaseGrupalConsulta(c));
             } else if (filtroPsicologiaUsuario === 'isabel' || filtroPsicologiaUsuario === 'pni') {
                 // Todas las sesiones de Isabel (PNI)
                 clasesAMostrar = clasesAMostrar.filter(c => {
@@ -21917,22 +22029,30 @@
                     return pId === 28 || pName.includes('isabel') || /pni/.test((c.nombre || '').toLowerCase());
                 });
             } else if (filtroPsicologiaUsuario === 'miriam') {
-                // Todas las sesiones de Miriam (Psicología)
+                // Consultas individuales de Miriam (Psicología)
                 clasesAMostrar = clasesAMostrar.filter(c => {
                     const pName = (c.profesionales?.nombre || c.profesor_nombre || '').toLowerCase();
                     const pId = Number(c.profesionales?.id || c.profesor_id || 0);
-                    return pId === 10 || pName.includes('miriam');
+                    return (pId === 10 || pName.includes('miriam')) && !esClaseGrupalConsulta(c);
                 });
             } else if (filtroPsicologiaUsuario === 'grupos') {
                 // Sesiones grupales de Miriam (Grupo de Autoayuda y Grupo Terapéutico)
-                clasesAMostrar = clasesAMostrar.filter(c => {
-                    const tipo = normalizarTipoClase(c.tipo_clase);
-                    const nom = String(c.nombre || '').toLowerCase();
-                    return tipo === 'consulta_grupal' || c.tipo_clase_id === 65 || c.tipo_clase_id === 66 || nom.includes('autoayuda') || (nom.includes('grupo') && nom.includes('terap'));
-                });
+                clasesAMostrar = clasesAMostrar.filter(c => esClaseGrupalConsulta(c));
             }
 
             if (clasesAMostrar.length === 0) {
+                if (filtroPsicologiaUsuario === 'individuales') {
+                    container.innerHTML = `
+                <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
+                    <i class="ph-duotone ph-user text-5xl text-blue-500/40 mb-4"></i>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin consultas individuales este mes</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay huecos disponibles para consultas individuales en este mes.</p>
+                    <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
+                        <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
+                    </button>
+                </div>`;
+                    return;
+                }
                 if (filtroPsicologiaUsuario === 'isabel-intro') {
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
@@ -22140,41 +22260,43 @@
                                 <i class="ph-bold ph-calendar-check text-xs"></i> RESERVAR CITA (SALDO 0 €)
                             </button>`;
                             } else {
+                                const esGrupal = esClaseGrupalConsulta(c);
                                 btnAction = `
-                            <button onclick="abrirCompraYReservaConsulta('psicologia', ${inlineJsString(rawId)})" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
+                            <button onclick="abrirCompraYReservaConsulta('psicologia', ${inlineJsString(rawId)})" class="${esGrupal ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
                                 <i class="ph-bold ph-calendar-plus"></i> COMPRAR Y RESERVAR
                             </button>`;
                             }
                         }
                     }
 
+                    const esGrupal = esClaseGrupalConsulta(c);
                     const adminTrash = (!isAdmin || c.isVirtual) ? '' : `<button onclick="borrarConsultaAdmin('psicologia', ${inlineJsString(rawId)})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
 
                     const profesionalName = String(c.profesionales?.nombre || 'Staff GEN');
                     const profesionalFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profesionalName);
                     const profesionalAvatar = profesionalFoto
                         ? `<img src="${escapeHtml(profesionalFoto)}" alt="" class="w-full h-full object-cover">`
-                        : `<div class="w-full h-full bg-blue-50 flex items-center justify-center text-[#3B82F6] text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
+                        : `<div class="w-full h-full ${esGrupal ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-[#3B82F6]'} flex items-center justify-center text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
 
                     const freeBadge = '';
 
                     const row = document.createElement('div');
-                    row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-blue-50/5 transition duration-300 group';
+                    row.className = `p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${esGrupal ? 'hover:bg-purple-50/10' : 'hover:bg-blue-50/5'} transition duration-300 group`;
 
                     row.innerHTML = `
                 <div class="flex items-start gap-4 w-full">
-                    <div class="flex flex-col items-center justify-center min-w-[3.75rem] px-2 h-14 rounded-xl bg-blue-50 text-[#3B82F6] border border-blue-100 shadow-sm flex-shrink-0 box-border">
-                        <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${escapeHtml(profileT('common_appointment', 'Cita'))}</span>
+                    <div class="flex flex-col items-center justify-center min-w-[3.75rem] px-2 h-14 rounded-xl ${esGrupal ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-[#3B82F6] border-blue-100'} border shadow-sm flex-shrink-0 box-border">
+                        <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${esGrupal ? 'Grupo' : escapeHtml(profileT('common_appointment', 'Cita'))}</span>
                         <span class="text-base font-black tracking-tight leading-none">${escapeHtml(hora)}</span>
                     </div>
                     
                     <div class="flex-grow">
                         <div class="flex flex-col gap-1">
                             <div class="flex flex-wrap items-center gap-3">
-                                <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#3B82F6] transition leading-tight">
+                                <h4 class="brand-font font-bold text-lg text-cocoa ${esGrupal ? 'group-hover:text-purple-700' : 'group-hover:text-[#3B82F6]'} transition leading-tight">
                                     ${escapeHtml(c.nombre || profileT('common_consultation', 'Consulta'))}
                                 </h4>
-                                ${c.capacidad_max > 1 ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Grupo · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : ''}
+                                ${esGrupal ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Sesión Grupal · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : `<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-user"></i> Consulta Individual</span>`}
                                 ${(() => {
                                     const m = obtenerDatosSesionMultiple(c);
                                     if (!m.esMultiple) return '';
@@ -22667,6 +22789,7 @@
                         // Usuario sin saldo de consulta: derivar a compra y reserva
                         return abrirCompraYReservaConsulta(tipo, clase);
                     }
+                    const esGrupal = esClaseGrupalConsulta(clase);
                     const htmlConfirm = multiInfo?.esMultiple
                         ? `Esta consulta es <b>doble (2 citas vinculadas)</b>. Con <b>1 única sesión de tu saldo/bono de consulta</b> se reservarán ambos turnos de forma simétrica:<br><br>
                            <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1 mb-2">
@@ -22674,16 +22797,18 @@
                              <div><b>Turno 2:</b> ${formatDisplayLongDate(partnerClase.fecha_inicio)} a las ${formatDisplayTime(partnerClase.fecha_inicio)}</div>
                            </div>
                            ¿Deseas canjearla para confirmar tus citas a 0 €?`
-                        : `Dispones de <b>1 sesión de consulta disponible</b> en tu cuenta (saldo adquirido o devuelto por reprogramación).<br><br>¿Deseas canjearla para confirmar tu cita para <b>${escapeHtml(clase?.nombre || config.nombre)}</b> a 0 €?`;
+                        : (esGrupal
+                            ? `Dispones de <b>1 sesión disponible</b> en tu cuenta.<br><br>¿Deseas canjearla para confirmar tu plaza en <b>${escapeHtml(clase?.nombre || 'Sesión Grupal')}</b> a 0 €?`
+                            : `Dispones de <b>1 sesión de consulta disponible</b> en tu cuenta (saldo adquirido o devuelto por reprogramación).<br><br>¿Deseas canjearla para confirmar tu cita para <b>${escapeHtml(clase?.nombre || config.nombre)}</b> a 0 €?`);
 
                     const confirmSaldo = await Swal.fire({
-                        title: multiInfo?.esMultiple ? 'Confirmar Consulta Doble' : 'Confirmar Cita',
+                        title: multiInfo?.esMultiple ? 'Confirmar Consulta Doble' : (esGrupal ? 'Confirmar Sesión Grupal' : 'Confirmar Cita'),
                         html: htmlConfirm,
                         icon: 'question',
                         showCancelButton: true,
-                        confirmButtonColor: config.color || '#3B82F6',
+                        confirmButtonColor: esGrupal ? '#8B5CF6' : (config.color || '#3B82F6'),
                         cancelButtonColor: '#9ca3af',
-                        confirmButtonText: '<i class="ph-bold ph-calendar-check mr-1"></i> Sí, reservar cita (0 €)',
+                        confirmButtonText: `<i class="ph-bold ph-calendar-check mr-1"></i> Sí, reservar ${esGrupal ? 'plaza' : 'cita'} (0 €)`,
                         cancelButtonText: 'Cancelar'
                     });
                     if (!confirmSaldo.isConfirmed) return;
@@ -24676,7 +24801,8 @@
                 profesionalObj = (allProfesionalesCache || []).find(p => p.id === profId);
             }
             const profNombre = profesionalObj ? `${profesionalObj.nombre || ''} ${profesionalObj.apellidos || ''}`.trim() : (config.label || 'Profesional');
-            const productosStripe = getProductosStripeProfesional(profesionalObj, tipo);
+            const esGrupalTurno = esClaseGrupalConsulta(turno);
+            const productosStripe = getProductosStripeProfesional(profesionalObj, tipo, esGrupalTurno);
 
             let activeAssignMode = 'existente';
             let studentPicker = null;
