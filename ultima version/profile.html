@@ -426,6 +426,26 @@
             opacity: 0.3;
         }
 
+        /* Días de los meses contiguos que sí tienen clases: se muestran visibles y
+           son pulsables para verlos/reservarlos sin cambiar de mes a mano */
+        #calendar-grid .calendar-day.other-month.has-classes:not(.disabled),
+        #calendar-grid .calendar-day.other-month.has-user-booking:not(.disabled),
+        #psicologia-calendar-grid .calendar-day.other-month.has-psicologia:not(.disabled),
+        #psicologia-calendar-grid .calendar-day.other-month.has-user-booking:not(.disabled) {
+            color: #8C8658;
+            /* Olive */
+            opacity: 0.85;
+        }
+
+        #calendar-grid .calendar-day.other-month.has-classes:hover:not(.disabled),
+        #calendar-grid .calendar-day.other-month.has-user-booking:hover:not(.disabled),
+        #psicologia-calendar-grid .calendar-day.other-month.has-psicologia:hover:not(.disabled),
+        #psicologia-calendar-grid .calendar-day.other-month.has-user-booking:hover:not(.disabled) {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #D27D60, #8C8658);
+            color: white;
+        }
+
         .calendar-day.today {
             border: 2px solid #D27D60;
             font-weight: bold;
@@ -5423,6 +5443,17 @@
         let allPsicologiaCache = [];
         let allNutricionCache = [];
 
+        // Ventana de fechas realmente cargada en caché (mes visible + mes siguiente).
+        // Sirve para poder cambiar de mes sin volver a consultar a la base de datos.
+        let windowClasesDesde = null;
+        let windowClasesHasta = null;
+        let windowPsicologiaDesde = null;
+        let windowPsicologiaHasta = null;
+        // Testigo para descartar respuestas lentas de una carga que ya fue superada
+        // por una navegación más reciente (evita parpadeos de mes incorrecto).
+        let cargasClasesToken = 0;
+        let cargasPsicologiaToken = 0;
+
         let activePublicView = 'inicio';
         let selectedDate = null; // Clases selected date
         let selectedDateInicio = null;
@@ -8872,46 +8903,41 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Días del mes anterior
+            const showHiddenProfesionales = isAdmin;
+            const diaTieneClases = (dateKey) => allClasesCache.some(c => {
+                if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false) {
+                    return false;
+                }
+                return formatDateLocal(new Date(c.fecha_inicio)) === dateKey;
+            });
+
+            const pintarDia = (dateObj, esMesAdjacente) => {
+                const dateKey = formatDateLocal(dateObj);
+                const isPast = dateObj < today;
+                const dayEl = crearDiaCalendario(dateObj.getDate(), esMesAdjacente, dateObj.getTime() === today.getTime(), isPast, dateKey);
+                if (diaTieneClases(dateKey)) dayEl.classList.add('has-classes');
+                if (selectedDate === dateKey) dayEl.classList.add('selected');
+                if (isPast) dayEl.classList.add('disabled');
+                if (esMesAdjacente) dayEl.classList.add('other-month');
+                return dayEl;
+            };
+
+            // Días del mes anterior (los futuros siguen siendo pulsables)
             const prevMonthDays = new Date(year, month, 0).getDate();
             for (let i = startDayOfWeek - 1; i >= 0; i--) {
-                const day = prevMonthDays - i;
-                const dayEl = crearDiaCalendario(day, true, false, false, null);
-                dayEl.classList.add('other-month');
-                grid.appendChild(dayEl);
+                grid.appendChild(pintarDia(new Date(year, month - 1, prevMonthDays - i), true));
             }
 
             // Días del mes actual
             for (let day = 1; day <= daysInMonth; day++) {
-                const dateObj = new Date(year, month, day);
-                const dateKey = formatDateLocal(dateObj);
-                const isToday = dateObj.getTime() === today.getTime();
-                const isPast = dateObj < today;
-                const showHiddenProfesionales = isAdmin;
-                const hasClasses = allClasesCache.some(c => {
-                    if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false) {
-                        return false;
-                    }
-                    const claseDate = formatDateLocal(new Date(c.fecha_inicio));
-                    return claseDate === dateKey;
-                });
-                const isSelected = selectedDate === dateKey;
-
-                const dayEl = crearDiaCalendario(day, false, isToday, isPast, dateKey);
-                if (hasClasses) dayEl.classList.add('has-classes');
-                if (isSelected) dayEl.classList.add('selected');
-                if (isPast) dayEl.classList.add('disabled');
-
-                grid.appendChild(dayEl);
+                grid.appendChild(pintarDia(new Date(year, month, day), false));
             }
 
-            // Días del mes siguiente
+            // Días del mes siguiente: se ven con sus clases y se pueden reservar directamente
             const totalCells = grid.children.length;
             const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
             for (let day = 1; day <= remainingCells; day++) {
-                const dayEl = crearDiaCalendario(day, true, false, false, null);
-                dayEl.classList.add('other-month');
-                grid.appendChild(dayEl);
+                grid.appendChild(pintarDia(new Date(year, month + 1, day), true));
             }
         }
 
@@ -8922,33 +8948,75 @@
 
             if (isToday) div.classList.add('today');
 
-            if (!isOtherMonth && !isPast && dateKey) {
+            // También se pueden pulsar los días de los meses contiguos mostrados en la
+            // rejilla (si no son pasados), para ver y reservar los días siguientes sin
+            // tener que cambiar de mes a mano.
+            if (!isPast && dateKey) {
                 div.onclick = () => filtrarPorFecha(dateKey);
             }
 
             return div;
         }
 
+        // ¿La ventana de datos ya cargada cubre por completo el mes objetivo?
+        function mesCargadoEnWindow(desde, hasta, targetMonth) {
+            if (!(targetMonth instanceof Date) || isNaN(targetMonth.getTime()) || !desde || !hasta) return false;
+            const y = targetMonth.getFullYear();
+            const m = targetMonth.getMonth();
+            const inicioMes = new Date(y, m, 1, 0, 0, 0, 0);
+            const finMes = new Date(y, m + 1, 0, 23, 59, 59, 999);
+
+            // Punto de partida que usaría una recarga de este mismo mes (misma lógica que
+            // cargarHorarios/cargarPsicologia): para el mes en curso, "desde ahora" (los
+            // días anteriores a hoy no son navegables), para el resto, desde el día 1.
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const esMesEnCurso = inicioMes <= hoy && finMes >= hoy;
+            const inicioConsulta = (!isAdmin && esMesEnCurso) ? hoy : inicioMes;
+
+            // Comparamos a nivel de día: la recarga del mes en curso empieza "a las X de hoy"
+            const desdeDia = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate());
+            return inicioConsulta >= desdeDia && finMes <= hasta;
+        }
+
+        // Mueve el calendario de clases al mes que contiene `dateKey`. Si esos datos ya
+        // están en memoria (ventana continua de dos meses) solo re-pinta, sin spinner.
+        // Devuelve true si ha cambiado de mes.
+        function irAMesDeFecha(dateKey) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey))) return false;
+            const [y, m] = String(dateKey).split('-').map(Number);
+            const targetM = new Date(y, m - 1, 1);
+            if (currentCalendarMonth.getFullYear() === targetM.getFullYear() &&
+                currentCalendarMonth.getMonth() === targetM.getMonth()) return false;
+
+            currentCalendarMonth = targetM;
+            if (mesCargadoEnWindow(windowClasesDesde, windowClasesHasta, targetM)) {
+                renderizarCalendario();
+                renderizarClases();
+            } else {
+                cargarHorarios(targetM).then(() => {
+                    renderizarCalendario();
+                    renderizarClases();
+                });
+            }
+            return true;
+        }
+
         async function cambiarMes(delta) {
             currentCalendarMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + delta, 1);
             selectedDate = 'todas';
+            // Si el mes destino ya está cargado (ventana continua) cambiamos al instante
+            if (mesCargadoEnWindow(windowClasesDesde, windowClasesHasta, currentCalendarMonth)) {
+                renderizarCalendario();
+                renderizarClases();
+                return;
+            }
             await cargarHorarios(currentCalendarMonth);
         }
 
         function filtrarPorFecha(dateKey) {
             selectedDate = dateKey;
-            if (dateKey && dateKey !== 'todas') {
-                const [y, m] = dateKey.split('-').map(Number);
-                const targetM = new Date(y, m - 1, 1);
-                if (currentCalendarMonth.getFullYear() !== targetM.getFullYear() || currentCalendarMonth.getMonth() !== targetM.getMonth()) {
-                    currentCalendarMonth = targetM;
-                    cargarHorarios(currentCalendarMonth).then(() => {
-                        renderizarCalendario();
-                        renderizarClases();
-                    });
-                    return;
-                }
-            }
+            if (dateKey && dateKey !== 'todas' && irAMesDeFecha(dateKey)) return;
             renderizarCalendario();
             renderizarClases();
         }
@@ -9082,32 +9150,46 @@
             const targetYear = currentCalendarMonth.getFullYear();
             const targetMonth = currentCalendarMonth.getMonth();
 
+            // Ventana continua: la barra no se corta el día 30/31, sigue en el mes siguiente
+            const inicioVentana = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0);
+            const finVentana = new Date(targetYear, targetMonth + 2, 0, 23, 59, 59, 999);
+
             const monthFallback = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
-
-            const titleEl = document.getElementById('sticky-days-title-text');
-            if (titleEl) {
-                titleEl.innerHTML = `Días con clases <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${monthNames[targetMonth]} ${targetYear})</span>`;
-            }
 
             allClasesCache.forEach(c => {
                 if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false) {
                     return;
                 }
                 const fechaObj = new Date(c.fecha_inicio);
-                if (fechaObj.getFullYear() === targetYear && fechaObj.getMonth() === targetMonth && (isAdmin || fechaObj >= hoy)) {
+                if (fechaObj >= inicioVentana && fechaObj <= finVentana && (isAdmin || fechaObj >= hoy)) {
                     const dKey = formatDateLocal(fechaObj);
                     fechasConClases.set(dKey, (fechasConClases.get(dKey) || 0) + 1);
                 }
             });
 
             const dKeys = Array.from(fechasConClases.keys()).sort();
+
+            // Título con el rango real de días mostrados (puede cruzar de mes)
+            const titleEl = document.getElementById('sticky-days-title-text');
+            if (titleEl) {
+                let rango = `${monthNames[targetMonth]} ${targetYear}`;
+                if (dKeys.length > 0) {
+                    const [fY, fM] = dKeys[0].split('-').map(Number);
+                    const [lY, lM] = dKeys[dKeys.length - 1].split('-').map(Number);
+                    const primero = `${monthNames[fM - 1]} ${fY}`;
+                    const ultimo = `${monthNames[lM - 1]} ${lY}`;
+                    rango = primero === ultimo ? primero : `${primero} – ${ultimo}`;
+                }
+                titleEl.innerHTML = `Días con clases <span class="text-olive font-extrabold text-[11px] uppercase tracking-wide">(${rango})</span>`;
+            }
+
             if (dKeys.length === 0) {
                 bar.innerHTML = `
                     <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
-                        <span class="italic">No hay clases programadas en ${monthNames[targetMonth]}.</span>
-                        <button type="button" onclick="cambiarMes(1)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
-                            Ver ${monthNames[(targetMonth + 1) % 12]} <i class="ph-bold ph-caret-right"></i>
+                        <span class="italic">No hay clases programadas en ${monthNames[targetMonth]} ni en ${monthNames[(targetMonth + 1) % 12]}.</span>
+                        <button type="button" onclick="cambiarMes(2)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                            Ver ${monthNames[(targetMonth + 2) % 12]} <i class="ph-bold ph-caret-right"></i>
                         </button>
                     </div>
                 `;
@@ -9118,7 +9200,15 @@
 
             // Seleccionar por defecto hoy si existe, o el próximo día disponible
             if (selectedDate === null || selectedDate === 'todas') {
-                selectedDate = fechasConClases.has(hoyKey) ? hoyKey : (dKeys.find(k => k >= hoyKey) || dKeys[0] || hoyKey);
+                const elegida = fechasConClases.has(hoyKey) ? hoyKey : (dKeys.find(k => k >= hoyKey) || dKeys[0] || hoyKey);
+                selectedDate = elegida;
+                // Si el mes visible no tiene ninguna clase y la próxima ya cae en el mes
+                // siguiente, saltamos a ese mes automáticamente (nada de cortes a final de mes)
+                const prefijoMesVisible = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-`;
+                const hayClasesEnMesVisible = dKeys.some(k => k.startsWith(prefijoMesVisible));
+                if (!hayClasesEnMesVisible && elegida >= hoyKey && irAMesDeFecha(elegida)) {
+                    return;
+                }
             }
 
             let html = '';
@@ -9435,12 +9525,17 @@
             const year = tDate.getFullYear();
             const month = tDate.getMonth();
             const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
-            const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            // Ventana continua: además del mes visible cargamos también el mes siguiente,
+            // para que la barra de días y el calendario no se corten en el cambio de mes.
+            const endOfMonth = new Date(year, month + 2, 0, 23, 59, 59, 999);
 
             const now = new Date();
             now.setHours(now.getHours() - 2);
             const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month;
             const startQuery = (!isAdmin && isCurrentMonth) ? now : startOfMonth;
+            windowClasesDesde = startQuery;
+            windowClasesHasta = endOfMonth;
+            const miToken = ++cargasClasesToken;
 
             const { data: clases, error: errClases } =
                 await client.from('clases')
@@ -9450,11 +9545,15 @@
                     .lte('fecha_inicio', endOfMonth.toISOString())
                     .order('fecha_inicio');
 
+            if (miToken !== cargasClasesToken) return; // carga superada por otra más reciente
+
             if (errClases) {
                 console.error('Error cargando clases', errClases);
                 if (container) container.innerHTML = '';
                 if (emptyState) emptyState.classList.remove('hidden');
                 allClasesCache = [];
+                windowClasesDesde = null;
+                windowClasesHasta = null;
                 actualizarOpcionesFiltrosClases();
                 renderizarCalendario();
                 renderizarBarraDiasRapidos();
@@ -9486,6 +9585,8 @@
 
             const { data: reservas, error: errReservas } = await reservasQuery;
 
+            if (miToken !== cargasClasesToken) return; // carga superada por otra más reciente
+
             if (errReservas) {
                 console.error('Error cargando reservas', errReservas);
             }
@@ -9499,6 +9600,8 @@
             });
 
             const ocupacionMap = await obtenerOcupacionClasesMap(clasesValidas.map(c => c.id));
+
+            if (miToken !== cargasClasesToken) return; // carga superada por otra más reciente
 
             // Enriquecer clases con ocupadas (aforo real vía RPC) y miReserva (solo las propias)
             clasesValidas.forEach(c => {
@@ -10386,13 +10489,13 @@
                     row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/10 transition duration-300 group';
 
                     row.innerHTML = `
-                        <div class="flex items-start gap-4 w-full">
+                        <div class="flex items-start gap-4 min-w-0 flex-1">
                             <div class="flex flex-col items-center justify-center min-w-[3.75rem] px-2 h-14 rounded-xl ${iconColorClass} border shadow-sm flex-shrink-0 box-border">
                                 <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${tipoTexto}</span>
                                 <span class="text-base font-black tracking-tight leading-none">${escapeHtml(hora)}</span>
                             </div>
                             
-                            <div class="flex-grow">
+                            <div class="min-w-0 flex-1">
                                 <div class="flex flex-col gap-1">
                                     <div class="flex flex-wrap items-center gap-3">
                                         <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-olive transition leading-tight">
@@ -10417,7 +10520,7 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end sm:min-w-[120px]">
+                        <div class="flex items-center justify-end flex-shrink-0 sm:min-w-[120px]">
                             ${btnAction}
                         </div>
                     `;
@@ -21780,12 +21883,17 @@
             const year = tDate.getFullYear();
             const month = tDate.getMonth();
             const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
-            const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            // Ventana continua: además del mes visible cargamos también el mes siguiente,
+            // para que la barra de días y el calendario no se corten en el cambio de mes.
+            const endOfMonth = new Date(year, month + 2, 0, 23, 59, 59, 999);
 
             const now = new Date();
             now.setHours(now.getHours() - 2);
             const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month;
             const startQuery = isCurrentMonth ? now : startOfMonth;
+            windowPsicologiaDesde = startQuery;
+            windowPsicologiaHasta = endOfMonth;
+            const miToken = ++cargasPsicologiaToken;
 
             const { data: rawClases, error: errClases } =
                 await client.from('clases')
@@ -21794,6 +21902,8 @@
                     .gte('fecha_inicio', startQuery.toISOString())
                     .lte('fecha_inicio', endOfMonth.toISOString())
                     .order('fecha_inicio');
+
+            if (miToken !== cargasPsicologiaToken) return; // carga superada por otra más reciente
 
             const dbClases = (rawClases || []).filter(esHorarioValidoConsulta);
 
@@ -21807,6 +21917,7 @@
                     resQuery = resQuery.eq('user_id', currentUser.id);
                 }
                 const { data: reservasRaw } = await resQuery;
+                if (miToken !== cargasPsicologiaToken) return; // carga superada por otra más reciente
                 const reservasConfirmadas = reservasRaw || [];
 
                 const perfilesMap = {};
@@ -21829,6 +21940,8 @@
                 });
 
                 const ocupacionPsicoMap = await obtenerOcupacionClasesMap(dbClases.map(c => c.id));
+
+                if (miToken !== cargasPsicologiaToken) return; // carga superada por otra más reciente
 
                 dbClases.forEach(c => {
                     const resClase = reservasMap[c.id] || [];
@@ -21859,7 +21972,7 @@
                     const exists = dbClases.some(c => String(c.id) === String(b.id));
                     if (!exists) {
                         const bDate = b.fecha instanceof Date ? b.fecha : new Date(b.fecha);
-                        if (bDate.getFullYear() === year && bDate.getMonth() === month) {
+                        if (bDate >= startOfMonth && bDate <= endOfMonth) {
                             dbClases.push({
                                 id: b.id,
                                 nombre: b.nombre,
@@ -22233,16 +22346,16 @@
                     const freeBadge = '';
 
                     const row = document.createElement('div');
-                    row.className = `p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${esGrupal ? 'hover:bg-purple-50/10' : 'hover:bg-blue-50/5'} transition duration-300 group`;
+                    row.className = `p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${esGrupal ? 'hover:bg-purple-50/10' : 'hover:bg-blue-50/5'} transition duration-300 group`;
 
                     row.innerHTML = `
-                <div class="flex items-start gap-4 w-full">
+                <div class="flex items-start gap-4 min-w-0 flex-1">
                     <div class="flex flex-col items-center justify-center min-w-[3.75rem] px-2 h-14 rounded-xl ${esGrupal ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-[#3B82F6] border-blue-100'} border shadow-sm flex-shrink-0 box-border">
                         <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${esGrupal ? 'Grupo' : escapeHtml(profileT('common_appointment', 'Cita'))}</span>
                         <span class="text-base font-black tracking-tight leading-none">${escapeHtml(hora)}</span>
                     </div>
                     
-                    <div class="flex-grow">
+                    <div class="min-w-0 flex-1">
                         <div class="flex flex-col gap-1">
                             <div class="flex flex-wrap items-center gap-3">
                                 <h4 class="brand-font font-bold text-lg text-cocoa ${esGrupal ? 'group-hover:text-purple-700' : 'group-hover:text-[#3B82F6]'} transition leading-tight">
@@ -22272,7 +22385,7 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end sm:min-w-[120px]">
+                <div class="flex items-center justify-end flex-shrink-0 sm:min-w-[180px] sm:ml-4">
                     ${btnAction}
                 </div>
             `;
@@ -22493,16 +22606,16 @@
                         : '';
 
                     const row = document.createElement('div');
-                    row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-purple-50/5 transition duration-300 group';
+                    row.className = 'p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 hover:bg-purple-50/5 transition duration-300 group';
 
                     row.innerHTML = `
-                <div class="flex items-start gap-4 w-full">
+                <div class="flex items-start gap-4 min-w-0 flex-1">
                     <div class="flex flex-col items-center justify-center min-w-[3.75rem] px-2 h-14 rounded-xl bg-purple-50 text-[#8B5CF6] border border-purple-100 shadow-sm flex-shrink-0 box-border">
                         <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${escapeHtml(profileT('common_appointment', 'Cita'))}</span>
                         <span class="text-base font-black tracking-tight leading-none">${escapeHtml(hora)}</span>
                     </div>
                     
-                    <div class="flex-grow">
+                    <div class="min-w-0 flex-1">
                         <div class="flex flex-col gap-1">
                             <div class="flex flex-wrap items-center gap-3">
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#8B5CF6] transition leading-tight">
@@ -22532,7 +22645,7 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end sm:min-w-[120px]">
+                <div class="flex items-center justify-end flex-shrink-0 sm:min-w-[180px] sm:ml-4">
                     ${btnAction}
                 </div>
             `;
@@ -23081,81 +23194,80 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const prevMonthDays = new Date(year, month, 0).getDate();
-            for (let i = startDayOfWeek - 1; i >= 0; i--) {
-                const day = prevMonthDays - i;
-                const div = document.createElement('div');
-                div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
-                div.textContent = day;
-                grid.appendChild(div);
-            }
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateObj = new Date(year, month, day);
+            const pintarDia = (dateObj, esMesAdjacente) => {
                 const dateKey = formatDateLocal(dateObj);
-                const isToday = dateObj.getTime() === today.getTime();
                 const isPast = dateObj < today;
-                const hasSessions = allPsicologiaCache.some(c => {
-                    const cDate = formatDateLocal(new Date(c.fecha_inicio));
-                    return cDate === dateKey;
-                });
-                const isSelected = selectedDatePsicologia === dateKey;
+                const hasSessions = allPsicologiaCache.some(c => formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
                 const hasUserBooking = (userBookingsCache || []).some(b => b.tipo === 'psicologia' && formatDateLocal(b.fecha) === dateKey);
 
                 const div = document.createElement('div');
                 div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20';
-                div.textContent = day;
-                if (isToday) div.classList.add('today');
+                div.textContent = dateObj.getDate();
+                if (dateObj.getTime() === today.getTime()) div.classList.add('today');
                 if (hasSessions) div.classList.add('has-psicologia');
                 if (hasUserBooking) div.classList.add('has-user-booking');
-                if (isSelected) div.classList.add('selected');
+                if (selectedDatePsicologia === dateKey) div.classList.add('selected');
                 if (isPast) {
                     div.classList.add('disabled');
                 } else {
-                    div.onclick = () => {
-                        selectedDatePsicologia = dateKey;
-                        renderizarCalendarioPsicologia();
-                        renderizarBarraDiasConsultas('psicologia');
-                        renderizarPsicologia();
-                    };
+                    // Incluidos los días de los meses contiguos mostrados en la rejilla:
+                    // al pulsarlos se salta a su mes y se pueden reservar sin usar las flechas
+                    div.onclick = () => filtrarPorFechaPsicologia(dateKey);
                 }
-                grid.appendChild(div);
+                if (esMesAdjacente) div.classList.add('other-month');
+                return div;
+            };
+
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                grid.appendChild(pintarDia(new Date(year, month - 1, prevMonthDays - i), true));
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                grid.appendChild(pintarDia(new Date(year, month, day), false));
             }
 
             const totalCells = grid.children.length;
             const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
             for (let day = 1; day <= remainingCells; day++) {
-                const div = document.createElement('div');
-                div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
-                div.textContent = day;
-                grid.appendChild(div);
+                grid.appendChild(pintarDia(new Date(year, month + 1, day), true));
             }
+        }
+
+        // Repinta la vista de consultas (calendario + barra de días + lista)
+        function pintarVistaPsicologia() {
+            renderizarCalendarioPsicologia();
+            renderizarBarraDiasConsultas('psicologia');
+            renderizarPsicologia();
         }
 
         async function cambiarMesPsicologia(delta) {
             currentCalendarMonthPsicologia.setMonth(currentCalendarMonthPsicologia.getMonth() + delta);
             selectedDatePsicologia = null;
+            // Si el mes destino ya está cargado (ventana continua) cambiamos al instante
+            if (mesCargadoEnWindow(windowPsicologiaDesde, windowPsicologiaHasta, new Date(currentCalendarMonthPsicologia.getFullYear(), currentCalendarMonthPsicologia.getMonth(), 1))) {
+                pintarVistaPsicologia();
+                return;
+            }
             await cargarPsicologia(currentCalendarMonthPsicologia);
         }
 
         function filtrarPorFechaPsicologia(dateKey) {
             selectedDatePsicologia = dateKey;
-            if (dateKey) {
-                const [y, m] = dateKey.split('-').map(Number);
+            if (dateKey && /^\d{4}-\d{2}-\d{2}$/.test(String(dateKey))) {
+                const [y, m] = String(dateKey).split('-').map(Number);
                 const targetM = new Date(y, m - 1, 1);
                 if (currentCalendarMonthPsicologia.getFullYear() !== targetM.getFullYear() || currentCalendarMonthPsicologia.getMonth() !== targetM.getMonth()) {
                     currentCalendarMonthPsicologia = targetM;
-                    cargarPsicologia(currentCalendarMonthPsicologia).then(() => {
-                        renderizarCalendarioPsicologia();
-                        renderizarBarraDiasConsultas('psicologia');
-                        renderizarPsicologia();
-                    });
+                    if (mesCargadoEnWindow(windowPsicologiaDesde, windowPsicologiaHasta, targetM)) {
+                        pintarVistaPsicologia();
+                    } else {
+                        cargarPsicologia(targetM).then(pintarVistaPsicologia);
+                    }
                     return;
                 }
             }
-            renderizarCalendarioPsicologia();
-            renderizarBarraDiasConsultas('psicologia');
-            renderizarPsicologia();
+            pintarVistaPsicologia();
         }
 
         function limpiarFiltroFechaPsicologia() {
@@ -23280,9 +23392,13 @@
             const targetYear = (tipo === 'psicologia' ? currentCalendarMonthPsicologia : currentCalendarMonthNutricion).getFullYear();
             const targetMonth = (tipo === 'psicologia' ? currentCalendarMonthPsicologia : currentCalendarMonthNutricion).getMonth();
 
+            // Ventana continua: la barra no se corta el día 30/31, sigue en el mes siguiente
+            const inicioVentana = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0);
+            const finVentana = new Date(targetYear, targetMonth + 2, 0, 23, 59, 59, 999);
+
             cache.forEach(c => {
                 const fechaObj = new Date(c.fecha_inicio);
-                if (fechaObj.getFullYear() === targetYear && fechaObj.getMonth() === targetMonth && fechaObj >= hoy) {
+                if (fechaObj >= inicioVentana && fechaObj <= finVentana && fechaObj >= hoy) {
                     const dKey = formatDateLocal(fechaObj);
                     fechasConSesiones.set(dKey, (fechasConSesiones.get(dKey) || 0) + 1);
                 }
@@ -23290,7 +23406,7 @@
 
             const dKeys = Array.from(fechasConSesiones.keys()).sort();
             if (dKeys.length === 0) {
-                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas programadas para este mes</span>';
+                bar.innerHTML = '<span class="text-xs text-cocoa/40 italic px-2">No hay consultas programadas en este periodo</span>';
                 return;
             }
 
