@@ -2602,7 +2602,6 @@
                                         <option value="isabel">Isabel (PNI)</option>
                                         <option value="miriam">Miriam (Psicología)</option>
                                         <option value="grupos">Grupos (Miriam)</option>
-                                        <option value="introductorias">Sesiones introductorias</option>
                                         <option value="disponibles" data-i18n="profile_filter_available_consultations">Disponibles</option>
                                         <option value="mis-reservas" data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</option>
                                     </select>
@@ -3700,7 +3699,7 @@
                             </div>
 
                             <!-- Saldos en Clientes -->
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                                 <div
                                     class="bg-purple-50/70 border border-purple-200 rounded-2xl p-3.5 flex items-center justify-between">
                                     <div>
@@ -3718,16 +3717,6 @@
                                     </div>
                                     <span id="consultas-saldo-nutri-count"
                                         class="text-xl font-black text-emerald-900">0</span>
-                                </div>
-                                <div
-                                    class="bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 flex items-center justify-between">
-                                    <div>
-                                        <p class="text-[11px] font-bold text-amber-900">1ª Consulta Gratis Disponible
-                                        </p>
-                                        <p class="text-[10px] text-amber-800/70">Clientes con bono inicial activo</p>
-                                    </div>
-                                    <span id="consultas-saldo-gratis-count"
-                                        class="text-xl font-black text-amber-900">0</span>
                                 </div>
                             </div>
 
@@ -6149,12 +6138,6 @@
                 </div>`);
             }
 
-            if (consultasGratis > 0) {
-                rows.push(`<div class="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span class="flex items-center gap-2 text-sm"><i class="ph-bold ph-sparkle text-pink-600"></i> Consultas Gratis</span>
-                    <span class="text-sm font-bold text-pink-700">${consultasGratis}</span>
-                </div>`);
-            }
 
             await Swal.fire({
                 title: `<span class="text-base font-bold">${escapeHtml(nombre)}</span>`,
@@ -7730,17 +7713,6 @@
                     </div>
                 </div>
 
-                <!-- CONSULTAS GRATUITAS -->
-                <div class="p-3 rounded-2xl flex items-start gap-3" style="background-color: #fdf2f8 !important; border: 1px solid #fbcfe8 !important;">
-                    <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs" style="background-color: #db2777 !important;">
-                        <i class="ph-fill ph-gift text-base"></i>
-                    </div>
-                    <div>
-                        <strong class="font-bold text-xs uppercase tracking-wide block mb-0.5" style="color: #9d174d !important;">${escapeHtml(freeConsultationTitle)}</strong>
-                        <p class="text-[11px] leading-relaxed" style="color: rgba(75,54,33,0.8) !important;">${escapeHtml(freeConsultationDesc)}</p>
-                    </div>
-                </div>
-
                 <div class="p-3 bg-sand/20 border border-cocoa/15 rounded-2xl">
                     <div class="flex items-center gap-2 mb-1">
                         <i class="ph-bold ph-lightning text-olive text-sm"></i>
@@ -7800,8 +7772,7 @@
             const totalBadgesCount = 3 + 
                 (userTotalTalleresDisponibles > 0 ? 1 : 0) +
                 (userCreditosReprogConsulta > 0 ? 1 : 0) +
-                (userSaldoClasesGratis > 0 ? 1 : 0) +
-                (userSaldoConsultasGratis > 0 ? 1 : 0);
+                (userSaldoClasesGratis > 0 ? 1 : 0);
 
             const bPad = 'px-3 py-1.5';
             const bGap = 'gap-2';
@@ -7877,18 +7848,6 @@
                 <div class="flex flex-col text-left leading-none">
                     <span class="${titleTxt} font-bold uppercase tracking-wider text-emerald-800">Bienvenida</span>
                     <span class="${countTxt} font-black text-emerald-700 mt-0.5">${userSaldoClasesGratis} disp.</span>
-                </div>
-            </div>` : ''}
-
-            ${userSaldoConsultasGratis > 0 ? `
-            <!-- 7. CONSULTA GRATIS -->
-            <div role="button" tabindex="0" onclick="switchPublicView('psicologia')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} bg-white/95 border border-pink-300 bg-pink-50/50 hover:border-pink-400 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" title="Ver y reservar consultas">
-                <div class="${iconBox} flex items-center justify-center bg-pink-100 text-pink-700 shrink-0">
-                    <i class="ph-fill ph-gift"></i>
-                </div>
-                <div class="flex flex-col text-left leading-none">
-                    <span class="${titleTxt} font-bold uppercase tracking-wider text-pink-800">Cita Gratis</span>
-                    <span class="${countTxt} font-black text-pink-700 mt-0.5">${userSaldoConsultasGratis} disp.</span>
                 </div>
             </div>` : ''}`;
             }
@@ -7966,25 +7925,23 @@
 
             // Regla v16.2: No mostrar bonos o promociones ya disfrutados/gastados (0 disp.)
             const showBonoBienvenida = userSaldoClasesGratis > 0;
-            const showConsultaOferta = !yaCanjeoConsultas || userSaldoConsultasGratis > 0;
 
             let freeBalancesCard = '';
-            if (showBonoBienvenida || showConsultaOferta) {
+            if (showBonoBienvenida) {
                 freeBalancesCard = `
         <div class="bg-white/95 p-5 rounded-3xl border border-emerald-200/80 shadow-md min-w-[280px] flex-1">
             <div class="flex items-center justify-between gap-4 mb-3">
                 <div>
                     <span class="block text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Promociones y Ofertas</span>
-                    <p class="text-lg font-black text-cocoa mt-0.5">Canje de Bonos y Sesiones Gratuitas</p>
+                    <p class="text-lg font-black text-cocoa mt-0.5">Bono de Bienvenida</p>
                 </div>
                 <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-xs">
                     <i class="ph-fill ph-gift text-2xl"></i>
                 </div>
             </div>
-            <p class="text-xs text-cocoa/70 leading-relaxed mb-4">Haz clic en cada oferta para canjearla y sumarla a tu cuenta. Cada promoción es válida para un único canje por alumno.</p>
+            <p class="text-xs text-cocoa/70 leading-relaxed mb-4">Disfruta de tu clase gratuita de bienvenida en cualquier horario regular.</p>
             
             <div class="space-y-3 mb-2">
-                ${showBonoBienvenida ? `
                 <!-- 1. Bono de Bienvenida Yoga Regular -->
                 <div class="rounded-2xl border border-emerald-300 bg-emerald-50/80 ring-1 ring-emerald-300 p-3.5 text-left transition shadow-xs">
                     <div class="flex items-start justify-between gap-3">
@@ -8002,27 +7959,7 @@
                             Ver Horarios y Reservar
                         </button>
                     </div>
-                </div>` : ''}
-
-                ${showConsultaOferta ? `
-                <!-- 2. Consulta Gratuita -->
-                <div class="rounded-xl border ${yaCanjeoConsultas ? 'border-pink-200 bg-pink-50/40' : 'border-pink-300 bg-pink-50/70'} p-2.5 text-left transition shadow-xs">
-                    <div class="flex items-center justify-between gap-2">
-                        <div>
-                            <p class="text-xs font-bold text-cocoa">🩺 Sesión Intro PNI / Psico</p>
-                            <p class="text-[10px] text-pink-800 font-bold">${yaCanjeoConsultas ? `${userSaldoConsultasGratis} disp. · 0 €` : 'Disponible para canjear · 0 €'}</p>
-                        </div>
-                        ${yaCanjeoConsultas 
-                            ? (userSaldoConsultasGratis > 0 ? `
-                            <div class="flex gap-1 shrink-0">
-                                <button type="button" onclick="filtrarPorOferta('pni')" class="px-2 py-1 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-[9px] font-bold uppercase rounded-lg shadow-2xs cursor-pointer" title="Reservar PNI (Isabel)">PNI</button>
-                                <button type="button" onclick="filtrarPorOferta('psicologia')" class="px-2 py-1 bg-[#b45c47] hover:bg-[#8f4735] text-white text-[9px] font-bold uppercase rounded-lg shadow-2xs cursor-pointer" title="Reservar Psicología (Miriam)">Psico</button>
-                            </div>` : `<span class="text-[9px] font-bold text-pink-700 bg-pink-100 px-2 py-0.5 rounded-full shrink-0">Canjeada</span>`)
-                            : `<button type="button" onclick="canjearOfertaPromocional('consultas')" class="px-3 py-1.5 bg-pink-700 hover:bg-pink-800 text-white text-[10px] font-black uppercase tracking-wider rounded-lg shadow-2xs cursor-pointer shrink-0 flex items-center gap-1">
-                                <i class="ph-bold ph-heart"></i> Canjear
-                               </button>`}
-                    </div>
-                </div>` : ''}
+                </div>
             </div>
         </div>`;
             }
@@ -14299,11 +14236,10 @@
                 }
             });
 
-            let saldosPsicoTotal = 0, saldosNutriTotal = 0, saldosGratisTotal = 0;
+            let saldosPsicoTotal = 0, saldosNutriTotal = 0;
             clients.forEach(u => {
                 saldosPsicoTotal += toSafeNumber(u.saldo_psicologia);
                 saldosNutriTotal += toSafeNumber(u.saldo_nutricion);
-                if (toSafeNumber(u.saldo_consultas_gratis) > 0) saldosGratisTotal++;
             });
 
             const consultasKpiTotal = document.getElementById('consultas-kpi-total');
@@ -14312,7 +14248,6 @@
             const consultasKpiAyurveda = document.getElementById('consultas-kpi-ayurveda');
             const consultasSaldoPsico = document.getElementById('consultas-saldo-psico-count');
             const consultasSaldoNutri = document.getElementById('consultas-saldo-nutri-count');
-            const consultasSaldoGratis = document.getElementById('consultas-saldo-gratis-count');
 
             if (consultasKpiTotal) consultasKpiTotal.textContent = totalPsicoCitas + totalNutriCitas + totalAyurvedaCitas;
             if (consultasKpiPsico) consultasKpiPsico.textContent = totalPsicoCitas;
@@ -14320,7 +14255,6 @@
             if (consultasKpiAyurveda) consultasKpiAyurveda.textContent = totalAyurvedaCitas;
             if (consultasSaldoPsico) consultasSaldoPsico.textContent = saldosPsicoTotal;
             if (consultasSaldoNutri) consultasSaldoNutri.textContent = saldosNutriTotal;
-            if (consultasSaldoGratis) consultasSaldoGratis.textContent = saldosGratisTotal;
 
             // Lista de próximas citas confirmadas
             const consultasListEl = document.getElementById('consultas-today-list');
@@ -15081,10 +15015,6 @@
                 badges.push(`<span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><i class="ph-bold ph-sparkle"></i> ${bienvenida} Bienvenida</span>`);
             }
 
-            // 5. Consulta Gratis
-            if (consultas > 0) {
-                badges.push(`<span class="bg-pink-50 text-pink-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-pink-200 flex items-center gap-1"><i class="ph-bold ph-gift"></i> ${consultas} Consulta</span>`);
-            }
 
             // 6. Consultas Psicología, Nutrición y Grupos
             const psic = toSafeNumber(u.saldo_psicologia);
@@ -16388,7 +16318,6 @@
             if (bYoga > 0) items.push(`${bYoga} Yoga`);
             if (bGratis > 0) items.push(`${bGratis} Bienvenida`);
             if (bComp > 0) items.push(`${bComp} Compañía`);
-            if (cGratis > 0) items.push(`${cGratis} Consulta Gratis`);
             if (bPsi > 0) items.push(`${bPsi} Psicología`);
             if (bNut > 0) items.push(`${bNut} Nutrición`);
 
@@ -19636,11 +19565,11 @@
                     confirmButtonColor: '#8C8658'
                 });
             }
-            if (tipoNorm === 'consultas' && toSafeNumber(userSaldoConsultasGratis) > 0) {
+            if (tipoNorm === 'consultas' || tipoNorm === 'consultas_gratis') {
                 return Swal.fire({
                     icon: 'info',
-                    title: 'Ya tienes tu consulta gratis',
-                    text: 'Tu consulta de bienvenida ya está en tu saldo: no necesitas canjearla de nuevo.',
+                    title: 'Promoción finalizada',
+                    text: 'Las sesiones introductorias y la consulta gratuita han finalizado.',
                     confirmButtonColor: '#8C8658'
                 });
             }
@@ -20046,27 +19975,12 @@
                     </div>
                 </div>
 
-                <!-- 3. Consulta Gratis -->
-                <div class="flex items-center justify-between p-2.5 rounded-xl border border-pink-200 bg-pink-50/60">
-                    <div class="flex items-center gap-2">
-                        <i class="ph-bold ph-gift text-pink-600 text-lg"></i>
-                        <div>
-                            <p class="text-xs font-bold text-cocoa">3. Consulta Gratis</p>
-                            <p class="text-[10px] text-pink-800">Saldo: <strong id="modal-saldo-consultas_gratis" class="text-pink-700 font-black">${consultaActual}</strong></p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', -1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #ffffff !important; color: #be185d !important; border: 1px solid #fbcfe8 !important;">-1</button>
-                        <button type="button" onclick="sumarSaldoYRecargarModal('${userId}', 'consultas_gratis', 1, this)" class="w-8 h-8 rounded-lg font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center shadow-2xs" style="background-color: #db2777 !important; color: #ffffff !important; border: 1px solid #be185d !important;">+1</button>
-                    </div>
-                </div>
-
-                <!-- 4. Consulta Psicología -->
+                <!-- 3. Consulta Psicología -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-blue-200 bg-blue-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-brain text-blue-600 text-lg"></i>
                         <div>
-                            <p class="text-xs font-bold text-cocoa">4. Consulta Psicología</p>
+                            <p class="text-xs font-bold text-cocoa">3. Consulta Psicología</p>
                             <p class="text-[10px] text-blue-800">Saldo: <strong id="modal-saldo-psicologia" class="text-blue-700 font-black">${psicologiaActual}</strong></p>
                         </div>
                     </div>
@@ -20076,12 +19990,12 @@
                     </div>
                 </div>
 
-                <!-- 5. Consulta Nutrición -->
+                <!-- 4. Consulta Nutrición -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-purple-200 bg-purple-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-apple text-purple-600 text-lg"></i>
                         <div>
-                            <p class="text-xs font-bold text-cocoa">5. Consulta Nutrición</p>
+                            <p class="text-xs font-bold text-cocoa">4. Consulta Nutrición</p>
                             <p class="text-[10px] text-purple-800">Saldo: <strong id="modal-saldo-nutricion" class="text-purple-700 font-black">${nutricionActual}</strong></p>
                         </div>
                     </div>
@@ -20091,7 +20005,7 @@
                     </div>
                 </div>
 
-                <!-- 6. Bonos de Grupos -->
+                <!-- 5. Bonos de Grupos -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-users text-indigo-600 text-lg"></i>
@@ -25220,13 +25134,7 @@
                 `;
             }
 
-            const extraOptions = `
-                <optgroup label="Otras Opciones">
-                    <option value="gratuita">Sesión Introductoria Gratuita (0 €)</option>
-                </optgroup>
-            `;
-
-            select.innerHTML = baseOptions + extraOptions;
+            select.innerHTML = baseOptions;
 
             // Inyectar productos Stripe dinámicos en segundo plano
             cargarStripeProductosDinamicos().then(prods => {

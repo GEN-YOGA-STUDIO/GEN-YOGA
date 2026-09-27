@@ -399,8 +399,8 @@ serve(async (req) => {
         rol: "cliente",
         bonos: 0,
         saldo_clases_gratis: 1,
-        saldo_consultas_gratis: 1,
-        saldo_yoga_compania: 1,
+        saldo_consultas_gratis: 0,
+        saldo_yoga_compania: 0,
       })
       .select("id, email, nombre, apellidos, fecha_nacimiento, telefono, notas, rol, bonos")
       .single();
