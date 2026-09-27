@@ -152,20 +152,24 @@ assert.deepEqual(
 assert.deepEqual([...calendarApi.consultationStartMinutesFor({ nombre: 'Isabel' }, '2026-08-19')], []);
 
 const expectedSilviaStarts = [900, 990, 1080];
-for (const dateKey of ['2026-06-19', '2026-08-28', '2026-09-11']) {
+// v16.3: Silvia ofrece consultas TODOS los viernes (se retiró la paridad
+// quincenal con ancla 2026-06-19: el estudio programa los viernes que necesita
+// y el calendario muestra cada fila activa sin refiltrar por quincena).
+for (const dateKey of ['2026-06-19', '2026-08-28', '2026-09-11', '2026-10-09', '2026-10-30', '2026-11-13', '2026-11-27']) {
   assert.deepEqual(
     [...calendarApi.consultationStartMinutesFor({ nombre: 'Silvia' }, dateKey)],
     expectedSilviaStarts,
-    `Silvia debe ofrecer 15:00, 16:30 y 18:00 el viernes alterno ${dateKey}`,
+    `Silvia debe ofrecer 15:00, 16:30 y 18:00 cada viernes (${dateKey})`,
   );
 }
-for (const dateKey of ['2026-08-21', '2026-09-04', '2026-09-12']) {
+for (const dateKey of ['2026-09-12', '2026-10-31', '2026-11-12']) {
   assert.deepEqual(
     [...calendarApi.consultationStartMinutesFor({ nombre: 'Silvia' }, dateKey)],
     [],
-    `Silvia no debe ofrecer consultas fuera de la paridad quincenal (${dateKey})`,
+    `Silvia no debe ofrecer consultas fuera del viernes (${dateKey})`,
   );
 }
+assert.doesNotMatch(calendarScript, /silviaConsultationAnchorDate/);
 assert.equal(calendarApi.consultationDurationMinutesFor({ nombre: 'Silvia' }), 90);
 assert.equal(calendarApi.consultationDurationMinutesFor({ nombre: 'Miriam' }), 60);
 assert.equal(calendarApi.consultationDurationMinutesFor({ nombre: 'Isabel' }), 60);

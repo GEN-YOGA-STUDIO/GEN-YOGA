@@ -224,7 +224,10 @@
         16 * 60 + 30,
         18 * 60
     ]);
-    const silviaConsultationAnchorDate = '2026-06-19';
+    // Silvia ofrece consultas de Ayurveda todos los viernes (15:00, 16:30 y 18:00).
+    // La paridad quincenal antigua (ancla 2026-06-19) se retiró en v16.3: el estudio
+    // programa los viernes que necesita y el calendario público muestra cada fila
+    // activa de la base de datos sin volver a filtrar por quincena.
     const consultationWeekdays = Object.freeze({
         miriam: Object.freeze([2, 3]),
         isabel: Object.freeze([2, 4])
@@ -388,10 +391,9 @@
         }
 
         if (slug === 'silvia') {
-            const anchor = new Date(`${silviaConsultationAnchorDate}T12:00:00Z`);
-            const requested = new Date(`${validDate}T12:00:00Z`);
-            const daysFromAnchor = Math.round((requested.getTime() - anchor.getTime()) / 86_400_000);
-            return weekday === 5 && daysFromAnchor % 14 === 0
+            // v16.3: consultas todos los viernes, sin paridad quincenal. La base de
+            // datos es la fuente de verdad: si el estudio crea el hueco, se muestra.
+            return weekday === 5
                 ? silviaConsultationSlotStartMinutes
                 : [];
         }
@@ -405,9 +407,14 @@
     function isCanonicalConsultationClass(item) {
         if (!item) return false;
         if (item?.professor?.slug === 'silvia') {
+            // v16.3 (causa raíz del 30-oct invisible): el calendario público no debe
+            // revalidar reglas de negocio sobre filas ya creadas por el estudio.
+            // Toda consulta real de Silvia en base de datos se muestra; la paridad
+            // quincenal y los horarios de reserva se controlan al reservar, no al ver.
             return item.classType === 'nutricion'
-                && item.durationMinutes === 90
-                && consultationStartMinutesFor(item.professor, item.dateKey).includes(item.startMinutes);
+                || item.classType === 'consulta'
+                || item.classType === 'consulta_grupal'
+                || item.classType === 'psicologia';
         }
         if (item?.professor?.slug === 'angel-javier') {
             if (item.startMinutes >= 1260) return false;
@@ -534,6 +541,13 @@
         const professional = Array.isArray(raw?.profesionales)
             ? raw.profesionales[0]
             : raw?.profesionales;
+        const professionalVisible = Array.isArray(raw?.profesionales)
+            ? raw.profesionales[0]?.visible_publico
+            : raw?.profesionales?.visible_publico;
+        // v16.3: la rama de consultas no filtraba por visibilidad y mostraba
+        // huecos de profesionales ocultos. Solo se excluye el 'false' explícito
+        // para no alterar las filas del RPC (ya filtradas en servidor).
+        if (professionalVisible === false) return null;
         const professor = {
             id: safePositiveInteger(raw?.profesor_id ?? professional?.id),
             nombre: String(raw?.profesor_nombre ?? professional?.nombre ?? '').trim(),
@@ -1325,6 +1339,7 @@
                     .from('clases')
                     .select(DIRECT_SELECT)
                     .eq('activa', true)
+                    .eq('profesionales.visible_publico', true)
                     .gte('fecha_inicio', bounds.start)
                     .lt('fecha_inicio', bounds.end)
                     .order('fecha_inicio')
