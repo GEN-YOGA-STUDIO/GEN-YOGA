@@ -2524,45 +2524,26 @@
                             </button>
                         </div>
 
-                        <!-- Filtros de Consultas (Limpio y contenido en tarjeta estilo Clases) -->
-                        <div class="bg-white/80 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 mb-3 border border-cocoa/10 shadow-2xs" id="psicologia-filtros">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <button id="psico-filtro-todas" onclick="filtrarConsultasUsuario('psicologia', 'todas')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-blue-200 bg-[#3B82F6] text-white shadow-xs transition flex items-center gap-1.5">
-                                    <span data-i18n="profile_filter_all_consultations">Todas las consultas</span>
-                                </button>
-                                <button id="psico-filtro-individuales" onclick="filtrarConsultasUsuario('psicologia', 'individuales')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-user text-blue-600"></i> <span>Individuales</span>
-                                </button>
-                                <button id="psico-filtro-grupos" onclick="filtrarConsultasUsuario('psicologia', 'grupos')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-users-three text-[#8B5CF6]"></i> <span>Grupales (Miriam)</span>
-                                </button>
-                                <button id="psico-filtro-isabel" onclick="filtrarConsultasUsuario('psicologia', 'isabel')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-heart text-[#8f6b2d]"></i> <span>Isabel (PNI)</span>
-                                </button>
-                                <button id="psico-filtro-miriam" onclick="filtrarConsultasUsuario('psicologia', 'miriam')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-brain text-[#b45c47]"></i> <span>Miriam (Individual)</span>
-                                </button>
-                                <button id="psico-filtro-introductorias"
-                                    onclick="filtrarConsultasUsuario('psicologia', 'introductorias')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-gift text-[#3B82F6]"></i> <span>Sesiones introductorias</span>
-                                </button>
-                                <button id="psico-filtro-disponibles"
-                                    onclick="filtrarConsultasUsuario('psicologia', 'disponibles')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <span data-i18n="profile_filter_available_consultations">Disponibles</span>
-                                </button>
-                                <button id="psico-filtro-mis-reservas"
-                                    onclick="filtrarConsultasUsuario('psicologia', 'mis-reservas')"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-cocoa/10 bg-white/80 text-cocoa hover:bg-white transition flex items-center gap-1.5 shadow-xs">
-                                    <i class="ph-bold ph-bookmark-simple text-[#3B82F6]"></i> <span
-                                        data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</span>
-                                </button>
+                        <!-- Filtros de Consultas (Compacto, estilo Clases con selector desplegable) -->
+                        <div id="psicologia-filtros"
+                            class="bg-white/80 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 mb-2.5 border border-cocoa/10 shadow-2xs">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+                                <!-- Filtro por Consulta / Especialidad -->
+                                <div class="flex flex-col gap-1">
+                                    <label for="filtro-consultas-usuario"
+                                        class="text-[11px] font-bold text-cocoa/60 uppercase tracking-wider"
+                                        data-i18n="profile_filter_consultation_type">Consultas</label>
+                                    <select id="filtro-consultas-usuario" onchange="filtrarConsultasUsuario('psicologia', this.value)"
+                                        class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2 text-xs sm:text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                        <option value="todas" data-i18n="profile_filter_all_consultations">Todas las consultas</option>
+                                        <option value="isabel">Isabel (PNI)</option>
+                                        <option value="miriam">Miriam (Psicología)</option>
+                                        <option value="grupos">Grupos (Miriam)</option>
+                                        <option value="introductorias">Sesiones introductorias</option>
+                                        <option value="disponibles" data-i18n="profile_filter_available_consultations">Disponibles</option>
+                                        <option value="mis-reservas" data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -21718,6 +21699,16 @@
         function filtrarConsultasUsuario(tipo, filtro) {
             if (tipo === 'psicologia') {
                 filtroPsicologiaUsuario = filtro || 'todas';
+                const sel = document.getElementById('filtro-consultas-usuario');
+                if (sel) {
+                    if (sel.querySelector(`option[value="${filtroPsicologiaUsuario}"]`)) {
+                        sel.value = filtroPsicologiaUsuario;
+                    } else if (filtroPsicologiaUsuario === 'isabel-intro') {
+                        sel.value = 'isabel';
+                    } else if (filtroPsicologiaUsuario === 'miriam-intro') {
+                        sel.value = 'miriam';
+                    }
+                }
                 ['todas', 'individuales', 'isabel', 'miriam', 'grupos', 'introductorias', 'disponibles', 'mis-reservas'].forEach(f => {
                     const btn = document.getElementById(`psico-filtro-${f}`);
                     if (btn) {
@@ -21894,6 +21885,17 @@
         function renderizarPsicologia() {
             const container = document.getElementById('psicologia-container');
             if (!container) return;
+
+            const sel = document.getElementById('filtro-consultas-usuario');
+            if (sel && sel.value !== filtroPsicologiaUsuario) {
+                if (sel.querySelector(`option[value="${filtroPsicologiaUsuario}"]`)) {
+                    sel.value = filtroPsicologiaUsuario;
+                } else if (filtroPsicologiaUsuario === 'isabel-intro') {
+                    sel.value = 'isabel';
+                } else if (filtroPsicologiaUsuario === 'miriam-intro') {
+                    sel.value = 'miriam';
+                }
+            }
 
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
