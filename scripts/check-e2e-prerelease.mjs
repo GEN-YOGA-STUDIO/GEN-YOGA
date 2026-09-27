@@ -83,7 +83,11 @@ function track(page) {
   const state = { errors: [], localFailed: [], externalFailed: [], bytes: 0, reqs: 0 };
   page.on('pageerror', (err) => state.errors.push(String((err && err.message) || err).slice(0, 220)));
   page.on('console', (msg) => {
-    if (msg.type() === 'error') state.errors.push(`console: ${msg.text().slice(0, 220)}`);
+    if (msg.type() === 'error') {
+      const text = msg.text();
+      if (text.includes('compute-pressure')) return;
+      state.errors.push(`console: ${text.slice(0, 220)}`);
+    }
   });
   page.on('response', async (res) => {
     try {

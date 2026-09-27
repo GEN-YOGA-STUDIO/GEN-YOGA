@@ -242,6 +242,12 @@
             will-change: transform;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
+            /* Column flexbox so every card always fills exactly the deck height.
+               Without this each .folder-body had an auto (content-driven) height:
+               the card with the longest text (Miriam) ended lower than the rest and
+               its brown background kept peeking underneath the active folder. */
+            display: flex;
+            flex-direction: column;
         }
 
         .folder-card-container.is-active,
@@ -257,6 +263,13 @@
             margin-top: -1px;
             box-shadow: 0 20px 45px -15px rgba(38, 22, 12, 0.15);
             z-index: 20;
+            /* Stretch to the remaining deck height so all folder bodies share the
+               exact same box (and the same bottom edge), regardless of how long
+               their content is. Any overflow is clipped instead of spilling over
+               the cards underneath. */
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
         }
 
         /* Carpetas con pestaña en la izquierda: esquina superior izquierda recta */

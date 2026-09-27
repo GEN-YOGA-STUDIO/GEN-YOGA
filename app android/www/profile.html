@@ -7220,79 +7220,97 @@
 
             // Auto-reserve after returning from Stripe checkout
             try {
+                const urlParamsBooking = new URLSearchParams(window.location.search);
+                const isPaymentSuccess = urlParamsBooking.get('payment_success') === 'true';
+                const paymentSessionId = (urlParamsBooking.get('session_id') || '').trim();
+                const hasValidPaymentVerification = isPaymentSuccess && (!paymentSessionId || paymentSessionId.startsWith('cs_live_'));
+
                 const pendingClaseRaw = safeGetItem('pending_booking_clase_id', '');
                 const pendingClaseId = safePositiveInteger(pendingClaseRaw);
-                if (pendingClaseRaw && !pendingClaseId) {
-                    safeRemoveItem('pending_booking_clase_id');
-                } else if (pendingClaseId) {
-                    setTimeout(() => {
-                        reservar(pendingClaseId, { automaticPostPayment: true });
-                    }, 800);
-                }
-
                 const pendingConsultationRaw = safeGetItem('pending_consultation_booking', '');
-                if (pendingConsultationRaw) {
-                    try {
-                        const pendingData = JSON.parse(pendingConsultationRaw);
-                        safeRemoveItem('pending_consultation_booking');
-                        if (pendingData && pendingData.tipo) {
-                            setTimeout(async () => {
-                                try {
-                                    if (pendingData.isVirtual && pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
-                                        const startIso = new Date(`${pendingData.fecha}T${pendingData.hora}:00`).toISOString();
-                                        await client.rpc('reservar_consulta_virtual', {
-                                            p_tipo: pendingData.tipo,
-                                            p_profesor_id: Number(pendingData.profesor_id),
-                                            p_fecha_inicio: startIso,
-                                            p_user_id: currentUser.id,
-                                            p_cobrar_saldo: false,
-                                            p_producto_contratado: pendingData.producto_contratado || null,
-                                            p_stripe_lookup_key: pendingData.lookup_key || null,
-                                            p_origen_pago: 'online'
+
+                if (!hasValidPaymentVerification) {
+                    // Si no venimos de una redirección verificada de pago (p. ej. el usuario canceló,
+                    // cerró la pasarela de Stripe, pulsó atrás o recargó), purgar cualquier reserva pendiente.
+                    if (pendingClaseRaw) safeRemoveItem('pending_booking_clase_id');
+                    if (pendingConsultationRaw) safeRemoveItem('pending_consultation_booking');
+                } else {
+                    if (pendingClaseId) {
+                        safeRemoveItem('pending_booking_clase_id');
+                        setTimeout(() => {
+                            reservar(pendingClaseId, { automaticPostPayment: true });
+                        }, 800);
+                    }
+
+                    if (pendingConsultationRaw) {
+                        try {
+                            const pendingData = JSON.parse(pendingConsultationRaw);
+                            safeRemoveItem('pending_consultation_booking');
+                            if (pendingData && pendingData.tipo) {
+                                setTimeout(async () => {
+                                    try {
+                                        if (pendingData.isVirtual && pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
+                                            const startIso = new Date(`${pendingData.fecha}T${pendingData.hora}:00`).toISOString();
+                                            await client.rpc('reservar_consulta_virtual', {
+                                                p_tipo: pendingData.tipo,
+                                                p_profesor_id: Number(pendingData.profesor_id),
+                                                p_fecha_inicio: startIso,
+                                                p_user_id: currentUser.id,
+                                                p_cobrar_saldo: true,
+                                                p_producto_contratado: pendingData.producto_contratado || null,
+                                                p_stripe_lookup_key: pendingData.lookup_key || null,
+                                                p_origen_pago: 'online'
+                                            });
+                                        } else if (pendingData.clase_id) {
+                                            const numericClaseId = safePositiveInteger(pendingData.clase_id);
+                                            await client.rpc('reservar_consulta_atomica', {
+                                                p_tipo: pendingData.tipo,
+                                                p_clase_id: numericClaseId,
+                                                p_user_id: currentUser.id,
+                                                p_cobrar_saldo: true,
+                                                p_producto_contratado: pendingData.producto_contratado || null,
+                                                p_stripe_lookup_key: pendingData.lookup_key || null,
+                                                p_origen_pago: 'online'
+                                            });
+                                        }
+                                        playYogaSound();
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: '¡Cita Reservada y Confirmada!',
+                                            html: `Tu reserva se ha completado correctamente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pagado online:</b> ${escapeHtml(pendingData.producto_contratado || 'Consulta')}</span>`,
+                                            showConfirmButton: false,
+                                            timer: 2500
                                         });
-                                    } else if (pendingData.clase_id) {
-                                        const numericClaseId = safePositiveInteger(pendingData.clase_id);
-                                        await client.rpc('reservar_consulta_atomica', {
-                                            p_tipo: pendingData.tipo,
-                                            p_clase_id: numericClaseId,
-                                            p_user_id: currentUser.id,
-                                            p_cobrar_saldo: false,
-                                            p_producto_contratado: pendingData.producto_contratado || null,
-                                            p_stripe_lookup_key: pendingData.lookup_key || null,
-                                            p_origen_pago: 'online'
-                                        });
-                                        try {
-                                            const { error: optClaseErr } = await client.from('clases').update({
-                                                metodo_pago: pendingData.producto_contratado || null,
-                                                stripe_lookup_key: pendingData.lookup_key || null
-                                            }).eq('id', numericClaseId);
-                                            if (optClaseErr) {
-                                                console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', optClaseErr.message);
-                                            }
-                                        } catch (eOpt) {
-                                            console.warn('Columnas opcionales metodo_pago/stripe_lookup_key en clases:', eOpt);
+                                        await refrescarConsultas(pendingData.tipo);
+                                    } catch (err) {
+                                        console.warn('Error al auto-reservar consulta post-pago:', err);
+                                        const errMsg = err?.message || '';
+                                        if (errMsg.includes('credit') || errMsg.includes('saldo')) {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Pago no verificado',
+                                                text: 'No se ha detectado saldo suficiente para confirmar esta reserva. Si realizaste el pago en Stripe, el saldo puede tardar unos segundos en reflejarse; por favor recarga la página.',
+                                                confirmButtonColor: '#795244'
+                                            });
+                                        } else if (pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
+                                            abrirConfirmacionReservaVirtual(pendingData.tipo, pendingData.profesor_id, pendingData.fecha, pendingData.hora);
                                         }
                                     }
-                                    playYogaSound();
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: '¡Cita Reservada y Confirmada!',
-                                        html: `Tu reserva se ha completado correctamente.<br><span class="text-xs text-cocoa/70 mt-1 block"><b>Pagado online:</b> ${escapeHtml(pendingData.producto_contratado || 'Consulta')}</span>`,
-                                        showConfirmButton: false,
-                                        timer: 2500
-                                    });
-                                    await refrescarConsultas(pendingData.tipo);
-                                } catch (err) {
-                                    console.warn('Error al auto-reservar consulta post-pago:', err);
-                                    if (pendingData.profesor_id && pendingData.fecha && pendingData.hora) {
-                                        abrirConfirmacionReservaVirtual(pendingData.tipo, pendingData.profesor_id, pendingData.fecha, pendingData.hora);
-                                    }
-                                }
-                            }, 1000);
+                                }, 1000);
+                            }
+                        } catch (_) {
+                            safeRemoveItem('pending_consultation_booking');
                         }
-                    } catch (_) {
-                        safeRemoveItem('pending_consultation_booking');
                     }
+
+                    // Limpiar parámetros de la URL para evitar reintentos en futuras recargas de página
+                    try {
+                        const cleanUrl = new URL(window.location.href);
+                        cleanUrl.searchParams.delete('payment_success');
+                        cleanUrl.searchParams.delete('session_id');
+                        const newQuery = cleanUrl.searchParams.toString();
+                        window.history.replaceState({}, document.title, cleanUrl.pathname + (newQuery ? '?' + newQuery : ''));
+                    } catch (_) {}
                 }
             } catch (e) {
                 console.warn('Error en auto-reserva post pago:', e);

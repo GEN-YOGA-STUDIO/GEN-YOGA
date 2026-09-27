@@ -111,7 +111,7 @@
                 <span>Redirigiéndote a tu perfil en <span id="countdown">5</span> segundos...</span>
             </div>
             <div class="flex flex-col gap-3 w-full">
-                <a href="profile.html" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+                <a id="btn-standard-profile" href="profile.html?payment_success=true" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
                     Ir a mi Perfil
                 </a>
                 <input type="hidden" id="session-id" name="session_id" value="" />
@@ -446,13 +446,22 @@
         function startCountdown(seconds) {
             const countdownEl = document.getElementById('countdown');
             if (redirectCountdownTimer) clearInterval(redirectCountdownTimer);
+            const targetUrl = stripeSessionId
+                ? `profile.html?payment_success=true&session_id=${encodeURIComponent(stripeSessionId)}`
+                : 'profile.html?payment_success=true';
+
+            const btnProfile = document.getElementById('btn-standard-profile');
+            if (btnProfile) {
+                btnProfile.href = targetUrl;
+            }
+
             redirectCountdownTimer = setInterval(() => {
                 seconds--;
                 if (countdownEl) countdownEl.textContent = seconds;
                 if (seconds <= 0) {
                     clearInterval(redirectCountdownTimer);
                     redirectCountdownTimer = null;
-                    window.location.href = 'profile.html';
+                    window.location.href = targetUrl;
                 }
             }, 1000);
         }
