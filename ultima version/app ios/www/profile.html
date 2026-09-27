@@ -453,14 +453,49 @@
         .calendar-day.inicio-calendar-day.selected {
             background: #ffffff !important;
             color: #26160c !important;
-            border: 2px solid #9b7b37 !important;
-            box-shadow: 0 10px 24px rgba(155, 123, 55, 0.18);
+            border: 2px solid #26160c !important;
+            box-shadow: 0 8px 24px rgba(38, 22, 12, 0.18) !important;
         }
 
         .calendar-day.inicio-calendar-day.has-reservations {
-            background: #ffffff;
-            border-color: rgba(155, 123, 55, 0.22);
-            box-shadow: 0 8px 18px rgba(38, 22, 12, 0.08);
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%) !important;
+            border: 2px solid #059669 !important;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.18) !important;
+            cursor: pointer;
+        }
+
+        .calendar-day.inicio-calendar-day.has-reservations:hover:not(.disabled):not(.other-month) {
+            transform: translateY(-2px);
+            background: #ffffff !important;
+            border-color: #047857 !important;
+            box-shadow: 0 8px 22px rgba(5, 150, 105, 0.28) !important;
+        }
+
+        .calendar-day.inicio-calendar-day.has-reservations .calendar-day-number {
+            background: #059669 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+        }
+
+        .calendar-day-booking-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 0.65rem;
+            line-height: 1;
+            font-weight: 900;
+            background: #059669;
+            color: #ffffff;
+            border-radius: 9999px;
+            padding: 0.15rem 0.35rem;
+            box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25);
+        }
+
+        .calendar-day.inicio-calendar-day.has-reservations.selected {
+            border: 2.5px solid #26160c !important;
+            outline: 2px solid #059669 !important;
+            outline-offset: 1px;
+            box-shadow: 0 10px 24px rgba(5, 150, 105, 0.35) !important;
         }
 
         .calendar-day-number {
@@ -481,7 +516,7 @@
         }
 
         .calendar-day.selected .calendar-day-number {
-            background: #9b7b37;
+            background: #26160c;
             color: #ffffff;
         }
 
@@ -499,38 +534,44 @@
             min-width: 0;
             border-radius: 0.55rem;
             padding: 0.22rem 0.38rem;
-            font-size: 0.65rem;
-            line-height: 1.05;
-            font-weight: 900;
+            font-size: 0.68rem;
+            line-height: 1.1;
+            font-weight: 800;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             border: 1px solid transparent;
-            box-shadow: 0 4px 10px rgba(38, 22, 12, 0.05);
+            box-shadow: 0 2px 6px rgba(38, 22, 12, 0.05);
         }
 
         .calendar-reservation-pill.yoga {
-            color: #047857;
-            background: rgba(16, 185, 129, 0.12);
-            border-color: rgba(16, 185, 129, 0.28);
+            color: #065f46;
+            background: #ecfdf5;
+            border-color: #6ee7b7;
+        }
+
+        .calendar-reservation-pill.taller {
+            color: #9a3412;
+            background: #fff7ed;
+            border-color: #fdba74;
         }
 
         .calendar-reservation-pill.psicologia {
-            color: #1d4ed8;
-            background: rgba(59, 130, 246, 0.12);
-            border-color: rgba(59, 130, 246, 0.28);
+            color: #1e40af;
+            background: #eff6ff;
+            border-color: #93c5fd;
         }
 
         .calendar-reservation-pill.nutricion {
-            color: #6d28d9;
-            background: rgba(139, 92, 246, 0.12);
-            border-color: rgba(139, 92, 246, 0.28);
+            color: #5b21b6;
+            background: #f5f3ff;
+            border-color: #c4b5fd;
         }
 
         .calendar-reservation-more {
-            color: rgba(38, 22, 12, 0.55);
-            font-size: 0.62rem;
-            font-weight: 800;
+            color: #065f46;
+            font-size: 0.65rem;
+            font-weight: 900;
             line-height: 1;
             padding-left: 0.15rem;
         }
@@ -2060,10 +2101,10 @@
 
                 <!-- 1. VISTA INICIO -->
                 <div id="view-inicio" class="fade-in">
-                    <!-- Layout 50/50: Izquierda Calendario y Citas, Derecha Bonos y Saldos en Matriz 2x2 -->
+                    <!-- Layout 50/50: Izquierda Calendario, Derecha 1º Reservas Activas y 2º Bonos y Saldos -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                         
-                        <!-- Columna Izquierda (50% en desktop): Calendario y Próximas Citas -->
+                        <!-- Columna Izquierda (50% en desktop): Calendario con días de reserva bien destacados -->
                         <div class="lg:col-span-6 space-y-6">
                             <!-- Calendario de Clases y Reservas -->
                             <div class="profile-calendar-main">
@@ -2100,10 +2141,18 @@
                                     <div id="inicio-calendar-grid" class="grid grid-cols-7 gap-1"></div>
 
                                     <div
-                                        class="mt-4 pt-4 border-t border-cocoa/10 flex flex-row flex-wrap gap-4 justify-center">
+                                        class="mt-4 pt-4 border-t border-cocoa/10 flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800">
+                                            <span class="w-3 h-3 rounded-full bg-emerald-600 inline-flex items-center justify-center text-white text-[8px] font-black"><i class="ph-bold ph-check"></i></span>
+                                            <span>Tus reservas</span>
+                                        </div>
                                         <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
                                             <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block"></span>
                                             <span data-i18n="common_classes">Clases</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b] inline-block"></span>
+                                            <span>Talleres</span>
                                         </div>
                                         <div class="flex items-center gap-1.5 text-[11px] font-bold text-cocoa/60">
                                             <span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6] inline-block"></span>
@@ -2122,30 +2171,43 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Mis Próximas Citas y Clases -->
+                        <!-- Columna Derecha (50% en desktop): 1º Reservas activas, 2º Bonos y Saldos -->
+                        <div class="lg:col-span-6 space-y-6">
+                            
+                            <!-- 1. Mis Próximas Citas y Clases (Reservas Activas) -->
                             <div class="profile-calendar-side">
-                                <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa mb-3 flex items-center gap-2 pl-1">
-                                    <i class="ph-bold ph-calendar-check text-olive"></i> <span
-                                        data-i18n="profile_upcoming_title">Mis Próximas Citas y Clases</span>
-                                </h3>
+                                <div class="flex items-center justify-between gap-2 mb-3 pl-1">
+                                    <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa flex items-center gap-2">
+                                        <i class="ph-bold ph-calendar-check text-olive"></i>
+                                        <span data-i18n="profile_upcoming_title">Mis Reservas Activas</span>
+                                    </h3>
+                                    <span id="inicio-reservas-count-badge" class="hidden text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full"></span>
+                                </div>
                                 <div id="inicio-consolidado-container" class="space-y-3"></div>
                                 <div id="inicio-empty-state"
                                     class="hidden flex flex-col items-center justify-center py-8 text-center bg-white/50 border border-cocoa/10 rounded-3xl p-5">
                                     <div class="bg-white p-4 rounded-full mb-3 shadow-xs border border-cocoa/10"><i
                                             class="ph-duotone ph-calendar-blank text-3xl text-cocoa/30"></i></div>
                                     <h4 class="brand-font text-lg font-bold text-cocoa mb-1"
-                                        data-i18n="profile_no_bookings_title">No tienes reservas</h4>
-                                    <p class="text-cocoa/60 text-xs font-light max-w-xs mx-auto"
+                                        data-i18n="profile_no_bookings_title">No tienes reservas activas</h4>
+                                    <p class="text-cocoa/60 text-xs font-light max-w-xs mx-auto mb-4"
                                         data-i18n="profile_no_bookings_desc">Navega por las pestañas
                                         de Clases y Consultas para programar tus reservas.</p>
+                                    <div class="flex flex-wrap items-center justify-center gap-2">
+                                        <button type="button" onclick="switchPublicView('horarios')" class="px-4 py-2 bg-olive hover:bg-olive/90 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer">
+                                            Ver Clases
+                                        </button>
+                                        <button type="button" onclick="switchPublicView('psicologia')" class="px-4 py-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer">
+                                            Ver Consultas
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Columna Derecha (50% en desktop): Bonos y Saldos en Matriz 2 Columnas -->
-                        <div class="lg:col-span-6 client-only">
-                            <div id="section-mis-saldos-cliente" class="mb-2">
+                            <!-- 2. Bonos y Saldos en Matriz 2 Columnas -->
+                            <div id="section-mis-saldos-cliente" class="client-only pt-2 border-t border-cocoa/10">
                                 <div class="flex items-center justify-between gap-2 mb-3 pl-1">
                                     <div>
                                         <h3 class="brand-font text-xl sm:text-2xl font-bold text-cocoa flex items-center gap-2">
@@ -2163,6 +2225,7 @@
                                     <!-- Rellenado dinámicamente por renderSaldosClienteV69() -->
                                 </div>
                             </div>
+
                         </div>
 
                     </div>
@@ -23471,57 +23534,39 @@
         }
 
         function getReservasInicioPorFecha(dateKey) {
-            if (userBookingsCache && userBookingsCache.length > 0) {
-                return userBookingsCache.filter(b => formatDateLocal(b.fecha) === dateKey);
-            }
-
-            const bookings = [];
-
-            allClasesCache.forEach(c => {
-                if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
-                    bookings.push({
-                        tipo: 'yoga',
-                        tipoLabel: profileT('common_class', 'Clase'),
-                        nombre: c.nombre || profileT('common_class', 'Clase'),
-                        fecha: new Date(c.fecha_inicio)
-                    });
+            const map = new Map();
+            (userBookingsCache || []).forEach(b => {
+                if (formatDateLocal(b.fecha) === dateKey) {
+                    map.set(String(b.id || b.reservaId), b);
                 }
             });
 
-            allTalleresCache.forEach(c => {
-                if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
-                    bookings.push({
-                        tipo: 'yoga',
-                        tipoLabel: 'Taller',
-                        nombre: c.nombre || 'Taller Especial',
-                        fecha: new Date(c.fecha_inicio)
-                    });
+            [...(allClasesCache || []), ...(allTalleresCache || []), ...(allPsicologiaCache || []), ...(allNutricionCache || [])].forEach(c => {
+                if (c && c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
+                    const key = String(c.id);
+                    if (!map.has(key)) {
+                        const esTaller = String(c.tipo_clase || '').toLowerCase() === 'taller';
+                        const esPsico = ['psicologia', 'consulta_grupal'].includes(c.tipo_clase);
+                        const esNutri = c.tipo_clase === 'nutricion';
+                        const tipo = esPsico ? 'psicologia' : (esNutri ? 'nutricion' : 'yoga');
+                        const tipoLabel = esTaller ? 'Taller' : (esPsico ? profileT('common_psychology', 'Psicología') : (esNutri ? profileT('common_nutrition', 'Nutrición') : profileT('common_class', 'Clase')));
+                        map.set(key, {
+                            id: c.id,
+                            reservaId: c.miReserva.id,
+                            tipo,
+                            tipoLabel,
+                            nombre: c.nombre || tipoLabel,
+                            fecha: new Date(c.fecha_inicio),
+                            profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
+                            profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
+                            colorClass: esTaller ? 'bg-terracotta/10 text-terracotta border-terracotta/20' : (esPsico ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20' : (esNutri ? 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20' : 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20')),
+                            descripcion: c.descripcion || ''
+                        });
+                    }
                 }
             });
 
-            allPsicologiaCache.forEach(c => {
-                if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
-                    bookings.push({
-                        tipo: 'psicologia',
-                        tipoLabel: profileT('common_psychology', 'Psicología'),
-                        nombre: c.nombre || profileT('common_consultation', 'Consulta'),
-                        fecha: new Date(c.fecha_inicio)
-                    });
-                }
-            });
-
-            allNutricionCache.forEach(c => {
-                if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
-                    bookings.push({
-                        tipo: 'nutricion',
-                        tipoLabel: profileT('common_nutrition', 'Nutrición'),
-                        nombre: c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'),
-                        fecha: new Date(c.fecha_inicio)
-                    });
-                }
-            });
-
-            return bookings.sort((a, b) => a.fecha - b.fecha);
+            return Array.from(map.values()).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
         }
 
         function renderizarCalendarioInicio() {
@@ -23566,10 +23611,23 @@
                 const div = document.createElement('div');
                 div.className = 'calendar-day inicio-calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 relative';
 
+                const headerRow = document.createElement('div');
+                headerRow.className = 'flex items-center justify-between w-full mb-0.5';
+
                 const dayNumber = document.createElement('span');
                 dayNumber.className = 'calendar-day-number';
                 dayNumber.textContent = day;
-                div.appendChild(dayNumber);
+                headerRow.appendChild(dayNumber);
+
+                if (reservasDia.length > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'calendar-day-booking-badge';
+                    badge.innerHTML = `<i class="ph-bold ph-check"></i>${reservasDia.length}`;
+                    badge.title = `${reservasDia.length} ${reservasDia.length === 1 ? 'reserva confirmada' : 'reservas confirmadas'}`;
+                    headerRow.appendChild(badge);
+                }
+
+                div.appendChild(headerRow);
 
                 if (isToday) div.classList.add('today');
                 if (isSelected) div.classList.add('selected');
@@ -23582,7 +23640,8 @@
                     reservasDia.slice(0, 2).forEach(b => {
                         const hora = formatDisplayTime(b.fecha);
                         const pill = document.createElement('div');
-                        pill.className = `calendar-reservation-pill ${b.tipo}`;
+                        const tipoClase = b.tipoLabel === 'Taller' ? 'taller' : b.tipo;
+                        pill.className = `calendar-reservation-pill ${tipoClase}`;
                         pill.title = `${b.tipoLabel}: ${b.nombre} · ${hora}`;
                         pill.textContent = `${hora} ${b.nombre}`;
                         reservasContainer.appendChild(pill);
@@ -23828,77 +23887,36 @@
             if (!container) return;
 
             let bookings = [];
-            if (userBookingsCache && userBookingsCache.length > 0) {
-                bookings = [...userBookingsCache];
-            } else {
-                allClasesCache.forEach(c => {
-                    if (c.miReserva) {
-                        bookings.push({
-                            id: c.id,
-                            reservaId: c.miReserva.id,
-                            tipo: 'yoga',
-                            nombre: c.nombre,
-                            fecha: new Date(c.fecha_inicio),
-                            profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN Yoga',
-                            profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                            colorClass: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20',
-                            tipoLabel: profileT('common_class', 'Clase'),
-                            descripcion: c.descripcion || ''
-                        });
-                    }
-                });
+            const map = new Map();
+            (userBookingsCache || []).forEach(b => {
+                map.set(String(b.id || b.reservaId), b);
+            });
 
-                allTalleresCache.forEach(c => {
-                    if (c.miReserva) {
-                        bookings.push({
+            [...(allClasesCache || []), ...(allTalleresCache || []), ...(allPsicologiaCache || []), ...(allNutricionCache || [])].forEach(c => {
+                if (c && c.miReserva) {
+                    const key = String(c.id);
+                    if (!map.has(key)) {
+                        const esTaller = String(c.tipo_clase || '').toLowerCase() === 'taller';
+                        const esPsico = ['psicologia', 'consulta_grupal'].includes(c.tipo_clase);
+                        const esNutri = c.tipo_clase === 'nutricion';
+                        const tipo = esPsico ? 'psicologia' : (esNutri ? 'nutricion' : 'yoga');
+                        const tipoLabel = esTaller ? 'Taller' : (esPsico ? profileT('common_psychology', 'Psicología') : (esNutri ? profileT('common_nutrition', 'Nutrición') : profileT('common_class', 'Clase')));
+                        map.set(key, {
                             id: c.id,
                             reservaId: c.miReserva.id,
-                            tipo: 'yoga',
-                            nombre: c.nombre,
-                            fecha: new Date(c.fecha_inicio),
-                            profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN Yoga',
-                            profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                            colorClass: 'bg-terracotta/10 text-terracotta border-terracotta/20',
-                            tipoLabel: 'Taller',
-                            descripcion: c.descripcion || ''
-                        });
-                    }
-                });
-
-                allPsicologiaCache.forEach(c => {
-                    if (c.miReserva) {
-                        bookings.push({
-                            id: c.id,
-                            reservaId: c.miReserva.id,
-                            tipo: 'psicologia',
-                            nombre: c.nombre || profileT('common_consultation', 'Consulta'),
+                            tipo,
+                            tipoLabel,
+                            nombre: c.nombre || tipoLabel,
                             fecha: new Date(c.fecha_inicio),
                             profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
                             profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                            colorClass: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20',
-                            tipoLabel: profileT('common_psychology', 'Psicología'),
+                            colorClass: esTaller ? 'bg-terracotta/10 text-terracotta border-terracotta/20' : (esPsico ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20' : (esNutri ? 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20' : 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20')),
                             descripcion: c.descripcion || ''
                         });
                     }
-                });
-
-                allNutricionCache.forEach(c => {
-                    if (c.miReserva) {
-                        bookings.push({
-                            id: c.id,
-                            reservaId: c.miReserva.id,
-                            tipo: 'nutricion',
-                            nombre: c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'),
-                            fecha: new Date(c.fecha_inicio),
-                            profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
-                            profesionalFoto: getTeacherPhotoFallback(c.profesionales) || (c.profesionales ? c.profesionales.foto_url : null),
-                            colorClass: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20',
-                            tipoLabel: profileT('common_nutrition', 'Nutrición'),
-                            descripcion: c.descripcion || ''
-                        });
-                    }
-                });
-            }
+                }
+            });
+            bookings = Array.from(map.values());
 
             if (!isAdmin && esTrabajador()) {
                 bookings = bookings.filter(b => {
@@ -23922,9 +23940,30 @@
                 bookingsAMostrar = bookings.filter(b => b.fecha >= hoy);
             }
 
+            const badgeEl = document.getElementById('inicio-reservas-count-badge');
+            if (badgeEl) {
+                if (bookingsAMostrar.length > 0) {
+                    badgeEl.textContent = `${bookingsAMostrar.length} ${bookingsAMostrar.length === 1 ? 'activa' : 'activas'}`;
+                    badgeEl.classList.remove('hidden');
+                } else {
+                    badgeEl.classList.add('hidden');
+                }
+            }
+
             if (bookingsAMostrar.length === 0) {
                 container.innerHTML = '';
-                if (emptyState) emptyState.classList.remove('hidden');
+                if (emptyState) {
+                    emptyState.classList.remove('hidden');
+                    const titleEl = emptyState.querySelector('h4');
+                    const descEl = emptyState.querySelector('p');
+                    if (selectedDateInicio) {
+                        if (titleEl) titleEl.textContent = 'Sin reservas en esta fecha';
+                        if (descEl) descEl.textContent = 'No tienes ninguna clase o consulta reservada para el día seleccionado.';
+                    } else {
+                        if (titleEl) titleEl.textContent = 'No tienes reservas activas';
+                        if (descEl) descEl.textContent = 'Navega por las pestañas de Clases y Consultas para programar tus reservas.';
+                    }
+                }
                 return;
             }
 
