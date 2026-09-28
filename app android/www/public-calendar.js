@@ -18,6 +18,7 @@
         'tipo_clase_id',
         'activa',
         'es_especial',
+        'es_gratuita',
         'companion_modality',
         'profesionales!inner(id,nombre,apellidos,color,visible_publico)'
     ].join(',');
@@ -114,7 +115,7 @@
             therapeutic: 'Yoga terapéutico',
             silviaYoga: 'Yoga con Silvia',
             ayurveda: 'Yoga y Ayurveda',
-            introductory: 'Sesión Introductoria de Yoga',
+            introductory: 'Sesión Introductoria',
             special: 'Talleres',
             filterPractice: 'Filtrar por práctica',
             filterSpecialist: 'Filtrar por profesional',
@@ -187,7 +188,7 @@
             therapeutic: 'Therapeutic yoga',
             silviaYoga: 'Yoga with Silvia',
             ayurveda: 'Yoga and Ayurveda',
-            introductory: 'Introductory Yoga Session',
+            introductory: 'Introductory Session',
             special: 'Workshops',
             filterPractice: 'Filter by practice',
             filterSpecialist: 'Filter by specialist',
@@ -605,12 +606,14 @@
         const mins = madridStart.minutes % 60;
         const timeStr = String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
         const profSlug = professor.slug || '';
-        const isOfficialFree = (
-            (madridStart.dateKey === '2026-08-30' && (timeStr === '10:00' || timeStr === '12:00') && profSlug.includes('angel')) ||
+        const isOfficialFree = Boolean(
+            raw?.es_gratuita === true ||
+            isIntroOrOpen ||
+            ((madridStart.dateKey === '2026-08-30' && (timeStr === '10:00' || timeStr === '12:00') && profSlug.includes('angel')) ||
             ((madridStart.dateKey === '2026-09-01' || madridStart.dateKey === '2026-09-03') && timeStr === '19:00' && profSlug.includes('yanira')) ||
             (((madridStart.dateKey === '2026-09-01' && timeStr === '20:15') || (madridStart.dateKey === '2026-09-02' && timeStr === '11:30')) && (profSlug.includes('miriam') || classType === 'psicologia')) ||
             ((madridStart.dateKey === '2026-09-18' || madridStart.dateKey === '2026-09-25') && timeStr === '11:00' && profSlug.includes('silvia')) ||
-            ((madridStart.dateKey === '2026-09-03' || madridStart.dateKey === '2026-09-22') && timeStr === '11:00' && (profSlug.includes('isabel') || classType === 'nutricion' || classType === 'psicologia'))
+            ((madridStart.dateKey === '2026-09-03' || madridStart.dateKey === '2026-09-22') && timeStr === '11:00' && (profSlug.includes('isabel') || classType === 'nutricion' || classType === 'psicologia')))
         );
 
         const complete = exactAvailability
@@ -1234,7 +1237,7 @@
         if (targetMode === 'talleres') {
             query = query.or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true');
         } else if (targetMode === 'clases') {
-            query = query.or('tipo_clase.eq.yoga,tipo_clase.eq.clase_especial,tipo_clase.eq.taller,tipo_clase.is.null,es_especial.eq.true,es_especial.eq.false,nombre.ilike.%introductor%,nombre.ilike.%abierta%,nombre.ilike.%bienvenida%');
+            query = query.or('tipo_clase.eq.yoga,tipo_clase.eq.clase_especial,tipo_clase.eq.taller,tipo_clase.is.null,es_especial.eq.true,es_especial.eq.false,nombre.ilike.%introductor%,nombre.ilike.%abierta%,nombre.ilike.%bienvenida%,es_gratuita.eq.true');
         }
 
         const { data, error } = await query;
@@ -1248,8 +1251,8 @@
         if (targetMode === 'talleres') {
             filtered = mapped.filter(item => item.classType === 'taller' || item.classType === 'especial' || item.classType === 'clase_especial' || item.isSpecial);
         } else if (targetMode === 'clases') {
-            // targetMode === 'clases': muestra clases de yoga regulares, clases especiales y talleres (excluye consultas)
-            filtered = mapped.filter(item => item.classType !== 'psicologia' && item.classType !== 'nutricion' && item.classType !== 'consulta' && item.classType !== 'consulta_grupal');
+            // targetMode === 'clases': muestra clases de yoga regulares, clases especiales, talleres y sesiones introductorias (excluye consultas individuales regulares)
+            filtered = mapped.filter(item => (item.isFree || item.style === 'sesion-introductoria' || /introductor|bienvenida|abierta/i.test(item.name || '')) || (item.classType !== 'psicologia' && item.classType !== 'nutricion' && item.classType !== 'consulta' && item.classType !== 'consulta_grupal'));
         } else {
             filtered = mapped;
         }
