@@ -2,6 +2,9 @@
 
 Este documento describe el estándar operativo para la Inteligencia Artificial (Antigravity y futuros agentes) para realizar modificaciones, pruebas y despliegues en **GEN Yoga** con máxima eficiencia de tokens, alta velocidad y cero errores en producción.
 
+> ## 🛑 PASO 0 — Antes de nada
+> Lee **`docs/FALLOS_PARA_IA.md`** (briefing autogenerado por el chequeo nocturno: es lo primero que debes analizar). Si lista fallos pendientes, esos van primero — clasifícalos como incidencia y corrígelos antes de cualquier desarrollo. En verde, sigue con el paso 1.
+
 ---
 
 ## 1. Filosofía de Trabajo

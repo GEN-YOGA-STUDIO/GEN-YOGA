@@ -1799,6 +1799,14 @@
         }
         if (Object.prototype.hasOwnProperty.call(options, 'style') || Object.prototype.hasOwnProperty.call(options, 'tipo') || Object.prototype.hasOwnProperty.call(options, 'type')) {
             state.style = canonicalStyle(options.style || options.tipo || options.type);
+            // Una tarjeta de estilo es siempre contexto yoga: no heredar modo/profe
+            // de una apertura anterior (p. ej. consultas de Miriam).
+            const hasMode = Object.prototype.hasOwnProperty.call(options, 'mode');
+            const hasTeacher = Object.prototype.hasOwnProperty.call(options, 'teacher') || Object.prototype.hasOwnProperty.call(options, 'profesional') || Object.prototype.hasOwnProperty.call(options, 'profesor');
+            if (!hasMode && !hasTeacher) {
+                state.mode = 'clases';
+                state.teacher = '';
+            }
         }
         if (Object.prototype.hasOwnProperty.call(options, 'classId')) {
             state.classId = safePositiveInteger(options.classId);
@@ -1855,6 +1863,14 @@
         }
         hidePanel();
         clearCalendarUrl();
+        // Cada apertura parte de estado limpio: la URL ya quedó limpia.
+        state.mode = 'clases';
+        state.teacher = '';
+        state.style = '';
+        state.classId = null;
+        state.oferta = '';
+        state.explicitWeek = false;
+        state.targetResolved = false;
         parseUrlState();
     }
 

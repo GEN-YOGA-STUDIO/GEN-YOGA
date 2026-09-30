@@ -15,6 +15,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
+import { buildBriefing } from './nightly-briefing.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // CERT_MODE=1: valida el entorno de certificación (base alternativa) con las
@@ -919,14 +920,23 @@ await section('cliente', async () => {
       }
     }
 
-    // I5. Reservar yoga: abrir el diálogo y cancelar (jamás confirmar).
+    // I5. Reservar yoga: si hay botón, diálogo + cancelar (jamás confirmar);
+    // si no, cada tarjeta debe mostrar su estado terminal (deadline/aforo).
     await page.locator('#nav-public-horarios').first().click({ timeout: 10000 }).catch(() => {});
     await page.waitForTimeout(1500);
     {
-      const resBtn = page.locator('#view-horarios button[onclick^="reservar("]:visible').first();
-      if ((await page.locator('#view-horarios button[onclick^="reservar("]:visible').count().catch(() => 0)) === 0) {
-        warn('cliente', 'reserva yoga', 'sin clases reservables a la vista (aviso, depende de datos)');
+      const n = await page.locator('#view-horarios button[onclick^="reservar("]:visible').count().catch(() => 0);
+      if (n === 0) {
+        const txt = ((await page.locator('#view-horarios').innerText().catch(() => '')) || '').replace(/\s+/g, ' ');
+        const states = (txt.match(/reserva cerrada|completa|finalizada|no disponible|tu plaza/gi) || []).length;
+        const kids = await page.locator('#view-horarios [id^="grid-"] > *').count().catch(() => 0);
+        if (kids === 0) warn('cliente', 'reserva yoga', 'día sin clases listadas (aviso, depende de datos)');
+        else if (states > 0) pass('cliente', `sin reservables hoy: ${states} estados terminales correctos`);
+        else fail('cliente', 'reserva yoga', `${kids} tarjetas sin botón ni estado`);
       } else {
+        const resBtn = page.locator('#view-horarios button[onclick^="reservar("]:visible').first();
+        await resBtn.scrollIntoViewIfNeeded().catch(() => {});
+        await page.waitForTimeout(400);
         await resBtn.click({ timeout: 10000 }).catch(() => {});
         let dlg = '';
         try {
@@ -940,6 +950,22 @@ await section('cliente', async () => {
         }
         await cancelOnly(page);
         if (!(await swalGone(page))) fail('cliente', 'reserva yoga', 'el diálogo no se cierra al cancelar');
+      }
+    }
+    // I5b. Día con clases del calendario filtra sus tarjetas con acción.
+    {
+      const day = page.locator('#calendar-grid .calendar-day.has-classes:not(.disabled):visible').first();
+      if ((await page.locator('#calendar-grid .calendar-day.has-classes:not(.disabled):visible').count().catch(() => 0)) === 0) {
+        warn('cliente', 'día calendario', 'sin días con clase (aviso, depende de datos)');
+      } else {
+        await day.scrollIntoViewIfNeeded().catch(() => {});
+        await page.waitForTimeout(400);
+        await day.click({ timeout: 8000 }).catch(() => {});
+        await page.waitForTimeout(2000);
+        const sel = await day.evaluate((el) => el.classList.contains('selected')).catch(() => false);
+        const kids = await page.locator('#view-horarios [id^="grid-"] > *').count().catch(() => 0);
+        if (sel && kids > 0) pass('cliente', `día calendario filtra (${kids} tarjetas)`);
+        else fail('cliente', 'día calendario', `selected=${sel} tarjetas=${kids}`);
       }
     }
 
@@ -1000,27 +1026,44 @@ await section('cliente', async () => {
       }
     }
 
-    // I8. Taller/especial: abrir el diálogo y cancelar.
+    // I8. Especiales: sub-pestañas + compra de bono especial (diálogo, sin pagar).
     await page.locator('#nav-public-especiales').first().click({ timeout: 10000 }).catch(() => {});
     await page.waitForTimeout(1500);
+    for (const [tab, label] of [
+      ['#btn-subtab-eventos-todos', 'todos'], ['#btn-subtab-eventos-clases', 'clases_especiales'], ['#btn-subtab-eventos-talleres', 'talleres'],
+    ]) {
+      const b = page.locator(`${tab}:visible`).first();
+      if ((await b.count().catch(() => 0)) === 0) { warn('cliente', `especiales ${label}`, 'subtab no visible (aviso)'); continue; }
+      await b.click({ timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(1500);
+      const arts = await page.locator('#view-especiales article:visible').count().catch(() => 0);
+      const txt = ((await page.locator('#view-especiales').innerText().catch(() => '')) || '').replace(/\s+/g, ' ');
+      if (arts > 0) pass('cliente', `especiales ${label}: ${arts} tarjetas`);
+      else if (/no hay|todavía|próximamente|vacío/i.test(txt)) pass('cliente', `especiales ${label}: vacío elegante`);
+      else fail('cliente', `especiales ${label}`, 'sin tarjetas ni mensaje de vacío');
+    }
     {
-      const tRes = page.locator('#view-especiales button[onclick^="reservar("]:visible');
-      if ((await tRes.count().catch(() => 0)) === 0) {
-        warn('cliente', 'reserva taller', 'sin talleres reservables (aviso, depende de datos)');
+      await page.locator('#btn-subtab-eventos-todos:visible').first().click({ timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(1200);
+      const buy = page.locator('#view-especiales button[onclick*="comprarBonoEspecialStripe"]:visible').first();
+      if ((await buy.count().catch(() => 0)) === 0) {
+        warn('cliente', 'bono especial', 'sin botón de compra (aviso, depende de datos)');
       } else {
-        await tRes.first().click({ timeout: 10000 }).catch(() => {});
+        await buy.scrollIntoViewIfNeeded().catch(() => {});
+        await page.waitForTimeout(400);
+        await buy.click({ timeout: 8000 }).catch(() => {});
         let dlg = '';
         try {
           await page.locator('.swal2-popup:visible').first().waitFor({ state: 'visible', timeout: 10000 });
           dlg = await swalText(page);
         } catch { /* sin diálogo */ }
-        if (/Confirmar|Reservar|Bono|Stripe|€|Comprar|Crédito|disponible|Completa/i.test(dlg)) {
-          pass('cliente', 'reserva taller: diálogo correcto');
+        if (/Bono de Clase Especial/i.test(dlg) && /20/.test(dlg)) {
+          pass('cliente', 'bono especial: diálogo con 20€');
         } else {
-          fail('cliente', 'reserva taller', `diálogo inesperado o ausente: "${dlg.slice(0, 100)}"`);
+          fail('cliente', 'bono especial', `diálogo inesperado: "${dlg.slice(0, 100)}"`);
         }
         await cancelOnly(page);
-        if (!(await swalGone(page))) fail('cliente', 'reserva taller', 'el diálogo no se cierra al cancelar');
+        if (!(await swalGone(page))) fail('cliente', 'bono especial', 'el diálogo no se cierra al cancelar');
       }
     }
 
@@ -1097,6 +1140,28 @@ await section('cliente', async () => {
       else fail('cliente', 'rol', `privilegios inesperados: ${JSON.stringify(rol)}`);
     }
 
+    // I12. Comprar pack/mensual con sesión: abre su diálogo con su precio (0 cargos).
+    for (const [buy, euros, label] of [
+      ['pack_4', '50', 'Pack 4'], ['pack_6', '65', 'Pack 6'],
+      ['pack_10', '95', 'Pack 10'], ['bono_ilimitado', '90', 'Mensual'],
+    ]) {
+      await page.goto(`${BASE}/profile.html?buy=${buy}`, { waitUntil: 'load', timeout: 45000 }).catch(() => {});
+      await page.waitForTimeout(3500);
+      lastUrl = `${BASE}/profile.html?buy=${buy}`;
+      let dlg = '';
+      try {
+        await page.locator('.swal2-popup:visible').first().waitFor({ state: 'visible', timeout: 8000 });
+        dlg = await swalText(page);
+      } catch { /* sin diálogo */ }
+      if (dlg && new RegExp(`${euros}[,.]00\\s*€|${euros}\\s*€`).test(dlg) && page.url().includes('profile.html')) {
+        pass('cliente', `${label}: diálogo con ${euros}€`);
+      } else {
+        fail('cliente', `${label} (?buy=${buy})`, `diálogo inesperado: "${dlg.slice(0, 100)}"`);
+      }
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(600);
+    }
+
     // I11. Logout deja la sesión limpia.
     await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
@@ -1130,11 +1195,71 @@ await section('compra', async () => {
     for (const cat of ['ofertas', 'yoga', 'psicologia', 'talleres']) {
       await page.locator(`[onclick*="switchCategory('${cat}')"]:visible`).first().click({ timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(600);
-      // Ofertas debe mostrar contenido (no una pestaña vacía).
+      // Inventario oferta por oferta: título + precio visible + acción.
+      if (cat === 'yoga') {
+        const cards = await page.locator('#section-yoga .tariff-card:visible').all().catch(() => []);
+        const seen = [];
+        for (const c of cards) {
+          const txt = ((await c.innerText().catch(() => '')) || '').replace(/\s+/g, ' ');
+          const title = ((await c.locator('h3').first().innerText().catch(() => '')) || '').replace(/\s+/g, ' ').slice(0, 30);
+          const price = (txt.match(/(\d+)\s*€/) || [])[1] || '?';
+          const acts = await c.locator('button[onclick], a[href*="buy="]').count().catch(() => 0);
+          seen.push(price);
+          if (price !== '?' && acts > 0) pass('compra', `yoga "${title}" ${price}€ comprable`);
+          else fail('compra', `yoga "${title || '?'}"`, `precio=${price} acciones=${acts}`);
+        }
+        const want = ['15', '50', '65', '95', '90'].sort().join(',');
+        if (seen.sort().join(',') === want) pass('compra', 'yoga: catálogo completo 15/50/65/95/90');
+        else fail('compra', 'yoga: catálogo', `precios vistos: ${seen.join('/')} (esperado 15/50/65/95/90)`);
+        const packs = await page.locator('#section-yoga a[href*="buy="]:visible').evaluateAll((els) => els.map((a) => a.getAttribute('href'))).catch(() => []);
+        const packsOk = ['pack_4', 'pack_6', 'pack_10', 'bono_ilimitado'].every((k) => packs.some((h) => (h || '').includes(k)));
+        if (packsOk) pass('compra', 'yoga: packs enlazan a profile?buy=');
+        else fail('compra', 'yoga: packs', `enlaces: ${packs.join(',').slice(0, 120)}`);
+      }
+      if (cat === 'psicologia') {
+        // El precio del onclick debe coincidir con el impreso en su tarjeta.
+        const bad = await page.evaluate(() => {
+          const out = [];
+          document.querySelectorAll('#section-psicologia button[onclick*="iniciarCheckoutConsultaStripe"]')
+            .forEach((b) => {
+              const m = (b.getAttribute('onclick') || '').match(/,\s*(\d+)\s*\)\s*$/);
+              const price = m ? m[1] : '?';
+              let node = b.parentElement;
+              let cardTxt = '';
+              for (let i = 0; i < 6 && node; i++) {
+                cardTxt = (node.innerText || '').replace(/\s+/g, ' ');
+                if (/\d+\s*€/.test(cardTxt) && node.querySelector('h2,h3')) break;
+                node = node.parentElement;
+              }
+              if (price === '?' || !new RegExp(`\\b${price}\\s*€`).test(cardTxt)) {
+                out.push(`${(b.innerText || '').replace(/\s+/g, ' ').slice(0, 30)}: onclick=${price}`);
+              }
+            });
+          return out;
+        }).catch(() => ['evaluate-falló']);
+        if (!bad.length) pass('compra', 'consultas: precio impreso = precio cobrado (12)');
+        else fail('compra', 'consultas: precio impreso ≠ cobrado', bad.slice(0, 4).join(' | '));
+      }
+      if (cat === 'talleres') {
+        const cards = await page.locator('#talleres-cards-container > *:visible').all().catch(() => []);
+        if (!cards.length) warn('compra', 'talleres', 'sin tarjetas dinámicas (aviso)');
+        for (const c of cards.slice(0, 6)) {
+          const txt = ((await c.innerText().catch(() => '')) || '').replace(/\s+/g, ' ');
+          const hasPrice = /\d+\s*€/.test(txt);
+          const hasBtn = (await c.locator('button:visible').count().catch(() => 0)) > 0;
+          const title = txt.slice(0, 34);
+          if (txt.length > 20 && hasPrice && hasBtn) pass('compra', `taller "${title}" con precio y botón`);
+          else fail('compra', 'taller', `tarjeta incompleta: "${title}"`);
+        }
+      }
       if (cat === 'ofertas') {
-        const txt = ((await page.innerText('body').catch(() => '')) || '').slice(0, 4000);
-        if (/bienvenida|oferta|gratis|0 €/i.test(txt)) pass('compra', 'ofertas muestra contenido');
-        else fail('compra', 'ofertas', 'pestaña vacía o sin oferta visible');
+        const txt = ((await page.locator('#section-ofertas').innerText().catch(() => '')) || '').replace(/\s+/g, ' ');
+        const cta = await page.locator('#section-ofertas a[href*="action=register"]').first().getAttribute('href').catch(() => '');
+        const ver = await page.locator('#section-ofertas a[href="clases.html#calendario-publico"]').count().catch(() => 0);
+        if (/Bono de Bienvenida/i.test(txt) && /0\s*€/.test(txt) && cta) pass('compra', 'ofertas: bienvenida 0€ con CTA a registro');
+        else fail('compra', 'ofertas', 'bienvenida incompleta');
+        if (ver > 0) pass('compra', 'ofertas: "Ver clases" enlaza al calendario');
+        else fail('compra', 'ofertas', 'sin enlace a clases.html#calendario-publico');
       }
       // Talleres se renderiza dinámico (sin onclick): se barre por contenedor.
       const btns = cat === 'talleres'
@@ -1166,6 +1291,16 @@ await section('compra', async () => {
     }
     if (totalBuy < 10) warn('compra', 'pocos botones de compra', `${totalBuy} diálogos (¿catálogo cambiado?)`);
     else pass('compra', `${totalBuy} botones de compra abren su diálogo`);
+    // Deep-link del enlace de ofertas: el calendario auto-abre.
+    {
+      await page.goto(`${BASE}/clases.html#calendario-publico`, { waitUntil: 'load', timeout: 45000 }).catch(() => {});
+      await page.waitForTimeout(3500);
+      const open = (await page.locator('#calendar-desktop').isVisible().catch(() => false))
+        || (await page.locator('#calendar-mobile').isVisible().catch(() => false));
+      if (open) pass('compra', 'deep-link #calendario-publico auto-abre');
+      else fail('compra', 'deep-link #calendario-publico', 'no auto-abre el calendario');
+      lastUrl = `${BASE}/clases.html#calendario-publico`;
+    }
     if (!page.url().startsWith(BASE)) fail('compra', 'fuga fuera de la web', page.url().slice(0, 120));
     else if (attempts > 0) pass('compra', `intercepción activa (${attempts} intentos), 0 sesiones reales y 0 cargos`);
     else pass('compra', 'flujos detenidos antes del checkout (0 llamadas, 0 cargos)');
@@ -1270,6 +1405,22 @@ const md = [
   ``,
 ].join('\n');
 await writeFile(path.join(outDir, `${PREFIX}-${date}.md`), md);
+
+// Briefing para la IA (lo primero que debe analizar): se regenera siempre,
+// en verde escribe "sin pendientes" para no perseguir fantasmas.
+try {
+  const other = PREFIX === 'cert' ? 'nightly' : 'cert';
+  let otherAction = null;
+  try {
+    otherAction = JSON.parse(await readFile(path.join(outDir, `${other}-action.json`), 'utf8'));
+  } catch { /* aún no existe el otro entorno */ }
+  const mine = action;
+  const prodAction = PREFIX === 'cert' ? otherAction : mine;
+  const certAction = PREFIX === 'cert' ? mine : otherAction;
+  await writeFile(path.join(root, 'docs', 'FALLOS_PARA_IA.md'), buildBriefing(prodAction, certAction));
+} catch (e) {
+  console.log(`  ⚠️ briefing no generado: ${String((e && e.message) || e).slice(0, 100)}`);
+}
 
 console.log('');
 if (failed > 0) {

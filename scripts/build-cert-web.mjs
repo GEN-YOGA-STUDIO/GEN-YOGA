@@ -2,12 +2,18 @@
 /**
  * scripts/build-cert-web.mjs — Artefacto web de certificación.
  *
- * Genera una copia de la web apuntando al proyecto Supabase DE CERTIFICACIÓN,
- * marcada como no indexable y sin CNAME (para no reclamar genyoga.studio).
+ * Certificación puede funcionar en dos modos:
+ *   1) AISLADO: con su propio proyecto Supabase de pruebas.
+ *        CERT_SUPABASE_URL             https://XXXX.supabase.co (distinto del de producción)
+ *        CERT_SUPABASE_PUBLISHABLE_KEY sb_publishable_… (distinto del de producción)
+ *   2) MISMA BD (decisión de GEN Yoga): la web de cert apunta a la MISMA base de
+ *      datos que producción — los cambios a validar son solo de web/apps.
+ *        CERT_ALLOW_PRODUCTION_DB=1    (sin CERT_SUPABASE_*)
+ *      En este modo las páginas llevan banner visible de entorno de pruebas y
+ *      las compras quedan desactivadas en el cliente; el backend LIVE ya
+ *      rechaza pagos cuyo origen no es genyoga.studio.
  *
- * Requisitos (si faltan, falla con un mensaje claro):
- *   CERT_SUPABASE_URL              https://XXXX.supabase.co (distinto del de producción)
- *   CERT_SUPABASE_PUBLISHABLE_KEY  sb_publishable_… (distinto del de producción)
+ * En ambos modos: noindex y sin CNAME (para no reclamar genyoga.studio).
  *
  * Uso:  node scripts/build-cert-web.mjs [_cert]
  */
@@ -26,31 +32,49 @@ function exigir(name) {
   const v = process.env[name]?.trim();
   if (!v) {
     console.error(`\n❌ Falta ${name}.`);
-    console.error('   Certificación necesita su propio proyecto Supabase con datos de prueba.');
-    console.error('   Guía: docs/CERTIFICATION_SETUP.md · guárdalo como secreto en el repo.');
+    console.error('   Modo aislado: define CERT_SUPABASE_URL y CERT_SUPABASE_PUBLISHABLE_KEY.');
+    console.error('   Modo misma-BD: usa CERT_ALLOW_PRODUCTION_DB=1 (sin las anteriores).');
+    console.error('   Guía: docs/CERTIFICATION_SETUP.md');
     process.exit(1);
   }
   return v;
 }
 
-const urlCert = exigir('CERT_SUPABASE_URL');
-const claveCert = exigir('CERT_SUPABASE_PUBLISHABLE_KEY');
+// Modo misma-BD: solo si se pide explícitamente (variable de entorno/CI) y no
+// hay credenciales de cert dedicadas.
+const MODO_MISMA_BD = process.env.CERT_ALLOW_PRODUCTION_DB === '1'
+  && !process.env.CERT_SUPABASE_URL?.trim()
+  && !process.env.CERT_SUPABASE_PUBLISHABLE_KEY?.trim();
+let mismoProyecto = MODO_MISMA_BD;
+let urlCert;
+let claveCert;
+
+if (MODO_MISMA_BD) {
+  urlCert = PRODUCCION_URL;
+  claveCert = PRODUCCION_CLAVE;
+} else {
+  urlCert = exigir('CERT_SUPABASE_URL');
+  claveCert = exigir('CERT_SUPABASE_PUBLISHABLE_KEY');
+}
 
 if (!/^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(urlCert)) {
   console.error(`❌ CERT_SUPABASE_URL no es la URL raíz https://<proyecto>.supabase.co → ${urlCert}`);
-  process.exit(1);
-}
-if (urlCert.includes(PRODUCCION_PROYECTO)) {
-  console.error('❌ CERT_SUPABASE_URL apunta al proyecto de PRODUCCIÓN: certificación no puede usarlo.');
   process.exit(1);
 }
 if (!/^sb_publishable_[A-Za-z0-9_-]{20,}$/.test(claveCert)) {
   console.error('❌ CERT_SUPABASE_PUBLISHABLE_KEY no tiene formato de clave pública de Supabase.');
   process.exit(1);
 }
-if (claveCert === PRODUCCION_CLAVE) {
-  console.error('❌ CERT_SUPABASE_PUBLISHABLE_KEY es la clave de PRODUCCIÓN.');
-  process.exit(1);
+if (!mismoProyecto) {
+  // Modo aislado: jamás el proyecto/clave de producción.
+  if (urlCert.includes(PRODUCCION_PROYECTO)) {
+    console.error('❌ CERT_SUPABASE_URL apunta al proyecto de PRODUCCIÓN: usa CERT_ALLOW_PRODUCTION_DB=1 para el modo misma-BD.');
+    process.exit(1);
+  }
+  if (claveCert === PRODUCCION_CLAVE) {
+    console.error('❌ CERT_SUPABASE_PUBLISHABLE_KEY es la clave de PRODUCCIÓN.');
+    process.exit(1);
+  }
 }
 
 const fuente = path.join(root, 'ultima version');
@@ -90,16 +114,37 @@ for (const file of htmls) {
   if (!out.includes(robotsMeta)) throw new Error(`${file}: no se pudo marcar como no indexable.`);
   marcadas++;
 
-  if (out.includes(PRODUCCION_URL) || out.includes(PRODUCCION_CLAVE)) {
-    throw new Error(`${file}: conserva configuración de producción.`);
+  if (mismoProyecto) {
+    // Modo misma-BD: la coherencia es la inversa — las páginas DEBEN llevar la
+    // configuración de producción (es la única base de datos que existe).
+    const urls = [...out.matchAll(/https:\/\/[a-z0-9.-]+\.supabase\.co/gi)].map((m) => m[0].toLowerCase());
+    if (urls.some((u) => u !== urlCert.toLowerCase())) {
+      throw new Error(`${file}: contiene un proyecto Supabase distinto del autorizado (misma-BD).`);
+    }
+    const claves = [...out.matchAll(/sb_publishable_[A-Za-z0-9_-]{20,}/g)].map((m) => m[0]);
+    if (claves.some((k) => k !== claveCert)) {
+      throw new Error(`${file}: contiene una clave pública distinta de la autorizada (misma-BD).`);
+    }
+  } else {
+    if (out.includes(PRODUCCION_URL) || out.includes(PRODUCCION_CLAVE)) {
+      throw new Error(`${file}: conserva configuración de producción.`);
+    }
+    const urls = [...out.matchAll(/https:\/\/[a-z0-9.-]+\.supabase\.co/gi)].map((m) => m[0].toLowerCase());
+    if (urls.some((u) => u !== urlCert.toLowerCase())) {
+      throw new Error(`${file}: contiene un proyecto Supabase distinto del de certificación.`);
+    }
+    const claves = [...out.matchAll(/sb_publishable_[A-Za-z0-9_-]{20,}/g)].map((m) => m[0]);
+    if (claves.some((k) => k !== claveCert)) {
+      throw new Error(`${file}: contiene una clave pública distinta de la de certificación.`);
+    }
   }
-  const urls = [...out.matchAll(/https:\/\/[a-z0-9.-]+\.supabase\.co/gi)].map((m) => m[0].toLowerCase());
-  if (urls.some((u) => u !== urlCert.toLowerCase())) {
-    throw new Error(`${file}: contiene un proyecto Supabase distinto del de certificación.`);
-  }
-  const claves = [...out.matchAll(/sb_publishable_[A-Za-z0-9_-]{20,}/g)].map((m) => m[0]);
-  if (claves.some((k) => k !== claveCert)) {
-    throw new Error(`${file}: contiene una clave pública distinta de la de certificación.`);
+
+  // Banner visible de entorno de pruebas (no bloquea clics: pointer-events none).
+  const banner = mismoProyecto
+    ? '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · misma base de datos que producción · compras desactivadas aquí</div>'
+    : '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · compras desactivadas aquí</div>';
+  if (!out.includes('gy-cert-banner')) {
+    out = out.replace(/(<body[^>]*>)/i, `$1\n  ${banner}`);
   }
   await writeFile(path.join(destino, file), out, 'utf8');
 }

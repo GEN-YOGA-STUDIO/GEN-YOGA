@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.2.2 — 30 sep 2026 · Incidencia
+
+- **Descripción:** calendario publico no hereda modo entre aperturas; briefing FALLOS_PARA_IA como paso 0 de la IA (ámbito: calendario)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.2.2`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.2.2.md`
+
 ## v17.2.1 — 30 sep 2026 · Incidencia
 
 - **Descripción:** acabar mejoras a medias: fusion de perfiles reembolsa duplicadas y suma saldos gratuitos (migracion 202610010001), admin_eliminar_clase cerrado a anon, botones informe conciliacion con guardas y antidoble-clic, invitado elige otra clase sin repagar, cancel.html traducido (ámbito: antierrores)
