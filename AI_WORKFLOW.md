@@ -7,15 +7,46 @@ Este documento describe el estándar operativo para la Inteligencia Artificial (
 ## 1. Filosofía de Trabajo
 El usuario (Jaime) interactúa mediante prompts de alto nivel: reporte de errores, nuevas funcionalidades, ajustes de tarifas, calendarios o políticas.
 La IA se encarga de:
-1. **Analizar** el alcance del cambio sin lecturas masivas innecesarias.
-2. **Modificar** de forma quirúrgica el código.
-3. **Migrar** la base de datos Supabase si aplica.
-4. **Verificar** la integridad completa con la batería de tests (`npm test`).
-5. **Sincronizar y Subir** la nueva versión a GitHub y Producción.
+1. **Clasificar** el cambio (sección 2): ¿mayor/desarrollo o menor/incidencia? — sin clasificar no se ejecuta nada.
+2. **Analizar** el alcance del cambio sin lecturas masivas innecesarias.
+3. **Modificar** de forma quirúrgica el código.
+4. **Migrar** la base de datos Supabase si aplica.
+5. **Verificar** la integridad completa con la batería de tests (`npm test`).
+6. **Registrar y Subir** el cambio con `npm run cambio` (versión, registro y tag) a GitHub y Producción.
 
 ---
 
-## 2. Servidores MCP Configurados y Uso Obligatorio
+## 2. Clasificación Obligatoria de Todo Cambio (mayor / menor)
+
+**Antes de tocar una sola línea de código, la IA debe preguntar (o confirmar) el tipo de cambio.** No se ejecuta nada sin clasificar:
+
+| | **Cambio MAYOR (desarrollo)** | **Cambio MENOR (incidencia)** |
+|---|---|---|
+| **Qué es** | Funcionalidad nueva, rediseño, política/precio nuevo, cambios de datos | Bug, error en producción, arreglo puntual, ajuste menor |
+| **Versión** | minor+1: `17.1.0` → `17.2.0` | patch+1: `17.1.0` → `17.1.1` |
+| **Validación** | `npm test` completo (22 checks) | `check:release`, `check:regression`, `check:web`, `check:twins`, `check:sync`, `check:deploy`, `check:cambios` |
+| **Deploy** | web + apps (`deploy-ios` y `deploy-android` en CI) | solo web (Pages, automático en el push) |
+
+**Orden único de ejecución** — todo pasa por el mismo comando:
+
+```bash
+npm run cambio -- desarrollo "descripción del cambio" --scope <módulo>
+npm run cambio -- incidencia "descripción del arreglo" --scope <módulo>
+```
+
+(sin argumentos, el comando pregunta por teclado; sinónimos aceptados: `mayor`/`feat` y `menor`/`fix`)
+
+Ese comando hace, en orden: bump de versión → Tailwind → `sync_apps.py` (raíz → `ultima version` → bundles) → `cap sync` (solo desarrollo) → batería de checks → **entrada nueva en `CAMBIOS.md`** → commit convencional → regeneración de `docs/HISTORIAL_VERSIONES.html` → **tag anotado** (`v17.2` en minor / `v17.1.1` en patch) → push → deploy de apps si es desarrollo.
+
+Reglas del registro:
+- **Todo cambio reportado**: `npm run check:cambios` (incluido en `npm test`) bloquea si a la versión vigente le falta su entrada en `CAMBIOS.md` o su tag.
+- **Nunca bumpear a mano** ni commitear una release sin pasar por `npm run cambio`; el historial y el registro se autogestionan.
+- Cambios de proceso/herramientas que no tocan la web se anotan igualmente en `CAMBIOS.md` bajo la versión vigente, en el bloque "sin cambio de versión web".
+- Historial completo v1 → actual: `npm run historial` → `docs/HISTORIAL_VERSIONES.html` (nunca en la raíz: la raíz es el artefacto desplegable).
+
+---
+
+## 3. Servidores MCP Configurados y Uso Obligatorio
 
 ### A. Supabase MCP
 - **URL Proyecto**: `https://jkjifmrrlyncuwpjhxvk.supabase.co`
@@ -40,7 +71,7 @@ La IA se encarga de:
 
 ---
 
-## 3. Reglas de Optimización de Tokens y Tiempo
+## 4. Reglas de Optimización de Tokens y Tiempo
 
 1. **Edición Quirúrgica Obligatoria**:
    - `profile.html` tiene un tamaño superior a 1.6 MB (~40.000 líneas).
@@ -58,15 +89,15 @@ La IA se encarga de:
 
 ---
 
-## 4. Pipeline de Validación y Despliegue (orden única)
+## 5. Pipeline de Validación y Despliegue (orden única)
 
-La orden canónica para una release completa y gemela es:
+La puerta de entrada de todo cambio es `npm run cambio` (ver sección 2): clasifica el cambio, lo numera, valida, lo registra en `CAMBIOS.md`, lo commitea, genera el historial, etiqueta y despliega. Internamente aplica exactamente el mismo pipeline histórico de `ship`:
 
 ```bash
 node scripts/ship.mjs --release
 ```
 
-(Sin versión = auto minor+1. Flags: `--aab` compila Android en local, `--submit-ios` / `--upload-android` lanzan solo esa pata.)
+(Sin versión = auto minor+1. Flags: `--aab` compila Android en local, `--submit-ios` / `--upload-android` lanzan solo esa pata. `ship` queda para releases gemelas completas de apps; para cambios normales de web, `npm run cambio`.)
 `ship` ejecuta en orden: bump → CSS → `sync_apps.py` → `cap sync` (android+ios) → `npm test` (suite completa, bloqueante: incluye regresión contra la versión anterior y E2E pre-subida con clics reales, Supabase en vivo y presupuestos de rendimiento) → commit+push → dispara `deploy-ios` y `deploy-android` en CI. El `submit-ios` a revisión se encadena solo al terminar `deploy-ios` en verde.
 
 Workflows (todos con acciones fijadas por SHA para reproducibilidad):
@@ -83,9 +114,11 @@ Reglas:
 
 ---
 
-## 5. Checklist para la IA antes de Cerrar una Tarea
+## 6. Checklist para la IA antes de Cerrar una Tarea
 
+- [ ] ¿Se preguntó/confirmó si el cambio es **mayor (desarrollo)** o **menor (incidencia)** antes de ejecutar nada?
+- [ ] ¿Todo salió por `npm run cambio` (versión correcta, tag, commit convencional, entrada en `CAMBIOS.md`)?
 - [ ] ¿El cambio de código fue quirúrgico sin romper estilos ni scripts adyacentes?
 - [ ] Si hubo cambios SQL, ¿están guardados en `supabase/migrations/` y ejecutados en Supabase vía MCP?
-- [ ] ¿`npm test` pasa al 100% sin advertencias?
+- [ ] ¿`npm test` pasa al 100% sin advertencias (incluye `check:cambios`)?
 - [ ] ¿Se ejecutó `npm run ship` o se confirmaron los archivos en GitHub vía MCP?
