@@ -42,7 +42,8 @@ if [ "$PERM" != "True" ]; then
 fi
 
 echo "→ git push origin main --follow-tags"
-git -c credential.helper= -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer $TOKEN" push origin main --follow-tags
+# El token va en la URL SOLO para este comando (no se guarda en .git/config ni en el helper).
+git push "https://x-access-token:${TOKEN}@github.com/GEN-YOGA-STUDIO/GEN-YOGA.git" main --follow-tags
 
 echo "✅ Push completado. Run de Deploy Cert en curso (o recién terminado):"
 GH_TOKEN="$TOKEN" gh run list -R GEN-YOGA-STUDIO/GEN-YOGA --workflow=deploy-cert.yml --limit 5 2>/dev/null \
