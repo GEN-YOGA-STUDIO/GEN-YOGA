@@ -1,0 +1,75 @@
+name: Chequeo nocturno de producción (genyoga.studio)
+
+# Salud real todas las noches contra https://genyoga.studio con el usuario
+# de pruebas. Solo lectura + login/logout: 0 reservas, 0 compras, 0 cargos.
+#
+# Secretos (repo → Settings → Secrets → Actions, crear UNA vez):
+#   GEN_YOGA_TEST_EMAIL     → usuario de pruebas (defecto: prueba@prueba.com)
+#   GEN_YOGA_TEST_PASSWORD  → contraseña (defecto: prueba)
+# Sin secretos también funciona (usa los valores por defecto de arriba).
+#
+# Manual: gh workflow run nightly-health --ref main
+
+on:
+  schedule:
+    # 03:00 Europe/Madrid ≈ 01:00 UTC (verano) / 02:00 UTC (invierno).
+    # Se fija 01:30 UTC: en España siempre cae de madrugada.
+    - cron: '30 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  nightly:
+    name: Salud de producción
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PROD_BASE_URL: https://genyoga.studio
+      GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
+      GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Instalar dependencias
+        run: npm ci --no-audit --no-fund
+      - name: Instalar Chromium
+        run: |
+          CORE_VER=$(node -p "require('./node_modules/playwright-core/package.json').version")
+          npx -y playwright@$CORE_VER install --only-shell chromium
+          npx -y playwright@$CORE_VER install --only-shell --with-deps chromium 2>/dev/null || true
+      - name: Chequeo nocturno contra producción
+        id: check
+        run: npm run check:nightly
+      - name: Subir informe
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nightly-report
+          path: nightly-reports/
+          if-no-files-found: warn
+      - name: Abrir issue si falla
+        if: failure()
+        uses: actions/github-script@60a0d83039c74a4a6f1193b26a2bb70d1f9b8c8a3 # v7
+        with:
+          script: |
+            const title = '🌙 Chequeo nocturno: producción con fallos';
+            const body = [
+              `El chequeo de las ${new Date().toISOString().slice(0, 10)} contra https://genyoga.studio ha fallado.`,
+              ``,
+              `Revisar: Actions → Chequeo nocturno de producción → artefacto \`nightly-report\`.`,
+              `Ejecución: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            ].join('\n');
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo, state: 'open', per_page: 20,
+            });
+            const dup = open.data.find((i) => i.title === title);
+            if (dup) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: dup.number, body });
+            } else {
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['producción'] });
+            }
