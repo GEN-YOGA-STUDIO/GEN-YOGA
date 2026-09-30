@@ -15,7 +15,7 @@ echo "🚀 Desplegando GEN Yoga verificado a GitHub y Producción..."
 
 if [ ! -d "$TMP/.git" ]; then
     rm -rf "$TMP"
-    git clone https://github.com/jaime312/GEN-YOGA.git "$TMP"
+    git clone https://github.com/GEN-YOGA-STUDIO/GEN-YOGA.git "$TMP"
     cd "$TMP"
 else
     cd "$TMP"

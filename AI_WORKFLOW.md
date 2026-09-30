@@ -30,7 +30,7 @@ La IA se encarga de:
   3. Comprobar que la función o tabla responde correctamente.
 
 ### B. GitHub MCP
-- **Repositorio**: `jaime312/GEN-YOGA` (rama `main`).
+- **Repositorio**: `GEN-YOGA-STUDIO/GEN-YOGA` (rama `main`).
 - **Herramientas clave**:
   - `push_files`: Envía uno o varios archivos modificados en un único commit autenticado directamente a GitHub.
   - `create_or_update_file`: Crea o actualiza un archivo individual en GitHub.
