@@ -6285,6 +6285,14 @@
                     confirmButtonColor: '#D27D60'
                 });
             }
+            if (!String(rawId).includes('@')) {
+                return Swal.fire({
+                    icon: 'info',
+                    title: 'Recuperación solo por email',
+                    text: 'La recuperación online solo funciona con tu email registrado (no hay SMS). Si te registraste con teléfono, pide el reseteo en recepción.',
+                    confirmButtonColor: '#D27D60'
+                });
+            }
             if (!client) {
                 return Swal.fire({ icon: 'error', title: 'Sin conexión', text: 'No hay conexión con el servidor. Inténtalo de nuevo.', confirmButtonColor: '#D27D60' });
             }
@@ -6736,6 +6744,19 @@
                         console.warn('Sincronización inicial de perfil:', errSync);
                     }
                     Swal.close();
+                    return;
+                }
+
+                if (data?.user && !data?.session) {
+                    const loginEmailInput = document.getElementById('login-email');
+                    if (loginEmailInput) loginEmailInput.value = authEmail;
+                    toggleAuth('login');
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Revisa tu correo',
+                        text: 'Te hemos enviado un email de activación. Confírmalo y luego entra con tus credenciales.',
+                        confirmButtonColor: '#D27D60'
+                    });
                     return;
                 }
 
@@ -9956,7 +9977,10 @@
 
         async function comprarBonoEspecialStripe(e, monthStr = null) {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const __gyAttempt = (typeof beginStripeCheckout === 'function') ? beginStripeCheckout() : null;
+            if (__gyAttempt === null) return;
             if (!currentUser?.id) {
+                stripeCheckoutInProgress = false;
                 solicitarLoginOAutenticacion('Debes iniciar sesión para comprar un Bono de Clase Especial.');
                 return;
             }
@@ -9988,7 +10012,7 @@
                 cancelButtonText: 'Cancelar'
             });
 
-            if (!result.isConfirmed) return;
+            if (!result.isConfirmed) { stripeCheckoutInProgress = false; return; }
 
             try {
                 Swal.fire({
@@ -9999,7 +10023,7 @@
                 });
 
                 safeSetItem('stripe_checkout_origin', 'profile');
-                const checkoutAttemptId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : ('attempt_' + Date.now());
+                const checkoutAttemptId = __gyAttempt || ((typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : ('attempt_' + Date.now()));
 
                 const { data, error } = await client.functions.invoke('create-checkout-session', {
                     body: {
@@ -10031,20 +10055,25 @@
                     throw new Error('No se recibió la URL de pago de Stripe.');
                 }
 
-                window.location.href = data.url;
+                closePaymentUiBeforeNavigation();
+                window.location.href = getValidatedStripeCheckoutUrl(data.url);
             } catch (err) {
+                stripeCheckoutInProgress = false;
                 console.error('Error al iniciar compra de clase especial:', err);
                 Swal.fire('Error', err.message || 'Error al iniciar la compra en Stripe', 'error');
             }
         }
 
         async function iniciarCheckoutTallerStripe(lookupKey = 'taller_intro_power_vinyasa', title = 'Taller GEN Yoga', price = '25', claseId = null) {
+            const __gyAttemptT = (typeof beginStripeCheckout === 'function') ? beginStripeCheckout() : null;
+            if (__gyAttemptT === null) return;
             if (!currentUser?.id) {
+                stripeCheckoutInProgress = false;
                 solicitarLoginOAutenticacion('Debes iniciar sesión para reservar una plaza en el taller.');
                 return;
             }
 
-            const checkoutAttemptId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : ('attempt_' + Date.now());
+            const checkoutAttemptId = __gyAttemptT || ((typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : ('attempt_' + Date.now()));
 
             Swal.fire({
                 title: 'Conectando con Stripe...',
@@ -10083,8 +10112,10 @@
                     throw new Error('No se recibió la URL de pago de Stripe.');
                 }
 
-                window.location.href = data.url;
+                closePaymentUiBeforeNavigation();
+                window.location.href = getValidatedStripeCheckoutUrl(data.url);
             } catch (err) {
+                stripeCheckoutInProgress = false;
                 console.error('Error al iniciar compra de taller:', err);
                 Swal.fire('Error', err.message || 'Error al iniciar la compra del taller en Stripe', 'error');
             }
@@ -11418,6 +11449,8 @@
         async function cancelar(reservaId) {
             const normalizedReservationId = safePositiveInteger(reservaId);
             if (!normalizedReservationId) return;
+            if (typeof window.__gyCancelLock !== 'undefined' && window.__gyCancelLock) return;
+            window.__gyCancelLock = true;
 
             const cancellationPoliciesLoaded = await cargarConfiguracionesApp();
 
@@ -11500,9 +11533,21 @@
             });
 
             if (res.isConfirmed) {
-                const { error } = await client.rpc('cancelar_con_bono', {
-                    p_reserva_id: normalizedReservationId
-                });
+                const confirmBtn = document.querySelector('.swal2-confirm');
+                if (confirmBtn) confirmBtn.disabled = true;
+                let rpcError = null;
+                try {
+                    const rpcRes = await client.rpc('cancelar_con_bono', {
+                        p_reserva_id: normalizedReservationId
+                    });
+                    rpcError = rpcRes.error;
+                } catch (invokeErr) {
+                    rpcError = invokeErr;
+                } finally {
+                    window.__gyCancelLock = false;
+                    if (confirmBtn) confirmBtn.disabled = false;
+                }
+                const { error } = { error: rpcError };
                 if (error) {
                     Swal.fire(
                         'No se puede cancelar',
@@ -11520,6 +11565,8 @@
                     if (isAdmin) await cargarAsistenciasPorClase();
                     refrescarInicioSiActivo();
                 }
+            } else {
+                window.__gyCancelLock = false;
             }
         }
 
@@ -23054,6 +23101,8 @@
         async function cancelarConsulta(tipo, reservaId) {
             const numericReservationId = Number(reservaId);
             if (!Number.isSafeInteger(numericReservationId) || numericReservationId <= 0) return;
+            if (window.__gyCancelConsultaLock) return;
+            window.__gyCancelConsultaLock = true;
 
             let normalizedTipo = (tipo || '').toLowerCase().trim();
             if (normalizedTipo === 'ayurveda') {
@@ -23138,22 +23187,37 @@
             });
 
             if (res.isConfirmed) {
-                let { error } = await client.rpc('cancelar_consulta_atomica', {
-                    p_tipo: normalizedTipo,
-                    p_reserva_id: numericReservationId
-                });
-
-                if (error && String(error.message || '').toLowerCase().includes('not found')) {
-                    const alternateTipo = (normalizedTipo === 'psicologia') ? 'nutricion' : 'psicologia';
-                    const retry = await client.rpc('cancelar_consulta_atomica', {
-                        p_tipo: alternateTipo,
+                const confirmBtnC = document.querySelector('.swal2-confirm');
+                if (confirmBtnC) confirmBtnC.disabled = true;
+                let rpcErr = null;
+                try {
+                    const first = await client.rpc('cancelar_consulta_atomica', {
+                        p_tipo: normalizedTipo,
                         p_reserva_id: numericReservationId
                     });
-                    if (!retry.error) {
-                        error = null;
-                        normalizedTipo = alternateTipo;
+                    rpcErr = first.error;
+                    var __gyCancelFinalTipo = normalizedTipo;
+                    if (rpcErr && String(rpcErr.message || '').toLowerCase().includes('not found')) {
+                        const alternateTipo = (normalizedTipo === 'psicologia') ? 'nutricion' : 'psicologia';
+                        const retry = await client.rpc('cancelar_consulta_atomica', {
+                            p_tipo: alternateTipo,
+                            p_reserva_id: numericReservationId
+                        });
+                        if (!retry.error) {
+                            rpcErr = null;
+                            __gyCancelFinalTipo = alternateTipo;
+                        } else {
+                            rpcErr = retry.error;
+                        }
                     }
+                } catch (invokeErrC) {
+                    rpcErr = invokeErrC;
+                } finally {
+                    window.__gyCancelConsultaLock = false;
+                    if (confirmBtnC) confirmBtnC.disabled = false;
                 }
+                let { error } = { error: rpcErr };
+                if (!rpcErr && typeof __gyCancelFinalTipo !== 'undefined') normalizedTipo = __gyCancelFinalTipo;
 
                 if (error) {
                     Swal.fire('No se pudo cancelar', mensajeErrorConsulta(error, normalizedTipo, 'cancelar'), 'error');
@@ -23162,16 +23226,22 @@
 
                 // Cancelar también la reserva vinculada si es múltiple
                 if (esSesionMultiple) {
+                    let segundosOk = 0;
                     for (const pb of partnerBookings) {
                         try {
                             const pTipo = pb.tipo || normalizedTipo;
-                            await client.rpc('cancelar_consulta_atomica', {
+                            const r2 = await client.rpc('cancelar_consulta_atomica', {
                                 p_tipo: pTipo,
                                 p_reserva_id: Number(pb.reservaId)
                             });
+                            if (!r2.error) segundosOk++;
+                            else console.warn('No se pudo cancelar turno vinculado:', r2.error);
                         } catch (pErr) {
                             console.warn('Error cancelando turno vinculado secundario:', pErr);
                         }
+                    }
+                    if (segundosOk !== partnerBookings.length) {
+                        Swal.fire('Aviso', 'Se canceló tu turno, pero uno de los turnos vinculados no pudo cancelarse. Revisa "Mis citas" o contacta con recepción.', 'warning');
                     }
                 }
 
@@ -23194,6 +23264,8 @@
                 await cargarMisReservasUsuario();
                 await refrescarConsultas(normalizedTipo);
                 refrescarInicioSiActivo();
+            } else {
+                window.__gyCancelConsultaLock = false;
             }
         }
 
@@ -27464,17 +27536,21 @@
         async function cancelarReservaTaller(reservaId) {
             const normalizedReservationId = safePositiveInteger(reservaId);
             if (!normalizedReservationId) return;
+            if (window.__gyCancelTallerLock) { return; }
+            window.__gyCancelTallerLock = true;
 
             const res = await Swal.fire({
                 title: '¿Eliminar alumno del taller?',
-                text: 'Esta acción cancelará la inscripción y liberará la clase especial mensual del alumno.',
+                text: 'Esta acción cancelará la inscripción y liberará la plaza del taller. Si se cancela con más de 24 horas, se asignará un Crédito de Reprogramación.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'Sí, eliminar'
             });
 
-            if (res.isConfirmed) {
+            if (!res.isConfirmed) { window.__gyCancelTallerLock = false; return; }
+
+            try {
                 Swal.fire({ title: 'Cancelando reserva...', didOpen: () => Swal.showLoading() });
                 const { error } = await client.rpc('cancelar_con_bono', {
                     p_reserva_id: normalizedReservationId
@@ -27487,6 +27563,11 @@
                     await cargarTalleresAdmin();
                     await cargarClasesEspeciales();
                 }
+            } catch (invokeErrT) {
+                try { Swal.close(); } catch (_) {}
+                Swal.fire('Error', amableError(invokeErrT?.message), 'error');
+            } finally {
+                window.__gyCancelTallerLock = false;
             }
         }
 
