@@ -1275,7 +1275,7 @@
     return { via: 'PDF (diálogo de impresión nativo del navegador)' };
   }
 
-  // ------------------------------------------------------------------
+  // ------------------------------------------------------------------ 
   // CONTROLADOR PRINCIPAL LLAMADO DESDE PROFILE.HTML
   // ------------------------------------------------------------------
   async function descargarInformeMarketing(formato) {
@@ -1283,6 +1283,7 @@
       swalError('No disponible', 'La descarga de informes está desactivada actualmente.');
       return;
     }
+    if (window.__gyInformeBusy) return;
 
     try {
       // eslint-disable-next-line no-undef
@@ -1297,6 +1298,7 @@
       return;
     }
 
+    window.__gyInformeBusy = true;
     var prog = null;
     if (window.Swal && window.Swal.fire) {
       prog = window.Swal.fire({
@@ -1328,11 +1330,14 @@
     } catch (err) {
       if (prog && window.Swal) { try { window.Swal.close(); } catch (_) { /* noop */ } }
       swalError('Error al generar informe', (err && err.message) || String(err));
+    } finally {
+      window.__gyInformeBusy = false;
     }
   }
 
   // Conciliación Stripe <-> BD
   async function ejecutarConciliacionPagos() {
+    if (window.__gyConciliacionBusy) return;
     try {
       // eslint-disable-next-line no-undef
       if (typeof isAdmin !== 'undefined' && !isAdmin) {
@@ -1346,6 +1351,10 @@
       swalError('Sin conexión', 'No hay conexión con la base de datos.');
       return;
     }
+
+    window.__gyConciliacionBusy = true;
+    const btnConciliar = document.getElementById('btn-conciliar-pagos');
+    if (btnConciliar) btnConciliar.disabled = true;
 
     if (window.Swal && window.Swal.fire) {
       window.Swal.fire({
@@ -1382,6 +1391,10 @@
       }
     } catch (err) {
       swalError('No se pudo conciliar', (err && err.message) || String(err));
+    } finally {
+      window.__gyConciliacionBusy = false;
+      const btnConciliarFinal = document.getElementById('btn-conciliar-pagos');
+      if (btnConciliarFinal) btnConciliarFinal.disabled = false;
     }
   }
 
@@ -1412,9 +1425,16 @@
   if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('DOMContentLoaded', function () {
       if (!INFORME_MARKETING_ENABLED) return;
-      ['btn-informe-excel', 'btn-informe-pdf'].forEach(function (id) {
+      var esAdmin = false;
+      try { esAdmin = typeof isAdmin !== 'undefined' && !!isAdmin; } catch (_) { esAdmin = false; }
+      ['btn-informe-excel', 'btn-informe-pdf', 'btn-conciliar-pagos'].forEach(function (id) {
         var b = document.getElementById(id);
-        if (b) b.classList.remove('hidden');
+        if (b) {
+          b.classList.remove('hidden');
+          // Solo se habilita el clic cuando el rol resuelto es admin (si el rol
+          // llega después, cargarDashboardAdmin() los habilita al abrir el panel).
+          if (esAdmin) b.disabled = false;
+        }
       });
     });
   }

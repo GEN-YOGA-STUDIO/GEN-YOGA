@@ -47,6 +47,7 @@ let lastShot = null;
 const SUITE_FILES = {
   auth: ['profile.html'],
   compra: ['tarifas.html'],
+  retorno: ['success.html', 'cancel.html'],
   cliente: ['profile.html', 'tarifas.html'],
   contenido: ['clases.html', 'tarifas.html', 'maestros.html', 'index.html', 'public-calendar.js'],
   landing: ['index.html', 'i18n.js'],
@@ -64,6 +65,7 @@ const SUITE_REPRO = {
   privacidad: ['Repetir la petición SIN sesión', 'Debe responder 401/403; 200 con datos = fuga'],
   auth: ['Abrir BASE/profile.html', 'Login con el usuario de pruebas (email visible; contraseña en secreto GEN_YOGA_TEST_PASSWORD)', 'Navegar la vista indicada y observar el error'],
   compra: ['Abrir BASE/tarifas.html sin sesión', 'Cada botón de compra debe abrir diálogo o detenerse; jamás salir a Stripe'],
+  retorno: ['Abrir BASE/success.html o cancel.html sin pagar', 'Debe informar con elegancia sin cobrar ni romper'],
   cliente: ['Abrir BASE/profile.html', 'Login con el usuario de pruebas (contraseña en secreto GEN_YOGA_TEST_PASSWORD)', 'Ejercer la acción indicada y CANCELAR el diálogo sin confirmar'],
   contenido: ['Abrir la página indicada en móvil 390px', 'Reproducir el paso indicado con la consola abierta'],
   landing: ['Abrir BASE/index.html como un cliente', 'Pulsar el botón indicado: debe llevar a su destino sin errores'],
@@ -412,43 +414,144 @@ await section('contenido', async () => {
   try {
     const page = await ctx.newPage();
     activePage = page;
-    let st = await gotoTracked(page, '/clases.html');
-    await page.locator('#btn-cat-consultas').click({ timeout: 10000 }).catch(() => {});
-    await page.waitForTimeout(500);
-    const consultasOk = await page.locator('#consultas-deck').isVisible().catch(() => false);
-    if (consultasOk) pass('contenido', 'clases: pestaña Consultas conmuta');
-    else fail('contenido', 'clases: pestaña Consultas', 'no conmuta');
-    await page.locator('#btn-cat-yoga').click({ timeout: 10000 }).catch(() => {});
-    await page.waitForTimeout(500);
-    await page.locator('#public-calendar-launch:visible').first().click({ timeout: 10000 }).catch(() => {});
-    await page.waitForTimeout(3000);
-    const cal = (await page.locator('#calendar-desktop').isVisible().catch(() => false))
+    const calOpen = async () => (await page.locator('#calendar-desktop').isVisible().catch(() => false))
       || (await page.locator('#calendar-mobile').isVisible().catch(() => false));
-    if (cal) pass('contenido', 'clases: el calendario público abre');
-    else fail('contenido', 'clases: el calendario público', 'no abre');
+    const calClose = async () => {
+      await page.locator('#public-calendar-close:visible').first().click({ timeout: 6000 }).catch(async () => page.keyboard.press('Escape'));
+      await page.waitForTimeout(900);
+    };
+    const calDays = () => page.locator('#calendar-desktop [data-calendar-day], #calendar-mobile [data-calendar-day]').count().catch(() => 0);
+    // Un lanzamiento es válido si pinta días o si el estado vacío ofrece
+    // SEMANA SIGUIENTE que lleva a contenido (caso talleres sin semana actual).
+    async function launchOk(label) {
+      // El calendario carga por RPC: sondear hasta 9s (abre, pinta días o
+      // estado vacío con salida a contenido).
+      for (let i = 0; i < 9; i++) {
+        await page.waitForTimeout(1000);
+        if (!(await calOpen())) continue;
+        if ((await calDays()) > 0) { pass('contenido', `calendario ${label} pinta días`); return true; }
+        const next = page.locator('#public-calendar-panel button:visible', { hasText: /SEMANA SIGUIENTE/i }).first();
+        if ((await next.count().catch(() => 0)) > 0) {
+          await next.click({ timeout: 8000 }).catch(() => {});
+          await page.waitForTimeout(2800);
+          if ((await calDays()) > 0) { pass('contenido', `calendario ${label}: siguiente semana con contenido`); return true; }
+          fail('contenido', `calendario ${label}`, 'abre vacío sin salida a contenido');
+          return true;
+        }
+      }
+      if (await calOpen()) {
+        fail('contenido', `calendario ${label}`, 'abre pero no pinta ni ofrece siguiente semana');
+        return true;
+      }
+      return false;
+    }
+    async function clickSettled(sel) {
+      const loc = page.locator(sel).first();
+      await loc.scrollIntoViewIfNeeded().catch(() => {});
+      await page.waitForTimeout(500);
+      await loc.click({ timeout: 8000 });
+    }
+
+    let st = await gotoTracked(page, '/clases.html');
+    // Carrusel: los 5 dots conmutan.
+    {
+      let okAll = true;
+      for (let i = 0; i < 5; i++) {
+        await page.locator('.slide-dot').nth(i).scrollIntoViewIfNeeded().catch(() => {});
+        await page.waitForTimeout(400);
+        await page.locator('.slide-dot').nth(i).click({ timeout: 8000 }).catch(() => { okAll = false; });
+        await page.waitForTimeout(600);
+        if (!(await page.locator('.slide-dot').nth(i).evaluate((el) => el.classList.contains('active')).catch(() => false))) okAll = false;
+      }
+      if (okAll) pass('contenido', 'clases: carrusel conmuta los 5 slides');
+      else fail('contenido', 'clases: carrusel', 'algún dot no conmuta');
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(500);
+    }
+    // btn-inicio cableado a index.
+    {
+      const oc = await page.locator('#btn-inicio').first().getAttribute('onclick').catch(() => '');
+      if ((oc || '').includes('index.html')) pass('contenido', 'clases: btn-inicio cableado a index');
+      else fail('contenido', 'clases: btn-inicio', 'no lleva a index');
+    }
+    // Pestañas por efecto (hidden retirado).
+    for (const [btn, deck, label] of [['#btn-cat-yoga', 'folders-deck', 'Yoga'], ['#btn-cat-consultas', 'consultas-deck', 'Consultas'], ['#btn-cat-talleres', 'talleres-deck', 'Talleres']]) {
+      await clickSettled(btn);
+      await page.waitForTimeout(800);
+      let shown = await page.locator(`#${deck}`).evaluate((el) => !el.classList.contains('hidden')).catch(() => false);
+      if (!shown) {
+        await clickSettled(btn);
+        await page.waitForTimeout(800);
+        shown = await page.locator(`#${deck}`).evaluate((el) => !el.classList.contains('hidden')).catch(() => false);
+      }
+      if (shown) pass('contenido', `clases: pestaña ${label} muestra su mazo`);
+      else fail('contenido', `clases: pestaña ${label}`, `${deck} no se muestra`);
+    }
+    // Los 3 lanzadores abren calendario útil y la X lo cierra.
+    for (const [tab, sel, label] of [['#btn-cat-yoga', '#public-calendar-launch', 'yoga'], ['#btn-cat-consultas', '#public-consultas-calendar-launch', 'consultas'], ['#btn-cat-talleres', '#public-talleres-calendar-launch', 'talleres']]) {
+      await clickSettled(tab);
+      await page.waitForTimeout(800);
+      await clickSettled(`${sel}:visible`);
+      const opened = await launchOk(label);
+      if (opened) pass('contenido', `clases: "Ver horario" abre el calendario (${label})`);
+      else fail('contenido', 'clases: calendario', `"Ver horario" no abre (${label})`);
+      await calClose();
+      if (await calOpen()) fail('contenido', 'calendario', `la X no cierra (${label})`);
+    }
+    // Tarjetas estilo/profe abren calendario.
+    for (const [tab, frag, label] of [['#btn-cat-yoga', 'power-vinyasa', 'power-vinyasa'], ['#btn-cat-consultas', 'miriam', 'miriam']]) {
+      await clickSettled(tab);
+      await page.waitForTimeout(800);
+      if ((await page.locator(`[onclick*="${frag}"]:visible`).count().catch(() => 0)) === 0) {
+        warn('contenido', `tarjeta ${label}`, 'no visible (aviso)');
+        continue;
+      }
+      await clickSettled(`[onclick*="${frag}"]:visible`);
+      const opened = await launchOk(`tarjeta ${label}`);
+      if (opened) pass('contenido', `clases: tarjeta ${label} abre calendario`);
+      else fail('contenido', 'clases: tarjeta', `${label} no abre calendario`);
+      await calClose();
+    }
+    // scroll-assist desplaza desde arriba.
+    {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(500);
+      const y0 = await page.evaluate(() => window.scrollY);
+      await clickSettled('#scroll-assist');
+      await page.waitForTimeout(900);
+      const y1 = await page.evaluate(() => window.scrollY);
+      if (y1 > y0 + 50) pass('contenido', 'clases: scroll-assist desplaza');
+      else fail('contenido', 'clases: scroll-assist', 'no desplaza');
+    }
     await assertClean('contenido-clases', st, page);
 
     st = await gotoTracked(page, '/maestros.html', 6000);
     const kids = await page.locator('#maestros-grid-section').evaluate((el) => el.childElementCount).catch(() => 0);
     if (kids > 1) pass('contenido', `maestros: parrilla poblada (${kids} nodos)`);
     else fail('contenido', 'maestros: parrilla', `vacía (nodos: ${kids})`);
-    // Ficha de maestra: abrir y cerrar el modal.
+    // Fichas de maestras: TODAS abren con su nombre y cierran.
     {
-      const trigger = page.locator('#maestros-grid-section .teacher-card__trigger:visible').first();
-      if ((await trigger.count()) === 0) warn('contenido', 'maestros: ficha', 'sin disparador de modal (aviso)');
+      const n = await page.locator('#maestros-grid-section .teacher-card__trigger:visible').count().catch(() => 0);
+      if (!n) warn('contenido', 'maestros: ficha', 'sin disparadores de modal (aviso)');
       else {
-        await trigger.click({ timeout: 8000 }).catch(() => {});
-        await page.waitForTimeout(800);
-        const open = await page.evaluate(() => document.body.classList.contains('teacher-modal-open')).catch(() => false);
-        if (!open) fail('contenido', 'maestros: ficha', 'el modal no abre');
-        else {
-          pass('contenido', 'maestros: la ficha abre');
+        let okAll = true;
+        for (let i = 0; i < Math.min(n, 8); i++) {
+          const trigger = page.locator('#maestros-grid-section .teacher-card__trigger:visible').nth(i);
+          await trigger.scrollIntoViewIfNeeded().catch(() => {});
+          await page.waitForTimeout(400);
+          await trigger.click({ timeout: 8000 }).catch(() => { okAll = false; });
+          await page.waitForTimeout(800);
+          const open = await page.evaluate(() => document.body.classList.contains('teacher-modal-open')).catch(() => false);
+          const name = ((await page.locator('.teacher-modal:visible').first().innerText().catch(() => '')) || '').replace(/\s+/g, ' ').slice(0, 40);
+          if (!open) { okAll = false; continue; }
           await page.locator('.teacher-modal__close:visible').first().click({ timeout: 8000 }).catch(async () => page.keyboard.press('Escape'));
           await page.waitForTimeout(600);
           const closed = await page.evaluate(() => !document.body.classList.contains('teacher-modal-open')).catch(() => false);
-          if (closed) pass('contenido', 'maestros: la ficha cierra');
-          else fail('contenido', 'maestros: ficha', 'el modal no cierra');
+          if (!closed) okAll = false;
+          else if (name) pass('contenido', `maestros: ficha "${name}" abre y cierra`);
         }
+        if (okAll) pass('contenido', `maestros: las ${Math.min(n, 8)} fichas abren y cierran`);
+        else fail('contenido', 'maestros: ficha', 'alguna ficha no abre o no cierra');
       }
     }
     await assertClean('contenido-maestros', st, page);
@@ -802,6 +905,18 @@ await section('cliente', async () => {
       if (inner && !(await page.locator(inner).isVisible().catch(() => false))) {
         warn('cliente', `vista ${label}`, `${inner} sin contenido visible (aviso)`);
       }
+      // Nutrición vive dentro de Psicología (subtab): mismo camino que sus botones.
+      if (label === 'Psicología') {
+        await page.evaluate(() => window.switchConsultasSubTab && window.switchConsultasSubTab('nutricion')).catch(() => {});
+        await page.waitForTimeout(1500);
+        if (await page.locator('#sub-view-nutricion').isVisible().catch(() => false)) {
+          pass('cliente', 'subvista Nutrición abre');
+        } else {
+          fail('cliente', 'subvista Nutrición', '#sub-view-nutricion no se muestra');
+        }
+        await page.evaluate(() => window.switchConsultasSubTab && window.switchConsultasSubTab('psicologia')).catch(() => {});
+        await page.waitForTimeout(800);
+      }
     }
 
     // I5. Reservar yoga: abrir el diálogo y cancelar (jamás confirmar).
@@ -1015,6 +1130,12 @@ await section('compra', async () => {
     for (const cat of ['ofertas', 'yoga', 'psicologia', 'talleres']) {
       await page.locator(`[onclick*="switchCategory('${cat}')"]:visible`).first().click({ timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(600);
+      // Ofertas debe mostrar contenido (no una pestaña vacía).
+      if (cat === 'ofertas') {
+        const txt = ((await page.innerText('body').catch(() => '')) || '').slice(0, 4000);
+        if (/bienvenida|oferta|gratis|0 €/i.test(txt)) pass('compra', 'ofertas muestra contenido');
+        else fail('compra', 'ofertas', 'pestaña vacía o sin oferta visible');
+      }
       // Talleres se renderiza dinámico (sin onclick): se barre por contenedor.
       const btns = cat === 'talleres'
         ? page.locator('#talleres-cards-container button:visible')
@@ -1050,6 +1171,55 @@ await section('compra', async () => {
     else pass('compra', 'flujos detenidos antes del checkout (0 llamadas, 0 cargos)');
     await assertClean('compra', st, page);
   } catch (e) { if (activePage) await snap(activePage, 'compra').catch(() => {}); throw e; } finally { await ctx.close(); }
+});
+
+// ---------------------------------------------------------------- G2. Retorno de pagos (success/cancel)
+// Sin sesión de pago: error elegante sin redirigir; cancel cuenta atrás y retornos.
+console.log('\n--- G2. Retorno de pagos ---');
+await section('retorno', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  try {
+    const page = await ctx.newPage();
+    activePage = page;
+    let st = await gotoTracked(page, '/success.html', 2500);
+    {
+      const errVisible = await page.locator('#verification-error').isVisible().catch(() => false);
+      const errMsg = await page.locator('#verification-error-message').textContent().catch(() => '');
+      if (errVisible && (errMsg || '').includes('sesión de pago LIVE válida')) {
+        pass('retorno', 'success sin sesión: error correcto');
+      } else fail('retorno', 'success sin sesión', `visible=${errVisible}`);
+      const retryHidden = await page.locator('#verification-retry').evaluate((el) => el.classList.contains('hidden')).catch(() => null);
+      if (retryHidden === true) pass('retorno', 'success sin sesión no ofrece reintentar');
+      else if (retryHidden === false) fail('retorno', 'success sin sesión', 'ofrece Reintentar en bucle');
+      await page.waitForTimeout(2500);
+      if (page.url().startsWith(BASE)) pass('retorno', 'success sin pago no redirige');
+      else fail('retorno', 'success sin pago', 'redirige fuera');
+    }
+    await assertClean('retorno-success', st, page);
+    st = await gotoTracked(page, '/cancel.html', 1200);
+    {
+      const read = () => page.locator('#countdown-dynamic').first().textContent().catch(() => null);
+      const t1 = await read();
+      await page.waitForTimeout(2500);
+      const t2 = await read();
+      const n1 = Number(t1);
+      const n2 = Number(t2);
+      if (Number.isFinite(n1) && Number.isFinite(n2) && n2 < n1) pass('retorno', `cancel: cuenta atrás late (${t1}→${t2})`);
+      else if (page.url().endsWith('profile.html') || page.url().endsWith('tarifas.html')) {
+        pass('retorno', `cancel: redirigió a ${page.url().split('/').pop()}`);
+      } else fail('retorno', 'cancel: cuenta atrás', `no avanza (${t1}→${t2})`);
+      const hrefs = await page.locator('#cancel-page, body').first().evaluate((root) =>
+        [...root.querySelectorAll('a[href$=".html"]')].map((a) => a.getAttribute('href')).filter(Boolean)).catch(() => []);
+      let deadRet = 0;
+      for (const h of [...new Set(hrefs)].slice(0, 8)) {
+        const r = await fetchTimeout(`${BASE}/${h.split(/[?#]/)[0]}`, { timeoutMs: 15000 });
+        if (!r.ok || r.status !== 200) deadRet++;
+      }
+      if (deadRet === 0) pass('retorno', `cancel: ${[...new Set(hrefs)].length} retornos vivos`);
+      else fail('retorno', 'cancel: retornos', `${deadRet} retornos rotos`);
+    }
+    await assertClean('retorno-cancel', st, page);
+  } catch (e) { if (activePage) await snap(activePage, 'retorno').catch(() => {}); throw e; } finally { await ctx.close(); }
 });
 
 // ---------------------------------------------------------------- H. Rendimiento

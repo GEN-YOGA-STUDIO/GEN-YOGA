@@ -718,15 +718,28 @@
             } catch (error) {
                 console.error("Booking error:", error);
                 const rawMessage = error.message || '';
-                const userMessage = /Failed to send a request to the Edge Function/i.test(rawMessage)
-                    ? 'No se pudo conectar con el servidor de reservas. Tu compra está registrada; inténtalo de nuevo en unos segundos o contacta con recepción para asignar tu plaza.'
-                    : (rawMessage || 'No se pudo procesar tu reserva. Inténtalo de nuevo.');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error al reservar',
-                    text: userMessage,
-                    confirmButtonColor: '#D27D60'
-                });
+                const esAforoOLimite = /(completa|llena|demasiado|demasiada|demasiadas|too (close|late|soon)|no longer|not available|no existe|ya no|404|409)/i.test(rawMessage);
+                if (esAforoOLimite) {
+                    // El pago sigue vigente: no se cobra de nuevo. Se recarga la lista
+                    // para que elija otra clase con el mismo session_id.
+                    await Swal.fire({
+                        icon: 'info',
+                        title: 'Elige otra clase',
+                        text: 'Tu pago sigue vigente (no se ha cobrado de nuevo), pero esa clase ya no está disponible. Elige otra de la lista y pulsa «Confirmar reserva». Si necesitas ayuda, contacta con recepción.',
+                        confirmButtonColor: '#D27D60'
+                    });
+                    try { await cargarClasesDisponiblesInvitado(); } catch (_) { /* mantener lista actual */ }
+                } else {
+                    const userMessage = /Failed to send a request to the Edge Function/i.test(rawMessage)
+                        ? 'No se pudo conectar con el servidor de reservas. Tu compra está registrada; inténtalo de nuevo en unos segundos o contacta con recepción para asignar tu plaza.'
+                        : (rawMessage || 'No se pudo procesar tu reserva. Inténtalo de nuevo.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al reservar',
+                        text: userMessage,
+                        confirmButtonColor: '#D27D60'
+                    });
+                }
             } finally {
                 window.__gyGuestBookingLock = false;
             }

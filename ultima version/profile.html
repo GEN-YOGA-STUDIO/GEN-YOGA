@@ -3153,18 +3153,18 @@
                                 title="Actualizar datos" aria-label="Actualizar datos">
                                 <i class="ph-bold ph-arrows-clockwise text-base"></i>
                             </button>
-                            <button id="btn-informe-excel" onclick="descargarInformeMarketing('xlsx')"
-                                class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-olive text-white text-xs font-bold uppercase tracking-wider hover:brightness-110 transition shadow-2xs"
+                            <button id="btn-informe-excel" disabled onclick="descargarInformeMarketing('xlsx')"
+                                class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-olive text-white text-xs font-bold uppercase tracking-wider hover:brightness-110 transition shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Descargar informe estratégico integral en Excel (Histórico + 1 Año + 3 Meses + 1 Mes)">
                                 <i class="ph-bold ph-file-xls text-base"></i> Excel
                             </button>
-                            <button id="btn-informe-pdf" onclick="descargarInformeMarketing('pdf')"
-                                class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-cocoa text-white text-xs font-bold uppercase tracking-wider hover:brightness-110 transition shadow-2xs"
+                            <button id="btn-informe-pdf" disabled onclick="descargarInformeMarketing('pdf')"
+                                class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-cocoa text-white text-xs font-bold uppercase tracking-wider hover:brightness-110 transition shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Descargar informe estratégico integral en PDF (Histórico + 1 Año + 3 Meses + 1 Mes)">
                                 <i class="ph-bold ph-file-pdf text-base"></i> PDF
                             </button>
-                            <button id="btn-conciliar-pagos" onclick="ejecutarConciliacionPagos()"
-                                class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-white border border-cocoa/15 text-cocoa/70 hover:text-cocoa hover:bg-sand/20 text-xs font-bold uppercase tracking-wider transition shadow-2xs"
+                            <button id="btn-conciliar-pagos" disabled onclick="ejecutarConciliacionPagos()"
+                                class="h-9 px-3 flex items-center gap-1.5 rounded-xl bg-white border border-cocoa/15 text-cocoa/70 hover:text-cocoa hover:bg-sand/20 text-xs font-bold uppercase tracking-wider transition shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Conciliar pagos Stripe con la base de datos">
                                 <i class="ph-bold ph-scales text-base"></i> Conciliar
                             </button>
@@ -13993,6 +13993,12 @@
         async function cargarDashboardAdmin(rango = currentDashboardRange) {
             if (!isAdmin) return;
 
+            // Botones de informe/conciliación: se habilitan al entrar un admin real
+            // (arrancan deshabilitados para que un clic precoz no dé ReferenceError).
+            ['btn-informe-excel', 'btn-informe-pdf', 'btn-conciliar-pagos'].forEach((btnId) => {
+                const b = document.getElementById(btnId);
+                if (b) b.disabled = false;
+            });
             // 1. Cargas asíncronas con fallbacks limpios
             const [usersRes, clasesRes, profsRes, reservasPsicoRes, reservasNutriRes] = await Promise.allSettled([
                 (!allUsersCache || allUsersCache.length === 0) ? client.from('profiles').select('*').order('created_at', { ascending: true }) : Promise.resolve({ data: allUsersCache }),
@@ -17133,6 +17139,7 @@
                 const nCnt = data?.reservas_nutricion_trasladadas || 0;
                 const tCnt = data?.reservas_talleres_trasladadas || 0;
                 const totalTrasladadas = yCnt + pCnt + nCnt + tCnt;
+                const reembolsadas = Number(data?.reservas_duplicadas_reembolsadas || 0);
 
                 await Swal.fire({
                     title: '¡Perfiles fusionados con éxito!',
@@ -17145,9 +17152,12 @@
                                 <div><strong>Reservas traspasadas:</strong> <span class="font-bold text-cocoa">${totalTrasladadas}</span> (${yCnt} yoga, ${pCnt} psicología, ${nCnt} nutrición${tCnt > 0 ? `, ${tCnt} talleres` : ''})</div>
                                 ${data?.bonos_trasladados ? `<div><strong>Bonos sumados:</strong> +${data.bonos_trasladados}</div>` : ''}
                                 ${data?.packs_trasladados ? `<div><strong>Packs transferidos:</strong> ${data.packs_trasladados}</div>` : ''}
+                                ${reembolsadas > 0 ? `<div><strong>Reservas duplicadas reembolsadas:</strong> +${reembolsadas} (packs, bonos y saldos devueltos al conservado)</div>` : ''}
                             </div>
                             <p class="text-[11px] text-cocoa/60">
-                                Ninguna reserva ha quedado suelta. Todas están ahora asignadas al perfil conservado y la ficha duplicada ha sido eliminada.
+                                ${reembolsadas > 0
+                                    ? 'Las reservas duplicadas se reembolsaron automáticamente antes de eliminar la ficha; ninguna quedó suelta.'
+                                    : 'Ninguna reserva ha quedado suelta. Todas están ahora asignadas al perfil conservado y la ficha duplicada ha sido eliminada.'}
                             </p>
                         </div>
                     `,

@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.2.1 — 30 sep 2026 · Incidencia
+
+- **Descripción:** acabar mejoras a medias: fusion de perfiles reembolsa duplicadas y suma saldos gratuitos (migracion 202610010001), admin_eliminar_clase cerrado a anon, botones informe conciliacion con guardas y antidoble-clic, invitado elige otra clase sin repagar, cancel.html traducido (ámbito: antierrores)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.2.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.2.1.md`
+
 ## v17.2.0 — 30 sep 2026 · Desarrollo
 
 - **Descripción:** sistema antierrores v17.2: locks anti-doble-clic en reservas cancelaciones y compras, doble-cargo checkout bloqueado, registro con confirmacion de email, recuperacion honesta, credito de taller en tarifas, storage de invitado unificado, i18n y back nativo (ámbito: antierrores)

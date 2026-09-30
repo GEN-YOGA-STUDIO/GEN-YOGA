@@ -112,6 +112,15 @@ const translations = {
         "modal_history_value_bullet3_desc": "Fortalece el vínculo entre estudio, farmacia y comunidad, GENerando bienestar, seguimiento y sentido de pertenencia.",
         "modal_history_value_bullet3_sub": "Para ello, ofrece recursos digitales, como una aplicación móvil única, y presenciales, como la atención en GEN Yoga y Farmacia Q19, ambas en una misma calle, mismo barrio, misma ciudad, donde converGEN perfiles y saberes GENeracionales diversos.",
         "footer_privacy": "Política de privacidad",
+        "cancel_page_title": "Pago Cancelado",
+        "cancel_page_message": "Parece que el proceso de pago ha sido cancelado y no se ha realizado ningún cargo. No te preocupes, puedes volver a intentarlo cuando estés listo.",
+        "cancel_btn_rates": "Volver a Tarifas",
+        "cancel_btn_profile": "Volver a mi Perfil",
+        "cancel_btn_profile_go": "Ir a mi Perfil",
+        "cancel_dest_profile": "tu perfil",
+        "cancel_dest_rates": "tarifas",
+        "cancel_redirect_to": "Redirigiéndote a {dest} en ",
+        "cancel_redirect_suffix": " segundos...",
 
         // clases.html (Sessions list)
         "classes_title": "Escoge tus sesiones",
@@ -578,6 +587,15 @@ const translations = {
         "modal_history_value_bullet3_desc": "Strengthens the bond between the studio, the pharmacy, and the community, GENerating well-being, follow-ups, and a sense of belonging.",
         "modal_history_value_bullet3_sub": "To do this, it offers digital resources, such as a unique mobile application, and in-person resources, such as care at GEN Yoga and Farmacia Q19, both in the same street, same neighborhood, same city, where diverse profiles and generational knowledge converge.",
         "footer_privacy": "Privacy Policy",
+        "cancel_page_title": "Payment Cancelled",
+        "cancel_page_message": "It looks like the payment process was cancelled and no charge has been made. Don't worry, you can try again whenever you're ready.",
+        "cancel_btn_rates": "Back to Rates",
+        "cancel_btn_profile": "Back to my Profile",
+        "cancel_btn_profile_go": "Go to my Profile",
+        "cancel_dest_profile": "your profile",
+        "cancel_dest_rates": "rates",
+        "cancel_redirect_to": "Redirecting you to {dest} in ",
+        "cancel_redirect_suffix": " seconds...",
 
         // clases.html (Sessions list)
         "classes_title": "Choose your sessions",
