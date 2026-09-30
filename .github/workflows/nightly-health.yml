@@ -52,18 +52,23 @@ jobs:
           name: nightly-report
           path: nightly-reports/
           if-no-files-found: warn
+      - name: Generar autorreporte para la IA
+        if: always()
+        run: node scripts/nightly-issue-body.mjs nightly-reports/nightly-action.json > nightly-reports/issue-body.md || echo "sin cuerpo"
       - name: Abrir issue si falla
         if: failure()
         uses: actions/github-script@60a0d83039c74a4a6f1193b26a2bb70d1f9b8c8a3 # v7
         with:
           script: |
+            const fs = require('fs');
+            let body;
+            try {
+              body = fs.readFileSync('nightly-reports/issue-body.md', 'utf8');
+            } catch {
+              body = '<!-- opencode-autofix -->\nChequeo nocturno fallido sin autorreporte: revisar el artefacto `nightly-report`.';
+            }
+            body += `\nEjecución: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const title = '🌙 Chequeo nocturno: producción con fallos';
-            const body = [
-              `El chequeo de las ${new Date().toISOString().slice(0, 10)} contra https://genyoga.studio ha fallado.`,
-              ``,
-              `Revisar: Actions → Chequeo nocturno de producción → artefacto \`nightly-report\`.`,
-              `Ejecución: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-            ].join('\n');
             const open = await github.rest.issues.listForRepo({
               owner: context.repo.owner, repo: context.repo.repo, state: 'open', per_page: 20,
             });
@@ -71,5 +76,5 @@ jobs:
             if (dup) {
               await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: dup.number, body });
             } else {
-              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['producción'] });
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['producción', 'ai-fix'] });
             }

@@ -1,0 +1,117 @@
+name: Validación de certificación (pre-producción)
+
+# Valida cada versión en el entorno de cert ANTES de que pase a producción.
+# Corre el mismo barrido de cliente que el nocturno (CERT_MODE=1) contra la
+# base de cert, con autodetección de su Supabase y chequeo de aislamiento.
+#
+# Disparo:
+#   - Tras cada "Deploy Cert" (espera a que Pages publique el nuevo build).
+#   - Cada noche 02:15 UTC + manual (input base_url para validar otro espejo).
+#
+# Base: input base_url → variable CERT_BASE_URL → Q19-CERT por defecto.
+#   (Si el espejo migra a GEN-YOGA-CERT, basta fijar la variable.)
+# Falla y abre issue `cert` + `ai-fix` si: manifiesto incoherente, cert
+# apuntando al Supabase de producción, backend roto, errores JS, acciones
+# de cliente rotas, etc.
+
+on:
+  workflow_run:
+    workflows: ["Deploy Cert"]
+    types: [completed]
+  schedule:
+    - cron: '15 2 * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base a validar (vacío = variable CERT_BASE_URL o Q19-CERT)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  cert:
+    name: Validar versión en cert
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CERT_MODE: '1'
+      CERT_BASE: ${{ inputs.base_url || vars.CERT_BASE_URL || 'https://gen-yoga-studio.github.io/Q19-CERT/' }}
+      GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
+      GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Instalar dependencias
+        run: npm ci --no-audit --no-fund
+      - name: Instalar Chromium
+        run: |
+          CORE_VER=$(node -p "require('./node_modules/playwright-core/package.json').version")
+          npx -y playwright@$CORE_VER install --only-shell chromium
+          npx -y playwright@$CORE_VER install --only-shell --with-deps chromium 2>/dev/null || true
+      - name: Esperar publicación en Pages
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        env:
+          RUN_STARTED: ${{ github.event.workflow_run.created_at }}
+        run: |
+          echo "Base: $CERT_BASE (deploy ${{ github.event.workflow_run.head_sha }})"
+          SEEN=0
+          for i in $(seq 1 8); do
+            CODE=$(curl -s -o /tmp/cert.json -w '%{http_code}' "$CERT_BASE/cert.json" || echo 000)
+            if [ "$CODE" = "200" ]; then
+              SEEN=1
+              BUILT=$(node -p "try{JSON.parse(require('fs').readFileSync('/tmp/cert.json','utf8')).construido||''}catch(e){''}")
+              echo "manifiesto construido=$BUILT run=$RUN_STARTED"
+              if [ -n "$BUILT" ] && [[ "$BUILT" > "$RUN_STARTED" ]]; then echo "✅ Nuevo build publicado."; break; fi
+            else
+              echo "sin manifiesto (intento $i/8)"
+            fi
+            [ "$i" = "8" ] && break
+            sleep 60
+          done
+          if [ "$SEEN" = "0" ]; then echo "⚠️ Sin manifiesto (cert legacy): margen extra para Pages."; sleep 120; fi
+      - name: Validar cert como un cliente
+        run: PROD_BASE_URL="$CERT_BASE" npm run check:cert
+      - name: Subir informe
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cert-report
+          path: nightly-reports/
+          if-no-files-found: warn
+      - name: Generar autorreporte para la IA
+        if: always()
+        run: CERT_MODE=1 node scripts/nightly-issue-body.mjs nightly-reports/cert-action.json > nightly-reports/cert-issue-body.md || echo "sin cuerpo"
+      - name: Resumen
+        if: always()
+        run: |
+          echo "## Validación de cert" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Base: \`$CERT_BASE\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Manifiesto: \`$(node -p "try{const m=JSON.parse(require('fs').readFileSync('/tmp/cert.json','utf8'));m.version+' ('+m.entorno+')'}catch(e){'sin manifiesto (legacy)'}" 2>/dev/null)\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Abrir issue si la versión no pasa
+        if: failure()
+        uses: actions/github-script@60a0d83039c74a4a6f1193b26a2bb70d1f9b8c8a3 # v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body;
+            try {
+              body = fs.readFileSync('nightly-reports/cert-issue-body.md', 'utf8');
+            } catch {
+              body = '<!-- opencode-autofix -->\nValidación de cert fallida sin autorreporte: revisar el artefacto `cert-report`.';
+            }
+            body += `\nEjecución: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = '🧪 Cert: la versión no pasa la validación';
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo, state: 'open', per_page: 20,
+            });
+            const dup = open.data.find((i) => i.title === title);
+            if (dup) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: dup.number, body });
+            } else {
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['cert', 'ai-fix'] });
+            }

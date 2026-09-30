@@ -1,0 +1,90 @@
+name: Deploy Cert
+
+# Entorno de certificación: cada push a main publica aquí primero.
+# Producción NO se toca con este workflow (para eso está npm run publicar).
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "cert"
+  cancel-in-progress: true
+
+env:
+  CERT_REPO: GEN-YOGA-STUDIO/GEN-YOGA-CERT
+
+jobs:
+  cert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Comprobar la configuración de certificación
+        env:
+          CERT_SUPABASE_URL: ${{ secrets.CERT_SUPABASE_URL }}
+          CERT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.CERT_SUPABASE_PUBLISHABLE_KEY }}
+          CERT_REPO_TOKEN: ${{ secrets.CERT_REPO_TOKEN }}
+        run: |
+          fallos=0
+          if [ -z "$CERT_SUPABASE_URL" ]; then
+            echo "::error::Falta el secreto CERT_SUPABASE_URL (URL del proyecto Supabase de certificación)."
+            fallos=1
+          fi
+          if [ -z "$CERT_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Falta el secreto CERT_SUPABASE_PUBLISHABLE_KEY (clave pública de certificación)."
+            fallos=1
+          fi
+          if [ -z "$CERT_REPO_TOKEN" ]; then
+            echo "::error::Falta el secreto CERT_REPO_TOKEN (PAT con Contents: write en GEN-YOGA-CERT)."
+            fallos=1
+          fi
+          if [ "$fallos" -ne 0 ]; then
+            echo "::error::Certificación no puede publicarse. Ver docs/CERTIFICATION_SETUP.md"
+            exit 1
+          fi
+
+      - name: Construir el artefacto de certificación
+        env:
+          CERT_SUPABASE_URL: ${{ secrets.CERT_SUPABASE_URL }}
+          CERT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.CERT_SUPABASE_PUBLISHABLE_KEY }}
+        run: node scripts/build-cert-web.mjs _cert
+
+      - name: Publicar en el repositorio de certificación
+        env:
+          CERT_REPO_TOKEN: ${{ secrets.CERT_REPO_TOKEN }}
+          VERSION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          rm -rf /tmp/cert
+          git clone --depth 1 "https://x-access-token:${CERT_REPO_TOKEN}@github.com/${CERT_REPO}.git" /tmp/cert
+          rsync -a --delete _cert/ /tmp/cert/
+          cd /tmp/cert
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sin cambios: cert ya publicaba la versión ${version}."
+          else
+            git commit -m "cert: versión ${version} (${GITHUB_SHA::7})"
+            git push
+            echo "Publicado en cert la versión ${version}."
+          fi
+
+      - name: Resumen
+        run: |
+          echo "## Certificación publicada" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Versión: \`$(node -p "require('./package.json').version")\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: https://gen-yoga-studio.github.io/GEN-YOGA-CERT/" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Producción: **sin tocar** (espera a \`npm run publicar\`)" >> "$GITHUB_STEP_SUMMARY"

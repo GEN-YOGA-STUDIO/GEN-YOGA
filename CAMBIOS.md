@@ -6,28 +6,40 @@ Desde el **30 sep 2026**, todo cambio que se ejecute en la web queda registrado 
 
 | Tipo | Qué es | Versión | Validación | Deploy |
 |---|---|---|---|---|
-| **Desarrollo** (cambio mayor) | funcionalidad nueva, rediseño, decisión de producto | minor+1 → `17.1.0` ⇒ `17.2.0` | `npm test` completo (22 checks) | web + apps (iOS/Android) |
-| **Incidencia** (cambio menor) | bug, error en producción, arreglo puntual | patch+1 → `17.1.0` ⇒ `17.1.1` | `release` + `regression` + `web` + `twins` + `sync` + `deploy` + `cambios` | solo web (Pages, automático) |
+| **Desarrollo** (cambio mayor) | funcionalidad nueva, rediseño, decisión de producto | minor+1 → `17.1.0` ⇒ `17.2.0` | `npm test` completo (22 checks) | cert (auto) → pro con `npm run publicar` + apps |
+| **Incidencia** (cambio menor) | bug, error en producción, arreglo puntual | patch+1 → `17.1.0` ⇒ `17.1.1` | `release` + `regression` + `web` + `twins` + `sync` + `deploy` + `cambios` | cert (auto) → pro con `npm run publicar`, solo web |
 
-Un único comando lo ejecuta todo (bump → `sync_apps.py` → validación → entrada aquí → commit → regenera el historial → tag anotado → push → deploy):
+Un único comando lo ejecuta todo (bump → `sync_apps.py` → validación → entrada aquí → control económico → commit → historial → tag anotado → **informe** → push → apps):
 
 ```bash
-npm run cambio -- desarrollo "descripción del cambio" --scope perfil
+npm run cambio -- desarrollo "descripción del cambio" --scope perfil --importe 100
 npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 ```
 
-`npm run check:cambios` (incluido en `npm test`) bloquea si a la versión vigente le falta su entrada aquí o su tag.
+- **`npm run check:cambios`** (incluido en `npm test`) bloquea si a la versión vigente le falta su entrada aquí, su tag o su **informe** en `docs/informes/`.
+- **`npm run contabilidad`** muestra el estado del control económico (documento privado, fuera del repo).
+- **`npm run publicar`** es el único paso que lleva una versión a producción: valida el registro y lanza el workflow de Pages. Hasta entonces, el push solo publica en cert.
 
 ---
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
+
+## v17.2.0 — 30 sep 2026 · Desarrollo
+
+- **Descripción:** sistema antierrores v17.2: locks anti-doble-clic en reservas cancelaciones y compras, doble-cargo checkout bloqueado, registro con confirmacion de email, recuperacion honesta, credito de taller en tarifas, storage de invitado unificado, i18n y back nativo (ámbito: antierrores)
+- **Validación:** npm test
+- **Tag:** `v17.2`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.2.0.md`
 
 ## v17.1.0 — 30 sep 2026 · Desarrollo
 
 - **Descripción:** corregir el `ReferenceError: tagOnlineBadge` en consultas con rama llena (release v17.1).
 - **Commits:** `fix(consultas): corregir ReferenceError tagOnlineBadge en rama llena + release v17.1` (65 ficheros sincronizados web + apps).
 - **Validación:** `npm test` completo (21 checks en ese momento).
-- **Tag:** pendiente — los tags anotados empiezan en la próxima release.
+- **Tag:** `v17.1` (línea base del registro de versiones).
+- **Contabilidad B:** sin línea nueva (la versión 17.1.0 ya estaba facturada en el documento; el vínculo automático empieza en la próxima release).
+- **Informe:** `docs/informes/v17.1.0.md`
 
 ### 30 sep 2026 · Proceso (sin cambio de versión web)
 
@@ -35,3 +47,6 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 - **`CAMBIOS.md`** (este fichero): registro obligatorio de todo cambio a partir de ahora.
 - **Flujo de versionado nuevo**: `npm run cambio` clasifica el cambio (mayor/desarrollo o menor/incidencia), lo numera, valida, registra, commitea y etiqueta. `check:cambios` se añade a `npm test`.
 - **`HISTORIAL_VERSIONES.html` movido de la raíz a `docs/`**: la raíz es el artefacto desplegable y `check:web` exige exactamente 8 páginas HTML.
+- **Contabilidad B fuera del repo público** (`docs/contabilidad b.md` dejó de estar trackeado y el historial ya publicado se purgó con `git filter-repo`): el documento vive solo en disco + copias privadas en `APLICACIONES/contabilidad-b/`, y `npm run contabilidad` muestra su estado.
+- **Informe automático por cambio**: cada release genera `docs/informes/v<versión>.md` con commits, dif, checks, despliegue y control económico; `check:cambios` lo exige.
+- **Flujo cert → pro**: `Pages` pasó a fuente *Actions*, el push a `main` publica en <https://gen-yoga-studio.github.io/GEN-YOGA-CERT/> (repo espejo `GEN-YOGA-CERT`) y **producción solo se toca con `npm run publicar`**.

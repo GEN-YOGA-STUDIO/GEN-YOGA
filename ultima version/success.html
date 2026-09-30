@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="17.1">
+    <meta name="application-version" content="17.2">
     <meta name="robots" content="noindex,nofollow">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.1">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.1">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.2">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.2">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
     <!-- Sugerencias de rendimiento -->
@@ -47,11 +47,11 @@
             } catch (e) {}
         })();
     </script>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=17.1">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=17.2">
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="capacitor-bridge.js?v=17.1" defer></script>
+    <script src="capacitor-bridge.js?v=17.2" defer></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
@@ -201,7 +201,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-60 flex flex-col items-center gap-1.5 text-xs text-cocoa">
-            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v17.1</span>
+            <span class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga - v17.2</span>
             <a href="politica-privacidad.html" class="hover:underline transition text-[11px] text-cocoa/70">Política de privacidad</a>
         </div>
     </div>
@@ -429,6 +429,8 @@
 
         async function reintentarVerificacion() {
             if (!stripeSessionId || !stripeSessionId.startsWith('cs_live_')) return;
+            if (window.__gyVerifyBusy) return;
+            window.__gyVerifyBusy = true;
             document.getElementById('verification-error').classList.add('hidden');
             document.getElementById('loading-state').classList.remove('hidden');
             try {
@@ -440,6 +442,8 @@
                     'No se ha podido confirmar el pago con Stripe. Si el importe se ha cobrado en tu tarjeta, tu bono se sincronizará en tu cuenta en breve.',
                     true
                 );
+            } finally {
+                window.__gyVerifyBusy = false;
             }
         }
 
@@ -480,6 +484,8 @@
 
         async function irAlPortalFacturas() {
             if (!stripeSessionId) return;
+            if (window.__gyPortalBusy) return;
+            window.__gyPortalBusy = true;
             if (redirectCountdownTimer) {
                 clearInterval(redirectCountdownTimer);
                 redirectCountdownTimer = null;
@@ -506,6 +512,7 @@
                 }
                 window.location.assign(portalUrl.href);
             } catch (error) {
+                window.__gyPortalBusy = false;
                 Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'No se pudo abrir el portal.' });
             }
         }
@@ -650,9 +657,10 @@
         }
 
         async function confirmarReservaInvitado() {
-            const claseId = document.getElementById('guest-clase-select').value;
-            const nombre = document.getElementById('guest-nombre').value.trim();
-            const apellidos = document.getElementById('guest-apellidos').value.trim();
+            if (window.__gyGuestBookingLock) return;
+            const claseId = document.getElementById('guest-clase-select')?.value;
+            const nombre = (document.getElementById('guest-nombre')?.value || '').trim();
+            const apellidos = (document.getElementById('guest-apellidos')?.value || '').trim();
 
             if (!claseId) {
                 Swal.fire({ icon: 'warning', title: 'Atención', text: 'Por favor, selecciona una clase de Yoga.' });
@@ -663,6 +671,8 @@
                 return;
             }
 
+            window.__gyGuestBookingLock = true;
+            const confirmBtnGuest = document.querySelector('.swal2-confirm');
             Swal.fire({
                 title: 'Reservando tu clase...',
                 text: 'Por favor, espera un momento.',
@@ -717,6 +727,8 @@
                     text: userMessage,
                     confirmButtonColor: '#D27D60'
                 });
+            } finally {
+                window.__gyGuestBookingLock = false;
             }
         }
 

@@ -115,7 +115,7 @@ requireText(shared, 'siteUrl !== PRODUCTION_SITE_ORIGIN', 'SITE_URL canónica si
 requireText(shared, 'return config.siteUrl', 'Retorno Stripe siempre canónico');
 const liveOriginsBlock = shared.match(/const LIVE_PAYMENT_ORIGINS[\s\S]*?\]\)/)?.[0] || '';
 const returnResolverBlock = shared.match(/export function resolveReturnBaseUrl[\s\S]*?\n}/)?.[0] || '';
-forbid(liveOriginsBlock, /jaime312|github\.io/i, 'Pagos LIVE');
+forbid(liveOriginsBlock, /gen-yoga-studio\.github\.io|jaime312|github\.io/i, 'Pagos LIVE');
 forbid(shared, /CERTIFICATION_BASE_URL|\/GEN-YOGA/i, 'Retornos Stripe');
 forbid(returnResolverBlock, /return\s+origin\b/i, 'Retornos Stripe');
 forbid(envExample.match(/^PAYMENT_ALLOWED_ORIGINS=.*$/m)?.[0] || '', /github\.io/i, 'PAYMENT_ALLOWED_ORIGINS de ejemplo');

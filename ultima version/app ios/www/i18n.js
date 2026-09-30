@@ -53,7 +53,7 @@ const translations = {
     es: {
         // Navigation & Menu
         "nav_sessions": "SESIONES",
-        "nav_clases": "SESIONES",
+        "nav_clases": "CLASES",
         "nav_tarifas": "TARIFAS",
         "nav_maestros": "MAESTROS",
         "nav_profesores": "PROFESORES",
@@ -339,7 +339,7 @@ const translations = {
         "register_phone_invalid": "El teléfono móvil debe tener exactamente 9 dígitos numéricos.",
         "register_birth_label": "Fecha de nacimiento",
         "register_birth_hint": "Lo usamos de forma privada para asignarte tu opción de bienvenida.",
-        "register_password_label": "Contraseña (mín. 6 caracteres)",
+        "register_password_label": "Contraseña (mín. 8 caracteres)",
         "register_btn_submit": "Registrarse &rarr;",
         "register_has_account": "¿Ya tienes una cuenta?",
         "register_btn_login": "Inicia sesión aquí",
@@ -805,7 +805,7 @@ const translations = {
         "register_phone_invalid": "Mobile phone number must have exactly 9 digits.",
         "register_birth_label": "Date of Birth",
         "register_birth_hint": "We use it privately to assign your welcome option.",
-        "register_password_label": "Password (min. 6 characters)",
+        "register_password_label": "Password (min. 8 characters)",
         "register_btn_submit": "Register &rarr;",
         "register_has_account": "Already have an account?",
         "register_btn_login": "Sign in here",
@@ -1029,6 +1029,11 @@ function safeRemoveItem(key) {
 }
 
 let currentLang = safeGetItem('yoga-lang', 'es');
+if (currentLang !== 'es' && currentLang !== 'en') {
+    // Idioma corrupto en storage: volver a ES y reescribirlo (evita píldora sin activo).
+    currentLang = 'es';
+    safeSetItem('yoga-lang', 'es');
+}
 
 function setLanguage(lang) {
     if (lang !== 'es' && lang !== 'en') return;
@@ -1108,6 +1113,7 @@ function t(key, fallback = '') {
 const alertTranslations = {
     "Contraseña débil": "Weak password",
     "Usa al menos 6 caracteres.": "Use at least 6 characters.",
+    "Usa al menos 8 caracteres.": "Use at least 8 characters.",
     "Error": "Error",
     "Atención": "Warning",
     "Éxito": "Success",

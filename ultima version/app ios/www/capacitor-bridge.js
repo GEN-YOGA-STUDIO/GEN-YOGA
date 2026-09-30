@@ -85,6 +85,18 @@
           return true;
         }
       }
+      // Calendario público (clases.html): cerrar el panel antes de salir de la página.
+      if (document.body && document.body.classList.contains('gy-calendar-open') &&
+          window.GENPublicCalendar && typeof window.GENPublicCalendar.close === 'function') {
+        window.GENPublicCalendar.close();
+        return true;
+      }
+      // Ficha de maestro (maestros.html): cerrar el modal antes de salir.
+      if (document.body && document.body.classList.contains('teacher-modal-open') &&
+          typeof window.closeTeacherModal === 'function') {
+        window.closeTeacherModal({ syncUrl: false });
+        return true;
+      }
       var openDialog = document.querySelector('[role="dialog"]:not(.hidden)');
       if (openDialog && openDialog.id !== 'flash-welcome-modal') {
         if (typeof window.closeModal === 'function') { window.closeModal(); return true; }

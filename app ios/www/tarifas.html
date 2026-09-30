@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="17.1">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.1">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.1">
+    <meta name="application-version" content="17.2">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.2">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.2">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,13 +25,13 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=17.1">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=17.2">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=17.1"></script>
-    <script src="capacitor-bridge.js?v=17.1" defer></script>
+    <script src="i18n.js?v=17.2"></script>
+    <script src="capacitor-bridge.js?v=17.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -772,12 +772,12 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v17.1 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v17.2 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '17.1';
+        const APP_VERSION = '17.2';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -789,9 +789,12 @@
 
         function safeSetItem(key, value) {
             try { sessionStorage.setItem(key, value); } catch (e) { console.warn('Storage error:', e); }
+            // Espejo en localStorage: success.html/profile.html leen de ahí (pre-fill de invitado, clase preferida, origen del checkout).
+            try { localStorage.setItem(key, value); } catch (e) { console.warn('Storage error:', e); }
         }
         function safeRemoveItem(key) {
             try { sessionStorage.removeItem(key); } catch (e) { console.warn('Storage error:', e); }
+            try { localStorage.removeItem(key); } catch (e) { console.warn('Storage error:', e); }
         }
         function escapeHtml(str) {
             if (str == null) return '';
@@ -1554,6 +1557,32 @@
                     return;
                 } else {
                     return;
+                }
+            }
+
+            // Antes de cobrar: si el usuario tiene crédito de reprogramación de taller
+            // disponible, no se va a Stripe — se le lleva al perfil para canjearlo a 0 €.
+            if (userId && userId !== 'guest' && claseId && supabaseClient) {
+                try {
+                    const { data: creditosTaller } = await supabaseClient
+                        .from('creditos_reprogramacion')
+                        .select('id')
+                        .eq('user_id', userId)
+                        .eq('tipo', 'taller')
+                        .eq('estado', 'disponible')
+                        .limit(1);
+                    if (Array.isArray(creditosTaller) && creditosTaller.length > 0) {
+                        await Swal.fire({
+                            icon: 'info',
+                            title: 'Tienes un Crédito de taller',
+                            text: 'Tienes un Crédito de Reprogramación disponible. Te llevamos a tu perfil para reservar este taller sin coste (0 €).',
+                            confirmButtonColor: '#AB593D'
+                        });
+                        window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales`;
+                        return;
+                    }
+                } catch (eCredit) {
+                    console.warn('No se pudo comprobar el crédito de taller:', eCredit);
                 }
             }
 

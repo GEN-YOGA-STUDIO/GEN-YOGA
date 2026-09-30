@@ -1,10 +1,14 @@
 {
   "name": "gen-yoga-app",
-  "version": "17.1.0",
-  "description": "Sitio web de GEN Yoga y verificaciones de calidad para la versión 17.1",
+  "version": "17.2.0",
+  "description": "Sitio web de GEN Yoga y verificaciones de calidad para la versión 17.2",
   "scripts": {
     "cambio": "node scripts/registrar-cambio.mjs",
     "historial": "node scripts/generar-historial-versiones.mjs docs/HISTORIAL_VERSIONES.html",
+    "contabilidad": "node scripts/contabilidad.mjs estado",
+    "build:cert-web": "node scripts/build-cert-web.mjs",
+    "cert": "gh workflow run deploy-cert.yml --ref main",
+    "publicar": "npm run check:cambios && gh workflow run deploy-pages.yml --ref main",
     "test": "npm run check:cambios && npm run check:release && npm run check:regression && npm run check:web && npm run check:teachers && npm run check:calendar && npm run check:overlaps && npm run check:stripe && npm run check:cursor && npm run check:talleres && npm run check:welcome && npm run check:v12 && npm run check:i18n && npm run check:deploy && npm run check:runtime && npm run check:e2e && npm run check:marketing && npm run check:dates && npm run check:live && npm run check:links && npm run check:sync && npm run check:twins",
     "check:cambios": "node scripts/check-cambios.mjs",
     "check:release": "node scripts/check-release-consistency.mjs",
@@ -38,6 +42,7 @@
     "setup:mcp": "node scripts/setup-mcp.mjs",
     "check:consultas": "node scripts/check-consultas-grupales.mjs",
     "check:nightly": "node scripts/check-nightly-production.mjs",
+    "check:cert": "CERT_MODE=1 node scripts/check-nightly-production.mjs",
     "test:quick": "node scripts/check-web-quality.mjs",
     "dev": "npx -y live-server --port=5500"
   },

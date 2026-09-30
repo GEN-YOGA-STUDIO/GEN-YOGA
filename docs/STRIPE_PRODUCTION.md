@@ -86,7 +86,7 @@ producción.
 https://genyoga.studio,https://www.genyoga.studio
 ```
 
-GitHub Pages y cualquier web de certificación deben quedar fuera de los pagos LIVE. El origen del navegador no incluye la ruta del repositorio, por lo que `jaime312.github.io/Q19-CERT` no se puede aislar de otros repositorios mediante CORS. Una certificación funcional requiere otro proyecto Supabase, Stripe TEST, Prices y webhook de prueba, preferiblemente bajo un hostname propio como `cert.genyoga.studio`.
+GitHub Pages y cualquier web de certificación deben quedar fuera de los pagos LIVE. El origen del navegador no incluye la ruta del repositorio, por lo que `gen-yoga-studio.github.io/Q19-CERT` no se puede aislar de otros repositorios mediante CORS. Una certificación funcional requiere otro proyecto Supabase, Stripe TEST, Prices y webhook de prueba, preferiblemente bajo un hostname propio como `cert.genyoga.studio`.
 
 Todos los retornos de Checkout y Customer Portal se construyen con el `SITE_URL` canónico. Nunca se refleja el encabezado `Origin`, ni se usan rutas `/GEN-YOGA` o `/Q19-CERT` para sesiones LIVE.
 

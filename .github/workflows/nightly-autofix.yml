@@ -1,0 +1,149 @@
+name: Autofix nocturno con IA (opencode)
+
+# Bucle cerrado: ante un issue del chequeo nocturno (etiqueta `ai-fix`),
+# un agente OpenCode intenta corregirlo solo, lo verifica y abre PR.
+#
+# ACTIVACIÓN (una vez, repo → Settings):
+#   1. Variable  AUTOFIX_ENABLED = true
+#      (Settings → Secrets and variables → Actions → Variables → New repository variable)
+#   2. Secreto con clave de un proveedor LLM que OpenCode pueda usar, p. ej.
+#      ANTHROPIC_API_KEY  (Settings → Secrets → Actions → New repository secret)
+# Sin esto, el workflow deja instrucciones en el issue y termina sin hacer nada.
+#
+# Disparo: al etiquetar un issue con `ai-fix`, o manual con el número de issue.
+# Seguridad: un solo intento por issue (etiqueta `autofix-intentado`) y el
+# agente NUNCA toca main: abre PR para revisión humana.
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Número del issue a corregir'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: nightly-autofix
+  cancel-in-progress: false
+
+jobs:
+  autofix:
+    name: Corregir con OpenCode
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'ai-fix'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PROD_BASE_URL: https://genyoga.studio
+      GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
+      GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+    steps:
+      - name: Resolver número de issue
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            N="${{ inputs.issue_number }}"
+          else
+            N="${{ github.event.issue.number }}"
+          fi
+          echo "number=$N" >> "$GITHUB_OUTPUT"
+          LABS=$(gh issue view "$N" --json labels -q '.labels[].name' 2>/dev/null || true)
+          echo "labels=$LABS" >> "$GITHUB_OUTPUT"
+      - name: Puerta de activación
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          N=${{ steps.issue.outputs.number }}
+          if echo "${{ steps.issue.outputs.labels }}" | grep -q 'autofix-intentado'; then
+            echo "Ya se intentó el autofix en este issue. Termino."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ vars.AUTOFIX_ENABLED }}" != "true" ]; then
+            gh issue comment "$N" --body "🤖 Autofix desactivado. Para activarlo: crea la variable de repositorio \`AUTOFIX_ENABLED=true\` y el secreto \`ANTHROPIC_API_KEY\` (Settings → Secrets and variables → Actions). Mientras tanto, el issue incluye el bloque *Prompt para OpenCode* listo para ejecutar en local con \`opencode run\`."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$OPENAI_API_KEY" ] && [ -z "$GEMINI_API_KEY" ] && [ -z "$GOOGLE_GENERATIVE_AI_API_KEY" ]; then
+            gh issue comment "$N" --body "🤖 Autofix activado pero sin clave LLM. Crea el secreto \`ANTHROPIC_API_KEY\` (o \`OPENAI_API_KEY\`/\`GEMINI_API_KEY\`) en Settings → Secrets → Actions y vuelve a etiquetar con \`ai-fix\` (quita antes \`autofix-intentado\`)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          gh issue edit "$N" --add-label "autofix-intentado"
+          gh issue comment "$N" --body "🤖 Autofix en marcha: un agente OpenCode intentará corregirlo y abrirá PR si la verificación pasa. Ejecución: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.gate.outputs.enabled == 'true'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: 22
+      - name: Instalar dependencias y Chromium
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          npm ci --no-audit --no-fund
+          CORE_VER=$(node -p "require('./node_modules/playwright-core/package.json').version")
+          npx -y playwright@$CORE_VER install --only-shell chromium
+      - name: Instalar OpenCode
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          if ! command -v opencode >/dev/null 2>&1; then
+            npm i -g opencode-ai || curl -fsSL https://opencode.ai/install | bash
+            export PATH="$HOME/.opencode/bin:$PATH"
+          fi
+          command -v opencode
+          opencode --version
+      - name: Ejecutar agente
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          N=${{ steps.issue.outputs.number }}
+          VERIFY="npm run check:nightly"
+          if echo "${{ steps.issue.outputs.labels }}" | grep -qx 'cert'; then VERIFY="npm run check:cert"; fi
+          gh issue view "$N" --json number,title,body -q '"ISSUE #\(.number): \(.title)\n\n\(.body)"' > /tmp/issue.txt
+          {
+            echo "Estás en /home/runner/work, repo GEN-YOGA, rama main. Corrige los fallos descritos en el issue de abajo."
+            echo "REGLAS DURAS: cambios mínimos; reproduce primero con scripts/check-nightly-production.mjs; 0 reservas/compras/escrituras reales (el flujo de compra se intercepta); no escribas secretos; si tocas .html/.js/.css de la web replica el cambio en \`ultima version/\` (fuente del deploy) y en \`app android/www\` + \`app ios/www\` si existen; verifica al final con \`$VERIFY\`; no hagas commit ni push, deja los cambios en el working tree."
+            echo ""
+            cat /tmp/issue.txt
+          } > /tmp/prompt.txt
+          timeout 15m opencode run "$(cat /tmp/prompt.txt)" > autofix-log.txt 2>&1 || echo "AGENT_EXIT=$?" >> autofix-log.txt
+          tail -60 autofix-log.txt
+      - name: Verificar y abrir PR
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          N=${{ steps.issue.outputs.number }}
+          VERIFY="npm run check:nightly"
+          if echo "${{ steps.issue.outputs.labels }}" | grep -qx 'cert'; then VERIFY="npm run check:cert"; fi
+          if [ -z "$(git status --porcelain | grep -v '^?? nightly-reports/' | grep -v '^?? autofix-log.txt' || true)" ]; then
+            gh issue comment "$N" --body "🤖 El agente terminó sin proponer cambios. Log (cola): $(tail -20 autofix-log.txt | head -c 1500)"
+            exit 0
+          fi
+          if timeout 12m $VERIFY > verify-log.txt 2>&1; then
+            D=$(date +%F)
+            BR="autofix/nightly-$D-$N"
+            git checkout -b "$BR"
+            git add -A
+            git -c user.name="genyoga-autofix" -c user.email="autofix@genyoga.studio" commit -m "autofix nocturno: corrige issue #$N (verificado con check:nightly)"
+            git push -u origin "$BR"
+            gh pr create --title "🤖 Autofix nocturno del issue #$N" --body "Generado por el workflow \`Autofix nocturno con IA\`.\n\nFixes #$N.\n\nVerificación: \`$VERIFY\` en verde (ver log de la ejecución)." --base main --head "$BR"
+            gh issue comment "$N" --body "✅ Verificación en verde. PR abierto para revisión humana."
+          else
+            gh issue comment "$N" --body "⚠️ El agente propuso cambios pero \`$VERIFY\` sigue en rojo. Cola de la verificación: $(tail -30 verify-log.txt | head -c 2000). Revisión humana necesaria."
+            exit 1
+          fi

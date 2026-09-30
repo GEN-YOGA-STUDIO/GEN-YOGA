@@ -7,9 +7,13 @@ import { fileURLToPath } from 'node:url';
 //
 // 1) La versión vigente de package.json tiene su entrada en CAMBIOS.md, con
 //    tipo (Desarrollo / Incidencia) y ordenado de más nueva a más antigua.
-// 2) Existe el tag anotado de la release (v17.2 si es .0, v17.1.1 si es patch).
-//    Durante `npm run cambio` la regla 2 se pospone (REGISTRO_EN_CURSO=1) y en
+// 2) La entrada declara qué pasó con la contabilidad B (- **Contabilidad B:** …),
+//    que es el vínculo con el control económico del documento privado.
+// 3) Existe el tag anotado de la release (v17.2 si es .0, v17.1.1 si es patch).
+//    Durante `npm run cambio` la regla 3 se pospone (REGISTRO_EN_CURSO=1) y en
 //    CI se degrada a aviso, porque Actions no fetchea tags con fetch-depth 1.
+// 4) Existe el informe automático de la release en docs/informes/v<versión>.md
+//    (commits, diff, checks, despliegue cert→pro y control económico).
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -51,9 +55,24 @@ if (changelog) {
   if (headings.length && !matches(headings[0])) {
     warn(`la primera entrada es ${headings[0].ver} y la vigente es ${full} — las entradas van de más nueva a más antigua`);
   }
+
+  console.log(`\n--- 2. Vínculo con el control económico (contabilidad B) ---`);
+  if (!entry) {
+    warn('sin entrada vigente: el vínculo con la contabilidad se comprueba cuando exista');
+  } else {
+    const inicio = changelog.indexOf(entry.text);
+    const resto = changelog.slice(inicio + entry.text.length);
+    const cuerpo = resto.split(/^## /m)[0];
+    if (/-\s*\*\*Contabilidad B:\*\*/.test(cuerpo)) {
+      const linea = (cuerpo.match(/-\s*\*\*Contabilidad B:\*\*\s*(.+)/) || [])[1]?.trim();
+      pass(`contabilidad B: ${linea}`);
+    } else {
+      fail(`la entrada ${entry.text} no declara el estado en la contabilidad B (línea «- **Contabilidad B:** …»)`);
+    }
+  }
 }
 
-console.log('\n--- 2. Tag anotado de la release ---');
+console.log('\n--- 3. Tag anotado de la release ---');
 let tags = [];
 try {
   tags = execFileSync('git', ['tag', '--list'], { cwd: root, encoding: 'utf8' })
@@ -72,6 +91,23 @@ if (process.env.REGISTRO_EN_CURSO) {
   pass(`tag ${expectedTag} presente`);
 } else {
   fail(`falta el tag anotado ${expectedTag} para la versión ${full} (tags vistos: ${tags.join(', ')})`);
+}
+
+console.log(`\n--- 4. Informe automático del cambio ---`);
+try {
+  const informe = await readFile(path.join(root, 'docs', 'informes', `v${full}.md`), 'utf8');
+  if (informe.includes(`# Informe de cambio — v${full}`)) {
+    const secciones = [...informe.matchAll(/^## \d+\. .+$/gm)].length;
+    pass(`docs/informes/v${full}.md (${secciones} secciones)`);
+  } else {
+    fail(`docs/informes/v${full}.md no corresponde a la versión ${full}`);
+  }
+} catch {
+  if (process.env.REGISTRO_EN_CURSO) {
+    pass(`release en curso: el informe se genera al final de npm run cambio`);
+  } else {
+    fail(`falta el informe docs/informes/v${full}.md (lo escribe npm run cambio en cada release)`);
+  }
 }
 
 console.log('');
