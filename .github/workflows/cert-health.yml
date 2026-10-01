@@ -34,6 +34,10 @@ permissions:
 jobs:
   cert:
     name: Validar versión en cert
+    # Solo valida si el deploy de cert salió bien (o si se lanza a mano/nocturno):
+    # si Deploy Cert falló — p. ej. faltan CERT_SUPABASE_URL / CERT_REPO_TOKEN —
+    # ya hay un run en rojo; abrir un issue duplicado solo añade ruido.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -94,7 +98,7 @@ jobs:
           echo "- Manifiesto: \`$(node -p "try{const m=JSON.parse(require('fs').readFileSync('/tmp/cert.json','utf8'));m.version+' ('+m.entorno+')'}catch(e){'sin manifiesto (legacy)'}" 2>/dev/null)\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Abrir issue si la versión no pasa
         if: failure()
-        uses: actions/github-script@60a0d83039c74a4a6f1193b26a2bb70d1f9b8c8a3 # v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const fs = require('fs');
