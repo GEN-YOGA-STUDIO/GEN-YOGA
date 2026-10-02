@@ -57,14 +57,14 @@ jobs:
           CERT_ALLOW_PRODUCTION_DB: "1"
         run: node scripts/build-cert-web.mjs _cert
 
-      - name: Checkout cert repo
+      - name: Checkout cert repo (GEN-YOGA-CERT)
         uses: actions/checkout@v4
         with:
           repository: ${{ env.CERT_REPO }}
           token: ${{ secrets.CERT_REPO_TOKEN }}
           path: cert-repo
 
-      - name: Publicar en el repositorio de certificación
+      - name: Publicar en GEN-YOGA-CERT
         run: |
           set -euo pipefail
           version=$(node -p "require('./package.json').version")
@@ -74,16 +74,45 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "Sin cambios: cert ya publicaba la versión ${version}."
+            echo "Sin cambios: GEN-YOGA-CERT ya publicaba la versión ${version}."
           else
             git commit -m "cert: versión ${version} (${GITHUB_SHA::7})"
             git push origin main
-            echo "Publicado en cert la versión ${version}."
+            echo "Publicado en GEN-YOGA-CERT la versión ${version}."
+          fi
+
+      - name: Checkout cert repo legacy (Q19-CERT)
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: GEN-YOGA-STUDIO/Q19-CERT
+          token: ${{ secrets.CERT_REPO_TOKEN }}
+          path: q19-cert-repo
+
+      - name: Publicar en Q19-CERT (espejo histórico)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -d "q19-cert-repo" ]; then
+            version=$(node -p "require('./package.json').version")
+            rsync -a --delete --exclude='.git' _cert/ q19-cert-repo/
+            cd q19-cert-repo
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            if git diff --cached --quiet; then
+              echo "Sin cambios: Q19-CERT ya publicaba la versión ${version}."
+            else
+              git commit -m "cert: versión ${version} (${GITHUB_SHA::7})"
+              git push origin main
+              echo "Publicado en Q19-CERT la versión ${version}."
+            fi
           fi
 
       - name: Resumen
         run: |
           echo "## Certificación publicada" >> "$GITHUB_STEP_SUMMARY"
           echo "- Versión: \`$(node -p "require('./package.json').version")\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- URL: https://gen-yoga-studio.github.io/GEN-YOGA-CERT/" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL oficial: https://gen-yoga-studio.github.io/GEN-YOGA-CERT/" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL espejo: https://gen-yoga-studio.github.io/Q19-CERT/" >> "$GITHUB_STEP_SUMMARY"
           echo "- Producción: **sin tocar** (espera a \`npm run publicar\`)" >> "$GITHUB_STEP_SUMMARY"
