@@ -4675,6 +4675,23 @@
                             placeholder="Ej: Traer esterilla propia, nivel intermedio..."
                             class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
                     </div>
+
+                    <!-- Opciones de Serie / Sesiones Futuras -->
+                    <div id="editar-clase-serie-container" class="md:col-span-2 bg-sand/20 border border-cocoa/15 p-4 rounded-2xl space-y-2">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="editar-clase-aplicar-futuras" name="editar-clase-aplicar-futuras"
+                                class="w-4 h-4 mt-0.5 rounded text-olive accent-olive cursor-pointer">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold text-cocoa flex items-center gap-1.5">
+                                    <i class="ph-bold ph-arrows-clockwise text-olive"></i> Aplicar cambios a las siguientes sesiones de la serie
+                                </span>
+                                <span class="text-[11px] text-cocoa/70 mt-0.5">
+                                    Si cambias nombre, hora, duración, profesor o aforo, se actualizarán también todas las clases futuras coincidentes en este mismo horario semanal.
+                                </span>
+                                <span id="editar-clase-futuras-badge" class="hidden mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-2 py-0.5 rounded-md w-fit"></span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="flex gap-3 pt-4 border-t border-cocoa/10">
@@ -17871,6 +17888,43 @@
                     tarifaTallerContainer.classList.add('hidden');
                 }
             }
+
+            // Opciones de serie y sesiones futuras
+            const checkFuturas = document.getElementById('editar-clase-aplicar-futuras');
+            const badgeFuturas = document.getElementById('editar-clase-futuras-badge');
+            const serieContainer = document.getElementById('editar-clase-serie-container');
+            if (checkFuturas) checkFuturas.checked = false;
+            if (badgeFuturas) {
+                badgeFuturas.classList.add('hidden');
+                badgeFuturas.textContent = '';
+            }
+
+            if (serieContainer) {
+                if (isConsulta || isTallerSesion) {
+                    serieContainer.classList.add('hidden');
+                } else {
+                    serieContainer.classList.remove('hidden');
+                    try {
+                        const dC = new Date(clase.fecha_inicio);
+                        const cDay = dC.getDay();
+                        const cH = dC.getHours();
+                        const cM = dC.getMinutes();
+                        const matchFuturas = (allClasesCache || []).filter(c => {
+                            if (safePositiveInteger(c.id) === cid || !c.activa) return false;
+                            const d = new Date(c.fecha_inicio);
+                            if (d <= dC) return false;
+                            const sameDay = d.getDay() === cDay;
+                            const sameTime = d.getHours() === cH && d.getMinutes() === cM;
+                            const sameName = (c.nombre || '').trim().toLowerCase() === (clase.nombre || '').trim().toLowerCase();
+                            return sameDay && sameTime && sameName;
+                        });
+                        if (matchFuturas.length > 0 && badgeFuturas) {
+                            badgeFuturas.textContent = `${matchFuturas.length} sesión(es) futura(s) detectada(s) en este horario semanal`;
+                            badgeFuturas.classList.remove('hidden');
+                        }
+                    } catch (_) {}
+                }
+            }
         }
 
         async function guardarEdicionClase(event) {
@@ -18003,7 +18057,78 @@
                 }
             } catch (_) { /* sin conteo no se bloquea el guardado */ }
 
-            // Actualizar en base de datos
+            // Gestión de serie recurrente: detectar si existen sesiones futuras coincidentes
+            const aplicarFuturasChecked = !!document.getElementById('editar-clase-aplicar-futuras')?.checked;
+            let actualizarSerie = aplicarFuturasChecked;
+            let futurasSerie = [];
+
+            if (!isConsulta && !isTallerSesion && currentEditingClass?.fecha_inicio) {
+                try {
+                    const dOrig = new Date(currentEditingClass.fecha_inicio);
+                    const origDay = dOrig.getDay();
+                    const origHours = dOrig.getHours();
+                    const origMins = dOrig.getMinutes();
+
+                    let qFut = client
+                        .from('clases')
+                        .select('id, nombre, fecha_inicio, fecha_fin, profesor_id, tipo_clase, activa')
+                        .eq('activa', true)
+                        .gt('fecha_inicio', currentEditingClass.fecha_inicio)
+                        .order('fecha_inicio');
+
+                    if (currentEditingClass.tipo_clase_id) {
+                        qFut = qFut.eq('tipo_clase_id', currentEditingClass.tipo_clase_id);
+                    } else if (currentEditingClass.nombre) {
+                        qFut = qFut.eq('nombre', currentEditingClass.nombre);
+                    }
+
+                    const { data: candidatasFuturas } = await qFut;
+                    futurasSerie = (candidatasFuturas || []).filter(c => {
+                        const d = new Date(c.fecha_inicio);
+                        const sameDay = d.getDay() === origDay;
+                        const sameTime = d.getHours() === origHours && d.getMinutes() === origMins;
+                        const sameProf = (!currentEditingClass.profesor_id || !c.profesor_id) ? true : (Number(c.profesor_id) === Number(currentEditingClass.profesor_id));
+                        return sameDay && sameTime && sameProf;
+                    });
+                } catch (errQ) {
+                    console.warn('Error al buscar serie futura:', errQ);
+                }
+
+                // Si no estaba marcado el checkbox pero hay clases futuras coincidentes, preguntar proactivamente
+                if (!aplicarFuturasChecked && futurasSerie.length > 0) {
+                    const pregSerie = await Swal.fire({
+                        title: '¿Aplicar cambios a la serie?',
+                        html: `
+                            <div class="text-left space-y-2 text-sm text-cocoa">
+                                <p>Has modificado: <strong>"${escapeHtml(nombre)}"</strong>.</p>
+                                <p class="text-xs text-cocoa/80 bg-sand/20 p-2.5 rounded-xl border border-cocoa/10">
+                                    <i class="ph-bold ph-calendar text-olive"></i> Se han encontrado <strong>${futurasSerie.length} clases futuras</strong> en este mismo horario semanal.
+                                </p>
+                                <p class="text-xs text-cocoa/70">¿Deseas aplicar estos cambios solo a esta sesión o también a las siguientes?</p>
+                            </div>
+                        `,
+                        icon: 'question',
+                        showCancelButton: true,
+                        showDenyButton: true,
+                        confirmButtonText: `<i class="ph-bold ph-arrows-clockwise"></i> A esta y las ${futurasSerie.length} siguientes`,
+                        denyButtonText: 'Solo a esta sesión',
+                        cancelButtonText: 'Cancelar guardado',
+                        confirmButtonColor: '#795244',
+                        denyButtonColor: '#5D4037',
+                        cancelButtonColor: '#8c8c8c'
+                    });
+
+                    if (pregSerie.isConfirmed) {
+                        actualizarSerie = true;
+                    } else if (pregSerie.isDenied) {
+                        actualizarSerie = false;
+                    } else {
+                        return; // Cancelado
+                    }
+                }
+            }
+
+            // Actualizar clase actual en base de datos
             let { error: updateErr } = await client.from('clases').update(updatePayload).eq('id', cid);
             if (updateErr && (updateErr.message?.includes('metodo_pago') || updateErr.message?.includes('stripe_lookup_key') || updateErr.message?.includes('schema cache'))) {
                 console.warn('Reintentando guardar edición sin columnas metodo_pago/stripe_lookup_key...', updateErr);
@@ -18012,6 +18137,35 @@
                 delete safePayload.stripe_lookup_key;
                 const retryRes = await client.from('clases').update(safePayload).eq('id', cid);
                 updateErr = retryRes.error;
+            }
+
+            // Propagar a clases futuras si se solicitó
+            let futurasActualizadas = 0;
+            if (!updateErr && actualizarSerie && futurasSerie.length > 0) {
+                const [hNew, mNew] = horaInicio.split(':').map(Number);
+                for (const f of futurasSerie) {
+                    const dF = new Date(f.fecha_inicio);
+                    dF.setHours(hNew, mNew, 0, 0);
+                    const dFFin = new Date(dF.getTime() + duracion * 60000);
+
+                    const fPayload = {
+                        nombre,
+                        tipo_clase_id: tipoClaseId,
+                        profesor_id: profesorId,
+                        duracion_minutos: duracion,
+                        capacidad_max: capacidad,
+                        descripcion,
+                        fecha_inicio: dF.toISOString(),
+                        fecha_fin: dFFin.toISOString(),
+                        es_gratuita: esGratuita,
+                        companion_modality: companionModality
+                    };
+
+                    let { error: errF } = await client.from('clases').update(fPayload).eq('id', f.id);
+                    if (!errF) {
+                        futurasActualizadas++;
+                    }
+                }
             }
 
             Swal.close();
@@ -18023,11 +18177,16 @@
 
             cerrarModalEditarClase();
 
+            let txtSuccess = 'Los cambios se han guardado correctamente.';
+            if (actualizarSerie && futurasActualizadas > 0) {
+                txtSuccess = `Se ha actualizado esta clase y ${futurasActualizadas} sesiones futuras de la serie.`;
+            }
+
             await Swal.fire({
                 icon: 'success',
                 title: isConsulta ? 'Consulta actualizada' : (isTallerSesion ? 'Taller actualizado' : 'Clase actualizada'),
-                text: 'Los cambios se han guardado correctamente.',
-                timer: 2000,
+                text: txtSuccess,
+                timer: 2500,
                 showConfirmButton: false
             });
 
@@ -18496,23 +18655,129 @@
         });
 
         async function borrarClase(id) {
-            const res = await Swal.fire({
-                title: '¿Eliminar clase?',
-                text: 'Si la clase tiene alumnos inscritos, se cancelarán sus reservas y se les devolverá automáticamente su bono o saldo correspondiente.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Sí, eliminar clase',
-                cancelButtonText: 'Cancelar'
+            const cid = safePositiveInteger(id);
+            if (!cid) return;
+
+            // 1. Obtener la clase objetivo para conocer su nombre, horario y serie
+            let targetClase = (allClasesCache || []).find(c => safePositiveInteger(c.id) === cid);
+            if (!targetClase && window.allAdminTodasCache) {
+                targetClase = window.allAdminTodasCache.find(c => safePositiveInteger(c.id) === cid);
+            }
+            if (!targetClase) {
+                const { data } = await client.from('clases').select('*, profesionales(id, nombre, apellidos)').eq('id', cid).maybeSingle();
+                targetClase = data;
+            }
+
+            if (!targetClase) {
+                return Swal.fire('Error', 'No se encontró la clase especificada.', 'error');
+            }
+
+            // 2. Buscar si hay sesiones futuras en la misma serie (mismo día de semana y horario a partir de la fecha seleccionada)
+            const dTarget = new Date(targetClase.fecha_inicio);
+            const targetDay = dTarget.getDay();
+            const targetHours = dTarget.getHours();
+            const targetMins = dTarget.getMinutes();
+            const nombreClase = targetClase.nombre || 'esta clase';
+
+            let futurasSerie = [];
+            try {
+                let q = client
+                    .from('clases')
+                    .select('id, nombre, fecha_inicio, fecha_fin, profesor_id, tipo_clase, activa')
+                    .eq('activa', true)
+                    .gte('fecha_inicio', targetClase.fecha_inicio)
+                    .order('fecha_inicio');
+
+                if (targetClase.tipo_clase_id) {
+                    q = q.eq('tipo_clase_id', targetClase.tipo_clase_id);
+                } else if (targetClase.nombre) {
+                    q = q.eq('nombre', targetClase.nombre);
+                }
+
+                const { data: candidatas } = await q;
+                if (candidatas && candidatas.length > 0) {
+                    futurasSerie = candidatas.filter(c => {
+                        const d = new Date(c.fecha_inicio);
+                        const matchDay = d.getDay() === targetDay;
+                        const matchTime = d.getHours() === targetHours && d.getMinutes() === targetMins;
+                        const matchProf = (!targetClase.profesor_id || !c.profesor_id) ? true : (Number(c.profesor_id) === Number(targetClase.profesor_id));
+                        return matchDay && matchTime && matchProf;
+                    });
+                }
+            } catch (errSearch) {
+                console.warn('Aviso al buscar sesiones de la serie:', errSearch);
+            }
+
+            // Clases futuras que no sean la actual
+            const otrasFuturas = futurasSerie.filter(c => safePositiveInteger(c.id) !== cid);
+
+            let clasesAEliminar = [cid];
+            let modoSerie = false;
+
+            if (otrasFuturas.length > 0) {
+                const totalSerie = otrasFuturas.length + 1;
+                const diaSemanaNombre = (typeof formatDisplayWeekday === 'function') ? formatDisplayWeekday(dTarget) : '';
+                const horaStr = `${String(targetHours).padStart(2, '0')}:${String(targetMins).padStart(2, '0')}`;
+
+                const eleccion = await Swal.fire({
+                    title: '¿Cómo deseas eliminar la clase?',
+                    html: `
+                        <div class="text-left space-y-2 text-sm text-cocoa">
+                            <p>Has seleccionado: <strong>${escapeHtml(nombreClase)}</strong> (${diaSemanaNombre} ${horaStr}).</p>
+                            <p class="text-xs text-cocoa/80 bg-sand/20 p-2.5 rounded-xl border border-cocoa/10">
+                                <i class="ph-bold ph-calendar text-olive"></i> Se han encontrado <strong>${totalSerie} sesiones</strong> en esta serie (esta clase y <strong>${otrasFuturas.length}</strong> siguientes).
+                            </p>
+                            <p class="text-[11px] text-cocoa/60 italic">Si alguna clase tiene alumnos inscritos, sus reservas se cancelarán y se les devolverá automáticamente su bono o saldo.</p>
+                        </div>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: `<i class="ph-bold ph-trash"></i> Esta y las ${otrasFuturas.length} siguientes (${totalSerie} clases)`,
+                    denyButtonText: 'Solo esta clase',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#d33',
+                    denyButtonColor: '#795244',
+                    cancelButtonColor: '#8c8c8c'
+                });
+
+                if (eleccion.isConfirmed) {
+                    clasesAEliminar = futurasSerie.map(c => safePositiveInteger(c.id)).filter(Boolean);
+                    modoSerie = true;
+                } else if (eleccion.isDenied) {
+                    clasesAEliminar = [cid];
+                    modoSerie = false;
+                } else {
+                    return; // Cancelado
+                }
+            } else {
+                const res = await Swal.fire({
+                    title: '¿Eliminar clase?',
+                    text: 'Si la clase tiene alumnos inscritos, se cancelarán sus reservas y se les devolverá automáticamente su bono o saldo correspondiente.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Sí, eliminar clase',
+                    cancelButtonText: 'Cancelar'
+                });
+                if (!res.isConfirmed) return;
+            }
+
+            Swal.fire({
+                title: modoSerie ? `Eliminando ${clasesAEliminar.length} clases de la serie...` : 'Eliminando clase...',
+                text: 'Reembolsando bonos a los alumnos inscritos...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
             });
 
-            if (res.isConfirmed) {
-                Swal.fire({ title: 'Eliminando clase y reembolsando bonos...', didOpen: () => Swal.showLoading() });
+            let devueltosTotal = 0;
+            let eliminadasTotal = 0;
+            const errores = [];
 
-                let devueltos = 0;
-                let { data, error } = await client.rpc('admin_eliminar_clase', { p_clase_id: id });
+            for (const classId of clasesAEliminar) {
+                let { data, error } = await client.rpc('admin_eliminar_clase', { p_clase_id: classId });
                 if (error && error.code === 'PGRST202') {
-                    const fallback = await client.rpc('admin_eliminar_clase_con_reembolso', { p_clase_id: id });
+                    const fallback = await client.rpc('admin_eliminar_clase_con_reembolso', { p_clase_id: classId });
                     if (!fallback.error) {
                         data = fallback.data;
                         error = null;
@@ -18520,32 +18785,41 @@
                 }
 
                 if (error) {
-                    Swal.close();
-                    Swal.fire('Error al eliminar', amableError(error.message, 'No se pudo eliminar la clase.'), 'error');
-                    return;
+                    console.warn(`Error al eliminar clase ${classId}:`, error);
+                    errores.push(classId);
                 } else {
-                    devueltos = data?.alumnos_reembolsados || (typeof data === 'number' ? data : 0);
+                    eliminadasTotal++;
+                    const dev = data?.alumnos_reembolsados || (typeof data === 'number' ? data : 0);
+                    devueltosTotal += dev;
                 }
-
-                Swal.close();
-                let msg = 'La clase ha sido eliminada.';
-                if (devueltos > 0) {
-                    msg += ` Se ha devuelto el bono a ${devueltos} alumno(s) inscrito(s).`;
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Clase eliminada',
-                    text: msg,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
-                await cargarTodasLasClasesConProfesionales({ force: true });
-                await cargarHorarios();
-                if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
-                if (isAdmin || esTrabajador()) await cargarAsistenciasPorClase();
             }
+
+            Swal.close();
+
+            if (eliminadasTotal === 0 && errores.length > 0) {
+                Swal.fire('Error al eliminar', 'No se pudo eliminar ninguna clase. Revisa la conexión.', 'error');
+                return;
+            }
+
+            let msg = modoSerie
+                ? `Se han eliminado con éxito ${eliminadasTotal} clases de la serie.`
+                : 'La clase ha sido eliminada.';
+            if (devueltosTotal > 0) {
+                msg += ` Se ha devuelto el bono a ${devueltosTotal} alumno(s) en total.`;
+            }
+
+            await Swal.fire({
+                icon: 'success',
+                title: modoSerie ? 'Serie de clases eliminada' : 'Clase eliminada',
+                text: msg,
+                timer: 2500,
+                showConfirmButton: false
+            });
+
+            await cargarTodasLasClasesConProfesionales({ force: true });
+            await cargarHorarios();
+            if (typeof cargarTodasLasSesionesAdmin === 'function') await cargarTodasLasSesionesAdmin({ force: true });
+            if (isAdmin || esTrabajador()) await cargarAsistenciasPorClase();
         }
 
         // --- 9. REALTIME ---

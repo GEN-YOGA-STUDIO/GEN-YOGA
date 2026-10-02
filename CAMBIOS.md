@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.3.1 — 2 oct 2026 · Incidencia
+
+- **Descripción:** opcion para editar o eliminar series recurrentes de clases en administracion v17.3.1 (ámbito: admin)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.3.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.3.1.md`
+
 ## v17.3.0 — 2 oct 2026 · Desarrollo
 
 - **Descripción:** unificar recuento de reservas en panel admin (todas, consultas y talleres) via RPC segura v17.3 (ámbito: admin)
