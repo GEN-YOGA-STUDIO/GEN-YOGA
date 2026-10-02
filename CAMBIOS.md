@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.4.0 — 2 oct 2026 · Desarrollo
+
+- **Descripción:** unificar visualizacion de sesiones y alumnos, filtro por bonos VIP y clase especial automatica con bono ilimitado (ámbito: admin)
+- **Validación:** npm test
+- **Tag:** `v17.4`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.4.0.md`
+
 ## v17.3.1 — 2 oct 2026 · Incidencia
 
 - **Descripción:** opcion para editar o eliminar series recurrentes de clases en administracion v17.3.1 (ámbito: admin)
