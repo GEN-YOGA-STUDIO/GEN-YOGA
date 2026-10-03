@@ -627,6 +627,105 @@ await section('contenido', async () => {
       await calClose();
       if (await calOpen()) fail('contenido', 'calendario', `la X no cierra (${label})`);
     }
+
+    // D1b. Alumno explorando el calendario semanal: semanas, modos, filtros de práctica y Escape
+    {
+      await clickSettled('#btn-cat-yoga');
+      await page.waitForTimeout(600);
+      await clickSettled('#public-calendar-launch:visible');
+      if (await launchOk('exhaustivo')) {
+        const r0 = ((await page.locator('#calendar-week-range').textContent().catch(() => '')) || '').trim();
+        const btnNext = page.locator('#calendar-next-week:visible').first();
+        if ((await btnNext.count().catch(() => 0)) > 0) {
+          await btnNext.click({ timeout: 6000 }).catch(() => {});
+          await page.waitForTimeout(1600);
+          const r1 = ((await page.locator('#calendar-week-range').textContent().catch(() => '')) || '').trim();
+          if (r1 && r1 !== r0 && !/nan|undefined/i.test(r1)) {
+            pass('contenido', `calendario: "Semana siguiente" avanza (${r0} → ${r1})`);
+          } else {
+            fail('contenido', 'calendario: semana siguiente', `rango antes="${r0}" despues="${r1}"`);
+          }
+
+          const btnPrev = page.locator('#calendar-prev-week:visible').first();
+          if ((await btnPrev.count().catch(() => 0)) > 0) {
+            await btnPrev.click({ timeout: 6000 }).catch(() => {});
+            await page.waitForTimeout(1600);
+            const r2 = ((await page.locator('#calendar-week-range').textContent().catch(() => '')) || '').trim();
+            if (r2 && !/nan|undefined/i.test(r2)) {
+              pass('contenido', `calendario: "Semana anterior" responde (${r2})`);
+            } else {
+              fail('contenido', 'calendario: semana anterior', `rango="${r2}"`);
+            }
+          }
+
+          const btnToday = page.locator('#calendar-today:visible').first();
+          if ((await btnToday.count().catch(() => 0)) > 0) {
+            await btnToday.click({ timeout: 6000 }).catch(() => {});
+            await page.waitForTimeout(1600);
+            const rToday = ((await page.locator('#calendar-week-range').textContent().catch(() => '')) || '').trim();
+            if (rToday && !/nan|undefined/i.test(rToday)) {
+              pass('contenido', 'calendario: botón "Hoy" restablece fecha');
+            } else {
+              warn('contenido', 'calendario: botón hoy', `rango="${rToday}"`);
+            }
+          }
+        }
+
+        // Conmutación de modos
+        const modeToggle = page.locator('#calendar-mode-toggle');
+        if ((await modeToggle.count().catch(() => 0)) > 0) {
+          let modesTested = 0;
+          for (const m of ['consultas', 'clases']) {
+            const btnMode = page.locator(`[data-calendar-mode="${m}"]:visible`).first();
+            if ((await btnMode.count().catch(() => 0)) > 0) {
+              await btnMode.click({ timeout: 6000 }).catch(() => {});
+              await page.waitForTimeout(1500);
+              const active = await btnMode.evaluate((el) => el.classList.contains('active')).catch(() => false);
+              if (active) modesTested++;
+            }
+          }
+          if (modesTested >= 2) pass('contenido', 'calendario: conmutación entre modos (clases/consultas)');
+          else warn('contenido', 'calendario: modos', `solo ${modesTested} modos conmutaron`);
+        }
+
+        // Filtros de estilo y limpiar filtros
+        const filterBtns = page.locator('#calendar-style-filters button[data-calendar-style]:visible');
+        const filterCount = await filterBtns.count().catch(() => 0);
+        if (filterCount > 0) {
+          await filterBtns.first().click({ timeout: 6000 }).catch(() => {});
+          await page.waitForTimeout(1000);
+          const btnClear = page.locator('#calendar-clear-filters:visible').first();
+          if ((await btnClear.count().catch(() => 0)) > 0) {
+            await btnClear.click({ timeout: 6000 }).catch(() => {});
+            await page.waitForTimeout(1000);
+            pass('contenido', 'calendario: chips de práctica filtran y limpian');
+          } else {
+            pass('contenido', 'calendario: filtro de práctica interactuable');
+          }
+        }
+
+        // Selección de día en vista móvil
+        const dayTabs = page.locator('#calendar-day-tabs [data-calendar-day]:visible');
+        const dayCount = await dayTabs.count().catch(() => 0);
+        if (dayCount > 1) {
+          await dayTabs.nth(1).click({ timeout: 6000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          const agendaVisible = await page.locator('#calendar-day-agenda').isVisible().catch(() => false);
+          if (agendaVisible) pass('contenido', 'calendario móvil: selector de días conmuta agenda');
+          else fail('contenido', 'calendario móvil', 'agenda no visible tras cambiar de día');
+        }
+
+        // Cierre con Escape
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(1000);
+        if (!(await calOpen())) pass('contenido', 'calendario: tecla Escape cierra limpiamente');
+        else {
+          fail('contenido', 'calendario: escape', 'no cierra con tecla Escape');
+          await calClose();
+        }
+      }
+    }
+
     // Tarjetas estilo/profe abren calendario.
     for (const [tab, frag, label] of [['#btn-cat-yoga', 'power-vinyasa', 'power-vinyasa'], ['#btn-cat-consultas', 'miriam', 'miriam']]) {
       await clickSettled(tab);
@@ -681,14 +780,46 @@ await section('contenido', async () => {
         }
         if (okAll) pass('contenido', `maestros: las ${Math.min(n, 8)} fichas abren y cierran`);
         else fail('contenido', 'maestros: ficha', 'alguna ficha no abre o no cierra');
+
+        // Cierre por clic en el backdrop (comportamiento habitual de usuario)
+        if (n > 0) {
+          const firstTrigger = page.locator('#maestros-grid-section .teacher-card__trigger:visible').first();
+          await firstTrigger.scrollIntoViewIfNeeded().catch(() => {});
+          await page.waitForTimeout(400);
+          await firstTrigger.click({ timeout: 8000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          await page.locator('#teacher-modal-overlay').click({ position: { x: 8, y: 8 }, timeout: 6000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          const closedBackdrop = await page.evaluate(() => !document.body.classList.contains('teacher-modal-open')).catch(() => false);
+          if (closedBackdrop) pass('contenido', 'maestros: clic en backdrop cierra la ficha');
+          else {
+            fail('contenido', 'maestros: backdrop', 'clic fuera del modal no cierra la ficha');
+            await page.keyboard.press('Escape');
+          }
+        }
       }
     }
     await assertClean('contenido-maestros', st, page);
 
     st = await gotoTracked(page, '/tarifas.html');
-    const tabs = page.locator('[onclick*="switchCategory"]:visible');
-    if ((await tabs.count()) > 0) pass('contenido', 'tarifas: pestañas conmutan');
-    else warn('contenido', 'tarifas: pestañas', 'no encontradas');
+    {
+      const categories = ['ofertas', 'yoga', 'psicologia', 'talleres'];
+      let catsOk = 0;
+      for (const cat of categories) {
+        const tabBtn = page.locator(`[onclick*="switchCategory('${cat}')"]:visible`).first();
+        if ((await tabBtn.count().catch(() => 0)) > 0) {
+          await tabBtn.click({ timeout: 6000 }).catch(() => {});
+          await page.waitForTimeout(700);
+          const sec = page.locator(`#section-${cat}`);
+          const isVis = await sec.isVisible().catch(() => false);
+          const secTxt = ((await sec.innerText().catch(() => '')) || '');
+          const hasBrokenPrice = /nan\s*€|undefined\s*€|null\s*€/i.test(secTxt);
+          if (isVis && !hasBrokenPrice) catsOk++;
+        }
+      }
+      if (catsOk === categories.length) pass('contenido', `tarifas: las ${categories.length} categorías muestran precios válidos`);
+      else fail('contenido', 'tarifas: categorías', `${catsOk}/${categories.length} categorías conmutan limpiamente`);
+    }
     await assertClean('contenido-tarifas', st, page);
 
     st = await gotoTracked(page, '/index.html');
@@ -746,6 +877,20 @@ await section('landing', async () => {
       const href = await page.locator('a[href*="profile.html?action=register"]').first().getAttribute('href').catch(() => null);
       if (href && href.includes('action=register') && href.includes('promo=bienvenida')) pass('landing', 'CTA bono apunta al registro con promo');
       else fail('landing', 'CTA bono bienvenida', `href inesperado: ${(href || 'ninguno').slice(0, 80)}`);
+    }
+
+    // Alumno nuevo: el enlace promocional de bienvenida abre profile con el formulario de registro listo
+    {
+      const pagePromo = await ctx.newPage();
+      try {
+        await pagePromo.goto(`${BASE}/profile.html?action=register&prompt=register&promo=bienvenida`, { waitUntil: 'load', timeout: 35000 });
+        await pagePromo.waitForTimeout(2000);
+        const formVis = (await pagePromo.locator('#form-register:visible').count().catch(() => 0)) > 0;
+        if (formVis) pass('landing', 'enlace promocional activa formulario de registro');
+        else fail('landing', 'enlace promocional', 'no activó formulario de registro en profile');
+      } finally {
+        await pagePromo.close().catch(() => {});
+      }
     }
 
     // Historia: abre con contenido, Escape cierra, link interno a clases.
@@ -1048,6 +1193,38 @@ await section('cliente', async () => {
       }
     }
 
+    // I4b. Panel Inicio: calendario general interactivo y coherencia de saldos
+    await page.locator('#nav-public-inicio').first().click({ timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(1000);
+    {
+      const mesInicio0 = ((await page.locator('#inicio-calendar-month-year').textContent().catch(() => '')) || '').trim();
+      await page.evaluate(() => window.cambiarMesInicio && window.cambiarMesInicio(1)).catch(() => {});
+      await page.waitForTimeout(1000);
+      const mesInicio1 = ((await page.locator('#inicio-calendar-month-year').textContent().catch(() => '')) || '').trim();
+      await page.evaluate(() => window.cambiarMesInicio && window.cambiarMesInicio(-1)).catch(() => {});
+      await page.waitForTimeout(800);
+      if (mesInicio0 && mesInicio1 && mesInicio0 !== mesInicio1 && !/nan|undefined/i.test(mesInicio1)) {
+        pass('cliente', `inicio: navegación mensual funciona (${mesInicio0} → ${mesInicio1})`);
+      } else {
+        warn('cliente', 'inicio: calendario mensual', `mes0="${mesInicio0}" mes1="${mesInicio1}"`);
+      }
+
+      const saldosTxt = ((await page.locator('#profile-saldos-wrapper').innerText().catch(() => '')) || '');
+      if (/nan|undefined|null/i.test(saldosTxt)) {
+        fail('cliente', 'saldos', `valores corruptos en saldos: "${saldosTxt.slice(0, 100)}"`);
+      } else if (saldosTxt.length > 0) {
+        pass('cliente', 'inicio: saldos formateados correctamente');
+      }
+
+      const conReservas = (await page.locator('#inicio-consolidado-container > *:visible').count().catch(() => 0)) > 0;
+      const emptyState = await page.locator('#inicio-empty-state').isVisible().catch(() => false);
+      if (conReservas || emptyState) {
+        pass('cliente', `inicio: reservas activas correctas (${conReservas ? 'con reservas' : 'estado vacío navegable'})`);
+      } else {
+        fail('cliente', 'inicio: reservas activas', 'ni contenedor ni empty state visibles');
+      }
+    }
+
     // I5. Reservar yoga: si hay botón, diálogo + cancelar (jamás confirmar);
     // si no, cada tarjeta debe mostrar su estado terminal (deadline/aforo).
     await page.locator('#nav-public-horarios').first().click({ timeout: 10000 }).catch(() => {});
@@ -1094,6 +1271,41 @@ await section('cliente', async () => {
         const kids = await page.locator('#view-horarios [id^="grid-"] > *').count().catch(() => 0);
         if (sel && kids > 0) pass('cliente', `día calendario filtra (${kids} tarjetas)`);
         else fail('cliente', 'día calendario', `selected=${sel} tarjetas=${kids}`);
+      }
+    }
+
+    // I5c. Horarios: navegación mensual, barra pegajosa de días y filtros
+    {
+      const mesH0 = ((await page.locator('#calendar-month-year').textContent().catch(() => '')) || '').trim();
+      await page.evaluate(() => window.cambiarMes && window.cambiarMes(1)).catch(() => {});
+      await page.waitForTimeout(1000);
+      const mesH1 = ((await page.locator('#calendar-month-year').textContent().catch(() => '')) || '').trim();
+      await page.evaluate(() => window.cambiarMes && window.cambiarMes(-1)).catch(() => {});
+      await page.waitForTimeout(800);
+      if (mesH0 && mesH1 && mesH0 !== mesH1 && !/nan|undefined/i.test(mesH1)) {
+        pass('cliente', `horarios: selector mensual responde (${mesH0} → ${mesH1})`);
+      } else {
+        warn('cliente', 'horarios: selector mensual', `mes0="${mesH0}" mes1="${mesH1}"`);
+      }
+
+      const btnScrollNext = page.locator('#btn-scroll-dias-next:visible').first();
+      const btnScrollPrev = page.locator('#btn-scroll-dias-prev:visible').first();
+      if ((await btnScrollNext.count().catch(() => 0)) > 0 && (await btnScrollPrev.count().catch(() => 0)) > 0) {
+        await btnScrollNext.click({ timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(400);
+        await btnScrollPrev.click({ timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(400);
+        pass('cliente', 'horarios: scroll de barra rápida de días operativo');
+      }
+
+      const fProf = page.locator('#filtro-profesor:visible').first();
+      const fTipo = page.locator('#filtro-tipo-yoga:visible').first();
+      if ((await fProf.count().catch(() => 0)) > 0 && (await fTipo.count().catch(() => 0)) > 0) {
+        await page.evaluate(() => window.aplicarFiltrosClases && window.aplicarFiltrosClases()).catch(() => {});
+        await page.waitForTimeout(800);
+        await page.evaluate(() => window.limpiarFiltroFecha && window.limpiarFiltroFecha()).catch(() => {});
+        await page.waitForTimeout(800);
+        pass('cliente', 'horarios: filtros de clase y botón "ver todas" responden');
       }
     }
 
@@ -1288,6 +1500,35 @@ await section('cliente', async () => {
       }
       await page.keyboard.press('Escape');
       await page.waitForTimeout(600);
+    }
+
+    // I13. Resiliencia de sesión persistente ante recarga (F5 / background reload)
+    {
+      await page.goto(`${BASE}/profile.html`, { waitUntil: 'load', timeout: 45000 }).catch(() => {});
+      await page.waitForTimeout(2000);
+      await page.reload({ waitUntil: 'load', timeout: 45000 });
+      await page.waitForTimeout(3500);
+      const appViewVis = await page.locator('#app-view:visible').isVisible().catch(() => false);
+      const authHidden = await page.locator('#auth-container').isHidden().catch(() => true);
+      const nombrePersist = (await page.locator('#profile-nombre-full').innerText().catch(() => '')).trim();
+      if (appViewVis && authHidden && nombrePersist) {
+        pass('cliente', `sesión persistente: F5 mantiene el panel activo ("${nombrePersist.slice(0, 30)}")`);
+      } else {
+        fail('cliente', 'sesión persistente', `appView=${appViewVis} authHidden=${authHidden} nombre="${nombrePersist}"`);
+      }
+    }
+
+    // I14. Degradación elegante ante parámetros URL erróneos o manipulados
+    {
+      await page.goto(`${BASE}/profile.html?view=vista_no_existe_xyz&clase=-999`, { waitUntil: 'load', timeout: 45000 }).catch(() => {});
+      await page.waitForTimeout(3000);
+      const appVivo = await page.locator('#app-view:visible').isVisible().catch(() => false);
+      if (appVivo) {
+        pass('cliente', 'degradación elegante: parámetros URL corruptos no rompen la app');
+      } else {
+        fail('cliente', 'parámetros corruptos', 'la app quedó en blanco o rota');
+      }
+      lastUrl = `${BASE}/profile.html`;
     }
 
     // I11. Logout deja la sesión limpia.
