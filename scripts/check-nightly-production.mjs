@@ -263,6 +263,7 @@ console.log('\n--- B. Supabase + Edge Functions en vivo ---');
   const fns = ['create-checkout-session', 'create-portal-session', 'list-stripe-products', 'get-checkout-session', 'book-guest-class', 'create-kiosk-user', 'delete-account', 'stripe-webhook'];
   let alive = 0;
   let ausentesCert = 0;
+  let fallbackCount = 0;
   for (const fn of fns) {
     lastUrl = `${SUPA_URL}/functions/v1/${fn}`;
     const r = await fetchTimeout(lastUrl, {
@@ -273,11 +274,17 @@ console.log('\n--- B. Supabase + Edge Functions en vivo ---');
     if (r.status >= 200 && r.status < 500 && r.status !== 404) alive++;
     // En cert no se despliegan las functions LIVE: ausente (404) es lo correcto.
     else if (r.status === 404 && isCert) ausentesCert++;
+    // list-stripe-products tiene fallback intencionado a la tabla stripe_productos en BD (AUDITORIA A2)
+    else if (r.status === 404 && fn === 'list-stripe-products') {
+      fallbackCount++;
+      warn('backend', `fn ${fn}`, 'no desplegada (404, frontend usa fallback a BD)');
+    }
     else if (r.status === 404) fail('backend', `fn ${fn}`, 'no desplegada (404)');
     else warn('backend', `fn ${fn}`, `HTTP ${r.status}`);
   }
   if (alive === fns.length) pass('backend', `las ${fns.length} Edge Functions responden`);
   else if (isCert && alive + ausentesCert === fns.length) pass('backend', `${ausentesCert} functions LIVE ausentes en cert (correcto: no se despliegan)`);
+  else if (alive + fallbackCount === fns.length) pass('backend', `${alive} Edge Functions responden (${fallbackCount} con fallback a BD)`);
 }
 
 // ---------------------------------------------------------------- C. Privacidad
