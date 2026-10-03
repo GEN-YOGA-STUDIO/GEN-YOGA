@@ -13,6 +13,7 @@
 // - Exit 1 si hay al menos un fallo bloqueante.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import tls from 'node:tls';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { buildBriefing } from './nightly-briefing.mjs';
@@ -238,6 +239,91 @@ console.log('\n--- A. Disponibilidad de genyoga.studio (HTTP 200 + tiempo) ---')
     else if (r.ms > 15000) fail('disponibilidad', p, `lento: ${r.ms}ms (>15s)`);
     else pass('disponibilidad', `${p} → 200 en ${r.ms}ms`);
   }
+
+  // A1. Certificado SSL/TLS en vivo y días hasta caducidad
+  try {
+    const host = new URL(BASE).hostname;
+    await new Promise((resolve) => {
+      const socket = tls.connect(443, host, { servername: host, timeout: 10000 }, () => {
+        const cert = socket.getPeerCertificate();
+        socket.end();
+        if (!cert || !cert.valid_to) {
+          warn('disponibilidad', 'SSL/TLS', 'no se pudo extraer el certificado');
+          resolve();
+          return;
+        }
+        const validTo = new Date(cert.valid_to);
+        const daysLeft = Math.floor((validTo - Date.now()) / (1000 * 60 * 60 * 24));
+        const issuer = (cert.issuer && (cert.issuer.O || cert.issuer.CN)) || 'desconocido';
+        if (daysLeft < 0) fail('disponibilidad', 'SSL/TLS', `certificado caducado hace ${-daysLeft} días`);
+        else if (daysLeft <= 3) fail('disponibilidad', 'SSL/TLS', `certificado caduca en ${daysLeft} días (renovación urgente requerida)`);
+        else if (daysLeft <= 14) warn('disponibilidad', 'SSL/TLS', `certificado próximo a caducar (${daysLeft} días restantes, emisor: ${issuer})`);
+        else pass('disponibilidad', `SSL/TLS válido (${daysLeft} días restantes, emisor: ${issuer})`);
+        resolve();
+      });
+      socket.on('error', (err) => {
+        warn('disponibilidad', 'SSL/TLS', `error de conexión TLS: ${err.message}`);
+        resolve();
+      });
+      socket.on('timeout', () => {
+        socket.destroy();
+        warn('disponibilidad', 'SSL/TLS', 'timeout al verificar certificado');
+        resolve();
+      });
+    });
+  } catch (err) {
+    warn('disponibilidad', 'SSL/TLS', String(err && err.message));
+  }
+
+  // A2. Deep links y Universal Links móviles (.well-known)
+  {
+    lastUrl = `${BASE}/.well-known/assetlinks.json`;
+    const rAndroid = await fetchTimeout(lastUrl, { timeoutMs: 15000 });
+    let androidOk = false;
+    if (rAndroid.status === 200 && Array.isArray(rAndroid.body)) {
+      androidOk = rAndroid.body.some((entry) => entry?.target?.package_name === 'gen.yoga.app');
+    }
+    if (androidOk) pass('disponibilidad', 'App Links Android (.well-known/assetlinks.json)');
+    else warn('disponibilidad', 'App Links Android', `HTTP ${rAndroid.status} o package_name no encontrado`);
+
+    lastUrl = `${BASE}/.well-known/apple-app-site-association`;
+    const rIos = await fetchTimeout(lastUrl, { timeoutMs: 15000 });
+    let iosOk = false;
+    if (rIos.status === 200 && rIos.body?.applinks?.details) {
+      iosOk = true;
+    }
+    if (iosOk) pass('disponibilidad', 'Universal Links iOS (.well-known/apple-app-site-association)');
+    else warn('disponibilidad', 'Universal Links iOS', `HTTP ${rIos.status} o formato JSON no reconocido`);
+  }
+
+  // A3. Recursos estáticos esenciales (>0 bytes)
+  {
+    const assets = ['tailwind-compiled.css', 'public-calendar.js', 'i18n.js', 'public-calendar.css', 'facilities-carousel.js', 'capacitor-bridge.js'];
+    let assetsOk = 0;
+    for (const a of assets) {
+      lastUrl = `${BASE}/${a}`;
+      const r = await fetchTimeout(lastUrl, { timeoutMs: 15000 });
+      if (r.status === 200) assetsOk++;
+      else fail('disponibilidad', `asset ${a}`, `HTTP ${r.status}`);
+    }
+    if (assetsOk === assets.length) pass('disponibilidad', `los ${assets.length} ficheros estáticos esenciales responden`);
+  }
+
+  // A4. Detección de coherencia de versión en vivo (anti-drift de caché)
+  try {
+    const pkgVer = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8')).version;
+    const baseMinor = pkgVer.split('.').slice(0, 2).join('.');
+    const htmlClases = await fetchTimeout(`${BASE}/clases.html`, { timeoutMs: 15000 });
+    if (htmlClases.ok && htmlClases.body === null) {
+      const txt = await fetch(`${BASE}/clases.html`).then((x) => x.text()).catch(() => '');
+      const metaVer = txt.match(/<meta\s+name=["']application-version["']\s+content=["']([^"']+)["']/i)?.[1];
+      if (metaVer && metaVer === baseMinor) {
+        pass('disponibilidad', `versión servida coherente con release (${metaVer})`);
+      } else if (metaVer) {
+        warn('disponibilidad', 'versión servida', `la web sirve v${metaVer} pero la release es v${baseMinor} (posible caché CDN)`);
+      }
+    }
+  } catch { /* sin lectura de versión */ }
 }
 
 // ---------------------------------------------------------------- B. Backend en vivo
@@ -285,6 +371,26 @@ console.log('\n--- B. Supabase + Edge Functions en vivo ---');
   if (alive === fns.length) pass('backend', `las ${fns.length} Edge Functions responden`);
   else if (isCert && alive + ausentesCert === fns.length) pass('backend', `${ausentesCert} functions LIVE ausentes en cert (correcto: no se despliegan)`);
   else if (alive + fallbackCount === fns.length) pass('backend', `${alive} Edge Functions responden (${fallbackCount} con fallback a BD)`);
+
+  // B2. RPCs públicas clave en vivo
+  const rpcs = [
+    { name: 'obtener_ocupacion_clases', body: { p_clase_ids: [] } },
+    { name: 'canjear_oferta_promocional', body: { p_oferta: 'test' } },
+  ];
+  let rpcOk = 0;
+  for (const { name, body } of rpcs) {
+    lastUrl = `${SUPA_URL}/rest/v1/rpc/${name}`;
+    const r = await fetchTimeout(lastUrl, {
+      timeoutMs: 15000, method: 'POST',
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) { fail('backend', `RPC ${name}`, `sin red: ${r.error}`); }
+    else if (r.status === 404) { fail('backend', `RPC ${name}`, 'no desplegada (404)'); }
+    else if (r.status >= 200 && r.status < 500) { rpcOk++; }
+    else { warn('backend', `RPC ${name}`, `HTTP ${r.status}`); }
+  }
+  if (rpcOk === rpcs.length) pass('backend', `las ${rpcs.length} RPCs públicas clave responden`);
 }
 
 // ---------------------------------------------------------------- C. Privacidad
