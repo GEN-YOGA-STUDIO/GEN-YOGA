@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.4.1 — 3 oct 2026 · Incidencia
+
+- **Descripción:** limpiar sesion local en logout para evitar 403 en verificacion nocturna de cert (ámbito: auth)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.4.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.4.1.md`
+
 ## v17.4.0 — 2 oct 2026 · Desarrollo
 
 - **Descripción:** unificar visualizacion de sesiones y alumnos, filtro por bonos VIP y clase especial automatica con bono ilimitado (ámbito: admin)

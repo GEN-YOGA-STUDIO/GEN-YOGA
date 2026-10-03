@@ -6859,7 +6859,11 @@
             safeRemoveItem('activeAdminCrearSubTab');
             safeRemoveItem('activePublicView');
             safeRemoveItem('activeConsultasSubTab');
-            await client.auth.signOut();
+            try {
+                await client.auth.signOut({ scope: 'local' });
+            } catch (e) {
+                console.warn('Error al limpiar sesión:', e);
+            }
             location.reload();
         }
 
