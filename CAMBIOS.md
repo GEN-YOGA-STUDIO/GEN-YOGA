@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.5.0 — 6 oct 2026 · Desarrollo
+
+- **Descripción:** optimizar contraste y estados hover y activo en filtros rapidos de bonos (ámbito: admin)
+- **Validación:** npm test
+- **Tag:** `v17.5`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.5.0.md`
+
 ## v17.4.1 — 3 oct 2026 · Incidencia
 
 - **Descripción:** limpiar sesion local en logout para evitar 403 en verificacion nocturna de cert (ámbito: auth)
