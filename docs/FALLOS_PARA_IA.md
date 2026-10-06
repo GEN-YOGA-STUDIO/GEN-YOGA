@@ -1,6 +1,6 @@
 # Fallos pendientes para la IA (autogenerado)
 
-Generado: 2026-10-03T16:41:04.130Z. Lo regenera cada `check:nightly` / `check:cert`.
+Generado: 2026-10-06T09:07:42.159Z. Lo regenera cada `check:nightly` / `check:cert`.
 
 ## 🟢 Sin fallos pendientes
 

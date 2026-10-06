@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.6.0 — 6 oct 2026 · Desarrollo
+
+- **Descripción:** ocultar bono ilimitado de meses pasados en tags y filtros de cliente (ámbito: admin)
+- **Validación:** npm test
+- **Tag:** `v17.6`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.6.0.md`
+
 ## v17.5.0 — 6 oct 2026 · Desarrollo
 
 - **Descripción:** optimizar contraste y estados hover y activo en filtros rapidos de bonos (ámbito: admin)
