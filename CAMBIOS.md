@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.7.0 — 8 oct 2026 · Incidencia
+
+- **Descripción:** Unificar visualización de versión en footers web y adoptar incremento exclusivo de segundo número (v17.7) (ámbito: web)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.7`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.7.0.md`
+
 ## v17.6.5 — 8 oct 2026 · Incidencia
 
 - **Descripción:** Habilitar flujo de pago y retornos en entorno de certificación (CERT) (ámbito: stripe)

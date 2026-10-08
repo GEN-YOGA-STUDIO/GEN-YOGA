@@ -74,11 +74,11 @@ for (const rel of files) {
   if (!fs.existsSync(filePath)) continue;
   let content = fs.readFileSync(filePath, 'utf8');
 
-  content = content.replace(/\?v=\d+\.\d+/g, `?v=${targetShort}`);
-  content = content.replace(/content="\d+\.\d+"/g, `content="${targetShort}"`);
-  content = content.replace(/\bv\d+\.\d+\b/g, `v${targetShort}`);
-  content = content.replace(/const APP_VERSION = '\d+\.\d+'/g, `const APP_VERSION = '${targetShort}'`);
-  content = content.replace(/const APP_RELEASE = '\d+\.\d+'/g, `const APP_RELEASE = '${targetShort}'`);
+  content = content.replace(/\?v=\d+\.\d+(\.\d+)?/g, `?v=${targetShort}`);
+  content = content.replace(/content="\d+\.\d+(\.\d+)?"/g, `content="${targetShort}"`);
+  content = content.replace(/\bv\d+\.\d+(\.\d+)?\b/g, `v${targetShort}`);
+  content = content.replace(/const APP_VERSION = '\d+\.\d+(\.\d+)?'/g, `const APP_VERSION = '${targetShort}'`);
+  content = content.replace(/const APP_RELEASE = '\d+\.\d+(\.\d+)?'/g, `const APP_RELEASE = '${targetShort}'`);
 
   fs.writeFileSync(filePath, content, 'utf8');
   console.log(`✅ Actualizado ${rel}`);

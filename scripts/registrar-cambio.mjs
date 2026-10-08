@@ -96,12 +96,12 @@ const [maj, min, pat] = pkg.version.split('.').map(Number);
 const patch = pat || 0;
 
 let objetivo = null;
-if (tipo === 'desarrollo') objetivo = `${maj}.${min + 1}.0`;
-if (tipo === 'incidencia') objetivo = `${maj}.${min}.${patch + 1}`;
+// Regla de versionado de GEN Yoga: subir solo el segundo número por miniversión (x.Y.0) y no tocar nunca el tercero.
+objetivo = `${maj}.${min + 1}.0`;
 
 const etiquetaDe = (v) => {
-  const [a, b, c] = v.split('.').map(Number);
-  return c ? `v${a}.${b}.${c}` : `v${a}.${b}`;
+  const [a, b] = v.split('.').map(Number);
+  return `v${a}.${b}`;
 };
 
 const run = (cmd, extraEnv = {}, label = null) => {
