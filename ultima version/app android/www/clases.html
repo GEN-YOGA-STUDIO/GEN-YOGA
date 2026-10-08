@@ -1252,7 +1252,7 @@ const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 let lastCancelVal = '24';
-let lastReservaVal = '12';
+let lastReservaVal = '1';
 
 function normalisePolicyHours(value, fallback) {
     const parsed = Number(String(value));
@@ -1288,9 +1288,12 @@ async function loadPublicBookingPolicies() {
         );
         lastReservaVal = normalisePolicyHours(
             data?.find(c => c.clave === 'horas_limite_reserva')?.valor,
-            '24'
+            '1'
         );
         updatePolicyText();
+        if (window.GENPublicCalendar?.refresh) {
+            try { window.GENPublicCalendar.refresh(); } catch (_) {}
+        }
     } catch (err) {
         console.error('Error cargando las políticas de reserva:', err);
         updatePolicyText();

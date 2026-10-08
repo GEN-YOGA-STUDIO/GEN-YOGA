@@ -742,7 +742,7 @@
                 if (Number.isFinite(value) && value >= 0 && value <= 168) return value;
             }
         } catch (_) {}
-        return 24;
+        return 1;
     }
 
     function resolveWorkshopPriceHint(item) {

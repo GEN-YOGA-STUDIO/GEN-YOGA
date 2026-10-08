@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.6.3 — 8 oct 2026 · Incidencia
+
+- **Descripción:** corregir condición de carrera y fallback en límite de reserva de clases (ámbito: reservas)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.6.3`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.6.3.md`
+
 ## v17.6.2 — 8 oct 2026 · Incidencia
 
 - **Descripción:** eliminar solapamiento entre la barra de bonos y el menu de seleccion en el perfil (ámbito: perfil)

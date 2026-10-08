@@ -7106,7 +7106,7 @@
         let configuracionesApp = {};
         const POLICY_MAX_HOURS = 168;
         const POLICY_HOUR_DEFAULTS = Object.freeze({
-            horas_limite_reserva: 24,
+            horas_limite_reserva: 1,
             horas_limite_cancelacion: 24
         });
         const policySaveInProgress = new Set();
@@ -7223,6 +7223,10 @@
                     data.forEach(c => {
                         configuracionesApp[c.clave] = c.valor;
                     });
+                }
+                if (Array.isArray(allClasesCache) && allClasesCache.length > 0) {
+                    try { renderizarClases(); } catch (_) {}
+                    try { refrescarInicioSiActivo(); } catch (_) {}
                 }
                 return true;
             } catch (err) {
@@ -7528,6 +7532,12 @@
             }
 
             appStaticBindingsInitialized = true;
+
+            try {
+                await cargarConfiguracionesApp();
+            } catch (eConf) {
+                console.warn('Error al cargar configuraciones app prioritarias:', eConf);
+            }
 
             try {
                 await cargarProfesionalesCache();
@@ -10374,7 +10384,7 @@
                 const startMs = start.getTime();
                 const endMs = c.fecha_fin ? new Date(c.fecha_fin).getTime() : (startMs + toSafeNumber(c.duracion_minutos || (isTaller ? 120 : 75)) * 60000);
                 const finalizada = endMs <= ahoraMs;
-                const horasLimite = getPolicyHours('horas_limite_reserva') || 24;
+                const horasLimite = getPolicyHours('horas_limite_reserva');
                 const cerrada = !finalizada && !c.miReserva && (startMs <= ahoraMs + horasLimite * 60 * 60 * 1000);
 
                 let action;
@@ -10900,7 +10910,7 @@
                     const finalizada = endMs <= ahoraMs;
                     const llena = toSafeNumber(c.ocupadas) >= toSafeNumber(c.capacidad_max);
                     const reservada = !!c.miReserva;
-                    const horasLimite = getPolicyHours('horas_limite_reserva') || 24;
+                    const horasLimite = getPolicyHours('horas_limite_reserva');
                     const cerrada = !finalizada && !reservada && (startMs <= ahoraMs + horasLimite * 60 * 60 * 1000);
 
                     const companionModKey = '';
