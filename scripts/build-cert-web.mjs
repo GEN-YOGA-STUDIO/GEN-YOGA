@@ -10,8 +10,7 @@
  *      datos que producción — los cambios a validar son solo de web/apps.
  *        CERT_ALLOW_PRODUCTION_DB=1    (sin CERT_SUPABASE_*)
  *      En este modo las páginas llevan banner visible de entorno de pruebas y
- *      las compras quedan desactivadas en el cliente; el backend LIVE ya
- *      rechaza pagos cuyo origen no es genyoga.studio.
+ *      la pasarela de pago queda activa para pruebas.
  *
  * En ambos modos: noindex y sin CNAME (para no reclamar genyoga.studio).
  *
@@ -141,8 +140,8 @@ for (const file of htmls) {
 
   // Banner visible de entorno de pruebas (no bloquea clics: pointer-events none).
   const banner = mismoProyecto
-    ? '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · misma base de datos que producción · compras desactivadas aquí</div>'
-    : '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · compras desactivadas aquí</div>';
+    ? '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · misma base de datos que producción · pagos habilitados para pruebas</div>'
+    : '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · pagos habilitados para pruebas</div>';
   if (!out.includes('gy-cert-banner')) {
     out = out.replace(/(<body[^>]*>)/i, `$1\n  ${banner}`);
   }

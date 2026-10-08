@@ -203,7 +203,7 @@ if (isCert) {
       const host = String(certManifest.supabase || '');
       if (host && host.includes(PROD_SUPA_HOST)) {
         if (process.env.CERT_ALLOW_PRODUCTION_DB === '1' || certManifest.aviso) {
-          warn('cert', 'AISLAMIENTO', 'el cert apunta a la BD de producción en modo desarrollo web/apps (compras desactivadas en cliente)');
+          warn('cert', 'AISLAMIENTO', 'el cert apunta a la BD de producción en modo desarrollo web/apps (pagos habilitados para pruebas)');
         } else {
           fail('cert', 'AISLAMIENTO', 'el cert apunta al Supabase DE PRODUCCIÓN: no es un entorno de pruebas válido');
         }

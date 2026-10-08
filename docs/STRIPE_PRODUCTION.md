@@ -80,15 +80,13 @@ El origen de `SITE_URL` se permite siempre de forma automática. No uses `*`, no
 añadas GitHub Pages y no autorices dominios de certificación en el proyecto de
 producción.
 
-`PAYMENT_ALLOWED_ORIGINS` determina desde qué orígenes se pueden crear o consultar pagos LIVE y abrir Customer Portal. Debe contener únicamente los hostnames productivos:
+`PAYMENT_ALLOWED_ORIGINS` determina desde qué orígenes se pueden crear o consultar pagos LIVE y abrir Customer Portal. Por defecto autoriza los orígenes productivos y el entorno de certificación para pruebas:
 
 ```text
 https://genyoga.studio,https://www.genyoga.studio
 ```
 
-GitHub Pages y cualquier web de certificación deben quedar fuera de los pagos LIVE. El origen del navegador no incluye la ruta del repositorio, por lo que `gen-yoga-studio.github.io/Q19-CERT` no se puede aislar de otros repositorios mediante CORS. Una certificación funcional requiere otro proyecto Supabase, Stripe TEST, Prices y webhook de prueba, preferiblemente bajo un hostname propio como `cert.genyoga.studio`.
-
-Todos los retornos de Checkout y Customer Portal se construyen con el `SITE_URL` canónico. Nunca se refleja el encabezado `Origin`, ni se usan rutas `/GEN-YOGA` o `/Q19-CERT` para sesiones LIVE.
+El entorno de certificación (`https://gen-yoga-studio.github.io/GEN-YOGA-CERT/`) está autorizado en código en `CERT_PAYMENT_ORIGINS` para permitir validar el flujo completo de Stripe Checkout en las pruebas pre-producción. Los retornos redirigen al entorno correspondiente (producción o certificación).
 
 Como alternativa al Dashboard, crea localmente
 `supabase/functions/.env.production.local` a partir del ejemplo y ejecuta:

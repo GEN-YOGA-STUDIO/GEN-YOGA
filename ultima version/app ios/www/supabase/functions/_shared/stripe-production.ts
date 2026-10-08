@@ -17,6 +17,8 @@ export const PURCHASE_TYPES = {
   MIRIAM_PSICO_PAREJA_1A: 'miriam_psico_pareja_1a',
   MIRIAM_PSICO_PAREJA_SIG: 'miriam_psico_pareja_sig',
   MIRIAM_PSICO_GRUPAL: 'prod_VDmmlmsGGhMebt',
+  MIRIAM_GRUPO_TERAPEUTICO: 'miriam_grupo_terapeutico',
+  MIRIAM_GRUPO_AUTOAYUDA: 'miriam_grupo_autoayuda',
   SILVIA_AYURVEDA_1A: 'silvia_ayurveda_1a',
   SILVIA_AYURVEDA_SIG: 'silvia_ayurveda_sig',
   SILVIA_AYURVEDA_BONO3: 'silvia_ayurveda_bono3',
@@ -109,6 +111,18 @@ export const CONSULTATION_CATALOG: Partial<Record<PurchaseType, ConsultationDeta
   },
   [PURCHASE_TYPES.MIRIAM_PSICO_GRUPAL]: {
     name: 'Sesión Grupal Miriam',
+    amount: 3000,
+    productId: MIRIAM_PRODUCT_IDS.SESION_GRUPAL,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_GRUPO_TERAPEUTICO]: {
+    name: 'Grupo Terapéutico con Miriam',
+    amount: 3000,
+    productId: MIRIAM_PRODUCT_IDS.SESION_GRUPAL,
+    guestAllowed: true,
+  },
+  [PURCHASE_TYPES.MIRIAM_GRUPO_AUTOAYUDA]: {
+    name: 'Grupo de Autoayuda con Miriam',
     amount: 3000,
     productId: MIRIAM_PRODUCT_IDS.SESION_GRUPAL,
     guestAllowed: true,
@@ -282,9 +296,14 @@ export type ValidatedPurchase = {
 
 const catalogCache = new Map<string, Promise<ValidatedCatalog>>()
 const PRODUCTION_SITE_ORIGIN = 'https://genyoga.studio'
+export const CERT_PAYMENT_ORIGINS: ReadonlyArray<string> = [
+  'https://gen-yoga-studio.github.io',
+  'https://q19-cert.github.io',
+]
 const LIVE_PAYMENT_ORIGINS = new Set([
   PRODUCTION_SITE_ORIGIN,
   'https://www.genyoga.studio',
+  ...CERT_PAYMENT_ORIGINS,
 ])
 
 export class HttpError extends Error {
@@ -368,7 +387,7 @@ function buildAllowedOrigins(siteOrigin: string): ReadonlySet<string> {
 
 function buildPaymentAllowedOrigins(): ReadonlySet<string> {
   requireEnv('PAYMENT_ALLOWED_ORIGINS')
-  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [])
+  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [...CERT_PAYMENT_ORIGINS])
   if (paymentAllowedOrigins.size === 0) {
     throw new Error('PAYMENT_ALLOWED_ORIGINS debe incluir al menos un origen productivo.')
   }
@@ -604,12 +623,20 @@ export function assertPaymentOrigin(
 }
 
 export function resolveReturnBaseUrl(
-  _req: Request,
+  req: Request,
   config: Pick<ProductionConfig, 'siteUrl'>,
 ): string {
-  // Stripe must always return to the canonical HTTPS hostname. Reflecting the
-  // browser Origin leaks the Checkout session through redirect chains and can
-  // make certification jump into a different published repository.
+  const origin = getRequestOrigin(req)
+  if (origin === 'https://gen-yoga-studio.github.io') {
+    const referer = req.headers.get('referer') || ''
+    if (referer.includes('/Q19-CERT')) {
+      return 'https://gen-yoga-studio.github.io/Q19-CERT'
+    }
+    return 'https://gen-yoga-studio.github.io/GEN-YOGA-CERT'
+  }
+  if (origin === 'https://q19-cert.github.io') {
+    return 'https://q19-cert.github.io/Q19-CERT'
+  }
   return config.siteUrl
 }
 
@@ -683,6 +710,57 @@ export function stripeObjectId(value: string | { id: string } | null | undefined
   return typeof value === 'string' ? value : value.id
 }
 
+// BUG-1: al cobrar un taller hay que dejar la plaza reservada en el servidor
+// (el cliente puede no volver en el mismo navegador). Solo lectura+1 insert
+// idempotente; nunca falla la entrega: devuelve el resultado para logs.
+export function metadataClaseId(metadata: unknown): number | null {
+  const raw = (metadata as Record<string, unknown> | null)?.clase_id
+  const n = typeof raw === 'number' ? raw : parseInt(String(raw || ''), 10)
+  return Number.isInteger(n) && (n as number) > 0 ? (n as number) : null
+}
+
+export async function bookPaidTallerClass(
+  supabase: { from: (table: string) => any },
+  args: { userId: string | null; purchaseType: string; paymentStatus: string; claseId: number | null },
+): Promise<'booked' | 'skipped' | 'failed'> {
+  const { userId, purchaseType, paymentStatus, claseId } = args
+  if (!userId || paymentStatus !== 'paid' || !claseId) return 'skipped'
+  const t = String(purchaseType || '').toLowerCase()
+  if (!(t === 'taller' || t.includes('taller'))) return 'skipped'
+  try {
+    const { data: clase } = await supabase
+      .from('clases')
+      .select('id,fecha_inicio,capacidad_max,tipo_clase,activa')
+      .eq('id', claseId)
+      .maybeSingle()
+    if (!clase || (clase as { activa?: boolean }).activa === false) return 'skipped'
+    if (!clase.fecha_inicio || new Date(clase.fecha_inicio).getTime() <= Date.now()) return 'skipped'
+    if (String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase() !== 'taller') return 'skipped'
+    const { data: existing } = await supabase
+      .from('reservas_yoga')
+      .select('id')
+      .eq('clase_id', claseId)
+      .eq('user_id', userId)
+      .eq('estado', 'confirmada')
+      .limit(1)
+    if (existing && (existing as unknown[]).length > 0) return 'skipped'
+    const { data: occ } = await supabase
+      .from('reservas_yoga')
+      .select('id')
+      .eq('clase_id', claseId)
+      .eq('estado', 'confirmada')
+    const cap = Number((clase as { capacidad_max?: number }).capacidad_max) || 10
+    if (((occ as unknown[]) || []).length >= cap) return 'skipped'
+    const { error } = await supabase
+      .from('reservas_yoga')
+      .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada' })
+    if (error) return 'failed'
+    return 'booked'
+  } catch (_) {
+    return 'failed'
+  }
+}
+
 function consultationPriceMatches(
   price: Stripe.Price,
   details: ConsultationDetails,
@@ -722,11 +800,6 @@ export async function resolveConsultationPrice(
   const matchingPrice = prices.data.find(
     (price: Stripe.Price) => consultationPriceMatches(price, details, true),
   ) || null
-  if (!matchingPrice && details.productId) {
-    throw new Error(
-      `El producto ${details.productId} no tiene un Price LIVE activo de ${details.amount} EUR céntimos.`,
-    )
-  }
   return matchingPrice
 }
 
@@ -1023,12 +1096,13 @@ export function validateCheckoutPurchase(
 
   const membershipMonth = metadata.membership_month?.trim() || null
   if (
-    purchaseType === PURCHASE_TYPES.BONO_ILIMITADO &&
+    (purchaseType === PURCHASE_TYPES.BONO_ILIMITADO ||
+      purchaseType === PURCHASE_TYPES.CLASE_ESPECIAL) &&
     (!membershipMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth))
   ) {
     throw new HttpError(400, 'La sesión no contiene un mes natural válido.')
   }
-  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && membershipMonth) {
+  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL && membershipMonth) {
     throw new HttpError(400, 'El producto no admite un mes natural seleccionado.')
   }
 

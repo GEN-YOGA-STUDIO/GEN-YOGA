@@ -296,9 +296,14 @@ export type ValidatedPurchase = {
 
 const catalogCache = new Map<string, Promise<ValidatedCatalog>>()
 const PRODUCTION_SITE_ORIGIN = 'https://genyoga.studio'
+export const CERT_PAYMENT_ORIGINS: ReadonlyArray<string> = [
+  'https://gen-yoga-studio.github.io',
+  'https://q19-cert.github.io',
+]
 const LIVE_PAYMENT_ORIGINS = new Set([
   PRODUCTION_SITE_ORIGIN,
   'https://www.genyoga.studio',
+  ...CERT_PAYMENT_ORIGINS,
 ])
 
 export class HttpError extends Error {
@@ -382,7 +387,7 @@ function buildAllowedOrigins(siteOrigin: string): ReadonlySet<string> {
 
 function buildPaymentAllowedOrigins(): ReadonlySet<string> {
   requireEnv('PAYMENT_ALLOWED_ORIGINS')
-  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [])
+  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [...CERT_PAYMENT_ORIGINS])
   if (paymentAllowedOrigins.size === 0) {
     throw new Error('PAYMENT_ALLOWED_ORIGINS debe incluir al menos un origen productivo.')
   }
@@ -618,12 +623,20 @@ export function assertPaymentOrigin(
 }
 
 export function resolveReturnBaseUrl(
-  _req: Request,
+  req: Request,
   config: Pick<ProductionConfig, 'siteUrl'>,
 ): string {
-  // Stripe must always return to the canonical HTTPS hostname. Reflecting the
-  // browser Origin leaks the Checkout session through redirect chains and can
-  // make certification jump into a different published repository.
+  const origin = getRequestOrigin(req)
+  if (origin === 'https://gen-yoga-studio.github.io') {
+    const referer = req.headers.get('referer') || ''
+    if (referer.includes('/Q19-CERT')) {
+      return 'https://gen-yoga-studio.github.io/Q19-CERT'
+    }
+    return 'https://gen-yoga-studio.github.io/GEN-YOGA-CERT'
+  }
+  if (origin === 'https://q19-cert.github.io') {
+    return 'https://q19-cert.github.io/Q19-CERT'
+  }
   return config.siteUrl
 }
 
