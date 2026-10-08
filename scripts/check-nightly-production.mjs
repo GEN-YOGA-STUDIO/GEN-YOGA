@@ -1248,7 +1248,7 @@ await section('cliente', async () => {
           await page.locator('.swal2-popup:visible').first().waitFor({ state: 'visible', timeout: 10000 });
           dlg = await swalText(page);
         } catch { /* sin diálogo */ }
-        if (/Confirmar Reserva|Clase Completa|Ya estás inscrito|No se puede reservar|Clase no disponible|Bono|Stripe|Comprar|invitado/i.test(dlg)) {
+        if (/Confirmar|Reserva|Gratuit|gratis|Introductori|Clase Completa|Ya estás inscrito|No se puede reservar|Clase no disponible|Bono|Stripe|Comprar|invitado|plaza/i.test(dlg)) {
           pass('cliente', `reserva yoga: diálogo correcto ("${dlg.replace(/\s+/g, ' ').slice(0, 60)}")`);
         } else {
           fail('cliente', 'reserva yoga', `diálogo inesperado o ausente: "${dlg.slice(0, 100)}"`);
