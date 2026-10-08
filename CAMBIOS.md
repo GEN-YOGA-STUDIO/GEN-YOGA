@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.6.1 — 8 oct 2026 · Incidencia
+
+- **Descripción:** iniciar sesion en tarifas de eventos lleva a login y enfoca clase concreta (ámbito: eventos)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.6.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.6.1.md`
+
 ## v17.6.0 — 6 oct 2026 · Desarrollo
 
 - **Descripción:** ocultar bono ilimitado de meses pasados en tags y filtros de cliente (ámbito: admin)

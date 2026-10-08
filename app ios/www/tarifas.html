@@ -678,7 +678,7 @@
                             </ul>
                         </div>
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
-                            <button onclick="iniciarCheckoutTallerStripe('clase_especial', 'Clase Especial: Flow & Meditación', '20')"
+                            <button onclick="iniciarCheckoutTallerStripe('clase_especial', 'Clase Especial: Flow & Meditación', '20', 7855, { fecha: '2026-10-09', hora: '19:00' })"
                                 class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
                                 Reservar Plaza (20 €)
                             </button>
@@ -719,7 +719,7 @@
                             </ul>
                         </div>
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
-                            <button onclick="iniciarCheckoutTallerStripe('taller_intro_power_vinyasa', 'Taller: Introducción a Power Vinyasa', '25')"
+                            <button onclick="iniciarCheckoutTallerStripe('taller_intro_power_vinyasa', 'Taller: Introducción a Power Vinyasa', '25', 5821, { fecha: '2026-09-19', hora: '09:00' })"
                                 class="block w-full py-3.5 bg-[#AB593D] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
                                 Reservar Plaza (25 €)
                             </button>
@@ -1466,7 +1466,7 @@
                 if (result.isConfirmed) {
                     userId = 'guest';
                 } else if (result.isDenied) {
-                    window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
+                    window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}&prompt=login&action=login`;
                     return;
                 } else {
                     return;
@@ -1523,7 +1523,7 @@
             }
         }
 
-        async function iniciarCheckoutTallerStripe(lookupKey, title, price, claseId) {
+        async function iniciarCheckoutTallerStripe(lookupKey, title, price, claseId, options = {}) {
             if (checkoutRequestInProgress) return;
 
             const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
@@ -1550,9 +1550,19 @@
                 if (result.isConfirmed) {
                     userId = 'guest';
                 } else if (result.isDenied) {
-                    const buyParam = lookupKey ? `buy=${encodeURIComponent(lookupKey)}` : '';
                     const claseParam = claseId ? `clase=${encodeURIComponent(claseId)}` : '';
-                    const params = [buyParam, claseParam, 'view=especiales'].filter(Boolean).join('&');
+                    const fechaParam = options?.fecha ? `fecha=${encodeURIComponent(options.fecha)}` : '';
+                    const horaParam = options?.hora ? `hora=${encodeURIComponent(options.hora)}` : '';
+                    const titleParam = title ? `title=${encodeURIComponent(title)}` : '';
+                    const params = [
+                        claseParam,
+                        fechaParam,
+                        horaParam,
+                        titleParam,
+                        'view=especiales',
+                        'prompt=login',
+                        'action=login'
+                    ].filter(Boolean).join('&');
                     window.location.href = `profile.html?${params}`;
                     return;
                 } else {
@@ -1637,9 +1647,9 @@
             }
         }
 
-        window.gestionarReservaTallerDinamico = async function(lookupKey, title, price, claseId) {
+        window.gestionarReservaTallerDinamico = async function(lookupKey, title, price, claseId, options = {}) {
             if (lookupKey) {
-                await iniciarCheckoutTallerStripe(lookupKey, title, price, claseId);
+                await iniciarCheckoutTallerStripe(lookupKey, title, price, claseId, options);
             } else {
                 const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
                 const hasSession = Boolean(sessionRes?.data?.session?.user);
@@ -1651,7 +1661,7 @@
                         icon: 'question',
                         showCancelButton: true,
                         showDenyButton: true,
-                        confirmButtonText: 'Iniciar Sesión / Registro',
+                        confirmButtonText: 'Iniciar Sesión',
                         denyButtonText: 'Ver en Calendario',
                         cancelButtonText: 'Cancelar',
                         confirmButtonColor: '#AB593D',
@@ -1662,7 +1672,12 @@
                     });
 
                     if (result.isConfirmed) {
-                        window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales&prompt=register`;
+                        const claseParam = claseId ? `clase=${encodeURIComponent(claseId)}` : '';
+                        const fechaParam = options?.fecha ? `fecha=${encodeURIComponent(options.fecha)}` : '';
+                        const horaParam = options?.hora ? `hora=${encodeURIComponent(options.hora)}` : '';
+                        const titleParam = title ? `title=${encodeURIComponent(title)}` : '';
+                        const params = [claseParam, fechaParam, horaParam, titleParam, 'view=especiales', 'prompt=login', 'action=login'].filter(Boolean).join('&');
+                        window.location.href = `profile.html?${params}`;
                     } else if (result.isDenied) {
                         window.location.href = `clases.html?style=taller#calendario-publico`;
                     }
@@ -1682,7 +1697,11 @@
                 btn.dataset.lookup || null,
                 btn.dataset.title || '',
                 btn.dataset.precio || '',
-                Number(btn.dataset.clase) || 0
+                Number(btn.dataset.clase) || 0,
+                {
+                    fecha: btn.dataset.fecha || '',
+                    hora: btn.dataset.hora || ''
+                }
             );
         });
 
@@ -1944,7 +1963,7 @@
                         </ul>
                     </div>
                     <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
-                        <button type="button" data-taller-reserva data-lookup="${escapeHtml(lookupKey || '')}" data-title="${escapeHtml(title || '')}" data-precio="${escapeHtml(precio || '')}" data-clase="${Number(taller.id) || 0}"
+                        <button type="button" data-taller-reserva data-lookup="${escapeHtml(lookupKey || '')}" data-title="${escapeHtml(title || '')}" data-precio="${escapeHtml(precio || '')}" data-clase="${Number(taller.id) || 0}" data-fecha="${escapeHtml(start.toISOString().slice(0, 10))}" data-hora="${escapeHtml(startH + ':' + startM)}"
                             class="block w-full py-3.5 text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
                             style="background-color: ${themeColor};">
                             Reservar Plaza (${escapeHtml(precio)} €)

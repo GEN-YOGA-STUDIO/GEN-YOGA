@@ -6723,6 +6723,7 @@
                     clase: params.get('clase'),
                     fecha: params.get('fecha'),
                     hora: params.get('hora'),
+                    title: params.get('title'),
                     teacher: params.get('teacher') || params.get('profesor'),
                     intro: params.get('intro') === 'true',
                     view: params.get('view') || 'horarios',
@@ -6736,8 +6737,22 @@
             try {
                 hasStoredSession = Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
             } catch (_) { hasStoredSession = false; }
-            if (params.get('prompt') === 'register' || params.get('register') === 'true' || params.get('registro') === 'true' || params.get('action') === 'register' || params.get('promo') === 'bienvenida' || (hasIntent && !currentUser && !hasStoredSession)) {
+
+            const requestedPrompt = (params.get('prompt') || '').toLowerCase().trim();
+            const requestedAction = (params.get('action') || '').toLowerCase().trim();
+            const wantsLogin = requestedPrompt === 'login' || requestedAction === 'login' || params.get('mode') === 'login';
+            const wantsRegister = !wantsLogin && (
+                requestedPrompt === 'register' ||
+                params.get('register') === 'true' ||
+                params.get('registro') === 'true' ||
+                requestedAction === 'register' ||
+                params.get('promo') === 'bienvenida'
+            );
+
+            if (wantsRegister) {
                 toggleAuth('register');
+            } else if (wantsLogin) {
+                toggleAuth('login');
             }
         });
 
@@ -8900,6 +8915,155 @@
 
             safeRemoveItem('pending_intro_booking');
 
+            // Comprobar si el intent es de un evento / taller / clase especial (v17.6.1)
+            const isEspecialIntent = viewParam === 'especiales' || tipoParam === 'taller' || tipoParam === 'especial' || tipoParam === 'clase_especial';
+            if (isEspecialIntent) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                switchPublicView('especiales');
+                await cargarClasesEspeciales();
+
+                let targetEspecial = null;
+                if (claseIdParam) {
+                    targetEspecial = (allTalleresCache || []).find(c => safePositiveInteger(c.id) === claseIdParam);
+                    if (!targetEspecial) {
+                        try {
+                            const { data: dEsp } = await client.from('clases').select('*, profesionales(*)').eq('id', claseIdParam).maybeSingle();
+                            if (dEsp) {
+                                targetEspecial = dEsp;
+                                if (!allTalleresCache.some(c => safePositiveInteger(c.id) === claseIdParam)) {
+                                    allTalleresCache.push(dEsp);
+                                }
+                            }
+                        } catch (_) {}
+                    }
+                }
+                if (!targetEspecial && (fechaParam || horaParam)) {
+                    targetEspecial = (allTalleresCache || []).find(c => {
+                        if (fechaParam) {
+                            const fClase = formatDateLocal(new Date(c.fecha_inicio));
+                            if (fClase !== fechaParam) return false;
+                        }
+                        if (horaParam) {
+                            const hClase = formatDisplayTime(c.fecha_inicio);
+                            if (!hClase.startsWith(horaParam) && !hClase.includes(horaParam)) return false;
+                        }
+                        return true;
+                    });
+                }
+
+                if (targetEspecial) {
+                    setTimeout(() => {
+                        const el = document.getElementById(`taller-card-${targetEspecial.id}`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            el.classList.add('ring-4', 'ring-[#AB593D]', 'shadow-2xl', 'scale-[1.02]');
+                            setTimeout(() => {
+                                el.classList.remove('ring-4', 'ring-[#AB593D]', 'shadow-2xl', 'scale-[1.02]');
+                            }, 4500);
+                        }
+                    }, 350);
+
+                    if (targetEspecial.miReserva) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: '¡Ya estás inscrito!',
+                            html: `
+                                <div class="text-left space-y-2 p-1">
+                                    <p class="text-xs text-cocoa">Ya tienes tu plaza reservada y confirmada en este evento:</p>
+                                    <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-cocoa/80 space-y-1">
+                                        <p class="font-bold text-emerald-900">${escapeHtml(targetEspecial.nombre)}</p>
+                                        <p><strong>Profesor/a:</strong> ${escapeHtml(targetEspecial.profesionales?.nombre || 'GEN Yoga')}</p>
+                                        <p><strong>Fecha:</strong> ${escapeHtml(formatDisplayWeekday(targetEspecial.fecha_inicio))} ${new Date(targetEspecial.fecha_inicio).getDate()} de ${escapeHtml(formatDisplayMonth(targetEspecial.fecha_inicio))}</p>
+                                        <p><strong>Hora:</strong> ${escapeHtml(formatDisplayTime(targetEspecial.fecha_inicio))}</p>
+                                    </div>
+                                </div>
+                            `,
+                            confirmButtonColor: '#795244'
+                        });
+                        return;
+                    }
+
+                    const ocupadasEsp = toSafeNumber(targetEspecial.ocupadas || targetEspecial.total_reservas || 0);
+                    const capMaxEsp = toSafeNumber(targetEspecial.capacidad_max || 10);
+                    if (ocupadasEsp >= capMaxEsp) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Evento Completo',
+                            html: `
+                                <div class="text-left space-y-2 p-1">
+                                    <div class="p-3.5 bg-red-50 border border-red-200 rounded-2xl shadow-2xs">
+                                        <span class="text-[10px] font-black uppercase tracking-wider text-red-700 bg-red-100 border border-red-300 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
+                                            Completo (${ocupadasEsp} / ${capMaxEsp} plazas)
+                                        </span>
+                                        <h4 class="text-base font-bold text-cocoa leading-tight">${escapeHtml(targetEspecial.nombre)}</h4>
+                                        <p class="text-xs text-cocoa/75 mt-1">Con <strong>${escapeHtml(targetEspecial.profesionales?.nombre || 'GEN Yoga')}</strong></p>
+                                    </div>
+                                    <p class="text-xs text-cocoa/80 mt-2">Este evento ha completado su aforo. Puedes consultar otros eventos disponibles en el calendario.</p>
+                                </div>
+                            `,
+                            confirmButtonText: 'Ver eventos disponibles',
+                            confirmButtonColor: '#795244'
+                        });
+                        return;
+                    }
+
+                    const profNameEsp = targetEspecial.profesionales?.nombre || 'GEN Yoga';
+                    const dateStrEsp = `${formatDisplayWeekday(targetEspecial.fecha_inicio)} ${new Date(targetEspecial.fecha_inicio).getDate()} de ${formatDisplayMonth(targetEspecial.fecha_inicio)}`;
+                    const horaStrEsp = formatDisplayTime(targetEspecial.fecha_inicio);
+                    const isClaseEsp = esClaseEspecialTipo(targetEspecial);
+                    const isTal = !isClaseEsp;
+
+                    const startMonthKey = madridDateKey(new Date(targetEspecial.fecha_inicio)).slice(0, 7) + '-01';
+                    const tieneBonoEspecialMes = isClaseEsp && userSpecialBonos.some(b => b.mes && String(b.mes).slice(0, 7) === startMonthKey.slice(0, 7) && toSafeNumber(b.saldo) > 0);
+                    const tieneCreditoTaller = isTal && (userCreditosReprogramacion.some(r => (r.tipo === 'taller' || r.tipo === 'credito_taller') && r.estado === 'disponible') || (toSafeNumber(currentUserProfile?.saldo_talleres) || 0) > 0);
+                    const puedeReservarGratis = tieneBonoEspecialMes || tieneCreditoTaller;
+
+                    const confirmText = puedeReservarGratis ? '¡Sí, reservar plaza (0 €)!' : 'Reservar plaza';
+                    const noteText = puedeReservarGratis
+                        ? (isClaseEsp ? 'Tienes 1 clase especial incluida este mes con tu Bono Ilimitado (0 €).' : 'Tienes un crédito disponible para reservar este taller (0 €).')
+                        : `Precio: ${isClaseEsp ? '20 €' : '25 €'}.`;
+
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: `¿Confirmar tu plaza?`,
+                            html: `
+                                <div class="text-left space-y-2 p-1">
+                                    <div class="p-3.5 bg-sand/20 border border-cocoa/20 rounded-2xl shadow-2xs">
+                                        <span class="text-[10px] font-black uppercase tracking-wider text-cocoa bg-white/80 border border-cocoa/20 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
+                                            ${isClaseEsp ? '✨ Clase Especial' : '🔥 Taller'}
+                                        </span>
+                                        <h4 class="text-base font-bold text-cocoa leading-tight">${escapeHtml(targetEspecial.nombre)}</h4>
+                                        <p class="text-xs text-cocoa/75 mt-1">Con <strong>${escapeHtml(profNameEsp)}</strong></p>
+                                        <p class="text-xs text-[#AB593D] font-bold mt-1 flex items-center gap-1">
+                                            <i class="ph-bold ph-calendar"></i> ${escapeHtml(dateStrEsp)} · ⏰ ${escapeHtml(horaStrEsp)}
+                                        </p>
+                                    </div>
+                                    <p class="text-xs text-cocoa/80 mt-2">${escapeHtml(noteText)}</p>
+                                </div>
+                            `,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: confirmText,
+                            cancelButtonText: 'Ver detalles del evento',
+                            confirmButtonColor: '#AB593D',
+                            cancelButtonColor: '#795244'
+                        }).then(async (result) => {
+                            if (result.isConfirmed) {
+                                if (puedeReservarGratis) {
+                                    await reservar(targetEspecial.id);
+                                } else if (isClaseEsp) {
+                                    comprarBonoEspecialStripe(null, startMonthKey);
+                                } else {
+                                    const { lookupKey, precio } = resolverPrecioYTallerLookup(targetEspecial);
+                                    iniciarCheckoutTallerStripe(lookupKey, targetEspecial.nombre, precio, targetEspecial.id);
+                                }
+                            }
+                        });
+                    }, 400);
+                }
+                return;
+            }
+
             // Asegurar que las clases de yoga estén cargadas para el mes objetivo
             if (claseIdParam && (!allClasesCache || !allClasesCache.some(c => safePositiveInteger(c.id) === claseIdParam))) {
                 try {
@@ -8983,8 +9147,17 @@
                 window.history.replaceState({}, document.title, window.location.pathname);
 
                 setTimeout(() => {
-                    const sched = document.getElementById('sticky-days-bar-container');
-                    if (sched) sched.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const el = document.getElementById(`clase-row-${targetClase.id}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.classList.add('ring-2', 'ring-[#D27D60]', 'bg-sand/20');
+                        setTimeout(() => {
+                            el.classList.remove('ring-2', 'ring-[#D27D60]', 'bg-sand/20');
+                        }, 4500);
+                    } else {
+                        const sched = document.getElementById('sticky-days-bar-container');
+                        if (sched) sched.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 }, 300);
 
                 if (targetClase.miReserva) {
@@ -10232,7 +10405,7 @@
                     : `<span class="text-[10px] font-black uppercase tracking-widest text-[#AB593D] bg-[#AB593D]/10 border border-[#AB593D]/25 px-3 py-1 rounded-full inline-flex items-center gap-1.5"><i class="ph-bold ph-barbell"></i> Taller</span>`;
 
                 return `
-            <article class="bg-white/95 rounded-3xl border ${isClaseEspecial ? 'border-slate-300 shadow-md' : 'border-terracotta/15 shadow-md'} overflow-hidden">
+            <article id="taller-card-${claseId}" data-clase-id="${claseId}" data-fecha="${start.toISOString().slice(0, 10)}" data-hora="${formatDisplayTime(c.fecha_inicio)}" class="bg-white/95 rounded-3xl border ${isClaseEspecial ? 'border-slate-300 shadow-md' : 'border-terracotta/15 shadow-md'} overflow-hidden transition-all duration-300">
                 <div class="h-2 ${isClaseEspecial ? 'bg-gradient-to-r from-slate-400 via-slate-600 to-slate-800' : 'bg-gradient-to-r from-terracotta to-golden'}"></div>
                 <div class="p-6">
                     <div class="flex items-center justify-between gap-3 mb-4">
@@ -10826,6 +10999,8 @@
                     }
 
                     const row = document.createElement('div');
+                    row.id = `clase-row-${claseId}`;
+                    row.dataset.claseId = String(claseId);
                     row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/10 transition duration-300 group';
 
                     row.innerHTML = `
