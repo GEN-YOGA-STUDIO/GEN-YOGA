@@ -10173,7 +10173,7 @@
             if (lookupKey === 'taller_35' || lookupKey === 'taller-35' || lookupKey === 'prod_V5uCPKKKH5K74P') {
                 return { lookupKey: 'taller_35', precio: '35' };
             }
-            if (lookupKey === 'clase_especial' || c.tipo_clase === 'clase_especial') {
+            if (lookupKey === 'clase_especial' || lookupKey === 'prod_V5uBKuweMRE6ig' || c.tipo_clase === 'clase_especial' || c.tipo_clase === 'especial' || (typeof esClaseEspecialTipo === 'function' && esClaseEspecialTipo(c))) {
                 return { lookupKey: 'clase_especial', precio: '20' };
             }
 
@@ -10181,7 +10181,15 @@
             if (tipoId && Array.isArray(window.tiposClasesCache)) {
                 const tipo = window.tiposClasesCache.find(t => t.id === tipoId);
                 if (tipo && tipo.stripe_product_id) {
-                    lookupKey = tipo.stripe_product_id;
+                    if (tipo.stripe_product_id === 'prod_V5uBKuweMRE6ig' || (typeof esClaseEspecialTipo === 'function' && esClaseEspecialTipo(c))) {
+                        lookupKey = 'clase_especial';
+                    } else if (tipo.stripe_product_id === 'prod_VDY8mI9bZ3SQeb') {
+                        lookupKey = 'taller_25';
+                    } else if (tipo.stripe_product_id === 'prod_V5uCPKKKH5K74P') {
+                        lookupKey = 'taller_35';
+                    } else {
+                        lookupKey = tipo.stripe_product_id;
+                    }
                     if (Array.isArray(window.stripeProductsCache)) {
                         const prod = window.stripeProductsCache.find(p => p.id === tipo.stripe_product_id);
                         if (prod) {
@@ -10555,6 +10563,12 @@
         }
 
         async function iniciarCheckoutTallerStripe(lookupKey = 'taller_intro_power_vinyasa', title = 'Taller GEN Yoga', price = '25', claseId = null) {
+            if (lookupKey === 'clase_especial' || lookupKey === 'prod_V5uBKuweMRE6ig') {
+                const targetClase = (allClasesCache || []).find(c => safePositiveInteger(c.id) === safePositiveInteger(claseId));
+                const targetMonth = targetClase?.fecha_inicio ? madridDateKey(new Date(targetClase.fecha_inicio)).slice(0, 7) + '-01' : null;
+                await comprarBonoEspecialStripe(null, targetMonth);
+                return;
+            }
             const __gyAttemptT = (typeof beginStripeCheckout === 'function') ? beginStripeCheckout() : null;
             if (__gyAttemptT === null) return;
             if (!currentUser?.id) {

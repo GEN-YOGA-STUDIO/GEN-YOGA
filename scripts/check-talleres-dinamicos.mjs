@@ -17,6 +17,8 @@ assert.match(tarifasHtml, /gestionarReservaTallerDinamico/, 'Debe existir la fun
 assert.match(tarifasHtml, /function escapeHtml/, 'Debe existir la función escapeHtml');
 assert.match(tarifasHtml, /function safeRemoveItem/, 'Debe existir la función safeRemoveItem');
 assert.match(tarifasHtml, /end\.getTime\(\)\s*>\s*now\.getTime\(\)/, 'Debe comprobar estrictamente que el taller no haya finalizado (end > now)');
+assert.match(tarifasHtml, /lookupKey === 'prod_V5uBKuweMRE6ig'\)\s*lookupKey = 'clase_especial'/, 'Debe normalizar prod_V5uBKuweMRE6ig a clase_especial');
+assert.match(tarifasHtml, /isClaseEspecial\s*=\s*options\?\.isTaller === false \|\| lookupKey === 'clase_especial'/, 'Debe identificar si es clase especial en gestionarReservaTallerDinamico');
 
 // 2. Verificar simulación de filtrado de vigencia
 const now = new Date('2026-09-20T12:00:00Z');
