@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.10.0 — 13 oct 2026 · Desarrollo
+
+- **Descripción:** mejora Ampliación del chequeo nocturno: validación de privacidad en navegador, layout escritorio, cabeceras MIME, assets de branding y seguridad de almacenamiento (ámbito: nightly)
+- **Validación:** npm test
+- **Tag:** `v17.10`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.10.0.md`
+
 ## v17.9.0 — 13 oct 2026 · Incidencia
 
 - **Descripción:** Mejoras en suite nocturna: detección de desbordamiento horizontal móvil, tokens corruptos, enlaces rotos y validación de formularios (ámbito: nightly)

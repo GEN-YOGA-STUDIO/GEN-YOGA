@@ -8,8 +8,7 @@ name: Validación de certificación (pre-producción)
 #   - Tras cada "Deploy Cert" (espera a que Pages publique el nuevo build).
 #   - Cada noche 02:15 UTC + manual (input base_url para validar otro espejo).
 #
-# Base: input base_url → variable CERT_BASE_URL → Q19-CERT por defecto.
-#   (Si el espejo migra a GEN-YOGA-CERT, basta fijar la variable.)
+# Base: input base_url → variable CERT_BASE_URL → GEN-YOGA-CERT por defecto.
 # Falla y abre issue `cert` + `ai-fix` si: manifiesto incoherente, cert
 # apuntando al Supabase de producción, backend roto, errores JS, acciones
 # de cliente rotas, etc.
@@ -23,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: 'Base a validar (vacío = variable CERT_BASE_URL o Q19-CERT)'
+        description: 'Base a validar (vacío = variable CERT_BASE_URL o GEN-YOGA-CERT)'
         required: false
         default: ''
 
@@ -44,7 +43,7 @@ jobs:
     timeout-minutes: 30
     env:
       CERT_MODE: '1'
-      CERT_BASE: ${{ inputs.base_url || vars.CERT_BASE_URL || 'https://gen-yoga-studio.github.io/Q19-CERT/' }}
+      CERT_BASE: ${{ inputs.base_url || vars.CERT_BASE_URL || 'https://gen-yoga-studio.github.io/GEN-YOGA-CERT/' }}
       GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
       GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
     steps:

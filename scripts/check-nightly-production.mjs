@@ -407,7 +407,12 @@ console.log('\n--- A. Disponibilidad de genyoga.studio (HTTP 200 + tiempo) ---')
 
   // A3. Recursos estáticos esenciales (>0 bytes)
   {
-    const assets = ['tailwind-compiled.css', 'public-calendar.js', 'i18n.js', 'public-calendar.css', 'facilities-carousel.js', 'capacitor-bridge.js'];
+    const assets = [
+      'tailwind-compiled.css', 'public-calendar.js', 'i18n.js', 'public-calendar.css',
+      'facilities-carousel.js', 'capacitor-bridge.js',
+      'img/favicon-64.png', 'img/apple-touch-icon.png',
+      'img/clases.webp', 'img/tarifas.webp', 'img/maestros.webp',
+    ];
     let assetsOk = 0;
     for (const a of assets) {
       lastUrl = `${BASE}/${a}`;
@@ -482,6 +487,24 @@ console.log('\n--- A. Disponibilidad de genyoga.studio (HTTP 200 + tiempo) ---')
     }
     if (metaOk === metaPages.length) pass('seo', `las ${metaPages.length} páginas clave tienen metadatos completos (viewport, canonical, OG)`);
     else pass('seo', `metadatos verificados (${metaOk}/${metaPages.length} páginas 100% completas)`);
+  }
+
+  // A6. Cabeceras MIME correctas (text/html, text/css, application/javascript)
+  {
+    const mimeProbes = [
+      { path: '/index.html', expect: 'text/html' },
+      { path: '/tailwind-compiled.css', expect: 'text/css' },
+      { path: '/public-calendar.js', expect: 'javascript' },
+    ];
+    let mimesOk = 0;
+    for (const { path: p, expect } of mimeProbes) {
+      lastUrl = `${BASE}${p}`;
+      const r = await fetch(lastUrl).catch(() => null);
+      const ct = (r && r.headers.get('content-type')) || '';
+      if (ct.toLowerCase().includes(expect)) mimesOk++;
+      else fail('disponibilidad', `MIME ${p}`, `Content-Type: "${ct}" (esperado ${expect})`);
+    }
+    if (mimesOk === mimeProbes.length) pass('disponibilidad', 'cabeceras MIME correctas en HTML, CSS y JS');
   }
 }
 
@@ -1088,7 +1111,7 @@ await section('contenido', async () => {
 
     // D3c. Paridad de precios del catálogo oficial de yoga (15€, 50€, 65€, 95€, 90€)
     const preciosOk = await page.evaluate(() => {
-      const t = document.body.innerText || '';
+      const t = (document.body.textContent || '') + ' ' + (document.body.innerText || '');
       return ['15€', '50€', '65€', '95€', '90€'].every((p) => t.includes(p));
     }).catch(() => false);
     if (preciosOk) pass('compra', 'tarifas: precios oficiales presentes (15€, 50€, 65€, 95€, 90€)');
@@ -1152,6 +1175,38 @@ await section('contenido', async () => {
       else fail('contenido', 'index: enlaces rotos', indexBadLinks.slice(0, 3).join(', '));
     }
     await assertClean('contenido-index', st, page);
+
+    // D4. Caza de bugs en politica-privacidad.html: renderizado, cláusulas legales y enlaces
+    st = await gotoTracked(page, '/politica-privacidad.html');
+    {
+      const privUiIssues = await checkUiIntegrity(page, 'politica-privacidad');
+      if (privUiIssues.length === 0) pass('contenido', 'privacidad: sin tokens corruptos ni desbordamiento móvil');
+      else fail('contenido', 'privacidad: integridad UI', privUiIssues.join(', '));
+
+      const privBadLinks = await checkInternalLinks(page, 'politica-privacidad');
+      if (privBadLinks.length === 0) pass('contenido', 'privacidad: enlaces internos válidos');
+      else fail('contenido', 'privacidad: enlaces rotos', privBadLinks.slice(0, 3).join(', '));
+
+      const privContent = await page.evaluate(() => {
+        const t = (document.body.innerText || '').toLowerCase();
+        return {
+          hasEmail: t.includes('hola@genyoga.studio'),
+          hasRgpd: t.includes('rgpd') || t.includes('protección de datos'),
+          hasRights: t.includes('acceder') && t.includes('rectificar') && t.includes('eliminar'),
+        };
+      }).catch(() => ({ hasEmail: false, hasRgpd: false, hasRights: false }));
+
+      if (privContent.hasEmail && privContent.hasRgpd && privContent.hasRights) {
+        pass('contenido', 'privacidad: cláusulas legales, derechos RGPD y contacto presentes');
+      } else {
+        fail('contenido', 'privacidad: contenido legal', `email=${privContent.hasEmail} rgpd=${privContent.hasRgpd} derechos=${privContent.hasRights}`);
+      }
+
+      const btnInicio = (await page.locator('a[href="index.html"]:visible').count().catch(() => 0)) > 0;
+      if (btnInicio) pass('contenido', 'privacidad: botón de retorno a inicio visible');
+      else fail('contenido', 'privacidad: retorno', 'sin botón visible de vuelta a inicio');
+    }
+    await assertClean('contenido-privacidad', st, page);
   } catch (e) { if (activePage) await snap(activePage, 'contenido').catch(() => {}); throw e; } finally { await ctx.close(); }
 });
 
@@ -1276,6 +1331,21 @@ await section('landing', async () => {
       await dismissWelcome(page);
     }
     await assertClean('landing-escritorio', st, page);
+
+    // D2b. Validación de diseño y ausencia de desbordamiento horizontal en escritorio (1280px)
+    // 1. Clases en escritorio con layout completo
+    const stClasesDesk = await gotoTracked(page, '/clases.html', 3000);
+    const clasesDeskIssues = await checkUiIntegrity(page, 'clases-escritorio');
+    if (clasesDeskIssues.length === 0) pass('landing', 'clases escritorio: sin desbordamiento ni tokens corruptos');
+    else fail('landing', 'clases escritorio: integridad UI', clasesDeskIssues.join(', '));
+    await assertClean('clases-escritorio', stClasesDesk, page);
+
+    // 2. Tarifas en escritorio
+    const stTarifasDesk = await gotoTracked(page, '/tarifas.html', 2500);
+    const tarifasDeskIssues = await checkUiIntegrity(page, 'tarifas-escritorio');
+    if (tarifasDeskIssues.length === 0) pass('landing', 'tarifas escritorio: sin desbordamiento ni tokens corruptos');
+    else fail('landing', 'tarifas escritorio: integridad UI', tarifasDeskIssues.join(', '));
+    await assertClean('tarifas-escritorio', stTarifasDesk, page);
   } finally { await ctx2.close(); }
 });
 
@@ -1430,6 +1500,21 @@ await section('cliente', async () => {
       else fail('cliente', 'registro email malformado', `válido=${v} llamadas_signup=${signupCalls}`);
     }
     await page.locator('#reg-email').fill('noche-noreply@test.local');
+    // I1b. Tipos seguros de campos de formulario (email/password nativos)
+    {
+      const fTypes = await page.evaluate(() => ({
+        regEmail: document.getElementById('reg-email')?.type,
+        regPass: document.getElementById('reg-password')?.type,
+        loginPass: document.getElementById('login-password')?.type,
+        hasLoginUser: document.getElementById('login-email') !== null,
+      })).catch(() => ({}));
+      if (fTypes.regEmail === 'email' && fTypes.regPass === 'password'
+          && fTypes.loginPass === 'password' && fTypes.hasLoginUser) {
+        pass('cliente', 'formularios con tipos de campo estándar (email/password)');
+      } else {
+        fail('cliente', 'tipos de campos de autenticación', JSON.stringify(fTypes));
+      }
+    }
     await page.evaluate(() => toggleAuth('login'));
     await page.waitForTimeout(600);
 
@@ -1847,6 +1932,31 @@ await section('cliente', async () => {
         fail('cliente', 'parámetros corruptos', 'la app quedó en blanco o rota');
       }
       lastUrl = `${BASE}/profile.html`;
+    }
+
+    // I10b. Seguridad: La contraseña en texto plano no se persiste en Web Storage
+    {
+      const pwdLeaked = await page.evaluate((pass) => {
+        const scan = (store) => {
+          for (let i = 0; i < store.length; i++) {
+            const k = store.key(i) || '';
+            const v = store.getItem(k) || '';
+            if (/password|contrase/i.test(k)) return true;
+            if (!k.includes('-auth-token') && v.includes(pass)) return true;
+            try {
+              const parsed = JSON.parse(v);
+              const jsonStr = JSON.stringify(parsed).toLowerCase();
+              if (jsonStr.includes('"password"') || jsonStr.includes('"contrasena"')) {
+                return true;
+              }
+            } catch {}
+          }
+          return false;
+        };
+        return scan(localStorage) || scan(sessionStorage);
+      }, PASSWORD).catch(() => false);
+      if (!pwdLeaked) pass('seguridad', 'contraseña en claro no persistida en localStorage/sessionStorage');
+      else fail('seguridad', 'fuga de contraseña', 'contraseña en claro encontrada en Web Storage');
     }
 
     // I11. Logout deja la sesión limpia.
