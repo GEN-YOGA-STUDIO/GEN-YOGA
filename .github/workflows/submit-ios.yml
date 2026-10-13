@@ -40,7 +40,7 @@ jobs:
         id: ver
         run: |
           VERSION="${{ inputs.version }}"
-          [ -z "$VERSION" ] && VERSION=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          [ -z "$VERSION" ] && VERSION=$(node -e "const fs = require('fs'); const v = fs.existsSync('app-version.json') ? require('./app-version.json').short : require('./package.json').version.split('.').slice(0,2).join('.'); console.log(v);")
           BUILD="${{ inputs.build }}"
           [ -z "$BUILD" ] && BUILD=$(grep -m1 'versionCode' "app android/android/app/build.gradle" | grep -o '[0-9]*')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"

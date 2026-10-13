@@ -66,13 +66,16 @@ try {
   }
 
   if (submitIos) {
-    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-    const short = (version || pkg.version).split('.').slice(0, 2).join('.');
+    let appShort = '2.0';
+    if (fs.existsSync('app-version.json')) {
+      const appCfg = JSON.parse(fs.readFileSync('app-version.json', 'utf8'));
+      appShort = appCfg.short || appCfg.version.split('.').slice(0, 2).join('.');
+    }
     const buildCode = fs
       .readFileSync('app android/android/app/build.gradle', 'utf8')
       .match(/versionCode\s+(\d+)/)[1];
-    console.log(`\n━━━ 8/8 Submit iOS v${short} (build ${buildCode}) a revisión ━━━`);
-    run(`gh workflow run submit-ios --ref main -f version=${short} -f build=${buildCode} -f whats-new="${message.replace(/"/g, "'")}"`);
+    console.log(`\n━━━ 8/8 Submit iOS v${appShort} (build ${buildCode}) a revisión ━━━`);
+    run(`gh workflow run submit-ios --ref main -f version=${appShort} -f build=${buildCode} -f whats-new="${message.replace(/"/g, "'")}"`);
   }
 
   if (uploadAndroid || release) {

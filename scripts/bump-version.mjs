@@ -45,15 +45,21 @@ if (pkg.description) {
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
 console.log(`✅ Actualizado package.json (${targetFull})`);
 
-// 2. Android & iOS package.json
-for (const sub of ['app android', 'app ios']) {
-  const subPkgPath = path.join(root, sub, 'package.json');
-  if (fs.existsSync(subPkgPath)) {
-    const subPkg = JSON.parse(fs.readFileSync(subPkgPath, 'utf8'));
-    subPkg.version = targetFull;
-    fs.writeFileSync(subPkgPath, JSON.stringify(subPkg, null, 2) + '\n', 'utf8');
-    console.log(`✅ Actualizado ${sub}/package.json (${targetFull})`);
+const syncApps = process.argv.includes('--apps') || process.argv.includes('--include-apps');
+
+// 2. Android & iOS package.json (solo si se pide sincronizar explícitamente)
+if (syncApps) {
+  for (const sub of ['app android', 'app ios']) {
+    const subPkgPath = path.join(root, sub, 'package.json');
+    if (fs.existsSync(subPkgPath)) {
+      const subPkg = JSON.parse(fs.readFileSync(subPkgPath, 'utf8'));
+      subPkg.version = targetFull;
+      fs.writeFileSync(subPkgPath, JSON.stringify(subPkg, null, 2) + '\n', 'utf8');
+      console.log(`✅ Actualizado ${sub}/package.json (${targetFull})`);
+    }
   }
+} else {
+  console.log(`ℹ️ Las apps móviles tienen su propia versión independiente (app-version.json). Usa bump-app-version.mjs para incrementarlas.`);
 }
 
 // 3. Web HTML files & Edge Functions
@@ -84,64 +90,68 @@ for (const rel of files) {
   console.log(`✅ Actualizado ${rel}`);
 }
 
-// 4. Android build.gradle (tanto en 'app android' como en 'ultima version/app android')
-const androidGradlePaths = [
-  path.join(root, 'app android', 'android', 'app', 'build.gradle'),
-  path.join(root, 'ultima version', 'app android', 'android', 'app', 'build.gradle')
-];
+if (syncApps) {
+  // 4. Android build.gradle (tanto en 'app android' como en 'ultima version/app android')
+  const androidGradlePaths = [
+    path.join(root, 'app android', 'android', 'app', 'build.gradle'),
+    path.join(root, 'ultima version', 'app android', 'android', 'app', 'build.gradle')
+  ];
 
-let currentAndroidBuild = 60;
-for (const gp of androidGradlePaths) {
-  if (fs.existsSync(gp)) {
-    const m = fs.readFileSync(gp, 'utf8').match(/versionCode\s+(\d+)/);
-    if (m) {
-      const v = parseInt(m[1], 10);
-      if (v > currentAndroidBuild) currentAndroidBuild = v;
-    }
-  }
-}
-const explicitBuild = buildArg && buildArg.trim() !== '' ? parseInt(buildArg, 10) : null;
-const nextAndroidBuild = explicitBuild || currentAndroidBuild + 1;
-
-for (const gp of androidGradlePaths) {
-  if (fs.existsSync(gp)) {
-    let gradle = fs.readFileSync(gp, 'utf8');
-    gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${nextAndroidBuild}`);
-    gradle = gradle.replace(/versionName\s+"[^"]+"/, `versionName "${targetShort}"`);
-    fs.writeFileSync(gp, gradle, 'utf8');
-    console.log(`✅ Actualizado Android (${path.relative(root, gp)}): versionName "${targetShort}", versionCode ${nextAndroidBuild}`);
-  }
-}
-
-// 5. iOS project.pbxproj (tanto en 'app ios' como en 'ultima version/app ios')
-const iosPbxPaths = [
-  path.join(root, 'app ios', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj'),
-  path.join(root, 'ultima version', 'app ios', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj')
-];
-
-let currentIosBuild = 242; // Base mínima conocida en App Store Connect (Build 242 ya fue subida)
-for (const p of iosPbxPaths) {
-  if (fs.existsSync(p)) {
-    const matches = fs.readFileSync(p, 'utf8').match(/CURRENT_PROJECT_VERSION = (\d+);/g);
-    if (matches) {
-      for (const m of matches) {
-        const val = parseInt(m.replace(/\D/g, ''), 10);
-        if (val > currentIosBuild) currentIosBuild = val;
+  let currentAndroidBuild = 60;
+  for (const gp of androidGradlePaths) {
+    if (fs.existsSync(gp)) {
+      const m = fs.readFileSync(gp, 'utf8').match(/versionCode\s+(\d+)/);
+      if (m) {
+        const v = parseInt(m[1], 10);
+        if (v > currentAndroidBuild) currentAndroidBuild = v;
       }
     }
   }
-}
+  const explicitBuild = buildArg && buildArg.trim() !== '' ? parseInt(buildArg, 10) : null;
+  const nextAndroidBuild = explicitBuild || currentAndroidBuild + 1;
 
-const nextIosBuild = explicitBuild || currentIosBuild + 1;
-
-for (const p of iosPbxPaths) {
-  if (fs.existsSync(p)) {
-    let pbx = fs.readFileSync(p, 'utf8');
-    pbx = pbx.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${targetShort};`);
-    pbx = pbx.replace(/CURRENT_PROJECT_VERSION = \d+;/g, `CURRENT_PROJECT_VERSION = ${nextIosBuild};`);
-    fs.writeFileSync(p, pbx, 'utf8');
-    console.log(`✅ Actualizado iOS (${path.relative(root, p)}): MARKETING_VERSION = ${targetShort}, CURRENT_PROJECT_VERSION = ${nextIosBuild}`);
+  for (const gp of androidGradlePaths) {
+    if (fs.existsSync(gp)) {
+      let gradle = fs.readFileSync(gp, 'utf8');
+      gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${nextAndroidBuild}`);
+      gradle = gradle.replace(/versionName\s+"[^"]+"/, `versionName "${targetShort}"`);
+      fs.writeFileSync(gp, gradle, 'utf8');
+      console.log(`✅ Actualizado Android (${path.relative(root, gp)}): versionName "${targetShort}", versionCode ${nextAndroidBuild}`);
+    }
   }
-}
 
-console.log(`\n🎉 ¡Versión v${targetShort} (Android Build #${nextAndroidBuild} | iOS Build #${nextIosBuild}) actualizada en todas las plataformas!\n`);
+  // 5. iOS project.pbxproj (tanto en 'app ios' como en 'ultima version/app ios')
+  const iosPbxPaths = [
+    path.join(root, 'app ios', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj'),
+    path.join(root, 'ultima version', 'app ios', 'ios', 'App', 'App.xcodeproj', 'project.pbxproj')
+  ];
+
+  let currentIosBuild = 242; // Base mínima conocida en App Store Connect (Build 242 ya fue subida)
+  for (const p of iosPbxPaths) {
+    if (fs.existsSync(p)) {
+      const matches = fs.readFileSync(p, 'utf8').match(/CURRENT_PROJECT_VERSION = (\d+);/g);
+      if (matches) {
+        for (const m of matches) {
+          const val = parseInt(m.replace(/\D/g, ''), 10);
+          if (val > currentIosBuild) currentIosBuild = val;
+        }
+      }
+    }
+  }
+
+  const nextIosBuild = explicitBuild || currentIosBuild + 1;
+
+  for (const p of iosPbxPaths) {
+    if (fs.existsSync(p)) {
+      let pbx = fs.readFileSync(p, 'utf8');
+      pbx = pbx.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${targetShort};`);
+      pbx = pbx.replace(/CURRENT_PROJECT_VERSION = \d+;/g, `CURRENT_PROJECT_VERSION = ${nextIosBuild};`);
+      fs.writeFileSync(p, pbx, 'utf8');
+      console.log(`✅ Actualizado iOS (${path.relative(root, p)}): MARKETING_VERSION = ${targetShort}, CURRENT_PROJECT_VERSION = ${nextIosBuild}`);
+    }
+  }
+
+  console.log(`\n🎉 ¡Versión v${targetShort} (Android Build #${nextAndroidBuild} | iOS Build #${nextIosBuild}) actualizada en todas las plataformas!\n`);
+} else {
+  console.log(`\n🎉 Versión web v${targetShort} actualizada. Versión de apps desacoplada y preservada.\n`);
+}

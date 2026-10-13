@@ -43,10 +43,18 @@ for (const page of pages) {
   check(`${page}: incluye capacitor-bridge.js?v=${short}`, source.includes(`capacitor-bridge.js?v=${short}`));
 }
 
-console.log('\n--- 3. package.json de apps ---');
+let appVersionConfig = null;
+try {
+  appVersionConfig = JSON.parse(await read('app-version.json'));
+} catch {}
+const appFull = appVersionConfig?.version || full;
+const appShort = appVersionConfig?.short || appFull.split('.').slice(0, 2).join('.');
+const expectedAppBuild = appVersionConfig?.build;
+
+console.log(`\n--- 3. package.json de apps (desacoplado de la web: ${appFull}) ---`);
 for (const sub of ['app android', 'app ios']) {
   const subPkg = JSON.parse(await read(`${sub}/package.json`));
-  check(`${sub}/package.json = ${full}`, subPkg.version === full, `visto: ${subPkg.version}`);
+  check(`${sub}/package.json = ${appFull}`, subPkg.version === appFull, `visto: ${subPkg.version}`);
 }
 
 console.log('\n--- 4. Versión en Edge Functions ---');
@@ -56,18 +64,24 @@ const appVersion = checkoutFn.match(/const APP_VERSION = '([^']+)'/)?.[1];
 check(`APP_RELEASE = ${short}`, appRelease === short, `visto: ${appRelease}`);
 if (appVersion !== undefined) check(`APP_VERSION = ${short}`, appVersion === short, `visto: ${appVersion}`);
 
-console.log('\n--- 5. Build numbers nativos ---');
+console.log(`\n--- 5. Build numbers nativos (versión de apps: ${appShort}) ---`);
 const gradle = await read('app android/android/app/build.gradle');
 const versionName = gradle.match(/versionName\s+"([^"]+)"/)?.[1];
 const versionCode = Number(gradle.match(/versionCode\s+(\d+)/)?.[1]);
-check(`Android versionName = ${short}`, versionName === short, `visto: ${versionName}`);
+check(`Android versionName = ${appShort}`, versionName === appShort, `visto: ${versionName}`);
 check('Android versionCode numérico', Number.isInteger(versionCode) && versionCode > 0, `visto: ${versionCode}`);
+if (expectedAppBuild) {
+  check(`Android versionCode = ${expectedAppBuild} (app-version.json)`, versionCode === expectedAppBuild, `visto: ${versionCode}`);
+}
 
 const pbxproj = await read('app ios/ios/App/App.xcodeproj/project.pbxproj');
 const marketing = [...pbxproj.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map((m) => m[1].trim());
 const builds = [...pbxproj.matchAll(/CURRENT_PROJECT_VERSION = (\d+);/g)].map((m) => Number(m[1]));
-check(`iOS MARKETING_VERSION = ${short} (Debug y Release)`, marketing.length >= 2 && new Set(marketing).size === 1 && marketing[0] === short, `visto: ${[...new Set(marketing)].join(', ')}`);
+check(`iOS MARKETING_VERSION = ${appShort} (Debug y Release)`, marketing.length >= 2 && new Set(marketing).size === 1 && marketing[0] === appShort, `visto: ${[...new Set(marketing)].join(', ')}`);
 check('iOS CURRENT_PROJECT_VERSION único', builds.length >= 2 && new Set(builds).size === 1, `visto: ${[...new Set(builds)].join(', ')}`);
+if (expectedAppBuild) {
+  check(`iOS CURRENT_PROJECT_VERSION = ${expectedAppBuild} (app-version.json)`, builds[0] === expectedAppBuild, `visto: ${builds[0]}`);
+}
 check(`Build Android (${versionCode}) = build iOS (${builds[0]})`, versionCode === builds[0], 'los stores deben publicar el mismo build');
 
 console.log('\n--- 6. Identidad de app por plataforma (gemelas salvo package) ---');

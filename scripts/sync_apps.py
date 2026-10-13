@@ -37,7 +37,7 @@ EXCLUDED_EXTS = {
     '.bat', '.cmd', '.ps1', '.sh', '.md'
 }
 EXCLUDED_FILES = {
-    'package.json', 'package-lock.json', 'tailwind.config.js', 'deno.lock',
+    'package.json', 'package-lock.json', 'app-version.json', 'tailwind.config.js', 'deno.lock',
     'tailwind-input.css', 'CNAME', '.gitignore',
     'opencode.json', 'opencode.jsonc',
     '-Jaime\u2019s Mac mini.gitignore', "-Jaime's Mac mini.gitignore",
