@@ -43,6 +43,9 @@ let actionSeq = 0;
 let lastUrl = '';
 let lastConsole = [];
 let lastShot = null;
+let browser = null;
+let activePage = null;
+const pendingSnaps = [];
 
 // Sospechosos habituales por suite (la IA los usa como punto de partida;
 // suspectsFor() añade además los ficheros citados en el propio error).
@@ -60,6 +63,10 @@ const SUITE_FILES = {
   rendimiento: ['img/', 'tailwind-compiled.css'],
   cert: ['scripts/build-cert-web.mjs', 'docs/CERTIFICATION_SETUP.md'],
   config: ['clases.html'],
+  seo: ['sitemap.xml', 'index.html', 'clases.html', 'tarifas.html'],
+  medios: ['img/', 'index.html', 'clases.html', 'maestros.html'],
+  seguridad: ['cancel.html', 'success.html', 'profile.html'],
+  datos: ['supabase/migrations/', 'clases.html', 'tarifas.html'],
 };
 const SUITE_REPRO = {
   disponibilidad: ['Abrir la URL indicada en un navegador', 'Debe responder HTTP 200 en <15s'],
@@ -75,10 +82,27 @@ const SUITE_REPRO = {
   rendimiento: ['Medir la página indicada: presupuesto 15s / 80 peticiones'],
   cert: ['Abrir BASE/cert.json: debe declarar entorno certificacion con Supabase aislado'],
   config: ['Verificar SUPA_URL/SUPA_KEY en clases.html'],
+  seo: ['Comprobar sitemap.xml, robots.txt y metaetiquetas en BASE'],
+  medios: ['Comprobar que todas las etiquetas img cargan sin 404 ni 0x0px en BASE'],
+  seguridad: ['Comprobar Open Redirect y limpieza de sesión en BASE'],
+  datos: ['Comprobar registros de profesionales, productos y clases en Supabase'],
 };
 function suiteKey(suite) { return SUITE_FILES[suite] ? suite : suite.split('-')[0]; }
-function severityFor(suite) {
-  return ['privacidad', 'backend', 'auth', 'cliente', 'cert', 'config'].includes(suiteKey(suite)) ? 'high' : 'medium';
+function severityFor(suite, name = '', detail = '') {
+  const sk = suiteKey(suite);
+  const text = `${suite} ${name} ${detail}`.toLowerCase();
+
+  // Alta severidad: seguridad, fugas de datos, caídas críticas o fallos completos de pago/auth
+  if (['privacidad', 'seguridad'].includes(sk)) return 'high';
+  if (sk === 'cert' && text.includes('aislamiento')) return 'high';
+  if (sk === 'disponibilidad' && (text.includes('500') || text.includes('ssl') || text.includes('sin red') || text.includes('sitio base'))) return 'high';
+  if (sk === 'backend' && (text.includes('auth') || text.includes('500') || text.includes('sin red'))) return 'high';
+  if (sk === 'compra' && (text.includes('precio') || text.includes('cobrado') || text.includes('fuga'))) return 'high';
+  if (sk === 'auth' && (text.includes('login usuario de pruebas') || text.includes('auth health'))) return 'high';
+  if (sk === 'cliente' && text.includes('login usuario de pruebas')) return 'high';
+
+  // Fallos funcionales estándar o cosméticos
+  return 'medium';
 }
 function suspectsFor(suite, detail, consoleLines) {
   const found = [];
@@ -99,7 +123,7 @@ async function snap(page, name) {
   try {
     const p = path.join(outDir, 'img', `${name}-${Date.now()}.png`);
     await page.screenshot({ path: p });
-    lastShot = path.relative(root, p);
+    lastShot = path.relative(outDir, p);
   } catch { /* página cerrada: sin captura */ }
   return lastShot;
 }
@@ -109,14 +133,23 @@ function rec(suite, name, status, detail = '') {
     errors.push(`${suite} · ${name}${detail ? ` — ${detail}` : ''}`);
     console.error(`  ❌ [${suite}] ${name}${detail ? `: ${detail}` : ''}`);
     actionSeq++;
-    actionItems.push({
+    const item = {
       id: `F${String(actionSeq).padStart(2, '0')}`,
       suite, check: name, detail,
-      url: lastUrl, severity: severityFor(suite),
+      url: lastUrl, severity: severityFor(suite, name, detail),
       suspectedFiles: suspectsFor(suite, detail, lastConsole),
       repro: reproFor(suite),
       evidence: { console: lastConsole.slice(0, 4), screenshot: lastShot },
-    });
+    };
+    actionItems.push(item);
+    if (!lastShot && activePage) {
+      const p = activePage;
+      const snapName = `${suite}-${name.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+      const snapPromise = snap(p, snapName).then((shotPath) => {
+        if (shotPath) item.evidence.screenshot = shotPath;
+      }).catch(() => {});
+      pendingSnaps.push(snapPromise);
+    }
   }
   else if (status === 'warn') { warnings.push(`${suite} · ${name}${detail ? ` — ${detail}` : ''}`); console.log(`  ⚠️ [${suite}] ${name}${detail ? `: ${detail}` : ''}`); }
   else console.log(`  ✅ [${suite}] ${name}`);
@@ -226,6 +259,82 @@ if (isCert) {
   }
 }
 
+// ---------------------------------------------------------------- Generación de informes
+async function writeReports() {
+  await Promise.allSettled(pendingSnaps);
+  pendingSnaps.length = 0;
+  const date = new Date().toISOString().slice(0, 10);
+  const passed = results.filter((r) => r.status === 'pass').length;
+  const failed = errors.length;
+  const warned = warnings.length;
+  const report = {
+    date: new Date().toISOString(), env: isCert ? 'certificacion' : 'produccion',
+    base: BASE, testUser: EMAIL, commit: COMMIT,
+    cert: certManifest ? { version: certManifest.version, construido: certManifest.construido, supabase: certManifest.supabase } : null,
+    summary: { passed, failed, warned, total: results.length },
+    results, errors, warnings,
+  };
+  const high = actionItems.filter((f) => f.severity === 'high').length;
+  const action = {
+    date: new Date().toISOString(), env: isCert ? 'certificacion' : 'produccion',
+    base: BASE, testUser: EMAIL, commit: COMMIT,
+    cert: certManifest ? { version: certManifest.version, construido: certManifest.construido, supabase: certManifest.supabase } : null,
+    summary: { failed, high, medium: failed - high, passed, warned, total: results.length },
+    failures: actionItems,
+  };
+  await writeFile(path.join(outDir, `${PREFIX}-${date}.json`), JSON.stringify(report, null, 2));
+  await writeFile(path.join(outDir, `${PREFIX}-action.json`), JSON.stringify(action, null, 2));
+  const md = [
+    `# ${isCert ? 'Validación de certificación' : 'Chequeo nocturno'} ${BASE} — ${date}`,
+    ``,
+    `Base: ${BASE} · Usuario: ${EMAIL} · Total: ${results.length} · ✅ ${passed} · ❌ ${failed} · ⚠️ ${warned}`,
+    ``,
+    ...results.map((r) => `- ${r.status === 'pass' ? '✅' : r.status === 'fail' ? '❌' : '⚠️'} **[${r.suite}]** ${r.name}${r.detail ? ` — ${r.detail}` : ''}`),
+    ``,
+  ].join('\n');
+  await writeFile(path.join(outDir, `${PREFIX}-${date}.md`), md);
+
+  // Briefing para la IA (lo primero que debe analizar): se regenera siempre,
+  // en verde escribe "sin pendientes" para no perseguir fantasmas.
+  try {
+    const other = PREFIX === 'cert' ? 'nightly' : 'cert';
+    let otherAction = null;
+    try {
+      otherAction = JSON.parse(await readFile(path.join(outDir, `${other}-action.json`), 'utf8'));
+    } catch { /* aún no existe el otro entorno */ }
+    const mine = action;
+    const prodAction = PREFIX === 'cert' ? otherAction : mine;
+    const certAction = PREFIX === 'cert' ? mine : otherAction;
+    await writeFile(path.join(root, 'docs', 'FALLOS_PARA_IA.md'), buildBriefing(prodAction, certAction));
+  } catch (e) {
+    console.log(`  ⚠️ briefing no generado: ${String((e && e.message) || e).slice(0, 100)}`);
+  }
+
+  console.log('');
+  if (failed > 0) {
+    console.error(`\n⛔ ${PREFIX}: ${failed} fallo(s) en ${BASE}. Informe en nightly-reports/${PREFIX}-${date}.md`);
+    process.exit(1);
+  }
+  console.log(`\n✅ ${PREFIX}: ${BASE} sano (${passed}/${results.length} checks, ${warned} avisos).`);
+}
+
+// ---------------------------------------------------------------- 0. Smoke Check inicial
+console.log(`\n--- 0. Verificación inicial de conectividad (Smoke Check contra ${BASE}) ---`);
+{
+  resetEvidence();
+  lastUrl = `${BASE}/`;
+  const smoke = await fetchTimeout(lastUrl, { timeoutMs: 15000 });
+  if (!smoke.ok || smoke.status === 404 || smoke.status >= 500) {
+    const reason = !smoke.ok ? `sin conexión de red (${smoke.error})` : `HTTP ${smoke.status}`;
+    fail('disponibilidad', 'sitio base no accesible (Smoke Check)', `${BASE}/ responde con ${reason}. Abortando suite para prevenir cascada de fallos.`);
+    if (browser) await browser.close().catch(() => {});
+    await writeReports();
+    process.exit(1);
+  } else {
+    pass('disponibilidad', 'sitio base accesible (Smoke Check)', `HTTP ${smoke.status} en ${smoke.ms}ms`);
+  }
+}
+
 // ---------------------------------------------------------------- A. Disponibilidad
 console.log('\n--- A. Disponibilidad de genyoga.studio (HTTP 200 + tiempo) ---');
 {
@@ -324,6 +433,56 @@ console.log('\n--- A. Disponibilidad de genyoga.studio (HTTP 200 + tiempo) ---')
       }
     }
   } catch { /* sin lectura de versión */ }
+
+  // A5. SEO, Metadatos y Sitemaps (robots.txt, sitemap.xml, viewport, canonical)
+  {
+    lastUrl = `${BASE}/robots.txt`;
+    const rRobots = await fetchTimeout(lastUrl, { timeoutMs: 15000 });
+    if (rRobots.status === 200) {
+      pass('seo', 'robots.txt responde HTTP 200');
+    } else {
+      warn('seo', 'robots.txt', `HTTP ${rRobots.status} (deseable para indexación de buscadores)`);
+    }
+
+    lastUrl = `${BASE}/sitemap.xml`;
+    const rSite = await fetchTimeout(lastUrl, { timeoutMs: 15000 });
+    if (rSite.status === 200) {
+      const siteTxt = await fetch(lastUrl).then((x) => x.text()).catch(() => '');
+      if (siteTxt.includes('<urlset') && siteTxt.includes('<loc>')) {
+        const urlCount = (siteTxt.match(/<loc>/g) || []).length;
+        pass('seo', `sitemap.xml válido con ${urlCount} URLs declaradas`);
+      } else {
+        fail('seo', 'sitemap.xml', 'formato XML inválido o sin etiquetas <loc>');
+      }
+    } else {
+      fail('seo', 'sitemap.xml', `HTTP ${rSite.status}`);
+    }
+
+    // Metadatos esenciales en páginas clave públicas (viewport, canonical, description, open graph)
+    const metaPages = ['/index.html', '/clases.html', '/tarifas.html', '/maestros.html'];
+    let metaOk = 0;
+    for (const p of metaPages) {
+      lastUrl = `${BASE}${p}`;
+      const txt = await fetch(lastUrl).then((x) => x.text()).catch(() => '');
+      const hasViewport = /<meta\s+name=["']viewport["']/i.test(txt);
+      const hasDesc = /<meta\s+name=["']description["']\s+content=["'][^"']{20,}["']/i.test(txt);
+      const hasCanonical = /<link\s+rel=["']canonical["']/i.test(txt);
+      const hasOg = /<meta\s+property=["']og:title["']/i.test(txt) && /<meta\s+property=["']og:image["']/i.test(txt);
+      if (hasViewport && hasDesc && hasCanonical && hasOg) {
+        metaOk++;
+      } else {
+        const missing = [
+          !hasViewport && 'viewport',
+          !hasDesc && 'description',
+          !hasCanonical && 'canonical',
+          !hasOg && 'og:meta',
+        ].filter(Boolean);
+        warn('seo', `metadatos en ${p}`, `faltan: ${missing.join(', ')}`);
+      }
+    }
+    if (metaOk === metaPages.length) pass('seo', `las ${metaPages.length} páginas clave tienen metadatos completos (viewport, canonical, OG)`);
+    else pass('seo', `metadatos verificados (${metaOk}/${metaPages.length} páginas 100% completas)`);
+  }
 }
 
 // ---------------------------------------------------------------- B. Backend en vivo
@@ -391,6 +550,35 @@ console.log('\n--- B. Supabase + Edge Functions en vivo ---');
     else { warn('backend', `RPC ${name}`, `HTTP ${r.status}`); }
   }
   if (rpcOk === rpcs.length) pass('backend', `las ${rpcs.length} RPCs públicas clave responden`);
+
+  // B3. Integridad y consistencia de datos en Supabase (profesionales, productos, clases)
+  {
+    lastUrl = `${SUPA_URL}/rest/v1/profesionales?visible_publico=is.true&select=id,nombre,especialidad`;
+    const rProf = await rest('profesionales?visible_publico=is.true&select=id,nombre,especialidad');
+    if (rProf.ok && Array.isArray(rProf.body)) {
+      const invalidProf = rProf.body.filter((p) => !p.nombre || p.nombre.trim().length === 0);
+      if (invalidProf.length === 0) pass('datos', `${rProf.body.length} profesionales activos con datos íntegros`);
+      else fail('datos', 'profesionales activos', `${invalidProf.length} registros sin nombre`);
+    } else {
+      warn('datos', 'profesionales', 'no se pudo consultar tabla');
+    }
+
+    lastUrl = `${SUPA_URL}/rest/v1/stripe_productos?activo=is.true&select=id,nombre,unit_amount`;
+    const rProd = await rest('stripe_productos?activo=is.true&select=id,nombre,unit_amount');
+    if (rProd.ok && Array.isArray(rProd.body)) {
+      const badPrices = rProd.body.filter((p) => typeof p.unit_amount === 'number' && p.unit_amount < 0);
+      if (badPrices.length === 0) pass('datos', `${rProd.body.length} productos en stripe_productos con precios coherentes`);
+      else fail('datos', 'stripe_productos', `${badPrices.length} productos con precio negativo`);
+    }
+
+    lastUrl = `${SUPA_URL}/rest/v1/clases?activa=is.true&select=id,capacidad_max,duracion_minutos&limit=20`;
+    const rClases = await rest('clases?activa=is.true&select=id,capacidad_max,duracion_minutos&limit=20');
+    if (rClases.ok && Array.isArray(rClases.body)) {
+      const badClases = rClases.body.filter((c) => (c.capacidad_max !== null && c.capacidad_max <= 0) || (c.duracion_minutos !== null && c.duracion_minutos <= 0));
+      if (badClases.length === 0) pass('datos', 'clases activas con aforo y duración válidos');
+      else warn('datos', 'clases activas', `${badClases.length} clases con aforo o duración <= 0`);
+    }
+  }
 }
 
 // ---------------------------------------------------------------- C. Privacidad
@@ -423,9 +611,10 @@ console.log('\n--- C. Privacidad sin sesión (fuga = fallo) ---');
 }
 
 // ---------------------------------------------------------------- Navegador
-const browser = await chromium.launch();
+browser = await chromium.launch({
+  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+});
 const perf = [];
-let activePage = null; // la página del escenario en curso (para capturas)
 function track(page) {
   const st = { errors: [], localFailed: [], externalFailed: [], bytes: 0, reqs: 0 };
   page.on('pageerror', (e) => {
@@ -512,19 +701,27 @@ async function section(suite, fn) {
   const mark = errors.length;
   const wmark = warnings.length;
   const rmark = results.length;
-  try { await fn(); }
-  catch (e1) {
+  const amark = actionItems.length;
+  const seqMark = actionSeq;
+  try {
+    await fn();
+  } catch (e1) {
     // Reintento único: distingue fallo real de flaky de red/navegador.
+    // 1. Revertir cualquier estado parcial que el intento 1 fallido haya dejado
+    errors.splice(mark);
+    warnings.splice(wmark);
+    results.splice(rmark);
+    actionItems.splice(amark);
+    actionSeq = seqMark;
+
     await new Promise((r) => setTimeout(r, 3000));
     activePage = null;
+    resetEvidence();
     try {
       await fn();
-      errors.splice(mark);
-      warnings.splice(wmark);
-      results.splice(rmark);
       warn(suite, 'flaky (aviso)', `falló una vez (${shortErr(e1)}); OK al reintentar`);
     } catch (e2) {
-      if (activePage) await snap(activePage, `${suite}-excepcion`);
+      if (activePage) await snap(activePage, `${suite}-excepcion`).catch(() => {});
       fail(suite, 'excepción del escenario', shortErr(e2));
     }
   }
@@ -847,6 +1044,40 @@ await section('contenido', async () => {
         if (langEn === 'en' && langEs === 'es') pass('contenido', 'index: ES/EN conmuta y restaura');
         else fail('contenido', 'index: idioma', `no conmuta (en=${langEn} es=${langEs})`);
       }
+
+      // D1b. Integridad de imágenes en vivo: verifica cada src cargándolo de
+      // forma independiente (ignora el estado lazy de su <img> original, que
+      // aún no ha entrado en viewport y daría falso positivo con 0x0px).
+      const brokenImages = await page.evaluate(async () => {
+        const srcs = [...new Set([...document.querySelectorAll('img')]
+          .map((img) => img.getAttribute('src') || '')
+          .filter((s) => s && !s.startsWith('data:')))];
+        const probe = (src) => new Promise((resolve) => {
+          const im = new Image();
+          const t = setTimeout(() => resolve({ src, ok: false, why: 'timeout 8s' }), 8000);
+          im.onload = () => { clearTimeout(t); resolve({ src, ok: im.naturalWidth > 0, why: '0px' }); };
+          im.onerror = () => { clearTimeout(t); resolve({ src, ok: false, why: 'error de carga' }); };
+          im.src = src;
+        });
+        const results = await Promise.all(srcs.map(probe));
+        return results.filter((r) => !r.ok);
+      }).catch(() => []);
+      if (brokenImages.length === 0) pass('medios', 'imágenes de landing cargan correctamente sin fallos 404');
+      else fail('medios', 'imágenes rotas', `${brokenImages.length} imagen(es) rotas: ${brokenImages.map((b) => `${b.src} (${b.why})`).slice(0, 3).join(', ')}`);
+
+      // D1c. Ausencia de tokens corruptos o plantillas sin renderizar en la UI
+      const badText = await page.evaluate(() => {
+        const t = document.body.innerText || '';
+        const bad = [];
+        if (/\bNaN\b/.test(t)) bad.push('NaN');
+        if (/\bundefined\b/.test(t)) bad.push('undefined');
+        if (/\[object Object\]/.test(t)) bad.push('[object Object]');
+        if (/null\s*€/i.test(t)) bad.push('null €');
+        if (/\{\{[^}]+\}\}/.test(t)) bad.push('token crudo {{}}');
+        return bad;
+      }).catch(() => []);
+      if (badText.length === 0) pass('contenido', 'sin tokens corruptos en la UI (NaN/undefined/[object])');
+      else fail('contenido', 'tokens corruptos en UI', `detectados: ${badText.join(', ')}`);
     }
     await assertClean('contenido-index', st, page);
   } catch (e) { if (activePage) await snap(activePage, 'contenido').catch(() => {}); throw e; } finally { await ctx.close(); }
@@ -1540,6 +1771,15 @@ await section('cliente', async () => {
     try {
       await page.locator('#auth-container:visible').waitFor({ state: 'visible', timeout: 15000 });
       pass('cliente', 'logout devuelve al login');
+      const tokenLeft = await page.evaluate(() => {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i) || '';
+          if (k.includes('-auth-token') && localStorage.getItem(k)) return true;
+        }
+        return false;
+      }).catch(() => false);
+      if (!tokenLeft) pass('seguridad', 'logout limpia tokens de sesión en localStorage');
+      else warn('seguridad', 'logout', 'quedaron tokens en localStorage');
     } catch { fail('cliente', 'logout', 'no vuelve al login'); }
     await assertClean('cliente', st, page);
   } catch (e) { if (activePage) await snap(activePage, 'cliente').catch(() => {}); throw e; } finally { await ctx.close(); }
@@ -1721,6 +1961,25 @@ await section('retorno', async () => {
       }
       if (deadRet === 0) pass('retorno', `cancel: ${[...new Set(hrefs)].length} retornos vivos`);
       else fail('retorno', 'cancel: retornos', `${deadRet} retornos rotos`);
+
+      // G3. Seguridad: Protección contra Open Redirect en retornos
+      {
+        const pageSec = await ctx.newPage();
+        try {
+          await pageSec.goto(`${BASE}/cancel.html?from=https://evil-attacker.example.com/phishing`, { waitUntil: 'load', timeout: 35000 });
+          await pageSec.waitForTimeout(5500);
+          const targetUrl = pageSec.url();
+          if (targetUrl.startsWith(BASE) || targetUrl.endsWith('tarifas.html') || targetUrl.endsWith('profile.html')) {
+            pass('seguridad', 'cancel.html neutraliza intento de Open Redirect');
+          } else {
+            fail('seguridad', 'Open Redirect vulnerable', `redirigió fuera a: ${targetUrl}`);
+          }
+        } catch (err) {
+          warn('seguridad', 'Open Redirect sonda', String(err.message));
+        } finally {
+          await pageSec.close().catch(() => {});
+        }
+      }
     }
     await assertClean('retorno-cancel', st, page);
   } catch (e) { if (activePage) await snap(activePage, 'retorno').catch(() => {}); throw e; } finally { await ctx.close(); }
@@ -1742,58 +2001,5 @@ console.log(`\n--- H. Rendimiento (${isCert ? 'cert' : 'producción'}) ---`);
   else { lastUrl = `${BASE}/`; fail('rendimiento', 'home inalcanzable', ping.error); }
 }
 
-await browser.close();
-
-// ---------------------------------------------------------------- Informe
-const date = new Date().toISOString().slice(0, 10);
-const passed = results.filter((r) => r.status === 'pass').length;
-const failed = errors.length;
-const warned = warnings.length;
-const report = {
-  date: new Date().toISOString(), env: isCert ? 'certificacion' : 'produccion',
-  base: BASE, testUser: EMAIL, commit: COMMIT,
-  cert: certManifest ? { version: certManifest.version, construido: certManifest.construido, supabase: certManifest.supabase } : null,
-  summary: { passed, failed, warned, total: results.length },
-  results, errors, warnings,
-};
-const action = {
-  date: new Date().toISOString(), env: isCert ? 'certificacion' : 'produccion',
-  base: BASE, testUser: EMAIL, commit: COMMIT,
-  cert: certManifest ? { version: certManifest.version, construido: certManifest.construido, supabase: certManifest.supabase } : null,
-  summary: { failed, high: actionItems.filter((f) => f.severity === 'high').length },
-  failures: actionItems,
-};
-await writeFile(path.join(outDir, `${PREFIX}-${date}.json`), JSON.stringify(report, null, 2));
-await writeFile(path.join(outDir, `${PREFIX}-action.json`), JSON.stringify(action, null, 2));
-const md = [
-  `# ${isCert ? 'Validación de certificación' : 'Chequeo nocturno'} ${BASE} — ${date}`,
-  ``,
-  `Base: ${BASE} · Usuario: ${EMAIL} · Total: ${results.length} · ✅ ${passed} · ❌ ${failed} · ⚠️ ${warned}`,
-  ``,
-  ...results.map((r) => `- ${r.status === 'pass' ? '✅' : r.status === 'fail' ? '❌' : '⚠️'} **[${r.suite}]** ${r.name}${r.detail ? ` — ${r.detail}` : ''}`),
-  ``,
-].join('\n');
-await writeFile(path.join(outDir, `${PREFIX}-${date}.md`), md);
-
-// Briefing para la IA (lo primero que debe analizar): se regenera siempre,
-// en verde escribe "sin pendientes" para no perseguir fantasmas.
-try {
-  const other = PREFIX === 'cert' ? 'nightly' : 'cert';
-  let otherAction = null;
-  try {
-    otherAction = JSON.parse(await readFile(path.join(outDir, `${other}-action.json`), 'utf8'));
-  } catch { /* aún no existe el otro entorno */ }
-  const mine = action;
-  const prodAction = PREFIX === 'cert' ? otherAction : mine;
-  const certAction = PREFIX === 'cert' ? mine : otherAction;
-  await writeFile(path.join(root, 'docs', 'FALLOS_PARA_IA.md'), buildBriefing(prodAction, certAction));
-} catch (e) {
-  console.log(`  ⚠️ briefing no generado: ${String((e && e.message) || e).slice(0, 100)}`);
-}
-
-console.log('');
-if (failed > 0) {
-  console.error(`\n⛔ ${PREFIX}: ${failed} fallo(s) en ${BASE}. Informe en nightly-reports/${PREFIX}-${date}.md`);
-  process.exit(1);
-}
-console.log(`\n✅ ${PREFIX}: ${BASE} sano (${passed}/${results.length} checks, ${warned} avisos).`);
+if (browser) await browser.close().catch(() => {});
+await writeReports();

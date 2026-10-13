@@ -6,11 +6,17 @@ name: Deploy Web to GitHub Pages
 
 on:
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Forzar despliegue omitiendo la comprobación de certificación'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: "pages"
@@ -29,6 +35,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Puerta de calidad (F7 de la auditoría nocturna 2026-10-08).
+      # ¿Por qué exige el SHA? cert-health valida un CONCRETO: el commit que se
+      # desplegó a Pages. Si aquí publicamos un SHA distinto al que cert aprobó,
+      # estaríamos publicando sin validar (p. ej. un push posterior al verde de
+      # cert). Por eso se comprueba `head_sha === github.sha`, no solo el color.
+      # Salida ante bloqueo: el checkbox `force_deploy` (uso consciente) o
+      # relanzar cert-health sobre este commit y repetir el despliegue.
+      # Excepciones a propósito: sin runs previos → permitir; error de API →
+      # permitir (no se bloquea un deploy por una caída transitoria de GitHub).
+      - name: Puerta de calidad (Validación de cert previa)
+        if: ${{ !inputs.force_deploy }}
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            try {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner, repo,
+                workflow_id: 'cert-health.yml',
+                per_page: 5,
+              });
+              const latest = (runs.data.workflow_runs || [])[0];
+              if (!latest) {
+                console.log('ℹ️ No se encontraron ejecuciones previas de cert-health. Permitiendo despliegue.');
+                return;
+              }
+              // Run aún en cola/ejecución (conclusion null): no es verde aún.
+              if (latest.status !== 'completed' || latest.conclusion === null) {
+                core.setFailed(`⏳ Puerta de calidad bloqueada: la última validación de cert (Run #${latest.run_number}) está EN CURSO (estado "${latest.status}"). Espera a que termine en verde antes de publicar, o usa el checkbox "force_deploy" para omitir esta comprobación.`);
+                return;
+              }
+              if (latest.conclusion !== 'success') {
+                core.setFailed(`⛔ Puerta de calidad bloqueada: la última validación de cert (Run #${latest.run_number}) terminó con estado "${latest.conclusion}". Corrige los errores en cert antes de publicar en producción, o usa el checkbox "force_deploy" para omitir esta comprobación.`);
+                return;
+              }
+              // En verde, pero ¿es el MISMO commit que vamos a publicar?
+              const deploySha = context.sha;
+              if (latest.head_sha !== deploySha) {
+                core.setFailed(`⛔ Puerta de calidad bloqueada: el último cert-health verde (Run #${latest.run_number}) validó el commit ${String(latest.head_sha).slice(0, 7)}, pero este despliegue publica el commit ${String(deploySha).slice(0, 7)}. Publicar un SHA que cert no ha validado es publicar sin validar: relanza cert-health sobre este commit (push a main o \`gh workflow run cert-health.yml --ref main\`) y vuelve a desplegar, o usa el checkbox "force_deploy" para forzarlo a sabiendas.`);
+                return;
+              }
+              console.log(`✅ Certificación en verde para el commit ${deploySha.slice(0, 7)} (Run #${latest.run_number} validó ${String(latest.head_sha).slice(0, 7)}). Despliegue a producción autorizado.`);
+            } catch (err) {
+              console.log(`⚠️ No se pudo verificar cert-health (${err.message}). Permitiendo despliegue.`);
+            }
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -44,6 +96,7 @@ jobs:
             cp "ultima version"/*.css _site/ 2>/dev/null || true
             cp "ultima version"/CNAME _site/ 2>/dev/null || true
             cp "ultima version"/*.xml _site/ 2>/dev/null || true
+            cp "ultima version"/*.txt _site/ 2>/dev/null || true
             if [ -d "ultima version/img" ]; then cp -r "ultima version/img" _site/; fi
             if [ -d "ultima version/fonts" ]; then cp -r "ultima version/fonts" _site/; fi
             if [ -d "ultima version/.well-known" ]; then cp -r "ultima version/.well-known" _site/; fi
@@ -54,6 +107,7 @@ jobs:
             cp *.css _site/ 2>/dev/null || true
             cp CNAME _site/ 2>/dev/null || true
             cp *.xml _site/ 2>/dev/null || true
+            cp *.txt _site/ 2>/dev/null || true
             if [ -d "img" ]; then cp -r img _site/; fi
             if [ -d "fonts" ]; then cp -r fonts _site/; fi
             if [ -d ".well-known" ]; then cp -r .well-known _site/; fi

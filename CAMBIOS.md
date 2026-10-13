@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.8.0 — 13 oct 2026 · Incidencia
+
+- **Descripción:** Publicar en cert mejoras del proceso nocturno, robots.txt y corrección de sondas de integridad Supabase (ámbito: nightly)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.8`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.8.0.md`
+
 ## v17.7.0 — 8 oct 2026 · Incidencia
 
 - **Descripción:** Unificar visualización de versión en footers web y adoptar incremento exclusivo de segundo número (v17.7) (ámbito: web)

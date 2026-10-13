@@ -1,17 +1,25 @@
 name: Autofix nocturno con IA (opencode)
 
-# Bucle cerrado: ante un issue del chequeo nocturno (etiqueta `ai-fix`),
-# un agente OpenCode intenta corregirlo solo, lo verifica y abre PR.
+# Bucle cerrado: ante un issue del chequeo nocturno o de cert (etiqueta
+# `ai-fix`), un agente OpenCode intenta corregirlo solo, lo verifica y abre PR.
 #
 # ACTIVACIÓN (una vez, repo → Settings):
 #   1. Variable  AUTOFIX_ENABLED = true
 #      (Settings → Secrets and variables → Actions → Variables → New repository variable)
 #   2. Secreto con clave de un proveedor LLM que OpenCode pueda usar, p. ej.
-#      ANTHROPIC_API_KEY  (Settings → Secrets → Actions → New repository secret)
+#      ANTHROPIC_API_KEY  (Settings → Secrets and variables → Actions → New repository secret)
 # Sin esto, el workflow deja instrucciones en el issue y termina sin hacer nada.
 #
-# Disparo: al etiquetar un issue con `ai-fix`, o manual con el número de issue.
-# Seguridad: un solo intento por issue (etiqueta `autofix-intentado`) y el
+# Disparo:
+#   - `issues: labeled` con `ai-fix` (etiquetas puestas A MANO; las que ponen
+#     otros workflows con el GITHUB_TOKEN no generan este evento).
+#   - `workflow_run`: automáticamente cuando `nightly-health` o `cert-health`
+#     terminan en rojo (conclusion = failure). No hay github.event.issue: el
+#     issue se resuelve por su marcador oculto (`<!-- nightly-issue -->` /
+#     `<!-- cert-issue -->`) según el workflow que falló.
+#   - Manual con el número de issue (workflow_dispatch).
+# Seguridad: un solo intento por issue (etiqueta `autofix-intentado`; los
+# health workflows la retiran si llega un fallo nuevo → regresión) y el
 # agente NUNCA toca main: abre PR para revisión humana.
 
 on:
@@ -22,6 +30,14 @@ on:
       issue_number:
         description: 'Número del issue a corregir'
         required: true
+  workflow_run:
+    # Los nombres deben coincidir EXACTO con el `name:` de cada fichero:
+    #   nightly-health.yml → "Chequeo nocturno de producción (genyoga.studio)"
+    #   cert-health.yml    → "Validación de certificación (pre-producción)"
+    workflows:
+      - "Chequeo nocturno de producción (genyoga.studio)"
+      - "Validación de certificación (pre-producción)"
+    types: [completed]
 
 permissions:
   contents: write
@@ -35,11 +51,13 @@ concurrency:
 jobs:
   autofix:
     name: Corregir con OpenCode
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'ai-fix'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'ai-fix') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
-      PROD_BASE_URL: https://genyoga.studio
       GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
       GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -51,39 +69,100 @@ jobs:
         id: issue
         env:
           GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ISSUE: ${{ inputs.issue_number }}
+          EVENT_ISSUE: ${{ github.event.issue.number }}
+          RUN_WORKFLOW: ${{ github.event.workflow_run.name }}
+          CERT_BASE: ${{ vars.CERT_BASE_URL || 'https://gen-yoga-studio.github.io/Q19-CERT/' }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            N="${{ inputs.issue_number }}"
+          N=""
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            N="$INPUT_ISSUE"
+          elif [ "$EVENT_NAME" = "issues" ]; then
+            N="$EVENT_ISSUE"
           else
-            N="${{ github.event.issue.number }}"
+            # workflow_run: no existe github.event.issue → buscar el issue
+            # abierto del tipo que falló (producción vs cert) por su marcador
+            # oculto en el cuerpo o, de reserva, por su título exacto.
+            if [ "$RUN_WORKFLOW" = "Validación de certificación (pre-producción)" ]; then
+              MARK='<!-- cert-issue -->'
+              TITLE='🧪 Cert: la versión no pasa la validación'
+              LABEL='cert'
+            else
+              MARK='<!-- nightly-issue -->'
+              TITLE='🌙 Chequeo nocturno: producción con fallos'
+              LABEL='producción'
+            fi
+            Q="[.[] | select(((.body // \"\") | contains(\"$MARK\")) or .title == \"$TITLE\")][0].number // empty"
+            N=$(gh issue list --state open --label "$LABEL" --limit 100 --json number,title,body --jq "$Q" 2>/dev/null || true)
+            if [ -z "$N" ]; then
+              # Respaldo: por si la etiqueta se renombró o se quitó a mano
+              N=$(gh issue list --state open --limit 100 --json number,title,body --jq "$Q" 2>/dev/null || true)
+            fi
+          fi
+          if [ -z "$N" ]; then
+            echo "No hay ningún issue abierto que corregir; termino."
+            echo "number=" >> "$GITHUB_OUTPUT"
+            echo "labels=" >> "$GITHUB_OUTPUT"
+            echo "base=https://genyoga.studio" >> "$GITHUB_OUTPUT"
+            echo "certmode=" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           echo "number=$N" >> "$GITHUB_OUTPUT"
           LABS=$(gh issue view "$N" --json labels -q '.labels[].name' 2>/dev/null || true)
-          echo "labels=$LABS" >> "$GITHUB_OUTPUT"
+          # En una sola línea: un valor multilínea rompería el formato de $GITHUB_OUTPUT
+          echo "labels=$(printf '%s' "$LABS" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          # Issue de cert → la verificación apunta al espejo de cert, NUNCA a
+          # producción (PROD_BASE_URL lo leen check:cert y el agente).
+          if printf '%s' "$LABS" | grep -qw 'cert'; then
+            echo "base=$CERT_BASE" >> "$GITHUB_OUTPUT"
+            echo "certmode=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=https://genyoga.studio" >> "$GITHUB_OUTPUT"
+            echo "certmode=" >> "$GITHUB_OUTPUT"
+          fi
       - name: Puerta de activación
         id: gate
         env:
           GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_LABELS: ${{ steps.issue.outputs.labels }}
+          AUTOFIX_ENABLED: ${{ vars.AUTOFIX_ENABLED }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          N=${{ steps.issue.outputs.number }}
-          if echo "${{ steps.issue.outputs.labels }}" | grep -q 'autofix-intentado'; then
+          N="$ISSUE_NUMBER"
+          # Con workflow_run la puerta se evalúa cada noche: los comentarios
+          # informativos se publican SOLO UNA VEZ por issue (evita spam).
+          comentar_una_vez() {
+            local veces
+            veces=$(gh api "repos/$GITHUB_REPOSITORY/issues/$N/comments" --paginate --jq 'map(.body) | join("\n")' 2>/dev/null | grep -c "$1" || true)
+            if [ "${veces:-0}" = "0" ]; then gh issue comment "$N" --body "$2"; fi
+          }
+          if [ -z "$N" ]; then
+            echo "Sin issue que tratar. Termino."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if printf '%s' "$ISSUE_LABELS" | grep -qw 'autofix-intentado'; then
             echo "Ya se intentó el autofix en este issue. Termino."
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if [ "${{ vars.AUTOFIX_ENABLED }}" != "true" ]; then
-            gh issue comment "$N" --body "🤖 Autofix desactivado. Para activarlo: crea la variable de repositorio \`AUTOFIX_ENABLED=true\` y el secreto \`ANTHROPIC_API_KEY\` (Settings → Secrets and variables → Actions). Mientras tanto, el issue incluye el bloque *Prompt para OpenCode* listo para ejecutar en local con \`opencode run\`."
+          if [ "$AUTOFIX_ENABLED" != "true" ]; then
+            comentar_una_vez "Autofix desactivado" "🤖 Autofix desactivado. Para activarlo: crea la variable de repositorio \`AUTOFIX_ENABLED=true\` y el secreto \`ANTHROPIC_API_KEY\` (Settings → Secrets and variables → Actions). Mientras tanto, el issue incluye el bloque *Prompt para OpenCode* listo para ejecutar en local con \`opencode run\`."
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$OPENAI_API_KEY" ] && [ -z "$GEMINI_API_KEY" ] && [ -z "$GOOGLE_GENERATIVE_AI_API_KEY" ]; then
-            gh issue comment "$N" --body "🤖 Autofix activado pero sin clave LLM. Crea el secreto \`ANTHROPIC_API_KEY\` (o \`OPENAI_API_KEY\`/\`GEMINI_API_KEY\`) en Settings → Secrets → Actions y vuelve a etiquetar con \`ai-fix\` (quita antes \`autofix-intentado\`)."
+            comentar_una_vez "sin clave LLM" "🤖 Autofix activado pero sin clave LLM. Crea el secreto \`ANTHROPIC_API_KEY\` (o \`OPENAI_API_KEY\`/\`GEMINI_API_KEY\`) en Settings → Secrets and variables → Actions y vuelve a etiquetar con \`ai-fix\` (quita antes \`autofix-intentado\`)."
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           echo "enabled=true" >> "$GITHUB_OUTPUT"
+          # `autofix-intentado` puede no existir aún en el repo: crearla por si acaso
+          gh label create "autofix-intentado" --color F9D0C4 --description "Un solo intento de autofix por issue" 2>/dev/null || true
           gh issue edit "$N" --add-label "autofix-intentado"
-          gh issue comment "$N" --body "🤖 Autofix en marcha: un agente OpenCode intentará corregirlo y abrirá PR si la verificación pasa. Ejecución: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh issue comment "$N" --body "🤖 Autofix en marcha: un agente OpenCode intentará corregirlo y abrirá PR si la verificación pasa. Ejecución: $RUN_URL"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.gate.outputs.enabled == 'true'
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -109,14 +188,20 @@ jobs:
         if: steps.gate.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_LABELS: ${{ steps.issue.outputs.labels }}
+          PROD_BASE_URL: ${{ steps.issue.outputs.base }}
+          CERT_MODE: ${{ steps.issue.outputs.certmode }}
         run: |
-          N=${{ steps.issue.outputs.number }}
+          N="$ISSUE_NUMBER"
           VERIFY="npm run check:nightly"
-          if echo "${{ steps.issue.outputs.labels }}" | grep -qx 'cert'; then VERIFY="npm run check:cert"; fi
+          if printf '%s' "$ISSUE_LABELS" | grep -qw 'cert'; then VERIFY="npm run check:cert"; fi
           gh issue view "$N" --json number,title,body -q '"ISSUE #\(.number): \(.title)\n\n\(.body)"' > /tmp/issue.txt
           {
             echo "Estás en /home/runner/work, repo GEN-YOGA, rama main. Corrige los fallos descritos en el issue de abajo."
             echo "REGLAS DURAS: cambios mínimos; reproduce primero con scripts/check-nightly-production.mjs; 0 reservas/compras/escrituras reales (el flujo de compra se intercepta); no escribas secretos; si tocas .html/.js/.css de la web replica el cambio en \`ultima version/\` (fuente del deploy) y en \`app android/www\` + \`app ios/www\` si existen; verifica al final con \`$VERIFY\`; no hagas commit ni push, deja los cambios en el working tree."
+            echo ""
+            echo "Base de verificación (PROD_BASE_URL): $PROD_BASE_URL. Puedes sobreescribirla (p. ej. servidor local) si el espejo aún no tiene tu cambio."
             echo ""
             cat /tmp/issue.txt
           } > /tmp/prompt.txt
@@ -126,11 +211,15 @@ jobs:
         if: steps.gate.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_LABELS: ${{ steps.issue.outputs.labels }}
+          PROD_BASE_URL: ${{ steps.issue.outputs.base }}
+          CERT_MODE: ${{ steps.issue.outputs.certmode }}
         run: |
-          N=${{ steps.issue.outputs.number }}
+          N="$ISSUE_NUMBER"
           VERIFY="npm run check:nightly"
-          if echo "${{ steps.issue.outputs.labels }}" | grep -qx 'cert'; then VERIFY="npm run check:cert"; fi
-          if [ -z "$(git status --porcelain | grep -v '^?? nightly-reports/' | grep -v '^?? autofix-log.txt' || true)" ]; then
+          if printf '%s' "$ISSUE_LABELS" | grep -qw 'cert'; then VERIFY="npm run check:cert"; fi
+          if [ -z "$(git status --porcelain | grep -v '^?? nightly-reports/' | grep -v '^?? autofix-log.txt' | grep -v '^?? verify-log.txt' || true)" ]; then
             gh issue comment "$N" --body "🤖 El agente terminó sin proponer cambios. Log (cola): $(tail -20 autofix-log.txt | head -c 1500)"
             exit 0
           fi
@@ -138,7 +227,8 @@ jobs:
             D=$(date +%F)
             BR="autofix/nightly-$D-$N"
             git checkout -b "$BR"
-            git add -A
+            # Los logs de esta ejecución no van en el PR (nightly-reports/ ya está en .gitignore)
+            git add -A -- . ':(exclude)autofix-log.txt' ':(exclude)verify-log.txt'
             git -c user.name="genyoga-autofix" -c user.email="autofix@genyoga.studio" commit -m "autofix nocturno: corrige issue #$N (verificado con check:nightly)"
             git push -u origin "$BR"
             gh pr create --title "🤖 Autofix nocturno del issue #$N" --body "Generado por el workflow \`Autofix nocturno con IA\`.\n\nFixes #$N.\n\nVerificación: \`$VERIFY\` en verde (ver log de la ejecución)." --base main --head "$BR"

@@ -161,6 +161,7 @@ for (const dir of dirs) {
 
 // Sin CNAME: genyoga.studio pertenece a producción.
 await writeFile(path.join(destino, '.nojekyll'), '', 'utf8');
+await writeFile(path.join(destino, 'robots.txt'), 'User-agent: *\nDisallow: /\n', 'utf8');
 await writeFile(
   path.join(destino, 'cert.json'),
   JSON.stringify(

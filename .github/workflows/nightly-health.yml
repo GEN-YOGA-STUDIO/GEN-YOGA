@@ -6,6 +6,7 @@ name: Chequeo nocturno de producción (genyoga.studio)
 # Secretos (repo → Settings → Secrets → Actions, crear UNA vez):
 #   GEN_YOGA_TEST_EMAIL     → usuario de pruebas (defecto: prueba@prueba.com)
 #   GEN_YOGA_TEST_PASSWORD  → contraseña (defecto: prueba)
+#   ALERT_WEBHOOK_URL       → (opcional) Webhook Discord / Slack para avisos
 # Sin secretos también funciona (usa los valores por defecto de arriba).
 #
 # Manual: gh workflow run nightly-health --ref main
@@ -16,10 +17,20 @@ on:
     # Se fija 01:30 UTC: en España siempre cae de madrugada.
     - cron: '30 1 * * *'
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL base alternativa (vacío = https://genyoga.studio)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
   issues: write
+  actions: write
+
+concurrency:
+  group: nightly-health
+  cancel-in-progress: false
 
 jobs:
   nightly:
@@ -27,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      PROD_BASE_URL: https://genyoga.studio
+      PROD_BASE_URL: ${{ inputs.base_url || 'https://genyoga.studio' }}
       GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
       GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
     steps:
@@ -40,8 +51,7 @@ jobs:
       - name: Instalar Chromium
         run: |
           CORE_VER=$(node -p "require('./node_modules/playwright-core/package.json').version")
-          npx -y playwright@$CORE_VER install --only-shell chromium
-          npx -y playwright@$CORE_VER install --only-shell --with-deps chromium 2>/dev/null || true
+          npx -y playwright@$CORE_VER install --with-deps chromium
       - name: Chequeo nocturno contra producción
         id: check
         run: npm run check:nightly
@@ -51,45 +61,141 @@ jobs:
         with:
           name: nightly-report
           path: nightly-reports/
+          retention-days: 30
           if-no-files-found: warn
+      - name: Publicar resumen en GitHub Actions
+        if: always()
+        run: |
+          node scripts/nightly-step-summary.mjs >> "$GITHUB_STEP_SUMMARY" || true
+          node scripts/analizar-informe-diario.mjs --append-summary || true
       - name: Generar autorreporte para la IA
         if: always()
         run: node scripts/nightly-issue-body.mjs nightly-reports/nightly-action.json > nightly-reports/issue-body.md || echo "sin cuerpo"
-      - name: Abrir issue si falla
+      - name: Abrir issue y disparar autofix si falla
+        id: open-issue
         if: failure()
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const fs = require('fs');
+            const MARK = '<!-- nightly-issue -->';
+            const TITLE = '🌙 Chequeo nocturno: producción con fallos';
+            const { owner, repo } = context.repo;
             let body;
             try {
               body = fs.readFileSync('nightly-reports/issue-body.md', 'utf8');
             } catch {
-              body = '<!-- opencode-autofix -->\nChequeo nocturno fallido sin autorreporte: revisar el artefacto `nightly-report`.';
+              body = '';
             }
-            body += `\nEjecución: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const title = '🌙 Chequeo nocturno: producción con fallos';
-            const open = await github.rest.issues.listForRepo({
-              owner: context.repo.owner, repo: context.repo.repo, state: 'open', per_page: 20,
-            });
-            const dup = open.data.find((i) => i.title === title);
+            if (!body || !body.trim()) {
+              body = 'Chequeo nocturno fallido sin autorreporte: revisar el artefacto `nightly-report`.';
+            }
+            if (!body.includes(MARK)) body = `${MARK}\n${body}`;
+            body += `\nEjecución: ${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+
+            async function findOpenIssue() {
+              const base = { owner, repo, state: 'open', per_page: 100 };
+              const scan = async (extra) => {
+                const list = await github.paginate(github.rest.issues.listForRepo, { ...base, ...extra });
+                return list.find((i) => !i.pull_request &&
+                  ((i.body || '').includes(MARK) || i.title === TITLE)) || null;
+              };
+              return (await scan({ labels: 'producción' })) || (await scan({}));
+            }
+
+            const dup = await findOpenIssue();
+            let issueNumber;
+            const newSig = (body.match(/<!-- failure-signature: ([a-f0-9]+) -->/) || [])[1];
+            const oldSig = dup ? ((dup.body || '').match(/<!-- failure-signature: ([a-f0-9]+) -->/) || [])[1] : null;
+            const sameSignature = Boolean(dup && newSig && oldSig && newSig === oldSig);
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+
             if (dup) {
-              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: dup.number, body });
+              issueNumber = dup.number;
+              await github.rest.issues.update({ owner, repo, issue_number: dup.number, body });
+              const names = (dup.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+
+              if (sameSignature) {
+                // Misma firma de fallos: no inundar con el cuerpo completo ni reintentar autofix indefinidamente
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: dup.number,
+                  body: `🔄 **Nueva pasada nocturna en rojo (Ejecución #${context.runNumber})**\n\nPersisten los mismos fallos sin variación en la firma de errores.\n- Fecha: ${new Date().toISOString()}\n- Ver ejecución: [Ejecución #${context.runNumber}](${runUrl})`,
+                });
+              } else {
+                // Firma distinta o nueva combinación de fallos: actualizar y notificar cambio
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: dup.number,
+                  body: `🔄 **Nueva pasada nocturna: variación en fallos detectada (Ejecución #${context.runNumber})**\n\nSe ha detectado un cambio en la firma de fallos respecto a la ejecución anterior.\n\n${body}`,
+                });
+                if (names.includes('autofix-intentado')) {
+                  await github.rest.issues.removeLabel({ owner, repo, issue_number: dup.number, name: 'autofix-intentado' });
+                }
+              }
+
+              if (!names.includes('ai-fix')) {
+                await github.rest.issues.addLabels({ owner, repo, issue_number: dup.number, labels: ['ai-fix'] });
+              }
+              core.setOutput('number', String(dup.number));
             } else {
-              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['producción', 'ai-fix'] });
+              const created = await github.rest.issues.create({
+                owner, repo, title: TITLE, body, labels: ['producción', 'ai-fix'],
+              });
+              issueNumber = created.data.number;
+              core.setOutput('number', String(issueNumber));
+            }
+
+            // Disparo automático de autofix: solo si es issue nuevo o si la firma cambió
+            const shouldDispatchAutofix = !dup || !sameSignature || !(dup.labels || []).some((l) => (typeof l === 'string' ? l : l.name) === 'autofix-intentado');
+            if (shouldDispatchAutofix) {
+              try {
+                await github.rest.actions.createWorkflowDispatch({
+                  owner, repo,
+                  workflow_id: 'nightly-autofix.yml',
+                  ref: 'main',
+                  inputs: { issue_number: String(issueNumber) },
+                });
+                console.log(`🤖 Autofix nocturno disparado automáticamente para issue #${issueNumber}`);
+              } catch (err) {
+                console.log(`ℹ️ No se pudo disparar autofix automático (${err.message}). El issue queda abierto con ai-fix.`);
+              }
+            } else {
+              console.log(`ℹ️ Autofix ya intentado previamente para esta misma firma de fallos. No se reintenta para evitar bucles.`);
             }
       - name: Cerrar issue si pasa
+        id: close-issue
         if: success()
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
-            const title = '🌙 Chequeo nocturno: producción con fallos';
-            const open = await github.rest.issues.listForRepo({
-              owner: context.repo.owner, repo: context.repo.repo, state: 'open', per_page: 20,
-            });
-            const dup = open.data.find((i) => i.title === title);
+            const MARK = '<!-- nightly-issue -->';
+            const TITLE = '🌙 Chequeo nocturno: producción con fallos';
+            const { owner, repo } = context.repo;
+            const base = { owner, repo, state: 'open', per_page: 100 };
+            const scan = async (extra) => {
+              const list = await github.paginate(github.rest.issues.listForRepo, { ...base, ...extra });
+              return list.find((i) => !i.pull_request &&
+                ((i.body || '').includes(MARK) || i.title === TITLE)) || null;
+            };
+            const dup = (await scan({ labels: 'producción' })) || (await scan({}));
             if (dup) {
-              const body = `✅ **Producción recuperada en verde**: Todas las comprobaciones han pasado con éxito.\nEjecución: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: dup.number, body });
-              await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: dup.number, state: 'closed' });
+              const body = `✅ **Producción recuperada en verde**: Todas las comprobaciones han pasado con éxito.\nEjecución: ${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+              await github.rest.issues.createComment({ owner, repo, issue_number: dup.number, body });
+              const names = (dup.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+              if (names.includes('ai-fix')) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: dup.number, name: 'ai-fix' });
+              }
+              await github.rest.issues.update({ owner, repo, issue_number: dup.number, state: 'closed' });
+              core.setOutput('number', String(dup.number));
             }
+      - name: Notificación de alerta (Webhook)
+        if: always()
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ "${{ job.status }}" = "failure" ]; then
+            node scripts/nightly-notify.mjs failure || true
+          elif [ "${{ job.status }}" = "success" ]; then
+            node scripts/nightly-notify.mjs success || true
+          fi
