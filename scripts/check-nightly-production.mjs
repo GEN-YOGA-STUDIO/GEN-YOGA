@@ -687,6 +687,45 @@ async function swalText(page) {
 async function swalGone(page) {
   return (await page.locator('.swal2-popup:visible').count().catch(() => 1)) === 0;
 }
+// Detección de tokens corruptos y desbordamiento horizontal en responsive móvil
+async function checkUiIntegrity(page, pageName) {
+  return page.evaluate((name) => {
+    const t = document.body.innerText || '';
+    const list = [];
+    if (/\bNaN\b/.test(t)) list.push('NaN');
+    if (/\bundefined\b/.test(t)) list.push('undefined');
+    if (/\[object Object\]/.test(t)) list.push('[object Object]');
+    if (/null\s*€/i.test(t)) list.push('null €');
+    if (/\{\{[^}]+\}\}/.test(t)) list.push('token crudo {{}}');
+    if (/\bInvalid Date\b/i.test(t)) list.push('Invalid Date');
+    const overflow = document.documentElement.scrollWidth - window.innerWidth;
+    if (overflow > 4) list.push(`desbordamiento horizontal (+${overflow}px)`);
+    return list;
+  }, pageName).catch(() => []);
+}
+// Detección de enlaces internos desconocidos y anclas rotas
+async function checkInternalLinks(page, pageName) {
+  return page.evaluate(() => {
+    const validPages = new Set([
+      'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
+      'profile.html', 'politica-privacidad.html', 'success.html', 'cancel.html'
+    ]);
+    const bad = [];
+    for (const a of document.querySelectorAll('a[href]')) {
+      const href = (a.getAttribute('href') || '').trim();
+      if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:') || href === '#') continue;
+      const [pathWithQuery, hashPart] = href.split('#');
+      const cleanPath = pathWithQuery ? pathWithQuery.split('?')[0].replace(/^\//, '') : '';
+      if (cleanPath && !validPages.has(cleanPath)) {
+        bad.push(`enlace desconocido: ${href}`);
+      }
+      if (!cleanPath && hashPart && !document.getElementById(hashPart) && !document.querySelector(`[name="${hashPart}"]`)) {
+        bad.push(`ancla rota: #${hashPart}`);
+      }
+    }
+    return bad;
+  }).catch(() => []);
+}
 // Cierra la oferta de bienvenida si está visible (no falla si no está).
 async function dismissWelcome(page) {
   await page.locator('#flash-welcome-modal button[onclick="cerrarFlashWelcomeModal()"]').first().click({ timeout: 4000 }).catch(() => {});
@@ -948,6 +987,16 @@ await section('contenido', async () => {
       if (y1 > y0 + 50) pass('contenido', 'clases: scroll-assist desplaza');
       else fail('contenido', 'clases: scroll-assist', 'no desplaza');
     }
+
+    // D1b. Caza de bugs en clases.html: tokens corruptos, desbordamiento móvil y enlaces
+    const clasesUiIssues = await checkUiIntegrity(page, 'clases');
+    if (clasesUiIssues.length === 0) pass('contenido', 'clases: sin tokens corruptos ni desbordamiento móvil');
+    else fail('contenido', 'clases: integridad UI', clasesUiIssues.join(', '));
+
+    const clasesBadLinks = await checkInternalLinks(page, 'clases');
+    if (clasesBadLinks.length === 0) pass('contenido', 'clases: enlaces internos y anclas válidos');
+    else fail('contenido', 'clases: enlaces rotos', clasesBadLinks.slice(0, 3).join(', '));
+
     await assertClean('contenido-clases', st, page);
 
     st = await gotoTracked(page, '/maestros.html', 6000);
@@ -996,6 +1045,16 @@ await section('contenido', async () => {
         }
       }
     }
+
+    // D2b. Caza de bugs en maestros.html: tokens corruptos, desbordamiento móvil y enlaces
+    const maestrosUiIssues = await checkUiIntegrity(page, 'maestros');
+    if (maestrosUiIssues.length === 0) pass('contenido', 'maestros: sin tokens corruptos ni desbordamiento móvil');
+    else fail('contenido', 'maestros: integridad UI', maestrosUiIssues.join(', '));
+
+    const maestrosBadLinks = await checkInternalLinks(page, 'maestros');
+    if (maestrosBadLinks.length === 0) pass('contenido', 'maestros: enlaces internos válidos');
+    else fail('contenido', 'maestros: enlaces rotos', maestrosBadLinks.slice(0, 3).join(', '));
+
     await assertClean('contenido-maestros', st, page);
 
     st = await gotoTracked(page, '/tarifas.html');
@@ -1017,6 +1076,24 @@ await section('contenido', async () => {
       if (catsOk === categories.length) pass('contenido', `tarifas: las ${categories.length} categorías muestran precios válidos`);
       else fail('contenido', 'tarifas: categorías', `${catsOk}/${categories.length} categorías conmutan limpiamente`);
     }
+
+    // D3b. Caza de bugs en tarifas.html: tokens corruptos, desbordamiento móvil y enlaces
+    const tarifasUiIssues = await checkUiIntegrity(page, 'tarifas');
+    if (tarifasUiIssues.length === 0) pass('contenido', 'tarifas: sin tokens corruptos ni desbordamiento móvil');
+    else fail('contenido', 'tarifas: integridad UI', tarifasUiIssues.join(', '));
+
+    const tarifasBadLinks = await checkInternalLinks(page, 'tarifas');
+    if (tarifasBadLinks.length === 0) pass('contenido', 'tarifas: enlaces internos válidos');
+    else fail('contenido', 'tarifas: enlaces rotos', tarifasBadLinks.slice(0, 3).join(', '));
+
+    // D3c. Paridad de precios del catálogo oficial de yoga (15€, 50€, 65€, 95€, 90€)
+    const preciosOk = await page.evaluate(() => {
+      const t = document.body.innerText || '';
+      return ['15€', '50€', '65€', '95€', '90€'].every((p) => t.includes(p));
+    }).catch(() => false);
+    if (preciosOk) pass('compra', 'tarifas: precios oficiales presentes (15€, 50€, 65€, 95€, 90€)');
+    else warn('compra', 'tarifas: precios', 'algún precio del catálogo oficial no localizado en el texto');
+
     await assertClean('contenido-tarifas', st, page);
 
     st = await gotoTracked(page, '/index.html');
@@ -1065,19 +1142,14 @@ await section('contenido', async () => {
       if (brokenImages.length === 0) pass('medios', 'imágenes de landing cargan correctamente sin fallos 404');
       else fail('medios', 'imágenes rotas', `${brokenImages.length} imagen(es) rotas: ${brokenImages.map((b) => `${b.src} (${b.why})`).slice(0, 3).join(', ')}`);
 
-      // D1c. Ausencia de tokens corruptos o plantillas sin renderizar en la UI
-      const badText = await page.evaluate(() => {
-        const t = document.body.innerText || '';
-        const bad = [];
-        if (/\bNaN\b/.test(t)) bad.push('NaN');
-        if (/\bundefined\b/.test(t)) bad.push('undefined');
-        if (/\[object Object\]/.test(t)) bad.push('[object Object]');
-        if (/null\s*€/i.test(t)) bad.push('null €');
-        if (/\{\{[^}]+\}\}/.test(t)) bad.push('token crudo {{}}');
-        return bad;
-      }).catch(() => []);
-      if (badText.length === 0) pass('contenido', 'sin tokens corruptos en la UI (NaN/undefined/[object])');
-      else fail('contenido', 'tokens corruptos en UI', `detectados: ${badText.join(', ')}`);
+      // D1c. Caza de bugs en index.html: tokens corruptos, desbordamiento móvil y enlaces
+      const indexUiIssues = await checkUiIntegrity(page, 'index');
+      if (indexUiIssues.length === 0) pass('contenido', 'index: sin tokens corruptos ni desbordamiento móvil');
+      else fail('contenido', 'index: integridad UI', indexUiIssues.join(', '));
+
+      const indexBadLinks = await checkInternalLinks(page, 'index');
+      if (indexBadLinks.length === 0) pass('contenido', 'index: enlaces internos válidos');
+      else fail('contenido', 'index: enlaces rotos', indexBadLinks.slice(0, 3).join(', '));
     }
     await assertClean('contenido-index', st, page);
   } catch (e) { if (activePage) await snap(activePage, 'contenido').catch(() => {}); throw e; } finally { await ctx.close(); }
@@ -1348,6 +1420,16 @@ await section('cliente', async () => {
       if (v === false && signupCalls === 0) pass('cliente', 'registro bloquea nombre vacío (nativo, 0 llamadas)');
       else fail('cliente', 'registro nombre vacío', `válido=${v} llamadas_signup=${signupCalls}`);
     }
+    await page.locator('#reg-nombre').fill('Noche');
+    await page.locator('#reg-email').fill('usuario-sin-arroba');
+    await page.locator('#form-register button[type="submit"]').click({ timeout: 8000 });
+    await page.waitForTimeout(1200);
+    {
+      const v = await page.evaluate(() => document.getElementById('reg-email')?.validity?.valid);
+      if (v === false && signupCalls === 0) pass('cliente', 'registro bloquea email malformado (nativo, 0 llamadas)');
+      else fail('cliente', 'registro email malformado', `válido=${v} llamadas_signup=${signupCalls}`);
+    }
+    await page.locator('#reg-email').fill('noche-noreply@test.local');
     await page.evaluate(() => toggleAuth('login'));
     await page.waitForTimeout(600);
 
@@ -1454,6 +1536,11 @@ await section('cliente', async () => {
       } else {
         fail('cliente', 'inicio: reservas activas', 'ni contenedor ni empty state visibles');
       }
+
+      // Caza de bugs en el panel del cliente: tokens corruptos y desbordamiento móvil
+      const perfilUiIssues = await checkUiIntegrity(page, 'perfil');
+      if (perfilUiIssues.length === 0) pass('cliente', 'perfil: sin tokens corruptos ni desbordamiento móvil');
+      else fail('cliente', 'perfil: integridad UI', perfilUiIssues.join(', '));
     }
 
     // I5. Reservar yoga: si hay botón, diálogo + cancelar (jamás confirmar);
@@ -1938,6 +2025,10 @@ await section('retorno', async () => {
       await page.waitForTimeout(2500);
       if (page.url().startsWith(BASE)) pass('retorno', 'success sin pago no redirige');
       else fail('retorno', 'success sin pago', 'redirige fuera');
+
+      const successUiIssues = await checkUiIntegrity(page, 'success');
+      if (successUiIssues.length === 0) pass('retorno', 'success: sin tokens corruptos ni desbordamiento móvil');
+      else fail('retorno', 'success: integridad UI', successUiIssues.join(', '));
     }
     await assertClean('retorno-success', st, page);
     st = await gotoTracked(page, '/cancel.html', 1200);
@@ -1961,6 +2052,10 @@ await section('retorno', async () => {
       }
       if (deadRet === 0) pass('retorno', `cancel: ${[...new Set(hrefs)].length} retornos vivos`);
       else fail('retorno', 'cancel: retornos', `${deadRet} retornos rotos`);
+
+      const cancelUiIssues = await checkUiIntegrity(page, 'cancel');
+      if (cancelUiIssues.length === 0) pass('retorno', 'cancel: sin tokens corruptos ni desbordamiento móvil');
+      else fail('retorno', 'cancel: integridad UI', cancelUiIssues.join(', '));
 
       // G3. Seguridad: Protección contra Open Redirect en retornos
       {
