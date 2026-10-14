@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.12.0 — 14 oct 2026 · Incidencia
+
+- **Descripción:** Sincronización atómica de packs en ajuste de saldo y regularización de Encarnación Escribano (ámbito: bonos)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.12`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.12.0.md`
+
 ## v17.11.0 — 13 oct 2026 · Desarrollo
 
 - **Descripción:** Simplificación de las apps: navegación 5 pestañas estilo Ami (Sesión 29:9:2026) con conexión a Supabase real (ámbito: apps)
