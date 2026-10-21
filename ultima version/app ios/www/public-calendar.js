@@ -1936,6 +1936,7 @@
             const params = new URLSearchParams({
                 view: 'especiales',
                 clase: String(item.id),
+                auto_book: 'true',
                 from: 'calendario'
             });
             if (!hasSession) params.set('prompt', 'register');

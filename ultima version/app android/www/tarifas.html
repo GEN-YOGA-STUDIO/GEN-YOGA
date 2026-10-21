@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="17.13">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.13">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.13">
+    <meta name="application-version" content="17.14">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.14">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.14">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,13 +25,13 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=17.13">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=17.14">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=17.13"></script>
-    <script src="capacitor-bridge.js?v=17.13" defer></script>
+    <script src="i18n.js?v=17.14"></script>
+    <script src="capacitor-bridge.js?v=17.14" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -772,12 +772,12 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v17.13 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v17.14 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '17.13';
+        const APP_VERSION = '17.14';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -1535,10 +1535,11 @@
             const session = sessionRes?.data?.session;
             let userId = session?.user?.id || null;
 
+            if (claseId) {
+                safeSetItem('pending_booking_clase_id', String(claseId));
+            }
+
             if (lookupKey === 'clase_especial') {
-                if (claseId) {
-                    safeSetItem('pending_booking_clase_id', String(claseId));
-                }
                 if (!userId) {
                     const result = await Swal.fire({
                         title: title || 'Clase Especial',
@@ -1567,16 +1568,53 @@
                         const fechaParam = options?.fecha ? `fecha=${encodeURIComponent(options.fecha)}` : '';
                         const horaParam = options?.hora ? `hora=${encodeURIComponent(options.hora)}` : '';
                         const titleParam = title ? `title=${encodeURIComponent(title)}` : '';
-                        const params = [claseParam, fechaParam, horaParam, titleParam, 'view=especiales', 'prompt=login', 'action=login'].filter(Boolean).join('&');
+                        const params = [claseParam, fechaParam, horaParam, titleParam, 'view=especiales', 'prompt=login', 'action=login', 'auto_book=true'].filter(Boolean).join('&');
                         window.location.href = `profile.html?${params}`;
                     } else if (result.isDenied) {
                         window.location.href = `clases.html?style=taller#calendario-publico`;
                     }
                     return;
-                } else {
-                    window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales`;
+                }
+
+                // Usuario autenticado: comprobar si ya dispone de bono especial o bono ilimitado activo
+                let tieneBono = false;
+                if (supabaseClient) {
+                    try {
+                        const targetMonthKey = (options?.fecha || new Date().toISOString()).slice(0, 7) + '-01';
+                        const { data: bonosEsp } = await supabaseClient
+                            .from('bonos_clases_especiales')
+                            .select('id, saldo')
+                            .eq('user_id', userId)
+                            .eq('mes', targetMonthKey)
+                            .gt('saldo', 0)
+                            .limit(1);
+                        if (Array.isArray(bonosEsp) && bonosEsp.length > 0) tieneBono = true;
+
+                        if (!tieneBono) {
+                            const { data: bonosIlim } = await supabaseClient
+                                .from('pagos_stripe')
+                                .select('id')
+                                .eq('user_id', userId)
+                                .eq('tipo', 'bono_ilimitado')
+                                .eq('estado', 'completado')
+                                .gte('fecha_fin', new Date().toISOString())
+                                .limit(1);
+                            if (Array.isArray(bonosIlim) && bonosIlim.length > 0) tieneBono = true;
+                        }
+                    } catch (eBono) {
+                        console.warn('Error comprobando bono especial:', eBono);
+                    }
+                }
+
+                if (tieneBono) {
+                    // Ya tiene bono: llevar directamente a reservar en el perfil sin recuadros de verificación
+                    const claseParam = claseId ? `clase=${encodeURIComponent(claseId)}` : '';
+                    const params = [claseParam, 'view=especiales', 'auto_book=true'].filter(Boolean).join('&');
+                    window.location.href = `profile.html?${params}`;
                     return;
                 }
+
+                // Si no tiene bono, proceder directamente a abrir Stripe Checkout para la clase especial
             }
 
             if (!userId) {
@@ -1610,7 +1648,8 @@
                         titleParam,
                         'view=especiales',
                         'prompt=login',
-                        'action=login'
+                        'action=login',
+                        'auto_book=true'
                     ].filter(Boolean).join('&');
                     window.location.href = `profile.html?${params}`;
                     return;
@@ -1620,7 +1659,7 @@
             }
 
             // Antes de cobrar: si el usuario tiene crédito de reprogramación de taller
-            // disponible, no se va a Stripe — se le lleva al perfil para canjearlo a 0 €.
+            // disponible, no se va a Stripe — se le lleva al perfil para auto-canjearlo a 0 €.
             if (userId && userId !== 'guest' && claseId && supabaseClient) {
                 try {
                     const { data: creditosTaller } = await supabaseClient
@@ -1631,13 +1670,7 @@
                         .eq('estado', 'disponible')
                         .limit(1);
                     if (Array.isArray(creditosTaller) && creditosTaller.length > 0) {
-                        await Swal.fire({
-                            icon: 'info',
-                            title: 'Tienes un Crédito de taller',
-                            text: 'Tienes un Crédito de Reprogramación disponible. Te llevamos a tu perfil para reservar este taller sin coste (0 €).',
-                            confirmButtonColor: '#AB593D'
-                        });
-                        window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales`;
+                        window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales&auto_book=true`;
                         return;
                     }
                 } catch (eCredit) {
@@ -1702,56 +1735,6 @@
             else if (lookupKey === 'prod_VDY8mI9bZ3SQeb') lookupKey = 'taller_25';
             else if (lookupKey === 'prod_V5uCPKKKH5K74P') lookupKey = 'taller_intro_power_vinyasa';
 
-            const isClaseEspecial = options?.isTaller === false || lookupKey === 'clase_especial';
-
-            if (isClaseEspecial) {
-                if (claseId) {
-                    safeSetItem('pending_booking_clase_id', String(claseId));
-                }
-                const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
-                const hasSession = Boolean(sessionRes?.data?.session?.user);
-
-                if (!hasSession) {
-                    const result = await Swal.fire({
-                        title: title || 'Clase Especial',
-                        html: `
-                            <div class="text-left text-xs text-cocoa/80 space-y-2.5">
-                                <p>Para reservar tu plaza en <strong>${escapeHtml(title)}</strong> (${price || '20'} €) necesitas acceder con tu cuenta de GEN Yoga o darte de alta.</p>
-                                <p class="text-[11px] text-cocoa/60 bg-sand/20 p-2.5 rounded-xl border border-cocoa/10">
-                                    ✨ Recuerda: si dispones de <strong>Bono Ilimitado mensual</strong>, tienes <strong>1 Clase Especial incluida cada mes</strong> sin coste adicional.
-                                </p>
-                            </div>
-                        `,
-                        icon: 'info',
-                        showCancelButton: true,
-                        showDenyButton: true,
-                        confirmButtonText: 'Iniciar Sesión / Registrarme',
-                        denyButtonText: 'Ver en Horario',
-                        cancelButtonText: 'Cancelar',
-                        confirmButtonColor: '#6a6540',
-                        denyButtonColor: '#AB593D',
-                        cancelButtonColor: '#d33',
-                        background: '#fff',
-                        color: '#333'
-                    });
-
-                    if (result.isConfirmed) {
-                        const claseParam = claseId ? `clase=${encodeURIComponent(claseId)}` : '';
-                        const fechaParam = options?.fecha ? `fecha=${encodeURIComponent(options.fecha)}` : '';
-                        const horaParam = options?.hora ? `hora=${encodeURIComponent(options.hora)}` : '';
-                        const titleParam = title ? `title=${encodeURIComponent(title)}` : '';
-                        const params = [claseParam, fechaParam, horaParam, titleParam, 'view=especiales', 'prompt=login', 'action=login'].filter(Boolean).join('&');
-                        window.location.href = `profile.html?${params}`;
-                    } else if (result.isDenied) {
-                        window.location.href = `clases.html?style=taller#calendario-publico`;
-                    }
-                    return;
-                } else {
-                    window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales`;
-                    return;
-                }
-            }
-
             if (lookupKey) {
                 await iniciarCheckoutTallerStripe(lookupKey, title, price, claseId, options);
             } else {
@@ -1780,13 +1763,13 @@
                         const fechaParam = options?.fecha ? `fecha=${encodeURIComponent(options.fecha)}` : '';
                         const horaParam = options?.hora ? `hora=${encodeURIComponent(options.hora)}` : '';
                         const titleParam = title ? `title=${encodeURIComponent(title)}` : '';
-                        const params = [claseParam, fechaParam, horaParam, titleParam, 'view=especiales', 'prompt=login', 'action=login'].filter(Boolean).join('&');
+                        const params = [claseParam, fechaParam, horaParam, titleParam, 'view=especiales', 'prompt=login', 'action=login', 'auto_book=true'].filter(Boolean).join('&');
                         window.location.href = `profile.html?${params}`;
                     } else if (result.isDenied) {
                         window.location.href = `clases.html?style=taller#calendario-publico`;
                     }
                 } else {
-                    window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales`;
+                    window.location.href = `profile.html?clase=${encodeURIComponent(claseId)}&view=especiales&auto_book=true`;
                 }
             }
         };

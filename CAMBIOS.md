@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.14.0 — 21 oct 2026 · Incidencia
+
+- **Descripción:** Reserva directa sin doble verificación en clases especiales desde tarifas y tras pago (ámbito: clases-especiales)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.14`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.14.0.md`
+
 ## v17.13.0 — 21 oct 2026 · Incidencia
 
 - **Descripción:** Auto-reserva de plaza en clases especiales tras compra y regularizacion de Estefania Dominguez (ámbito: clases-especiales)
