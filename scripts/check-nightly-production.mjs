@@ -1778,7 +1778,8 @@ await section('cliente', async () => {
       const b = page.locator(`${tab}:visible`).first();
       if ((await b.count().catch(() => 0)) === 0) { warn('cliente', `especiales ${label}`, 'subtab no visible (aviso)'); continue; }
       await b.click({ timeout: 8000 }).catch(() => {});
-      await page.waitForTimeout(1500);
+      await page.locator('#view-especiales article:visible, #view-especiales #special-classes-empty:not(.hidden)').first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(600);
       const arts = await page.locator('#view-especiales article:visible').count().catch(() => 0);
       const txt = ((await page.locator('#view-especiales').innerText().catch(() => '')) || '').replace(/\s+/g, ' ');
       if (arts > 0) pass('cliente', `especiales ${label}: ${arts} tarjetas`);

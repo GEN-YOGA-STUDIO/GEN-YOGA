@@ -10275,101 +10275,11 @@
             );
         });
 
-        async function cargarClasesEspeciales() {
+        function renderizarEventosEspeciales() {
             const container = document.getElementById('special-classes-container');
             const emptyState = document.getElementById('special-classes-empty');
             const benefit = document.getElementById('special-classes-benefit');
             if (!container) return;
-
-            container.innerHTML = `
-        <div class="lg:col-span-2 flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-            <i class="ph-duotone ph-spinner animate-spin text-4xl text-terracotta"></i>
-            <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando clases especiales...</span>
-        </div>`;
-
-            if (!allProfesionalesCache || allProfesionalesCache.length === 0) {
-                await cargarProfesionalesCache();
-            }
-            if (esTrabajador() && !currentProfessionalProfile && !isAdmin) {
-                await cargarPerfilProfesionalActual(currentUserProfile);
-            }
-
-            const now = new Date();
-            now.setHours(now.getHours() - 2);
-            const { data: clases, error } = await client.from('clases')
-                .select('*, profesionales(*)')
-                .or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true')
-                .eq('activa', true)
-                .gte('fecha_inicio', now.toISOString())
-                .order('fecha_inicio');
-
-            if (error) {
-                console.error('Error cargando clases especiales:', error);
-                allTalleresCache = [];
-                container.innerHTML = '';
-                if (emptyState) emptyState.classList.remove('hidden');
-                return;
-            }
-
-            let visibles = (clases || []).filter(c => (isAdmin || c.profesionales?.visible_publico !== false) && c.activa !== false);
-            if (!isAdmin && esTrabajador()) {
-                visibles = visibles.filter(esClaseDelProfesionalActual);
-                // Fallback directo por IDs autorizados del profesor si no hubo coincidencia en JS
-                if (visibles.length === 0) {
-                    const teacherIds = Array.from(getProfesorIdsActuales());
-                    if (teacherIds.length > 0) {
-                        visibles = (clases || []).filter(c => teacherIds.includes(Number(c.profesor_id)));
-                        if (visibles.length === 0) {
-                            try {
-                                const { data: directTalleres } = await client
-                                    .from('clases')
-                                    .select('*, profesionales(*)')
-                                    .in('profesor_id', teacherIds)
-                                    .or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true')
-                                    .eq('activa', true)
-                                    .gte('fecha_inicio', now.toISOString())
-                                    .order('fecha_inicio');
-                                if (Array.isArray(directTalleres) && directTalleres.length > 0) {
-                                    visibles = directTalleres;
-                                }
-                            } catch (e) {
-                                console.warn('Error en fallback directo de talleres profesor:', e);
-                            }
-                        }
-                    }
-                }
-            }
-            let reservas = [];
-            const visibleIds = (visibles || []).map(c => c.id).filter(Boolean);
-            if (visibleIds.length > 0) {
-                let resQuery = client.from('reservas_yoga')
-                    .select('id, clase_id, user_id, estado')
-                    .eq('estado', 'confirmada')
-                    .in('clase_id', visibleIds);
-
-                if (!isAdmin && currentUser?.id) {
-                    resQuery = resQuery.eq('user_id', currentUser.id);
-                }
-
-                const reservasResult = await resQuery;
-                if (!reservasResult.error) reservas = reservasResult.data || [];
-                else console.error('Error cargando reservas especiales:', reservasResult.error);
-            }
-
-            const reservasMap = {};
-            reservas.filter(r => r.estado === 'confirmada').forEach(r => {
-                if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
-                reservasMap[r.clase_id].push(r);
-            });
-            const ocupacionEspecialesMap = await obtenerOcupacionClasesMap(visibles.map(c => c.id));
-            visibles.forEach(c => {
-                const confirmadas = reservasMap[c.id] || [];
-                c.ocupadas = (ocupacionEspecialesMap && ocupacionEspecialesMap[c.id] != null)
-                    ? ocupacionEspecialesMap[c.id]
-                    : confirmadas.length;
-                c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
-            });
-            allTalleresCache = visibles;
 
             const btnBonoIlimitado = document.getElementById('btn-especiales-bono-ilimitado');
             if (btnBonoIlimitado) {
@@ -10384,6 +10294,8 @@
                 benefit.classList.add('hidden');
                 benefit.innerHTML = '';
             }
+
+            const visibles = Array.isArray(allTalleresCache) ? allTalleresCache : [];
 
             // Filtrado según sub-pestaña activa (todos, clases_especiales, talleres)
             let eventosFiltrados = visibles;
@@ -10492,6 +10404,108 @@
             }).join('');
         }
 
+        async function cargarClasesEspeciales() {
+            const container = document.getElementById('special-classes-container');
+            const emptyState = document.getElementById('special-classes-empty');
+            if (!container) return;
+
+            // Si ya hay eventos en caché, renderizarlos inmediatamente para respuesta instantánea
+            if (Array.isArray(allTalleresCache) && allTalleresCache.length > 0) {
+                renderizarEventosEspeciales();
+            } else if (!container.children.length || container.querySelector('.animate-spin')) {
+                container.innerHTML = `
+        <div class="lg:col-span-2 flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+            <i class="ph-duotone ph-spinner animate-spin text-4xl text-terracotta"></i>
+            <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando clases especiales...</span>
+        </div>`;
+            }
+
+            if (!allProfesionalesCache || allProfesionalesCache.length === 0) {
+                await cargarProfesionalesCache();
+            }
+            if (esTrabajador() && !currentProfessionalProfile && !isAdmin) {
+                await cargarPerfilProfesionalActual(currentUserProfile);
+            }
+
+            const now = new Date();
+            now.setHours(now.getHours() - 2);
+            const { data: clases, error } = await client.from('clases')
+                .select('*, profesionales(*)')
+                .or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true')
+                .eq('activa', true)
+                .gte('fecha_inicio', now.toISOString())
+                .order('fecha_inicio');
+
+            if (error) {
+                console.error('Error cargando clases especiales:', error);
+                allTalleresCache = [];
+                container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            let visibles = (clases || []).filter(c => (isAdmin || c.profesionales?.visible_publico !== false) && c.activa !== false);
+            if (!isAdmin && esTrabajador()) {
+                visibles = visibles.filter(esClaseDelProfesionalActual);
+                // Fallback directo por IDs autorizados del profesor si no hubo coincidencia en JS
+                if (visibles.length === 0) {
+                    const teacherIds = Array.from(getProfesorIdsActuales());
+                    if (teacherIds.length > 0) {
+                        visibles = (clases || []).filter(c => teacherIds.includes(Number(c.profesor_id)));
+                        if (visibles.length === 0) {
+                            try {
+                                const { data: directTalleres } = await client
+                                    .from('clases')
+                                    .select('*, profesionales(*)')
+                                    .in('profesor_id', teacherIds)
+                                    .or('tipo_clase.eq.taller,tipo_clase.eq.especial,tipo_clase.eq.clase_especial,es_especial.eq.true')
+                                    .eq('activa', true)
+                                    .gte('fecha_inicio', now.toISOString())
+                                    .order('fecha_inicio');
+                                if (Array.isArray(directTalleres) && directTalleres.length > 0) {
+                                    visibles = directTalleres;
+                                }
+                            } catch (e) {
+                                console.warn('Error en fallback directo de talleres profesor:', e);
+                            }
+                        }
+                    }
+                }
+            }
+            let reservas = [];
+            const visibleIds = (visibles || []).map(c => c.id).filter(Boolean);
+            if (visibleIds.length > 0) {
+                let resQuery = client.from('reservas_yoga')
+                    .select('id, clase_id, user_id, estado')
+                    .eq('estado', 'confirmada')
+                    .in('clase_id', visibleIds);
+
+                if (!isAdmin && currentUser?.id) {
+                    resQuery = resQuery.eq('user_id', currentUser.id);
+                }
+
+                const reservasResult = await resQuery;
+                if (!reservasResult.error) reservas = reservasResult.data || [];
+                else console.error('Error cargando reservas especiales:', reservasResult.error);
+            }
+
+            const reservasMap = {};
+            reservas.filter(r => r.estado === 'confirmada').forEach(r => {
+                if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+                reservasMap[r.clase_id].push(r);
+            });
+            const ocupacionEspecialesMap = await obtenerOcupacionClasesMap(visibles.map(c => c.id));
+            visibles.forEach(c => {
+                const confirmadas = reservasMap[c.id] || [];
+                c.ocupadas = (ocupacionEspecialesMap && ocupacionEspecialesMap[c.id] != null)
+                    ? ocupacionEspecialesMap[c.id]
+                    : confirmadas.length;
+                c.miReserva = confirmadas.find(r => r.user_id === currentUser?.id) || null;
+            });
+            allTalleresCache = visibles;
+            renderizarEventosEspeciales();
+        }
+
         function switchEventosSubTab(subtab) {
             activeEventosSubTab = subtab;
             const btnTodos = document.getElementById('btn-subtab-eventos-todos');
@@ -10500,7 +10514,11 @@
             if (btnTodos) btnTodos.classList.toggle('active', subtab === 'todos');
             if (btnClases) btnClases.classList.toggle('active', subtab === 'clases_especiales');
             if (btnTalleres) btnTalleres.classList.toggle('active', subtab === 'talleres');
-            cargarClasesEspeciales();
+            if (Array.isArray(allTalleresCache) && allTalleresCache.length > 0) {
+                renderizarEventosEspeciales();
+            } else {
+                cargarClasesEspeciales();
+            }
         }
 
         async function comprarBonoEspecialStripe(e, monthStr = null, targetClaseId = null, options = {}) {
