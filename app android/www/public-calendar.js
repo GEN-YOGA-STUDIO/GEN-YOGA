@@ -643,6 +643,9 @@
     }
 
     function classMatchesFilters(item) {
+        if (state.classId && item.id === state.classId) {
+            return true;
+        }
         if (state.oferta) {
             const ofKey = state.oferta.toLowerCase().trim();
             if (['yoga', 'bienvenida', 'gratis', 'intro', 'introductoria'].includes(ofKey)) {
@@ -651,7 +654,11 @@
             }
         }
         if (state.style) {
-            if (state.style === 'sesion-introductoria') {
+            if (state.style === 'taller' || state.style === 'especial') {
+                if (item.classType !== 'taller' && item.classType !== 'especial' && item.classType !== 'clase_especial' && !item.isSpecial) {
+                    return false;
+                }
+            } else if (state.style === 'sesion-introductoria') {
                 const isIntro = item.style === 'sesion-introductoria' || String(item.name || '').toLowerCase().includes('introductoria') || String(item.name || '').toLowerCase().includes('abierta');
                 if (!isIntro) return false;
             } else if (state.style === 'power-vinyasa' || state.style === 'vinyasa') {
@@ -915,6 +922,13 @@
     }
 
     function ensureSelectedMobileDay(days, classes) {
+        if (state.classId) {
+            const targetItem = classes.find(item => item.id === state.classId);
+            if (targetItem && days.includes(targetItem.dateKey)) {
+                state.selectedDay = targetItem.dateKey;
+                return;
+            }
+        }
         if (days.includes(state.selectedDay)) return;
         const today = todayKeyMadrid();
         if (days.includes(today)) {
@@ -1505,7 +1519,7 @@
                         classes: data
                             .map(row => normalizeClassRow(row, true))
                             .filter(Boolean)
-                            .filter(c => c.classType === 'taller' || c.classType === 'especial' || c.classType === 'clase_especial')
+                            .filter(c => c.classType === 'taller' || c.classType === 'especial' || c.classType === 'clase_especial' || c.isSpecial)
                     };
                 }
 
@@ -1621,7 +1635,12 @@
         const classId = safePositiveInteger(url.searchParams.get('class') || url.searchParams.get('clase'));
         const teacher = normalizeTeacherParam(url.searchParams.get('teacher') || url.searchParams.get('profesional') || url.searchParams.get('profesor') || '');
         const rawStyle = url.searchParams.get('style') || url.searchParams.get('type') || url.searchParams.get('tipo') || url.searchParams.get('clase_tipo') || '';
-        const style = canonicalStyle(rawStyle);
+        let style = canonicalStyle(rawStyle);
+
+        if ((style === 'taller' || /taller|especial/i.test(rawStyle)) && !modeParam) {
+            state.mode = 'talleres';
+            style = '';
+        }
 
         state.weekStart = week ? mondayFor(week) : defaultWeekStart();
         if (state.weekStart < SEASON_START_WEEK) {
@@ -1692,7 +1711,17 @@
                 target = await findNextMatchingClass();
                 if (target && (state.classId || state.teacher || state.style)) state.classId = target.id;
             }
-            if (target) state.weekStart = mondayFor(target.dateKey);
+            if (target) {
+                state.weekStart = mondayFor(target.dateKey);
+                state.selectedDay = target.dateKey;
+                if (target.classType === 'taller' || target.classType === 'especial' || target.classType === 'clase_especial' || target.isSpecial) {
+                    if (state.mode !== 'consultas') {
+                        state.mode = 'talleres';
+                    }
+                } else if (target.classType === 'psicologia' || target.classType === 'nutricion' || target.classType === 'consulta' || target.classType === 'consulta_grupal') {
+                    state.mode = 'consultas';
+                }
+            }
             if (state.weekStart < SEASON_START_WEEK) state.weekStart = SEASON_START_WEEK;
         } catch (error) {
             console.warn('No se pudo resolver el enlace directo del calendario:', error?.message || error);
@@ -1798,14 +1827,21 @@
             state.teacher = normalizeTeacherParam(options.teacher || options.profesional || options.profesor);
         }
         if (Object.prototype.hasOwnProperty.call(options, 'style') || Object.prototype.hasOwnProperty.call(options, 'tipo') || Object.prototype.hasOwnProperty.call(options, 'type')) {
-            state.style = canonicalStyle(options.style || options.tipo || options.type);
-            // Una tarjeta de estilo es siempre contexto yoga: no heredar modo/profe
-            // de una apertura anterior (p. ej. consultas de Miriam).
+            const raw = options.style || options.tipo || options.type;
+            const parsed = canonicalStyle(raw);
             const hasMode = Object.prototype.hasOwnProperty.call(options, 'mode');
-            const hasTeacher = Object.prototype.hasOwnProperty.call(options, 'teacher') || Object.prototype.hasOwnProperty.call(options, 'profesional') || Object.prototype.hasOwnProperty.call(options, 'profesor');
-            if (!hasMode && !hasTeacher) {
-                state.mode = 'clases';
-                state.teacher = '';
+            if ((parsed === 'taller' || /taller|especial/i.test(String(raw))) && !hasMode) {
+                state.mode = 'talleres';
+                state.style = '';
+            } else {
+                state.style = parsed;
+                // Una tarjeta de estilo es siempre contexto yoga: no heredar modo/profe
+                // de una apertura anterior (p. ej. consultas de Miriam).
+                const hasTeacher = Object.prototype.hasOwnProperty.call(options, 'teacher') || Object.prototype.hasOwnProperty.call(options, 'profesional') || Object.prototype.hasOwnProperty.call(options, 'profesor');
+                if (!hasMode && !hasTeacher) {
+                    state.mode = 'clases';
+                    state.teacher = '';
+                }
             }
         }
         if (Object.prototype.hasOwnProperty.call(options, 'classId')) {
@@ -1838,8 +1874,10 @@
         updateUrl(wasOpen ? 'replace' : 'push');
         root.dispatchEvent(new CustomEvent('genyoga:calendar:open', { detail: { week: state.weekStart, mode: state.mode } }));
         await loadWeek();
-        el.panel.scrollTo({ top: 0, behavior: 'auto' });
-        el.close.focus();
+        if (!state.classId) {
+            el.panel.scrollTo({ top: 0, behavior: 'auto' });
+        }
+        el.close.focus({ preventScroll: true });
     }
 
     function hidePanel() {
@@ -2069,7 +2107,7 @@
             }
         });
         root.addEventListener('languageChanged', () => render());
-        root.addEventListener('popstate', () => {
+        const handleLocationChange = () => {
             if (root.location.hash === CALENDAR_HASH) {
                 parseUrlState();
                 if (!state.open) open({ historyMode: 'none' });
@@ -2080,7 +2118,9 @@
                 hidePanel();
                 parseUrlState();
             }
-        });
+        };
+        root.addEventListener('popstate', handleLocationChange);
+        root.addEventListener('hashchange', handleLocationChange);
         root.addEventListener('focus', () => {
             if (state.open) loadWeek({ silent: true });
         });

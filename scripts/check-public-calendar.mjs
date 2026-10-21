@@ -229,6 +229,8 @@ assert.match(teachersPage, /#calendario-publico/);
 assert.match(teachersPage, /getSlug/);
 assert.match(ratesPage, /selected-yoga-class-summary/);
 assert.match(ratesPage, /pending_booking_clase_id/);
+assert.match(ratesPage, /getCalendarioTallerUrl/);
+assert.doesNotMatch(ratesPage, /clases\.html\?style=taller/);
 assert.match(successPage, /preferred_guest_class_id/);
 assert.match(successPage, /\.eq\('activa',\s*true\)/);
 assert.match(profilePage, /tipo_clase_id:\s*tipoClaseId/);
