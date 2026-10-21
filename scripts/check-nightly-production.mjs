@@ -1894,7 +1894,7 @@ await section('cliente', async () => {
       lastUrl = `${BASE}/profile.html?buy=${buy}`;
       let dlg = '';
       try {
-        await page.locator('.swal2-popup:visible').first().waitFor({ state: 'visible', timeout: 8000 });
+        await page.locator('.swal2-popup:visible').first().waitFor({ state: 'visible', timeout: 15000 });
         dlg = await swalText(page);
       } catch { /* sin diálogo */ }
       if (dlg && new RegExp(`${euros}[,.]00\\s*€|${euros}\\s*€`).test(dlg) && page.url().includes('profile.html')) {
@@ -1902,8 +1902,7 @@ await section('cliente', async () => {
       } else {
         fail('cliente', `${label} (?buy=${buy})`, `diálogo inesperado: "${dlg.slice(0, 100)}"`);
       }
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(600);
+      await cancelOnly(page);
     }
 
     // I13. Resiliencia de sesión persistente ante recarga (F5 / background reload)

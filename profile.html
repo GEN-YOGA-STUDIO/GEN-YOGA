@@ -6770,9 +6770,53 @@
             }
         });
 
+        function procesarCompraParametroUrl() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const buyParam = urlParams.get('buy');
+                if (!buyParam) return;
+
+                if (buyParam === 'clase_suelta') {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    comprarClaseSuelta();
+                } else if (['pack_4', 'pack_6', 'pack_10'].includes(buyParam)) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    comprarPack(buyParam);
+                } else if (['promo_50_clase', 'promo_50', 'promo'].includes(buyParam)) {
+                    // Octubre 2026: la promoción del 50% (GENYOGA) está retirada.
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else if (buyParam === 'bono_ilimitado' || buyParam === 'bono_mensual') {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    comprarBonoMensual();
+                } else if (buyParam) {
+                    let loggedNow = false;
+                    try { loggedNow = !!(currentUser && currentUser.id); } catch (_) { loggedNow = false; }
+                    if (loggedNow) {
+                        const claseResume = safePositiveInteger(urlParams.get('clase')) || null;
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        const resumeKey = buyParam;
+                        setTimeout(() => {
+                            try {
+                                if (/taller|especial/i.test(resumeKey) && typeof iniciarCheckoutTallerStripe === 'function') {
+                                    iniciarCheckoutTallerStripe(resumeKey, /taller/i.test(resumeKey) ? 'Taller' : 'Clase Especial', undefined, claseResume);
+                                } else if (typeof iniciarCheckoutConsultaStripe === 'function') {
+                                    iniciarCheckoutConsultaStripe(resumeKey);
+                                }
+                            } catch (_) { /* las funciones informan con Swal */ }
+                        }, 500);
+                    }
+                }
+            } catch (e) {
+                console.warn('Error al procesar compra desde parámetro URL:', e);
+            }
+        }
+
         function initializeAuthenticatedApp(user) {
             const userId = user?.id;
             if (!userId) return Promise.resolve();
+            if (user) currentUser = user;
+
+            procesarCompraParametroUrl();
 
             if (initializedUserId === userId && initAppPromise) {
                 return initAppPromise;
@@ -7358,6 +7402,7 @@
             const appView = document.getElementById('app-view');
             if (authContainer) authContainer.classList.add('hidden');
             if (appView) appView.classList.remove('hidden');
+            procesarCompraParametroUrl();
 
             // Los selectores y listeners son persistentes durante toda la vida de la página.
             // Reutilizarlos evita instancias y envíos duplicados tras TOKEN_REFRESHED/USER_UPDATED.
@@ -8698,41 +8743,7 @@
             await cargarConfiguracionesApp();
 
             // Check if the user reached this page with a query parameter to purchase a class or bono
-            const urlParams = new URLSearchParams(window.location.search);
-            const buyParam = urlParams.get('buy');
-            if (buyParam === 'clase_suelta') {
-                window.history.replaceState({}, document.title, window.location.pathname);
-                comprarClaseSuelta();
-            } else if (['pack_4', 'pack_6', 'pack_10'].includes(buyParam)) {
-                window.history.replaceState({}, document.title, window.location.pathname);
-                comprarPack(buyParam);
-            } else if (['promo_50_clase', 'promo_50', 'promo'].includes(buyParam)) {
-                // Octubre 2026: la promoción del 50% (GENYOGA) está retirada.
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } else if (buyParam === 'bono_ilimitado' || buyParam === 'bono_mensual') {
-                window.history.replaceState({}, document.title, window.location.pathname);
-                comprarBonoMensual();
-            } else if (buyParam) {
-                // BUG-15: retomar compra de consulta/taller tras el login. Sin
-                // sesión se conserva ?buy= (el login recarga y se reintenta
-                // ya autenticado); con sesión se retoma la compra pedida.
-                let loggedNow = false;
-                try { loggedNow = !!(currentUser && currentUser.id); } catch (_) { loggedNow = false; }
-                if (loggedNow) {
-                    const claseResume = safePositiveInteger(urlParams.get('clase')) || null;
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    const resumeKey = buyParam;
-                    setTimeout(() => {
-                        try {
-                            if (/taller|especial/i.test(resumeKey) && typeof iniciarCheckoutTallerStripe === 'function') {
-                                iniciarCheckoutTallerStripe(resumeKey, /taller/i.test(resumeKey) ? 'Taller' : 'Clase Especial', undefined, claseResume);
-                            } else if (typeof iniciarCheckoutConsultaStripe === 'function') {
-                                iniciarCheckoutConsultaStripe(resumeKey);
-                            }
-                        } catch (_) { /* las funciones informan con Swal */ }
-                    }, 900);
-                }
-            }
+            procesarCompraParametroUrl();
 
             // Comprobar si el usuario llega con una oferta para canjear (v17.14)
             const actionParam = (urlParams.get('action') || urlParams.get('accion') || '').toLowerCase().trim();
