@@ -1932,8 +1932,9 @@
         }
 
         if (item.classType === 'taller' || item.classType === 'especial' || item.classType === 'clase_especial') {
+            try { localStorage.setItem('pending_booking_clase_id', String(item.id)); } catch (_) {}
             const params = new URLSearchParams({
-                view: 'horarios',
+                view: 'especiales',
                 clase: String(item.id),
                 from: 'calendario'
             });

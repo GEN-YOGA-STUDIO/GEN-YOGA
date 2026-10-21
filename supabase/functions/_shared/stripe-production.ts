@@ -726,16 +726,22 @@ export async function bookPaidTallerClass(
   const { userId, purchaseType, paymentStatus, claseId } = args
   if (!userId || paymentStatus !== 'paid' || !claseId) return 'skipped'
   const t = String(purchaseType || '').toLowerCase()
-  if (!(t === 'taller' || t.includes('taller'))) return 'skipped'
+  const isTaller = t === 'taller' || t.includes('taller')
+  const isEspecial = t === 'clase_especial' || t.includes('especial')
+  if (!isTaller && !isEspecial) return 'skipped'
   try {
     const { data: clase } = await supabase
       .from('clases')
-      .select('id,fecha_inicio,capacidad_max,tipo_clase,activa')
+      .select('id,fecha_inicio,capacidad_max,tipo_clase,activa,es_especial')
       .eq('id', claseId)
       .maybeSingle()
     if (!clase || (clase as { activa?: boolean }).activa === false) return 'skipped'
     if (!clase.fecha_inicio || new Date(clase.fecha_inicio).getTime() <= Date.now()) return 'skipped'
-    if (String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase() !== 'taller') return 'skipped'
+    const tipo = String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase()
+    const esEsp = (clase as { es_especial?: boolean }).es_especial === true || tipo === 'clase_especial' || tipo === 'especial'
+    if (isTaller && tipo !== 'taller') return 'skipped'
+    if (isEspecial && !esEsp) return 'skipped'
+
     const { data: existing } = await supabase
       .from('reservas_yoga')
       .select('id')
@@ -744,6 +750,7 @@ export async function bookPaidTallerClass(
       .eq('estado', 'confirmada')
       .limit(1)
     if (existing && (existing as unknown[]).length > 0) return 'skipped'
+
     const { data: occ } = await supabase
       .from('reservas_yoga')
       .select('id')
@@ -751,11 +758,35 @@ export async function bookPaidTallerClass(
       .eq('estado', 'confirmada')
     const cap = Number((clase as { capacidad_max?: number }).capacidad_max) || 10
     if (((occ as unknown[]) || []).length >= cap) return 'skipped'
-    const { error } = await supabase
-      .from('reservas_yoga')
-      .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada' })
-    if (error) return 'failed'
-    return 'booked'
+
+    if (isEspecial) {
+      const classMonth = new Date(clase.fecha_inicio).toISOString().slice(0, 7) + '-01'
+      const { data: bEsp } = await supabase
+        .from('bonos_clases_especiales')
+        .select('id, saldo')
+        .eq('user_id', userId)
+        .eq('mes', classMonth)
+        .gt('saldo', 0)
+        .order('id', { ascending: true })
+        .limit(1)
+      if (bEsp && bEsp.length > 0) {
+        await supabase
+          .from('bonos_clases_especiales')
+          .update({ saldo: Math.max(0, (Number(bEsp[0].saldo) || 1) - 1), updated_at: new Date().toISOString() })
+          .eq('id', bEsp[0].id)
+      }
+      const { error } = await supabase
+        .from('reservas_yoga')
+        .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada', bono_descontado: true, tipo_reserva: 'clase_especial' })
+      if (error) return 'failed'
+      return 'booked'
+    } else {
+      const { error } = await supabase
+        .from('reservas_yoga')
+        .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada' })
+      if (error) return 'failed'
+      return 'booked'
+    }
   } catch (_) {
     return 'failed'
   }

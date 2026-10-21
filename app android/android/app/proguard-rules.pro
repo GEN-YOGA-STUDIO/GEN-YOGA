@@ -1,21 +1,28 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard & R8 Rules for Capacitor, WebViews, and AndroidX
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve Capacitor Bridge and Plugin System
+-keep class com.getcapacitor.** { *; }
+-keep class * extends com.getcapacitor.Plugin { *; }
+-keepclassmembers class * {
+    @com.getcapacitor.PluginMethod public *;
+    @android.webkit.JavascriptInterface public *;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Ignore warnings for optional Cordova classes if not present
+-dontwarn org.apache.cordova.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Preserve WebKit interface classes
+-keepclassmembers class * extends android.webkit.WebViewClient {
+    public void *(android.webkit.WebView, java.lang.String);
+    public void *(android.webkit.WebView, java.lang.String, android.graphics.Bitmap);
+}
+-keepclassmembers class * extends android.webkit.WebChromeClient {
+    public void *(android.webkit.WebView, java.lang.String);
+}
+
+# Preserve AndroidX Splash Screen & Core
+-keep class androidx.core.splashscreen.** { *; }
+
+# Preserve Line Numbers and Annotations
+-keepattributes SourceFile,LineNumberTable,*Annotation*
+-renamesourcefileattribute SourceFile

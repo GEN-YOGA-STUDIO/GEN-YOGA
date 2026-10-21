@@ -22,7 +22,6 @@ android {
             // o variables de entorno GENYOGA_STORE_FILE / GENYOGA_STORE_PASSWORD / GENYOGA_KEY_ALIAS / GENYOGA_KEY_PASSWORD.
             def props = new Properties()
             def localProps = file('../local.properties')
-            // ../local.properties es el del proyecto android; app/local.properties como alternativa.
             def appLocalProps = file('local.properties')
             if (localProps.exists()) { localProps.withInputStream { props.load(it) } }
             if (appLocalProps.exists()) { appLocalProps.withInputStream { props.load(it) } }
@@ -36,17 +35,23 @@ android {
                 def f = file(p.toString())
                 return f.isAbsolute() ? f : file(p.toString())
             }
-            storeFile relOrAbs(envOrProp('GENYOGA_STORE_FILE', 'genyoga.storeFile'))
-            storePassword envOrProp('GENYOGA_STORE_PASSWORD', 'genyoga.storePassword')
-            keyAlias envOrProp('GENYOGA_KEY_ALIAS', 'genyoga.keyAlias') ?: 'yoga-key'
-            keyPassword envOrProp('GENYOGA_KEY_PASSWORD', 'genyoga.keyPassword')
+            def storePass = envOrProp('GENYOGA_STORE_PASSWORD', 'genyoga.storePassword')
+            if (storePass != '') {
+                storeFile relOrAbs(envOrProp('GENYOGA_STORE_FILE', 'genyoga.storeFile'))
+                storePassword storePass
+                keyAlias envOrProp('GENYOGA_KEY_ALIAS', 'genyoga.keyAlias') ?: 'yoga-key'
+                keyPassword envOrProp('GENYOGA_KEY_PASSWORD', 'genyoga.keyPassword')
+            } else {
+                initWith debug
+            }
         }
     }
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

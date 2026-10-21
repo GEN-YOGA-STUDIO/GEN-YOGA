@@ -252,6 +252,15 @@ serve(async (req: Request) => {
     const payload: NotificationPayload = await req.json()
     const { evento, destinatario, profesional_id } = payload
 
+    if (evento === 'creacion_clase') {
+      // Política de estudio: Los huecos nuevos creados no se notifican por email.
+      // Solo se notifican reservas y cancelaciones de alumnos.
+      return new Response(JSON.stringify({ ok: true, skipped: true, motivo: 'creacion_clase_desactivada' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     if (!destinatario || !destinatario.includes('@')) {
       return new Response(JSON.stringify({ ok: false, error: 'Email de destinatario no válido' }), {
         status: 400,

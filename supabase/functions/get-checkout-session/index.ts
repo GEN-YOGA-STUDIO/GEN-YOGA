@@ -139,6 +139,7 @@ serve(async (req) => {
       isGuestWorkshop,
       purchaseType: purchase.purchaseType,
       membershipMonth: purchase.membershipMonth,
+      claseId: metadataClaseId(session.metadata),
       email: isGuest ? (session.customer_details?.email || '') : '',
       phone: isGuest ? (session.customer_details?.phone || '') : '',
       nombre: isGuest ? (nameParts[0] || '') : '',

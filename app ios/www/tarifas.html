@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="17.12">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.12">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.12">
+    <meta name="application-version" content="17.13">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.13">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.13">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,13 +25,13 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=17.12">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=17.13">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=17.12"></script>
-    <script src="capacitor-bridge.js?v=17.12" defer></script>
+    <script src="i18n.js?v=17.13"></script>
+    <script src="capacitor-bridge.js?v=17.13" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -659,7 +659,7 @@
                                 <div class="w-12 h-12 rounded-2xl bg-[#6a6540]/10 flex items-center justify-center text-[#6a6540] shadow-inner">
                                     <i class="ph-fill ph-sparkle text-2xl"></i>
                                 </div>
-                                <span class="text-[10px] font-bold text-[#6a6540] bg-[#6a6540]/10 border border-[#6a6540]/20 px-3 py-1 rounded-full uppercase tracking-wider mr-24">Viernes 9 Oct · 19:00 a 20:15</span>
+                                <span class="text-[10px] font-bold text-[#6a6540] bg-[#6a6540]/10 border border-[#6a6540]/20 px-3 py-1 rounded-full uppercase tracking-wider mr-24">Viernes 23 Oct · 19:00 a 20:15</span>
                             </div>
                             <h3 class="text-2xl font-serif text-cocoa font-bold mb-1">Flow & Meditación</h3>
                             <div class="flex items-baseline gap-2 mb-3">
@@ -678,7 +678,7 @@
                             </ul>
                         </div>
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
-                            <button onclick="iniciarCheckoutTallerStripe('clase_especial', 'Clase Especial: Flow & Meditación', '20', 7855, { fecha: '2026-10-09', hora: '19:00' })"
+                            <button onclick="iniciarCheckoutTallerStripe('clase_especial', 'Clase Especial: Flow & Meditación', '20', 7856, { fecha: '2026-10-23', hora: '19:00' })"
                                 class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
                                 Reservar Plaza (20 €)
                             </button>
@@ -772,12 +772,12 @@
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
                 <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v17.12 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-60 text-[10px]">v17.13 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '17.12';
+        const APP_VERSION = '17.13';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -1536,6 +1536,9 @@
             let userId = session?.user?.id || null;
 
             if (lookupKey === 'clase_especial') {
+                if (claseId) {
+                    safeSetItem('pending_booking_clase_id', String(claseId));
+                }
                 if (!userId) {
                     const result = await Swal.fire({
                         title: title || 'Clase Especial',
@@ -1702,6 +1705,9 @@
             const isClaseEspecial = options?.isTaller === false || lookupKey === 'clase_especial';
 
             if (isClaseEspecial) {
+                if (claseId) {
+                    safeSetItem('pending_booking_clase_id', String(claseId));
+                }
                 const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
                 const hasSession = Boolean(sessionRes?.data?.session?.user);
 
