@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.18.0 — 22 oct 2026 · Desarrollo
+
+- **Descripción:** Clase suelta (1 clase, 15 EUR) disponible en el modal de compra de packs de profile (ámbito: bonos)
+- **Validación:** npm test
+- **Tag:** `v17.18`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.18.0.md`
+
 ## v17.17.0 — 22 oct 2026 · Desarrollo
 
 - **Descripción:** Visibilidad de la caducidad de cada bono: desglose por packs con fecha de caducidad para alumno y admin, desplegables y consumo FEFO (ámbito: bonos)
