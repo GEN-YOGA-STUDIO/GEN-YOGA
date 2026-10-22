@@ -43,4 +43,28 @@ union all
 select '3. Coherencia saldo', 3, detalle from coherencia
 union all
 select '4. Ahora Madrid', 4, to_char(now() at time zone 'Europe/Madrid', 'DD/MM/YYYY HH24:MI')
+union all
+-- ¿La RPC de ajuste de saldos crea packs 'manual_admin' con caducidad de 60 días? (migración 202610140001)
+select '5. RPC ajustar_saldo crea packs 60 dias', 5,
+  case
+    when exists (
+      select 1 from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where p.proname = 'ajustar_saldo_usuario' and n.nspname = 'public'
+        and pg_get_functiondef(p.oid) like '%manual_admin%'
+        and pg_get_functiondef(p.oid) like '%60 days%'
+    ) then 'OK - los bonos dados por admin caducan a los 60 dias'
+    else 'FALTA - ejecutar migracion 202610140001_fix_sincronizacion_packs_ajustar_saldo.sql'
+  end
+union all
+-- Inventario de packs 'manual_admin' vigentes (bonos dados por el centro)
+select '6. Bonos de admin vigentes', 6,
+  coalesce(string_agg(
+    pr.email || ' | ' || ccp.credits_remaining || ' bonos | otorgado ' ||
+    to_char(ccp.purchased_at at time zone 'Europe/Madrid', 'DD/MM/YYYY') ||
+    ' | caduca ' || to_char(ccp.expires_at at time zone 'Europe/Madrid', 'DD/MM/YYYY'),
+    '; ' order by pr.email), 'ninguno')
+from public.class_credit_packs ccp
+join public.profiles pr on pr.id = ccp.user_id
+where ccp.pack_type = 'manual_admin' and ccp.credits_remaining > 0 and ccp.expires_at > now()
 order by orden, apartado;
