@@ -1,6 +1,6 @@
-# Diseño de soluciones — Auditoría QA genyoga.studio → v17.21.1
+# Diseño de soluciones — Auditoría QA genyoga.studio → v17.22.0
 
-> **Clasificación:** incidencia (fix). **Versión objetivo:** `17.21.1` (regla del repo en `registrar-cambio.mjs`: una **incidencia** sube el 3er número; el minor solo sube en `desarrollo`, como `v17.6.5` o `v17.4.1`).
+> **Clasificación:** incidencia (fix). **Versión objetivo:** `17.22.0` (regla real del repo: `registrar-cambio.mjs:99-100` fija **incondicionalmente** `minor+1` → `x.Y+1.0`. Las ramas de `patch+1` de la cabecera del script solo viven dentro del bloque interactivo `if (!tipo && rl)` y **nunca se alcanzan** pasando el tipo como argumento, pese a lo que promete su documentación).
 > **Base:** v17.21.0 (producción = repo local). **Despliegue:** cert primero (`npm run cambio` → push → workflow `deploy-cert`).
 > Todos los fallos se **reprodujeron localmente** contra el mismo código que está en producción antes de diseñarlos.
 > Tres hallazgos del informe original **no se reprodujeron** y se documentan abajo como "correcciones del informe".

@@ -1106,17 +1106,28 @@
         el.mobile.hidden = true;
     }
 
+    function syncModeTabState() {
+        const tabs = [
+            [document.getElementById('calendar-mode-global') || document.getElementById('calendar-mode-todo'), 'todo'],
+            [document.getElementById('calendar-mode-clases'), 'clases'],
+            [document.getElementById('calendar-mode-consultas'), 'consultas'],
+            [document.getElementById('calendar-mode-talleres'), 'talleres'],
+        ];
+        tabs.forEach(([btn, mode]) => {
+            if (!btn) return;
+            const selected = mode === 'todo'
+                ? (state.mode === 'todo' || state.mode === 'global')
+                : state.mode === mode;
+            btn.classList.toggle('active', selected);
+            btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+            btn.tabIndex = selected ? 0 : -1;
+        });
+    }
+
     function render() {
         if (!state.initialized) return;
         syncStaticCopy();
-        const btnGlobal = document.getElementById('calendar-mode-global') || document.getElementById('calendar-mode-todo');
-        const btnClases = document.getElementById('calendar-mode-clases');
-        const btnConsultas = document.getElementById('calendar-mode-consultas');
-        const btnTalleres = document.getElementById('calendar-mode-talleres');
-        if (btnGlobal) btnGlobal.classList.toggle('active', state.mode === 'todo' || state.mode === 'global');
-        if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
-        if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
-        if (btnTalleres) btnTalleres.classList.toggle('active', state.mode === 'talleres');
+        syncModeTabState();
         el.weekRange.textContent = weekRangeLabel(state.weekStart);
         if (el.prevWeek) {
             const atSeasonStart = state.weekStart <= SEASON_START_WEEK;
@@ -1872,6 +1883,7 @@
         state.open = true;
         state.lastFocus = wasOpen ? state.lastFocus : document.activeElement;
         el.panel.hidden = false;
+        el.panel.removeAttribute('aria-hidden');
         document.body.classList.add('gy-calendar-open');
         setBackgroundInert(true);
         startPolling();
@@ -1887,6 +1899,7 @@
 
     function hidePanel() {
         el.panel.hidden = true;
+        el.panel.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('gy-calendar-open');
         setBackgroundInert(false);
         stopPolling();
@@ -2042,16 +2055,23 @@
                     state.style = '';
                     state.teacher = '';
                     state.classId = null;
-                    const btnGlobal = document.getElementById('calendar-mode-global') || document.getElementById('calendar-mode-todo');
-                    const btnClases = document.getElementById('calendar-mode-clases');
-                    const btnConsultas = document.getElementById('calendar-mode-consultas');
-                    const btnTalleres = document.getElementById('calendar-mode-talleres');
-                    if (btnGlobal) btnGlobal.classList.toggle('active', state.mode === 'todo' || state.mode === 'global');
-                    if (btnClases) btnClases.classList.toggle('active', state.mode === 'clases');
-                    if (btnConsultas) btnConsultas.classList.toggle('active', state.mode === 'consultas');
-                    if (btnTalleres) btnTalleres.classList.toggle('active', state.mode === 'talleres');
+                    syncModeTabState();
                     loadWeek();
                 }
+            });
+            modeToggle.addEventListener('keydown', event => {
+                const tabs = [...modeToggle.querySelectorAll('[role="tab"]')];
+                const currentIndex = tabs.indexOf(document.activeElement);
+                if (currentIndex < 0) return;
+                let nextIndex = -1;
+                if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+                else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                else if (event.key === 'Home') nextIndex = 0;
+                else if (event.key === 'End') nextIndex = tabs.length - 1;
+                if (nextIndex < 0) return;
+                event.preventDefault();
+                tabs[nextIndex].focus();
+                tabs[nextIndex].click();
             });
         }
 

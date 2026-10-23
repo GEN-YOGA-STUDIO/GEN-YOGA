@@ -66,6 +66,7 @@ const pages = [
   { file: 'politica-privacidad.html', selector: '#privacy-main-title', extra: null },
   { file: 'success.html', selector: '#countdown', extra: null },
   { file: 'cancel.html', selector: '#countdown-dynamic', extra: null },
+  { file: '404.html', selector: 'h1[data-i18n="nf_title"]', extra: 'a[data-i18n="nf_btn_home"]' },
 ];
 
 const browser = await chromium.launch();
@@ -113,4 +114,4 @@ if (errors.length > 0) {
   console.error(`⛔ check-runtime: ${errors.length} fallo(s) bloqueante(s).`);
   process.exit(1);
 }
-console.log('✅ check-runtime: las 8 páginas cargan sin errores JS en móvil.');
+console.log('✅ check-runtime: las 9 páginas cargan sin errores JS en móvil.');

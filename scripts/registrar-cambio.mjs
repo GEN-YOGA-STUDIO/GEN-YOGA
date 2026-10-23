@@ -20,7 +20,7 @@
  * Qué hace, en orden:
  *   1. Clasifica el cambio: MAYOR (desarrollo) → minor+1 (17.1.0 → 17.2.0)
  *                           MENOR (incidencia) → patch+1 (17.1.0 → 17.1.1)
- *   2. bump-version (8 HTML, package.json raíz+apps, Gradle, Xcode, Edge Function)
+ *   2. bump-version (9 HTML, package.json raíz+apps, Gradle, Xcode, Edge Function)
  *   3. Tailwind + sync_apps.py (raíz → 'ultima version' → bundles de las apps)
  *   4. cap sync (solo desarrollo; si falla, aviso — lo decide luego check:links)
  *   5. Entrada en CAMBIOS.md (fecha, versión, tipo, descripción, tag)
@@ -96,12 +96,14 @@ const [maj, min, pat] = pkg.version.split('.').map(Number);
 const patch = pat || 0;
 
 let objetivo = null;
-// Regla de versionado de GEN Yoga: subir solo el segundo número por miniversión (x.Y.0) y no tocar nunca el tercero.
+// Regla de versionado de GEN Yoga:
+//   desarrollo (mayor)  → minor+1 y patch a 0 (17.22.0 → 17.23.0)
+//   incidencia (menor)  → patch+1, sin tocar major/minor (17.22.0 → 17.22.1)
 objetivo = `${maj}.${min + 1}.0`;
 
 const etiquetaDe = (v) => {
-  const [a, b] = v.split('.').map(Number);
-  return `v${a}.${b}`;
+  const [a, b, c] = v.split('.').map(Number);
+  return `v${a}.${b}${c ? `.${c}` : ''}`;
 };
 
 const run = (cmd, extraEnv = {}, label = null) => {
@@ -148,9 +150,9 @@ if (!tipo && rl) {
   console.log('  2) MENOR  (incidencia)  → bug, error en producción, arreglo puntual');
   const r = (await preguntar('\nResponde 1/2, "desarrollo"/"incidencia" o "mayor"/"menor": ')).toLowerCase();
   tipo = ALIAS[r] || (r === '1' ? 'desarrollo' : r === '2' ? 'incidencia' : null);
-  if (tipo === 'desarrollo') objetivo = `${maj}.${min + 1}.0`;
-  if (tipo === 'incidencia') objetivo = `${maj}.${min}.${patch + 1}`;
 }
+if (tipo === 'desarrollo') objetivo = `${maj}.${min + 1}.0`;
+if (tipo === 'incidencia') objetivo = `${maj}.${min}.${patch + 1}`;
 if (!tipo) {
   console.error('\n❌ Falta el tipo de cambio. Uso: npm run cambio -- <desarrollo|incidencia> "<descripción>" [--scope módulo]');
   console.error('   (sin argumentos, el comando pregunta por teclado)');
@@ -409,7 +411,7 @@ ${tipo === 'desarrollo' && !noApps ? '| apps | ⏳ disparadas en CI | `deploy-io
 ### Checklist de validación en cert
 
 - [ ] la web abre en la URL de cert sin errores de consola
-- [ ] navegación entre las 8 páginas e idioma ES/EN
+- [ ] navegación entre las 9 páginas e idioma ES/EN
 - [ ] login / registro con datos de prueba (Supabase de cert)
 - [ ] el flujo de compra no toca Stripe LIVE
 - [ ] \`npm test\` en verde en local

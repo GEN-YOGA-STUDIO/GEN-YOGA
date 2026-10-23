@@ -81,15 +81,31 @@ const usarUltima = await readdir(fuente).then(() => true).catch(() => false);
 const origen = usarUltima ? fuente : root;
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 
+const PAGINAS_ESPERADAS = [
+  '404.html',
+  'cancel.html',
+  'clases.html',
+  'index.html',
+  'maestros.html',
+  'politica-privacidad.html',
+  'profile.html',
+  'success.html',
+  'tarifas.html',
+];
+
 const entradas = await readdir(origen, { withFileTypes: true });
-const htmls = entradas.filter((e) => e.isFile() && e.name.endsWith('.html')).map((e) => e.name);
+const htmls = entradas.filter((e) => e.isFile() && e.name.endsWith('.html')).map((e) => e.name).sort();
 const jsCssXml = entradas
   .filter((e) => e.isFile() && /\.(js|css|xml)$/.test(e.name))
   .map((e) => e.name);
 const dirs = entradas.filter((e) => e.isDirectory() && ['img', 'fonts', '.well-known'].includes(e.name)).map((e) => e.name);
 
-if (htmls.length !== 8) {
-  console.error(`❌ Se esperaban 8 páginas HTML en ${origen} y hay ${htmls.length}: aborto.`);
+const faltan = PAGINAS_ESPERADAS.filter((name) => !htmls.includes(name));
+const sobran = htmls.filter((name) => !PAGINAS_ESPERADAS.includes(name));
+if (faltan.length || sobran.length) {
+  console.error(`❌ El artefacto de cert debe tener exactamente ${PAGINAS_ESPERADAS.length} páginas HTML en ${origen}.`);
+  if (faltan.length) console.error(`   Faltan: ${faltan.join(', ')}`);
+  if (sobran.length) console.error(`   Sobran: ${sobran.join(', ')}`);
   process.exit(1);
 }
 

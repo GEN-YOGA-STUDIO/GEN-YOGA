@@ -32,7 +32,7 @@ const pages = [
   'profile.html', 'politica-privacidad.html', 'success.html', 'cancel.html',
 ];
 
-console.log('\n--- 2. Versión visual coherente en las 8 páginas ---');
+console.log('\n--- 2. Versión visual coherente en las 9 páginas ---');
 for (const page of pages) {
   const source = await read(page);
   const pinned = [...source.matchAll(/\?v=(\d+\.\d+)/g)].map((m) => m[1]);

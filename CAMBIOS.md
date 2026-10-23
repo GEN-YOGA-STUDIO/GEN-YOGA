@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.22.1 — 23 oct 2026 · Incidencia
+
+- **Descripción:** QA exhaustiva: i18n completa de success y calendario, accesibilidad de pestañas y modal, talleres dinamicos sin datos caducados, verificaciones de 9 paginas y versionado real de incidencias (ámbito: qa)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.22.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.22.1.md`
+
 ## v17.22.0 — 23 oct 2026 · Incidencia
 
 - **Descripción:** Auditoria QA completa de genyoga.studio: contraste WCAG AA, targets <24px, landmarks y h1, metas SEO, i18n ES/EN, fechas caducadas y xlsx bajo demanda; anadidos 404.html, favicon.ico y manifest.json (ámbito: qa)

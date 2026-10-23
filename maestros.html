@@ -977,10 +977,10 @@
         </script>
         <link rel="stylesheet" href="tailwind-compiled.css?v=17.22" />
     </head>
-    <body class="subpixel-antialiased min-h-screen w-full overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
+    <body data-page-title-key="page_title_maestros" class="subpixel-antialiased min-h-screen w-full overflow-x-hidden bg-[#f8f6f2] font-sans selection:bg-[#D85A38] selection:text-white">
         <main>
         <section class="teachers-hero" aria-labelledby="teachers-hero-title">
-            <a class="teachers-hero__home" href="index.html" aria-label="Volver a la página de inicio">
+            <a class="teachers-hero__home" href="index.html" aria-label="Volver a la página de inicio" data-i18n-aria-label="teachers_aria_home">
                 <i class="ph-bold ph-arrow-left" aria-hidden="true"></i>
                 <span data-i18n="btn_back_home">Inicio</span>
             </a>
@@ -1002,13 +1002,13 @@
         </section>
 
 
-        <section id="maestros-grid-section" class="teachers-gallery" aria-label="Listado de maestros">
+        <section id="maestros-grid-section" class="teachers-gallery" aria-label="Listado de maestros" data-i18n-aria-label="teachers_aria_list">
             <a href="index.html" class="teachers-gallery__home">
                 <i class="ph-bold ph-arrow-left" aria-hidden="true"></i>
                 <span data-i18n="btn_back_home">INICIO</span>
             </a>
 
-            <div class="teachers-gallery__filters" role="group" aria-label="Filtrar maestros por servicio">
+            <div class="teachers-gallery__filters" role="group" aria-label="Filtrar maestros por servicio" data-i18n-aria-label="teachers_aria_filter">
                 <button id="btn-filtro-prof-todos" type="button" onclick="filtrarProfesionalesLanding('todos')" class="teacher-filter teacher-filter--todos is-active" data-i18n="btn_prof_all">TODOS</button>
                 <button id="btn-filtro-prof-yoga" type="button" onclick="filtrarProfesionalesLanding('yoga')" class="teacher-filter teacher-filter--clases" data-i18n="rates_tab_yoga">CLASES</button>
                 <button id="btn-filtro-prof-psicologia" type="button" onclick="filtrarProfesionalesLanding('psicologia')" class="teacher-filter teacher-filter--consultas" data-i18n="rates_tab_psy">CONSULTAS</button>
@@ -1048,7 +1048,7 @@
         <!-- ========================================== -->
         <div id="teacher-modal-overlay" class="teacher-modal-overlay is-hidden" aria-hidden="true" onclick="handleTeacherModalBackdrop(event)">
             <article class="teacher-modal" role="dialog" aria-modal="true" aria-labelledby="teacher-modal-name">
-                <button type="button" class="teacher-modal__close" aria-label="Cerrar ficha del maestro" onclick="closeTeacherModal()">
+                <button type="button" class="teacher-modal__close" aria-label="Cerrar ficha del maestro" data-i18n-aria-label="teachers_modal_close" onclick="closeTeacherModal()">
                     <i class="ph-bold ph-x" aria-hidden="true"></i>
                 </button>
 
@@ -1473,28 +1473,29 @@
             allProfesionalesLanding = translatedProfs.map(p => {
                 const emailLower = (p.email || '').toLowerCase();
                 const nomLower = (p.nombre || '').toLowerCase();
+                const isEnglish = (window.currentLang || document.documentElement.lang) === 'en';
 
                 const updated = { ...p };
                 if (emailLower.includes('angel') || nomLower.includes('ángel') || nomLower.includes('angel')) {
                     updated.nombre = "ÁNGEL JAVIER";
                     updated.foto_cutout = 'img/maestro-angel-recortado.webp';
-                    updated.especialidad = 'Yoga Alineación & Yoga para Todos | clases';
+                    if (!isEnglish) updated.especialidad = 'Yoga Alineación & Yoga para Todos | clases';
                 } else if (emailLower.includes('miriam') || emailLower.includes('respira') || nomLower.includes('miriam')) {
                     updated.nombre = "MIRIAM";
                     updated.foto_cutout = 'img/maestra-miriam-recortada.webp';
-                    updated.especialidad = 'Psicoterapia, Grupos y Talleres | consultas,talleres';
+                    if (!isEnglish) updated.especialidad = 'Psicoterapia, Grupos y Talleres | consultas,talleres';
                 } else if (emailLower.includes('silvia') || emailLower.includes('sil-hada') || nomLower.includes('silvia')) {
                     updated.nombre = "SILVIA";
                     updated.foto_cutout = 'img/maestra-silvia-recortada.webp';
-                    updated.especialidad = 'Hatha & Iyengar Yoga, Ayurveda | clases,consultas';
+                    if (!isEnglish) updated.especialidad = 'Hatha & Iyengar Yoga, Ayurveda | clases,consultas';
                 } else if (emailLower.includes('isabel') || emailLower.includes('isarodriguez') || nomLower.includes('isabel')) {
                     updated.nombre = "ISABEL";
                     updated.foto_cutout = 'img/maestra-isabel-recortada.webp';
-                    updated.especialidad = 'Psiconeuroinmunología Clínica (PNI) | consultas';
+                    if (!isEnglish) updated.especialidad = 'Psiconeuroinmunología Clínica (PNI) | consultas';
                 } else if (emailLower.includes('yanira') || nomLower.includes('yanira')) {
                     updated.nombre = "YANIRA";
                     updated.foto_cutout = 'img/maestra-yanira-recortada.webp';
-                    updated.especialidad = 'Power Vinyasa & Yoga Restaurativo | clases,talleres';
+                    if (!isEnglish) updated.especialidad = 'Power Vinyasa & Yoga Restaurativo | clases,talleres';
                 }
                 return updated;
             });

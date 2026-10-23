@@ -739,6 +739,7 @@
 </head>
 
 <body
+    data-page-title-key="page_title_index"
     class="subpixel-antialiased min-h-screen w-full overflow-x-hidden relative selection:bg-sand selection:text-cocoa font-sans lg:h-screen lg:overflow-hidden">
     <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
     <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]">
@@ -1362,6 +1363,20 @@
         // --- QA: accesibilidad del modal de bienvenida ------------------------------
         let flashModalLastFocus = null;
         let flashModalTrapHandler = null;
+        let flashModalInertSiblings = [];
+
+        function setFlashModalBackgroundInert(enabled) {
+            if (enabled) {
+                const modal = document.getElementById('flash-welcome-modal');
+                if (!modal) return;
+                flashModalInertSiblings = [...document.body.children]
+                    .filter(node => node !== modal && node instanceof HTMLElement && !node.hasAttribute('inert'));
+                flashModalInertSiblings.forEach(node => node.setAttribute('inert', ''));
+            } else {
+                flashModalInertSiblings.forEach(node => node.removeAttribute('inert'));
+                flashModalInertSiblings = [];
+            }
+        }
 
         function flashModalIsOpen() {
             const modal = document.getElementById('flash-welcome-modal');
@@ -1407,6 +1422,7 @@
             flashModalLastFocus = document.activeElement;
             modal.removeAttribute('inert');
             modal.removeAttribute('aria-hidden');
+            setFlashModalBackgroundInert(true);
 
             modal.classList.remove('opacity-0', 'pointer-events-none');
             modal.classList.add('opacity-100', 'pointer-events-auto');
@@ -1440,6 +1456,7 @@
             // QA: retirar el diálogo del árbol de accesibilidad y devolver el foco al disparador
             modal.setAttribute('inert', '');
             modal.setAttribute('aria-hidden', 'true');
+            setFlashModalBackgroundInert(false);
             if (flashModalTrapHandler) {
                 document.removeEventListener('keydown', flashModalTrapHandler, true);
                 flashModalTrapHandler = null;
