@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.22.3 — 23 oct 2026 · Incidencia
+
+- **Descripción:** Elimina la opción duplicada «Clases completas» del filtro del perfil y completa las traducciones EN del área de cliente (saldos, packs y caducidades, bonos especial e ilimitado, estados vacíos y pie de página). (ámbito: perfil)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.22.3`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.22.3.md`
+
 ## v17.22.2 — 23 oct 2026 · Incidencia
 
 - **Descripción:** Corrige el refresco tras cancelar una reserva: urlParams no definido en checkProfile y la UI se quedaba mostrando la reserva hasta recargar (ámbito: perfil)

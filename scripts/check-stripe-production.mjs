@@ -337,8 +337,9 @@ const isabelCreditBlock = consultationBillingMigration.match(
   /elsif p_purchase_type in \(\s*'miriam_psico_individual_1a',[\s\S]*?'isabel_pni_1a',[\s\S]*?'isabel_pni_sig'\s*\) then[\s\S]*?get diagnostics v_profile_updated = row_count;/,
 )?.[0] || '';
 requireText(isabelCreditBlock, 'set saldo_psicologia = saldo_psicologia + 1', 'Crédito de consultas de Isabel');
-requireText(frontendSources[1], 'role="progressbar" aria-label="Clases utilizadas"', 'Progreso de consumo en el perfil');
-requireText(frontendSources[1], 'role="progressbar" aria-label="Tiempo transcurrido del mes"', 'Progreso del mes natural en el perfil');
+requireText(frontendSources[1], 'role="progressbar"', 'Progreso de consumo en el perfil');
+requireText(frontendSources[1], 'profile_pack_used_aria', 'Etiqueta accesible del progreso de consumo en el perfil');
+requireText(frontendSources[1], 'profile_unlimited_aria_progress', 'Etiqueta accesible del progreso del mes natural en el perfil');
 requireText(frontendSources[1], 'membership_month: membershipMonth', 'Mes natural enviado desde el perfil');
 requireText(frontendSources[0], '60 días naturales desde la compra', 'Caducidad de clase suelta visible en tarifas');
 requireText(migration, 'enable row level security', 'RLS Stripe');
