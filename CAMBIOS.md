@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.22.2 — 23 oct 2026 · Incidencia
+
+- **Descripción:** Corrige el refresco tras cancelar una reserva: urlParams no definido en checkProfile y la UI se quedaba mostrando la reserva hasta recargar (ámbito: perfil)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.22.2`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.22.2.md`
+
 ## v17.22.1 — 23 oct 2026 · Incidencia
 
 - **Descripción:** QA exhaustiva: i18n completa de success y calendario, accesibilidad de pestañas y modal, talleres dinamicos sin datos caducados, verificaciones de 9 paginas y versionado real de incidencias (ámbito: qa)
