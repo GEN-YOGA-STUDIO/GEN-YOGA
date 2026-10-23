@@ -2051,6 +2051,11 @@ await section('compra', async () => {
         if (!cards.length) warn('compra', 'talleres', 'sin tarjetas dinámicas (aviso)');
         for (const c of cards.slice(0, 6)) {
           const txt = ((await c.innerText().catch(() => '')) || '').replace(/\s+/g, ' ');
+          // Estado vacío legítimo: no hay talleres activos con fecha futura.
+          if (/Próximamente nuevos talleres|New workshops coming soon/i.test(txt)) {
+            pass('compra', 'talleres: estado vacío correcto (sin talleres activos)');
+            continue;
+          }
           const hasPrice = /\d+\s*€/.test(txt);
           const hasBtn = (await c.locator('button:visible').count().catch(() => 0)) > 0;
           const title = txt.slice(0, 34);
