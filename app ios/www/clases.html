@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="17.21">
+    <meta name="application-version" content="17.22">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.21">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.21">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.22">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.22">
+    <link rel="icon" href="favicon.ico" sizes="any" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
     <title>GEN Yoga | Clases</title>
 
     <!-- Rendimiento, SEO y tarjetas sociales -->
@@ -25,10 +27,10 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-    <script src="i18n.js?v=17.21"></script>
-    <script src="capacitor-bridge.js?v=17.21" defer></script>
+    <script src="i18n.js?v=17.22"></script>
+    <script src="capacitor-bridge.js?v=17.22" defer></script>
     
-    <link rel="stylesheet" href="tailwind-compiled.css?v=17.21" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=17.22" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -350,6 +352,35 @@
             background: #68704a !important;
         }
 
+        /* QA / WCAG 2.1 AA — contraste del texto dentro de las carpetas.
+           Se ajusta el color del texto, nunca el de la marca:
+           - Carpetas oscuras: texto blanco a opacidad plena (los tonos /60 y /80
+             quedaban por debajo de 4.5:1).
+           - Carpetas claras (#e06b53, #ee9785, #c07238): el blanco no alcanza 4.5:1
+             ni a opacidad plena, así que el texto pasa a cocoa oscuro.
+           Se usa !important porque los tonos /60, /80, la clase text-white del contenedor
+           y la regla .gy-folder-calendar-link de public-calendar.css (cargada después)
+           ganarían por especificidad u orden de hoja. */
+        .folder-body,
+        .folder-body * {
+            color: #ffffff !important;
+        }
+        #card-3 .folder-body,
+        #card-3 .folder-body *,
+        #card-4 .folder-body,
+        #card-4 .folder-body *,
+        #card-taller-1 .folder-body,
+        #card-taller-1 .folder-body * {
+            color: #26160c !important;
+        }
+        /* El subrayado del enlace de calendario pasa a oscuro en las carpetas claras
+           para mantener también el contraste del elemento (no textual). */
+        #card-3 .folder-body .gy-folder-calendar-link,
+        #card-4 .folder-body .gy-folder-calendar-link,
+        #card-taller-1 .folder-body .gy-folder-calendar-link {
+            border-bottom-color: rgba(38, 22, 12, 0.65) !important;
+        }
+
         /* Consultation cards use owned CSS instead of generated arbitrary-color
            utilities. This keeps the text legible even when Tailwind is cached or
            rebuilt without one of the custom background classes. */
@@ -477,27 +508,40 @@
             width: max-content;
         }
 
-        /* Slide Dots styles (Discreet minimal dots) */
+        /* Slide Dots styles (Discreet minimal dots)
+           El botón mide 24x24 (target mínimo recomendado) y el punto visible de 8px se
+           pinta en ::before para que el área realmente pulsable cumpla el mínimo. */
         .slide-dot {
             background-color: transparent;
-            border-color: currentColor;
-            opacity: 0.25;
-            transform: scale(0.75);
-            width: 8px;
-            height: 8px;
+            border-color: transparent;
+            width: 24px;
+            height: 24px;
             transition: all 0.3s ease;
             position: relative;
         }
-        /* Área táctil ampliada invisible: el punto se ve de 8px pero se pulsa en ~36px */
+        .slide-dot::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 9999px;
+            border: 2px solid currentColor;
+            background-color: transparent;
+            opacity: 0.25;
+            transform: translate(-50%, -50%) scale(0.75);
+            transition: all 0.3s ease;
+        }
         .slide-dot::after {
             content: '';
             position: absolute;
-            inset: -14px;
+            inset: -6px;
         }
-        .slide-dot.active {
+        .slide-dot.active::before {
             background-color: currentColor;
             opacity: 0.85;
-            transform: scale(1.15);
+            transform: translate(-50%, -50%) scale(1.15);
         }
 
         /* Pulse Animation for indicators */
@@ -514,7 +558,7 @@
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
-    <link rel="stylesheet" href="public-calendar.css?v=17.21">
+    <link rel="stylesheet" href="public-calendar.css?v=17.22">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
     <!-- Backgrounds (Fades in/out behind the cards) -->
@@ -524,11 +568,11 @@
 
     <!-- Floating Dot Navigation on the Right (Minimalistic) -->
     <div id="slide-dots" class="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4 text-[#795244] transition-colors duration-500">
-        <button onclick="scrollToSlide(0)" class="slide-dot rounded-full border-2 border-current transition-all duration-300 active" aria-label="Slide 1"></button>
-        <button onclick="scrollToSlide(1)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 2"></button>
-        <button onclick="scrollToSlide(2)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 3"></button>
-        <button onclick="scrollToSlide(3)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 4"></button>
-        <button onclick="scrollToSlide(4)" class="slide-dot rounded-full border-2 border-current transition-all duration-300" aria-label="Slide 5"></button>
+        <button onclick="scrollToSlide(0)" class="slide-dot transition-all duration-300 active" aria-label="Slide 1"></button>
+        <button onclick="scrollToSlide(1)" class="slide-dot transition-all duration-300" aria-label="Slide 2"></button>
+        <button onclick="scrollToSlide(2)" class="slide-dot transition-all duration-300" aria-label="Slide 3"></button>
+        <button onclick="scrollToSlide(3)" class="slide-dot transition-all duration-300" aria-label="Slide 4"></button>
+        <button onclick="scrollToSlide(4)" class="slide-dot transition-all duration-300" aria-label="Slide 5"></button>
     </div>
 
     <!-- Fixed Presentation Layer (Viewport containing Title and Folders Deck) -->
@@ -940,7 +984,7 @@
 
                 <!-- Center Content Column (Direct Message + High Conversion Button) -->
                 <div class="w-full md:w-1/2 flex flex-col items-center text-center px-2">
-                    <span class="text-white/60 text-xs md:text-sm uppercase tracking-[0.25em] font-extrabold mb-3 md:mb-4" data-i18n="classes_cta_tagline">
+                    <span class="text-white text-xs md:text-sm uppercase tracking-[0.25em] font-extrabold mb-3 md:mb-4" data-i18n="classes_cta_tagline">
                         Tu práctica empieza aquí
                     </span>
                     <h2 class="brand-font text-3xl md:text-6xl font-black uppercase tracking-tight text-white leading-tight mb-4 md:mb-6" data-i18n="classes_cta_title">
@@ -1006,8 +1050,8 @@
                 </a>
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
-                <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v17.21 | &copy; 2026 Gen Yoga</span>
+                <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
+                <span id="app-version-label" class="opacity-90 text-[10px]">v17.22 | &copy; 2026 Gen Yoga</span>
             </div>
         </div>
     </div>
@@ -1547,8 +1591,8 @@ window.switchCategoryDeck = function(cat) {
 };
 
 </script>
-    <script src="public-calendar.js?v=17.21"></script>
-    <script src="facilities-carousel.js?v=17.21"></script>
+    <script src="public-calendar.js?v=17.22"></script>
+    <script src="facilities-carousel.js?v=17.22"></script>
     <script>
         window.GENPublicCalendar?.init({ client });
     </script>
@@ -1912,9 +1956,13 @@ window.switchCategoryDeck = function(cat) {
                     scrollAssist.style.color = '#795244';
 
                     if (progress < (pushStart - 1.5)) {
-                        scrollAssistText.textContent = 'Ver más clases';
+                        scrollAssistText.textContent = (typeof window.t === 'function')
+                            ? window.t('classes_scroll_prompt', 'Ver más clases')
+                            : 'Ver más clases';
                     } else {
-                        scrollAssistText.textContent = '¿Tienes dudas?';
+                        scrollAssistText.textContent = (typeof window.t === 'function')
+                            ? window.t('classes_scroll_arrow_doubt', '¿Tienes dudas?')
+                            : '¿Tienes dudas?';
                     }
                 }
             });

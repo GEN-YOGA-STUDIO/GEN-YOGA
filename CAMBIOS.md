@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.22.0 — 23 oct 2026 · Incidencia
+
+- **Descripción:** Auditoria QA completa de genyoga.studio: contraste WCAG AA, targets <24px, landmarks y h1, metas SEO, i18n ES/EN, fechas caducadas y xlsx bajo demanda; anadidos 404.html, favicon.ico y manifest.json (ámbito: qa)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.22`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.22.0.md`
+
 ## v17.21.0 — 22 oct 2026 · Desarrollo
 
 - **Descripción:** Eliminado el aviso de caducidad 60 dias bajo los botones de otorgar bonos en el modal de gestion del admin (ámbito: bonos)

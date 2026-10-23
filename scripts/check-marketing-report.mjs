@@ -53,10 +53,14 @@ check(
   'flag y clases hidden de los botones deben ir juntos',
 );
 check('descarga bloqueada sin flag', report.includes('if (!INFORME_MARKETING_ENABLED)')); 
+// QA: SheetJS puede venir en <head> (profile.html) o cargarse bajo demanda
+// al pulsar "Exportar a Excel" (ensureSheetJs() en marketing-report.js).
+// En ambos casos la versión debe ir fijada exacta: ni @latest ni rangos.
+const pinnedXlsx = /cdn\.jsdelivr\.net\/npm\/xlsx@\d+\.\d+\.\d+\/dist\/xlsx\.full\.min\.js/;
 check(
   'SheetJS por CDN con versión exacta',
-  /cdn\.jsdelivr\.net\/npm\/xlsx@\d+\.\d+\.\d+\/dist\/xlsx\.full\.min\.js/.test(profile),
-  'sin @latest ni rangos',
+  pinnedXlsx.test(profile) || pinnedXlsx.test(report),
+  'sin @latest ni rangos (en profile.html o bajo demanda desde marketing-report.js)',
 );
 
 console.log('\n--- 2. marketing-report.js válido y seguro ---');

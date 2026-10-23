@@ -1065,6 +1065,31 @@
   }
 
   // ------------------------------------------------------------------
+  // CARGA BAJO DEMANDA DE SHEETJS (xlsx)
+  // El área de clientes ya no descarga SheetJS en cada visita: solo se
+  // pide el archivo (≈1 MB) cuando el usuario pulsa el informe Excel.
+  // ------------------------------------------------------------------
+  var SHEETJS_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  var sheetJsPromise = null;
+
+  function ensureSheetJs() {
+    if (window.XLSX && window.XLSX.utils) return Promise.resolve(true);
+    if (sheetJsPromise) return sheetJsPromise;
+
+    sheetJsPromise = new Promise(function (resolve) {
+      var script = document.createElement('script');
+      script.src = SHEETJS_URL;
+      script.async = true;
+      script.onload = function () { resolve(true); };
+      // Si la CDN falla, downloadExcel() hace su fallback a CSV.
+      script.onerror = function () { sheetJsPromise = null; resolve(false); };
+      document.head.appendChild(script);
+    });
+
+    return sheetJsPromise;
+  }
+
+  // ------------------------------------------------------------------
   // EXPORTACIÓN A EXCEL (.XLSX MULTI-HOJA CON SHEETJS)
   // ------------------------------------------------------------------
   function downloadExcel(report) {
@@ -1310,10 +1335,13 @@
     }
 
     try {
+      // QA: SheetJS se trae en paralelo con los datos, solo si hace falta.
+      var sheetJsReady = formato === 'pdf' ? null : ensureSheetJs();
       var data = await fetchAllReportData();
       var report = buildMasterReport(data);
 
       var failed = Object.keys(data).filter(function (t) { return data[t].status !== 'ok'; });
+      if (sheetJsReady) await sheetJsReady;
       var res = formato === 'pdf' ? downloadPdf(report) : downloadExcel(report);
 
       if (window.Swal && window.Swal.fire) {

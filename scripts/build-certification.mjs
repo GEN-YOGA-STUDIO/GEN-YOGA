@@ -59,6 +59,7 @@ function assertSafeTarget() {
 }
 
 const htmlFiles = [
+  '404.html',
   'cancel.html',
   'clases.html',
   'index.html',
@@ -75,6 +76,8 @@ const staticFiles = [
   'public-calendar.css',
   'public-calendar.js',
   'facilities-carousel.js',
+  'favicon.ico',
+  'manifest.json',
 ];
 const staticDirectories = ['fonts', 'img'];
 

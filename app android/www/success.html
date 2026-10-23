@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="17.21">
+    <meta name="application-version" content="17.22">
     <meta name="robots" content="noindex,nofollow">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.21">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.21">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.22">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.22">
+    <link rel="icon" href="favicon.ico" sizes="any" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
     <title>¡Gracias por tu compra! | GEN Yoga</title>
     
     <!-- Sugerencias de rendimiento -->
@@ -47,11 +49,12 @@
             } catch (e) {}
         })();
     </script>
-    <link rel="stylesheet" href="tailwind-compiled.css?v=17.21">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=17.22">
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
+    <script src="i18n.js?v=17.22"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="capacitor-bridge.js?v=17.21" defer></script>
+    <script src="capacitor-bridge.js?v=17.22" defer></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
@@ -70,12 +73,12 @@
     <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"></div>
 
     <!-- Main Container -->
-    <div id="main-card" class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/30 text-center flex flex-col items-center transition-all duration-300">
+    <main id="main-card" class="relative z-10 bg-white/95 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/30 text-center flex flex-col items-center transition-all duration-300">
         
         <!-- Loading State -->
         <div id="loading-state" class="py-12 flex flex-col items-center">
             <i class="ph-bold ph-spinner text-5xl text-cocoa/40 animate-spin mb-4"></i>
-            <p class="text-cocoa/60 font-bold text-sm uppercase tracking-wider">Verificando tu compra...</p>
+            <h1 class="text-cocoa/60 font-bold text-sm uppercase tracking-wider" data-i18n="success_verifying">Verificando tu compra...</h1>
         </div>
 
         <!-- Verification Error (Hidden by default) -->
@@ -83,15 +86,15 @@
             <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-4 shadow-inner">
                 <i class="ph-bold ph-warning-circle text-3xl"></i>
             </div>
-            <h1 class="brand-font text-2xl font-black text-cocoa mb-2">No pudimos verificar el pago</h1>
-            <p id="verification-error-message" class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+            <h1 class="brand-font text-2xl font-black text-cocoa mb-2" data-i18n="success_error_title">No pudimos verificar el pago</h1>
+            <p id="verification-error-message" class="text-cocoa/75 text-sm mb-6 leading-relaxed" data-i18n="success_error_message">
                 No se ha confirmado ninguna compra. Comprueba el enlace o vuelve a intentarlo.
             </p>
             <div class="flex flex-col gap-3 w-full">
-                <button id="verification-retry" type="button" onclick="reintentarVerificacion()" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                <button id="verification-retry" type="button" onclick="reintentarVerificacion()" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="success_error_retry">
                     Reintentar verificación
                 </button>
-                <a href="tarifas.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm">
+                <a href="tarifas.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm" data-i18n="success_error_back">
                     Volver a Tarifas
                 </a>
             </div>
@@ -102,21 +105,21 @@
             <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-6 shadow-inner">
                 <i class="ph-fill ph-check-circle text-5xl"></i>
             </div>
-            <h1 class="brand-font text-3xl font-black text-cocoa mb-3">¡Pago Completado!</h1>
-            <p id="standard-success-message" class="text-cocoa/75 text-sm mb-6 leading-relaxed">
+            <h1 class="brand-font text-3xl font-black text-cocoa mb-3" data-i18n="success_done_title">¡Pago Completado!</h1>
+            <p id="standard-success-message" class="text-cocoa/75 text-sm mb-6 leading-relaxed" data-i18n="success_done_message">
                 Stripe ha confirmado tu compra. Tu cuenta se actualizará automáticamente; si aún no ves el nuevo saldo al entrar en tu perfil, recarga la página tras unos segundos.
             </p>
             <div class="bg-emerald-50/60 border border-emerald-500/10 px-4 py-2.5 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2 mb-8 w-full justify-center">
-                <i class="ph-bold ph-spinner text-sm animate-spin"></i>
-                <span>Redirigiéndote a tu perfil en <span id="countdown">5</span> segundos...</span>
+                <i class="ph-bold ph-spinner text-sm animate-spin" aria-hidden="true"></i>
+                <span data-i18n="success_redirecting">Redirigiéndote a tu perfil en <span id="countdown">5</span> segundos...</span>
             </div>
             <div class="flex flex-col gap-3 w-full">
-                <a id="btn-standard-profile" href="profile.html?payment_success=true" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+                <a id="btn-standard-profile" href="profile.html?payment_success=true" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]" data-i18n="success_go_profile">
                     Ir a mi Perfil
                 </a>
                 <input type="hidden" id="session-id" name="session_id" value="" />
                 <button type="button" onclick="irAlPortalFacturas()" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm flex items-center justify-center gap-2">
-                    <i class="ph-bold ph-receipt text-base"></i> Gestionar mis Facturas / Suscripción
+                    <i class="ph-bold ph-receipt text-base" aria-hidden="true"></i> <span data-i18n="success_manage_invoices">Gestionar mis Facturas / Suscripción</span>
                 </button>
             </div>
         </div>
@@ -200,11 +203,11 @@
         </div>
         
         <!-- Footer logo -->
-        <div class="mt-8 opacity-60 flex flex-col items-center gap-1 text-xs text-cocoa">
-            <span id="app-version-label" class="opacity-60 text-[10px]">v17.21 | &copy; 2026 Gen Yoga</span>
-            <a href="politica-privacidad.html" class="hover:underline transition text-[11px] text-cocoa/70">Política de privacidad</a>
+        <div class="mt-8 flex flex-col items-center gap-1 text-xs text-cocoa">
+            <span id="app-version-label" class="opacity-90 text-[10px]">v17.22 | &copy; 2026 Gen Yoga</span>
+            <a href="politica-privacidad.html" class="hover:underline transition text-[11px] text-cocoa/70 inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
         </div>
-    </div>
+    </main>
 
     <!-- Script to verify session and handle guest booking -->
     <script>

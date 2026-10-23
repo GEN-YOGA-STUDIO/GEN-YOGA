@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="17.21">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.21">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.21">
+    <meta name="application-version" content="17.22">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=17.22">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=17.22">
+    <link rel="icon" href="favicon.ico" sizes="any" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
     <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
     
@@ -25,13 +27,13 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=17.21">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=17.22">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=17.21"></script>
-    <script src="capacitor-bridge.js?v=17.21" defer></script>
+    <script src="i18n.js?v=17.22"></script>
+    <script src="capacitor-bridge.js?v=17.22" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -106,8 +108,8 @@
             }
 
             .fixed-viewport {
-                width: 100vw;
-                max-width: 100vw;
+                width: 100%;
+                max-width: 100%;
                 min-width: 0;
                 padding-top: max(calc(var(--gy-notch-shield-height, 0px) + 1.25rem), 4.75rem) !important;
                 padding-left: 1rem;
@@ -210,12 +212,12 @@
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans overflow-x-hidden">
     <!-- Fixed Presentation Layer -->
-    <div class="fixed-viewport">
+    <main class="fixed-viewport">
         
         <!-- Button completely loose on the left con protección Notch Safe-Area y touch target amplio -->
         <a href="index.html" id="btn-inicio"
             style="top: max(calc(var(--gy-notch-shield-height, 0px) + 14px), 52px);"
-            class="absolute left-4 md:left-12 bg-[#a69c6a] border border-[#a69c6a] text-white px-6 py-3 md:py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg group z-50 min-h-[48px] min-w-[100px]">
+            class="absolute left-4 md:left-12 bg-[#a69c6a] border border-[#a69c6a] text-[#2b1a10] px-6 py-3 md:py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg group z-50 min-h-[48px] min-w-[100px]">
             <svg class="w-4 h-4 text-current" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19.45 12c-3 0.5-9 0.5-13.5 0M9 6c-1.5 2-3.5 4.5-5 6 1.5 1.5 3.5 4 5 6"></path>
             </svg>
@@ -237,7 +239,7 @@
 
         <!-- Sticky Header (Title + Tabs Navigation) -->
         <div id="sticky-header" class="w-full flex flex-col items-center z-30 select-none pb-4">
-            <h1 class="brand-font font-black text-[#a69c6a] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.15em] text-center mb-6" data-i18n="rates_title">
+            <h1 class="brand-font font-black text-[#8b8049] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.15em] text-center mb-6" data-i18n="rates_title">
                 Tarifas
             </h1>
 
@@ -251,17 +253,17 @@
                 </button>
                 <button id="tab-yoga" type="button" role="tab" aria-controls="section-yoga" aria-selected="false"
                     onclick="switchCategory('yoga')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#33241a] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
                     <span data-i18n="rates_tab_yoga">Clases</span>
                 </button>
                 <button id="tab-psicologia" type="button" role="tab" aria-controls="section-psicologia" aria-selected="false"
                     onclick="switchCategory('psicologia')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#33241a] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
                     <span data-i18n="rates_tab_psy">Consultas</span>
                 </button>
                 <button id="tab-talleres" type="button" role="tab" aria-controls="section-talleres" aria-selected="false"
                     onclick="switchCategory('talleres')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#33241a] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
                     <span data-i18n="rates_tab_workshops">Eventos</span>
                 </button>
             </div>
@@ -295,7 +297,7 @@
                         
                         <div class="flex items-baseline gap-3 mb-6">
                             <span class="text-5xl sm:text-6xl font-extrabold text-[#047857]">0 €</span>
-                            <span class="text-xs sm:text-sm text-cocoa/60 font-light" data-i18n="rates_welcome_price_note">sin cuota de alta · sin permanencia</span>
+                            <span class="text-xs sm:text-sm text-cocoa font-light" data-i18n="rates_welcome_price_note">sin cuota de alta · sin permanencia</span>
                         </div>
                         
                         <p class="text-sm sm:text-base text-cocoa/85 leading-relaxed font-normal mb-6" data-i18n="rates_welcome_description">
@@ -306,9 +308,9 @@
                             <div class="flex items-start gap-3 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 shadow-2xs">
                                 <i class="ph-bold ph-flower-lotus text-xl text-emerald-700 mt-0.5 shrink-0"></i>
                                 <div>
-                                    <strong class="text-sm sm:text-base font-bold text-emerald-950 block">1 Sesión Gratuita de Yoga para cualquier clase regular</strong>
-                                    <span class="text-xs sm:text-sm text-emerald-900/80 leading-relaxed block mt-1">
-                                        Válida para reservar tu plaza en <strong>cualquiera de las clases normales de yoga</strong> de nuestra parrilla semanal (se excluyen talleres y clases especiales).
+                                    <strong class="text-sm sm:text-base font-bold text-emerald-950 block" data-i18n="rates_welcome_free_session">1 Sesión Gratuita de Yoga para cualquier clase regular</strong>
+                                    <span class="text-xs sm:text-sm text-emerald-900 leading-relaxed block mt-1">
+                                        <span data-i18n="rates_welcome_valid_for">Válida para reservar tu plaza en</span> <strong data-i18n="rates_welcome_regular_classes">cualquiera de las clases normales de yoga</strong> <span data-i18n="rates_welcome_schedule_note">de nuestra parrilla semanal (se excluyen talleres y clases especiales).</span>
                                     </span>
                                 </div>
                             </div>
@@ -316,8 +318,8 @@
                             <div class="flex items-start gap-3 p-4 rounded-2xl bg-white border border-cocoa/10 shadow-2xs">
                                 <i class="ph-bold ph-sparkle text-xl text-amber-600 mt-0.5 shrink-0"></i>
                                 <div>
-                                    <strong class="text-sm sm:text-base font-bold text-cocoa block">Activación Inmediata y Automática</strong>
-                                    <span class="text-xs sm:text-sm text-cocoa/70 leading-relaxed block mt-1">
+                                    <strong class="text-sm sm:text-base font-bold text-cocoa block" data-i18n="rates_welcome_instant_title">Activación Inmediata y Automática</strong>
+                                    <span class="text-xs sm:text-sm text-cocoa leading-relaxed block mt-1" data-i18n="rates_welcome_instant_text">
                                         Disponible en tu perfil tan pronto como completes el registro. Sin esperas ni trámites adicionales.
                                     </span>
                                 </div>
@@ -330,11 +332,11 @@
                             class="w-full sm:flex-1 py-4 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-center text-xs sm:text-sm font-bold uppercase tracking-widest rounded-2xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01] flex items-center justify-center gap-2"
                             style="background-color: #8f6b2d; color: #ffffff;">
                             <i class="ph-bold ph-gift text-base"></i>
-                            <span>Crear Cuenta y Recibir Bono (0 €)</span>
+                            <span data-i18n="rates_welcome_create">Crear Cuenta y Recibir Bono (0 €)</span>
                         </a>
                         <a href="clases.html#calendario-publico"
                             class="text-center text-xs sm:text-sm font-semibold text-emerald-800 hover:text-cocoa transition py-2 px-3 underline decoration-transparent hover:decoration-current">
-                            Ver clases y horarios regulares →
+                            <span data-i18n="rates_welcome_view_schedule">Ver clases y horarios regulares →</span>
                         </a>
                     </div>
                 </article>
@@ -680,10 +682,10 @@
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
                             <button onclick="iniciarCheckoutTallerStripe('clase_especial', 'Clase Especial: Flow & Meditación', '20', 7856, { fecha: '2026-10-23', hora: '19:00' })"
                                 class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
-                                Reservar Plaza (20 €)
+                                <span data-i18n="rates_events_book">Reservar Plaza</span> (20 €)
                             </button>
                             <a href="clases.html?mode=talleres&clase=7856&week=2026-10-19#calendario-publico" class="text-center text-[11px] font-semibold text-[#6a6540] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
-                                Ver próximas fechas en horario →
+                                <span data-i18n="rates_events_link_special">Ver próximas fechas en horario →</span>
                             </a>
                         </div>
                     </div>
@@ -721,10 +723,10 @@
                         <div class="mt-4 pt-4 border-t border-cocoa/10 flex flex-col gap-2.5">
                             <button onclick="iniciarCheckoutTallerStripe('taller_intro_power_vinyasa', 'Taller: Introducción a Power Vinyasa', '25', 5821, { fecha: '2026-09-19', hora: '09:00' })"
                                 class="block w-full py-3.5 bg-[#AB593D] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]">
-                                Reservar Plaza (25 €)
+                                <span data-i18n="rates_events_book">Reservar Plaza</span> (25 €)
                             </button>
                             <a href="clases.html?mode=talleres&clase=5821&week=2026-09-14#calendario-publico" class="text-center text-[11px] font-semibold text-[#AB593D] hover:text-cocoa transition py-1 underline decoration-transparent hover:decoration-current">
-                                Ver detalles en el calendario →
+                                <span data-i18n="rates_events_link_taller">Ver detalles en el calendario →</span>
                             </a>
                         </div>
                     </div>
@@ -733,14 +735,14 @@
 
             <!-- 4. CATEGORY: OFERTAS & SESIONES GRATUITAS -->
             
-        </div>
+        </main>
 
         <!-- Footer (Matches clases.html layout) -->
         <footer class="w-full border-t border-[#795244]/15 py-4 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm font-normal text-[#795244] mt-8">
             <div class="flex items-center gap-2 justify-start">
                 <a href="https://www.google.com/maps/place/GEN+Yoga/@38.9949298,-1.8671035,511m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd665fc18e428caf:0x9efcbd7f5fdb3e1e!8m2!3d38.9949257!4d-1.8645286!16s%2Fg%2F11zd4y51p2?entry=ttu&g_ep=EgoyMDI2MDgwNC4wIKXMDSoASAFQAw%3D%3D"
                     target="_blank" rel="noopener noreferrer"
-                    class="hover:text-sand flex items-center gap-2 text-xs md:text-sm font-normal tracking-[0.1em] text-[#795244] transition-colors">
+                    class="hover:text-sand flex items-center gap-2 text-xs md:text-sm font-normal tracking-[0.1em] text-[#795244] transition-colors py-2 min-h-[24px]">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.45 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
@@ -750,19 +752,19 @@
             </div>
             <div class="flex items-center gap-6 justify-center text-[#795244]">
                 <a href="https://wa.me/34624435679" target="_blank" rel="noopener noreferrer"
-                    class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center"
+                    class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center p-2"
                     aria-label="WhatsApp (+34 624 435 679)" title="WhatsApp / Teléfono: +34 624 435 679">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-current" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12.04 2c-5.46 0-9.45 4.45-9.45 9.45 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.45-4.45 9.45-9.45 0-2.65-1.03-5.14-2.9-7.01A9.45 9.45 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.45-.14.17-.29.45-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.45-.51.11-.11.25-.29.45-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.13.17 1.77 2.7 4.29 3.79.45.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.07-.12-.23-.19-.48-.31"/>
                     </svg>
                 </a>
-                <a href="mailto:hola@genyoga.studio" class="hover:opacity-75 transition flex items-center" aria-label="Email">
+                <a href="mailto:hola@genyoga.studio" class="hover:opacity-75 transition flex items-center p-2" aria-label="Email">
                     <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <rect width="20" height="16" x="2" y="4" rx="2"></rect>
                         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
                     </svg>
                 </a>
-                <a href="https://www.instagram.com/genyoga.studio" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center">
+                <a href="https://www.instagram.com/genyoga.studio" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center p-2">
                     <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
                         <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -771,13 +773,13 @@
                 </a>
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
-                <a href="politica-privacidad.html" class="hover:underline" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-60 text-[10px]">v17.21 | &copy; 2026 Gen Yoga</span>
+                <a href="politica-privacidad.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
+                <span id="app-version-label" class="opacity-90 text-[10px]">v17.22 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '17.21';
+        const APP_VERSION = '17.22';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -1160,7 +1162,13 @@
 
                 const yogaClasses = (clases || []).filter(c => {
                     const tipo = (c.tipo_clase || '').toLowerCase();
-                    return tipo !== 'psicologia' && tipo !== 'nutricion' && tipo !== 'consulta';
+                    if (tipo === 'psicologia' || tipo === 'nutricion' || tipo === 'consulta') return false;
+                    // F1: la clase suelta solo sirve para clases regulares de yoga. Los talleres y
+                    // clases especiales no son reservables con clase suelta (el diálogo posterior lo
+                    // explica y bloquea), así que se excluyen del desplegable para no preseleccionar
+                    // una opción imposible de completar.
+                    const esEspecial = c.es_especial === true || tipo === 'especial' || tipo === 'taller';
+                    return !esEspecial;
                 });
 
                 if (yogaClasses.length === 0) {
@@ -1902,12 +1910,12 @@
                         <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#AB593D]/10 flex items-center justify-center text-[#AB593D]">
                             <i class="ph-duotone ph-sparkle text-3xl"></i>
                         </div>
-                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Próximamente nuevos talleres</h3>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">${escapeHtml(fmtT('rates_events_empty_title', {}, 'Próximamente nuevos talleres'))}</h3>
                         <p class="text-sm text-cocoa/75 font-light leading-relaxed mb-6">
-                            Actualmente no hay talleres o clases especiales activas con fechas futuras. Muy pronto publicaremos nuevas experiencias y fechas. Consulta nuestro horario semanal para descubrir todas las clases regulares.
+                            ${escapeHtml(fmtT('rates_events_empty', {}, 'Actualmente no hay talleres o clases especiales activas con fechas futuras. Muy pronto publicaremos nuevas experiencias y fechas. Consulta nuestro horario semanal para descubrir todas las clases regulares.'))}
                         </p>
                         <a href="clases.html#calendario-publico" class="inline-flex items-center gap-2 px-6 py-3 bg-[#AB593D] hover:bg-[#26160c] text-white text-xs font-bold uppercase tracking-widest rounded-xl transition shadow">
-                            <span>Ver horario completo</span>
+                            <span>${escapeHtml(fmtT('rates_events_empty_cta', {}, 'Ver horario completo'))}</span>
                             <i class="ph-bold ph-arrow-right"></i>
                         </a>
                     </div>
@@ -1930,6 +1938,18 @@
             container.innerHTML = talleres.map((t, idx) => renderizarCardTallerDinamico(t, idx, talleres.length)).join('');
         }
 
+        // QA: traducción de las tarjetas dinámicas de la categoría Eventos.
+        // `window.t(clave, respaldo)` resuelve el texto según el idioma activo; los marcadores
+        // {lugar} se sustituyen con fmtT para no perder los datos dinámicos (duración, capacidad...).
+        function fmtT(key, params, fallback) {
+            let txt = (typeof window.t === 'function') ? window.t(key, fallback || '') : (fallback || '');
+            if (!txt) txt = fallback || '';
+            Object.keys(params || {}).forEach(k => {
+                txt = txt.split('{' + k + '}').join(String(params[k]));
+            });
+            return txt;
+        }
+
         function renderizarCardTallerDinamico(taller, index, total) {
             const start = new Date(taller.fecha_inicio);
             const isTaller = taller.tipo_clase === 'taller' || /taller|inmersi|power vinyasa/i.test(`${taller.nombre} ${taller.descripcion || ''}`);
@@ -1941,12 +1961,19 @@
                 title = 'Introducción a Power Vinyasa';
             }
 
-            const badgeLabel = isTaller ? 'Próximo Taller' : 'Próxima Clase Especial';
+            const badgeLabel = isTaller
+                ? fmtT('rates_events_next_taller', {}, 'Próximo Taller')
+                : fmtT('rates_events_next_special', {}, 'Próxima Clase Especial');
             const themeColor = isTaller ? '#AB593D' : '#6a6540';
             const iconClass = isTaller ? 'ph-fire' : 'ph-sparkle';
 
-            const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const enLang = (typeof localStorage !== 'undefined' && localStorage.getItem('yoga-lang') === 'en');
+            const dias = enLang
+                ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                : ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const meses = enLang
+                ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                : ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             const diaNombre = dias[start.getDay()];
             const diaNum = start.getDate();
             const mesNombre = meses[start.getMonth()];
@@ -1954,14 +1981,23 @@
             const startM = String(start.getMinutes()).padStart(2, '0');
             const endH = String(end.getHours()).padStart(2, '0');
             const endM = String(end.getMinutes()).padStart(2, '0');
-            const fechaPildora = `${diaNombre} ${diaNum} ${mesNombre} · ${startH}:${startM} a ${endH}:${endM}`;
+            const fechaPildora = fmtT('rates_events_date', {
+                day: diaNombre, num: diaNum, month: mesNombre,
+                start: `${startH}:${startM}`, end: `${endH}:${endM}`
+            }, `${diaNombre} ${diaNum} ${mesNombre} · ${startH}:${startM} a ${endH}:${endM}`);
 
             const prof = Array.isArray(taller.profesionales) ? taller.profesionales[0] : taller.profesionales;
             const profName = prof?.nombre || 'Yanira';
 
             const subtitulo = isTaller
-                ? `Con ${profName} · ${duracion >= 120 ? '2 Horas de Inmersión' : `${duracion} Minutos de Inmersión`}`
-                : `Con ${profName} · Sesión Temática (${duracion} min)`;
+                ? fmtT('rates_events_subtitle_taller', {
+                    teacher: profName,
+                    duration: duracion >= 120
+                        ? fmtT('rates_events_duration_hours', {}, '2 Horas de Inmersión')
+                        : fmtT('rates_events_duration_minutes', { duration: duracion }, `${duracion} Minutos de Inmersión`)
+                }, `Con ${profName} · ${duracion >= 120 ? '2 Horas de Inmersión' : `${duracion} Minutos de Inmersión`}`)
+                : fmtT('rates_events_subtitle_special', { teacher: profName, duration: duracion },
+                    `Con ${profName} · Sesión Temática (${duracion} min)`);
 
             let precio = isTaller ? '25' : '20';
             let lookupKey = null;
@@ -1998,25 +2034,27 @@
             }
 
             const precioSub = isTaller
-                ? `/ plaza (${duracion} min)`
-                : `/ plaza (o con Bono Ilimitado)`;
+                ? fmtT('rates_events_price_taller', { duration: duracion }, `/ plaza (${duracion} min)`)
+                : fmtT('rates_events_price_special', {}, '/ plaza (o con Bono Ilimitado)');
 
             const descripcion = taller.descripcion
                 ? taller.descripcion
                 : (isTaller
-                    ? `Inmersión completa de ${duracion} minutos diseñada para aprender y consolidar los fundamentos de la práctica con atención personalizada.`
-                    : `Práctica guiada de profundización que combina asana suave con técnicas de pranayama y meditación profunda para calmar el sistema nervioso y restaurar el equilibrio interior.`);
+                    ? fmtT('rates_events_desc_taller', { duration: duracion },
+                        `Inmersión completa de ${duracion} minutos diseñada para aprender y consolidar los fundamentos de la práctica con atención personalizada.`)
+                    : fmtT('rates_events_desc_special', {},
+                        'Práctica guiada de profundización que combina asana suave con técnicas de pranayama y meditación profunda para calmar el sistema nervioso y restaurar el equilibrio interior.'));
 
             const capacidad = Number(taller.capacidad_max) || 10;
 
             const bullets = isTaller ? [
-                `Máximo ${capacidad} alumnos para atención personalizada`,
-                'Ajustes manuales y soporte individual',
-                'Material de apoyo e infusiones incluidas'
+                fmtT('rates_events_bullet_taller_1', { capacity: capacidad }, `Máximo ${capacidad} alumnos para atención personalizada`),
+                fmtT('rates_events_bullet_taller_2', {}, 'Ajustes manuales y soporte individual'),
+                fmtT('rates_events_bullet_taller_3', {}, 'Material de apoyo e infusiones incluidas')
             ] : [
-                `Grupos reducidos (máximo ${capacidad} plazas)`,
-                '<strong>1 clase al mes incluida</strong> con el Bono Ilimitado',
-                'Disponible para compra suelta o reserva con bono'
+                fmtT('rates_events_bullet_special_1', { capacity: capacidad }, `Grupos reducidos (máximo ${capacidad} plazas)`),
+                fmtT('rates_events_bullet_special_2', {}, '<strong>1 clase al mes incluida</strong> con el Bono Ilimitado'),
+                fmtT('rates_events_bullet_special_3', {}, 'Disponible para compra suelta o reserva con bono')
             ];
 
             const lowerTitle = title.toLowerCase();
@@ -2031,8 +2069,8 @@
             }
 
             const enlaceHorario = isTaller
-                ? 'Ver detalles en el calendario →'
-                : 'Ver próximas fechas en horario →';
+                ? fmtT('rates_events_link_taller', {}, 'Ver detalles en el calendario →')
+                : fmtT('rates_events_link_special', {}, 'Ver próximas fechas en horario →');
 
             return `
                 <div class="tariff-card flex flex-col justify-between h-full bg-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 border-2 shadow-xl relative overflow-hidden ring-2"
@@ -2077,7 +2115,7 @@
                         <button type="button" data-taller-reserva data-lookup="${escapeHtml(lookupKey || '')}" data-title="${escapeHtml(title || '')}" data-precio="${escapeHtml(precio || '')}" data-clase="${Number(taller.id) || 0}" data-fecha="${escapeHtml(start.toISOString().slice(0, 10))}" data-hora="${escapeHtml(startH + ':' + startM)}" data-is-taller="${isTaller ? 'true' : 'false'}"
                             class="block w-full py-3.5 text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-[1.01]"
                             style="background-color: ${themeColor};">
-                            Reservar Plaza (${escapeHtml(precio)} €)
+                            ${escapeHtml(fmtT('rates_events_book', {}, 'Reservar Plaza'))} (${escapeHtml(precio)} €)
                         </button>
                         <a href="${getCalendarioTallerUrl(Number(taller.id) || 0, start.toISOString().slice(0, 10))}" class="text-center text-[11px] font-semibold transition py-1 underline decoration-transparent hover:decoration-current"
                             style="color: ${themeColor};">

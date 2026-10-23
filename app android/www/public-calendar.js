@@ -1569,7 +1569,12 @@
         const silent = options.silent === true && state.classes.length > 0;
         const requestId = ++state.requestSerial;
         state.error = null;
-        if (!silent) state.loading = true;
+        if (!silent) {
+            state.loading = true;
+            // Carga no silenciosa: se vacían las clases de la semana anterior para que render()
+            // pinte el esqueleto de carga en lugar de un "0 clases publicadas" fugaz.
+            state.classes = [];
+        }
         render();
 
         try {

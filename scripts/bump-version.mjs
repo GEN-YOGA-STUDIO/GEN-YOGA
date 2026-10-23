@@ -64,6 +64,7 @@ if (syncApps) {
 
 // 3. Web HTML files & Edge Functions
 const files = [
+  '404.html',
   'index.html',
   'clases.html',
   'tarifas.html',

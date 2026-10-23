@@ -114,6 +114,10 @@ const translations = {
         "footer_privacy": "Política de privacidad",
         "cancel_page_title": "Pago Cancelado",
         "cancel_page_message": "Parece que el proceso de pago ha sido cancelado y no se ha realizado ningún cargo. No te preocupes, puedes volver a intentarlo cuando estés listo.",
+        "nf_title": "Página no encontrada",
+        "nf_message": "La página que buscas no existe o se ha movido. Puede que el enlace esté anticuado o que se haya escrito mal la dirección.",
+        "nf_btn_home": "Volver al inicio",
+        "nf_btn_rates": "Ver clases y tarifas",
         "cancel_btn_rates": "Volver a Tarifas",
         "cancel_btn_profile": "Volver a mi Perfil",
         "cancel_btn_profile_go": "Ir a mi Perfil",
@@ -126,7 +130,7 @@ const translations = {
         "classes_title": "Escoge tus sesiones",
         "classes_subtitle": "Descubre nuestros estilos de yoga",
         "classes_card_vinyasa_title": "Power Vinyasa",
-        "classes_vinyasa_tagline": "¿Listx para fluir con energía y fuerza?",
+        "classes_vinyasa_tagline": "¿Lista para fluir con energía y fuerza?",
         "classes_card_vinyasa_desc": "Una práctica dinámica, fluida y vigorosa donde cada respiración guía el movimiento. Conecta posturas continuas (vinyasas) que desarrollan fuerza muscular, equilibrio, resistencia y concentración mientras tu cuerpo se mueve al ritmo de tu propia energía.",
         "classes_card_hombres_title": "Yoga Alineación",
         "classes_hombres_tagline": "Ajuste preciso, fuerza y consciencia corporal.",
@@ -223,12 +227,12 @@ const translations = {
         "rates_psy_buy_btn_120": "Comprar 1ª sesión pareja (120 €)",
         "rates_psy_buy_btn_100": "Comprar sesión pareja sucesiva (100 €)",
         "rates_psy_group_autoayuda_title": "🌱 Grupo de Autoayuda",
-        "rates_psy_group_autoayuda_desc": "Martes 11:30 h (6 y 20 oct) · 2 sesiones/mes · 2 h",
+        "rates_psy_group_autoayuda_desc": "Martes 11:30 h (27 oct y 3 nov) · 2 sesiones/mes · 2 h",
         "rates_psy_group_autoayuda_focus": "Espacio centrado en una temática concreta con un objetivo compartido.",
         "rates_psy_group_autoayuda_badge": "30 € · 2 h",
         "rates_psy_group_autoayuda_buy": "Comprar sesión Autoayuda (30 €)",
         "rates_psy_group_terapeutico_title": "🫂 Grupo Terapéutico",
-        "rates_psy_group_terapeutico_desc": "Miércoles 11:30 h (7 y 21 oct) · 2 sesiones/mes · 2 h",
+        "rates_psy_group_terapeutico_desc": "Miércoles 11:30 h (28 oct y 4 nov) · 2 sesiones/mes · 2 h",
         "rates_psy_group_terapeutico_focus": "Grupo cerrado y continuado para abordar diversos temas con confianza y vínculo.",
         "rates_psy_group_terapeutico_badge": "30 € · 2 h",
         "rates_psy_group_terapeutico_buy": "Comprar sesión Terapéutica (30 €)",
@@ -523,7 +527,69 @@ const translations = {
         // policy wording dynamic
         "policy_booking_limit": "Las reservas cierran <b>{res} h</b> antes del inicio.",
         "policy_cancel_limit": "Puedes cancelar y recuperar el bono mientras falten más de <b>{can} h</b>. Al llegar a ese límite, la cancelación se bloquea y el bono no se devuelve.",
-        "footer_address": "Calle San Carlos 2, Albacete"
+        "footer_address": "Calle San Carlos 2, Albacete",
+
+        // --- QA | Modal de bienvenida de la home (index.html) ---
+        "flash_badge": "★ 100% Gratuito · Nuevos Alumnos",
+        "home_h1": "GEN Yoga · Estudio de yoga y bienestar en Albacete",
+        "flash_price_note": "sin cuota de alta · sin compromiso",
+        "flash_close_label": "Cerrar aviso promocional",
+        "flash_title": "¡Tu 1ª Clase de Yoga es Gratis!",
+        "flash_lead": "Crea tu cuenta en <strong>GEN Yoga</strong> y recibe automáticamente en tu perfil tu <strong>Bono de Bienvenida</strong> para empezar a entrenar con nosotros:",
+        "flash_benefit_session": "1 Sesión Gratuita de Yoga para cualquier clase regular",
+        "flash_benefit_valid": "Válida para cualquier horario regular de la parrilla semanal (excluye talleres y clases especiales)",
+        "flash_benefit_activation": "Activación Inmediata:",
+        "flash_benefit_instant": "Disponible al instante tras registrarte. ¡Apúntate y ven a conocernos!",
+        "flash_cta": "✨ Crear Cuenta y Recibir Bono (0 €) →",
+        "flash_secondary": "Cerrar y continuar al estudio",
+
+        // --- QA | Tarjeta de bienvenida (tarifas.html) ---
+        "rates_welcome_free_session": "1 Sesión Gratuita de Yoga para cualquier clase regular",
+        "rates_welcome_valid_for": "Válida para reservar tu plaza en",
+        "rates_welcome_regular_classes": "cualquiera de las clases normales de yoga",
+        "rates_welcome_schedule_note": "de nuestra parrilla semanal (se excluyen talleres y clases especiales)",
+        "rates_welcome_instant_title": "Activación Inmediata y Automática",
+        "rates_welcome_instant_text": "Disponible en tu perfil tan pronto como completes el registro. Sin esperas ni códigos.",
+        "rates_welcome_view_schedule": "Ver clases y horarios regulares →",
+
+        // --- QA | Categoría Eventos: tarjetas dinámicas (tarifas.html) ---
+        "rates_events_next_taller": "Próximo Taller",
+        "rates_events_next_special": "Próxima Clase Especial",
+        "rates_events_date": "{day} {num} {month} · {start} a {end}",
+        "rates_events_subtitle_taller": "Con {teacher} · {duration}",
+        "rates_events_subtitle_special": "Con {teacher} · Sesión Temática ({duration} min)",
+        "rates_events_duration_hours": "2 Horas de Inmersión",
+        "rates_events_duration_minutes": "{duration} Minutos de Inmersión",
+        "rates_events_price_taller": "/ plaza ({duration} min)",
+        "rates_events_price_special": "/ plaza (o con Bono Ilimitado)",
+        "rates_events_desc_taller": "Inmersión completa de {duration} minutos diseñada para aprender y consolidar los fundamentos de la práctica con atención personalizada.",
+        "rates_events_desc_special": "Práctica guiada de profundización que combina asana suave con técnicas de pranayama y meditación profunda para calmar el sistema nervioso y restaurar el equilibrio interior.",
+        "rates_events_bullet_taller_1": "Máximo {capacity} alumnos para atención personalizada",
+        "rates_events_bullet_taller_2": "Ajustes manuales y soporte individual",
+        "rates_events_bullet_taller_3": "Material de apoyo e infusiones incluidas",
+        "rates_events_bullet_special_1": "Grupos reducidos (máximo {capacity} plazas)",
+        "rates_events_bullet_special_2": "<strong>1 clase al mes incluida</strong> con el Bono Ilimitado",
+        "rates_events_bullet_special_3": "Disponible para compra suelta o reserva con bono",
+        "rates_events_link_taller": "Ver detalles en el calendario →",
+        "rates_events_link_special": "Ver próximas fechas en horario →",
+        "rates_events_empty_title": "Próximamente nuevos talleres",
+        "rates_events_empty": "Actualmente no hay talleres o clases especiales activas con fechas futuras. Muy pronto publicaremos nuevas experiencias y fechas. Consulta nuestro horario semanal para descubrir todas las clases regulares.",
+        "rates_events_empty_cta": "Ver horario completo",
+        "rates_events_book": "Reservar Plaza",
+
+        // --- QA | Otros textos sueltos ---
+        "teachers_footer_address": "© 2026 GEN Yoga • Calle San Carlos 2, Albacete",
+        "btn_back_home_arrow": "← INICIO",
+        "success_verifying": "Verificando tu compra...",
+        "success_error_title": "No pudimos verificar el pago",
+        "success_error_message": "No se ha confirmado ninguna compra. Comprueba el enlace o vuelve a intentarlo.",
+        "success_error_retry": "Reintentar verificación",
+        "success_error_back": "Volver a Tarifas",
+        "success_done_title": "¡Pago Completado!",
+        "success_done_message": "Stripe ha confirmado tu compra. Tu cuenta se actualizará automáticamente; si aún no ves el nuevo saldo al entrar en tu perfil, recarga la página tranquilamente.",
+        "success_redirecting": "Redirigiéndote a tu perfil en <span id=\"countdown\">5</span> segundos...",
+        "success_go_profile": "Ir a mi Perfil",
+        "success_manage_invoices": "Gestionar mis Facturas / Suscripción"
     },
     en: {
         // Navigation & Menu
@@ -589,6 +655,10 @@ const translations = {
         "footer_privacy": "Privacy Policy",
         "cancel_page_title": "Payment Cancelled",
         "cancel_page_message": "It looks like the payment process was cancelled and no charge has been made. Don't worry, you can try again whenever you're ready.",
+        "nf_title": "Page not found",
+        "nf_message": "The page you are looking for does not exist or has moved. The link may be out of date, or the address may be misspelled.",
+        "nf_btn_home": "Back to home",
+        "nf_btn_rates": "See classes and rates",
         "cancel_btn_rates": "Back to Rates",
         "cancel_btn_profile": "Back to my Profile",
         "cancel_btn_profile_go": "Go to my Profile",
@@ -698,12 +768,12 @@ const translations = {
         "rates_psy_buy_btn_120": "Buy 1st couple session (€120)",
         "rates_psy_buy_btn_100": "Buy follow-up couple session (€100)",
         "rates_psy_group_autoayuda_title": "🌱 Self-Help Group",
-        "rates_psy_group_autoayuda_desc": "Tuesdays 11:30 (Oct 6 & 20) · 2 sessions/month · 2 h",
+        "rates_psy_group_autoayuda_desc": "Tuesdays 11:30 (Oct 27 & Nov 3) · 2 sessions/month · 2 h",
         "rates_psy_group_autoayuda_focus": "Space focused on a specific theme with a shared goal.",
         "rates_psy_group_autoayuda_badge": "30 € · 2 h",
         "rates_psy_group_autoayuda_buy": "Buy Self-Help session (€30)",
         "rates_psy_group_terapeutico_title": "🫂 Therapeutic Group",
-        "rates_psy_group_terapeutico_desc": "Wednesdays 11:30 (Oct 7 & 21) · 2 sessions/month · 2 h",
+        "rates_psy_group_terapeutico_desc": "Wednesdays 11:30 (Oct 28 & Nov 4) · 2 sessions/month · 2 h",
         "rates_psy_group_terapeutico_focus": "Closed, ongoing group exploring diverse themes with trust and connection.",
         "rates_psy_group_terapeutico_badge": "30 € · 2 h",
         "rates_psy_group_terapeutico_buy": "Buy Therapeutic session (€30)",
@@ -998,7 +1068,69 @@ const translations = {
         // policy wording dynamic
         "policy_booking_limit": "Bookings close <b>{res} hours</b> before the start.",
         "policy_cancel_limit": "You can cancel and recover the credit while more than <b>{can} hours</b> remain. At that cutoff, cancellation is blocked and the credit is not refunded.",
-        "footer_address": "2 San Carlos St, Albacete"
+        "footer_address": "2 San Carlos St, Albacete",
+
+        // --- QA | Home welcome modal (index.html) ---
+        "flash_badge": "★ 100% Free · New students",
+        "home_h1": "GEN Yoga · Yoga and wellness studio in Albacete",
+        "flash_price_note": "no sign-up fee · no strings attached",
+        "flash_close_label": "Close promotional notice",
+        "flash_title": "Your 1st Yoga Class is Free!",
+        "flash_lead": "Create your account at <strong>GEN Yoga</strong> and automatically receive in your profile your <strong>Welcome Pass</strong> to start practising with us:",
+        "flash_benefit_session": "1 Free Yoga Session for any regular class",
+        "flash_benefit_valid": "Valid for any regular slot in the weekly timetable (workshops and special classes excluded)",
+        "flash_benefit_activation": "Instant activation:",
+        "flash_benefit_instant": "Available the moment you sign up. Join us and come meet us!",
+        "flash_cta": "✨ Create Account and Claim Your Pass (€0) →",
+        "flash_secondary": "Close and continue to the studio",
+
+        // --- QA | Welcome card (tarifas.html) ---
+        "rates_welcome_free_session": "1 Free Yoga Session for any regular class",
+        "rates_welcome_valid_for": "Valid for booking your spot in",
+        "rates_welcome_regular_classes": "any of our regular yoga classes",
+        "rates_welcome_schedule_note": "in the weekly timetable (workshops and special classes excluded)",
+        "rates_welcome_instant_title": "Instant and Automatic Activation",
+        "rates_welcome_instant_text": "Available in your profile as soon as you finish signing up. No waiting, no codes.",
+        "rates_welcome_view_schedule": "See regular classes and timetable →",
+
+        // --- QA | Events category: dynamic cards (tarifas.html) ---
+        "rates_events_next_taller": "Next Workshop",
+        "rates_events_next_special": "Next Special Class",
+        "rates_events_date": "{day} {num} {month} · {start} to {end}",
+        "rates_events_subtitle_taller": "With {teacher} · {duration}",
+        "rates_events_subtitle_special": "With {teacher} · Themed Session ({duration} min)",
+        "rates_events_duration_hours": "2 Hours of Immersion",
+        "rates_events_duration_minutes": "{duration} Minutes of Immersion",
+        "rates_events_price_taller": "/ spot ({duration} min)",
+        "rates_events_price_special": "/ spot (or with the Unlimited Pass)",
+        "rates_events_desc_taller": "A complete {duration}-minute immersion designed to learn and consolidate the foundations of the practice with personal attention.",
+        "rates_events_desc_special": "A guided deepening practice combining gentle asana with pranayama and deep meditation techniques to calm the nervous system and restore inner balance.",
+        "rates_events_bullet_taller_1": "Up to {capacity} students for personal attention",
+        "rates_events_bullet_taller_2": "Hands-on adjustments and individual support",
+        "rates_events_bullet_taller_3": "Support material and infusions included",
+        "rates_events_bullet_special_1": "Small groups (up to {capacity} spots)",
+        "rates_events_bullet_special_2": "<strong>1 class a month included</strong> with the Unlimited Pass",
+        "rates_events_bullet_special_3": "Available for drop-in purchase or pass booking",
+        "rates_events_link_taller": "See details on the calendar →",
+        "rates_events_link_special": "See upcoming dates on the timetable →",
+        "rates_events_empty_title": "New workshops coming soon",
+        "rates_events_empty": "There are currently no active workshops or special classes with future dates. We will soon publish new experiences and dates. Check our weekly timetable to discover all the regular classes.",
+        "rates_events_empty_cta": "See full timetable",
+        "rates_events_book": "Book a Spot",
+
+        // --- QA | Other copy ---
+        "teachers_footer_address": "© 2026 GEN Yoga • 2 San Carlos St, Albacete",
+        "btn_back_home_arrow": "← HOME",
+        "success_verifying": "Verifying your purchase...",
+        "success_error_title": "We could not verify the payment",
+        "success_error_message": "No purchase has been confirmed. Check the link or try again.",
+        "success_error_retry": "Try verification again",
+        "success_error_back": "Back to Rates",
+        "success_done_title": "Payment Complete!",
+        "success_done_message": "Stripe has confirmed your purchase. Your account will update automatically; if you still do not see the new balance when you open your profile, simply reload the page.",
+        "success_redirecting": "Redirecting you to your profile in <span id=\"countdown\">5</span> seconds...",
+        "success_go_profile": "Go to my profile",
+        "success_manage_invoices": "Manage my invoices / subscription"
     }
 };
 
@@ -1098,7 +1230,7 @@ function setLanguage(lang) {
             btnEn.style.fontWeight = '500';
             btnEn.style.textDecoration = 'none';
             btnEn.style.color = '#f8f6f2';
-            btnEn.style.opacity = '0.5';
+            btnEn.style.opacity = '0.85';
         } else {
             btnEn.style.fontWeight = '900';
             btnEn.style.textDecoration = 'underline';
@@ -1110,7 +1242,7 @@ function setLanguage(lang) {
             btnEs.style.fontWeight = '500';
             btnEs.style.textDecoration = 'none';
             btnEs.style.color = '#f8f6f2';
-            btnEs.style.opacity = '0.5';
+            btnEs.style.opacity = '0.85';
         }
     }
 
@@ -1185,7 +1317,33 @@ const alertTranslations = {
     "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos disponibles. Compra un bono extra por 15€ para reservar.": "You do not have an active pass or class credit left. Choose a class pack or unlimited pass to book.",
     "¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?": "Do you want to book this class with your <b>Unlimited Pass</b>?",
     "¿Quieres reservar esta clase usando tu <b>Bono Ilimitado</b>?": "Do you want to book this class with your <b>Unlimited Pass</b>?",
-    "¿Quieres reservar esta clase usando <b>uno de tus bonos</b>?": "Do you want to book this class using <b>one of your class credits</b>?"
+    "¿Quieres reservar esta clase usando <b>uno de tus bonos</b>?": "Do you want to book this class using <b>one of your class credits</b>?",
+
+    // --- QA | Diálogos de compra de tarifas.html (no estaban en el mapa) ---
+    "Clase suelta de Yoga · 15 €": "Drop-in Yoga Class · €15",
+    "Selecciona la clase a la que quieres asistir:": "Select the class you want to attend:",
+    "No se pudo cargar la lista de clases. Inténtalo de nuevo.": "We could not load the class list. Please try again.",
+    "Elige la fecha de tu primera clase de yoga gratuita. Después crearás tu cuenta.": "Choose the date of your first free yoga class. You will create your account next.",
+    "Datos del Alumno (Usuario Temporal)": "Student details (temporary user)",
+    "¿Prefieres usar tu cuenta? Inicia sesión y tus datos se completarán automáticamente.": "Prefer to use your account? Sign in and your details will be filled in automatically.",
+    "Introduce tus datos para registrar tu reserva temporal y enviarte el acceso a la clase:": "Enter your details to register your temporary booking and receive your class access:",
+    "Este campo es obligatorio.": "This field is required.",
+    "El nombre es obligatorio.": "The first name is required.",
+    "El apellido es obligatorio.": "The last name is required.",
+    "Por favor, introduce tu nombre.": "Please enter your first name.",
+    "Por favor, introduce tus apellidos.": "Please enter your last name.",
+    "El teléfono móvil debe tener 9 dígitos numéricos.": "The mobile number must be 9 numeric digits.",
+    "El email no es válido.": "The email is not valid.",
+    "Solo clases regulares de yoga (no incluye talleres ni clases especiales)": "Regular yoga classes only (workshops and special classes excluded)",
+    "Próxima clase disponible": "Next available class",
+    "Selecciona una fecha futura para tu clase.": "Select a future date for your class.",
+    "Este taller ha comenzado o finalizado.": "This workshop has started or finished.",
+    "¿Quieres comprar esta plaza?": "Do you want to buy this spot?",
+    "Clase no reservable con clase suelta": "This session cannot be booked with a drop-in class",
+    "Esta sesión es un taller o clase especial y no se puede reservar con clase suelta o bono normal (15 €). Por favor, selecciona una clase regular de yoga.": "This session is a workshop or special class and cannot be booked with a drop-in or normal pass (€15). Please select a regular yoga class.",
+    "Elegir otra clase": "Choose another class",
+    "Ver horario completo": "See full timetable",
+    "Ver detalles en el calendario →": "See details on the calendar →"
 };
 
 function translateText(text) {
@@ -1224,6 +1382,14 @@ if (window.Swal) {
                 if (opts.html) opts.html = translateText(opts.html);
                 if (opts.confirmButtonText) opts.confirmButtonText = translateText(opts.confirmButtonText);
                 if (opts.cancelButtonText) opts.cancelButtonText = translateText(opts.cancelButtonText);
+                if (opts.denyButtonText) opts.denyButtonText = translateText(opts.denyButtonText);
+                if (opts.inputLabel) opts.inputLabel = translateText(opts.inputLabel);
+                if (opts.inputPlaceholder) opts.inputPlaceholder = translateText(opts.inputPlaceholder);
+                if (opts.inputErrorMessages && typeof opts.inputErrorMessages === 'object') {
+                    opts.inputErrorMessages = Object.fromEntries(
+                        Object.entries(opts.inputErrorMessages).map(([k, v]) => [k, translateText(v)])
+                    );
+                }
                 return originalSwalFire.call(window.Swal, opts);
             } else {
                 const newArgs = args.map(arg => typeof arg === 'string' ? translateText(arg) : arg);
@@ -1264,6 +1430,12 @@ function applyTranslations() {
                 el.innerHTML = translation;
             }
         }
+    });
+
+    // 1b. Scopes accessible labels (aria-label) — QA v17.22
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+        const translation = t(el.getAttribute('data-i18n-aria-label'));
+        if (translation) el.setAttribute('aria-label', translation);
     });
 
     // 2. Translate document title dynamically based on key
@@ -1351,9 +1523,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         langDiv.innerHTML = `
-            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '2px 6px'}; min-width:${isNative ? '34px' : 'auto'}; min-height:${isNative ? '32px' : 'auto'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">ES</button>
-            <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none; user-select:none;">/</span>
-            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '2px 6px'}; min-width:${isNative ? '34px' : 'auto'}; min-height:${isNative ? '32px' : 'auto'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">EN</button>
+            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">ES</button>
+            <span style="color:rgba(248, 246, 242, 0.95); font-size:11px; pointer-events:none; user-select:none;">/</span>
+            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.85; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">EN</button>
         `;
         document.body.appendChild(langDiv);
     }
