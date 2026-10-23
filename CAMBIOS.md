@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.22.5 — 23 oct 2026 · Incidencia
+
+- **Descripción:** arregla el modal de consulta en movil (botones alcanzables, sin solape del selector de idioma) y completa las traducciones del perfil (ámbito: perfil)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v17.22.5`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v17.22.5.md`
+
 ## v17.22.4 — 23 oct 2026 · Incidencia
 
 - **Descripción:** Corrige los avisos toast de SweetAlert2, que se mostraban como modales bloqueantes: el traductor de i18n forzaba el contexto de Swal y perdía las opciones del mixin. Afectaba sobre todo al aviso tras cancelar una reserva. (ámbito: perfil)

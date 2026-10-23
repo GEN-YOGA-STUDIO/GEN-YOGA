@@ -1682,6 +1682,33 @@
             }
         }
 
+        @media (max-width: 639px) {
+            /* Compact dialogs on small screens so actions stay reachable */
+            .swal2-popup {
+                padding: 0.85rem 0.8rem 0.95rem !important;
+            }
+
+            .swal2-title {
+                font-size: 1.15rem !important;
+                line-height: 1.25 !important;
+                padding: 0.3rem 0 0.45rem !important;
+            }
+
+            .swal2-html-container {
+                font-size: 0.82rem !important;
+                line-height: 1.4 !important;
+                margin: 0.3rem 0 0 !important;
+                max-height: 48vh !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .swal2-actions {
+                margin-top: 0.6rem !important;
+                gap: 0.4rem !important;
+            }
+        }
+
         @media (max-width: 380px) {
             #header-saldos-wrapper {
                 grid-template-columns: minmax(0, 1fr);
@@ -2810,17 +2837,17 @@
                         <button id="btn-subtab-eventos-todos" onclick="switchEventosSubTab('todos')"
                             class="filtro-prof-btn active flex items-center gap-1.5 text-xs font-bold">
                             <i class="ph-bold ph-squares-four text-sm"></i>
-                            <span>Todos</span>
+                            <span data-i18n="profile_events_all">Todos</span>
                         </button>
                         <button id="btn-subtab-eventos-clases" onclick="switchEventosSubTab('clases_especiales')"
                             class="filtro-prof-btn flex items-center gap-1.5 text-xs font-bold">
                             <i class="ph-fill ph-sparkle text-sm text-slate-700"></i>
-                            <span>Clases Especiales</span>
+                            <span data-i18n="common_special_classes">Clases Especiales</span>
                         </button>
                         <button id="btn-subtab-eventos-talleres" onclick="switchEventosSubTab('talleres')"
                             class="filtro-prof-btn flex items-center gap-1.5 text-xs font-bold">
                             <i class="ph-bold ph-barbell text-sm text-[#AB593D]"></i>
-                            <span>Talleres</span>
+                            <span data-i18n="common_workshops">Talleres</span>
                         </button>
                     </div>
                     <div id="special-classes-benefit" class="hidden mb-3"></div>
@@ -2864,9 +2891,9 @@
                                     <select id="filtro-consultas-usuario" onchange="filtrarConsultasUsuario('psicologia', this.value)"
                                         class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2 text-xs sm:text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
                                         <option value="todas" data-i18n="profile_filter_all_consultations">Todas las consultas</option>
-                                        <option value="isabel">Isabel (PNI)</option>
-                                        <option value="miriam">Miriam (Psicología)</option>
-                                        <option value="grupos">Grupos (Miriam)</option>
+                                        <option value="isabel" data-i18n="profile_filter_isabel_pni">Isabel (PNI)</option>
+                                        <option value="miriam" data-i18n="profile_filter_miriam_psychology">Miriam (Psicología)</option>
+                                        <option value="grupos" data-i18n="profile_filter_groups_miriam">Grupos (Miriam)</option>
                                         <option value="disponibles" data-i18n="profile_filter_available_consultations">Disponibles</option>
                                         <option value="mis-reservas" data-i18n="profile_filter_my_booked_consultations">Mis consultas reservadas</option>
                                     </select>
@@ -6270,12 +6297,15 @@
             const esLocal = origen === 'local';
 
             let nombre = '';
+            if (rawProd === 'mostrador_presencial' || rawProd === 'Pago presencial en mostrador') {
+                nombre = profileT('profile_counter_payment', 'Pago presencial en mostrador');
+            }
             const prodDetail = window.obtenerDetalleStripeProducto(rawProd) || window.obtenerDetalleStripeProducto(lookup);
-            if (prodDetail && prodDetail.name && prodDetail.name !== rawProd && prodDetail.name !== lookup) {
+            if (!nombre && prodDetail && prodDetail.name && prodDetail.name !== rawProd && prodDetail.name !== lookup) {
                 nombre = prodDetail.label;
-            } else if (rawProd && !rawProd.startsWith('prod_') && !rawProd.startsWith('price_')) {
+            } else if (!nombre && rawProd && !rawProd.startsWith('prod_') && !rawProd.startsWith('price_')) {
                 nombre = rawProd;
-            } else if (prodDetail && prodDetail.name) {
+            } else if (!nombre && prodDetail && prodDetail.name) {
                 nombre = prodDetail.label;
             }
 
@@ -7387,6 +7417,18 @@
 
         function getCurrentLocale() {
             return getCurrentLang() === 'en' ? 'en-GB' : 'es-ES';
+        }
+
+        function getShortWeekdays() {
+            return getCurrentLang() === 'en'
+                ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                : ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        }
+
+        function getShortMonths() {
+            return getCurrentLang() === 'en'
+                ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                : ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         }
 
         function profileT(key, fallback = '') {
@@ -10043,9 +10085,9 @@
             if (dKeys.length === 0) {
                 bar.innerHTML = `
                     <div class="flex items-center justify-between gap-3 w-full py-1 px-2 text-xs text-cocoa/70">
-                        <span class="italic">No hay clases programadas en ${monthNames[targetMonth]} ni en ${monthNames[(targetMonth + 1) % 12]}.</span>
+                        <span class="italic">${escapeHtml(profileT('profile_no_classes_month', 'No hay clases programadas en'))} ${escapeHtml(monthNames[targetMonth])} ${escapeHtml(profileT('profile_no_classes_month_or', 'ni en'))} ${escapeHtml(monthNames[(targetMonth + 1) % 12])}.</span>
                         <button type="button" onclick="cambiarMes(2)" class="text-olive font-bold underline hover:text-cocoa flex items-center gap-1 cursor-pointer whitespace-nowrap">
-                            Ver ${monthNames[(targetMonth + 2) % 12]} <i class="ph-bold ph-caret-right"></i>
+                            ${escapeHtml(profileT('profile_see_month', 'Ver'))} ${escapeHtml(monthNames[(targetMonth + 2) % 12])} <i class="ph-bold ph-caret-right"></i>
                         </button>
                     </div>
                 `;
@@ -10068,8 +10110,8 @@
             }
 
             let html = '';
-            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const diasSemanaCorta = getShortWeekdays();
+            const mesesCorta = getShortMonths();
 
             dKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
@@ -10087,12 +10129,12 @@
 
                 if (isToday && isSelected) {
                     btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
                     countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
                 } else if (isToday && !isSelected) {
                     btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
                     countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
                 } else if (isSelected) {
@@ -10112,7 +10154,7 @@
                         class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
                         ${topLabel}
                         <span class="${textClass}">${d} ${mesNombre}</span>
-                        <span class="${countClass}">${numClases} clase${numClases > 1 ? 's' : ''}</span>
+                        <span class="${countClass}">${numClases} ${escapeHtml(profileT(numClases === 1 ? 'profile_class_count_one' : 'profile_class_count_plural', numClases === 1 ? 'clase' : 'clases'))}</span>
                     </button>
                 `;
             });
@@ -10617,8 +10659,8 @@
                     const emptyP = emptyState.querySelector('p');
                     if (emptyP) {
                         emptyP.textContent = (!isAdmin && esTrabajador())
-                            ? 'No tienes eventos asignados a tu nombre actualmente.'
-                            : (activeEventosSubTab === 'clases_especiales' ? 'No hay clases especiales programadas en este filtro.' : (activeEventosSubTab === 'talleres' ? 'No hay talleres programados en este filtro.' : 'No hay eventos programados todavía.'));
+                            ? profileT('profile_no_events_assigned', 'No tienes eventos asignados a tu nombre actualmente.')
+                            : (activeEventosSubTab === 'clases_especiales' ? profileT('profile_no_special_classes_filter', 'No hay clases especiales programadas en este filtro.') : (activeEventosSubTab === 'talleres' ? profileT('profile_no_workshops_filter', 'No hay talleres programados en este filtro.') : profileT('profile_no_events_filter', 'No hay eventos programados todavía.')));
                     }
                 }
                 return;
@@ -10646,47 +10688,47 @@
                 let aforoOEstadoTaller = '';
 
                 if (isAdmin || esTrabajador()) {
-                    aforoOEstadoTaller = `<span class="text-xs text-cocoa/60 font-bold bg-sand/20 px-3 py-1.5 rounded-full"><i class="ph-bold ph-users mr-1"></i>${toSafeNumber(c.ocupadas)} / ${toSafeNumber(c.capacidad_max)} plazas</span>`;
-                    action = `<button onclick="switchPublicView('mis-clases'); setTimeout(() => { const sel = document.getElementById('filtro-asistencias-tipo-sesion'); if (sel) { sel.value = 'talleres'; aplicarFiltrosAsistencias(); } }, 120);" class="inline-flex items-center gap-1.5 bg-cocoa hover:bg-black text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-sm transition cursor-pointer"><i class="ph-bold ph-users-three"></i> Ver inscritos</button>`;
+                    aforoOEstadoTaller = `<span class="text-xs text-cocoa/60 font-bold bg-sand/20 px-3 py-1.5 rounded-full"><i class="ph-bold ph-users mr-1"></i>${toSafeNumber(c.ocupadas)} / ${toSafeNumber(c.capacidad_max)} ${escapeHtml(profileT('profile_places', 'plazas'))}</span>`;
+                    action = `<button onclick="switchPublicView('mis-clases'); setTimeout(() => { const sel = document.getElementById('filtro-asistencias-tipo-sesion'); if (sel) { sel.value = 'talleres'; aplicarFiltrosAsistencias(); } }, 120);" class="inline-flex items-center gap-1.5 bg-cocoa hover:bg-black text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-sm transition cursor-pointer"><i class="ph-bold ph-users-three"></i> ${escapeHtml(profileT('profile_view_attendees', 'Ver inscritos'))}</button>`;
                 } else {
                     if (c.miReserva) {
-                        action = `<button onclick="cancelar(${reservaId})" class="px-5 py-2.5 rounded-full border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition cursor-pointer">CANCELAR RESERVA</button>`;
-                        aforoOEstadoTaller = `<span class="text-xs font-bold text-olive flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Plaza Reservada</span>`;
+                        action = `<button onclick="cancelar(${reservaId})" class="px-5 py-2.5 rounded-full border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition cursor-pointer">${escapeHtml(profileT('profile_cancel_booking_upper', 'CANCELAR RESERVA'))}</button>`;
+                        aforoOEstadoTaller = `<span class="text-xs font-bold text-olive flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> ${escapeHtml(profileT('profile_your_spot_reserved', 'Tu Plaza Reservada'))}</span>`;
                     } else if (finalizada) {
-                        action = '<span class="px-4 py-2 rounded-full bg-sand/15 text-cocoa/40 text-xs font-bold uppercase">FINALIZADA</span>';
-                        aforoOEstadoTaller = `<span class="text-xs font-bold text-cocoa/40">Finalizada</span>`;
+                        action = `<span class="px-4 py-2 rounded-full bg-sand/15 text-cocoa/40 text-xs font-bold uppercase">${escapeHtml(profileT('profile_finished', 'Finalizada'))}</span>`;
+                        aforoOEstadoTaller = `<span class="text-xs font-bold text-cocoa/40">${escapeHtml(profileT('profile_finished', 'Finalizada'))}</span>`;
                     } else if (full) {
-                        action = '<span class="px-4 py-2 rounded-full bg-sand/15 text-cocoa/40 text-xs font-bold uppercase">COMPLETA</span>';
-                        aforoOEstadoTaller = `<span class="text-xs font-bold text-red-700">Completa</span>`;
+                        action = `<span class="px-4 py-2 rounded-full bg-sand/15 text-cocoa/40 text-xs font-bold uppercase">${escapeHtml(profileT('profile_full', 'Completa'))}</span>`;
+                        aforoOEstadoTaller = `<span class="text-xs font-bold text-red-700">${escapeHtml(profileT('profile_full', 'Completa'))}</span>`;
                     } else if (cerrada) {
-                        action = '<span class="px-4 py-2 rounded-full bg-sand/15 text-cocoa/40 text-xs font-bold uppercase">RESERVA CERRADA</span>';
-                        aforoOEstadoTaller = `<span class="text-xs font-bold text-amber-800">Reserva Cerrada</span>`;
+                        action = `<span class="px-4 py-2 rounded-full bg-sand/15 text-cocoa/40 text-xs font-bold uppercase">${escapeHtml(profileT('profile_booking_closed', 'Reserva Cerrada'))}</span>`;
+                        aforoOEstadoTaller = `<span class="text-xs font-bold text-amber-800">${escapeHtml(profileT('profile_booking_closed', 'Reserva Cerrada'))}</span>`;
                     } else if (isClaseEspecial) {
                         const tieneBonoEspecialMes = userSpecialBonos.some(b => b.mes && String(b.mes).slice(0, 7) === startMonthKey.slice(0, 7) && toSafeNumber(b.saldo) > 0);
                         if (tieneBonoEspecialMes) {
-                            action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);"><i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> RESERVAR CON BONO ESPECIAL</button>`;
+                            action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);"><i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> ${escapeHtml(profileT('profile_book_with_special_pass', 'RESERVAR CON BONO ESPECIAL'))}</button>`;
                         } else {
-                            action = `<button onclick="comprarBonoEspecialStripe(event, '${startMonthKey}', ${claseId})" class="text-white text-[11px] font-black px-5 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #475569 0%, #0f172a 100%);" title="Comprar bono para ${escapeHtml(monthFriendlyName)} por 20 €"><i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> COMPRAR BONO ESPECIAL (20 €)</button>`;
+                            action = `<button onclick="comprarBonoEspecialStripe(event, '${startMonthKey}', ${claseId})" class="text-white text-[11px] font-black px-5 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #475569 0%, #0f172a 100%);" title="${escapeHtml(profileT('profile_buy_special_pass_for', 'Comprar bono para'))} ${escapeHtml(monthFriendlyName)} ${escapeHtml(profileT('profile_price_20_suffix', 'por 20 €'))}"><i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> ${escapeHtml(profileT('profile_buy_special_pass_20', 'COMPRAR BONO ESPECIAL (20 €)'))}</button>`;
                         }
-                        aforoOEstadoTaller = `<span class="text-xs font-bold text-slate-700 flex items-center gap-1"><i class="ph-fill ph-sparkle text-slate-500"></i> Clase Especial (${escapeHtml(monthFriendlyName)})</span>`;
+                        aforoOEstadoTaller = `<span class="text-xs font-bold text-slate-700 flex items-center gap-1"><i class="ph-fill ph-sparkle text-slate-500"></i> ${escapeHtml(profileT('profile_special_class', 'Clase Especial'))} (${escapeHtml(monthFriendlyName)})</span>`;
                     } else {
                         // Taller
                         const creditoReprog = userCreditosReprogramacion.find(r => (r.tipo === 'taller' || r.tipo === 'credito_taller') && r.estado === 'disponible');
                         const tieneSaldoTaller = (toSafeNumber(currentUserProfile?.saldo_talleres) || 0) > 0;
                         if (creditoReprog || tieneSaldoTaller) {
-                            action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 bg-emerald-600 hover:bg-emerald-700"><i class="ph-bold ph-arrows-clockwise mr-1"></i> RESERVAR CON BONO / CRÉDITO (0 €)</button>`;
+                            action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 bg-emerald-600 hover:bg-emerald-700"><i class="ph-bold ph-arrows-clockwise mr-1"></i> ${escapeHtml(profileT('profile_book_with_pass_credit', 'RESERVAR CON BONO / CRÉDITO (0 €)'))}</button>`;
                         } else {
                             const { lookupKey, precio } = resolverPrecioYTallerLookup(c);
-                            action = `<button type="button" data-checkout-taller data-lookup="${escapeHtml(lookupKey || '')}" data-title="${escapeHtml(c.nombre || '')}" data-precio="${escapeHtml(precio || '')}" data-clase="${Number(claseId) || 0}" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">RESERVAR PLAZA (${precio} €)</button>`;
+                            action = `<button type="button" data-checkout-taller data-lookup="${escapeHtml(lookupKey || '')}" data-title="${escapeHtml(c.nombre || '')}" data-precio="${escapeHtml(precio || '')}" data-clase="${Number(claseId) || 0}" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%);">${escapeHtml(profileT('profile_book_place_price', 'RESERVAR PLAZA'))} (${precio} €)</button>`;
                         }
-                        aforoOEstadoTaller = `<span class="text-xs font-bold text-[#AB593D] flex items-center gap-1"><i class="ph-bold ph-barbell"></i> Taller (Plaza Individual)</span>`;
+                        aforoOEstadoTaller = `<span class="text-xs font-bold text-[#AB593D] flex items-center gap-1"><i class="ph-bold ph-barbell"></i> ${escapeHtml(profileT('profile_workshop_singular', 'Taller'))} (${escapeHtml(profileT('profile_individual_place', 'Plaza Individual'))})</span>`;
                     }
                 }
 
                 const teacher = String(c.profesionales?.nombre || 'Equipo GEN Yoga');
                 const badgeTipo = isClaseEspecial
-                    ? `<span class="text-[10px] font-black uppercase tracking-widest text-slate-800 bg-slate-100 border border-slate-300 px-3 py-1 rounded-full inline-flex items-center gap-1.5"><i class="ph-fill ph-sparkle text-slate-600"></i> Clase Especial</span>`
-                    : `<span class="text-[10px] font-black uppercase tracking-widest text-[#AB593D] bg-[#AB593D]/10 border border-[#AB593D]/25 px-3 py-1 rounded-full inline-flex items-center gap-1.5"><i class="ph-bold ph-barbell"></i> Taller</span>`;
+                    ? `<span class="text-[10px] font-black uppercase tracking-widest text-slate-800 bg-slate-100 border border-slate-300 px-3 py-1 rounded-full inline-flex items-center gap-1.5"><i class="ph-fill ph-sparkle text-slate-600"></i> ${escapeHtml(profileT('profile_special_class', 'Clase Especial'))}</span>`
+                    : `<span class="text-[10px] font-black uppercase tracking-widest text-[#AB593D] bg-[#AB593D]/10 border border-[#AB593D]/25 px-3 py-1 rounded-full inline-flex items-center gap-1.5"><i class="ph-bold ph-barbell"></i> ${escapeHtml(profileT('profile_workshop_singular', 'Taller'))}</span>`;
 
                 return `
             <article id="taller-card-${claseId}" data-clase-id="${claseId}" data-fecha="${start.toISOString().slice(0, 10)}" data-hora="${formatDisplayTime(c.fecha_inicio)}" class="bg-white/95 rounded-3xl border ${isClaseEspecial ? 'border-slate-300 shadow-md' : 'border-terracotta/15 shadow-md'} overflow-hidden transition-all duration-300">
@@ -10846,18 +10888,18 @@
             const skipConfirm = options?.skipConfirmation === true || (new URLSearchParams(window.location.search).get('auto_book') === 'true');
             if (!skipConfirm) {
                 const result = await Swal.fire({
-                    title: `<span class="font-serif font-black text-slate-800">Bono de Clase Especial</span>`,
+                    title: `<span class="font-serif font-black text-slate-800">${escapeHtml(profileT('profile_special_pass_title', 'Bono de Clase Especial'))}</span>`,
                     html: `
                         <div class="text-left text-xs text-slate-700 space-y-3 my-2">
                             <div class="p-3.5 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300">
                                 <div class="flex items-center justify-between font-black text-sm text-slate-900">
-                                    <span class="flex items-center gap-1.5"><i class="ph-fill ph-sparkle text-slate-700"></i> Clase Especial (${escapeHtml(monthName)})</span>
+                                    <span class="flex items-center gap-1.5"><i class="ph-fill ph-sparkle text-slate-700"></i> ${escapeHtml(profileT('profile_special_class', 'Clase Especial'))} (${escapeHtml(monthName)})</span>
                                     <span class="text-base font-black text-slate-900">20,00 €</span>
                                 </div>
-                                <p class="text-[11px] text-slate-600 mt-1">Válido exclusivamente para reservar 1 plaza en las Clases Especiales del mes de <strong>${escapeHtml(monthName)}</strong>.</p>
+                                <p class="text-[11px] text-slate-600 mt-1">${escapeHtml(profileT('profile_special_pass_validity', 'Válido exclusivamente para reservar 1 plaza en las Clases Especiales del mes de'))} <strong>${escapeHtml(monthName)}</strong>.</p>
                             </div>
                             <div class="text-[11px] text-cocoa/70 bg-sand/20 p-2.5 rounded-xl border border-cocoa/10">
-                                <i class="ph-bold ph-info text-olive mr-1"></i> Recuerda: el <strong>Bono Ilimitado mensual (90 €)</strong> incluye 1 Bono de Clase Especial sin coste adicional cada mes.
+                                <i class="ph-bold ph-info text-olive mr-1"></i> ${escapeHtml(profileT('profile_special_pass_remember', 'Recuerda'))}: ${escapeHtml(profileT('profile_special_pass_unlimited_includes', 'el Bono Ilimitado mensual (90 €) incluye 1 Bono de Clase Especial sin coste adicional cada mes.'))}
                             </div>
                         </div>
                     `,
@@ -10865,8 +10907,8 @@
                     showCancelButton: true,
                     confirmButtonColor: '#334155',
                     cancelButtonColor: '#9ca3af',
-                    confirmButtonText: 'Continuar al pago (20 €)',
-                    cancelButtonText: 'Cancelar'
+                    confirmButtonText: profileT('profile_continue_payment_20', 'Continuar al pago (20 €)'),
+                    cancelButtonText: profileT('profile_cancel_button', 'Cancelar')
                 });
 
                 if (!result.isConfirmed) { stripeCheckoutInProgress = false; return; }
@@ -10874,8 +10916,8 @@
 
             try {
                 Swal.fire({
-                    title: 'Conectando con Stripe...',
-                    text: 'Preparando tu pasarela de pago segura de 20 €',
+                    title: profileT('profile_connecting_stripe', 'Conectando con Stripe...'),
+                    text: profileT('profile_preparing_payment_20', 'Preparando tu pasarela de pago segura de 20 €'),
                     allowOutsideClick: false,
                     didOpen: () => Swal.showLoading()
                 });
@@ -11274,10 +11316,10 @@
                         tipoTexto = 'Intro';
                     } else if (isClaseEspecial) {
                         iconColorClass = 'bg-slate-100 text-slate-800 border-slate-300';
-                        tipoTexto = 'Especial';
+                        tipoTexto = profileT('profile_special_short', 'Especial');
                     } else if (isTaller) {
                         iconColorClass = 'bg-orange-50 text-orange-800 border-orange-200';
-                        tipoTexto = 'Taller';
+                        tipoTexto = profileT('profile_workshop_singular', 'Taller');
                     } else if (isHot) {
                         iconColorClass = 'bg-cocoa/10 text-cocoa border-cocoa/20';
                         tipoTexto = 'Hot';
@@ -11311,11 +11353,11 @@
                                 <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
                             </button>`;
                     } else if (finalizada) {
-                        btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Finalizada</span>`;
+                        btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_finished', 'Finalizada'))}</span>`;
                     } else if (llena) {
                         btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_full', 'Completa'))}</span>`;
                     } else if (cerrada) {
-                        btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Reserva Cerrada</span>`;
+                        btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_booking_closed', 'Reserva Cerrada'))}</span>`;
                     } else {
                         const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                         if (!esAlumno) {
@@ -11323,7 +11365,7 @@
                         } else if (isIntro) {
                             btnAction = `
                                 <button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 active:scale-95 flex items-center gap-1.5" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: #ffffff;">
-                                    <i class="ph-bold ph-gift text-xs"></i> RESERVAR (0 €)
+                                    <i class="ph-bold ph-gift text-xs"></i> ${escapeHtml(profileT('profile_book_zero', 'RESERVAR (0 €)'))}
                                 </button>`;
                         } else if (isClaseEspecial) {
                             const mesClase = String(c.fecha_inicio || '').slice(0, 7);
@@ -11331,12 +11373,12 @@
                             if (tieneBonoEsp) {
                                 btnAction = `
                                     <button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-5 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 active:scale-95" style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%); color: #ffffff;">
-                                        RESERVAR (1 ESPECIAL)
+                                        ${escapeHtml(profileT('profile_book_special_one', 'RESERVAR (1 ESPECIAL)'))}
                                     </button>`;
                             } else {
                                 btnAction = `
                                     <button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-4 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 active:scale-95 flex items-center gap-1.5" style="background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: #ffffff;">
-                                        <i class="ph-fill ph-sparkle text-amber-300 text-xs"></i> RESERVAR (20 € / ILIMITADO)
+                                        <i class="ph-fill ph-sparkle text-amber-300 text-xs"></i> ${escapeHtml(profileT('profile_book_special_price', 'RESERVAR (20 € / ILIMITADO)'))}
                                     </button>`;
                             }
                         } else if (isTaller) {
@@ -11344,19 +11386,19 @@
                             if (tieneReprog) {
                                 btnAction = `
                                     <button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-5 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 active:scale-95 bg-emerald-600 hover:bg-emerald-700" style="color: #ffffff;">
-                                        <i class="ph-bold ph-arrows-clockwise mr-1"></i> RESERVAR (CRÉDITO 0 €)
+                                        <i class="ph-bold ph-arrows-clockwise mr-1"></i> ${escapeHtml(profileT('profile_book_credit', 'RESERVAR (CRÉDITO 0 €)'))}
                                     </button>`;
                             } else {
                                 const { lookupKey: lookupKeyTaller, precio: precioTaller } = resolverPrecioYTallerLookup(c);
                                 btnAction = `
                                     <button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-5 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105 active:scale-95" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%); color: #ffffff;">
-                                        RESERVAR PLAZA (${precioTaller} €)
+                                        ${escapeHtml(profileT('profile_book_place_price', 'RESERVAR PLAZA'))} (${precioTaller} €)
                                     </button>`;
                             }
                         } else {
                             btnAction = `
                                 <button onclick="reservar(${claseId})" class="btn-reserva-terracotta text-white text-[11px] font-bold px-6 py-2.5 rounded-full shadow-md cursor-pointer" style="background: linear-gradient(135deg, #D27D60 0%, #B48A47 100%) !important; color: #ffffff !important; border: 1px solid #D27D60 !important; box-shadow: 0 4px 14px rgba(210, 125, 96, 0.35) !important;">
-                                    RESERVAR
+                                    ${escapeHtml(profileT('profile_book', 'RESERVAR'))}
                                 </button>`;
                         }
                     }
@@ -11376,13 +11418,13 @@
                         if (reservada) {
                             infoCapacidadOEstado = `<span class="text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-2.5 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1 shadow-2xs"><i class="ph-fill ph-check-circle text-olive"></i> ${escapeHtml(profileT('profile_your_spot', 'Tu Plaza'))}</span>`;
                         } else if (finalizada) {
-                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/15 border border-cocoa/10 px-2.5 py-0.5 rounded-md uppercase tracking-wide">Finalizada</span>`;
+                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/15 border border-cocoa/10 px-2.5 py-0.5 rounded-md uppercase tracking-wide">${escapeHtml(profileT('profile_finished', 'Finalizada'))}</span>`;
                         } else if (llena) {
-                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide">Completa</span>`;
+                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide">${escapeHtml(profileT('profile_full', 'Completa'))}</span>`;
                         } else if (cerrada) {
-                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide">Reserva Cerrada</span>`;
+                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide">${escapeHtml(profileT('profile_booking_closed', 'Reserva Cerrada'))}</span>`;
                         } else {
-                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-check text-emerald-600"></i> Reserva Disponible</span>`;
+                            infoCapacidadOEstado = `<span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-check text-emerald-600"></i> ${escapeHtml(profileT('profile_booking_available', 'Reserva Disponible'))}</span>`;
                         }
                     }
 
@@ -11399,11 +11441,11 @@
 
                     let especialidadBadge = '';
                     if (isIntro) {
-                        especialidadBadge = `<span class="text-[9px] font-black uppercase tracking-wider text-pink-800 bg-pink-50 border border-pink-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-gift text-pink-600"></i> Sesión Gratuita (0 €)</span>`;
+                        especialidadBadge = `<span class="text-[9px] font-black uppercase tracking-wider text-pink-800 bg-pink-50 border border-pink-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-gift text-pink-600"></i> ${escapeHtml(profileT('profile_free_session_short', 'Sesión Gratuita (0 €)'))}</span>`;
                     } else if (isClaseEspecial) {
-                        especialidadBadge = `<span class="text-[9px] font-black uppercase tracking-wider text-slate-800 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs"><i class="ph-fill ph-sparkle text-amber-500"></i> Clase Especial</span>`;
+                        especialidadBadge = `<span class="text-[9px] font-black uppercase tracking-wider text-slate-800 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs"><i class="ph-fill ph-sparkle text-amber-500"></i> ${escapeHtml(profileT('profile_special_class', 'Clase Especial'))}</span>`;
                     } else if (isTaller) {
-                        especialidadBadge = `<span class="text-[9px] font-black uppercase tracking-wider text-[#AB593D] bg-[#AB593D]/10 border border-[#AB593D]/30 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-barbell text-[#AB593D]"></i> Taller</span>`;
+                        especialidadBadge = `<span class="text-[9px] font-black uppercase tracking-wider text-[#AB593D] bg-[#AB593D]/10 border border-[#AB593D]/30 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs"><i class="ph-bold ph-barbell text-[#AB593D]"></i> ${escapeHtml(profileT('profile_workshop_singular', 'Taller'))}</span>`;
                     }
 
                     const row = document.createElement('div');
@@ -11414,7 +11456,7 @@
                     row.innerHTML = `
                         <div class="flex items-start gap-4 min-w-0 flex-1">
                             <div class="flex flex-col items-center justify-center min-w-[3.75rem] px-2 h-14 rounded-xl ${iconColorClass} border shadow-sm flex-shrink-0 box-border">
-                                <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${tipoTexto}</span>
+                                <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${escapeHtml(tipoTexto)}</span>
                                 <span class="text-base font-black tracking-tight leading-none">${escapeHtml(hora)}</span>
                             </div>
                             
@@ -11719,7 +11761,7 @@
                                         <label class="flex items-start gap-3 p-3 rounded-2xl border border-cocoa/20 bg-white cursor-pointer hover:bg-sand/20 transition shadow-2xs">
                                             <input type="radio" name="swal-colegas-opt" value="individual" class="mt-1 accent-cocoa">
                                             <div>
-                                                <span class="font-bold text-xs text-cocoa block">🧘 Reserva Individual (1 plaza)</span>
+                                                <span class="font-bold text-xs text-cocoa block">🧘 ${escapeHtml(profileT('profile_individual_booking_one', 'Reserva Individual (1 plaza)'))}</span>
                                                 <span class="text-[11px] text-cocoa/70 block">Asistir individualmente usando un bono de clase o Bono Ilimitado.</span>
                                             </div>
                                         </label>
@@ -11837,7 +11879,7 @@
                                         <label class="flex items-start gap-3 p-3 rounded-2xl border border-cocoa/20 bg-white cursor-pointer hover:bg-sand/20 transition shadow-2xs">
                                             <input type="radio" name="swal-companion-choice" value="individual" class="mt-1 accent-cocoa">
                                             <div>
-                                                <span class="font-bold text-xs text-cocoa block">🧘 Reserva Individual (1 plaza)</span>
+                                                <span class="font-bold text-xs text-cocoa block">🧘 ${escapeHtml(profileT('profile_individual_booking_one', 'Reserva Individual (1 plaza)'))}</span>
                                                 <span class="text-[11px] text-cocoa/70 block">Asistir individualmente usando un bono de clase o Bono Ilimitado.</span>
                                             </div>
                                         </label>` : ''}
@@ -11924,16 +11966,16 @@
                 } else if (!canUseCompanion && canBookNormal) {
                     // No tiene bono de compañía pero sí bono normal
                     const infoRes = await Swal.fire({
-                        title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">Reserva Individual</div>`,
+                        title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">${escapeHtml(profileT('profile_individual_booking', 'Reserva Individual'))}</div>`,
                         html: `
                             <div class="text-left space-y-2.5 p-1 text-xs text-cocoa/85">
-                                <p>Esta sesión es de <strong>Yoga en Compañía</strong>.</p>
-                                <p>No dispones de un Bono de Yoga en Compañía, pero puedes confirmar tu <strong>plaza individual</strong> usando un bono de clase.</p>
+                                <p>${escapeHtml(profileT('profile_companion_session', 'Esta sesión es de'))} <strong>${escapeHtml(profileT('profile_companion_yoga', 'Yoga en Compañía'))}</strong>.</p>
+                                <p>${escapeHtml(profileT('profile_no_companion_pass', 'No dispones de un Bono de Yoga en Compañía, pero puedes confirmar tu'))} <strong>${escapeHtml(profileT('profile_individual_spot', 'plaza individual'))}</strong> ${escapeHtml(profileT('profile_using_class_credit', 'usando un bono de clase.'))}</p>
                             </div>
                         `,
                         showCancelButton: true,
-                        confirmButtonText: canUseUnlimited ? 'Reservar con Bono Ilimitado' : 'Reservar con un bono de clase',
-                        cancelButtonText: 'Cancelar',
+                        confirmButtonText: canUseUnlimited ? profileT('profile_book_with_unlimited', 'Reservar con Bono Ilimitado') : profileT('profile_book_with_credit', 'Reservar con un bono de clase'),
+                        cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                         confirmButtonColor: '#D27D60',
                         cancelButtonColor: '#9ca3af'
                     });
@@ -12212,11 +12254,11 @@
                     }
                     return false;
                 }
-                mensajeConfirmacion = `¿Quieres reservar tu plaza en esta <b>Clase Especial</b> usando tu <b>Bono de Clase Especial (${escapeHtml(mesNombre)})</b>?`;
+                mensajeConfirmacion = `${escapeHtml(profileT('profile_special_confirm_prefix', '¿Quieres reservar tu plaza en esta'))} <b>${escapeHtml(profileT('profile_special_class', 'Clase Especial'))}</b> ${escapeHtml(profileT('profile_using_your', 'usando tu'))} <b>${escapeHtml(profileT('profile_special_pass_title', 'Bono de Clase Especial'))} (${escapeHtml(mesNombre)})</b>?`;
             } else if (isTaller) {
                 const tieneReprog = userCreditosReprogramacion.find(r => r.tipo === 'taller' && r.estado === 'disponible');
                 if (tieneReprog) {
-                    mensajeConfirmacion = `¿Quieres canjear tu <b>Crédito de Reprogramación de Taller</b> para reservar tu plaza en <b>${escapeHtml(clase.nombre || 'Taller')}</b> a 0 €?`;
+                    mensajeConfirmacion = `${escapeHtml(profileT('profile_reprogram_confirm_prefix', '¿Quieres canjear tu'))} <b>${escapeHtml(profileT('profile_reprogram_credit', 'Crédito de Reprogramación de Taller'))}</b> ${escapeHtml(profileT('profile_reprogram_confirm_middle', 'para reservar tu plaza en'))} <b>${escapeHtml(clase.nombre || profileT('profile_workshop_singular', 'Taller'))}</b> ${escapeHtml(profileT('profile_reprogram_confirm_suffix', 'a 0 €?'))}`;
                 } else if (!isAdmin) {
                     const { lookupKey: lookupKeyTaller, precio: precioTaller } = resolverPrecioYTallerLookup(clase);
                     if (skipPrompt) {
@@ -12246,29 +12288,29 @@
                     }
                     return false;
                 } else {
-                    mensajeConfirmacion = `¿Reservar plaza en este <b>Taller</b> (Modo Administrador)?`;
+                    mensajeConfirmacion = `${escapeHtml(profileT('profile_admin_workshop_confirm', '¿Reservar plaza en este'))} <b>${escapeHtml(profileT('profile_workshop_singular', 'Taller'))}</b> (${escapeHtml(profileT('profile_admin_mode', 'Modo Administrador'))})?`;
                 }
             } else if (isExplicitFreeClass) {
-                mensajeConfirmacion = '¿Quieres reservar tu plaza en esta <b>Sesión Introductoria Gratuita (0 €)</b>?';
+                mensajeConfirmacion = `${escapeHtml(profileT('profile_free_intro_confirm_prefix', '¿Quieres reservar tu plaza en esta'))} <b>${escapeHtml(profileT('profile_free_intro_session', 'Sesión Introductoria Gratuita (0 €)'))}</b>?`;
             } else if (canUseFree) {
-                mensajeConfirmacion = '¿Quieres reservar tu plaza usando tu <b>Bono de Bienvenida (0 €)</b>?';
+                mensajeConfirmacion = `${escapeHtml(profileT('profile_welcome_confirm_prefix', '¿Quieres reservar tu plaza usando tu'))} <b>${escapeHtml(profileT('profile_welcome_pass', 'Bono de Bienvenida (0 €)'))}</b>?`;
             } else if (canUseUnlimited) {
-                mensajeConfirmacion = '¿Quieres reservar esta clase con tu <b>Bono Ilimitado</b>?';
+                mensajeConfirmacion = `${escapeHtml(profileT('profile_unlimited_confirm_prefix', '¿Quieres reservar esta clase con tu'))} <b>${escapeHtml(profileT('profile_unlimited_pass', 'Bono Ilimitado'))}</b>?`;
             } else {
-                mensajeConfirmacion = '¿Quieres reservar esta clase usando un <b>bono de clases</b>?';
+                mensajeConfirmacion = `${escapeHtml(profileT('profile_credit_confirm_prefix', '¿Quieres reservar esta clase usando un'))} <b>${escapeHtml(profileT('profile_class_credit', 'bono de clases'))}</b>?`;
             }
 
             const confirmRes = skipPrompt
                 ? { isConfirmed: true }
                 : await Swal.fire({
-                    title: 'Confirmar Reserva',
+                    title: profileT('profile_confirm_reservation', 'Confirmar Reserva'),
                     html: mensajeConfirmacion,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#D27D60',
                     cancelButtonColor: '#9ca3af',
-                    confirmButtonText: 'Sí, reservar',
-                    cancelButtonText: 'Cancelar'
+                    confirmButtonText: profileT('profile_yes_book', 'Sí, reservar'),
+                    cancelButtonText: profileT('profile_cancel_button', 'Cancelar')
                 });
 
             if (!confirmRes.isConfirmed) return false;
@@ -13562,8 +13604,8 @@
                 selectedAsistenciaFecha = fechasConSesiones.has(hoyKey) ? hoyKey : (dKeys.find(k => k >= hoyKey) || dKeys[0] || hoyKey);
             }
 
-            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const diasSemanaCorta = getShortWeekdays();
+            const mesesCorta = getShortMonths();
 
             let html = '';
             dKeys.forEach(dKey => {
@@ -13582,12 +13624,12 @@
 
                 if (isToday && isSelected) {
                     btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
                     countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
                 } else if (isToday && !isSelected) {
                     btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
                     countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
                 } else if (isSelected) {
@@ -13607,7 +13649,7 @@
                 class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
                 ${topLabel}
                 <span class="${textClass}">${d} ${mesNombre}</span>
-                <span class="${countClass}">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
+                <span class="${countClass}">${numSesiones} ${escapeHtml(profileT(numSesiones === 1 ? 'profile_consultations_sessions' : 'profile_consultations_sessions_plural', numSesiones === 1 ? 'sesión' : 'sesiones'))}</span>
             </button>
         `;
             });
@@ -21298,30 +21340,30 @@
 
 
             const { value: formValues } = await Swal.fire({
-                title: 'Ajustes de Perfil',
+                title: profileT('profile_settings_title', 'Ajustes de Perfil'),
                 html: `
             <div class="flex flex-col gap-3 text-left font-sans">
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Nombre</label>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">${escapeHtml(profileT('profile_first_name', 'Nombre'))}</label>
                     <input id="swal-nombre" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(currentNombre)}">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Apellidos</label>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">${escapeHtml(profileT('profile_last_name', 'Apellidos'))}</label>
                     <input id="swal-apellidos" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(currentApellidos)}">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Teléfono Móvil (9 dígitos)</label>
-                    <input id="swal-telefono" type="tel" maxlength="15" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="Ej: 612 345 678" value="${escapeHtml(currentTelefono)}">
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">${escapeHtml(profileT('profile_mobile_phone_9', 'Teléfono Móvil (9 dígitos)'))}</label>
+                    <input id="swal-telefono" type="tel" maxlength="15" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" placeholder="${escapeHtml(profileT('profile_phone_placeholder', 'Ej: 612 345 678'))}" value="${escapeHtml(currentTelefono)}">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Fecha de Nacimiento</label>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">${escapeHtml(profileT('profile_birth_date', 'Fecha de Nacimiento'))}</label>
                     <input id="swal-fecha-nac" type="date" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition text-sm" value="${escapeHtml(currentFechaNac)}">
                 </div>
                 <div class="mt-2 pt-3 border-t border-cocoa/10">
-                    <label class="text-xs font-bold text-red-500 uppercase tracking-wider block mb-2">Zona de Peligro</label>
+                    <label class="text-xs font-bold text-red-500 uppercase tracking-wider block mb-2">${escapeHtml(profileT('profile_danger_zone', 'Zona de Peligro'))}</label>
                     <button type="button" onclick="Swal.close(); window.eliminarPropiaCuenta();" 
                         class="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/50 font-bold rounded-xl transition-all duration-200 text-xs flex items-center justify-center gap-2 active:scale-95">
-                        <i class="ph-bold ph-trash-simple text-sm"></i> Eliminar Cuenta Permanentemente
+                        <i class="ph-bold ph-trash-simple text-sm"></i> ${escapeHtml(profileT('profile_delete_account_permanently', 'Eliminar Cuenta Permanentemente'))}
                     </button>
                 </div>
             </div>
@@ -21329,8 +21371,8 @@
                 focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonColor: '#B48A47',
-                confirmButtonText: 'Guardar',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: profileT('profile_save', 'Guardar'),
+                cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                 preConfirm: () => {
                     const nombre = document.getElementById('swal-nombre').value.trim();
                     const apellidos = document.getElementById('swal-apellidos').value.trim();
@@ -21338,7 +21380,7 @@
                     const fechaNac = document.getElementById('swal-fecha-nac').value;
 
                     if (!nombre) {
-                        Swal.showValidationMessage('El nombre es obligatorio');
+                        Swal.showValidationMessage(profileT('profile_name_required', 'El nombre es obligatorio'));
                         return false;
                     }
 
@@ -21346,7 +21388,7 @@
                     if (telefonoRaw) {
                         cleanTel = telefonoRaw.replace(/\D/g, '');
                         if (cleanTel.length !== 9) {
-                            Swal.showValidationMessage('El teléfono móvil debe tener exactamente 9 dígitos numéricos.');
+                            Swal.showValidationMessage(profileT('profile_phone_9_digits', 'El teléfono móvil debe tener exactamente 9 dígitos numéricos.'));
                             return false;
                         }
                     }
@@ -21359,7 +21401,7 @@
                 const [newNombre, newApellidos, newTelefono, newFechaNac] = formValues;
 
                 Swal.fire({
-                    title: 'Guardando perfil...',
+                    title: profileT('profile_saving_profile', 'Guardando perfil...'),
                     allowOutsideClick: false,
                     didOpen: () => Swal.showLoading()
                 });
@@ -21386,7 +21428,7 @@
 
                 // Las escrituras directas a profiles están revocadas: solo la RPC atómica es válida.
                 if (!updateSuccess) {
-                    await Swal.fire('No se pudo guardar', updateErrorMsg || 'Revisa los datos e inténtalo de nuevo.', 'error');
+                    await Swal.fire(profileT('profile_save_failed', 'No se pudo guardar'), updateErrorMsg || profileT('profile_save_failed_desc', 'Revisa los datos e inténtalo de nuevo.'), 'error');
                     return;
                 }
 
@@ -21399,7 +21441,7 @@
                 await loadProfileCard();
                 Swal.fire({
                     icon: 'success',
-                    title: 'Perfil actualizado',
+                    title: profileT('profile_updated', 'Perfil actualizado'),
                     toast: true,
                     position: 'top-end',
                     timer: 2000,
@@ -23139,15 +23181,15 @@
 
         async function iniciarCheckoutConsultaStripe(lookupKey) {
             if (!currentUser?.id) {
-                return Swal.fire('Inicia sesión', 'Debes iniciar sesión para realizar la compra.', 'warning');
+                return Swal.fire(profileT('profile_sign_in', 'Inicia sesión'), profileT('profile_consult_signin_purchase', 'Debes iniciar sesión para realizar la compra.'), 'warning');
             }
 
             const checkoutAttemptId = beginStripeCheckout();
             if (checkoutAttemptId === null) return;
 
             Swal.fire({
-                title: 'Cargando pasarela de pago...',
-                text: 'Por favor, espera un momento.',
+                title: profileT('profile_loading_payment_gateway', 'Cargando pasarela de pago...'),
+                text: profileT('profile_please_wait', 'Por favor, espera un momento.'),
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
                 background: '#fff',
@@ -23167,7 +23209,7 @@
                 });
 
                 if (error) {
-                    let errorMsg = error.message || 'Error al iniciar la sesión de pago.';
+                    let errorMsg = error.message || profileT('profile_consult_payment_session_error', 'Error al iniciar la sesión de pago.');
                     try {
                         if (error.context && typeof error.context.json === 'function') {
                             const errJson = await error.context.json();
@@ -23182,7 +23224,7 @@
                     closePaymentUiBeforeNavigation();
                     window.location.assign(checkoutUrl);
                 } else {
-                    throw new Error('No se recibió la URL de la pasarela de pagos.');
+                    throw new Error(profileT('profile_consult_no_checkout_url', 'No se recibió la URL de la pasarela de pagos.'));
                 }
             } catch (error) {
                 stripeCheckoutInProgress = false;
@@ -23190,8 +23232,8 @@
                 console.error('Error en compra de consulta Stripe:', error);
                 Swal.fire({
                     icon: 'error',
-                    title: 'No se pudo iniciar el pago',
-                    text: amableError(error.message, 'La pasarela no respondió correctamente. Inténtalo de nuevo.'),
+                    title: profileT('profile_consult_payment_failed', 'No se pudo iniciar el pago'),
+                    text: amableError(error.message, profileT('profile_consult_gateway_error', 'La pasarela no respondió correctamente. Inténtalo de nuevo.')),
                     confirmButtonColor: '#D27D60'
                 });
             }
@@ -23199,7 +23241,7 @@
 
         async function abrirModalComprarConsultas(tipo = 'psicologia') {
             if (!currentUser?.id) {
-                return Swal.fire('Inicia sesión', 'Debes iniciar sesión para adquirir sesiones de consulta.', 'warning');
+                return Swal.fire(profileT('profile_sign_in', 'Inicia sesión'), profileT('profile_consult_signin_buy_consultation', 'Debes iniciar sesión para adquirir sesiones de consulta.'), 'warning');
             }
 
             const isPsico = tipo === 'psicologia';
@@ -23207,16 +23249,16 @@
 
             if (isPsico) {
                 const groupOptions = [
-                    { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 },
-                    { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 }
+                    { key: 'miriam_grupo_autoayuda', title: profileT('profile_consult_selfhelp_title', '🌱 Grupo de Autoayuda (30 €)'), desc: profileT('profile_consult_selfhelp_desc', 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)'), price: 30 },
+                    { key: 'miriam_grupo_terapeutico', title: profileT('profile_consult_therapy_title', '🫂 Grupo Terapéutico (30 €)'), desc: profileT('profile_consult_therapy_desc', 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)'), price: 30 }
                 ];
                 const individualOptions = [
-                    { key: 'miriam_psico_individual_1a', title: 'Miriam · 1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (50 min)', price: 75 },
-                    { key: 'miriam_psico_individual_sig', title: 'Miriam · Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (50 min)', price: 65 },
-                    { key: 'miriam_psico_pareja_1a', title: 'Miriam · Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
-                    { key: 'miriam_psico_pareja_sig', title: 'Miriam · Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 },
-                    { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Psiconeuroinmunología Clínica inicial (60 min)', price: 80 },
-                    { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Consulta de seguimiento clínico (60 min)', price: 60 }
+                    { key: 'miriam_psico_individual_1a', title: `Miriam · ${profileT('profile_consult_psy_first_title', '1ª Sesión Individual (75 €)')}`, desc: profileT('profile_consult_psy_first_desc', 'Acompañamiento psicoterapéutico inicial (50 min)'), price: 75 },
+                    { key: 'miriam_psico_individual_sig', title: `Miriam · ${profileT('profile_consult_psy_follow_title', 'Sesión de Seguimiento (65 €)')}`, desc: profileT('profile_consult_psy_follow_desc', 'Sesión psicoterapéutica sucesiva (50 min)'), price: 65 },
+                    { key: 'miriam_psico_pareja_1a', title: `Miriam · ${profileT('profile_consult_couple_first_title', 'Terapia de Pareja · 1ª Sesión (120 €)')}`, desc: profileT('profile_consult_couple_first_desc', 'Sesión inicial de pareja (50 min)'), price: 120 },
+                    { key: 'miriam_psico_pareja_sig', title: `Miriam · ${profileT('profile_consult_couple_follow_title', 'Terapia de Pareja · Seguimiento (100 €)')}`, desc: profileT('profile_consult_couple_follow_desc', 'Sesión sucesiva de pareja (50 min)'), price: 100 },
+                    { key: 'isabel_pni_1a', title: `Isabel · ${profileT('profile_consult_pni_first_title', '1ª Consulta PNI (80 €)')}`, desc: profileT('profile_consult_pni_list_first_desc', 'Psiconeuroinmunología Clínica inicial (60 min)'), price: 80 },
+                    { key: 'isabel_pni_sig', title: `Isabel · ${profileT('profile_consult_pni_follow_title', 'Seguimiento PNI (60 €)')}`, desc: profileT('profile_consult_pni_list_follow_desc', 'Consulta de seguimiento clínico (60 min)'), price: 60 }
                 ];
 
                 const renderOptCard = (opt, isDefault) => `
@@ -23233,16 +23275,16 @@
                 `;
 
                 htmlContent = `
-                    <div class="text-left max-h-[65vh] overflow-y-auto pr-1">
-                        <p class="text-xs text-cocoa/60 mb-3">Elige la sesión o bono que deseas adquirir. Se asignará a tu cuenta para reservar en la fecha que elijas.</p>
+                    <div class="text-left max-h-[50vh] sm:max-h-[65vh] overflow-y-auto pr-1">
+                        <p class="text-xs text-cocoa/60 mb-3">${escapeHtml(profileT('profile_consult_purchase_intro_psy', 'Elige la sesión o bono que deseas adquirir. Se asignará a tu cuenta para reservar en la fecha que elijas.'))}</p>
                         
                         <!-- Categoría: Sesiones Grupales -->
                         <div class="mb-4">
                             <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-purple-200">
                                 <span class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
-                                    <i class="ph-bold ph-users-three text-sm"></i> Sesiones Grupales (Miriam)
+                                    <i class="ph-bold ph-users-three text-sm"></i> ${escapeHtml(profileT('profile_consult_group_sessions_miriam', 'Sesiones Grupales (Miriam)'))}
                                 </span>
-                                <span class="text-[10px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">30 € / sesión</span>
+                                <span class="text-[10px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">${escapeHtml(profileT('profile_consult_per_session_30', '30 € / sesión'))}</span>
                             </div>
                             <div class="space-y-2">
                                 ${groupOptions.map((opt, idx) => renderOptCard(opt, idx === 0)).join('')}
@@ -23253,9 +23295,9 @@
                         <div>
                             <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-blue-200">
                                 <span class="text-xs font-black uppercase tracking-wider text-[#3B82F6] flex items-center gap-1.5">
-                                    <i class="ph-bold ph-user text-sm"></i> Consultas Individuales (Psicología y PNI)
+                                    <i class="ph-bold ph-user text-sm"></i> ${escapeHtml(profileT('profile_consult_individual_sessions_psy', 'Consultas Individuales (Psicología y PNI)'))}
                                 </span>
-                                <span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Desde 60 €</span>
+                                <span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${escapeHtml(profileT('profile_consult_from_60', 'Desde 60 €'))}</span>
                             </div>
                             <div class="space-y-2">
                                 ${individualOptions.map((opt) => renderOptCard(opt, false)).join('')}
@@ -23265,12 +23307,12 @@
                 `;
             } else {
                 const nutriOptions = [
-                    { key: 'isabel_pni_1a', title: 'Isabel · 1ª Consulta PNI (80 €)', desc: 'Valoración clínica integral de PNI (60 min)', price: 80 },
-                    { key: 'isabel_pni_sig', title: 'Isabel · Seguimiento PNI (60 €)', desc: 'Revisión y evolución (60 min)', price: 60 },
-                    { key: 'silvia_ayurveda_1a', title: 'Silvia · 1ª Consulta Ayurveda (80 €)', desc: 'Diagnóstico doshas y nutrición consciente (90 min)', price: 80 },
-                    { key: 'silvia_ayurveda_sig', title: 'Silvia · Seguimiento Ayurveda (60 €)', desc: 'Revisión y ajustes (60 min)', price: 60 },
-                    { key: 'silvia_ayurveda_bono3', title: 'Silvia · Bono 3 Sesiones Ayurveda (170 €)', desc: 'Bono 3 consultas individuales (Ahorro 10 €)', price: 170 },
-                    { key: 'silvia_ayurveda_bono6', title: 'Silvia · Bono 6 Sesiones Ayurveda (280 €)', desc: 'Bono 6 consultas individuales (Ahorro 80 €)', price: 280 }
+                    { key: 'isabel_pni_1a', title: `Isabel · ${profileT('profile_consult_pni_first_title', '1ª Consulta PNI (80 €)')}`, desc: profileT('profile_consult_pni_list_first_desc', 'Valoración clínica integral de PNI (60 min)'), price: 80 },
+                    { key: 'isabel_pni_sig', title: `Isabel · ${profileT('profile_consult_pni_follow_title', 'Seguimiento PNI (60 €)')}`, desc: profileT('profile_consult_pni_list_follow_desc', 'Revisión y evolución (60 min)'), price: 60 },
+                    { key: 'silvia_ayurveda_1a', title: `Silvia · ${profileT('profile_consult_ayur_first_title', '1ª Consulta Ayurveda (80 €)')}`, desc: profileT('profile_consult_ayur_list_first_desc', 'Diagnóstico doshas y nutrición consciente (90 min)'), price: 80 },
+                    { key: 'silvia_ayurveda_sig', title: `Silvia · ${profileT('profile_consult_ayur_follow_title', 'Seguimiento Ayurveda (60 €)')}`, desc: profileT('profile_consult_ayur_list_follow_desc', 'Revisión y ajustes (60 min)'), price: 60 },
+                    { key: 'silvia_ayurveda_bono3', title: `Silvia · ${profileT('profile_consult_ayur_pass3_title', 'Bono 3 Sesiones Ayurveda (170 €)')}`, desc: profileT('profile_consult_ayur_list_pass3_desc', 'Bono 3 consultas individuales (Ahorro 10 €)'), price: 170 },
+                    { key: 'silvia_ayurveda_bono6', title: `Silvia · ${profileT('profile_consult_ayur_pass6_title', 'Bono 6 Sesiones Ayurveda (280 €)')}`, desc: profileT('profile_consult_ayur_list_pass6_desc', 'Bono 6 consultas individuales (Ahorro 80 €)'), price: 280 }
                 ];
 
                 const htmlNutri = nutriOptions.map((opt, idx) => `
@@ -23287,8 +23329,8 @@
                 `).join('');
 
                 htmlContent = `
-                    <div class="text-left max-h-[65vh] overflow-y-auto pr-1">
-                        <p class="text-xs text-cocoa/60 mb-3">Elige la consulta o bono de nutrición y salud integrativa que deseas adquirir.</p>
+                    <div class="text-left max-h-[50vh] sm:max-h-[65vh] overflow-y-auto pr-1">
+                        <p class="text-xs text-cocoa/60 mb-3">${escapeHtml(profileT('profile_consult_purchase_intro_nutri', 'Elige la consulta o bono de nutrición y salud integrativa que deseas adquirir.'))}</p>
                         <div class="space-y-2.5">
                             ${htmlNutri}
                         </div>
@@ -23297,11 +23339,11 @@
             }
 
             const { isConfirmed } = await Swal.fire({
-                title: isPsico ? 'Comprar Consultas y Sesiones Grupales' : 'Comprar Consultas de Nutrición',
+                title: isPsico ? profileT('profile_consult_purchase_title_psy', 'Comprar Consultas y Sesiones Grupales') : profileT('profile_consult_purchase_title_nutri', 'Comprar Consultas de Nutrición'),
                 html: htmlContent,
                 showCancelButton: true,
-                confirmButtonText: 'Ir a Pagar con Stripe',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: profileT('profile_consult_pay_stripe', 'Ir a Pagar con Stripe'),
+                cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                 confirmButtonColor: '#795244',
                 cancelButtonColor: '#9ca3af'
             });
@@ -23316,7 +23358,7 @@
 
         async function abrirCompraYReservaConsulta(tipo, claseOrId) {
             if (!currentUser?.id) {
-                return Swal.fire('Inicia sesión', 'Debes iniciar sesión para comprar y reservar.', 'warning');
+                return Swal.fire(profileT('profile_sign_in', 'Inicia sesión'), profileT('profile_consult_signin_buy_book', 'Debes iniciar sesión para comprar y reservar.'), 'warning');
             }
 
             const cache = tipo === 'psicologia' ? allPsicologiaCache : allNutricionCache;
@@ -23330,7 +23372,7 @@
             }
 
             const prof = clase.profesionales || allProfesionalesCache.find(p => p.id === clase.profesor_id) || {};
-            const profName = `${prof.nombre || ''} ${prof.apellidos || ''}`.trim() || 'tu profesional';
+            const profName = `${prof.nombre || ''} ${prof.apellidos || ''}`.trim() || profileT('profile_consult_your_professional', 'tu profesional');
             const profSlug = (prof.nombre || '').toLowerCase();
             const isMiriam = profSlug.includes('miriam');
             const isIsabel = profSlug.includes('isabel');
@@ -23338,56 +23380,62 @@
             const esClaseGrupal = esClaseGrupalConsulta(clase);
 
             let options = [];
-            let modalTitle = 'Reservar y Comprar Consulta';
-            let modalSubtitle = 'Selecciona el tipo de sesión:';
+            let modalTitle = profileT('profile_consult_book_buy', 'Reservar y Comprar Consulta');
+            let modalSubtitle = profileT('profile_consult_select_session_type', 'Selecciona el tipo de sesión:');
 
             if (esClaseGrupal) {
-                modalTitle = 'Reservar y Comprar Sesión Grupal';
-                modalSubtitle = 'Selecciona el tipo de sesión grupal:';
+                modalTitle = profileT('profile_consult_book_buy_group', 'Reservar y Comprar Sesión Grupal');
+                modalSubtitle = profileT('profile_consult_select_group_type', 'Selecciona el tipo de sesión grupal:');
                 const nomLower = (clase.nombre || '').toLowerCase();
                 const isAutoayuda = nomLower.includes('autoayuda') || clase.tipo_clase_id === 65;
                 const isTerapeutico = nomLower.includes('terap') || clase.tipo_clase_id === 66;
 
+                const optAutoayuda = {
+                    key: 'miriam_grupo_autoayuda',
+                    title: profileT('profile_consult_selfhelp_title', '🌱 Grupo de Autoayuda (30 €)'),
+                    desc: profileT('profile_consult_selfhelp_desc', 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)'),
+                    price: 30
+                };
+                const optTerapeutico = {
+                    key: 'miriam_grupo_terapeutico',
+                    title: profileT('profile_consult_therapy_title', '🫂 Grupo Terapéutico (30 €)'),
+                    desc: profileT('profile_consult_therapy_desc', 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)'),
+                    price: 30
+                };
+
                 if (isAutoayuda) {
-                    options = [
-                        { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 }
-                    ];
+                    options = [optAutoayuda];
                 } else if (isTerapeutico) {
-                    options = [
-                        { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 }
-                    ];
+                    options = [optTerapeutico];
                 } else {
-                    options = [
-                        { key: 'miriam_grupo_autoayuda', title: '🌱 Grupo de Autoayuda (30 €)', desc: 'Espacio centrado en una temática concreta (Martes 11:30 · 120 min)', price: 30 },
-                        { key: 'miriam_grupo_terapeutico', title: '🫂 Grupo Terapéutico (30 €)', desc: 'Grupo cerrado, continuado y multitemático (Miércoles 11:30 · 120 min)', price: 30 }
-                    ];
+                    options = [optAutoayuda, optTerapeutico];
                 }
             } else {
-                modalTitle = 'Reservar y Comprar Consulta Individual';
-                modalSubtitle = 'Selecciona el tipo de consulta:';
+                modalTitle = profileT('profile_consult_book_buy_individual', 'Reservar y Comprar Consulta Individual');
+                modalSubtitle = profileT('profile_consult_select_type', 'Selecciona el tipo de consulta:');
 
                 if (isMiriam) {
                     options = [
-                        { key: 'miriam_psico_individual_1a', title: '1ª Sesión Individual (75 €)', desc: 'Acompañamiento psicoterapéutico inicial (50 min)', price: 75 },
-                        { key: 'miriam_psico_individual_sig', title: 'Sesión de Seguimiento (65 €)', desc: 'Sesión psicoterapéutica sucesiva (50 min)', price: 65 },
-                        { key: 'miriam_psico_pareja_1a', title: 'Terapia de Pareja · 1ª Sesión (120 €)', desc: 'Sesión inicial de pareja (50 min)', price: 120 },
-                        { key: 'miriam_psico_pareja_sig', title: 'Terapia de Pareja · Seguimiento (100 €)', desc: 'Sesión sucesiva de pareja (50 min)', price: 100 }
+                        { key: 'miriam_psico_individual_1a', title: profileT('profile_consult_psy_first_title', '1ª Sesión Individual (75 €)'), desc: profileT('profile_consult_psy_first_desc', 'Acompañamiento psicoterapéutico inicial (50 min)'), price: 75 },
+                        { key: 'miriam_psico_individual_sig', title: profileT('profile_consult_psy_follow_title', 'Sesión de Seguimiento (65 €)'), desc: profileT('profile_consult_psy_follow_desc', 'Sesión psicoterapéutica sucesiva (50 min)'), price: 65 },
+                        { key: 'miriam_psico_pareja_1a', title: profileT('profile_consult_couple_first_title', 'Terapia de Pareja · 1ª Sesión (120 €)'), desc: profileT('profile_consult_couple_first_desc', 'Sesión inicial de pareja (50 min)'), price: 120 },
+                        { key: 'miriam_psico_pareja_sig', title: profileT('profile_consult_couple_follow_title', 'Terapia de Pareja · Seguimiento (100 €)'), desc: profileT('profile_consult_couple_follow_desc', 'Sesión sucesiva de pareja (50 min)'), price: 100 }
                     ];
                 } else if (isIsabel) {
                     options = [
-                        { key: 'isabel_pni_1a', title: '1ª Consulta PNI (80 €)', desc: 'Valoración clínica integral y pautas iniciales (60 min)', price: 80 },
-                        { key: 'isabel_pni_sig', title: 'Consulta de Seguimiento PNI (60 €)', desc: 'Evolución clínica y ajustes personalizados (60 min)', price: 60 }
+                        { key: 'isabel_pni_1a', title: profileT('profile_consult_pni_first_title', '1ª Consulta PNI (80 €)'), desc: profileT('profile_consult_pni_first_desc', 'Valoración clínica integral y pautas iniciales (60 min)'), price: 80 },
+                        { key: 'isabel_pni_sig', title: profileT('profile_consult_pni_follow_title', 'Consulta de Seguimiento PNI (60 €)'), desc: profileT('profile_consult_pni_follow_desc', 'Evolución clínica y ajustes personalizados (60 min)'), price: 60 }
                     ];
                 } else if (isSilvia) {
                     options = [
-                        { key: 'silvia_ayurveda_1a', title: '1ª Consulta Ayurveda (80 €)', desc: 'Diagnóstico doshas y estilo de vida (90 min)', price: 80 },
-                        { key: 'silvia_ayurveda_sig', title: 'Consulta Seguimiento Ayurveda (60 €)', desc: 'Revisión y evolución de pautas (60 min)', price: 60 },
-                        { key: 'silvia_ayurveda_bono3', title: 'Bono 3 Sesiones Ayurveda (170 €)', desc: 'Ahorro 10 € · Validez 6 meses', price: 170 },
-                        { key: 'silvia_ayurveda_bono6', title: 'Bono 6 Sesiones Ayurveda (280 €)', desc: 'Ahorro 80 € · Validez 6 meses', price: 280 }
+                        { key: 'silvia_ayurveda_1a', title: profileT('profile_consult_ayur_first_title', '1ª Consulta Ayurveda (80 €)'), desc: profileT('profile_consult_ayur_first_desc', 'Diagnóstico doshas y estilo de vida (90 min)'), price: 80 },
+                        { key: 'silvia_ayurveda_sig', title: profileT('profile_consult_ayur_follow_title', 'Consulta Seguimiento Ayurveda (60 €)'), desc: profileT('profile_consult_ayur_follow_desc', 'Revisión y evolución de pautas (60 min)'), price: 60 },
+                        { key: 'silvia_ayurveda_bono3', title: profileT('profile_consult_ayur_pass3_title', 'Bono 3 Sesiones Ayurveda (170 €)'), desc: profileT('profile_consult_ayur_pass3_desc', 'Ahorro 10 € · Validez 6 meses'), price: 170 },
+                        { key: 'silvia_ayurveda_bono6', title: profileT('profile_consult_ayur_pass6_title', 'Bono 6 Sesiones Ayurveda (280 €)'), desc: profileT('profile_consult_ayur_pass6_desc', 'Ahorro 80 € · Validez 6 meses'), price: 280 }
                     ];
                 } else {
                     options = [
-                        { key: tipo === 'psicologia' ? 'miriam_psico_individual_1a' : 'silvia_ayurveda_1a', title: `1ª Sesión de ${tipo === 'psicologia' ? 'Psicología' : 'Nutrición'}`, desc: 'Consulta individual', price: 75 }
+                        { key: tipo === 'psicologia' ? 'miriam_psico_individual_1a' : 'silvia_ayurveda_1a', title: profileT(tipo === 'psicologia' ? 'profile_consult_first_psychology' : 'profile_consult_first_nutrition', tipo === 'psicologia' ? '1ª Sesión de Psicología' : '1ª Sesión de Nutrición'), desc: profileT('profile_consult_individual', 'Consulta individual'), price: 75 }
                     ];
                 }
             }
@@ -23397,12 +23445,12 @@
                 const isGroupKey = customStripeKey === 'prod_VDmmlmsGGhMebt';
                 if (!isGroupKey && (!esClaseGrupal || customStripeKey !== 'prod_VDmmlmsGGhMebt')) {
                     const pInfo = window.obtenerDetalleStripeProducto(customStripeKey);
-                    const pTitle = (pInfo && pInfo.name && !pInfo.name.startsWith('prod_')) ? pInfo.name : (clase.nombre || 'Consulta');
+                    const pTitle = (pInfo && pInfo.name && !pInfo.name.startsWith('prod_')) ? pInfo.name : (clase.nombre || profileT('profile_consult_fallback', 'Consulta'));
                     const pPriceNum = pInfo?.precio ? parseFloat(pInfo.precio.replace('€', '').replace(',', '.').trim()) : 30;
                     options.unshift({
                         key: customStripeKey,
                         title: pInfo?.label || pTitle,
-                        desc: 'Producto Stripe vinculado a esta sesión',
+                        desc: profileT('profile_consult_stripe_product', 'Producto Stripe vinculado a esta sesión'),
                         price: isNaN(pPriceNum) ? 30 : pPriceNum
                     });
                 }
@@ -23438,11 +23486,11 @@
                         ${profPhoto ? `<img src="${escapeHtml(profPhoto)}" class="w-full h-full object-cover">` : `<div class="w-full h-full ${esClaseGrupal ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} flex items-center justify-center font-bold">${escapeHtml(profName.charAt(0))}</div>`}
                     </div>
                     <div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
                             <p class="font-bold text-cocoa text-sm">${escapeHtml(profName)}</p>
-                            <span class="text-[10px] font-bold ${esClaseGrupal ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-blue-100 text-blue-800 border-blue-200'} border px-2 py-0.2 rounded-full uppercase tracking-wider">${esClaseGrupal ? 'Sesión Grupal' : 'Individual'}</span>
+                            <span class="text-[10px] font-bold ${esClaseGrupal ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-blue-100 text-blue-800 border-blue-200'} border px-2 py-0.2 rounded-full uppercase tracking-wider whitespace-nowrap shrink-0">${esClaseGrupal ? escapeHtml(profileT('profile_group_session', 'Sesión Grupal')) : escapeHtml(profileT('profile_individual_short', 'Individual'))}</span>
                         </div>
-                        <p class="text-xs text-cocoa/70"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fechaFormat)} a las <strong>${horaFormat}</strong></p>
+                        <p class="text-xs text-cocoa/70"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fechaFormat)} ${escapeHtml(profileT('profile_consult_at_time', 'a las'))} <strong>${horaFormat}</strong></p>
                     </div>
                 </div>
                 <p class="text-xs font-bold uppercase tracking-wider text-cocoa/50 mb-2">${escapeHtml(modalSubtitle)}</p>
@@ -23452,8 +23500,8 @@
             </div>
         `,
                 showCancelButton: true,
-                confirmButtonText: 'Proceder al Pago Seguro',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: profileT('profile_consult_secure_payment', 'Proceder al Pago Seguro'),
+                cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                 confirmButtonColor: esClaseGrupal ? '#8B5CF6' : '#795244',
                 cancelButtonColor: '#9ca3af'
             });
@@ -23772,8 +23820,8 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-user text-5xl text-blue-500/40 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin consultas individuales este mes</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay huecos disponibles para consultas individuales en este mes.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_individual_consultations', 'Sin consultas individuales este mes'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_individual_consultations_desc', 'Actualmente no hay huecos disponibles para consultas individuales en este mes.'))}</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
                         <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
                     </button>
@@ -23784,10 +23832,10 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-sparkle text-5xl text-[#8f6b2d]/50 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin sesiones introductorias con Isabel</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay sesiones introductorias programadas con Isabel (PNI) para este mes.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_intro_isabel', 'Sin sesiones introductorias con Isabel'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_intro_isabel_desc', 'Actualmente no hay sesiones introductorias programadas con Isabel (PNI) para este mes.'))}</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'isabel')" class="inline-flex items-center gap-2 bg-[#8f6b2d] hover:bg-[#6e5221] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
-                        <i class="ph-bold ph-calendar-plus"></i> <span>Ver todas las consultas de Isabel</span>
+                        <i class="ph-bold ph-calendar-plus"></i> <span>${escapeHtml(profileT('profile_view_isabel_consultations', 'Ver todas las consultas de Isabel'))}</span>
                     </button>
                 </div>`;
                     return;
@@ -23796,10 +23844,10 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-sparkle text-5xl text-[#b45c47]/50 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin sesiones introductorias con Miriam</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay sesiones introductorias programadas con Miriam (Psicología) para este mes.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_intro_miriam', 'Sin sesiones introductorias con Miriam'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_intro_miriam_desc', 'Actualmente no hay sesiones introductorias programadas con Miriam (Psicología) para este mes.'))}</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'miriam')" class="inline-flex items-center gap-2 bg-[#b45c47] hover:bg-[#8f4735] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
-                        <i class="ph-bold ph-calendar-plus"></i> <span>Ver todas las consultas de Miriam</span>
+                        <i class="ph-bold ph-calendar-plus"></i> <span>${escapeHtml(profileT('profile_view_miriam_consultations', 'Ver todas las consultas de Miriam'))}</span>
                     </button>
                 </div>`;
                     return;
@@ -23808,8 +23856,8 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-heart text-5xl text-[#8f6b2d]/40 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin consultas disponibles con Isabel</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay huecos disponibles para consultas con Isabel (PNI) en este mes.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_isabel', 'Sin consultas disponibles con Isabel'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_isabel_desc', 'Actualmente no hay huecos disponibles para consultas con Isabel (PNI) en este mes.'))}</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
                         <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
                     </button>
@@ -23820,8 +23868,8 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-brain text-5xl text-[#b45c47]/40 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin consultas disponibles con Miriam</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay huecos disponibles para consultas con Miriam (Psicología) en este mes.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_miriam', 'Sin consultas disponibles con Miriam'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_miriam_desc', 'Actualmente no hay huecos disponibles para consultas con Miriam (Psicología) en este mes.'))}</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
                         <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
                     </button>
@@ -23832,8 +23880,8 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-users-three text-5xl text-[#8B5CF6]/40 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin sesiones grupales este mes</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">Actualmente no hay sesiones de Grupo de Autoayuda o Grupo Terapéutico programadas para este mes.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_group_sessions', 'Sin sesiones grupales este mes'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_group_sessions_desc', 'Actualmente no hay sesiones de Grupo de Autoayuda o Grupo Terapéutico programadas para este mes.'))}</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
                         <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
                     </button>
@@ -23844,8 +23892,8 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-gift text-5xl text-[#3B82F6]/30 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin sesiones introductorias</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">No hay sesiones introductorias de psicología disponibles actualmente.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_intro_sessions', 'Sin sesiones introductorias'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_intro_psych_desc', 'No hay sesiones introductorias de psicología disponibles actualmente.'))}</p>
                     <button onclick="filtrarConsultasUsuario('psicologia', 'todas')" class="inline-flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
                         <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
                     </button>
@@ -23914,7 +23962,7 @@
                     const isFree = c.es_gratuita === true || c.es_gratis === true || /introductor/i.test(c.nombre || '') || c.metodo_pago === 'gratuita' || esClaseElegibleBonoGratis(c);
                     const prodInfo = obtenerDetalleProductoConsulta(c.reservaConfirmada || c.miReserva, c);
                     const tagBadge = isFree
-                        ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-gift"></i> Sesión Gratuita (0 €) · Sin Bono</span>`
+                        ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-gift"></i> ${escapeHtml(profileT('profile_free_session_badge', 'Sesión Gratuita (0 €) · Sin Bono'))}</span>`
                         : `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-credit-card"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
 
                     let btnAction = '';
@@ -23979,7 +24027,7 @@
                         } else if (isFree) {
                             btnAction = `
                         <button onclick="reservarConsulta('psicologia', ${inlineJsString(rawId)})" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:shadow-lg hover:brightness-110 active:scale-95 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform cursor-pointer">
-                            RESERVAR GRATIS (0 €)
+                            <i class="ph-bold ph-gift"></i> ${escapeHtml(profileT('profile_book_free', 'RESERVAR GRATIS (0 €)'))}
                         </button>`;
                         } else {
                             const esGrupal = esClaseGrupalConsulta(c);
@@ -23987,12 +24035,12 @@
                             if (saldo >= 1) {
                                 btnAction = `
                             <button onclick="reservarConsulta('psicologia', ${inlineJsString(rawId)})" class="${esGrupal ? 'bg-purple-600 hover:bg-purple-700' : 'bg-[#3B82F6] hover:bg-blue-600'} text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95 flex items-center gap-1.5 cursor-pointer">
-                                <i class="ph-bold ph-calendar-check text-xs"></i> RESERVAR ${esGrupal ? 'GRUPO' : 'CITA'} (SALDO 0 €)
+                                <i class="ph-bold ph-calendar-check text-xs"></i> ${escapeHtml(profileT(esGrupal ? 'profile_book_group_balance' : 'profile_book_session_balance', esGrupal ? 'RESERVAR GRUPO (SALDO 0 €)' : 'RESERVAR CITA (SALDO 0 €)'))}
                             </button>`;
                             } else {
                                 btnAction = `
                             <button onclick="abrirCompraYReservaConsulta('psicologia', ${inlineJsString(rawId)})" class="${esGrupal ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
-                                <i class="ph-bold ph-calendar-plus"></i> COMPRAR Y RESERVAR
+                                <i class="ph-bold ph-calendar-plus"></i> ${escapeHtml(profileT('profile_buy_and_book', 'COMPRAR Y RESERVAR'))}
                             </button>`;
                             }
                         }
@@ -24015,7 +24063,7 @@
                     row.innerHTML = `
                 <div class="flex items-start gap-4 min-w-0 flex-1">
                     <div class="flex flex-col items-center justify-center min-w-[3.75rem] px-2 h-14 rounded-xl ${esGrupal ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-[#3B82F6] border-blue-100'} border shadow-sm flex-shrink-0 box-border">
-                        <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${esGrupal ? 'Grupo' : escapeHtml(profileT('common_appointment', 'Cita'))}</span>
+                        <span class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase pb-0.5 tracking-tight max-w-full truncate text-center">${esGrupal ? escapeHtml(profileT('profile_group_short', 'Grupo')) : escapeHtml(profileT('common_appointment', 'Cita'))}</span>
                         <span class="text-base font-black tracking-tight leading-none">${escapeHtml(hora)}</span>
                     </div>
                     
@@ -24025,11 +24073,11 @@
                                 <h4 class="brand-font font-bold text-lg text-cocoa ${esGrupal ? 'group-hover:text-purple-700' : 'group-hover:text-[#3B82F6]'} transition leading-tight">
                                     ${escapeHtml(c.nombre || profileT('common_consultation', 'Consulta'))}
                                 </h4>
-                                ${esGrupal ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Sesión Grupal · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : `<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-user"></i> Consulta Individual</span>`}
+                                ${esGrupal ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> ${escapeHtml(profileT('profile_group_session', 'Sesión Grupal'))} · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} ${escapeHtml(profileT('profile_places_free', 'plazas libres'))}</span>` : `<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-user"></i> ${escapeHtml(profileT('profile_consultation_individual', 'Consulta Individual'))}</span>`}
                                 ${(() => {
                                     const m = obtenerDatosSesionMultiple(c);
                                     if (!m.esMultiple) return '';
-                                    return `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs" title="Consulta Doble vinculada (ambos turnos se reservan simultáneamente)"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                                    return `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs" title="${escapeHtml(profileT('profile_consultation_double_title', 'Consulta Doble vinculada (ambos turnos se reservan simultáneamente)'))}"><i class="ph-bold ph-link"></i> ${escapeHtml(profileT('profile_consultation_double', 'Consulta Doble'))} (${m.parte}/${m.total})</span>`;
                                 })()}
                                 ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
@@ -24104,8 +24152,8 @@
                     container.innerHTML = `
                 <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                     <i class="ph-duotone ph-gift text-5xl text-[#8B5CF6]/30 mb-4"></i>
-                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">Sin sesiones introductorias</h3>
-                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">No hay sesiones introductorias de nutrición/PNI disponibles actualmente.</p>
+                    <h3 class="brand-font text-2xl font-bold text-cocoa mb-2">${escapeHtml(profileT('profile_no_intro_sessions', 'Sin sesiones introductorias'))}</h3>
+                    <p class="text-cocoa/60 font-medium text-sm max-w-sm mx-auto mb-5">${escapeHtml(profileT('profile_no_intro_nutrition_desc', 'No hay sesiones introductorias de nutrición/PNI disponibles actualmente.'))}</p>
                     <button onclick="filtrarConsultasUsuario('nutricion', 'todas')" class="inline-flex items-center gap-2 bg-[#8B5CF6] hover:bg-purple-600 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-md transition">
                         <i class="ph-bold ph-calendar-plus"></i> <span data-i18n="profile_view_all_consultations">Ver todas las consultas</span>
                     </button>
@@ -24173,7 +24221,7 @@
                     const isFree = c.es_gratuita === true || c.es_gratis === true || /introductor/i.test(c.nombre || '') || c.metodo_pago === 'gratuita' || esClaseElegibleBonoGratis(c);
                     const prodInfo = obtenerDetalleProductoConsulta(c.reservaConfirmada || c.miReserva, c);
                     const tagBadge = isFree
-                        ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-gift"></i> Sesión Gratuita (0 €) · Sin Bono</span>`
+                        ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-gift"></i> ${escapeHtml(profileT('profile_free_session_badge', 'Sesión Gratuita (0 €) · Sin Bono'))}</span>`
                         : `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md shadow-2xs"><i class="ph-bold ph-credit-card"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
 
                     let btnAction = '';
@@ -24238,19 +24286,19 @@
                         } else if (isFree) {
                             btnAction = `
                         <button onclick="reservarConsulta('nutricion', ${inlineJsString(rawId)})" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:shadow-lg hover:brightness-110 active:scale-95 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform cursor-pointer">
-                            RESERVAR GRATIS (0 €)
+                            <i class="ph-bold ph-gift"></i> ${escapeHtml(profileT('profile_book_free', 'RESERVAR GRATIS (0 €)'))}
                         </button>`;
                         } else {
                             const saldo = getSaldoConsultaActual('nutricion');
                             if (saldo >= 1) {
                                 btnAction = `
                             <button onclick="reservarConsulta('nutricion', ${inlineJsString(rawId)})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95 flex items-center gap-1.5 cursor-pointer">
-                                <i class="ph-bold ph-calendar-check text-xs"></i> RESERVAR CITA (SALDO 0 €)
+                                <i class="ph-bold ph-calendar-check text-xs"></i> ${escapeHtml(profileT('profile_book_session_balance', 'RESERVAR CITA (SALDO 0 €)'))}
                             </button>`;
                             } else {
                                 btnAction = `
                             <button onclick="abrirCompraYReservaConsulta('nutricion', ${inlineJsString(rawId)})" class="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
-                                <i class="ph-bold ph-calendar-plus"></i> COMPRAR Y RESERVAR
+                                <i class="ph-bold ph-calendar-plus"></i> ${escapeHtml(profileT('profile_buy_and_book', 'COMPRAR Y RESERVAR'))}
                             </button>`;
                             }
                         }
@@ -24265,7 +24313,7 @@
                         : `<div class="w-full h-full bg-purple-50 flex items-center justify-center text-[#8B5CF6] text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
 
                     const freeBadge = isFree
-                        ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> Sesión Gratuita</span>`
+                        ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> ${escapeHtml(profileT('profile_free_session', 'Sesión Gratuita'))}</span>`
                         : '';
 
                     const row = document.createElement('div');
@@ -24284,11 +24332,11 @@
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#8B5CF6] transition leading-tight">
                                     ${escapeHtml(c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'))}
                                 </h4>
-                                ${c.capacidad_max > 1 ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> Grupo · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} plazas libres</span>` : ''}
+                                ${c.capacidad_max > 1 ? `<span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-users"></i> ${escapeHtml(profileT('profile_group_short', 'Grupo'))} · ${Math.max(0, c.capacidad_max - (c.ocupadas || 0))} ${escapeHtml(profileT('profile_places_free', 'plazas libres'))}</span>` : ''}
                                 ${(() => {
                                     const m = obtenerDatosSesionMultiple(c);
                                     if (!m.esMultiple) return '';
-                                    return `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs" title="Consulta Doble vinculada (ambos turnos se reservan simultáneamente)"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                                    return `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs" title="${escapeHtml(profileT('profile_consultation_double_title', 'Consulta Doble vinculada (ambos turnos se reservan simultáneamente)'))}"><i class="ph-bold ph-link"></i> ${escapeHtml(profileT('profile_consultation_double', 'Consulta Doble'))} (${m.parte}/${m.total})</span>`;
                                 })()}
                                 ${freeBadge}
                                 <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
@@ -24396,7 +24444,7 @@
 
         async function reservarConsultaInner(tipo, claseId) {
             if (!currentUser?.id) {
-                return Swal.fire('Sesión caducada', 'Vuelve a iniciar sesión para reservar.', 'warning');
+                return Swal.fire(profileT('profile_consult_session_expired', 'Sesión caducada'), profileT('profile_consult_signin_again', 'Vuelve a iniciar sesión para reservar.'), 'warning');
             }
 
             // Validación de rol: sólo los alumnos pueden reservar consultas
@@ -24405,8 +24453,8 @@
             if (!esAlumno) {
                 return Swal.fire({
                     icon: 'error',
-                    title: 'Acción no permitida',
-                    text: 'Solo los alumnos pueden realizar reservas de consultas.',
+                    title: profileT('profile_consult_action_not_allowed', 'Acción no permitida'),
+                    text: profileT('profile_consult_only_students', 'Solo los alumnos pueden realizar reservas de consultas.'),
                     confirmButtonColor: '#B48A47'
                 });
             }
@@ -24418,7 +24466,7 @@
                 const cache = tipo === 'psicologia' ? allPsicologiaCache : allNutricionCache;
                 const clase = (cache || []).find(c => String(c.id) === String(claseId));
                 if (!clase) {
-                    return Swal.fire('Error', 'No se encontró la consulta seleccionada.', 'error');
+                    return Swal.fire('Error', profileT('profile_consult_not_found', 'No se encontró la consulta seleccionada.'), 'error');
                 }
 
                 const multiInfo = obtenerDatosSesionMultiple(clase);
@@ -24444,8 +24492,8 @@
                     if (!partnerClase) {
                         return Swal.fire({
                             icon: 'error',
-                            title: 'Turno vinculado no encontrado',
-                            text: 'Esta consulta está configurada como Consulta Doble, pero no se ha encontrado el segundo turno vinculado. Contacta con el estudio.',
+                            title: profileT('profile_consult_linked_slot_missing', 'Turno vinculado no encontrado'),
+                            text: profileT('profile_consult_linked_slot_missing_desc', 'Esta consulta está configurada como Consulta Doble, pero no se ha encontrado el segundo turno vinculado. Contacta con el estudio.'),
                             confirmButtonColor: config.color
                         });
                     }
@@ -24456,8 +24504,8 @@
                     if (yaTiene1 || yaTiene2) {
                         return Swal.fire({
                             icon: 'warning',
-                            title: 'Ya tienes esta cita vinculada',
-                            text: 'Ya cuentas con una reserva confirmada para uno o ambos turnos de esta consulta doble.',
+                            title: profileT('profile_consult_already_linked', 'Ya tienes esta cita vinculada'),
+                            text: profileT('profile_consult_already_linked_desc', 'Ya cuentas con una reserva confirmada para uno o ambos turnos de esta consulta doble.'),
                             confirmButtonColor: config.color
                         });
                     }
@@ -24468,8 +24516,8 @@
                     if (llena1 || llena2) {
                         return Swal.fire({
                             icon: 'error',
-                            title: 'Turno no disponible',
-                            text: 'Uno de los turnos de la consulta doble ya está completo. Al tratarse de una consulta doble, deben reservarse ambos turnos a la vez.',
+                            title: profileT('profile_consult_slot_unavailable', 'Turno no disponible'),
+                            text: profileT('profile_consult_slot_unavailable_desc', 'Uno de los turnos de la consulta doble ya está completo. Al tratarse de una consulta doble, deben reservarse ambos turnos a la vez.'),
                             confirmButtonColor: config.color
                         });
                     }
@@ -24477,8 +24525,8 @@
                     if (clase?.miReserva) {
                         return Swal.fire({
                             icon: 'warning',
-                            title: 'Ya tienes esta cita',
-                            text: 'Ya hay una reserva confirmada para ti en este horario.',
+                            title: profileT('profile_consult_already_have', 'Ya tienes esta cita'),
+                            text: profileT('profile_consult_already_have_desc', 'Ya hay una reserva confirmada para ti en este horario.'),
                             confirmButtonColor: config.color
                         });
                     }
@@ -24486,8 +24534,8 @@
                     if (clase && clase.ocupadas >= clase.capacidad_max && !isAdmin) {
                         return Swal.fire({
                             icon: 'error',
-                            title: 'Consulta reservada',
-                            text: 'Este horario ya no está disponible.',
+                            title: profileT('profile_consult_booked', 'Consulta reservada'),
+                            text: profileT('profile_consult_no_longer_available', 'Este horario ya no está disponible.'),
                             confirmButtonColor: config.color
                         });
                     }
@@ -24496,23 +24544,23 @@
                 const esGratuita = esClaseElegibleBonoGratis(clase) || clase?.es_gratuita === true || clase?.es_gratis === true || clase?.metodo_pago === 'gratuita' || /introductor/i.test(clase?.nombre || '');
                 if (esGratuita) {
                     const htmlConfirm = multiInfo?.esMultiple
-                        ? `Esta consulta es <b>doble (2 citas vinculadas en fechas/horas distintas)</b> que se reservarán de forma simultánea de forma gratuita (0 €):<br><br>
+                        ? `${escapeHtml(profileT('profile_consult_is_double', 'Esta consulta es'))} <b>${escapeHtml(profileT('profile_consult_double_free_desc', 'doble (2 citas vinculadas en fechas/horas distintas) que se reservarán de forma simultánea de forma gratuita (0 €):'))}</b><br><br>
                            <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1 mb-2">
-                             <div><b>Turno 1:</b> ${formatDisplayLongDate(clase.fecha_inicio)} a las ${formatDisplayTime(clase.fecha_inicio)}</div>
-                             <div><b>Turno 2:</b> ${formatDisplayLongDate(partnerClase.fecha_inicio)} a las ${formatDisplayTime(partnerClase.fecha_inicio)}</div>
+                             <div><b>${escapeHtml(profileT('profile_consult_turn_1', 'Turno 1'))}:</b> ${formatDisplayLongDate(clase.fecha_inicio)} ${escapeHtml(profileT('profile_consult_at_time', 'a las'))} ${formatDisplayTime(clase.fecha_inicio)}</div>
+                             <div><b>${escapeHtml(profileT('profile_consult_turn_2', 'Turno 2'))}:</b> ${formatDisplayLongDate(partnerClase.fecha_inicio)} ${escapeHtml(profileT('profile_consult_at_time', 'a las'))} ${formatDisplayTime(partnerClase.fecha_inicio)}</div>
                            </div>
-                           ¿Deseas confirmar la reserva de ambos turnos a 0 €?`
-                        : '¿Quieres reservar tu plaza para esta <b>Sesión Introductoria Gratuita (0 €)</b>?';
+                           ${escapeHtml(profileT('profile_consult_confirm_both_free', '¿Deseas confirmar la reserva de ambos turnos a 0 €?'))}`
+                        : `${escapeHtml(profileT('profile_consult_free_simple', '¿Quieres reservar tu plaza para esta'))} <b>${escapeHtml(profileT('profile_free_intro_session', 'Sesión Introductoria Gratuita (0 €)'))}</b>?`;
 
                     const confirmRes = await Swal.fire({
-                        title: multiInfo?.esMultiple ? 'Confirmar Consulta Doble Gratuita' : 'Confirmar Sesión Gratuita',
+                        title: multiInfo?.esMultiple ? profileT('profile_consult_confirm_free_double', 'Confirmar Consulta Doble Gratuita') : profileT('profile_consult_confirm_free', 'Confirmar Sesión Gratuita'),
                         html: htmlConfirm,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonColor: '#EC4899',
                         cancelButtonColor: '#9ca3af',
-                        confirmButtonText: 'Sí, reservar gratis (0 €)',
-                        cancelButtonText: 'Cancelar'
+                        confirmButtonText: profileT('profile_consult_yes_book_free', 'Sí, reservar gratis (0 €)'),
+                        cancelButtonText: profileT('profile_cancel_button', 'Cancelar')
                     });
                     if (!confirmRes.isConfirmed) return;
                 } else if (!isAdmin && !esTrabajador()) {
@@ -24522,32 +24570,32 @@
                         return abrirCompraYReservaConsulta(tipo, clase);
                     }
                     const htmlConfirm = multiInfo?.esMultiple
-                        ? `Esta consulta es <b>doble (2 citas vinculadas)</b>. Con <b>1 única sesión de tu saldo/bono de consulta</b> se reservarán ambos turnos de forma simétrica:<br><br>
+                        ? `${escapeHtml(profileT('profile_consult_is_double', 'Esta consulta es'))} <b>${escapeHtml(profileT('profile_consult_double_balance_desc', 'doble (2 citas vinculadas). Con'))}</b> <b>${escapeHtml(profileT('profile_consult_single_session_balance', '1 única sesión de tu saldo/bono de consulta'))}</b> ${escapeHtml(profileT('profile_consult_both_slots_symmetric', 'se reservarán ambos turnos de forma simétrica:'))}<br><br>
                            <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1 mb-2">
-                             <div><b>Turno 1:</b> ${formatDisplayLongDate(clase.fecha_inicio)} a las ${formatDisplayTime(clase.fecha_inicio)}</div>
-                             <div><b>Turno 2:</b> ${formatDisplayLongDate(partnerClase.fecha_inicio)} a las ${formatDisplayTime(partnerClase.fecha_inicio)}</div>
+                             <div><b>${escapeHtml(profileT('profile_consult_turn_1', 'Turno 1'))}:</b> ${formatDisplayLongDate(clase.fecha_inicio)} ${escapeHtml(profileT('profile_consult_at_time', 'a las'))} ${formatDisplayTime(clase.fecha_inicio)}</div>
+                             <div><b>${escapeHtml(profileT('profile_consult_turn_2', 'Turno 2'))}:</b> ${formatDisplayLongDate(partnerClase.fecha_inicio)} ${escapeHtml(profileT('profile_consult_at_time', 'a las'))} ${formatDisplayTime(partnerClase.fecha_inicio)}</div>
                            </div>
-                           ¿Deseas canjearla para confirmar tus citas a 0 €?`
+                           ${escapeHtml(profileT('profile_consult_redeem_for_appointments', '¿Deseas canjearla para confirmar tus citas a 0 €?'))}`
                         : (esGrupal
-                            ? `Dispones de <b>1 bono grupal</b> en tu cuenta.<br><br>¿Deseas canjearlo para confirmar tu plaza en <b>${escapeHtml(clase?.nombre || 'Sesión Grupal')}</b> a 0 €?`
-                            : `Dispones de <b>1 sesión de consulta disponible</b> en tu cuenta.<br><br>¿Deseas canjearla para confirmar tu cita para <b>${escapeHtml(clase?.nombre || config.nombre)}</b> a 0 €?`);
+                            ? `${escapeHtml(profileT('profile_consult_you_have', 'Dispones de'))} <b>${escapeHtml(profileT('profile_consult_one_group_pass', '1 bono grupal'))}</b> ${escapeHtml(profileT('profile_consult_in_your_account', 'en tu cuenta.'))}<br><br>${escapeHtml(profileT('profile_consult_redeem_group_spot', '¿Deseas canjearlo para confirmar tu plaza en'))} <b>${escapeHtml(clase?.nombre || profileT('profile_group_session', 'Sesión Grupal'))}</b> ${escapeHtml(profileT('profile_consult_for_zero', 'a 0 €?'))}`
+                            : `${escapeHtml(profileT('profile_consult_you_have', 'Dispones de'))} <b>${escapeHtml(profileT('profile_consult_one_session_available', '1 sesión de consulta disponible'))}</b> ${escapeHtml(profileT('profile_consult_in_your_account', 'en tu cuenta.'))}<br><br>${escapeHtml(profileT('profile_consult_redeem_appointment', '¿Deseas canjearla para confirmar tu cita para'))} <b>${escapeHtml(clase?.nombre || config.nombre)}</b> ${escapeHtml(profileT('profile_consult_for_zero', 'a 0 €?'))}`);
 
                     const confirmSaldo = await Swal.fire({
-                        title: multiInfo?.esMultiple ? 'Confirmar Consulta Doble' : (esGrupal ? 'Confirmar Sesión Grupal' : 'Confirmar Cita'),
+                        title: multiInfo?.esMultiple ? profileT('profile_consult_confirm_double', 'Confirmar Consulta Doble') : (esGrupal ? profileT('profile_consult_confirm_group', 'Confirmar Sesión Grupal') : profileT('profile_consult_confirm_appointment', 'Confirmar Cita')),
                         html: htmlConfirm,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonColor: esGrupal ? '#8B5CF6' : (config.color || '#3B82F6'),
                         cancelButtonColor: '#9ca3af',
-                        confirmButtonText: `<i class="ph-bold ph-calendar-check mr-1"></i> Sí, reservar ${esGrupal ? 'plaza (Bono Grupal 0 €)' : 'cita (0 €)'}`,
-                        cancelButtonText: 'Cancelar'
+                        confirmButtonText: `<i class="ph-bold ph-calendar-check mr-1"></i> ${escapeHtml(profileT(esGrupal ? 'profile_consult_book_group_spot_zero' : 'profile_consult_book_appointment_zero', esGrupal ? 'Sí, reservar plaza (Bono Grupal 0 €)' : 'Sí, reservar cita (0 €)'))}`,
+                        cancelButtonText: profileT('profile_cancel_button', 'Cancelar')
                     });
                     if (!confirmSaldo.isConfirmed) return;
                 }
 
                 isReserving = true;
                 Swal.fire({
-                    title: multiInfo?.esMultiple ? 'Reservando ambos turnos...' : 'Confirmando cita...',
+                    title: multiInfo?.esMultiple ? profileT('profile_consult_reserving_both', 'Reservando ambos turnos...') : profileT('profile_consult_confirming', 'Confirmando cita...'),
                     didOpen: () => Swal.showLoading()
                 });
 
@@ -24568,7 +24616,7 @@
                         Swal.close();
                         return Swal.fire({
                             icon: 'error',
-                            title: 'No se pudo reservar',
+                            title: profileT('profile_consult_could_not_book', 'No se pudo reservar'),
                             text: mensajeErrorConsulta(err1, tipo, 'reservar'),
                             confirmButtonColor: config.color
                         });
@@ -24597,8 +24645,8 @@
                         Swal.close();
                         return Swal.fire({
                             icon: 'error',
-                            title: 'No se pudo completar la consulta doble',
-                            text: `No fue posible reservar el segundo turno (${mensajeErrorConsulta(err2, tipo, 'reservar')}). Se ha cancelado la reserva para proteger tu saldo.`,
+                            title: profileT('profile_consult_double_incomplete', 'No se pudo completar la consulta doble'),
+                            text: `${escapeHtml(profileT('profile_consult_double_second_failed', 'No fue posible reservar el segundo turno'))} (${mensajeErrorConsulta(err2, tipo, 'reservar')}). ${escapeHtml(profileT('profile_consult_double_rolled_back', 'Se ha cancelado la reserva para proteger tu saldo.'))}`,
                             confirmButtonColor: config.color
                         });
                     }
@@ -24607,11 +24655,11 @@
                     playYogaSound();
                     Swal.fire({
                         icon: 'success',
-                        title: '¡Consulta Doble Reservada!',
-                        html: `Se han reservado correctamente los 2 turnos vinculados con un solo pago/saldo:<br><br>
+                        title: profileT('profile_consult_double_booked', '¡Consulta Doble Reservada!'),
+                        html: `${escapeHtml(profileT('profile_consult_double_booked_desc', 'Se han reservado correctamente los 2 turnos vinculados con un solo pago/saldo:'))}<br><br>
                                <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs space-y-1">
-                                 <div><b>Turno 1:</b> ${formatDisplayLongDate(s1.fecha_inicio)} a las ${formatDisplayTime(s1.fecha_inicio)}</div>
-                                 <div><b>Turno 2:</b> ${formatDisplayLongDate(s2.fecha_inicio)} a las ${formatDisplayTime(s2.fecha_inicio)}</div>
+                                 <div><b>${escapeHtml(profileT('profile_consult_turn_1', 'Turno 1'))}:</b> ${formatDisplayLongDate(s1.fecha_inicio)} ${escapeHtml(profileT('profile_consult_at_time', 'a las'))} ${formatDisplayTime(s1.fecha_inicio)}</div>
+                                 <div><b>${escapeHtml(profileT('profile_consult_turn_2', 'Turno 2'))}:</b> ${formatDisplayLongDate(s2.fecha_inicio)} ${escapeHtml(profileT('profile_consult_at_time', 'a las'))} ${formatDisplayTime(s2.fecha_inicio)}</div>
                                </div>`,
                         showConfirmButton: true,
                         confirmButtonColor: config.color
@@ -24657,7 +24705,7 @@
                     if (resError) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'No se pudo reservar',
+                            title: profileT('profile_consult_could_not_book', 'No se pudo reservar'),
                             text: mensajeErrorConsulta(resError, tipo, 'reservar'),
                             confirmButtonColor: config.color
                         });
@@ -24665,8 +24713,8 @@
                         playYogaSound();
                         Swal.fire({
                             icon: 'success',
-                            title: '¡Cita Reservada!',
-                            text: 'Tu profesional te espera.',
+                            title: profileT('profile_consult_booked_success', '¡Cita Reservada!'),
+                            text: profileT('profile_consult_booked_success_desc', 'Tu profesional te espera.'),
                             showConfirmButton: false,
                             timer: 1500
                         });
@@ -25121,8 +25169,8 @@
         </button>
     `;
 
-            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const diasSemanaCorta = getShortWeekdays();
+            const mesesCorta = getShortMonths();
 
             dKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
@@ -25140,7 +25188,7 @@
                         : 'bg-white hover:bg-sand/20 text-cocoa border border-cocoa/10 shadow-2xs');
 
                 const topLabel = isToday
-                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">HOY</span>`
+                    ? `<span class="text-[9px] uppercase tracking-wider font-black ${isSelected ? 'text-amber-200' : 'text-olive'} leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`
                     : `<span class="text-[9px] uppercase tracking-wider opacity-80 leading-none">${diaSemana}</span>`;
 
                 html += `
@@ -25148,7 +25196,7 @@
                 class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] cursor-pointer ${btnClass}">
                 ${topLabel}
                 <span class="text-xs sm:text-sm font-black leading-tight">${d} ${mesNombre}</span>
-                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numSesiones} cita${numSesiones > 1 ? 's' : ''}</span>
+                <span class="text-[8px] opacity-75 font-medium leading-none mt-0.5">${numSesiones} ${escapeHtml(profileT(numSesiones === 1 ? 'common_appointment' : 'common_appointments', numSesiones === 1 ? 'cita' : 'citas'))}</span>
             </button>
         `;
             });
@@ -25629,7 +25677,7 @@
                             ${(() => {
                                 const m = obtenerDatosSesionMultiple(b);
                                 if (!m.esMultiple) return '';
-                                return `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                                return `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"><i class="ph-bold ph-link"></i> ${escapeHtml(profileT('profile_consultation_double', 'Consulta Doble'))} (${m.parte}/${m.total})</span>`;
                             })()}
                         </div>
 
@@ -25806,7 +25854,7 @@
                             ${(() => {
                                 const m = obtenerDatosSesionMultiple(b);
                                 if (!m.esMultiple) return '';
-                                return `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                                return `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"><i class="ph-bold ph-link"></i> ${escapeHtml(profileT('profile_consultation_double', 'Consulta Doble'))} (${m.parte}/${m.total})</span>`;
                             })()}
                         </div>
 
@@ -28239,8 +28287,8 @@
             }
 
             let html = '';
-            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const diasSemanaCorta = getShortWeekdays();
+            const mesesCorta = getShortMonths();
 
             allDKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
@@ -28258,12 +28306,12 @@
 
                 if (isToday && isSelected) {
                     btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
                     countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
                 } else if (isToday && !isSelected) {
                     btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
                     countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
                 } else if (isSelected) {
@@ -28547,13 +28595,13 @@
                             ${(() => {
                                 const m = obtenerDatosSesionMultiple(c);
                                 if (!m.esMultiple) return '';
-                                return `<span class="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1" title="Consulta Doble vinculada"><i class="ph-bold ph-link"></i> Consulta Doble (${m.parte}/${m.total})</span>`;
+                                return `<span class="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1" title="${escapeHtml(profileT('profile_consultation_double_title_short', 'Consulta Doble vinculada'))}"><i class="ph-bold ph-link"></i> ${escapeHtml(profileT('profile_consultation_double', 'Consulta Doble'))} (${m.parte}/${m.total})</span>`;
                             })()}
                         </div>
-                        <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || 'Consulta Individual')}</h3>
+                        <h3 class="brand-font text-xl font-bold text-gray-900">${escapeHtml(c.nombre || profileT('profile_consultation_individual', 'Consulta Individual'))}</h3>
                         <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${escapeHtml(fecha)} - ${escapeHtml(hora)}</p>
-                        <p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-user-circle"></i> Profesional: ${escapeHtml(profName)}</p>
-                        ${c.descripcion ? `<p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-info"></i> Notas: ${escapeHtml(c.descripcion)}</p>` : ''}
+                        <p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-user-circle"></i> ${escapeHtml(profileT('profile_professional_label', 'Profesional:'))} ${escapeHtml(profName)}</p>
+                        ${c.descripcion ? `<p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-info"></i> ${escapeHtml(profileT('profile_notes_label', 'Notas:'))} ${escapeHtml(c.descripcion)}</p>` : ''}
                     </div>
                     ${adminTrash}
                 </div>
@@ -28721,8 +28769,8 @@
             }
 
             let html = '';
-            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const diasSemanaCorta = getShortWeekdays();
+            const mesesCorta = getShortMonths();
 
             allDKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
@@ -28740,12 +28788,12 @@
 
                 if (isToday && isSelected) {
                     btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
                     countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
                 } else if (isToday && !isSelected) {
                     btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
                     countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
                 } else if (isSelected) {
@@ -29867,8 +29915,8 @@
             }
 
             let html = '';
-            const diasSemanaCorta = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const mesesCorta = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const diasSemanaCorta = getShortWeekdays();
+            const mesesCorta = getShortMonths();
 
             allDKeys.forEach(dKey => {
                 const [y, m, d] = dKey.split('-').map(Number);
@@ -29886,12 +29934,12 @@
 
                 if (isToday && isSelected) {
                     btnClass = 'bg-gradient-to-b from-[#D27D60] to-[#B85E42] text-white border-2 border-[#B85E42] ring-2 ring-[#D27D60]/40 shadow-sm chip-today chip-selected';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-white/25 text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-white leading-tight mt-0.5';
                     countClass = 'text-[8px] text-white/90 font-semibold leading-none mt-0.5';
                 } else if (isToday && !isSelected) {
                     btnClass = 'bg-[#F7EBE6] text-[#26160C] border-2 border-[#D27D60] hover:bg-[#F2DFD7] shadow-2xs chip-today';
-                    topLabel = '<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">HOY</span>';
+                    topLabel = `<span class="text-[9px] uppercase tracking-wider font-black px-1.5 py-0.5 rounded-md bg-[#D27D60] text-white leading-none">${escapeHtml(profileT('profile_today', 'HOY'))}</span>`;
                     textClass = 'text-xs sm:text-sm font-black text-[#8C3D28] leading-tight mt-0.5';
                     countClass = 'text-[8px] text-[#8C3D28]/80 font-semibold leading-none mt-0.5';
                 } else if (isSelected) {
@@ -29911,7 +29959,7 @@
                         class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center min-w-[3.8rem] sm:min-w-[4.2rem] cursor-pointer ${btnClass}">
                         ${topLabel}
                         <span class="${textClass}">${d} ${mesNombre}</span>
-                        <span class="${countClass}">${numSesiones} sesión${numSesiones > 1 ? 'es' : ''}</span>
+                        <span class="${countClass}">${numSesiones} ${escapeHtml(profileT(numSesiones === 1 ? 'profile_consultations_sessions' : 'profile_consultations_sessions_plural', numSesiones === 1 ? 'sesión' : 'sesiones'))}</span>
                     </button>
                 `;
             });
@@ -30536,21 +30584,21 @@
                 event.stopPropagation();
             }
             const { value: packType } = await Swal.fire({
-                title: 'Packs de Clases de Yoga (Bonos)',
+                title: profileT('profile_packs_title', 'Packs de Clases de Yoga (Bonos)'),
                 html: `
             <div class="grid gap-2.5 text-left font-sans">
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>1 clase</b><small class="block text-gray-500">Bono para clase regular · 60 días</small></span><span><input type="radio" name="swal-pack" value="clase_suelta" checked> 15 €</span></label>
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>4 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_4"> 50 €</span></label>
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>6 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_6"> 65 €</span></label>
-                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>10 clases</b><small class="block text-gray-500">Bonos para clases regulares · 60 días</small></span><span><input type="radio" name="swal-pack" value="pack_10"> 95 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>${escapeHtml(profileT('profile_pack_one_class', '1 clase'))}</b><small class="block text-gray-500">${escapeHtml(profileT('profile_pack_single_desc', 'Bono para clase regular · 60 días'))}</small></span><span><input type="radio" name="swal-pack" value="clase_suelta" checked> 15 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>${escapeHtml(profileT('profile_pack_four_classes', '4 clases'))}</b><small class="block text-gray-500">${escapeHtml(profileT('profile_pack_regular_desc', 'Bonos para clases regulares · 60 días'))}</small></span><span><input type="radio" name="swal-pack" value="pack_4"> 50 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>${escapeHtml(profileT('profile_pack_six_classes', '6 clases'))}</b><small class="block text-gray-500">${escapeHtml(profileT('profile_pack_regular_desc', 'Bonos para clases regulares · 60 días'))}</small></span><span><input type="radio" name="swal-pack" value="pack_6"> 65 €</span></label>
+                <label class="flex items-center justify-between gap-3 border border-cocoa/10 rounded-xl p-3 cursor-pointer"><span><b>${escapeHtml(profileT('profile_pack_ten_classes', '10 clases'))}</b><small class="block text-gray-500">${escapeHtml(profileT('profile_pack_regular_desc', 'Bonos para clases regulares · 60 días'))}</small></span><span><input type="radio" name="swal-pack" value="pack_10"> 95 €</span></label>
                 <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-[11px] leading-relaxed mt-1 flex items-start gap-2">
                     <i class="ph-bold ph-info text-amber-700 text-sm mt-0.5 shrink-0"></i>
-                    <span><b>Información importante:</b> Los packs compran bonos de asistencia para <b>clases regulares de yoga</b>. No sirven para reservar talleres ni eventos especiales, que cuentan con su propia compra directa de entrada.</span>
+                    <span><b>${escapeHtml(profileT('profile_pack_important', 'Información importante:'))}</b> ${escapeHtml(profileT('profile_pack_important_desc', 'Los packs compran bonos de asistencia para clases regulares de yoga. No sirven para reservar talleres ni eventos especiales, que cuentan con su propia compra directa de entrada.'))}</span>
                 </div>
             </div>`,
                 showCancelButton: true,
-                confirmButtonText: 'Continuar',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: profileT('profile_continue', 'Continuar'),
+                cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                 confirmButtonColor: '#8C8658',
                 preConfirm: () => document.querySelector('input[name="swal-pack"]:checked')?.value || null
             });
@@ -30573,24 +30621,29 @@
             const pack = PACK_PURCHASE_OPTIONS[packType];
             if (!pack) return;
             if (!currentUser?.id) {
-                await Swal.fire('Inicia sesión', 'Debes iniciar sesión para comprar un pack.', 'warning');
+                await Swal.fire(profileT('profile_sign_in', 'Inicia sesión'), profileT('profile_sign_in_pack', 'Debes iniciar sesión para comprar un pack.'), 'warning');
                 return;
             }
 
+            const packTitles = {
+                pack_4: profileT('profile_pack_4_title', 'Pack de 4 clases'),
+                pack_6: profileT('profile_pack_6_title', 'Pack de 6 clases'),
+                pack_10: profileT('profile_pack_10_title', 'Pack de 10 clases')
+            };
             const { isConfirmed } = await Swal.fire({
-                title: pack.title,
-                html: `Vas a adquirir <strong>${pack.credits} clases</strong> por <strong>${pack.price},00 €</strong>.<br><br>El pack caduca 60 días después de la compra y es válido para clases no especiales.`,
+                title: packTitles[packType] || pack.title,
+                html: `${escapeHtml(profileT('profile_pack_about_to_buy', 'Vas a adquirir'))} <strong>${pack.credits} ${escapeHtml(profileT('profile_pack_classes_word', 'clases'))}</strong> ${escapeHtml(profileT('profile_pack_for_word', 'por'))} <strong>${pack.price},00 €</strong>.<br><br>${escapeHtml(profileT('profile_pack_expiry_desc', 'El pack caduca 60 días después de la compra y es válido para clases no especiales.'))}`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Ir a pagar',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: profileT('profile_go_to_payment', 'Ir a pagar'),
+                cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                 confirmButtonColor: '#795244'
             });
             if (!isConfirmed) return;
 
             const checkoutAttemptId = beginStripeCheckout();
             if (checkoutAttemptId === null) return;
-            Swal.fire({ title: 'Cargando pasarela de pago...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: profileT('profile_loading_payment_gateway', 'Cargando pasarela de pago...'), allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             try {
                 safeSetItem('stripe_checkout_origin', 'profile');
@@ -30641,7 +30694,7 @@
             const firstDay = new Date(Date.UTC(year, month - 1, 1, 12));
             const daysInMonth = new Date(Date.UTC(year, month, 0, 12)).getUTCDate();
             const monthName = firstDay.toLocaleDateString(getCurrentLocale(), { month: 'long', year: 'numeric', timeZone: 'UTC' });
-            return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} · del 1 al ${daysInMonth}`;
+            return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} · ${profileT('profile_month_range_from', 'del 1 al')} ${daysInMonth}`;
         }
 
         // Stripe Checkout integration for a one-off unlimited calendar month.
@@ -30654,8 +30707,8 @@
             if (!currentUser || !currentUser.id) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Inicia sesión',
-                    text: 'Debes iniciar sesión para adquirir el Bono Ilimitado.',
+                    title: profileT('profile_sign_in', 'Inicia sesión'),
+                    text: profileT('profile_sign_in_unlimited', 'Debes iniciar sesión para adquirir el Bono Ilimitado.'),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -30668,17 +30721,17 @@
             const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index));
             const availableMonths = monthOptions.filter(month => !purchasedMonths.has(month));
             if (!availableMonths.length) {
-                await Swal.fire('Meses ya comprados', 'Ya tienes comprados todos los meses disponibles para compra anticipada.', 'info');
+                await Swal.fire(profileT('profile_months_already_bought', 'Meses ya comprados'), profileT('profile_months_already_bought_desc', 'Ya tienes comprados todos los meses disponibles para compra anticipada.'), 'info');
                 return;
             }
 
             const { value: membershipMonth } = await Swal.fire({
-                title: 'Elige el mes del Bono Ilimitado',
-                html: `<div class="text-left"><p class="text-sm text-gray-600 mb-3">Es un pago único de <strong>90,00 €</strong>. El bono empieza el día 1 y termina el último día del mes elegido.</p><select id="swal-membership-month" class="swal2-select m-0 w-full" aria-label="Mes natural del Bono Ilimitado">${monthOptions.map(month => `<option value="${escapeHtml(month)}" ${purchasedMonths.has(month) ? 'disabled' : ''}>${escapeHtml(naturalMonthOptionLabel(month))}${purchasedMonths.has(month) ? ' · ya comprado' : ''}</option>`).join('')}</select><p class="text-xs text-gray-500 mt-3">Incluye clases regulares ilimitadas, una clase especial y un invitado durante ese mes.</p></div>`,
+                title: profileT('profile_choose_unlimited_month', 'Elige el mes del Bono Ilimitado'),
+                html: `<div class="text-left"><p class="text-sm text-gray-600 mb-3">${escapeHtml(profileT('profile_unlimited_one_time', 'Es un pago único de'))} <strong>90,00 €</strong>. ${escapeHtml(profileT('profile_unlimited_month_range', 'El bono empieza el día 1 y termina el último día del mes elegido.'))}</p><select id="swal-membership-month" class="swal2-select m-0 w-full" aria-label="${escapeHtml(profileT('profile_unlimited_month_aria', 'Mes natural del Bono Ilimitado'))}">${monthOptions.map(month => `<option value="${escapeHtml(month)}" ${purchasedMonths.has(month) ? 'disabled' : ''}>${escapeHtml(naturalMonthOptionLabel(month))}${purchasedMonths.has(month) ? ` · ${escapeHtml(profileT('profile_already_purchased', 'ya comprado'))}` : ''}</option>`).join('')}</select><p class="text-xs text-gray-500 mt-3">${escapeHtml(profileT('profile_unlimited_includes', 'Incluye clases regulares ilimitadas, una clase especial y un invitado durante ese mes.'))}</p></div>`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Comprar mes',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: profileT('profile_buy_month', 'Comprar mes'),
+                cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                 confirmButtonColor: '#795244',
                 cancelButtonColor: '#d33',
                 background: '#fff',
@@ -30696,8 +30749,8 @@
             if (checkoutAttemptId === null) return;
 
             Swal.fire({
-                title: 'Cargando pasarela de pago...',
-                text: 'Por favor, espera un momento.',
+                title: profileT('profile_loading_payment_gateway', 'Cargando pasarela de pago...'),
+                text: profileT('profile_please_wait', 'Por favor, espera un momento.'),
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
                 background: '#fff',
