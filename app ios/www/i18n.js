@@ -1782,13 +1782,13 @@ if (window.Swal) {
                         Object.entries(opts.inputErrorMessages).map(([k, v]) => [k, translateText(v)])
                     );
                 }
-                return originalSwalFire.call(window.Swal, opts);
+                return originalSwalFire.call(this, opts);
             } else {
                 const newArgs = args.map(arg => typeof arg === 'string' ? translateText(arg) : arg);
-                return originalSwalFire.apply(window.Swal, newArgs);
+                return originalSwalFire.apply(this, newArgs);
             }
         }
-        return originalSwalFire.apply(window.Swal, args);
+        return originalSwalFire.apply(this, args);
     };
 }
 
