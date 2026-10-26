@@ -92,6 +92,7 @@ for (const [productId, label] of [
   ['prod_V5uCPKKKH5K74P', 'Taller Introducción Power Vinyasa'],
   ['prod_VDY8mI9bZ3SQeb', 'Taller 25 euros'],
   ['prod_V9eGZTzwCNJ55q', 'Promo 50% GEN YOGA'],
+  ['prod_VVkT3C71EAUJmt', 'Bono Mensual (65 € · 2 clases/semana)'],
 ]) {
   requireText(shared, productId, `Producto Stripe de ${label}`);
 }

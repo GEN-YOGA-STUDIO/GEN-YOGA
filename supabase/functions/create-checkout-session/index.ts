@@ -36,7 +36,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '17.24'
+const APP_RELEASE = '17.25'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -112,14 +112,18 @@ serve(async (req) => {
     if (isPromoPurchase(lookupKey)) {
       throw new HttpError(410, 'La promoción del 50% de la primera clase ha finalizado. Consulta las tarifas actuales.')
     }
-    if (lookupKey === PURCHASE_TYPES.PACK_6) {
+    if (lookupKey === PURCHASE_TYPES.PACK_6 || lookupKey === 'prod_V0IUpyuvd7uX00') {
       throw new HttpError(410, 'El pack de 6 clases ha sido sustituido por el Bono Mensual (65 € · 2 clases/semana). Consulta las nuevas tarifas.')
+    }
+    if (lookupKey === 'prod_VVkT3C71EAUJmt') {
+      lookupKey = PURCHASE_TYPES.BONO_MENSUAL
     }
     const allowedPurchaseTypes = new Set<string>([
       PURCHASE_TYPES.CLASE_SUELTA,
       PURCHASE_TYPES.PACK_4,
       PURCHASE_TYPES.PACK_10,
       PURCHASE_TYPES.BONO_ILIMITADO,
+      PURCHASE_TYPES.BONO_INICIAL,
       PURCHASE_TYPES.BONO_MENSUAL,
       ...Object.keys(CONSULTATION_CATALOG),
       ...Object.keys(WORKSHOP_CATALOG),
@@ -128,7 +132,7 @@ serve(async (req) => {
     if (!allowedPurchaseTypes.has(lookupKey) && !isDynamicStripe) {
       throw new HttpError(400, 'Producto no permitido.')
     }
-    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
+    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
       ? (body.membership_month ? validateMembershipMonth(body.membership_month) : madridYearMonth())
       : null
 
@@ -251,19 +255,38 @@ serve(async (req) => {
         },
       ]
     } else if (purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
-      lineItems = [
-        {
-          price_data: {
-            currency: 'eur',
-            unit_amount: 6500,
-            product_data: {
-              name: 'Bono Mensual (2 clases/semana)',
-              metadata: { lookup_key: 'bono_mensual' },
+      let resolvedPriceId: string | null = null
+      try {
+        const prices = await stripe.prices.list({
+          product: 'prod_VVkT3C71EAUJmt',
+          active: true,
+          currency: 'eur',
+          limit: 10,
+        })
+        const matching = prices.data.find(
+          (p: Stripe.Price) => p.unit_amount === 6500 && p.type === 'one_time' && !p.recurring,
+        )
+        if (matching) {
+          resolvedPriceId = matching.id
+        }
+      } catch (err) {
+        console.warn('No se pudo listar precios para prod_VVkT3C71EAUJmt:', err)
+      }
+
+      if (resolvedPriceId) {
+        lineItems = [{ price: resolvedPriceId, quantity: 1 }]
+      } else {
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: 6500,
+              product: 'prod_VVkT3C71EAUJmt',
             },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ]
+        ]
+      }
     } else if (getConsultationDetails(purchaseType)) {
       const details = getConsultationDetails(purchaseType)!
       const consultationPrice = await resolveConsultationPrice(stripe, purchaseType)

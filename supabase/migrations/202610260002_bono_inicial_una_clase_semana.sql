@@ -642,6 +642,9 @@ BEGIN
   END IF;
 
   v_normalized_purchase_type := lower(trim(coalesce(p_purchase_type, '')));
+  IF v_normalized_purchase_type = 'prod_vvkt3c71eaujmt' THEN
+    v_normalized_purchase_type := 'bono_mensual';
+  END IF;
 
   -- Asignación de créditos según tipo de pack
   v_credits := CASE
@@ -906,3 +909,27 @@ GRANT EXECUTE ON FUNCTION public.stripe_fulfill_checkout(
   text, text, integer, text, text, text, timestamptz, timestamptz,
   text, boolean, boolean
 ) TO authenticated, service_role;
+
+-- Sincronización del nuevo producto de Stripe para Bono Mensual (65 €)
+INSERT INTO public.stripe_productos (id, nombre, descripcion, precio_str, precio_centimos, moneda, categoria, activo)
+VALUES (
+  'prod_VVkT3C71EAUJmt',
+  'Bono Mensual',
+  'Bono Mensual (2 clases regulares por semana en el mes elegido)',
+  '65,00 €',
+  6500,
+  'eur',
+  'General - Services',
+  true
+)
+ON CONFLICT (id) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  descripcion = EXCLUDED.descripcion,
+  precio_str = EXCLUDED.precio_str,
+  precio_centimos = EXCLUDED.precio_centimos,
+  activo = EXCLUDED.activo;
+
+-- Desactivar el pack de 6 clases antiguo de Stripe
+UPDATE public.stripe_productos
+   SET activo = false
+ WHERE id = 'prod_V0IUpyuvd7uX00';

@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.25.0 — 26 oct 2026 · Desarrollo
+
+- **Descripción:** Vinculación de producto Stripe prod_VVkT3C71EAUJmt para Bono Mensual (65 €) (ámbito: stripe)
+- **Validación:** npm test
+- **Tag:** `v17.25`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.25.0.md`
+
 ## v17.24.0 — 26 oct 2026 · Desarrollo
 
 - **Descripción:** Incorporación de Bono Inicial (40 € · 1 clase/semana) y ordenación de bonos mensuales (ámbito: tarifas)
