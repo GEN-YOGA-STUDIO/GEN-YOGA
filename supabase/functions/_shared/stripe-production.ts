@@ -44,6 +44,7 @@ export const PACK_PRODUCT_IDS = {
 } as const
 
 export const MONTHLY_PRODUCT_IDS = {
+  BONO_INICIAL: 'prod_VVkU2penYA08Qe',
   BONO_MENSUAL: 'prod_VVkT3C71EAUJmt',
 } as const
 
@@ -1054,6 +1055,13 @@ export function validateCheckoutPurchase(
     price = catalog.bonoIlimitado
     expectedAmount = 9000
   } else if (
+    itemProduct === MONTHLY_PRODUCT_IDS.BONO_INICIAL ||
+    metadata.purchase_type === PURCHASE_TYPES.BONO_INICIAL
+  ) {
+    purchaseType = PURCHASE_TYPES.BONO_INICIAL
+    price = lineItems[0].price
+    expectedAmount = 4000
+  } else if (
     priceId === catalog.bonoMensual.id ||
     itemProduct === MONTHLY_PRODUCT_IDS.BONO_MENSUAL ||
     metadata.purchase_type === PURCHASE_TYPES.BONO_MENSUAL
@@ -1111,7 +1119,7 @@ export function validateCheckoutPurchase(
   if (session.currency?.toLowerCase() !== 'eur' || session.amount_total !== expectedAmount) {
     throw new HttpError(400, 'El importe de la sesión no coincide con el producto.')
   }
-  const expectedMode = (priceId === catalog.bonoMensual?.id && session.mode === 'subscription')
+  const expectedMode = ((priceId === catalog.bonoMensual?.id || session.mode === 'subscription') && session.mode === 'subscription')
     ? 'subscription'
     : 'payment'
   if (session.mode !== expectedMode || session.status !== 'complete') {

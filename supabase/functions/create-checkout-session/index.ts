@@ -36,7 +36,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '17.25'
+const APP_RELEASE = '17.26'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -117,6 +117,9 @@ serve(async (req) => {
     }
     if (lookupKey === 'prod_VVkT3C71EAUJmt') {
       lookupKey = PURCHASE_TYPES.BONO_MENSUAL
+    }
+    if (lookupKey === 'prod_VVkU2penYA08Qe') {
+      lookupKey = PURCHASE_TYPES.BONO_INICIAL
     }
     const allowedPurchaseTypes = new Set<string>([
       PURCHASE_TYPES.CLASE_SUELTA,
@@ -219,7 +222,7 @@ serve(async (req) => {
       [PURCHASE_TYPES.BONO_ILIMITADO]: catalog.bonoIlimitado,
     }
     const price = priceByPurchaseType[purchaseType]
-    const isSubscription = false
+    let isSubscription = false
     const appUserId = isGuest ? 'guest' : user!.id
     const source = body.from === 'profile' ? 'profile' : 'tarifas'
     const metadata: Stripe.MetadataParam = {
@@ -241,19 +244,43 @@ serve(async (req) => {
     if (price) {
       lineItems = [{ price: price.id, quantity: 1 }]
     } else if (purchaseType === PURCHASE_TYPES.BONO_INICIAL) {
-      lineItems = [
-        {
-          price_data: {
-            currency: 'eur',
-            unit_amount: 4000,
-            product_data: {
-              name: 'Bono Inicial (1 clase/semana)',
-              metadata: { lookup_key: 'bono_inicial' },
+      let resolvedPriceId: string | null = null
+      try {
+        const prices = await stripe.prices.list({
+          product: 'prod_VVkU2penYA08Qe',
+          active: true,
+          currency: 'eur',
+          limit: 10,
+        })
+        const matching = prices.data.find(
+          (p: Stripe.Price) => p.unit_amount === 4000 && p.type === 'one_time' && !p.recurring,
+        ) || prices.data.find(
+          (p: Stripe.Price) => p.unit_amount === 4000,
+        )
+        if (matching) {
+          resolvedPriceId = matching.id
+          if (matching.type === 'recurring' || Boolean(matching.recurring)) {
+            isSubscription = true
+          }
+        }
+      } catch (err) {
+        console.warn('No se pudo listar precios para prod_VVkU2penYA08Qe:', err)
+      }
+
+      if (resolvedPriceId) {
+        lineItems = [{ price: resolvedPriceId, quantity: 1 }]
+      } else {
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: 4000,
+              product: 'prod_VVkU2penYA08Qe',
             },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ]
+        ]
+      }
     } else if (purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
       let resolvedPriceId: string | null = null
       try {
@@ -265,9 +292,14 @@ serve(async (req) => {
         })
         const matching = prices.data.find(
           (p: Stripe.Price) => p.unit_amount === 6500 && p.type === 'one_time' && !p.recurring,
+        ) || prices.data.find(
+          (p: Stripe.Price) => p.unit_amount === 6500,
         )
         if (matching) {
           resolvedPriceId = matching.id
+          if (matching.type === 'recurring' || Boolean(matching.recurring)) {
+            isSubscription = true
+          }
         }
       } catch (err) {
         console.warn('No se pudo listar precios para prod_VVkT3C71EAUJmt:', err)

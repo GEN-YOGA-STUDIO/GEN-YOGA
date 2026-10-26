@@ -644,6 +644,8 @@ BEGIN
   v_normalized_purchase_type := lower(trim(coalesce(p_purchase_type, '')));
   IF v_normalized_purchase_type = 'prod_vvkt3c71eaujmt' THEN
     v_normalized_purchase_type := 'bono_mensual';
+  ELSIF v_normalized_purchase_type = 'prod_vvku2penya08qe' THEN
+    v_normalized_purchase_type := 'bono_inicial';
   END IF;
 
   -- Asignación de créditos según tipo de pack
@@ -909,6 +911,25 @@ GRANT EXECUTE ON FUNCTION public.stripe_fulfill_checkout(
   text, text, integer, text, text, text, timestamptz, timestamptz,
   text, boolean, boolean
 ) TO authenticated, service_role;
+
+-- Sincronización del nuevo producto de Stripe para Bono Inicial (40 €)
+INSERT INTO public.stripe_productos (id, nombre, descripcion, precio_str, precio_centimos, moneda, categoria, activo)
+VALUES (
+  'prod_VVkU2penYA08Qe',
+  'Bono Inicial',
+  'Bono Inicial (1 clase regular por semana en el mes elegido)',
+  '40,00 €',
+  4000,
+  'eur',
+  'General - Services',
+  true
+)
+ON CONFLICT (id) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  descripcion = EXCLUDED.descripcion,
+  precio_str = EXCLUDED.precio_str,
+  precio_centimos = EXCLUDED.precio_centimos,
+  activo = EXCLUDED.activo;
 
 -- Sincronización del nuevo producto de Stripe para Bono Mensual (65 €)
 INSERT INTO public.stripe_productos (id, nombre, descripcion, precio_str, precio_centimos, moneda, categoria, activo)

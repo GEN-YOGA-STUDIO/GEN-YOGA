@@ -13,7 +13,7 @@ puede aceptar cobros reales. Crea o selecciona estos Prices activos:
 - `STRIPE_PRICE_PACK_4`: pago único de 50 EUR para 4 clases.
 - `STRIPE_PRICE_PACK_6`: pago único de 65 EUR para 6 clases (retirado; sustituido por Bono Mensual).
 - `STRIPE_PRICE_PACK_10`: pago único de 95 EUR para 10 clases.
-- `STRIPE_PRICE_BONO_INICIAL`: pago único de 40 EUR para un mes natural (1 clase regular/semana).
+- `STRIPE_PRICE_BONO_INICIAL`: pago único de 40 EUR para un mes natural (1 clase regular/semana; Product ID: `prod_VVkU2penYA08Qe`).
 - `STRIPE_PRICE_BONO_MENSUAL`: pago único de 65 EUR para un mes natural (2 clases regulares/semana; Product ID: `prod_VVkT3C71EAUJmt`).
 - `STRIPE_PRICE_BONO_ILIMITADO`: pago único de 90 EUR para un mes natural.
 - Price legacy de suscripción mensual (90 EUR): se conserva para validar renovaciones automáticas de clientes históricos.
@@ -23,6 +23,7 @@ Los packs, bonos y consultas se validan además contra sus productos live de Str
 - 4 clases: `prod_V0ITB6mD71fwnD`.
 - 6 clases: `prod_V0IUpyuvd7uX00` (retirado / 410 Gone; sustituido por Bono Mensual).
 - 10 clases: `prod_V0IUYoGJJbX7FW`.
+- Bono Inicial (40 € · 1 clase/semana): `prod_VVkU2penYA08Qe`.
 - Bono Mensual (65 € · 2 clases/semana): `prod_VVkT3C71EAUJmt`.
 - Miriam Acompañamiento 1ª sesión (75 €): `prod_V1pKHgtMwPkCpC`.
 - Miriam Acompañamiento siguientes (65 €): `prod_V1pLmzpCRU8ZpL`.
