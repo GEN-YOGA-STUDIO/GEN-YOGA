@@ -263,6 +263,85 @@
     } catch (e) { /* ignorar */ }
   }
 
+  // Interceptar llamadas a Edge Functions de Supabase en entornos nativos (iOS / Android)
+  // para enrutarlas mediante CapacitorHttp. Evita errores de CORS / Origin en WKWebView
+  // (donde Origin es capacitor://localhost y el servidor exige https://genyoga.studio).
+  function hookNativeFunctionsFetch(native) {
+    if (!native) return;
+    try {
+      var origFetch = window.fetch;
+      if (!origFetch) return;
+
+      window.fetch = async function (resource, init) {
+        try {
+          var url = (typeof resource === 'string')
+            ? resource
+            : (resource && resource.url ? resource.url : '');
+
+          if (url && url.indexOf('.supabase.co/functions/v1/') !== -1) {
+            var Http = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp) || window.CapacitorHttp;
+            if (Http && typeof Http.request === 'function') {
+              var method = (init && init.method) ? String(init.method).toUpperCase() : 'POST';
+              var headers = {};
+              if (init && init.headers) {
+                if (typeof init.headers.forEach === 'function') {
+                  init.headers.forEach(function (v, k) { headers[k] = v; });
+                } else if (Array.isArray(init.headers)) {
+                  init.headers.forEach(function (pair) { headers[pair[0]] = pair[1]; });
+                } else {
+                  Object.assign(headers, init.headers);
+                }
+              }
+              headers['Origin'] = 'https://genyoga.studio';
+              headers['Referer'] = 'https://genyoga.studio/profile.html';
+              if (!headers['Content-Type'] && !headers['content-type']) {
+                headers['Content-Type'] = 'application/json';
+              }
+
+              var data = init && init.body;
+              if (typeof data === 'string') {
+                try {
+                  data = JSON.parse(data);
+                } catch (_) {
+                  // mantener texto sin procesar si no es JSON
+                }
+              }
+
+              var res = await Http.request({
+                url: url,
+                method: method,
+                headers: headers,
+                data: data
+              });
+
+              var responseBody = (res && res.data != null)
+                ? (typeof res.data === 'string' ? res.data : JSON.stringify(res.data))
+                : '';
+
+              var respHeaders = new Headers();
+              if (res && res.headers) {
+                Object.keys(res.headers).forEach(function (k) {
+                  try { respHeaders.set(k, res.headers[k]); } catch (_) {}
+                });
+              }
+
+              return new Response(responseBody, {
+                status: (res && res.status) || 200,
+                statusText: String((res && res.status) || 200),
+                headers: respHeaders
+              });
+            }
+          }
+        } catch (fetchBridgeErr) {
+          console.warn('[capacitor-bridge] Error in native functions fetch wrapper, falling back to origFetch:', fetchBridgeErr);
+        }
+        return origFetch.apply(this, arguments);
+      };
+    } catch (e) {
+      console.warn('[capacitor-bridge] Could not install native fetch hook:', e);
+    }
+  }
+
   try {
     var native = isNative();
     hookExternalLinks();
@@ -271,6 +350,7 @@
       hookBackButton(native);
       hookAppUrlOpen(native);
       hookStripeRedirects(native);
+      hookNativeFunctionsFetch(native);
       hideSplash(native);
     }
   } catch (e) { /* este bridge nunca debe tumbar la app */ }

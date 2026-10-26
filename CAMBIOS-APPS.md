@@ -17,6 +17,21 @@ Historial independiente de versiones de las aplicaciones nativas para **Google P
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea -->
 
+## v2.0.1 (Build 281) — 26 oct 2026 · Parche / Hotfix
+
+- **Ámbito:** Apps móviles independientes (Android e iOS).
+- **Corrección de compra de bonos en iOS:**
+  - Enrutamiento nativo de llamadas a Edge Functions de Supabase (`create-checkout-session`) vía `CapacitorHttp.request` en iOS/Android. Resuelve el bloqueo de CORS en WKWebView (`capacitor://localhost`) estableciendo `Origin: https://genyoga.studio` nativo mediante URLSession.
+  - Activado `CapacitorHttp: { enabled: true }` de forma idéntica y gemela en iOS y Android.
+- **Cancelación y recuperación de bonos al desapuntarse:**
+  - Botón prominente "DESAPUNTARME" / "Desapuntarme" en rojo accesible directamente en todas las vistas de clases reservadas y modales de detalle.
+  - Devolución inmediata del bono de clase en la cuenta del usuario.
+  - Blindaje con `try ... finally` en `cancelar(reservaId)` para eliminar cualquier bloqueo permanente del UI.
+  - Ventana de gracia de 60 minutos para reservas hechas recientemente y límite por defecto ajustado a 2 horas.
+- **Build:** #281 (`versionCode` 281 en Android, `CURRENT_PROJECT_VERSION` 281 en iOS, `MARKETING_VERSION` 2.0).
+- **Tiendas:** Compilación y despliegue directo a Apple App Store Connect / TestFlight.
+
+
 ## v2.0.0 (Build 280) — 13 oct 2026 · Rediseño Mayor
 
 - **Ámbito:** Apps móviles independientes (Android e iOS).

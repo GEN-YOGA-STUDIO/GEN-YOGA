@@ -1256,23 +1256,24 @@
             align-items: center;
             justify-content: center;
             gap: 0.45rem;
-            color: rgba(38, 22, 12, 0.55);
-            background: #f8f6f2;
-            border: 1px solid rgba(38, 22, 12, 0.12);
+            color: #b91c1c;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
             border-radius: 9999px;
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             line-height: 1;
-            font-weight: 900;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.07em;
-            box-shadow: 0 7px 16px rgba(38, 22, 12, 0.06);
+            letter-spacing: 0.05em;
+            box-shadow: 0 2px 6px rgba(185, 28, 28, 0.08);
             transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .inicio-booking-cancel:hover {
-            color: #dc2626;
-            background: #fff5f5;
-            border-color: rgba(220, 38, 38, 0.25);
+            color: #ffffff;
+            background: #dc2626;
+            border-color: #dc2626;
             transform: translateY(-1px);
         }
 
@@ -1823,7 +1824,7 @@
 
         @media (max-width: 380px) {
             #header-saldos-wrapper {
-                grid-template-columns: minmax(0, 1fr);
+                flex-wrap: nowrap !important;
             }
         }
 
@@ -7369,7 +7370,7 @@
         const POLICY_MAX_HOURS = 168;
         const POLICY_HOUR_DEFAULTS = Object.freeze({
             horas_limite_reserva: 1,
-            horas_limite_cancelacion: 24
+            horas_limite_cancelacion: 2
         });
         const policySaveInProgress = new Set();
 
@@ -9030,7 +9031,16 @@
 
         function contarClasesSemanalesPlan(period, refDate = null) {
             if (!period) return 0;
-            const baseDate = refDate ? new Date(refDate) : new Date();
+            // refDate puede llegar como Date, ISO o (por error) como el objeto
+            // del periodo. Solo aceptamos fechas reales; en cualquier otro caso
+            // contamos la semana natural actual.
+            let baseDate = new Date();
+            if (refDate instanceof Date && !Number.isNaN(refDate.getTime())) {
+                baseDate = refDate;
+            } else if (typeof refDate === 'string' || typeof refDate === 'number') {
+                const parsed = new Date(refDate);
+                if (!Number.isNaN(parsed.getTime())) baseDate = parsed;
+            }
             const inicioSemana = new Date(baseDate);
             const dia = inicioSemana.getDay();
             const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
@@ -9184,8 +9194,12 @@
             const nuevoMesDate = `${nuevoMes}-01`;
             const mesActualDate = `${mesKey}-01`;
             let success = false;
+            let errorServidor = '';
 
-            // 1. Intentar RPC cambiar_mes_bono_usuario
+            // El cambio de mes solo puede hacerse a través de la función
+            // SECURITY DEFINER. El cliente nunca escribe directamente en las
+            // tablas de periodos: así no se pueden saltar las comprobaciones de
+            // propiedad, tipo de bono, mes de origen ni límite de cambios.
             try {
                 const { error: rpcErr } = await client.rpc('cambiar_mes_bono_usuario', {
                     p_tipo: tipo,
@@ -9193,40 +9207,15 @@
                     p_mes_actual: mesActualDate,
                     p_nuevo_mes: nuevoMesDate
                 });
-                if (!rpcErr) success = true;
-                else console.warn('Aviso RPC cambiar_mes_bono_usuario:', rpcErr);
+                if (!rpcErr) {
+                    success = true;
+                } else {
+                    console.warn('Error RPC cambiar_mes_bono_usuario:', rpcErr);
+                    errorServidor = rpcErr.message || 'Error del servidor';
+                }
             } catch (e) {
                 console.warn('Excepción RPC cambiar_mes_bono_usuario:', e);
-            }
-
-            // 2. Fallback resiliente directo si RPC no estuviese desplegada aún
-            if (!success) {
-                try {
-                    const startIso = `${nuevoMesDate}T00:00:00.000Z`;
-                    const endD = new Date(`${nuevoMesDate}T00:00:00.000Z`);
-                    endD.setUTCMonth(endD.getUTCMonth() + 1);
-                    const endIso = endD.toISOString();
-
-                    if (tipo === 'bono_ilimitado') {
-                        let uQuery = client.from('unlimited_membership_periods')
-                            .update({ membership_month: nuevoMesDate, starts_at: startIso, ends_at: endIso })
-                            .eq('user_id', currentUser.id);
-                        if (periodId) uQuery = uQuery.eq('id', periodId);
-                        else uQuery = uQuery.eq('membership_month', mesActualDate);
-                        const { error: uErr } = await uQuery;
-                        if (!uErr) success = true;
-                    } else {
-                        let mQuery = client.from('monthly_membership_periods')
-                            .update({ membership_month: nuevoMesDate, starts_at: startIso, ends_at: endIso })
-                            .eq('user_id', currentUser.id);
-                        if (periodId) mQuery = mQuery.eq('id', periodId);
-                        else mQuery = mQuery.eq('membership_month', mesActualDate).eq('plan_type', tipo);
-                        const { error: mErr } = await mQuery;
-                        if (!mErr) success = true;
-                    }
-                } catch (fbErr) {
-                    console.error('Error en fallback de cambio de mes:', fbErr);
-                }
+                errorServidor = e?.message || 'Error de conexión';
             }
 
             if (success) {
@@ -9265,7 +9254,8 @@
                 });
             } else {
                 Swal.close();
-                await Swal.fire('Error', 'No se pudo realizar el cambio de mes en este momento. Inténtalo de nuevo.', 'error');
+                const detalle = errorServidor ? ` Motivo: ${errorServidor}` : '';
+                await Swal.fire('Error', `No se pudo realizar el cambio de mes en este momento.${detalle}`, 'error');
             }
         }
         window.iniciarCambioMesBonoCliente = iniciarCambioMesBonoCliente;
@@ -9301,7 +9291,9 @@
                 `;
             } else if (planActual.tieneMultiples) {
                 const mesLabel = formatMadridDate(planActual.period?.starts_at, { month: 'long', year: 'numeric' });
-                const uso = typeof obtenerUsoSemanalBonosMensuales === 'function' ? obtenerUsoSemanalBonosMensuales(planActual.period?.starts_at) : { totalMensualesUsadas: 0, mensualUsadas: 0, inicialUsadas: 0 };
+                // La cuota es semanal y se consulta para la semana actual; usar
+                // el inicio del mes devolvía siempre 0 salvo la primera semana.
+                const uso = typeof obtenerUsoSemanalBonosMensuales === 'function' ? obtenerUsoSemanalBonosMensuales() : { totalMensualesUsadas: 0, mensualUsadas: 0, inicialUsadas: 0 };
                 const totalCupoSemanal = planActual.todosLosPlanes.reduce((acc, p) => acc + (p.maxClasses === Infinity ? 0 : p.maxClasses), 0);
                 const badgesHtml = planActual.todosLosPlanes.map(p => {
                     if (p.tipo === 'bono_ilimitado') return '<span class="text-[9px] font-black uppercase tracking-wider bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs">🥇 Dorado · Ilimitado</span>';
@@ -9332,7 +9324,7 @@
                 `;
             } else if (planActual.tipo === 'bono_inicial') {
                 const mesLabel = formatMonthlyMonth(planActual.period);
-                const consumidasSemana = contarClasesSemanalesPlan(planActual.period);
+                const consumidasSemana = contarClasesSemanalesPlan(planActual.period, new Date());
                 detalleEstadoHtml = `
                     <div class="p-3.5 sm:p-4 rounded-2xl border border-[#8f6b2d]/40 bg-[#fffbf7] text-left" style="background: linear-gradient(135deg, #fffbf7 0%, #f7ede2 50%, #edd3ba 100%);">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -9352,7 +9344,7 @@
                 `;
             } else if (planActual.tipo === 'bono_mensual') {
                 const mesLabel = formatMonthlyMonth(planActual.period);
-                const consumidasSemana = contarClasesSemanalesPlan(planActual.period);
+                const consumidasSemana = contarClasesSemanalesPlan(planActual.period, new Date());
                 detalleEstadoHtml = `
                     <div class="p-3.5 sm:p-4 rounded-2xl border border-slate-300 bg-slate-50 text-left" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%);">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -10137,6 +10129,10 @@
                     document.body.classList.add('is-admin');
                     document.body.classList.remove('is-profesor');
 
+                    if (configuracionesApp && (configuracionesApp['horas_limite_cancelacion'] === '24' || configuracionesApp['horas_limite_cancelacion'] === 24)) {
+                        actualizarConfigRapido('horas_limite_cancelacion', 2).catch(() => {});
+                    }
+
                     const pubNav = document.getElementById('public-nav');
                     if (pubNav) pubNav.classList.add('hidden');
 
@@ -10448,7 +10444,7 @@
 
                 if (targetConsulta) {
                     if (targetConsulta.miReserva) {
-                        Swal.fire({
+                        const resAction = await Swal.fire({
                             icon: 'info',
                             title: '¡Ya estás inscrito!',
                             html: `
@@ -10462,8 +10458,15 @@
                             </div>
                         </div>
                     `,
-                            confirmButtonColor: '#795244'
+                            showCancelButton: true,
+                            confirmButtonText: 'Mantener mi cita',
+                            confirmButtonColor: '#8C8658',
+                            cancelButtonText: 'Desapuntarme de la cita',
+                            cancelButtonColor: '#dc2626'
                         });
+                        if (resAction.dismiss === Swal.DismissReason.cancel) {
+                            cancelarConsulta(targetConsulta.tipo_clase || subtab, targetConsulta.miReserva.id);
+                        }
                         return;
                     }
 
@@ -10559,7 +10562,7 @@
                     }, 350);
 
                     if (targetEspecial.miReserva) {
-                        Swal.fire({
+                        const resAction = await Swal.fire({
                             icon: 'info',
                             title: '¡Ya estás inscrito!',
                             html: `
@@ -10573,8 +10576,15 @@
                                     </div>
                                 </div>
                             `,
-                            confirmButtonColor: '#795244'
+                            showCancelButton: true,
+                            confirmButtonText: 'Mantener mi plaza',
+                            confirmButtonColor: '#8C8658',
+                            cancelButtonText: 'Desapuntarme de la clase',
+                            cancelButtonColor: '#dc2626'
                         });
+                        if (resAction.dismiss === Swal.DismissReason.cancel) {
+                            cancelar(targetEspecial.miReserva.id);
+                        }
                         return;
                     }
 
@@ -10768,7 +10778,7 @@
                 }, 300);
 
                 if (targetClase.miReserva) {
-                    Swal.fire({
+                    const resAction = await Swal.fire({
                         icon: 'info',
                         title: '¡Ya estás inscrito!',
                         html: `
@@ -10782,8 +10792,15 @@
                         </div>
                     </div>
                 `,
-                        confirmButtonColor: '#795244'
+                        showCancelButton: true,
+                        confirmButtonText: 'Mantener mi plaza',
+                        confirmButtonColor: '#8C8658',
+                        cancelButtonText: 'Desapuntarme de la clase',
+                        cancelButtonColor: '#dc2626'
                     });
+                    if (resAction.dismiss === Swal.DismissReason.cancel) {
+                        cancelar(targetClase.miReserva.id);
+                    }
                     return;
                 }
 
@@ -12374,8 +12391,8 @@
                                 <span class="text-[11px] text-cocoa/60 truncate">
                                     <i class="ph-bold ph-user-circle"></i> ${escapeHtml(profName)}
                                 </span>
-                                <button onclick="cancelar(${reservaId})" class="text-red-500 hover:text-red-700 hover:underline font-bold text-[11px] shrink-0 transition" title="Cancelar esta reserva">
-                                    Cancelar
+                                <button onclick="cancelar(${reservaId})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs shadow-2xs transition active:scale-95 cursor-pointer" title="${escapeHtml(profileT('profile_cancel_and_recover', 'Desapuntarme y recuperar mi bono'))}">
+                                    <i class="ph-bold ph-x-circle text-red-600 text-sm"></i> Desapuntarme
                                 </button>
                             </div>
                         </div>
@@ -12585,8 +12602,8 @@
                             </button>`;
                     } else if (reservada) {
                         btnAction = `
-                            <button onclick="cancelar(${reservaId})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
-                                <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
+                            <button onclick="cancelar(${reservaId})" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs shadow-xs hover:shadow-sm active:scale-95 transition cursor-pointer" title="${escapeHtml(profileT('profile_cancel_and_recover', 'Desapuntarme de esta clase y recuperar mi bono'))}">
+                                <i class="ph-bold ph-x-circle text-red-600 text-sm"></i> ${escapeHtml(profileT('profile_cancel_booking_short', 'DESAPUNTARME'))}
                             </button>`;
                     } else if (finalizada) {
                         btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_finished', 'Finalizada'))}</span>`;
@@ -13689,120 +13706,116 @@
             if (typeof window.__gyCancelLock !== 'undefined' && window.__gyCancelLock) return;
             window.__gyCancelLock = true;
 
-            const cancellationPoliciesLoaded = await cargarConfiguracionesApp();
+            try {
+                const cancellationPoliciesLoaded = await cargarConfiguracionesApp();
+                const permitirCancelacionAdminSiempre = configuracionesApp['permitir_cancelacion_admin_siempre'] === 'true' || configuracionesApp['permitir_cancelacion_admin_siempre'] === true;
+                const puedeOmitirLimiteCancelacion = isAdmin && permitirCancelacionAdminSiempre;
 
-            const permitirCancelacionAdminSiempre = configuracionesApp['permitir_cancelacion_admin_siempre'] === 'true' || configuracionesApp['permitir_cancelacion_admin_siempre'] === true;
-            const puedeOmitirLimiteCancelacion = isAdmin && permitirCancelacionAdminSiempre;
+                // 1. Localizar la clase/reserva en memoria si es posible
+                let resItem = [...(allClasesCache || []), ...(allTalleresCache || [])].find(c => c.miReserva?.id === normalizedReservationId);
+                let fechaInicio = resItem?.fecha_inicio || null;
+                let createdAtReserva = resItem?.miReserva?.created_at || null;
 
-            if (
-                cancellationPoliciesLoaded &&
-                !puedeOmitirLimiteCancelacion
-            ) {
-                Swal.fire({
-                    title: 'Verificando reserva...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
+                // Si no está en memoria, consultar datos de la reserva
+                if (!fechaInicio && cancellationPoliciesLoaded && !puedeOmitirLimiteCancelacion) {
+                    const { data: resYoga } = await client
+                        .from('reservas_yoga')
+                        .select('clase_id, created_at')
+                        .eq('id', normalizedReservationId)
+                        .maybeSingle();
+
+                    if (resYoga?.clase_id) {
+                        createdAtReserva = resYoga.created_at;
+                        const { data: claseData } = await client
+                            .from('clases')
+                            .select('fecha_inicio')
+                            .eq('id', resYoga.clase_id)
+                            .maybeSingle();
+                        if (claseData?.fecha_inicio) {
+                            fechaInicio = claseData.fecha_inicio;
+                        }
+                    }
+                }
+
+                // Si la reserva fue realizada recientemente (últimos 60 minutos), permitir desapuntarse siempre por error/cambio
+                const reservaReciente = createdAtReserva && (Date.now() - Date.parse(createdAtReserva) < 60 * 60 * 1000);
+
+                if (!puedeOmitirLimiteCancelacion && !reservaReciente && fechaInicio) {
+                    const hoursUntilClass = getHoursUntilClass(fechaInicio);
+                    const cancellationLimitHours = getPolicyHours('horas_limite_cancelacion');
+                    if (hoursUntilClass !== null && hoursUntilClass <= cancellationLimitHours) {
+                        return Swal.fire({
+                            icon: 'error',
+                            title: 'No se puede cancelar',
+                            text: getCancellationDeadlineMessage(),
+                            confirmButtonColor: '#D27D60'
+                        });
+                    }
+                }
+
+                let textoCancelacion = 'La plaza quedará libre y tu bono de clase se devolverá a tu cuenta de inmediato.';
+                try {
+                    if (esClaseEspecialTipo(resItem)) {
+                        textoCancelacion = 'La plaza quedará libre. Tu Bono de Clase Especial de este mes se reintegrará en tu saldo para que puedas utilizarlo en otra clase especial.';
+                    } else if (esTallerTipo(resItem)) {
+                        textoCancelacion = 'La plaza quedará libre. Al cancelar este taller con más de 24 horas, no se realiza reembolso monetario, pero se te asignará un Crédito de Reprogramación para reservar otro taller temático sin coste adicional.';
+                    }
+                } catch (_) {}
+
+                const res = await Swal.fire({
+                    title: '¿Desapuntarte de la clase?',
+                    text: textoCancelacion,
+                    icon: 'warning',
+                    iconColor: '#D27D60',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#8C8658',
+                    confirmButtonText: 'Sí, desapuntarme',
+                    cancelButtonText: 'Mantener mi plaza'
                 });
 
-                const { data: resYoga, error: errYoga } = await client
-                    .from('reservas_yoga')
-                    .select('clase_id')
-                    .eq('id', normalizedReservationId)
-                    .single();
+                if (res.isConfirmed) {
+                    const confirmBtn = document.querySelector('.swal2-confirm');
+                    if (confirmBtn) confirmBtn.disabled = true;
+                    let rpcError = null;
+                    try {
+                        Swal.fire({
+                            title: 'Cancelando reserva...',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+                        const rpcRes = await client.rpc('cancelar_con_bono', {
+                            p_reserva_id: normalizedReservationId
+                        });
+                        rpcError = rpcRes.error;
+                    } catch (invokeErr) {
+                        rpcError = invokeErr;
+                    } finally {
+                        if (confirmBtn) confirmBtn.disabled = false;
+                        Swal.close();
+                    }
 
-                if (errYoga || !resYoga?.clase_id) {
-                    Swal.close();
-                    return Swal.fire({
-                        icon: 'error',
-                        title: 'No se pudo verificar la reserva',
-                        text: 'Actualiza la página e inténtalo de nuevo.',
-                        confirmButtonColor: '#D27D60'
-                    });
+                    if (rpcError) {
+                        Swal.fire(
+                            'No se puede cancelar',
+                            getYogaCancellationErrorMessage(rpcError),
+                            'error'
+                        );
+                    } else {
+                        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2200 });
+                        Toast.fire({ icon: 'success', title: 'Te has desapuntado de la clase. Bono recuperado.' });
+                        await checkProfile();
+                        await cargarMisReservasUsuario();
+                        await cargarHorarios();
+                        await cargarClasesEspeciales();
+                        if (isAdmin) await cargarAsistenciasPorClase();
+                        refrescarInicioSiActivo();
+                    }
                 }
-
-                const { data: claseData, error: claseError } = await client
-                    .from('clases')
-                    .select('fecha_inicio')
-                    .eq('id', resYoga.clase_id)
-                    .single();
-                Swal.close();
-
-                const hoursUntilClass = getHoursUntilClass(claseData?.fecha_inicio);
-                if (claseError || hoursUntilClass === null) {
-                    return Swal.fire({
-                        icon: 'error',
-                        title: 'No se pudo verificar la clase',
-                        text: 'No se ha realizado ningún cambio en tu reserva.',
-                        confirmButtonColor: '#D27D60'
-                    });
-                }
-
-                const cancellationLimitHours = getPolicyHours('horas_limite_cancelacion');
-                if (hoursUntilClass <= cancellationLimitHours) {
-                    return Swal.fire({
-                        icon: 'error',
-                        title: 'No se puede cancelar',
-                        text: getCancellationDeadlineMessage(),
-                        confirmButtonColor: '#D27D60'
-                    });
-                }
-            }
-
-            let textoCancelacion = 'La plaza quedará libre. Si esta reserva consumió un bono, se devolverá a tu cuenta.';
-            try {
-                const resItem = [...allClasesCache, ...allTalleresCache].find(c => c.miReserva?.id === normalizedReservationId);
-                if (esClaseEspecialTipo(resItem)) {
-                    textoCancelacion = 'La plaza quedará libre. Tu Bono de Clase Especial de este mes se reintegrará en tu saldo para que puedas utilizarlo en otra clase especial.';
-                } else if (esTallerTipo(resItem)) {
-                    textoCancelacion = 'La plaza quedará libre. Al cancelar este taller con más de 24 horas, no se realiza reembolso monetario, pero se te asignará un Crédito de Reprogramación para reservar otro taller temático sin coste adicional.';
-                }
-            } catch (_) {}
-
-            const res = await Swal.fire({
-                title: '¿Cancelar reserva?',
-                text: textoCancelacion,
-                icon: 'warning',
-                iconColor: '#D27D60',
-                showCancelButton: true,
-                confirmButtonColor: '#8C8658',
-                cancelButtonColor: '#9ca3af',
-                confirmButtonText: 'Sí, cancelar'
-            });
-
-            if (res.isConfirmed) {
-                const confirmBtn = document.querySelector('.swal2-confirm');
-                if (confirmBtn) confirmBtn.disabled = true;
-                let rpcError = null;
-                try {
-                    const rpcRes = await client.rpc('cancelar_con_bono', {
-                        p_reserva_id: normalizedReservationId
-                    });
-                    rpcError = rpcRes.error;
-                } catch (invokeErr) {
-                    rpcError = invokeErr;
-                } finally {
-                    window.__gyCancelLock = false;
-                    if (confirmBtn) confirmBtn.disabled = false;
-                }
-                const { error } = { error: rpcError };
-                if (error) {
-                    Swal.fire(
-                        'No se puede cancelar',
-                        getYogaCancellationErrorMessage(error),
-                        'error'
-                    );
-                }
-                else {
-                    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-                    Toast.fire({ icon: 'info', title: 'Reserva cancelada. Saldo actualizado.' });
-                    await checkProfile();
-                    await cargarMisReservasUsuario();
-                    await cargarHorarios();
-                    await cargarClasesEspeciales();
-                    if (isAdmin) await cargarAsistenciasPorClase();
-                    refrescarInicioSiActivo();
-                }
-            } else {
+            } catch (err) {
+                console.error('Error al cancelar reserva:', err);
+                Swal.fire('Error', 'Ocurrió un error al intentar cancelar. Inténtalo de nuevo.', 'error');
+            } finally {
                 window.__gyCancelLock = false;
             }
         }

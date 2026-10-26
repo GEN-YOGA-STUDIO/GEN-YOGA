@@ -151,19 +151,8 @@ $$;
 REVOKE ALL ON FUNCTION public.cambiar_mes_bono_usuario(text, bigint, date, date) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.cambiar_mes_bono_usuario(text, bigint, date, date) TO authenticated, service_role;
 
--- Políticas adicionales RLS para permitir que el usuario actualice su propio periodo si no tiene clases usadas
-DROP POLICY IF EXISTS "unlimited_membership_periods_update_own" ON public.unlimited_membership_periods;
-CREATE POLICY "unlimited_membership_periods_update_own"
-  ON public.unlimited_membership_periods
-  FOR UPDATE
-  TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
-
-DROP POLICY IF EXISTS "monthly_membership_periods_update_own" ON public.monthly_membership_periods;
-CREATE POLICY "monthly_membership_periods_update_own"
-  ON public.monthly_membership_periods
-  FOR UPDATE
-  TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+-- Nota: no se crean políticas UPDATE directas sobre los periodos de bono.
+-- El cambio de mes muta exclusivamente mediante la RPC SECURITY DEFINER
+-- cambiar_mes_bono_usuario, que valida propiedad, tipo, mes de origen y
+-- consumo antes de escribir. Las políticas update_own se consideran inseguras
+-- porque permitirían al cliente saltarse esas comprobaciones.

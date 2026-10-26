@@ -736,5 +736,5 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.stripe_fulfill_checkout FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.stripe_fulfill_checkout TO service_role;
+REVOKE ALL ON FUNCTION public.stripe_fulfill_checkout(text, text, bigint, text, uuid, boolean, text, text, text, text, text, integer, text, text, text, timestamptz, timestamptz, text, boolean, boolean) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.stripe_fulfill_checkout(text, text, bigint, text, uuid, boolean, text, text, text, text, text, integer, text, text, text, timestamptz, timestamptz, text, boolean, boolean) TO service_role;

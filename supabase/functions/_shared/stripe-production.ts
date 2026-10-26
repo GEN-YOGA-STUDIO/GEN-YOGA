@@ -449,7 +449,7 @@ export function readProductionConfig(options: {
     throw new Error('Los productos de pago único no pueden compartir Price ID.')
   }
   if (oneTimePriceIds.includes(priceBonoMensual)) {
-    throw new Error('El Price recurrente antiguo no puede reutilizar un Price de pago único.')
+    throw new Error('El Price del Bono Mensual no puede reutilizar el Price de otro producto.')
   }
 
   const { siteUrl, siteOrigin } = normaliseSiteUrl(requireEnv('SITE_URL'))
@@ -552,13 +552,37 @@ export async function loadAndValidateCatalog(
     throw new Error('STRIPE_PRICE_BONO_ILIMITADO debe ser un pago único de un mes natural.')
   }
 
-  validateCommonPrice(bonoMensual, config.priceBonoMensual, 9000)
-  if (
-    bonoMensual.type !== 'recurring' ||
-    bonoMensual.recurring?.interval !== 'month' ||
-    bonoMensual.recurring.interval_count !== 1
-  ) {
-    throw new Error('STRIPE_PRICE_BONO_MENSUAL debe ser una suscripción mensual.')
+  // El Bono Mensual pasó de suscripción legacy de 90 EUR a pago único de
+  // 65 EUR. Se aceptan ambas formas para no romper el despliegue mientras el
+  // secreto STRIPE_PRICE_BONO_MENSUAL siga apuntando al Price antiguo (sus
+  // renovaciones se gestionan por invoice.paid, no por checkout).
+  const legacyMonthlySubscription =
+    bonoMensual.type === 'recurring' &&
+    bonoMensual.recurring?.interval === 'month' &&
+    bonoMensual.recurring.interval_count === 1 &&
+    bonoMensual.unit_amount === 9000
+  const currentMonthlyOneTime =
+    bonoMensual.type === 'one_time' &&
+    !bonoMensual.recurring &&
+    bonoMensual.unit_amount === 6500
+
+  if (legacyMonthlySubscription) {
+    validateCommonPrice(bonoMensual, config.priceBonoMensual, 9000)
+    console.warn(
+      'STRIPE_PRICE_BONO_MENSUAL apunta al Price recurrente legacy de 90 EUR; ' +
+      'configura el Price de pago único de 65 EUR para el nuevo Bono Mensual.',
+    )
+  } else if (currentMonthlyOneTime) {
+    validateCommonPrice(
+      bonoMensual,
+      config.priceBonoMensual,
+      6500,
+      MONTHLY_PRODUCT_IDS.BONO_MENSUAL,
+    )
+  } else {
+    throw new Error(
+      'STRIPE_PRICE_BONO_MENSUAL debe ser el pago único de 65 EUR o la suscripción legacy de 90 EUR/mes.',
+    )
   }
 
   return { claseSuelta, pack4, pack6, pack10, bonoIlimitado, bonoMensual }
@@ -1068,7 +1092,9 @@ export function validateCheckoutPurchase(
   ) {
     purchaseType = PURCHASE_TYPES.BONO_MENSUAL
     price = lineItems[0].price || catalog.bonoMensual
-    expectedAmount = 6500
+    // El Price legacy era de 90 EUR/mes; el vigente es 65 EUR de pago único.
+    // Validamos contra el importe real del Price para admitir ambos.
+    expectedAmount = price.unit_amount ?? 6500
   } else if (itemProduct === PROMO_PRODUCT_IDS.PROMO_50_CLASE || metadata.purchase_type === PURCHASE_TYPES.PROMO_50_CLASE || metadata.purchase_type === 'promo_50' || metadata.purchase_type === 'promo') {
     purchaseType = PURCHASE_TYPES.PROMO_50_CLASE
     price = lineItems[0].price
@@ -1119,9 +1145,7 @@ export function validateCheckoutPurchase(
   if (session.currency?.toLowerCase() !== 'eur' || session.amount_total !== expectedAmount) {
     throw new HttpError(400, 'El importe de la sesión no coincide con el producto.')
   }
-  const expectedMode = ((priceId === catalog.bonoMensual?.id || session.mode === 'subscription') && session.mode === 'subscription')
-    ? 'subscription'
-    : 'payment'
+  const expectedMode = price.type === 'recurring' ? 'subscription' : 'payment'
   if (session.mode !== expectedMode || session.status !== 'complete') {
     throw new HttpError(400, 'El tipo o estado de la sesión no coincide con el producto.')
   }

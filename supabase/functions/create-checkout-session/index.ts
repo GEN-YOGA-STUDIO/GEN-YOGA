@@ -5,6 +5,7 @@ import {
   WORKSHOP_CATALOG,
   PURCHASE_TYPES,
   PACK_PRODUCT_IDS,
+  MONTHLY_PRODUCT_IDS,
   PROMO_PRODUCT_IDS,
   MIRIAM_PRODUCT_IDS,
   ISABEL_PRODUCT_IDS,
@@ -61,7 +62,7 @@ function addMonths(yearMonth: string, amount: number): string {
 function validateMembershipMonth(value: unknown): string {
   const membershipMonth = String(value || '').trim()
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth)) {
-    throw new HttpError(400, 'Selecciona un mes natural válido para el Bono Ilimitado.')
+    throw new HttpError(400, 'Selecciona un mes natural válido para el bono.')
   }
   const currentMonth = madridYearMonth()
   const lastAllowedMonth = addMonths(currentMonth, MEMBERSHIP_MONTHS_AHEAD)
@@ -106,7 +107,7 @@ serve(async (req) => {
     }
 
     const rawLookupKey = String(body.lookup_key || '').trim()
-    const lookupKey = normalizePromoPurchaseType(rawLookupKey)
+    let lookupKey = normalizePromoPurchaseType(rawLookupKey)
     // Promoción del 50% (código GENYOGA) retirada en octubre: los alias se
     // normalizan primero para responder 410 explícito en lugar de 400 genérico.
     if (isPromoPurchase(lookupKey)) {
@@ -212,6 +213,20 @@ serve(async (req) => {
         throw new Error('El identificador Stripe del perfil no es válido.')
       }
       stripeCustomerId = profile.stripe_customer_id || null
+    }
+
+    // Los bonos mensuales dependen de una tabla y una función de fulfillment
+    // nuevas. Si la migración no está aplicada, se aborta ANTES de crear la
+    // sesión de Stripe para no cobrar sin poder entregar el bono.
+    if (lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL) {
+      const { data: bonoReady, error: bonoReadyError } = await supabase.rpc('bono_checkout_ready')
+      if (bonoReadyError || bonoReady !== true) {
+        console.error('Preflight bono no disponible:', bonoReadyError?.message || bonoReady)
+        throw new HttpError(
+          503,
+          'La compra de bonos mensuales no está disponible en este momento. No se ha realizado ningún cargo. Inténtalo más tarde o contacta con el estudio.',
+        )
+      }
     }
 
     const catalog = await getValidatedCatalog(stripe, config)
@@ -387,6 +402,7 @@ serve(async (req) => {
       ])
       const fixedProductIds = new Set<string>([
         ...Object.values(PACK_PRODUCT_IDS),
+        ...Object.values(MONTHLY_PRODUCT_IDS),
         PROMO_PRODUCT_IDS.PROMO_50_CLASE,
         MIRIAM_PRODUCT_IDS.INDIVIDUAL_1A, MIRIAM_PRODUCT_IDS.INDIVIDUAL_SIG,
         MIRIAM_PRODUCT_IDS.PAREJA_1A, MIRIAM_PRODUCT_IDS.PAREJA_SIG,
