@@ -8450,14 +8450,18 @@
 
             const title = t('profile_saldos_info_title', 'Tus Bonos y Saldos Disponibles');
             const intro = t('profile_saldos_info_intro', 'En GEN Yoga dispones de diferentes tipos de saldo para tus prácticas y servicios:');
-            const packsTitle = 'Clases Regulares (Packs y Clases Sueltas)';
-            const packsDesc = 'Créditos para clases habituales de yoga (4, 6 o 10 clases o sueltas). Caducan a los 60 días de la compra. IMPORTANTE: Los packs o clases normales NO dan acceso a Clases Especiales ni a Talleres.';
+            const initialTitle = 'Bono Inicial (40 € / mes natural)';
+            const initialDesc = '1 clase regular por semana (lunes a domingo) durante el mes natural elegido. Válido para clases regulares de yoga.';
+            const monthlyTitle = 'Bono Mensual (65 € / mes natural)';
+            const monthlyDesc = '2 clases regulares por semana (lunes a domingo) durante el mes natural elegido. Válido para clases regulares de yoga.';
+            const unlimitedTitle = t('profile_saldos_info_unlimited_title', 'Bono Mensual Ilimitado (90 € / mes natural)');
+            const unlimitedDesc = 'Acceso ilimitado a todas las clases regulares de Yoga durante el mes natural activo. Incluye además 1 Bono de Clase Especial gratuito y 1 Invitado Gratuito para ese mes.';
+            const packsTitle = 'Packs Flexibles y Clase Suelta (4 o 10 clases)';
+            const packsDesc = 'Créditos flexibles para clases habituales de yoga (packs de 4 o 10 clases o clase suelta). Caducan a los 60 días de la compra. IMPORTANTE: Los packs o clases normales NO dan acceso a Clases Especiales ni a Talleres.';
             const specialPassTitle = 'Bono de Clase Especial (20 € o Incluido)';
             const specialPassDesc = 'Válido exclusivamente para reservar Clases Especiales de 75 min. Cada mes natural con Bono Ilimitado (90 €) incluye 1 clase especial gratis, o cualquier alumno puede adquirir un bono individual por 20 €. Con bono de clase regular NO se puede acceder a clases especiales. Cancelando con más de 24h, el bono se reintegra a tu saldo del mes.';
             const workshopTitle = 'Talleres Temáticos (35 € o Reprogramación)';
             const workshopDesc = 'Inmersiones temáticas de 120 min. Se adquieren mediante reserva individual de 35 € en Stripe. Si cancelas con más de 24h de antelación, se te asigna un Crédito de Reprogramación para disfrutar de otro taller sin coste.';
-            const unlimitedTitle = t('profile_saldos_info_unlimited_title', 'Bono Mensual Ilimitado (90 € / mes natural)');
-            const unlimitedDesc = 'Acceso ilimitado a todas las clases regulares de Yoga durante el mes natural activo. Incluye además 1 Bono de Clase Especial gratuito y 1 Invitado Gratuito para ese mes.';
             const freeClassTitle = 'Bono de Bienvenida (1 Clase Gratis - 0 €)';
             const freeClassDesc = 'Clase regular de bienvenida para nuevos alumnos o promociones especiales activas.';
             const companionTitle = t('profile_saldos_info_companion_title', 'Bono Yoga en Compañía (0 €)');
@@ -8473,7 +8477,40 @@
             <div class="text-left text-xs md:text-sm text-cocoa/85 space-y-3 my-3">
                 <p class="text-cocoa/70 text-xs leading-relaxed">${escapeHtml(intro)}</p>
                 
-                <!-- BRONCE: CLASES NORMALES -->
+                <!-- BONO INICIAL -->
+                <div class="p-3 rounded-2xl flex items-start gap-3" style="background-color: #fbf7ee !important; border: 1.5px solid #8f6b2d !important;">
+                    <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs" style="background-color: #8f6b2d !important;">
+                        <i class="ph-fill ph-plant text-base"></i>
+                    </div>
+                    <div>
+                        <strong class="font-bold text-xs uppercase tracking-wide block mb-0.5" style="color: #8f6b2d !important;">${escapeHtml(initialTitle)}</strong>
+                        <p class="text-[11px] leading-relaxed" style="color: rgba(75,54,33,0.8) !important;">${escapeHtml(initialDesc)}</p>
+                    </div>
+                </div>
+
+                <!-- BONO MENSUAL -->
+                <div class="p-3 rounded-2xl flex items-start gap-3" style="background-color: #f5f7f2 !important; border: 1.5px solid #5a6b47 !important;">
+                    <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs" style="background-color: #5a6b47 !important;">
+                        <i class="ph-fill ph-calendar-check text-base"></i>
+                    </div>
+                    <div>
+                        <strong class="font-bold text-xs uppercase tracking-wide block mb-0.5" style="color: #5a6b47 !important;">${escapeHtml(monthlyTitle)}</strong>
+                        <p class="text-[11px] leading-relaxed" style="color: rgba(75,54,33,0.8) !important;">${escapeHtml(monthlyDesc)}</p>
+                    </div>
+                </div>
+
+                <!-- BONO ILIMITADO -->
+                <div class="p-3 rounded-2xl flex items-start gap-3" style="background-color: #fdf6f3 !important; border: 1.5px solid #D27D60 !important;">
+                    <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs" style="background-color: #D27D60 !important;">
+                        <i class="ph-fill ph-infinity text-base"></i>
+                    </div>
+                    <div>
+                        <strong class="font-bold text-xs uppercase tracking-wide block mb-0.5" style="color: #b45737 !important;">${escapeHtml(unlimitedTitle)}</strong>
+                        <p class="text-[11px] leading-relaxed" style="color: rgba(75,54,33,0.8) !important;">${escapeHtml(unlimitedDesc)}</p>
+                    </div>
+                </div>
+
+                <!-- BRONCE: CLASES NORMALES Y PACKS -->
                 <div class="p-3 rounded-2xl flex items-start gap-3" style="background-color: #fffbf7 !important; border: 1.5px solid #c4824d !important;">
                     <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%) !important;">
                         <i class="ph-fill ph-ticket text-base"></i>
@@ -8506,17 +8543,6 @@
                     <div>
                         <strong class="font-bold text-xs uppercase tracking-wide block mb-0.5 text-[#AB593D]">${escapeHtml(workshopTitle)}</strong>
                         <p class="text-[11px] leading-relaxed text-cocoa/80">${escapeHtml(workshopDesc)}</p>
-                    </div>
-                </div>
-
-                <!-- ILIMITADO -->
-                <div class="p-3 rounded-2xl flex items-start gap-3" style="background-color: #fdf6f3 !important; border: 1px solid #f1cfc4 !important;">
-                    <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs" style="background-color: #D27D60 !important;">
-                        <i class="ph-fill ph-infinity text-base"></i>
-                    </div>
-                    <div>
-                        <strong class="font-bold text-xs uppercase tracking-wide block mb-0.5" style="color: #b45737 !important;">${escapeHtml(unlimitedTitle)}</strong>
-                        <p class="text-[11px] leading-relaxed" style="color: rgba(75,54,33,0.8) !important;">${escapeHtml(unlimitedDesc)}</p>
                     </div>
                 </div>
 
