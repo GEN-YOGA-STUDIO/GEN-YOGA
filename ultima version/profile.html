@@ -8115,13 +8115,20 @@
                 classYearMonth = `${y}-${m}`;
             }
 
+            const ahoraMs = Date.now();
+            const ymActual = (typeof getMadridYearMonthClient === 'function') ? getMadridYearMonthClient(new Date()) : '';
+            // Una vez pasado de mes (día 1), no se pueden reservar clases con bonos de meses anteriores
+            if (ymActual && classYearMonth && classYearMonth < ymActual) return null;
+
             const naturalMonth = userUnlimitedPeriods.find(period => {
+                const end = Date.parse(period.ends_at);
+                if (Number.isFinite(end) && end <= ahoraMs) return false;
                 const periodMonthStr = String(period.membership_month || '').slice(0, 7);
+                if (ymActual && periodMonthStr && periodMonthStr < ymActual) return false;
                 if (classYearMonth && periodMonthStr === classYearMonth) {
                     return true;
                 }
                 const start = Date.parse(period.starts_at);
-                const end = Date.parse(period.ends_at);
                 if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
                 // BUG-17: regla estricta igual que el servidor (sin día extra):
                 // starts_at <= clase AND ends_at > clase.
@@ -8211,13 +8218,20 @@
                 classYearMonth = `${y}-${m}`;
             }
 
+            const ahoraMs = Date.now();
+            const ymActual = (typeof getMadridYearMonthClient === 'function') ? getMadridYearMonthClient(new Date()) : '';
+            // Una vez pasado de mes (día 1), no se pueden reservar clases con bonos de meses anteriores
+            if (ymActual && classYearMonth && classYearMonth < ymActual) return [];
+
             const periods = (userMonthlyMembershipPeriods || []).filter(period => {
+                const end = Date.parse(period.ends_at);
+                if (Number.isFinite(end) && end <= ahoraMs) return false;
                 const periodMonthStr = String(period.membership_month || '').slice(0, 7);
+                if (ymActual && periodMonthStr && periodMonthStr < ymActual) return false;
                 if (classYearMonth && periodMonthStr === classYearMonth) {
                     return true;
                 }
                 const start = Date.parse(period.starts_at);
-                const end = Date.parse(period.ends_at);
                 if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
                 return timestamp >= start && timestamp < end;
             });
@@ -8675,6 +8689,7 @@
             (userUnlimitedPeriods || []).forEach(p => {
                 if (Date.parse(p.ends_at) > ahoraMs) {
                     const ym = String(p.membership_month || p.starts_at || '').slice(0, 7);
+                    if (ym < ymActual) return; // Una vez transcurrido el mes, retirar bonos anteriores
                     if (!mesesMap.has(ym)) mesesMap.set(ym, []);
                     mesesMap.get(ym).push({
                         tipo: 'bono_ilimitado',
@@ -8691,6 +8706,7 @@
             (userMonthlyMembershipPeriods || []).forEach(p => {
                 if (Date.parse(p.ends_at) > ahoraMs) {
                     const ym = String(p.membership_month || p.starts_at || '').slice(0, 7);
+                    if (ym < ymActual) return; // Una vez transcurrido el mes, retirar bonos anteriores
                     const isInicial = esPeriodoBonoInicial(p);
                     if (!mesesMap.has(ym)) mesesMap.set(ym, []);
                     mesesMap.get(ym).push({
@@ -8910,11 +8926,17 @@
         function obtenerBonosMensualesDeMes(yearMonth) {
             const ym = String(yearMonth || '').slice(0, 7);
             if (!ym) return [];
+            const ahoraMs = Date.now();
+            const ymActual = (typeof getMadridYearMonthClient === 'function') ? getMadridYearMonthClient(new Date()) : '';
+
+            // Una vez pasado de mes (día 1), los bonos de meses anteriores ya no están activos ni disponibles para reservar
+            if (ymActual && ym < ymActual) return [];
+
             const results = [];
 
             // 1. Bono Ilimitado (90 € · Prioridad 1)
             (userUnlimitedPeriods || []).forEach(p => {
-                if (String(p.membership_month || p.starts_at || '').slice(0, 7) === ym) {
+                if (Date.parse(p.ends_at) > ahoraMs && String(p.membership_month || p.starts_at || '').slice(0, 7) === ym) {
                     results.push({
                         tipo: 'bono_ilimitado',
                         nombre: 'Bono Ilimitado',
@@ -8929,7 +8951,7 @@
 
             // 2. Bono Mensual (65 € · Prioridad 2) y Bono Inicial (40 € · Prioridad 3)
             (userMonthlyMembershipPeriods || []).forEach(p => {
-                if (String(p.membership_month || p.starts_at || '').slice(0, 7) === ym) {
+                if (Date.parse(p.ends_at) > ahoraMs && String(p.membership_month || p.starts_at || '').slice(0, 7) === ym) {
                     const isInicial = esPeriodoBonoInicial(p);
                     results.push({
                         tipo: isInicial ? 'bono_inicial' : 'bono_mensual',
@@ -9671,7 +9693,6 @@
                 <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${initialMembershipRows}</div>
             </div>
             <div>
-                <p class="text-[10px] text-cocoa/50 mb-1.5 italic">⚠️ 1 modalidad por mes. No reembolsable tras consumir 1 clase.</p>
                 <button onclick="comprarBonoInicial(event)" class="w-full mt-1 py-2.5 bg-[#8f6b2d] text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition cursor-pointer">${escapeHtml(profileT('profile_buy_bono_inicial', 'Comprar Bono Inicial (40 €)'))}</button>
             </div>
         </div>
@@ -9690,7 +9711,6 @@
                 <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${monthlyMembershipRows}</div>
             </div>
             <div>
-                <p class="text-[10px] text-cocoa/50 mb-1.5 italic">⚠️ 1 modalidad por mes. No reembolsable tras consumir 1 clase.</p>
                 <button onclick="comprarBonoMensual(event)" class="w-full mt-1 py-2.5 bg-[#475569] text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition cursor-pointer">${escapeHtml(profileT('profile_buy_bono_mensual', 'Comprar Bono Mensual (65 €)'))}</button>
             </div>
         </div>
@@ -9706,7 +9726,6 @@
                 <div class="mb-2">${benefitBadge(userConsultationDiscountUsed, profileT('profile_unlimited_discount_available', '30% primera consulta disponible'), profileT('profile_unlimited_discount_used', 'Descuento de consulta utilizado'))}</div>
             </div>
             <div>
-                <p class="text-[10px] text-cocoa/50 mb-1.5 italic">⚠️ 1 modalidad por mes. No reembolsable tras consumir 1 clase.</p>
                 ${manageBillingButton}
                 <button onclick="comprarBonoIlimitado(event)" class="w-full mt-1 py-2.5 bg-[#b45309] text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition">${escapeHtml(profileT('profile_buy_unlimited_month', 'Elegir y comprar un mes'))}</button>
             </div>
@@ -10722,6 +10741,16 @@
             for (let day = 1; day <= remainingCells; day++) {
                 grid.appendChild(pintarDia(new Date(year, month + 1, day), true));
             }
+
+            // Una vez pasado de mes (día 1), los meses anteriores no son navegables para alumnos
+            const btnPrev = document.querySelector('button[onclick="cambiarMes(-1)"]');
+            if (btnPrev && !isAdmin) {
+                const hoyMes = new Date(today.getFullYear(), today.getMonth(), 1);
+                const isCurrentOrPast = new Date(year, month, 1) <= hoyMes;
+                btnPrev.disabled = isCurrentOrPast;
+                btnPrev.style.opacity = isCurrentOrPast ? '0.2' : '1';
+                btnPrev.style.cursor = isCurrentOrPast ? 'not-allowed' : 'pointer';
+            }
         }
 
         function crearDiaCalendario(day, isOtherMonth, isToday, isPast, dateKey) {
@@ -10786,7 +10815,12 @@
         }
 
         async function cambiarMes(delta) {
-            currentCalendarMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + delta, 1);
+            const nextMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + delta, 1);
+            if (!isAdmin && delta < 0) {
+                const hoyMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                if (nextMonth < hoyMes) return;
+            }
+            currentCalendarMonth = nextMonth;
             selectedDate = 'todas';
             // Si el mes destino ya está cargado (ventana continua) cambiamos al instante
             if (mesCargadoEnWindow(windowClasesDesde, windowClasesHasta, currentCalendarMonth)) {
@@ -11764,6 +11798,17 @@
             }
 
             const targetMonth = (monthStr && String(monthStr).trim()) ? String(monthStr).trim() : madridDateKey(new Date()).slice(0, 7) + '-01';
+            const ymActual = (typeof getMadridYearMonthClient === 'function') ? getMadridYearMonthClient(new Date()) : madridDateKey(new Date()).slice(0, 7);
+            if (targetMonth.slice(0, 7) < ymActual) {
+                stripeCheckoutInProgress = false;
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Mes no disponible',
+                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    confirmButtonColor: '#795244'
+                });
+                return;
+            }
             const monthName = formatDisplayMonth(targetMonth);
             const effectiveClaseId = safePositiveInteger(targetClaseId) || safePositiveInteger(safeGetItem('pending_booking_clase_id')) || safePositiveInteger(new URLSearchParams(window.location.search).get('clase'));
             if (effectiveClaseId) {
@@ -27065,10 +27110,25 @@
                 div.textContent = day;
                 grid.appendChild(div);
             }
+
+            // Una vez pasado de mes (día 1), los meses anteriores no son navegables para alumnos
+            const btnPrevInicio = document.querySelector('button[onclick="cambiarMesInicio(-1)"]');
+            if (btnPrevInicio && !isAdmin) {
+                const hoyMes = new Date(today.getFullYear(), today.getMonth(), 1);
+                const isCurrentOrPast = new Date(year, month, 1) <= hoyMes;
+                btnPrevInicio.disabled = isCurrentOrPast;
+                btnPrevInicio.style.opacity = isCurrentOrPast ? '0.2' : '1';
+                btnPrevInicio.style.cursor = isCurrentOrPast ? 'not-allowed' : 'pointer';
+            }
         }
 
         function cambiarMesInicio(delta) {
-            currentCalendarMonthInicio.setMonth(currentCalendarMonthInicio.getMonth() + delta);
+            const nextMonth = new Date(currentCalendarMonthInicio.getFullYear(), currentCalendarMonthInicio.getMonth() + delta, 1);
+            if (!isAdmin && delta < 0) {
+                const hoyMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                if (nextMonth < hoyMes) return;
+            }
+            currentCalendarMonthInicio = nextMonth;
             renderizarCalendarioInicio();
         }
 
@@ -32300,7 +32360,8 @@
             }
 
             const currentMonth = getMadridYearMonthClient();
-            const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index));
+            const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index))
+                .filter(month => month >= currentMonth);
             const availableMonths = monthOptions.filter(month => !obtenerBonosMensualesDeMes(month).some(p => p.tipo === 'bono_ilimitado'));
             if (!availableMonths.length) {
                 await Swal.fire(
@@ -32349,6 +32410,16 @@
             });
 
             if (!membershipMonth) return;
+
+            if (membershipMonth < currentMonth) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Mes no disponible',
+                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    confirmButtonColor: '#795244'
+                });
+                return;
+            }
 
             const bonosExistentes = obtenerBonosMensualesDeMes(membershipMonth);
             const yaTieneIlimitado = bonosExistentes.some(p => p.tipo === 'bono_ilimitado');
@@ -32462,7 +32533,8 @@
             }
 
             const currentMonth = getMadridYearMonthClient();
-            const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index));
+            const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index))
+                .filter(month => month >= currentMonth);
             const availableMonths = monthOptions.filter(month => !obtenerBonosMensualesDeMes(month).some(p => p.tipo === 'bono_ilimitado'));
             if (!availableMonths.length) {
                 await Swal.fire(
@@ -32510,6 +32582,16 @@
             });
 
             if (!membershipMonth) return;
+
+            if (membershipMonth < currentMonth) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Mes no disponible',
+                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    confirmButtonColor: '#795244'
+                });
+                return;
+            }
 
             const bonosExistentes = obtenerBonosMensualesDeMes(membershipMonth);
             const yaTieneIlimitado = bonosExistentes.some(p => p.tipo === 'bono_ilimitado');
@@ -32623,7 +32705,8 @@
             }
 
             const currentMonth = getMadridYearMonthClient();
-            const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index));
+            const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index))
+                .filter(month => month >= currentMonth);
             const availableMonths = monthOptions.filter(month => !obtenerBonosMensualesDeMes(month).some(p => p.tipo === 'bono_ilimitado'));
             if (!availableMonths.length) {
                 await Swal.fire(
@@ -32671,6 +32754,16 @@
             });
 
             if (!membershipMonth) return;
+
+            if (membershipMonth < currentMonth) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Mes no disponible',
+                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    confirmButtonColor: '#795244'
+                });
+                return;
+            }
 
             const bonosExistentes = obtenerBonosMensualesDeMes(membershipMonth);
             const yaTieneIlimitado = bonosExistentes.some(p => p.tipo === 'bono_ilimitado');
