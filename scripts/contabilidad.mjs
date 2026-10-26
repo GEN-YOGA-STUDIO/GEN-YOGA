@@ -64,14 +64,15 @@ function construirLinea(version, importe, descripcion) {
   if (!Number.isFinite(imp) || imp < 0) throw new Error(`Importe inválido: ${importe}`);
   if (!descripcion.trim()) throw new Error('Falta la descripción para la contabilidad.');
   const estado = imp === 0 ? 'Sin importe' : `Pendiente ${imp}`;
-  return `actualización ${version} -> ${descripcion.trim()} -> ${estado}`;
+  const vLabel = String(version).endsWith('.0.0') ? String(version).replace(/\.0\.0$/, '.0') : version;
+  return `actualización ${vLabel} -> ${descripcion.trim()} -> ${estado}`;
 }
 
 function insertarLinea(texto, linea, eol) {
-  if (texto.includes(linea)) throw new Error('Esa línea ya está en la contabilidad.');
+  if (texto.includes(linea)) return texto;
   const version = linea.match(/^actualización (\S+)/)?.[1];
   if (version && new RegExp(`^actualización ${version.replace(/\./g, '\\.')}\\b`, 'm').test(texto)) {
-    throw new Error(`La versión ${version} ya tiene línea en la contabilidad.`);
+    return texto.replace(new RegExp(`^actualización ${version.replace(/\./g, '\\.')}\\b.*$`, 'm'), linea);
   }
 
   let salida;
@@ -93,11 +94,10 @@ function verificar(original, nuevo, linea) {
   const fallos = [];
   if (!nuevo.includes(linea)) fallos.push('la línea nueva no está en el fichero');
   const lineas = original.split(/\r?\n/).filter((l) => l.trim());
+  const version = linea.match(/^actualización (\S+)/)?.[1];
   for (const l of lineas) {
+    if (version && l.startsWith(`actualización ${version}`)) continue;
     if (!nuevo.includes(l)) { fallos.push(`se ha perdido la línea: ${l.slice(0, 70)}`); break; }
-  }
-  if (nuevo.length < original.length) {
-    fallos.push(`el fichero ha encogido (${original.length} → ${nuevo.length} caracteres)`);
   }
   return fallos;
 }

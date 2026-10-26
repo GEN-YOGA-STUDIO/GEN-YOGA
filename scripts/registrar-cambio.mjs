@@ -67,6 +67,7 @@ for (let i = 0; i < argv.length; i++) {
   if (a === '--scope' || a === '-s') opts.scope = argv[++i];
   else if (a === '--message' || a === '-m') opts.message = argv[++i];
   else if (a === '--importe' || a === '-i') opts.importe = argv[++i];
+  else if (a === '--target' || a === '--version' || a === '-v') opts.target = argv[++i];
   else if (a.startsWith('--') || a === '-y') flags.add(a === '-y' ? '--yes' : a);
   else pos.push(a);
 }
@@ -96,10 +97,18 @@ const [maj, min, pat] = pkg.version.split('.').map(Number);
 const patch = pat || 0;
 
 let objetivo = null;
-// Regla de versionado de GEN Yoga:
-//   desarrollo (mayor)  → minor+1 y patch a 0 (17.22.0 → 17.23.0)
-//   incidencia (menor)  → patch+1, sin tocar major/minor (17.22.0 → 17.22.1)
-objetivo = `${maj}.${min + 1}.0`;
+if (opts.target) {
+  const cleanV = opts.target.trim().replace(/^v/, '');
+  const tParts = cleanV.split('.');
+  if (tParts.length === 2) objetivo = `${cleanV}.0`;
+  else if (tParts.length === 3) objetivo = cleanV;
+  else objetivo = cleanV;
+} else {
+  // Regla de versionado de GEN Yoga:
+  //   desarrollo (mayor)  → minor+1 y patch a 0 (17.22.0 → 17.23.0)
+  //   incidencia (menor)  → patch+1, sin tocar major/minor (17.22.0 → 17.22.1)
+  objetivo = `${maj}.${min + 1}.0`;
+}
 
 const etiquetaDe = (v) => {
   const [a, b, c] = v.split('.').map(Number);
@@ -151,8 +160,10 @@ if (!tipo && rl) {
   const r = (await preguntar('\nResponde 1/2, "desarrollo"/"incidencia" o "mayor"/"menor": ')).toLowerCase();
   tipo = ALIAS[r] || (r === '1' ? 'desarrollo' : r === '2' ? 'incidencia' : null);
 }
-if (tipo === 'desarrollo') objetivo = `${maj}.${min + 1}.0`;
-if (tipo === 'incidencia') objetivo = `${maj}.${min}.${patch + 1}`;
+if (!opts.target) {
+  if (tipo === 'desarrollo') objetivo = `${maj}.${min + 1}.0`;
+  if (tipo === 'incidencia') objetivo = `${maj}.${min}.${patch + 1}`;
+}
 if (!tipo) {
   console.error('\n❌ Falta el tipo de cambio. Uso: npm run cambio -- <desarrollo|incidencia> "<descripción>" [--scope módulo]');
   console.error('   (sin argumentos, el comando pregunta por teclado)');
@@ -217,7 +228,8 @@ if (sucios) {
 
 if (dryRun) {
   if (tipo === 'desarrollo' && importeContabilidad > 0) {
-    console.log(`\n[dry-run] Contabilidad: se añadiría «actualización ${objetivo} -> ${desc} -> Pendiente ${importeContabilidad}»`);
+    const vLabel = String(objetivo).endsWith('.0.0') ? String(objetivo).replace(/\.0\.0$/, '.0') : objetivo;
+    console.log(`\n[dry-run] Contabilidad: se añadiría «actualización ${vLabel} -> ${desc} -> Pendiente ${importeContabilidad}»`);
   }
   console.log('\n(--dry-run: no se ejecuta nada)');
   if (rl) rl.close();

@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.0.0 — 26 oct 2026 · Desarrollo
+
+- **Descripción:** Nuevos bonos mensuales (Inicial y Mensual), modalidades simultáneas, selector recurrente y tarifas (ámbito: bonos)
+- **Validación:** npm test
+- **Tag:** `v18.0`
+- **Contabilidad B:** línea «Pendiente 150» añadida
+- **Informe:** `docs/informes/v18.0.0.md`
+
 ## v17.28.0 — 26 oct 2026 · Desarrollo
 
 - **Descripción:** Soporte de múltiples bonos mensuales en el mismo mes con prioridad por precio y desglose en botón de clases (ámbito: bonos)
