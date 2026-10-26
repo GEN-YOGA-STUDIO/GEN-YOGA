@@ -64,9 +64,8 @@ serve(async (req) => {
       const purchase = validateCheckoutPurchase(session, catalog)
 
       let subscription: Stripe.Subscription | null = null
-      if (purchase.purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
-        const subscriptionId = stripeObjectId(session.subscription)
-        if (!subscriptionId) throw new HttpError(400, 'La sesión mensual no contiene suscripción.')
+      const subscriptionId = stripeObjectId(session.subscription)
+      if (subscriptionId) {
         subscription = await stripe.subscriptions.retrieve(subscriptionId)
         const validatedSubscription = validateMonthlySubscription(subscription, catalog)
         if (validatedSubscription.appUserId !== purchase.appUserId) {

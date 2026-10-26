@@ -36,7 +36,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '17.26'
+const APP_RELEASE = '17.27'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -182,29 +182,31 @@ serve(async (req) => {
         throw new HttpError(409, 'La cuenta se está eliminando y no puede iniciar nuevos pagos.')
       }
 
-      if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_ILIMITADO) {
-        const { data: existingMonth, error: existingMonthError } = await supabase
+      const isMonthlyPlanPurchase = lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL
+      if (membershipMonth && isMonthlyPlanPurchase) {
+        // 1. Comprobar si ya tiene Bono Ilimitado para ese mes
+        const { data: existingUnl, error: existingUnlError } = await supabase
           .from('unlimited_membership_periods')
           .select('id')
           .eq('user_id', user.id)
           .eq('membership_month', `${membershipMonth}-01`)
           .maybeSingle()
-        if (existingMonthError && !/does not exist/i.test(existingMonthError.message)) throw new Error('No se pudo comprobar el mes elegido.')
-        if (existingMonth) {
-          throw new HttpError(409, 'Ya tienes comprado el Bono Ilimitado para ese mes natural.')
+        if (existingUnlError && !/does not exist/i.test(existingUnlError.message)) throw new Error('No se pudo comprobar el mes elegido.')
+        if (existingUnl) {
+          throw new HttpError(409, `Ya tienes contratado el Bono Ilimitado para ${membershipMonth}. En un mismo mes natural solo se permite 1 modalidad mensual.`)
         }
-      }
 
-      if (membershipMonth && (lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL)) {
-        const { data: existingMonth, error: existingMonthError } = await supabase
+        // 2. Comprobar si ya tiene Bono Inicial o Bono Mensual para ese mes
+        const { data: existingMonthly, error: existingMonthlyError } = await supabase
           .from('monthly_membership_periods')
-          .select('id')
+          .select('id, plan_type')
           .eq('user_id', user.id)
           .eq('membership_month', `${membershipMonth}-01`)
           .maybeSingle()
-        if (existingMonthError && !/does not exist/i.test(existingMonthError.message)) throw new Error('No se pudo comprobar el mes elegido.')
-        if (existingMonth) {
-          throw new HttpError(409, 'Ya tienes un bono mensual contratado para ese mes natural.')
+        if (existingMonthlyError && !/does not exist/i.test(existingMonthlyError.message)) throw new Error('No se pudo comprobar el mes elegido.')
+        if (existingMonthly) {
+          const nombrePlanExistente = existingMonthly.plan_type === 'bono_inicial' ? 'Bono Inicial' : 'Bono Mensual'
+          throw new HttpError(409, `Ya tienes contratado el ${nombrePlanExistente} para ${membershipMonth}. En un mismo mes natural solo se permite 1 modalidad mensual.`)
         }
       }
       if (profile.stripe_customer_id && !String(profile.stripe_customer_id).startsWith('cus_')) {

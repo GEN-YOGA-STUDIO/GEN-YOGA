@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.27.0 — 26 oct 2026 · Desarrollo
+
+- **Descripción:** Exclusividad mensual entre bonos, selector recurrente (bronce, plata, dorado) y política de cambios (ámbito: bonos)
+- **Validación:** npm test
+- **Tag:** `v17.27`
+- **Contabilidad B:** línea «Pendiente 150» añadida
+- **Informe:** `docs/informes/v17.27.0.md`
+
 ## v17.26.0 — 26 oct 2026 · Desarrollo
 
 - **Descripción:** Vinculación Stripe prod_VVkU2penYA08Qe para Bono Inicial y reordenación de bonos en tarifas (ámbito: tarifas)
