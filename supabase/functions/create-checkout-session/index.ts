@@ -36,7 +36,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '17.22'
+const APP_RELEASE = '17.23'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -112,12 +112,15 @@ serve(async (req) => {
     if (isPromoPurchase(lookupKey)) {
       throw new HttpError(410, 'La promoción del 50% de la primera clase ha finalizado. Consulta las tarifas actuales.')
     }
+    if (lookupKey === PURCHASE_TYPES.PACK_6) {
+      throw new HttpError(410, 'El pack de 6 clases ha sido sustituido por el Bono Mensual (65 € · 2 clases/semana). Consulta las nuevas tarifas.')
+    }
     const allowedPurchaseTypes = new Set<string>([
       PURCHASE_TYPES.CLASE_SUELTA,
       PURCHASE_TYPES.PACK_4,
-      PURCHASE_TYPES.PACK_6,
       PURCHASE_TYPES.PACK_10,
       PURCHASE_TYPES.BONO_ILIMITADO,
+      PURCHASE_TYPES.BONO_MENSUAL,
       ...Object.keys(CONSULTATION_CATALOG),
       ...Object.keys(WORKSHOP_CATALOG),
     ])
@@ -125,7 +128,7 @@ serve(async (req) => {
     if (!allowedPurchaseTypes.has(lookupKey) && !isDynamicStripe) {
       throw new HttpError(400, 'Producto no permitido.')
     }
-    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
+    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
       ? (body.membership_month ? validateMembershipMonth(body.membership_month) : madridYearMonth())
       : null
 
@@ -179,9 +182,22 @@ serve(async (req) => {
           .eq('user_id', user.id)
           .eq('membership_month', `${membershipMonth}-01`)
           .maybeSingle()
-        if (existingMonthError) throw new Error('No se pudo comprobar el mes ilimitado elegido.')
+        if (existingMonthError && !/does not exist/i.test(existingMonthError.message)) throw new Error('No se pudo comprobar el mes elegido.')
         if (existingMonth) {
           throw new HttpError(409, 'Ya tienes comprado el Bono Ilimitado para ese mes natural.')
+        }
+      }
+
+      if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_MENSUAL) {
+        const { data: existingMonth, error: existingMonthError } = await supabase
+          .from('monthly_membership_periods')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('membership_month', `${membershipMonth}-01`)
+          .maybeSingle()
+        if (existingMonthError && !/does not exist/i.test(existingMonthError.message)) throw new Error('No se pudo comprobar el mes elegido.')
+        if (existingMonth) {
+          throw new HttpError(409, 'Ya tienes comprado el Bono Mensual para ese mes natural.')
         }
       }
       if (profile.stripe_customer_id && !String(profile.stripe_customer_id).startsWith('cus_')) {
@@ -195,12 +211,11 @@ serve(async (req) => {
     const priceByPurchaseType: Record<string, Stripe.Price> = {
       [PURCHASE_TYPES.CLASE_SUELTA]: catalog.claseSuelta,
       [PURCHASE_TYPES.PACK_4]: catalog.pack4,
-      [PURCHASE_TYPES.PACK_6]: catalog.pack6,
       [PURCHASE_TYPES.PACK_10]: catalog.pack10,
       [PURCHASE_TYPES.BONO_ILIMITADO]: catalog.bonoIlimitado,
     }
     const price = priceByPurchaseType[purchaseType]
-    const isSubscription = purchaseType === PURCHASE_TYPES.BONO_MENSUAL
+    const isSubscription = false
     const appUserId = isGuest ? 'guest' : user!.id
     const source = body.from === 'profile' ? 'profile' : 'tarifas'
     const metadata: Stripe.MetadataParam = {
@@ -221,6 +236,21 @@ serve(async (req) => {
 
     if (price) {
       lineItems = [{ price: price.id, quantity: 1 }]
+    } else if (purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
+      lineItems = [
+        {
+          price_data: {
+            currency: 'eur',
+            unit_amount: 6500,
+            product_data: {
+              name: 'Bono Mensual (2 clases/semana)',
+              metadata: { lookup_key: 'bono_mensual' },
+            },
+          },
+          quantity: 1,
+        },
+      ]
+    }
     } else if (getConsultationDetails(purchaseType)) {
       const details = getConsultationDetails(purchaseType)!
       const consultationPrice = await resolveConsultationPrice(stripe, purchaseType)

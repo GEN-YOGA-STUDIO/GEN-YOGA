@@ -1051,7 +1051,7 @@ export function validateCheckoutPurchase(
   } else if (priceId === catalog.bonoMensual.id) {
     purchaseType = PURCHASE_TYPES.BONO_MENSUAL
     price = catalog.bonoMensual
-    expectedAmount = 9000
+    expectedAmount = 6500
   } else if (itemProduct === PROMO_PRODUCT_IDS.PROMO_50_CLASE || metadata.purchase_type === PURCHASE_TYPES.PROMO_50_CLASE || metadata.purchase_type === 'promo_50' || metadata.purchase_type === 'promo') {
     purchaseType = PURCHASE_TYPES.PROMO_50_CLASE
     price = lineItems[0].price
@@ -1079,6 +1079,10 @@ export function validateCheckoutPurchase(
       price = lineItems[0].price
       const validDetails = assertValidPromoPrice(price, purchaseType)
       expectedAmount = validDetails.amount ?? price.unit_amount ?? session.amount_total
+    } else if (rawMetaType === PURCHASE_TYPES.BONO_MENSUAL) {
+      purchaseType = PURCHASE_TYPES.BONO_MENSUAL
+      price = lineItems[0].price
+      expectedAmount = 6500
     } else if (rawMetaType.startsWith('prod_') || rawMetaType.startsWith('price_') || (itemProduct && itemProduct.startsWith('prod_'))) {
       purchaseType = rawMetaType as PurchaseType
       price = lineItems[0].price
@@ -1128,12 +1132,13 @@ export function validateCheckoutPurchase(
   const membershipMonth = metadata.membership_month?.trim() || null
   if (
     (purchaseType === PURCHASE_TYPES.BONO_ILIMITADO ||
+      purchaseType === PURCHASE_TYPES.BONO_MENSUAL ||
       purchaseType === PURCHASE_TYPES.CLASE_ESPECIAL) &&
     (!membershipMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth))
   ) {
     throw new HttpError(400, 'La sesión no contiene un mes natural válido.')
   }
-  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL && membershipMonth) {
+  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && purchaseType !== PURCHASE_TYPES.BONO_MENSUAL && purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL && membershipMonth) {
     throw new HttpError(400, 'El producto no admite un mes natural seleccionado.')
   }
 
