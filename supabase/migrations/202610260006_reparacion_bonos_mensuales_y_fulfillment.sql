@@ -137,6 +137,34 @@ GRANT SELECT, INSERT, DELETE ON TABLE public.monthly_membership_periods TO authe
 GRANT ALL ON TABLE public.monthly_membership_periods TO service_role;
 GRANT USAGE, SELECT ON SEQUENCE public.monthly_membership_periods_id_seq TO authenticated, service_role;
 
+-- Asegurar el constraint único en bonos_clases_especiales (user_id, mes) que
+-- requieren los RPCs admin_asignar_mes_ilimitado y stripe_fulfill_checkout.
+-- Puede no existir si la migración 202609030012 no se aplicó correctamente.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'bonos_clases_especiales_user_mes_key'
+  ) THEN
+    -- Deduplicar antes de crear el constraint
+    DELETE FROM public.bonos_clases_especiales b
+     WHERE EXISTS (
+       SELECT 1 FROM public.bonos_clases_especiales b2
+        WHERE b2.user_id = b.user_id
+          AND b2.mes = b.mes
+          AND b2.id > b.id
+     )
+       AND b.saldo = 0;
+    
+    ALTER TABLE public.bonos_clases_especiales
+      ADD CONSTRAINT bonos_clases_especiales_user_mes_key UNIQUE (user_id, mes);
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_bonos_clases_especiales_user_mes_unique
+      ON public.bonos_clases_especiales(user_id, mes);
+END $$;
+
 -- ----------------------------------------------------------------------------
 -- 2. RPCs de administración (sin borrados cruzados ni ON CONFLICT obsoleto)
 -- ----------------------------------------------------------------------------
