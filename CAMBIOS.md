@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.0.3 — 26 oct 2026 · Incidencia
+
+- **Descripción:** Cambio de mes autoservicio en bonos mensuales si 0 clases consumidas sin recepcion y eliminacion de llamadas llamativas (ámbito: bonos)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.0.3`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.0.3.md`
+
 ## v18.0.2 — 26 oct 2026 · Incidencia
 
 - **Descripción:** Retirada de opción de bonos de meses anteriores y eliminación de textos de exclusividad residuales (ámbito: bonos)

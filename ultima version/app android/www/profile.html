@@ -8768,7 +8768,12 @@
                                         <span class="text-[11px] font-bold text-[#78350f]">${escapeHtml(mesLabel)}</span>
                                     </div>
                                     <p class="text-[10px] text-[#78350f]/80 mt-1">Clases regulares ilimitadas · Incluye 1 clase especial gratis y 1 invitado.</p>
-                                    <p class="text-[9px] text-[#78350f]/60 mt-0.5">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[9px] text-[#78350f]/60">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</span>
+                                        <button type="button" onclick="Swal.close(); iniciarCambioMesBonoCliente('bono_ilimitado', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-[#78350f] hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
+                                            <i class="ph-bold ph-arrows-clockwise"></i> Cambiar mes
+                                        </button>
+                                    </div>
                                 </div>
                                 <span class="text-[9px] font-black uppercase tracking-wide text-amber-900 bg-amber-200/80 px-2 py-1 rounded-md shrink-0">${activo ? 'Activo' : 'Próximo'}</span>
                             </div>
@@ -8783,7 +8788,12 @@
                                         <span class="text-[11px] font-bold text-slate-800">${escapeHtml(mesLabel)}</span>
                                     </div>
                                     <p class="text-[10px] text-slate-700 mt-1">2 clases regulares/semana (lunes a domingo)${esMesActual ? ` · Esta semana: <strong>${usadasEsteBono} / 2</strong>` : ''}</p>
-                                    <p class="text-[9px] text-slate-500 mt-0.5">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[9px] text-slate-500">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</span>
+                                        <button type="button" onclick="Swal.close(); iniciarCambioMesBonoCliente('bono_mensual', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-slate-700 hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
+                                            <i class="ph-bold ph-arrows-clockwise"></i> Cambiar mes
+                                        </button>
+                                    </div>
                                 </div>
                                 <span class="text-[9px] font-black uppercase tracking-wide text-slate-800 bg-slate-200 px-2 py-1 rounded-md shrink-0">${activo ? 'Activo' : 'Próximo'}</span>
                             </div>
@@ -8798,7 +8808,12 @@
                                         <span class="text-[11px] font-bold text-[#5e4213]">${escapeHtml(mesLabel)}</span>
                                     </div>
                                     <p class="text-[10px] text-[#5e4213]/80 mt-1">1 clase regular/semana (lunes a domingo)${esMesActual ? ` · Esta semana: <strong>${usadasEsteBono} / 1</strong>` : ''}</p>
-                                    <p class="text-[9px] text-[#5e4213]/60 mt-0.5">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[9px] text-[#5e4213]/60">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</span>
+                                        <button type="button" onclick="Swal.close(); iniciarCambioMesBonoCliente('bono_inicial', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-[#8f6b2d] hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
+                                            <i class="ph-bold ph-arrows-clockwise"></i> Cambiar mes
+                                        </button>
+                                    </div>
                                 </div>
                                 <span class="text-[9px] font-black uppercase tracking-wide text-[#8f6b2d] bg-[#f5ede2] px-2 py-1 rounded-md shrink-0">${activo ? 'Activo' : 'Próximo'}</span>
                             </div>
@@ -9038,6 +9053,222 @@
             });
             return count;
         }
+
+        async function iniciarCambioMesBonoCliente(tipo, periodId, mesActualStr) {
+            if (!currentUser || !currentUser.id) {
+                return Swal.fire('Inicia sesión', 'Debes iniciar sesión para gestionar tus bonos.', 'warning');
+            }
+
+            const mesKey = normalizarMesClave(mesActualStr);
+            if (!mesKey) return;
+
+            const [yyyy, mm] = mesKey.split('-');
+            const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const labelMesActual = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${yyyy}` : mesKey;
+            const nombreBono = tipo === 'bono_ilimitado'
+                ? 'Bono Ilimitado (Dorado · 90 €)'
+                : (tipo === 'bono_mensual' ? 'Bono Mensual (Plata · 65 €)' : 'Bono Inicial (Bronce · 40 €)');
+
+            // 1. Comprobar si se ha consumido alguna clase en este mes con este bono
+            let clasesConsumidas = 0;
+            (userBookingsCache || []).forEach(b => {
+                if (b.estado && b.estado !== 'cancelada') {
+                    const fechaStr = b.clases?.fecha_inicio || b.fecha_inicio;
+                    if (fechaStr && normalizarMesClave(fechaStr) === mesKey) {
+                        if (tipo === 'bono_ilimitado' && (b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual)) {
+                            clasesConsumidas++;
+                        } else if (tipo === 'bono_mensual' && b.tipo_reserva === 'bono_mensual') {
+                            clasesConsumidas++;
+                        } else if (tipo === 'bono_inicial' && b.tipo_reserva === 'bono_inicial') {
+                            clasesConsumidas++;
+                        }
+                    }
+                }
+            });
+
+            // Comprobación adicional en Supabase
+            try {
+                const startIso = `${mesKey}-01T00:00:00.000Z`;
+                const endD = new Date(`${mesKey}-01T00:00:00.000Z`);
+                endD.setUTCMonth(endD.getUTCMonth() + 1);
+                const endIso = endD.toISOString();
+
+                let q = client.from('reservas_yoga')
+                    .select('id, tipo_reserva, usado_bono_mensual, estado, clases!inner(fecha_inicio)')
+                    .eq('user_id', currentUser.id)
+                    .neq('estado', 'cancelada')
+                    .gte('clases.fecha_inicio', startIso)
+                    .lt('clases.fecha_inicio', endIso);
+
+                if (tipo === 'bono_ilimitado') {
+                    q = q.or('tipo_reserva.eq.ilimitado,usado_bono_mensual.eq.true');
+                } else if (tipo === 'bono_mensual') {
+                    q = q.eq('tipo_reserva', 'bono_mensual');
+                } else if (tipo === 'bono_inicial') {
+                    q = q.eq('tipo_reserva', 'bono_inicial');
+                }
+
+                const { data: dbRes, error: dbErr } = await q;
+                if (!dbErr && Array.isArray(dbRes)) {
+                    clasesConsumidas = Math.max(clasesConsumidas, dbRes.length);
+                }
+            } catch (e) {
+                console.warn('Error comprobando reservas consumidas del periodo:', e);
+            }
+
+            if (clasesConsumidas > 0) {
+                await Swal.fire({
+                    icon: 'info',
+                    title: 'Bono ya iniciado',
+                    text: `Ya has utilizado ${clasesConsumidas} clase${clasesConsumidas > 1 ? 's' : ''} en ${labelMesActual} con este bono. Al haber consumido clases, no es posible cambiarlo a otro mes.`,
+                    confirmButtonColor: '#795244'
+                });
+                return;
+            }
+
+            // 2. Obtener meses disponibles (desde el mes actual en adelante, excluyendo el mes origen)
+            const currentMonth = getMadridYearMonthClient();
+            const monthOptions = Array.from({ length: 12 }, (_, index) => addMonthsToYearMonth(currentMonth, index))
+                .filter(m => m >= currentMonth && m !== mesKey);
+
+            const availableMonths = monthOptions.filter(m => {
+                const bonos = obtenerBonosMensualesDeMes(m);
+                if (tipo === 'bono_ilimitado') {
+                    return !bonos.some(b => b.tipo === 'bono_ilimitado');
+                }
+                return !bonos.some(b => b.tipo === tipo);
+            });
+
+            if (!availableMonths.length) {
+                await Swal.fire({
+                    icon: 'info',
+                    title: 'Sin meses disponibles',
+                    text: 'Ya dispones de este bono en todos los meses disponibles para cambio.',
+                    confirmButtonColor: '#795244'
+                });
+                return;
+            }
+
+            const { value: nuevoMes } = await Swal.fire({
+                title: 'Cambiar mes del bono',
+                html: `
+                    <div class="text-left font-sans space-y-2 text-xs text-cocoa/80 p-1 leading-relaxed">
+                        <p>No has consumido ninguna clase en <strong>${escapeHtml(labelMesActual)}</strong>.</p>
+                        <p>Selecciona el nuevo mes natural al que deseas trasladar tu <strong>${escapeHtml(nombreBono)}</strong>:</p>
+                        <div class="mt-2">
+                            <select id="swal-select-nuevo-mes-cliente" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
+                                ${availableMonths.map(m => `<option value="${m}">${escapeHtml(naturalMonthOptionLabel(m))}</option>`).join('')}
+                            </select>
+                        </div>
+                        <p class="text-[11px] text-cocoa/55 mt-2">Tu bono se trasladará al mes seleccionado de forma inmediata con todas sus ventajas intactas.</p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar cambio',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#8C8658',
+                cancelButtonColor: '#64748b',
+                focusConfirm: false,
+                preConfirm: () => document.getElementById('swal-select-nuevo-mes-cliente')?.value || null
+            });
+
+            if (!nuevoMes) return;
+
+            Swal.fire({
+                title: 'Cambiando mes...',
+                text: 'Actualizando tu bono al nuevo mes elegido.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const nuevoMesDate = `${nuevoMes}-01`;
+            const mesActualDate = `${mesKey}-01`;
+            let success = false;
+
+            // 1. Intentar RPC cambiar_mes_bono_usuario
+            try {
+                const { error: rpcErr } = await client.rpc('cambiar_mes_bono_usuario', {
+                    p_tipo: tipo,
+                    p_period_id: periodId ? parseInt(periodId, 10) : null,
+                    p_mes_actual: mesActualDate,
+                    p_nuevo_mes: nuevoMesDate
+                });
+                if (!rpcErr) success = true;
+                else console.warn('Aviso RPC cambiar_mes_bono_usuario:', rpcErr);
+            } catch (e) {
+                console.warn('Excepción RPC cambiar_mes_bono_usuario:', e);
+            }
+
+            // 2. Fallback resiliente directo si RPC no estuviese desplegada aún
+            if (!success) {
+                try {
+                    const startIso = `${nuevoMesDate}T00:00:00.000Z`;
+                    const endD = new Date(`${nuevoMesDate}T00:00:00.000Z`);
+                    endD.setUTCMonth(endD.getUTCMonth() + 1);
+                    const endIso = endD.toISOString();
+
+                    if (tipo === 'bono_ilimitado') {
+                        let uQuery = client.from('unlimited_membership_periods')
+                            .update({ membership_month: nuevoMesDate, starts_at: startIso, ends_at: endIso })
+                            .eq('user_id', currentUser.id);
+                        if (periodId) uQuery = uQuery.eq('id', periodId);
+                        else uQuery = uQuery.eq('membership_month', mesActualDate);
+                        const { error: uErr } = await uQuery;
+                        if (!uErr) success = true;
+                    } else {
+                        let mQuery = client.from('monthly_membership_periods')
+                            .update({ membership_month: nuevoMesDate, starts_at: startIso, ends_at: endIso })
+                            .eq('user_id', currentUser.id);
+                        if (periodId) mQuery = mQuery.eq('id', periodId);
+                        else mQuery = mQuery.eq('membership_month', mesActualDate).eq('plan_type', tipo);
+                        const { error: mErr } = await mQuery;
+                        if (!mErr) success = true;
+                    }
+                } catch (fbErr) {
+                    console.error('Error en fallback de cambio de mes:', fbErr);
+                }
+            }
+
+            if (success) {
+                // Actualizar cachés en memoria
+                if (tipo === 'bono_ilimitado') {
+                    const pObj = (userUnlimitedPeriods || []).find(p => (periodId && String(p.id) === String(periodId)) || normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
+                    if (pObj) {
+                        pObj.membership_month = nuevoMesDate;
+                        pObj.starts_at = `${nuevoMesDate}T00:00:00.000Z`;
+                        const endD = new Date(`${nuevoMesDate}T00:00:00.000Z`);
+                        endD.setUTCMonth(endD.getUTCMonth() + 1);
+                        pObj.ends_at = endD.toISOString();
+                    }
+                } else {
+                    const pObj = (userMonthlyMembershipPeriods || []).find(p => (periodId && String(p.id) === String(periodId)) || normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
+                    if (pObj) {
+                        pObj.membership_month = nuevoMesDate;
+                        pObj.starts_at = `${nuevoMesDate}T00:00:00.000Z`;
+                        const endD = new Date(`${nuevoMesDate}T00:00:00.000Z`);
+                        endD.setUTCMonth(endD.getUTCMonth() + 1);
+                        pObj.ends_at = endD.toISOString();
+                    }
+                }
+
+                if (typeof loadAllUserData === 'function') await loadAllUserData();
+                if (typeof renderSaldosClienteV69 === 'function') renderSaldosClienteV69();
+                if (typeof renderWidgetBonoRecurrente === 'function') renderWidgetBonoRecurrente();
+
+                Swal.close();
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Bono cambiado de mes',
+                    text: `Tu bono ha sido trasladado a ${naturalMonthOptionLabel(nuevoMes)} con éxito.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.close();
+                await Swal.fire('Error', 'No se pudo realizar el cambio de mes en este momento. Inténtalo de nuevo.', 'error');
+            }
+        }
+        window.iniciarCambioMesBonoCliente = iniciarCambioMesBonoCliente;
 
         function renderWidgetBonoRecurrente() {
             const container = document.getElementById('widget-bono-recurrente');
@@ -9532,6 +9763,7 @@
             <div class="mt-2.5 h-2 rounded-full bg-white border border-cocoa/5 overflow-hidden" role="progressbar" aria-label="${escapeHtml(profileT('profile_unlimited_aria_progress', 'Tiempo transcurrido del mes'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><div class="h-full rounded-full ${isEnded ? 'bg-cocoa/20' : 'bg-gradient-to-r from-terracotta to-golden'}" style="width:${progress}%"></div></div>
             <p class="mt-1.5 text-[10px] text-cocoa/50">${isFuture ? escapeHtml(profileT('profile_unlimited_starts', 'El tiempo comenzará el primer día del mes.')) : (isActive ? `${progress}% ${escapeHtml(profileT('profile_unlimited_progress', 'del mes transcurrido'))}` : escapeHtml(profileT('profile_unlimited_period_done', 'Periodo natural completado')))}</p>
             ${!isEnded ? `<div class="flex flex-wrap gap-1.5 mt-3">${benefitBadge(false, profileT('profile_unlimited_benefit_classes', 'Clases regulares ilimitadas'), '')}${benefitBadge(specialUsed, profileT('profile_unlimited_benefit_special_available', 'Especial disponible'), profileT('profile_unlimited_benefit_special_used', 'Especial utilizada'))}${benefitBadge(guestUsed, profileT('profile_unlimited_benefit_guest_available', 'Invitado disponible'), profileT('profile_unlimited_benefit_guest_used', 'Invitado utilizado'))}</div>` : ''}
+            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-cocoa/10 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">¿Error de mes?</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_ilimitado', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-amber-800 hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> Cambiar a otro mes</button></div>` : ''}
         </div>`;
             }).join('') : `<p class="text-xs text-cocoa/45 py-3">${escapeHtml(profileT('profile_unlimited_none', 'Aún no has comprado ningún mes ilimitado.'))}</p>`;
 
@@ -9553,6 +9785,7 @@
             <div class="mt-2.5 h-2 rounded-full bg-white border border-cocoa/5 overflow-hidden" role="progressbar" aria-label="${escapeHtml(profileT('profile_unlimited_aria_progress', 'Tiempo transcurrido del mes'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><div class="h-full rounded-full ${isEnded ? 'bg-cocoa/20' : 'bg-gradient-to-r from-[#8f6b2d] to-[#b88c42]'}" style="width:${progress}%"></div></div>
             <p class="mt-1.5 text-[10px] text-cocoa/50">${isFuture ? escapeHtml(profileT('profile_unlimited_starts', 'El tiempo comenzará el primer día del mes.')) : (isActive ? `${progress}% ${escapeHtml(profileT('profile_unlimited_progress', 'del mes transcurrido'))}` : escapeHtml(profileT('profile_unlimited_period_done', 'Periodo natural completado')))}</p>
             ${!isEnded ? `<div class="flex flex-wrap gap-1.5 mt-3">${benefitBadge(false, profileT('profile_bono_inicial_benefit_classes', '1 clase regular por semana'), '')}</div>` : ''}
+            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-[#8f6b2d]/15 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">¿Error de mes?</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_inicial', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-[#8f6b2d] hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> Cambiar a otro mes</button></div>` : ''}
         </div>`;
             }).join('') : `<p class="text-xs text-cocoa/45 py-3">${escapeHtml(profileT('profile_bono_inicial_none', 'Aún no has contratado ningún Bono Inicial.'))}</p>`;
 
@@ -9574,6 +9807,7 @@
             <div class="mt-2.5 h-2 rounded-full bg-white border border-cocoa/5 overflow-hidden" role="progressbar" aria-label="${escapeHtml(profileT('profile_unlimited_aria_progress', 'Tiempo transcurrido del mes'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><div class="h-full rounded-full ${isEnded ? 'bg-cocoa/20' : 'bg-gradient-to-r from-amber-500 to-amber-700'}" style="width:${progress}%"></div></div>
             <p class="mt-1.5 text-[10px] text-cocoa/50">${isFuture ? escapeHtml(profileT('profile_unlimited_starts', 'El tiempo comenzará el primer día del mes.')) : (isActive ? `${progress}% ${escapeHtml(profileT('profile_unlimited_progress', 'del mes transcurrido'))}` : escapeHtml(profileT('profile_unlimited_period_done', 'Periodo natural completado')))}</p>
             ${!isEnded ? `<div class="flex flex-wrap gap-1.5 mt-3">${benefitBadge(false, profileT('profile_bono_mensual_benefit_classes', '2 clases regulares por semana'), '')}</div>` : ''}
+            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">¿Error de mes?</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_mensual', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-slate-700 hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> Cambiar a otro mes</button></div>` : ''}
         </div>`;
             }).join('') : `<p class="text-xs text-cocoa/45 py-3">${escapeHtml(profileT('profile_bono_mensual_none', 'Aún no has contratado ningún Bono Mensual.'))}</p>`;
 
