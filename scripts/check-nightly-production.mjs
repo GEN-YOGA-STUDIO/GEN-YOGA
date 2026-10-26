@@ -1886,7 +1886,7 @@ await section('cliente', async () => {
 
     // I12. Comprar pack/mensual con sesión: abre su diálogo con su precio (0 cargos).
     for (const [buy, euros, label] of [
-      ['pack_4', '50', 'Pack 4'], ['bono_mensual', '65', 'Bono Mensual'],
+      ['pack_4', '50', 'Pack 4'], ['bono_inicial', '40', 'Bono Inicial'], ['bono_mensual', '65', 'Bono Mensual'],
       ['pack_10', '95', 'Pack 10'], ['bono_ilimitado', '90', 'Mensual'],
     ]) {
       await page.goto(`${BASE}/profile.html?buy=${buy}`, { waitUntil: 'load', timeout: 45000 }).catch(() => {});
@@ -2014,11 +2014,11 @@ await section('compra', async () => {
           if (price !== '?' && acts > 0) pass('compra', `yoga "${title}" ${price}€ comprable`);
           else fail('compra', `yoga "${title || '?'}"`, `precio=${price} acciones=${acts}`);
         }
-        const want = ['15', '50', '65', '95', '90'].sort().join(',');
-        if (seen.sort().join(',') === want) pass('compra', 'yoga: catálogo completo 15/50/65/95/90');
-        else fail('compra', 'yoga: catálogo', `precios vistos: ${seen.join('/')} (esperado 15/50/65/95/90)`);
+        const want = ['15', '40', '50', '65', '95', '90'].sort().join(',');
+        if (seen.sort().join(',') === want) pass('compra', 'yoga: catálogo completo 15/40/50/65/95/90');
+        else fail('compra', 'yoga: catálogo', `precios vistos: ${seen.join('/')} (esperado 15/40/50/65/95/90)`);
         const packs = await page.locator('#section-yoga a[href*="buy="]:visible').evaluateAll((els) => els.map((a) => a.getAttribute('href'))).catch(() => []);
-        const packsOk = ['pack_4', 'bono_mensual', 'pack_10', 'bono_ilimitado'].every((k) => packs.some((h) => (h || '').includes(k)));
+        const packsOk = ['pack_4', 'bono_inicial', 'bono_mensual', 'pack_10', 'bono_ilimitado'].every((k) => packs.some((h) => (h || '').includes(k)));
         if (packsOk) pass('compra', 'yoga: packs enlazan a profile?buy=');
         else fail('compra', 'yoga: packs', `enlaces: ${packs.join(',').slice(0, 120)}`);
       }

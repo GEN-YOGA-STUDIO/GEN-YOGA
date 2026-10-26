@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v17.24.0 — 26 oct 2026 · Desarrollo
+
+- **Descripción:** Incorporación de Bono Inicial (40 € · 1 clase/semana) y ordenación de bonos mensuales (ámbito: tarifas)
+- **Validación:** npm test
+- **Tag:** `v17.24`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v17.24.0.md`
+
 ## v17.23.0 — 26 oct 2026 · Desarrollo
 
 - **Descripción:** Retirada de pack 6 clases e incorporación de Bono Mensual (65 € · 2 clases/semana) (ámbito: tarifas)

@@ -36,7 +36,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '17.23'
+const APP_RELEASE = '17.24'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -188,7 +188,7 @@ serve(async (req) => {
         }
       }
 
-      if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_MENSUAL) {
+      if (membershipMonth && (lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL)) {
         const { data: existingMonth, error: existingMonthError } = await supabase
           .from('monthly_membership_periods')
           .select('id')
@@ -197,7 +197,7 @@ serve(async (req) => {
           .maybeSingle()
         if (existingMonthError && !/does not exist/i.test(existingMonthError.message)) throw new Error('No se pudo comprobar el mes elegido.')
         if (existingMonth) {
-          throw new HttpError(409, 'Ya tienes comprado el Bono Mensual para ese mes natural.')
+          throw new HttpError(409, 'Ya tienes un bono mensual contratado para ese mes natural.')
         }
       }
       if (profile.stripe_customer_id && !String(profile.stripe_customer_id).startsWith('cus_')) {
@@ -236,6 +236,20 @@ serve(async (req) => {
 
     if (price) {
       lineItems = [{ price: price.id, quantity: 1 }]
+    } else if (purchaseType === PURCHASE_TYPES.BONO_INICIAL) {
+      lineItems = [
+        {
+          price_data: {
+            currency: 'eur',
+            unit_amount: 4000,
+            product_data: {
+              name: 'Bono Inicial (1 clase/semana)',
+              metadata: { lookup_key: 'bono_inicial' },
+            },
+          },
+          quantity: 1,
+        },
+      ]
     } else if (purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
       lineItems = [
         {
@@ -250,7 +264,6 @@ serve(async (req) => {
           quantity: 1,
         },
       ]
-    }
     } else if (getConsultationDetails(purchaseType)) {
       const details = getConsultationDetails(purchaseType)!
       const consultationPrice = await resolveConsultationPrice(stripe, purchaseType)

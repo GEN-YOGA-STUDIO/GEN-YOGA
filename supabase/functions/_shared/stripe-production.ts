@@ -11,6 +11,7 @@ export const PURCHASE_TYPES = {
   PACK_6: 'pack_6',
   PACK_10: 'pack_10',
   BONO_ILIMITADO: 'bono_ilimitado',
+  BONO_INICIAL: 'bono_inicial',
   BONO_MENSUAL: 'bono_mensual',
   MIRIAM_PSICO_INDIVIDUAL_1A: 'miriam_psico_individual_1a',
   MIRIAM_PSICO_INDIVIDUAL_SIG: 'miriam_psico_individual_sig',
@@ -1079,6 +1080,10 @@ export function validateCheckoutPurchase(
       price = lineItems[0].price
       const validDetails = assertValidPromoPrice(price, purchaseType)
       expectedAmount = validDetails.amount ?? price.unit_amount ?? session.amount_total
+    } else if (rawMetaType === PURCHASE_TYPES.BONO_INICIAL) {
+      purchaseType = PURCHASE_TYPES.BONO_INICIAL
+      price = lineItems[0].price
+      expectedAmount = 4000
     } else if (rawMetaType === PURCHASE_TYPES.BONO_MENSUAL) {
       purchaseType = PURCHASE_TYPES.BONO_MENSUAL
       price = lineItems[0].price
@@ -1133,12 +1138,19 @@ export function validateCheckoutPurchase(
   if (
     (purchaseType === PURCHASE_TYPES.BONO_ILIMITADO ||
       purchaseType === PURCHASE_TYPES.BONO_MENSUAL ||
+      purchaseType === PURCHASE_TYPES.BONO_INICIAL ||
       purchaseType === PURCHASE_TYPES.CLASE_ESPECIAL) &&
     (!membershipMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth))
   ) {
     throw new HttpError(400, 'La sesión no contiene un mes natural válido.')
   }
-  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && purchaseType !== PURCHASE_TYPES.BONO_MENSUAL && purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL && membershipMonth) {
+  if (
+    purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO &&
+    purchaseType !== PURCHASE_TYPES.BONO_MENSUAL &&
+    purchaseType !== PURCHASE_TYPES.BONO_INICIAL &&
+    purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL &&
+    membershipMonth
+  ) {
     throw new HttpError(400, 'El producto no admite un mes natural seleccionado.')
   }
 
