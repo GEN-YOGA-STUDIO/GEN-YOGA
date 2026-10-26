@@ -9571,32 +9571,137 @@
             const countTxt = 'text-xs';
             const availableLabel = escapeHtml(profileT('profile_available_short', 'disp.'));
 
+            // Recopilar bonos recurrentes vigentes o futuros para la cabecera
+            const bonosRecurrentesHeader = [];
+            const hoyYm = typeof getMadridYearMonthClient === 'function' ? getMadridYearMonthClient(new Date()) : new Date().toISOString().slice(0, 7);
+
+            // 1. Bonos del mes actual (pueden ser varios si se solapan)
+            const bonosMesActual = typeof obtenerBonosMensualesDeMes === 'function' ? obtenerBonosMensualesDeMes(hoyYm) : [];
+            if (bonosMesActual.length > 0) {
+                bonosRecurrentesHeader.push(...bonosMesActual);
+            }
+
+            // 2. Si no hay bonos en el mes actual o solo hay 1, buscar en meses futuros contratados
+            if (bonosRecurrentesHeader.length === 0) {
+                const planProx = typeof obtenerPlanMensualActualOProximo === 'function' ? obtenerPlanMensualActualOProximo() : null;
+                if (planProx && planProx.todosLosPlanes && planProx.todosLosPlanes.length > 0) {
+                    bonosRecurrentesHeader.push(...planProx.todosLosPlanes);
+                } else if (planProx && planProx.period) {
+                    bonosRecurrentesHeader.push(planProx);
+                }
+            } else if (bonosRecurrentesHeader.length === 1) {
+                const nextYm = typeof addMonthsToYearMonth === 'function' ? addMonthsToYearMonth(hoyYm, 1) : null;
+                if (nextYm) {
+                    const bonosProx = typeof obtenerBonosMensualesDeMes === 'function' ? obtenerBonosMensualesDeMes(nextYm) : [];
+                    if (bonosProx.length > 0) {
+                        bonosRecurrentesHeader.push({ ...bonosProx[0], esFuturo: true });
+                    }
+                }
+            }
+
+            // Máximo 2 botones de bono recurrente si el alumno dispone de más de uno
+            const bonosAMostrar = bonosRecurrentesHeader.slice(0, 2);
+
+            let bonosRecurrentesHtml = '';
+            if (bonosAMostrar.length === 0) {
+                // Sin bono recurrente (blanco / vacío neutral)
+                bonosRecurrentesHtml = `
+            <!-- 1. BONO RECURRENTE: SIN MES (BLANCO / VACÍO) -->
+            <div role="button" tabindex="0" onclick="abrirModalElegirBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: #ffffff; border: 1.5px solid rgba(38, 22, 12, 0.22); box-shadow: 0 1px 3px rgba(38, 22, 12, 0.06);" title="Elegir modalidad de Bono Recurrente (Inicial, Mensual o Ilimitado)">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-2xs text-cocoa/80 bg-cocoa/10">
+                    <i class="ph-bold ph-repeat text-sm"></i>
+                </div>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="text-[9px] font-black uppercase tracking-wider text-cocoa/70">Bono recurrente</span>
+                    <span class="text-xs sm:text-[13px] font-black text-cocoa mt-0.5 whitespace-nowrap">Sin mes</span>
+                </div>
+            </div>`;
+            } else {
+                bonosRecurrentesHtml = bonosAMostrar.map((bono) => {
+                    const esInicial = bono.tipo === 'bono_inicial';
+                    const esMensual = bono.tipo === 'bono_mensual';
+
+                    let mesNombre = 'Sin mes';
+                    if (bono.period) {
+                        const raw = formatMadridDate(bono.period?.starts_at || (bono.period.membership_month ? `${bono.period.membership_month}T00:00:00.000Z` : new Date()), { month: 'long', year: 'numeric' });
+                        if (raw && raw !== '--/--/----') {
+                            mesNombre = raw.charAt(0).toUpperCase() + raw.slice(1);
+                        }
+                    } else if (bono.mesClave) {
+                        mesNombre = typeof naturalMonthOptionLabel === 'function' ? naturalMonthOptionLabel(bono.mesClave) : bono.mesClave;
+                    }
+
+                    if (esInicial) {
+                        return `
+            <!-- BONO INICIAL (BRONCE METÁLICO) -->
+            <div role="button" tabindex="0" onclick="abrirModalElegirBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffbf7 0%, #f7ede2 50%, #edd3ba 100%); border: 1.5px solid #8f6b2d; box-shadow: 0 1px 4px rgba(143, 107, 45, 0.2);" title="Bono Inicial activo: ${escapeHtml(mesNombre)} (1 clase/semana)">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #8f6b2d 0%, #5e4213 100%);">
+                    <i class="ph-fill ph-plant text-sm"></i>
+                </div>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="text-[9px] font-black uppercase tracking-wider text-[#8f6b2d]">Bono Inicial</span>
+                    <span class="text-xs sm:text-[13px] font-black text-[#5e4213] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
+                </div>
+            </div>`;
+                    } else if (esMensual) {
+                        return `
+            <!-- BONO MENSUAL (PLATA METÁLICA) -->
+            <div role="button" tabindex="0" onclick="abrirModalElegirBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.22);" title="Bono Mensual activo: ${escapeHtml(mesNombre)} (2 clases/semana)">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
+                    <i class="ph-fill ph-calendar-check text-sm"></i>
+                </div>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="text-[9px] font-black uppercase tracking-wider text-[#334155]">Bono Mensual</span>
+                    <span class="text-xs sm:text-[13px] font-black text-[#0f172a] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
+                </div>
+            </div>`;
+                    } else {
+                        return `
+            <!-- BONO ILIMITADO (DORADO METÁLICO) -->
+            <div role="button" tabindex="0" onclick="abrirModalElegirBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.2);" title="Bono Ilimitado activo: ${escapeHtml(mesNombre)}">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
+                    <i class="ph-fill ph-infinity text-sm"></i>
+                </div>
+                <div class="flex flex-col text-left leading-none">
+                    <span class="text-[9px] font-black uppercase tracking-wider text-[#92400e]">Bono Ilimitado</span>
+                    <span class="text-xs sm:text-[13px] font-black text-[#78350f] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
+                </div>
+            </div>`;
+                    }
+                }).join('');
+            }
+
             if (headerWrapper) {
                 headerWrapper.innerHTML = `
-            <!-- 1. CLASES NORMALES (BRONCE METÁLICO) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonosCliente(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f6ece0 50%, #eed4bd 100%); border: 1.5px solid #c4824d; box-shadow: 0 1px 4px rgba(196, 130, 77, 0.15);" title="Ver cada uno de mis bonos y su fecha de caducidad">
-                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #b86e37 0%, #7d370c 100%);">
+            ${bonosRecurrentesHtml}
+
+            <!-- SEPARADOR / ESPACIO ENTRE BONO RECURRENTE Y CLASES -->
+            <div class="h-7 w-px bg-cocoa/20 mx-2 sm:mx-3.5 self-center shrink-0" aria-hidden="true"></div>
+
+            <!-- CLASES NORMALES (COLOR CORPORATIVO COCOA GEN YOGA) -->
+            <div role="button" tabindex="0" onclick="abrirDetalleBonosCliente(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fdfbf7 0%, #f6f0ea 50%, #ede3d7 100%); border: 1.5px solid #26160C; box-shadow: 0 1px 4px rgba(38, 22, 12, 0.12);" title="Ver cada uno de mis bonos y su fecha de caducidad">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #442a18 0%, #26160C 100%);">
                     <i class="ph-fill ph-ticket"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
-                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#874113]">${escapeHtml(profileT('profile_balance_classes', 'Clases'))}</span>
-                    <span class="${countTxt} font-black text-[#5e2704] mt-0.5">${userBonos} ${availableLabel}</span>
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-cocoa">${escapeHtml(profileT('profile_balance_classes', 'Clases'))}</span>
+                    <span class="${countTxt} font-black text-cocoa mt-0.5">${userBonos} ${availableLabel}</span>
                 </div>
             </div>
 
-            <!-- 2. CLASE ESPECIAL (PLATEADA METÁLICA) -->
-            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.18);" title="Comprar Bono Clase Especial">
-                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
-                    <i class="ph-fill ph-sparkle text-amber-300"></i>
+            <!-- CLASE ESPECIAL (COLOR CORPORATIVO TERRACOTTA GEN YOGA) -->
+            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbfb 0%, #fdf2ef 50%, #fce7e2 100%); border: 1.5px solid #E1654E; box-shadow: 0 1px 4px rgba(225, 101, 78, 0.15);" title="Comprar Bono Clase Especial">
+                <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #e1654e 0%, #c13d26 100%);">
+                    <i class="ph-fill ph-sparkle text-white"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
-                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#334155]">${escapeHtml(profileT('profile_balance_special', 'Clase especial'))}</span>
-                    <span class="${countTxt} font-black text-[#0f172a] mt-0.5">${userSpecialBonosMes} ${availableLabel}</span>
+                    <span class="${titleTxt} font-black uppercase tracking-wider text-[#c13d26]">${escapeHtml(profileT('profile_balance_special', 'Clase especial'))}</span>
+                    <span class="${countTxt} font-black text-[#882110] mt-0.5">${userSpecialBonosMes} ${availableLabel}</span>
                 </div>
             </div>
 
             ${userTotalTalleresDisponibles > 0 ? `
-            <!-- 3. TALLERES (DORADA METÁLICA - A LA DERECHA DE LA PLATEADA) -->
+            <!-- 3. TALLERES (DORADA METÁLICA) -->
             <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);" title="Ver y reservar talleres temáticos">
                 <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
                     <i class="ph-fill ph-chalkboard-teacher"></i>
@@ -9642,39 +9747,6 @@
                     <span class="${countTxt} font-black text-[#022c22] mt-0.5">${userSaldoNutricion} ${availableLabel}</span>
                 </div>
             </div>` : ''}
-
-            <!-- 3d2. BONO INICIAL (1 CLASE/SEMANA) - BRONCE METÁLICO -->
-            <div role="button" tabindex="0" onclick="comprarBonoInicial(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbf7 0%, #f7ede2 50%, #edd3ba 100%); border: 1.5px solid #8f6b2d; box-shadow: 0 1px 4px rgba(143, 107, 45, 0.15);" title="Comprar Bono Inicial (1 clase/semana · Bronce)">
-                <div class="${iconBox} flex items-center justify-center shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #8f6b2d 0%, #5e4213 100%); color: white;">
-                    <i class="ph-fill ph-plant"></i>
-                </div>
-                <div class="flex flex-col text-left leading-none">
-                    <span class="${titleTxt} font-bold uppercase tracking-wider text-[#8f6b2d]">${escapeHtml(profileT('profile_balance_bono_inicial', 'Bono Inicial'))}</span>
-                    <span class="${countTxt} font-black text-[#5e4213] mt-0.5">${activeInitialPeriod ? escapeHtml(formatMonthlyMonth(activeInitialPeriod)) : (nextInitialPeriod ? `${escapeHtml(profileT('profile_balance_next', 'Próx:'))} ${escapeHtml(formatMonthlyMonth(nextInitialPeriod))}` : escapeHtml(profileT('profile_balance_no_month', 'Sin mes')))}</span>
-                </div>
-            </div>
-
-            <!-- 3e. BONO MENSUAL (2 CLASES/SEMANA) - PLATA METÁLICA -->
-            <div role="button" tabindex="0" onclick="comprarBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.18);" title="Comprar Bono Mensual (2 clases/semana · Plata)">
-                <div class="${iconBox} flex items-center justify-center shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: white;">
-                    <i class="ph-fill ph-calendar-check"></i>
-                </div>
-                <div class="flex flex-col text-left leading-none">
-                    <span class="${titleTxt} font-bold uppercase tracking-wider text-[#334155]">${escapeHtml(profileT('profile_balance_bono_mensual', 'Bono Mensual'))}</span>
-                    <span class="${countTxt} font-black text-[#0f172a] mt-0.5">${activeMonthlyPeriod ? escapeHtml(formatMonthlyMonth(activeMonthlyPeriod)) : (nextMonthlyPeriod ? `${escapeHtml(profileT('profile_balance_next', 'Próx:'))} ${escapeHtml(formatMonthlyMonth(nextMonthlyPeriod))}` : escapeHtml(profileT('profile_balance_no_month', 'Sin mes')))}</span>
-                </div>
-            </div>
-
-            <!-- 4. BONO ILIMITADO (MENSUAL) - DORADO METÁLICO -->
-            <div role="button" tabindex="0" onclick="comprarBonoIlimitado(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);" title="Comprar mes ilimitado (Dorado)">
-                <div class="${iconBox} flex items-center justify-center shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); color: white;">
-                    <i class="ph-fill ph-infinity"></i>
-                </div>
-                <div class="flex flex-col text-left leading-none">
-                    <span class="${titleTxt} font-bold uppercase tracking-wider text-[#92400e]">${escapeHtml(profileT('profile_balance_unlimited', 'Ilimitado'))}</span>
-                    <span class="${countTxt} font-black text-[#78350f] mt-0.5">${activePeriod ? escapeHtml(formatUnlimitedMonth(activePeriod)) : (nextPeriod ? `${escapeHtml(profileT('profile_balance_next', 'Próx:'))} ${escapeHtml(formatUnlimitedMonth(nextPeriod))}` : escapeHtml(profileT('profile_balance_no_month', 'Sin mes')))}</span>
-                </div>
-            </div>
 
             ${userCreditosReprogConsulta > 0 ? `
             <!-- 5. CRÉDITO CONSULTA REPROGRAMADA -->
