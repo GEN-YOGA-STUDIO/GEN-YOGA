@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.0.6 — 27 oct 2026 · Incidencia
+
+- **Descripción:** Sustitucion de Yoga Restaurativo por Yoga Integral Adaptado en pestanas y calendario (ámbito: clases)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.0.6`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.0.6.md`
+
 ## v18.0.5 — 27 oct 2026 · Incidencia
 
 - **Descripción:** Ajuste de tamano de letra en pestanas de carpetas de clases (ámbito: clases)

@@ -108,6 +108,7 @@
             classAction: '{action}: {name}, {date}, de {start} a {end}',
             vinyasa: 'Power Vinyasa',
             powerVinyasa: 'Power Vinyasa',
+            integral: 'Yoga Integral Adaptado',
             restorative: 'Yoga Restaurativo',
             men: 'Yoga Alineación',
             alignment: 'Yoga Alineación',
@@ -181,6 +182,7 @@
             classAction: '{action}: {name}, {date}, from {start} to {end}',
             vinyasa: 'Power Vinyasa',
             powerVinyasa: 'Power Vinyasa',
+            integral: 'Adapted Integral Yoga',
             restorative: 'Restorative Yoga',
             men: 'Alignment Yoga',
             alignment: 'Alignment Yoga',
@@ -339,6 +341,7 @@
         if (!normalized) return '';
         if (normalized.includes('introductor') || normalized.includes('bienvenida') || normalized.includes('gratis') || normalized.includes('prueba') || normalized.includes('clase abierta') || normalized.includes('abierta')) return 'sesion-introductoria';
         if (normalized.includes('power') && normalized.includes('vinyasa')) return 'power-vinyasa';
+        if (normalized.includes('integral')) return 'yoga-integral-adaptado';
         if (normalized.includes('restaur') || normalized.includes('suave')) return 'restaurativa';
         if (normalized.includes('alineac') || normalized.includes('hombre')) return 'yoga-alineacion';
         if (normalized.includes('para todos') || normalized.includes('for everyone')) return 'yoga-para-todos';
@@ -689,6 +692,8 @@
             'sesion-introductoria': text('introductory') || 'Sesión Introductoria de Yoga',
             'power-vinyasa': text('powerVinyasa'),
             vinyasa: text('powerVinyasa'),
+            'yoga-integral-adaptado': text('integral') || 'Yoga Integral Adaptado',
+            'yoga-integral': text('integral') || 'Yoga Integral Adaptado',
             restaurativa: text('restorative'),
             'yoga-alineacion': text('alignment'),
             'yoga-para-hombres': text('alignment'),
@@ -712,6 +717,8 @@
         'sesion-introductoria': '#047857',
         'power-vinyasa': '#df7fa5',
         vinyasa: '#df7fa5',
+        'yoga-integral-adaptado': '#ee9785',
+        'yoga-integral': '#ee9785',
         restaurativa: '#c3b89a',
         'yoga-alineacion': '#5A8A7A',
         'yoga-para-hombres': '#5A8A7A',
@@ -1036,7 +1043,7 @@
             { style: 'yoga-para-todos', label: text('everyone') },
             { style: 'yoga-alineacion', label: text('alignment') },
             { style: 'power-vinyasa', label: text('powerVinyasa') },
-            { style: 'restaurativa', label: text('restorative') },
+            { style: 'yoga-integral-adaptado', label: text('integral') || 'Yoga Integral' },
             { style: 'sesion-introductoria', label: text('introductory') },
             { style: 'ayurveda', label: text('ayurveda') }
         ];
@@ -1049,6 +1056,8 @@
                 isPressed = state.style === 'power-vinyasa' || state.style === 'vinyasa';
             } else if (button.style === 'yoga-alineacion') {
                 isPressed = state.style === 'yoga-alineacion' || state.style === 'yoga-para-hombres';
+            } else if (button.style === 'yoga-integral-adaptado') {
+                isPressed = state.style === 'yoga-integral-adaptado' || state.style === 'yoga-integral';
             } else {
                 isPressed = state.style === button.style;
             }
