@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.0.10 — 27 oct 2026 · Incidencia
+
+- **Descripción:** Eliminar precio en confirmacion de reserva con bono inicial o mensual (ámbito: perfil)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.0.10`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.0.10.md`
+
 ## v18.0.9 — 27 oct 2026 · Incidencia
 
 - **Descripción:** Ocultar aviso sin bonos si el alumno tiene bono inicial o clases especiales (ámbito: perfil)
