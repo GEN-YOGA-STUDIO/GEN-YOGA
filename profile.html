@@ -7849,7 +7849,7 @@
             }
 
             // Load data from Supabase without letting a single failure block the entire view
-            if (!isAdmin) {
+            if (currentUser?.id) {
                 await cargarMisReservasUsuario();
             }
             await Promise.allSettled([
@@ -8286,14 +8286,31 @@
             let mensualUsadas = 0;
             let inicialUsadas = 0;
             let ilimitadoUsadas = 0;
+            let totalMensualesUsadas = 0;
 
             (userBookingsCache || []).forEach(b => {
-                if (b.estado === 'confirmada' && b.clases && b.clases.fecha_inicio) {
-                    const f = new Date(b.clases.fecha_inicio);
+                if (b.estado === 'confirmada') {
+                    const fVal = b.clases?.fecha_inicio || b.fecha_inicio || b.fecha;
+                    if (!fVal) return;
+                    const f = new Date(fVal);
                     if (f >= inicioSemana && f < finSemana) {
-                        if (b.tipo_reserva === 'bono_mensual') mensualUsadas++;
-                        else if (b.tipo_reserva === 'bono_inicial') inicialUsadas++;
-                        else if (b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual) ilimitadoUsadas++;
+                        const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
+                        const esPack = b.tipo_reserva === 'pack_normal' || (b.bono_descontado === true && !b.usado_bono_mensual);
+                        const esBienvenida = b.tipo_reserva === 'bienvenida' || b.saldo_gratis_descontado === true;
+                        const esGratis = b.tipo_reserva === 'gratuita';
+                        const esEspecial = b.tipo_reserva === 'clase_especial';
+
+                        if (esIlimitado) {
+                            ilimitadoUsadas++;
+                        } else if (b.tipo_reserva === 'bono_mensual') {
+                            mensualUsadas++;
+                            totalMensualesUsadas++;
+                        } else if (b.tipo_reserva === 'bono_inicial') {
+                            inicialUsadas++;
+                            totalMensualesUsadas++;
+                        } else if (!esPack && !esBienvenida && !esGratis && !esEspecial) {
+                            totalMensualesUsadas++;
+                        }
                     }
                 }
             });
@@ -8302,7 +8319,7 @@
                 mensualUsadas,
                 inicialUsadas,
                 ilimitadoUsadas,
-                totalMensualesUsadas: mensualUsadas + inicialUsadas
+                totalMensualesUsadas: Math.max(totalMensualesUsadas, mensualUsadas + inicialUsadas)
             };
         }
         window.obtenerUsoSemanalBonosMensuales = obtenerUsoSemanalBonosMensuales;
@@ -8809,7 +8826,7 @@
                             </div>
                         `;
                     } else if (item.tipo === 'bono_mensual') {
-                        const usadasEsteBono = esMesActual ? usoSemanal.mensualUsadas : 0;
+                        const usadasEsteBono = esMesActual ? Math.min(2, Math.max(usoSemanal.mensualUsadas, usoSemanal.totalMensualesUsadas)) : 0;
                         return `
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-300 bg-slate-50/80 px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
@@ -8832,7 +8849,7 @@
                             </div>
                         `;
                     } else {
-                        const usadasEsteBono = esMesActual ? usoSemanal.inicialUsadas : 0;
+                        const usadasEsteBono = esMesActual ? Math.min(1, Math.max(usoSemanal.inicialUsadas, Math.max(0, usoSemanal.totalMensualesUsadas - 2))) : 0;
                         return `
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-[#c4824d]/40 bg-[#fffbf7] px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
@@ -9162,11 +9179,27 @@
 
             let count = 0;
             (userBookingsCache || []).forEach(b => {
-                if (b.estado === 'confirmada' && b.clases && b.clases.fecha_inicio) {
-                    const f = new Date(b.clases.fecha_inicio);
+                if (b.estado === 'confirmada') {
+                    const fVal = b.clases?.fecha_inicio || b.fecha_inicio || b.fecha;
+                    if (!fVal) return;
+                    const f = new Date(fVal);
                     if (f >= inicioSemana && f < finSemana) {
-                        if (b.tipo_reserva === 'bono_inicial' || b.tipo_reserva === 'bono_mensual' || b.usado_bono_mensual) {
-                            count++;
+                        const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
+                        const esPack = b.tipo_reserva === 'pack_normal' || (b.bono_descontado === true && !b.usado_bono_mensual);
+                        const esBienvenida = b.tipo_reserva === 'bienvenida' || b.saldo_gratis_descontado === true;
+                        const esGratis = b.tipo_reserva === 'gratuita';
+                        const esEspecial = b.tipo_reserva === 'clase_especial';
+
+                        if (period.plan_type === 'bono_ilimitado' || period.max_classes_per_week === Infinity) {
+                            if (esIlimitado) count++;
+                        } else if (period.plan_type === 'bono_mensual') {
+                            if (b.tipo_reserva === 'bono_mensual' || (!esIlimitado && !esPack && !esBienvenida && !esGratis && !esEspecial && b.tipo_reserva !== 'bono_inicial')) count++;
+                        } else if (period.plan_type === 'bono_inicial') {
+                            if (b.tipo_reserva === 'bono_inicial') count++;
+                        } else {
+                            if (b.tipo_reserva === 'bono_inicial' || b.tipo_reserva === 'bono_mensual' || (!esIlimitado && !esPack && !esBienvenida && !esGratis && !esEspecial)) {
+                                count++;
+                            }
                         }
                     }
                 }
@@ -13362,8 +13395,64 @@
             const cubiertaPorIlimitado = !!periodoIlimitado;
             const periodosMensuales = typeof getMonthlyMembershipPeriodsForDate === 'function' ? getMonthlyMembershipPeriodsForDate(fechaClase) : (getMonthlyMembershipPeriodForDate(fechaClase) ? [getMonthlyMembershipPeriodForDate(fechaClase)] : []);
             const totalLimiteSemanal = periodosMensuales.reduce((sum, p) => sum + toSafeNumber(p.max_classes_per_week || (p.plan_type === 'bono_inicial' ? 1 : 2)), 0);
-            const usoSemanal = typeof obtenerUsoSemanalBonosMensuales === 'function' ? obtenerUsoSemanalBonosMensuales(fechaClase) : { totalMensualesUsadas: 0, mensualUsadas: 0, inicialUsadas: 0 };
-            const clasesConsumidasSemana = usoSemanal.totalMensualesUsadas;
+            // Sincronización en tiempo real del uso semanal con Supabase (con fallback a cache local)
+            let usoSemanal = typeof obtenerUsoSemanalBonosMensuales === 'function' ? obtenerUsoSemanalBonosMensuales(fechaClase) : { totalMensualesUsadas: 0, mensualUsadas: 0, inicialUsadas: 0 };
+            if (currentUser?.id && client && periodosMensuales.length > 0) {
+                try {
+                    const baseDate = new Date(fechaClase);
+                    const diaSem = baseDate.getDay();
+                    const diffALunes = baseDate.getDate() - diaSem + (diaSem === 0 ? -6 : 1);
+                    const inicioSemanaDate = new Date(baseDate);
+                    inicioSemanaDate.setDate(diffALunes);
+                    inicioSemanaDate.setHours(0, 0, 0, 0);
+                    const finSemanaDate = new Date(inicioSemanaDate);
+                    finSemanaDate.setDate(finSemanaDate.getDate() + 7);
+
+                    const { data: weeklyBookings, error: errWeekly } = await client
+                        .from('reservas_yoga')
+                        .select('id, tipo_reserva, usado_bono_mensual, bono_descontado, saldo_gratis_descontado, estado, clases!inner(id, fecha_inicio)')
+                        .eq('user_id', currentUser.id)
+                        .eq('estado', 'confirmada')
+                        .gte('clases.fecha_inicio', inicioSemanaDate.toISOString())
+                        .lt('clases.fecha_inicio', finSemanaDate.toISOString());
+
+                    if (!errWeekly && Array.isArray(weeklyBookings)) {
+                        let cntMensual = 0;
+                        let cntInicial = 0;
+                        let cntTotal = 0;
+                        let cntIlimitado = 0;
+                        weeklyBookings.forEach(r => {
+                            const esIlimitado = r.tipo_reserva === 'ilimitado' || r.usado_bono_mensual === true;
+                            const esPack = r.tipo_reserva === 'pack_normal' || (r.bono_descontado === true && !r.usado_bono_mensual);
+                            const esBienvenida = r.tipo_reserva === 'bienvenida' || r.saldo_gratis_descontado === true;
+                            const esGratis = r.tipo_reserva === 'gratuita';
+                            const esEspecial = r.tipo_reserva === 'clase_especial';
+
+                            if (esIlimitado) {
+                                cntIlimitado++;
+                            } else if (r.tipo_reserva === 'bono_mensual') {
+                                cntMensual++;
+                                cntTotal++;
+                            } else if (r.tipo_reserva === 'bono_inicial') {
+                                cntInicial++;
+                                cntTotal++;
+                            } else if (!esPack && !esBienvenida && !esGratis && !esEspecial) {
+                                cntTotal++;
+                            }
+                        });
+                        usoSemanal = {
+                            mensualUsadas: cntMensual,
+                            inicialUsadas: cntInicial,
+                            ilimitadoUsadas: cntIlimitado,
+                            totalMensualesUsadas: Math.max(cntTotal, cntMensual + cntInicial)
+                        };
+                    }
+                } catch (eWeekly) {
+                    console.warn('Aviso sincronizando uso semanal con Supabase:', eWeekly);
+                }
+            }
+
+            const clasesConsumidasSemana = Math.max(usoSemanal.totalMensualesUsadas, usoSemanal.mensualUsadas + usoSemanal.inicialUsadas);
             const limiteSemanal = totalLimiteSemanal;
             const cupoMensualDisponible = periodosMensuales.length > 0 && (clasesConsumidasSemana < totalLimiteSemanal);
             const cubiertaPorMensual = !!periodosMensuales.length && cupoMensualDisponible;
@@ -13975,13 +14064,27 @@
                 mensajeConfirmacion = `${escapeHtml(profileT('profile_unlimited_confirm_prefix', '¿Quieres reservar esta clase con tu'))} <b>${escapeHtml(profileT('profile_unlimited_pass', 'Bono Ilimitado'))}</b>?`;
             } else if (canUseMonthly) {
                 // Determinar qué bono mensual se consume según prioridad por precio (Mensual 65 € > Inicial 40 €)
+                // Se agotan primero las clases del Bono Mensual (hasta v_mensual_max) y después las del Bono Inicial (hasta v_inicial_max)
                 const v_mensual_max = periodosMensuales.filter(p => p.plan_type === 'bono_mensual' || toSafeNumber(p.max_classes_per_week) === 2).reduce((sum, p) => sum + toSafeNumber(p.max_classes_per_week || 2), 0);
-                const usaMensual = v_mensual_max > 0 && (usoSemanal.mensualUsadas < v_mensual_max);
+                const v_inicial_max = periodosMensuales.filter(p => p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1).reduce((sum, p) => sum + toSafeNumber(p.max_classes_per_week || 1), 0);
+                const gastadasSemana = Math.max(usoSemanal.totalMensualesUsadas, usoSemanal.mensualUsadas + usoSemanal.inicialUsadas);
+
+                // Si aún no se han consumido v_mensual_max clases esta semana y el usuario tiene Bono Mensual activo: usa Bono Mensual
+                // Si ya se consumieron v_mensual_max clases (p.ej. 2) y el usuario tiene Bono Inicial activo: pasa a Bono Inicial
+                let usaMensual = false;
+                if (v_mensual_max > 0 && (usoSemanal.mensualUsadas < v_mensual_max && gastadasSemana < v_mensual_max)) {
+                    usaMensual = true;
+                } else if (v_inicial_max > 0) {
+                    usaMensual = false;
+                } else {
+                    usaMensual = v_mensual_max > 0;
+                }
+
                 const nombreBonoUsado = usaMensual
                     ? `${escapeHtml(profileT('rates_bono_mensual_title', 'Bono Mensual'))} (2 clases/semana)`
                     : `${escapeHtml(profileT('rates_bono_inicial_title', 'Bono Inicial'))} (1 clase/semana)`;
                 const detalleCombinado = periodosMensuales.length > 1
-                    ? `<br><span class="text-[11px] text-cocoa/70">Cupo semanal combinado: clase ${usoSemanal.totalMensualesUsadas + 1} de ${totalLimiteSemanal}.</span>`
+                    ? `<br><span class="text-[11px] text-cocoa/70">Cupo semanal combinado: clase ${gastadasSemana + 1} de ${totalLimiteSemanal}.</span>`
                     : '';
                 mensajeConfirmacion = `${escapeHtml(profileT('profile_unlimited_confirm_prefix', '¿Quieres reservar esta clase con tu'))} <b>${nombreBonoUsado}</b>?${detalleCombinado}`;
             } else {
