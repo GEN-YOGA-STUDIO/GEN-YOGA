@@ -23700,8 +23700,9 @@
                 });
             }
 
-            // Si tiene el flag legacy bono_mensual_activo pero sin periodos en BD
-            if (userMonths.length === 0 && u.bono_mensual_activo) {
+            // Si tiene el flag bono_mensual_activo pero no hay ningún periodo ilimitado (activo/futuro) en la lista
+            const tieneIlimitadoEnLista = todosPeriodosMensuales.some(p => p.tipo === 'ilimitado');
+            if (!tieneIlimitadoEnLista && u.bono_mensual_activo) {
                 todosPeriodosMensuales.push({
                     tipo: 'ilimitado',
                     badgeTipo: '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded border border-emerald-300 shadow-2xs">🥇 Ilimitado (90 €)</span>',
@@ -24279,55 +24280,101 @@
             Swal.fire({ title: 'Retirando bono...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
             let success = false;
+            let resultData = null;
+            const parsedPeriodId = (selectedPeriodId && !isNaN(Number(selectedPeriodId)) && Number(selectedPeriodId) > 0)
+                ? Number(selectedPeriodId)
+                : null;
+            const mesDate = selectedMes ? (normalizarMesClave(selectedMes) + '-01') : null;
+
+            // 1. Invocar RPC dedicada SECURITY DEFINER admin_retirar_mes_ilimitado
             try {
-                const mesDate = selectedMes ? (normalizarMesClave(selectedMes) + '-01') : null;
                 const { data, error } = await client.rpc('admin_retirar_mes_ilimitado', {
                     p_user_id: userId,
-                    p_period_id: selectedPeriodId ? parseInt(selectedPeriodId, 10) : null,
+                    p_period_id: parsedPeriodId,
                     p_mes: mesDate
                 });
-                if (!error) success = true;
+                if (!error && data && data.success !== false) {
+                    success = true;
+                    resultData = data;
+                } else if (error) {
+                    console.warn('Fallo RPC admin_retirar_mes_ilimitado:', error);
+                }
             } catch (rpcErr) {
                 console.warn('Fallo RPC admin_retirar_mes_ilimitado:', rpcErr);
             }
 
-            if (!success) {
+            // 2. Si no tuvo éxito y hay un period_id concreto, intentar admin_retirar_periodo_ilimitado
+            if (!success && parsedPeriodId) {
                 try {
-                    if (selectedPeriodId) {
-                        await client.from('unlimited_membership_periods').delete().eq('id', selectedPeriodId);
-                    } else if (selectedMes) {
-                        const mDate = normalizarMesClave(selectedMes) + '-01';
-                        await client.from('unlimited_membership_periods').delete().eq('user_id', userId).eq('membership_month', mDate);
-                    } else {
-                        await client.from('unlimited_membership_periods').delete().eq('user_id', userId);
-                    }
-                    const { data: remaining } = await client.from('unlimited_membership_periods').select('id, starts_at, ends_at').eq('user_id', userId);
-                    const remainingCount = (remaining || []).length;
-                    const minStart = remainingCount ? remaining.reduce((min, p) => !min || p.starts_at < min ? p.starts_at : min, null) : null;
-                    const maxEnd = remainingCount ? remaining.reduce((max, p) => !max || p.ends_at > max ? p.ends_at : max, null) : null;
-                    await client.rpc('admin_configurar_bono_mensual', {
-                        p_user_id: userId,
-                        p_activo: remainingCount > 0,
-                        p_inicio: minStart,
-                        p_fin: maxEnd
+                    const { error: rpc2Err } = await client.rpc('admin_retirar_periodo_ilimitado', {
+                        p_period_id: parsedPeriodId
                     });
-                    success = true;
-                } catch (fbErr) {
-                    console.error('Error fallback retirar mes:', fbErr);
+                    if (!rpc2Err) {
+                        success = true;
+                    } else {
+                        console.warn('Fallo fallback admin_retirar_periodo_ilimitado:', rpc2Err);
+                    }
+                } catch (rpc2Err) {
+                    console.warn('Fallo fallback admin_retirar_periodo_ilimitado:', rpc2Err);
+                }
+            }
+
+            // 3. Fallback adicional si se retira todo o el usuario ya no tiene meses: admin_configurar_bono_mensual
+            if (!success && (!parsedPeriodId && !mesDate)) {
+                try {
+                    const { error: cfgErr } = await client.rpc('admin_configurar_bono_mensual', {
+                        p_user_id: userId,
+                        p_activo: false,
+                        p_inicio: null,
+                        p_fin: null
+                    });
+                    if (!cfgErr) {
+                        success = true;
+                    } else {
+                        console.warn('Fallo fallback admin_configurar_bono_mensual:', cfgErr);
+                    }
+                } catch (cfgErr) {
+                    console.warn('Fallo fallback admin_configurar_bono_mensual:', cfgErr);
                 }
             }
 
             // Actualizar caché en memoria inmediatamente
             const uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
             if (uCache) {
-                if (!selectedPeriodId && !selectedMes) {
+                if (resultData && typeof resultData.bono_mensual_activo === 'boolean') {
+                    uCache.bono_mensual_activo = resultData.bono_mensual_activo;
+                    if (!resultData.bono_mensual_activo) {
+                        uCache.bono_mensual_inicio = null;
+                        uCache.bono_mensual_fin = null;
+                        uCache.unlimited_membership_periods = [];
+                    }
+                } else if (!parsedPeriodId && !mesDate) {
                     uCache.bono_mensual_activo = false;
                     uCache.bono_mensual_inicio = null;
                     uCache.bono_mensual_fin = null;
                     uCache.unlimited_membership_periods = [];
                 }
+                if (Array.isArray(uCache.unlimited_membership_periods)) {
+                    if (parsedPeriodId) {
+                        uCache.unlimited_membership_periods = uCache.unlimited_membership_periods.filter(p => Number(p.id) !== Number(parsedPeriodId));
+                    } else if (mesDate) {
+                        const mK = normalizarMesClave(mesDate);
+                        uCache.unlimited_membership_periods = uCache.unlimited_membership_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mK);
+                    }
+                    if (uCache.unlimited_membership_periods.length === 0 && (!resultData || !resultData.bono_mensual_activo)) {
+                        uCache.bono_mensual_activo = false;
+                        uCache.bono_mensual_inicio = null;
+                        uCache.bono_mensual_fin = null;
+                    }
+                }
             }
 
+            if (typeof actualizarContadoresFiltroBonos === 'function') {
+                actualizarContadoresFiltroBonos();
+            }
+            if (typeof filtrarUsuarios === 'function') {
+                filtrarUsuarios();
+            }
             if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
             if (typeof checkProfile === 'function') checkProfile();
 
