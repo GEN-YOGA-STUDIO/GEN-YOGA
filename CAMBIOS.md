@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.0.8 — 27 oct 2026 · Incidencia
+
+- **Descripción:** Mostrar tags de bonos mensuales en admin y desglose semanal de bono mensual para el alumno (ámbito: perfil)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.0.8`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.0.8.md`
+
 ## v18.0.7 — 27 oct 2026 · Incidencia
 
 - **Descripción:** Unificar gestion de bonos mensuales al inicio del modal de administracion (ámbito: perfil)
