@@ -8293,44 +8293,93 @@
         }
         window.getMonthlyMembershipPeriodForDate = getMonthlyMembershipPeriodForDate;
 
-        function obtenerUsoSemanalBonosMensuales(refDate = null) {
-            const baseDate = refDate ? new Date(refDate) : new Date();
-            const inicioSemana = new Date(baseDate);
-            const dia = inicioSemana.getDay();
-            const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
-            inicioSemana.setDate(diff);
-            inicioSemana.setHours(0, 0, 0, 0);
+        function getBloqueSemanalMesNatural(refDate = null) {
+            let base = refDate instanceof Date ? refDate : new Date(refDate || Date.now());
+            if (Number.isNaN(base.getTime())) base = new Date();
 
-            const finSemana = new Date(inicioSemana);
-            finSemana.setDate(finSemana.getDate() + 7);
+            const ym = (typeof getMadridYearMonthClient === 'function' ? getMadridYearMonthClient(base) : '')
+                || (typeof normalizarMesClave === 'function' ? normalizarMesClave(base) : '')
+                || base.toISOString().slice(0, 7);
+            const [year, month] = ym.split('-').map(Number);
+
+            let day = 1;
+            try {
+                const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', day: '2-digit' }).formatToParts(base);
+                day = Number(parts.find(p => p.type === 'day')?.value) || 1;
+            } catch (_) {
+                day = base.getDate();
+            }
+
+            const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+            const index = Math.min(4, Math.max(0, Math.floor((day - 1) / 7)));
+            const startDay = 1 + index * 7;
+            const endDay = Math.min(startDay + 6, daysInMonth);
+            const pad = value => String(value).padStart(2, '0');
+
+            return {
+                ym,
+                year,
+                month,
+                index,
+                startDay,
+                endDay,
+                daysInMonth,
+                startKey: `${ym}-${pad(startDay)}`,
+                endKey: `${ym}-${pad(endDay)}`
+            };
+        }
+        window.getBloqueSemanalMesNatural = getBloqueSemanalMesNatural;
+
+        function addDaysToDateKey(dateKey, days) {
+            const [year, month, day] = String(dateKey || '').split('-').map(Number);
+            if (!year || !month || !day) return '';
+            const dt = new Date(Date.UTC(year, month - 1, day + Number(days || 0), 12));
+            return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+        }
+        window.addDaysToDateKey = addDaysToDateKey;
+
+        function madridDateTimeToUtc(dateKey, hour = 0) {
+            const [year, month, day] = String(dateKey || '').split('-').map(Number);
+            if (!year || !month || !day) return null;
+            const utcGuess = Date.UTC(year, month - 1, day, Number(hour) || 0, 0, 0);
+            try {
+                const parts = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'Europe/Madrid',
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                }).formatToParts(new Date(utcGuess));
+                const val = type => Number(parts.find(p => p.type === type)?.value || 0);
+                let localHour = val('hour');
+                if (localHour === 24) localHour = 0;
+                const asUtc = Date.UTC(val('year'), val('month') - 1, val('day'), localHour, val('minute'), val('second'));
+                return new Date(utcGuess - (asUtc - utcGuess));
+            } catch (_) {
+                return new Date(utcGuess);
+            }
+        }
+        window.madridDateTimeToUtc = madridDateTimeToUtc;
+
+        function obtenerUsoSemanalBonosMensuales(refDate = null) {
+            const bloque = getBloqueSemanalMesNatural(refDate || new Date());
 
             let mensualUsadas = 0;
             let inicialUsadas = 0;
             let ilimitadoUsadas = 0;
-            let totalMensualesUsadas = 0;
 
             (userBookingsCache || []).forEach(b => {
                 if (b.estado === 'confirmada') {
                     const fVal = b.clases?.fecha_inicio || b.fecha_inicio || b.fecha;
                     if (!fVal) return;
-                    const f = new Date(fVal);
-                    if (f >= inicioSemana && f < finSemana) {
+                    const fechaKey = typeof madridDateKey === 'function' ? madridDateKey(fVal) : '';
+                    if (fechaKey && fechaKey >= bloque.startKey && fechaKey <= bloque.endKey) {
                         const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
-                        const esPack = b.tipo_reserva === 'pack_normal' || (b.bono_descontado === true && !b.usado_bono_mensual);
-                        const esBienvenida = b.tipo_reserva === 'bienvenida' || b.saldo_gratis_descontado === true;
-                        const esGratis = b.tipo_reserva === 'gratuita';
-                        const esEspecial = b.tipo_reserva === 'clase_especial';
 
                         if (esIlimitado) {
                             ilimitadoUsadas++;
                         } else if (b.tipo_reserva === 'bono_mensual') {
                             mensualUsadas++;
-                            totalMensualesUsadas++;
                         } else if (b.tipo_reserva === 'bono_inicial') {
                             inicialUsadas++;
-                            totalMensualesUsadas++;
-                        } else if (!esPack && !esBienvenida && !esGratis && !esEspecial) {
-                            totalMensualesUsadas++;
                         }
                     }
                 }
@@ -8340,7 +8389,7 @@
                 mensualUsadas,
                 inicialUsadas,
                 ilimitadoUsadas,
-                totalMensualesUsadas: Math.max(totalMensualesUsadas, mensualUsadas + inicialUsadas)
+                totalMensualesUsadas: mensualUsadas + inicialUsadas
             };
         }
         window.obtenerUsoSemanalBonosMensuales = obtenerUsoSemanalBonosMensuales;
@@ -8582,9 +8631,9 @@
             const title = t('profile_saldos_info_title', 'Tus Bonos y Saldos Disponibles');
             const intro = t('profile_saldos_info_intro', 'En GEN Yoga dispones de diferentes tipos de saldo para tus prácticas y servicios:');
             const initialTitle = 'Bono Inicial (40 € / mes natural)';
-            const initialDesc = '1 clase regular por semana (lunes a domingo) durante el mes natural elegido. Válido para clases regulares de yoga.';
+            const initialDesc = '1 clase regular por semana del mes natural durante el mes elegido. Válido para clases regulares de yoga.';
             const monthlyTitle = 'Bono Mensual (65 € / mes natural)';
-            const monthlyDesc = '2 clases regulares por semana (lunes a domingo) durante el mes natural elegido. Válido para clases regulares de yoga.';
+            const monthlyDesc = '2 clases regulares por semana del mes natural durante el mes elegido. Válido para clases regulares de yoga.';
             const unlimitedTitle = t('profile_saldos_info_unlimited_title', 'Bono Mensual Ilimitado (90 € / mes natural)');
             const unlimitedDesc = 'Acceso ilimitado a todas las clases regulares de Yoga durante el mes natural activo. Incluye además 1 Bono de Clase Especial gratuito y 1 Invitado Gratuito para ese mes.';
             const packsTitle = 'Packs Flexibles y Clase Suelta (4 o 10 clases)';
@@ -8848,7 +8897,7 @@
                             </div>
                         `;
                     } else if (item.tipo === 'bono_mensual') {
-                        const usadasEsteBono = esMesActual ? Math.min(2, Math.max(usoSemanal.mensualUsadas, usoSemanal.totalMensualesUsadas)) : 0;
+                        const usadasEsteBono = esMesActual ? usoSemanal.mensualUsadas : 0;
                         return `
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-300 bg-slate-50/80 px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
@@ -8856,7 +8905,7 @@
                                         <span class="text-[9px] font-black uppercase tracking-wider bg-slate-700 text-white px-2 py-0.5 rounded-full shadow-2xs">🥈 ${escapeHtml(profileT('profile_metal_silver_price', 'Plata · 65 €'))}</span>
                                         <span class="text-[11px] font-bold text-slate-800">${escapeHtml(mesLabel)}</span>
                                     </div>
-                                    <p class="text-[10px] text-slate-700 mt-1">${escapeHtml(profileT('profile_monthly_classes_week_desc', '2 clases regulares/semana (lunes a domingo)'))}${esMesActual ? ` · ${escapeHtml(profileT('profile_this_week', 'Esta semana'))}: <strong>${usadasEsteBono} / 2</strong>` : ''}</p>
+                                    <p class="text-[10px] text-slate-700 mt-1">${escapeHtml(profileT('profile_monthly_classes_week_desc', '2 clases regulares/semana del mes natural'))}${esMesActual ? ` · ${escapeHtml(profileT('profile_this_week', 'Esta semana del mes'))}: <strong>${usadasEsteBono} / 2</strong>` : ''}</p>
                                     <div class="flex items-center gap-2 mt-1">
                                         <span class="text-[9px] text-slate-500">${escapeHtml(profileTReplace('profile_ends_on', 'Termina el {date}', { date: formatMadridDate(finIncluido) }))}</span>
                                         <button type="button" onclick="Swal.close(); abrirDetalleBonoMensualSemanas(null, 'bono_mensual', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-slate-700 hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
@@ -8871,7 +8920,7 @@
                             </div>
                         `;
                     } else {
-                        const usadasEsteBono = esMesActual ? Math.min(1, Math.max(usoSemanal.inicialUsadas, Math.max(0, usoSemanal.totalMensualesUsadas - 2))) : 0;
+                        const usadasEsteBono = esMesActual ? usoSemanal.inicialUsadas : 0;
                         return `
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-[#c4824d]/40 bg-[#fffbf7] px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
@@ -8879,7 +8928,7 @@
                                         <span class="text-[9px] font-black uppercase tracking-wider bg-[#8f6b2d] text-white px-2 py-0.5 rounded-full shadow-2xs">🥉 ${escapeHtml(profileT('profile_metal_bronze_price', 'Bronce · 40 €'))}</span>
                                         <span class="text-[11px] font-bold text-[#5e4213]">${escapeHtml(mesLabel)}</span>
                                     </div>
-                                    <p class="text-[10px] text-[#5e4213]/80 mt-1">${escapeHtml(profileT('profile_initial_classes_week_desc', '1 clase regular/semana (lunes a domingo)'))}${esMesActual ? ` · ${escapeHtml(profileT('profile_this_week', 'Esta semana'))}: <strong>${usadasEsteBono} / 1</strong>` : ''}</p>
+                                    <p class="text-[10px] text-[#5e4213]/80 mt-1">${escapeHtml(profileT('profile_initial_classes_week_desc', '1 clase regular/semana del mes natural'))}${esMesActual ? ` · ${escapeHtml(profileT('profile_this_week', 'Esta semana del mes'))}: <strong>${usadasEsteBono} / 1</strong>` : ''}</p>
                                     <div class="flex items-center gap-2 mt-1">
                                         <span class="text-[9px] text-[#5e4213]/60">${escapeHtml(profileTReplace('profile_ends_on', 'Termina el {date}', { date: formatMadridDate(finIncluido) }))}</span>
                                         <button type="button" onclick="Swal.close(); abrirDetalleBonoMensualSemanas(null, 'bono_inicial', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-[#8f6b2d] hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
@@ -9183,7 +9232,7 @@
             if (!period) return 0;
             // refDate puede llegar como Date, ISO o (por error) como el objeto
             // del periodo. Solo aceptamos fechas reales; en cualquier otro caso
-            // contamos la semana natural actual.
+            // contamos el bloque semanal del mes natural actual.
             let baseDate = new Date();
             if (refDate instanceof Date && !Number.isNaN(refDate.getTime())) {
                 baseDate = refDate;
@@ -9191,39 +9240,26 @@
                 const parsed = new Date(refDate);
                 if (!Number.isNaN(parsed.getTime())) baseDate = parsed;
             }
-            const inicioSemana = new Date(baseDate);
-            const dia = inicioSemana.getDay();
-            const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
-            inicioSemana.setDate(diff);
-            inicioSemana.setHours(0, 0, 0, 0);
-
-            const finSemana = new Date(inicioSemana);
-            finSemana.setDate(finSemana.getDate() + 7);
+            const bloque = getBloqueSemanalMesNatural(baseDate);
 
             let count = 0;
             (userBookingsCache || []).forEach(b => {
                 if (b.estado === 'confirmada') {
                     const fVal = b.clases?.fecha_inicio || b.fecha_inicio || b.fecha;
                     if (!fVal) return;
-                    const f = new Date(fVal);
-                    if (f >= inicioSemana && f < finSemana) {
-                        const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
-                        const esPack = b.tipo_reserva === 'pack_normal' || (b.bono_descontado === true && !b.usado_bono_mensual);
-                        const esBienvenida = b.tipo_reserva === 'bienvenida' || b.saldo_gratis_descontado === true;
-                        const esGratis = b.tipo_reserva === 'gratuita';
-                        const esEspecial = b.tipo_reserva === 'clase_especial';
+                    const fechaKey = typeof madridDateKey === 'function' ? madridDateKey(fVal) : '';
+                    if (!fechaKey || fechaKey < bloque.startKey || fechaKey > bloque.endKey) return;
 
-                        if (period.plan_type === 'bono_ilimitado' || period.max_classes_per_week === Infinity) {
-                            if (esIlimitado) count++;
-                        } else if (period.plan_type === 'bono_mensual') {
-                            if (b.tipo_reserva === 'bono_mensual' || (!esIlimitado && !esPack && !esBienvenida && !esGratis && !esEspecial && b.tipo_reserva !== 'bono_inicial')) count++;
-                        } else if (period.plan_type === 'bono_inicial') {
-                            if (b.tipo_reserva === 'bono_inicial') count++;
-                        } else {
-                            if (b.tipo_reserva === 'bono_inicial' || b.tipo_reserva === 'bono_mensual' || (!esIlimitado && !esPack && !esBienvenida && !esGratis && !esEspecial)) {
-                                count++;
-                            }
-                        }
+                    const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
+
+                    if (period.plan_type === 'bono_ilimitado' || period.max_classes_per_week === Infinity) {
+                        if (esIlimitado) count++;
+                    } else if (period.plan_type === 'bono_mensual') {
+                        if (b.tipo_reserva === 'bono_mensual') count++;
+                    } else if (period.plan_type === 'bono_inicial') {
+                        if (b.tipo_reserva === 'bono_inicial') count++;
+                    } else if (b.tipo_reserva === 'bono_mensual' || b.tipo_reserva === 'bono_inicial') {
+                        count++;
                     }
                 }
             });
@@ -9511,7 +9547,7 @@
                         ? `🥉 ${profileT('profile_balance_bono_inicial', 'Bono Inicial')} (40 €)`
                         : `🥈 ${profileT('profile_balance_bono_mensual', 'Bono Mensual')} (65 €)`,
                     badgeColor: isInicial ? 'bg-[#8f6b2d] text-white' : 'bg-slate-700 text-white',
-                    maxClasses: isInicial ? 1 : 2,
+                    maxClasses: Math.max(1, toSafeNumber(p.max_classes_per_week || (isInicial ? 1 : 2))),
                     mesKey: ym,
                     starts_at: p.starts_at,
                     ends_at: p.ends_at,
@@ -9550,12 +9586,15 @@
             const mesTituloRaw = new Date(yyyy, mm - 1, 1).toLocaleDateString(getCurrentLocale(), { month: 'long', year: 'numeric' });
             const mesTitulo = `${mesTituloRaw.charAt(0).toUpperCase()}${mesTituloRaw.slice(1)}`;
 
-            // Consultar reservas del mes en Supabase
+            // Consultar reservas del mes en Supabase (mes natural Madrid)
             let userMonthBookings = [];
             try {
-                const startIso = `${targetMesKey}-01T00:00:00.000Z`;
-                const endD = new Date(yyyy, mm, 1);
-                const endIso = endD.toISOString();
+                const monthStart = madridDateTimeToUtc(`${targetMesKey}-01`, 0);
+                const nextMonthDate = new Date(Date.UTC(yyyy, mm, 1, 12));
+                const nextMonthKey = `${nextMonthDate.getUTCFullYear()}-${String(nextMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
+                const monthEnd = madridDateTimeToUtc(`${nextMonthKey}-01`, 0);
+                const startIso = monthStart.toISOString();
+                const endIso = monthEnd.toISOString();
 
                 const { data: dbRes } = await client.from('reservas_yoga')
                     .select('id, tipo_reserva, usado_bono_mensual, estado, clases!inner(id, nombre, fecha_inicio, fecha_fin, profesor_id, profesionales(nombre))')
@@ -9582,35 +9621,34 @@
                 }));
             }
 
-            // Calcular semanas naturales del mes (Lunes a Domingo)
-            const daysInMonth = new Date(yyyy, mm, 0).getDate();
-            const monthFirstDate = new Date(yyyy, mm - 1, 1);
-            const monthLastDate = new Date(yyyy, mm - 1, daysInMonth, 23, 59, 59, 999);
+            // El desglose es por bono: no mezclar clases de pack, clase suelta
+            // ni reservas manuales con el cupo del plan seleccionado.
+            const tipoCupoSeleccionado = selectedPeriod.tipo === 'bono_inicial'
+                ? 'bono_inicial'
+                : (selectedPeriod.tipo === 'bono_mensual' ? 'bono_mensual' : null);
+            if (tipoCupoSeleccionado) {
+                userMonthBookings = (userMonthBookings || []).filter(r => r.tipo_reserva === tipoCupoSeleccionado);
+            }
 
-            let curMonday = new Date(yyyy, mm - 1, 1);
-            const dayOfW = curMonday.getDay();
-            const diffToMonday = curMonday.getDate() - dayOfW + (dayOfW === 0 ? -6 : 1);
-            curMonday.setDate(diffToMonday);
-            curMonday.setHours(0, 0, 0, 0);
+            // Bloques semanales anclados al mes natural: 1-7, 8-14, 15-21,
+            // 22-28 y 29-fin de mes (en febrero no hay quinto bloque).
+            const daysInMonth = new Date(Date.UTC(yyyy, mm, 0)).getUTCDate();
+            const dateRangeFormatter = new Intl.DateTimeFormat(getCurrentLocale(), { day: 'numeric', month: 'short', timeZone: 'UTC' });
+            const formatDiaBloque = day => dateRangeFormatter.format(new Date(Date.UTC(yyyy, mm - 1, day, 12)));
 
             const semanas = [];
-            let semanaNum = 1;
+            for (let index = 0; index < 5; index++) {
+                const startDay = 1 + index * 7;
+                if (startDay > daysInMonth) break;
+                const endDay = Math.min(startDay + 6, daysInMonth);
+                const startKey = `${targetMesKey}-${String(startDay).padStart(2, '0')}`;
+                const endKey = `${targetMesKey}-${String(endDay).padStart(2, '0')}`;
+                const rangoFechas = `${formatDiaBloque(startDay)} – ${formatDiaBloque(endDay)}`;
 
-            while (curMonday <= monthLastDate) {
-                const curSunday = new Date(curMonday);
-                curSunday.setDate(curSunday.getDate() + 6);
-                curSunday.setHours(23, 59, 59, 999);
-
-                const inicioVis = curMonday < monthFirstDate ? monthFirstDate : curMonday;
-                const finVis = curSunday > monthLastDate ? monthLastDate : curSunday;
-
-                const dateRangeFormatter = new Intl.DateTimeFormat(getCurrentLocale(), { day: 'numeric', month: 'short' });
-                const rangoFechas = `${dateRangeFormatter.format(inicioVis)} – ${dateRangeFormatter.format(finVis)}`;
-
-                // Filtrar reservas que caen en esta semana (lunes 00:00 a domingo 23:59)
                 const reservasSemana = (userMonthBookings || []).filter(r => {
-                    const f = new Date(r.clases?.fecha_inicio || r.fecha_inicio);
-                    return f >= curMonday && f <= curSunday;
+                    const fVal = r.clases?.fecha_inicio || r.fecha_inicio;
+                    const fechaKey = typeof madridDateKey === 'function' ? madridDateKey(fVal) : '';
+                    return fechaKey && fechaKey >= startKey && fechaKey <= endKey;
                 });
 
                 const countUsadas = reservasSemana.length;
@@ -9620,10 +9658,10 @@
                 const agotada = !esIlimitado && countUsadas >= maxSemana;
 
                 semanas.push({
-                    num: semanaNum,
+                    num: index + 1,
                     rangoFechas,
-                    curMonday: new Date(curMonday),
-                    curSunday: new Date(curSunday),
+                    startKey,
+                    endKey,
                     reservas: reservasSemana,
                     usadas: countUsadas,
                     restantes,
@@ -9631,9 +9669,6 @@
                     esIlimitado,
                     maxSemana
                 });
-
-                curMonday.setDate(curMonday.getDate() + 7);
-                semanaNum++;
             }
 
             const semanasDisponibles = semanas.filter(s => s.esIlimitado || s.restantes > 0);
@@ -9751,9 +9786,9 @@
 
             let explicacionModalidad = '';
             if (selectedPeriod.tipo === 'bono_inicial') {
-                explicacionModalidad = profileT('profile_explanation_inicial', 'Tu Bono Inicial (40 €) incluye 1 clase regular por semana (lunes a domingo) durante todo el mes natural.');
+                explicacionModalidad = profileT('profile_explanation_inicial', 'Tu Bono Inicial (40 €) incluye 1 clase regular por semana del mes natural durante todo el mes.');
             } else if (selectedPeriod.tipo === 'bono_mensual') {
-                explicacionModalidad = profileT('profile_explanation_mensual', 'Tu Bono Mensual (65 €) incluye 2 clases regulares por semana (lunes a domingo) durante todo el mes natural.');
+                explicacionModalidad = profileT('profile_explanation_mensual', 'Tu Bono Mensual (65 €) incluye 2 clases regulares por semana del mes natural durante todo el mes.');
             } else {
                 explicacionModalidad = profileT('profile_explanation_ilimitado', 'Tu Bono Ilimitado (90 €) incluye clases regulares ilimitadas + 1 clase especial gratis y 1 invitado para todo el mes natural.');
             }
@@ -10386,7 +10421,7 @@
                         <i class="ph-fill ph-plant text-xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_inicial_desc', '1 clase regular por semana (lunes a domingo) durante el mes natural elegido.'))}</p>
+                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_inicial_desc', '1 clase regular por semana del mes natural durante el mes elegido.'))}</p>
                 <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${initialMembershipRows}</div>
             </div>
             <div>
@@ -10407,7 +10442,7 @@
                         <i class="ph-fill ph-calendar-check text-xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_mensual_desc', '2 clases regulares por semana (lunes a domingo) durante el mes natural elegido.'))}</p>
+                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_mensual_desc', '2 clases regulares por semana del mes natural durante el mes elegido.'))}</p>
                 <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${monthlyMembershipRows}</div>
             </div>
             <div>
@@ -13453,14 +13488,9 @@
             let usoSemanal = typeof obtenerUsoSemanalBonosMensuales === 'function' ? obtenerUsoSemanalBonosMensuales(fechaClase) : { totalMensualesUsadas: 0, mensualUsadas: 0, inicialUsadas: 0 };
             if (currentUser?.id && client && periodosMensuales.length > 0) {
                 try {
-                    const baseDate = new Date(fechaClase);
-                    const diaSem = baseDate.getDay();
-                    const diffALunes = baseDate.getDate() - diaSem + (diaSem === 0 ? -6 : 1);
-                    const inicioSemanaDate = new Date(baseDate);
-                    inicioSemanaDate.setDate(diffALunes);
-                    inicioSemanaDate.setHours(0, 0, 0, 0);
-                    const finSemanaDate = new Date(inicioSemanaDate);
-                    finSemanaDate.setDate(finSemanaDate.getDate() + 7);
+                    const bloqueSemanal = getBloqueSemanalMesNatural(fechaClase);
+                    const inicioSemanaDate = madridDateTimeToUtc(bloqueSemanal.startKey, 0);
+                    const finSemanaDate = madridDateTimeToUtc(addDaysToDateKey(bloqueSemanal.endKey, 1), 0);
 
                     const { data: weeklyBookings, error: errWeekly } = await client
                         .from('reservas_yoga')
@@ -13473,32 +13503,23 @@
                     if (!errWeekly && Array.isArray(weeklyBookings)) {
                         let cntMensual = 0;
                         let cntInicial = 0;
-                        let cntTotal = 0;
                         let cntIlimitado = 0;
                         weeklyBookings.forEach(r => {
                             const esIlimitado = r.tipo_reserva === 'ilimitado' || r.usado_bono_mensual === true;
-                            const esPack = r.tipo_reserva === 'pack_normal' || (r.bono_descontado === true && !r.usado_bono_mensual);
-                            const esBienvenida = r.tipo_reserva === 'bienvenida' || r.saldo_gratis_descontado === true;
-                            const esGratis = r.tipo_reserva === 'gratuita';
-                            const esEspecial = r.tipo_reserva === 'clase_especial';
 
                             if (esIlimitado) {
                                 cntIlimitado++;
                             } else if (r.tipo_reserva === 'bono_mensual') {
                                 cntMensual++;
-                                cntTotal++;
                             } else if (r.tipo_reserva === 'bono_inicial') {
                                 cntInicial++;
-                                cntTotal++;
-                            } else if (!esPack && !esBienvenida && !esGratis && !esEspecial) {
-                                cntTotal++;
                             }
                         });
                         usoSemanal = {
                             mensualUsadas: cntMensual,
                             inicialUsadas: cntInicial,
                             ilimitadoUsadas: cntIlimitado,
-                            totalMensualesUsadas: Math.max(cntTotal, cntMensual + cntInicial)
+                            totalMensualesUsadas: cntMensual + cntInicial
                         };
                     }
                 } catch (eWeekly) {
@@ -14125,16 +14146,10 @@
                 const v_inicial_max = periodosMensuales.filter(p => p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1).reduce((sum, p) => sum + toSafeNumber(p.max_classes_per_week || 1), 0);
                 const gastadasSemana = Math.max(usoSemanal.totalMensualesUsadas, usoSemanal.mensualUsadas + usoSemanal.inicialUsadas);
 
-                // Si aún no se han consumido v_mensual_max clases esta semana y el usuario tiene Bono Mensual activo: usa Bono Mensual
-                // Si ya se consumieron v_mensual_max clases (p.ej. 2) y el usuario tiene Bono Inicial activo: pasa a Bono Inicial
-                let usaMensual = false;
-                if (v_mensual_max > 0 && (usoSemanal.mensualUsadas < v_mensual_max && gastadasSemana < v_mensual_max)) {
-                    usaMensual = true;
-                } else if (v_inicial_max > 0) {
-                    usaMensual = false;
-                } else {
-                    usaMensual = v_mensual_max > 0;
-                }
+                // El servidor consume primero el Bono Mensual (hasta agotar su
+                // cupo) y solo después pasa al Bono Inicial. El mensaje debe
+                // reflejar exactamente esa prioridad.
+                const usaMensual = v_mensual_max > 0 && usoSemanal.mensualUsadas < v_mensual_max;
 
                 const nombreBonoUsado = usaMensual
                     ? `${escapeHtml(profileT('rates_bono_mensual_title', 'Bono Mensual'))} (${escapeHtml(profileT('profile_two_classes_week_long', '2 clases/semana'))})`
@@ -24542,7 +24557,7 @@
                 title: 'Asignar Bono Inicial',
                 html: `
                     <div class="text-left font-sans space-y-3 my-2">
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 1 clase regular por semana (lunes a domingo).</p>
+                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 1 clase regular por semana del mes natural.</p>
                         <div>
                             <label class="block text-xs font-bold text-cocoa mb-1">Mes Natural:</label>
                             <select id="swal-select-mes-inicial-admin" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
@@ -24719,7 +24734,7 @@
                 title: 'Asignar Bono Mensual',
                 html: `
                     <div class="text-left font-sans space-y-3 my-2">
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 2 clases regulares por semana (lunes a domingo).</p>
+                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 2 clases regulares por semana del mes natural.</p>
                         <div>
                             <label class="block text-xs font-bold text-cocoa mb-1">Mes Natural:</label>
                             <select id="swal-select-mes-mensual-admin" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
@@ -33548,7 +33563,7 @@
                                 return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(monthOptionLabelWithRemaining(month))}${escapeHtml(labelExtra)}</option>`;
                             }).join('')}
                         </select>
-                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_inicial_includes', 'Incluye 1 clase regular por semana (lunes a domingo) durante ese mes.'))}</p>
+                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_inicial_includes', 'Incluye 1 clase regular por semana del mes natural durante ese mes.'))}</p>
                     </div>
                 `,
                 showCancelButton: true,
@@ -33719,7 +33734,7 @@
                                 return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(monthOptionLabelWithRemaining(month))}${escapeHtml(labelExtra)}</option>`;
                             }).join('')}
                         </select>
-                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_mensual_includes', 'Incluye 2 clases regulares por semana (lunes a domingo) durante ese mes.'))}</p>
+                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_mensual_includes', 'Incluye 2 clases regulares por semana del mes natural durante ese mes.'))}</p>
                     </div>
                 `,
                 showCancelButton: true,
