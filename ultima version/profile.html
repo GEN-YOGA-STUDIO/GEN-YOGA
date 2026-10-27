@@ -22950,82 +22950,92 @@
                 htmlSpecialPassesList = '<p class="text-xs text-slate-400 italic py-1">Sin clases especiales asignadas</p>';
             }
 
-            // v18.0: Solo se listan meses ilimitados activos o futuros (los finalizados quedan en la BD, no se muestran)
-            const mesesVisibles = userMonths.filter(p => {
+            // v18.0: Unificación de bonos mensuales (Inicial, Mensual, Ilimitado)
+            const todosPeriodosMensuales = [];
+
+            // 1. Bono Ilimitado (unlimited_membership_periods)
+            for (const p of userMonths) {
                 const mKey = normalizarMesClave(p.membership_month || p.starts_at);
-                return mKey && mKey >= currentMonthKey;
-            });
-            let htmlMesesList = '';
-            if (mesesVisibles.length > 0) {
-                htmlMesesList = mesesVisibles.map(p => {
-                    const mKey = normalizarMesClave(p.membership_month || p.starts_at);
-                    const [yyyy, mm] = (mKey || '').split('-');
-                    const mesLabel = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${yyyy}` : (p.membership_month || 'Mes');
-                    const periodId = p.id || '';
-                    const esActual = mKey && mKey === currentMonthKey;
-                    const badgeEstado = esActual
-                        ? '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-300">Activo este mes</span>'
-                        : '<span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-300">Próximo</span>';
-                    return `
-                        <div class="inline-flex items-center justify-between gap-3 bg-white border-emerald-300 px-3 py-2 rounded-xl text-xs font-bold shadow-xs">
-                            <span class="flex items-center gap-1.5 text-emerald-950 font-bold">
-                                <i class="ph-bold ph-calendar-check text-emerald-700 text-sm"></i> ${mesLabel} ${badgeEstado}
-                            </span>
-                            <button type="button" onclick="retirarMesIlimitadoAdmin('${userId}', '${periodId}', '${mKey}')"
-                                class="px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs"
-                                style="background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #b91c1c !important;"
-                                title="Quitar este mes ilimitado">
-                                <i class="ph-bold ph-trash text-xs"></i> <span>Quitar</span>
-                            </button>
-                        </div>
-                    `;
-                }).join(' ');
-            } else {
-                htmlMesesList = `
-                    <div class="w-full py-1 text-xs text-gray-500 italic">
-                        Sin meses naturales contratados
-                    </div>
-                `;
+                if (!mKey || mKey < currentMonthKey) continue;
+                todosPeriodosMensuales.push({
+                    tipo: 'ilimitado',
+                    badgeTipo: '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded border border-emerald-300 shadow-2xs">🥇 Ilimitado (90 €)</span>',
+                    mKey,
+                    periodId: p.id || '',
+                    accionQuitar: `retirarMesIlimitadoAdmin('${userId}', '${p.id || ''}', '${mKey}')`
+                });
             }
 
-            // v18.0: Solo se listan meses de Bono Inicial o Mensual activos o futuros
-            const mesesMensualVisibles = userMonthlyPeriods.filter(p => {
+            // Si tiene el flag legacy bono_mensual_activo pero sin periodos en BD
+            if (userMonths.length === 0 && u.bono_mensual_activo) {
+                todosPeriodosMensuales.push({
+                    tipo: 'ilimitado',
+                    badgeTipo: '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded border border-emerald-300 shadow-2xs">🥇 Ilimitado (90 €)</span>',
+                    mKey: currentMonthKey,
+                    periodId: '',
+                    accionQuitar: `retirarMesIlimitadoAdmin('${userId}', null, null)`
+                });
+            }
+
+            // 2. Bono Inicial y Bono Mensual (monthly_membership_periods)
+            for (const p of userMonthlyPeriods) {
                 const mKey = normalizarMesClave(p.membership_month || p.starts_at);
-                return mKey && mKey >= currentMonthKey;
-            });
-            let htmlMonthlyPeriodsList = '';
-            if (mesesMensualVisibles.length > 0) {
-                htmlMonthlyPeriodsList = mesesMensualVisibles.map(p => {
-                    const mKey = normalizarMesClave(p.membership_month || p.starts_at);
-                    const [yyyy, mm] = (mKey || '').split('-');
-                    const mesLabel = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${yyyy}` : (p.membership_month || 'Mes');
-                    const periodId = p.id || '';
-                    const esActual = mKey && mKey === currentMonthKey;
-                    const esInicial = p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1;
-                    const badgeTipo = esInicial
-                        ? '<span class="text-[9px] bg-[#faf6f0] text-[#8f6b2d] font-bold px-1.5 py-0.5 rounded border border-[#e6d7c3]">Bono Inicial · 1 cl/sem</span>'
-                        : '<span class="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded border border-amber-300">Bono Mensual · 2 cl/sem</span>';
+                if (!mKey || mKey < currentMonthKey) continue;
+                const esInicial = p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1;
+                if (esInicial) {
+                    todosPeriodosMensuales.push({
+                        tipo: 'inicial',
+                        badgeTipo: '<span class="text-[9px] bg-[#faf6f0] text-[#8f6b2d] font-black px-1.5 py-0.5 rounded border border-[#e6d7c3] shadow-2xs">🥉 Inicial · 40 € (1 cl/sem)</span>',
+                        mKey,
+                        periodId: p.id || '',
+                        accionQuitar: `retirarMesBonoMensualAdmin('${userId}', '${p.id || ''}', '${mKey}')`
+                    });
+                } else {
+                    todosPeriodosMensuales.push({
+                        tipo: 'mensual',
+                        badgeTipo: '<span class="text-[9px] bg-amber-100 text-amber-900 font-black px-1.5 py-0.5 rounded border border-amber-300 shadow-2xs">🥈 Mensual · 65 € (2 cl/sem)</span>',
+                        mKey,
+                        periodId: p.id || '',
+                        accionQuitar: `retirarMesBonoMensualAdmin('${userId}', '${p.id || ''}', '${mKey}')`
+                    });
+                }
+            }
+
+            // Ordenar cronológicamente por mes natural
+            todosPeriodosMensuales.sort((a, b) => a.mKey.localeCompare(b.mKey));
+
+            let htmlUnifiedMonthlyList = '';
+            if (todosPeriodosMensuales.length > 0) {
+                htmlUnifiedMonthlyList = todosPeriodosMensuales.map(p => {
+                    const [yyyy, mm] = (p.mKey || '').split('-');
+                    const mesLabel = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${yyyy}` : p.mKey;
+                    const esActual = p.mKey === currentMonthKey;
                     const badgeEstado = esActual
-                        ? '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-300">Activo este mes</span>'
-                        : '<span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-300">Próximo</span>';
+                        ? '<span class="text-[9px] bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded shadow-2xs">Activo este mes</span>'
+                        : '<span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-200">Próximo</span>';
                     return `
-                        <div class="inline-flex items-center justify-between gap-3 bg-white border ${esInicial ? 'border-[#8f6b2d]/40' : 'border-amber-300'} px-3 py-2 rounded-xl text-xs font-bold shadow-xs">
-                            <span class="flex items-center gap-1.5 text-cocoa font-bold">
-                                <i class="ph-bold ${esInicial ? 'ph-plant text-[#8f6b2d]' : 'ph-calendar-check text-amber-700'} text-sm"></i> ${mesLabel} ${badgeTipo} ${badgeEstado}
-                            </span>
-                            <button type="button" onclick="retirarMesBonoMensualAdmin('${userId}', '${periodId}', '${mKey}')"
-                                class="px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs"
+                        <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-white border border-slate-200 shadow-2xs w-full">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="flex items-center gap-1 text-xs font-black text-slate-800">
+                                    <i class="ph-bold ph-calendar text-slate-500 text-sm"></i>
+                                    ${mesLabel}
+                                </span>
+                                ${p.badgeTipo}
+                                ${badgeEstado}
+                            </div>
+                            <button type="button" onclick="${p.accionQuitar}"
+                                class="px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs shrink-0"
                                 style="background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #b91c1c !important;"
-                                title="Quitar este mes de Bono ${esInicial ? 'Inicial' : 'Mensual'}">
+                                title="Quitar este mes contratado">
                                 <i class="ph-bold ph-trash text-xs"></i> <span>Quitar</span>
                             </button>
                         </div>
                     `;
-                }).join(' ');
+                }).join('');
             } else {
-                htmlMonthlyPeriodsList = `
-                    <div class="w-full py-1 text-xs text-gray-500 italic">
-                        Sin meses de Bono Inicial o Mensual contratados
+                htmlUnifiedMonthlyList = `
+                    <div class="w-full py-2 px-3 rounded-xl bg-white/60 border border-dashed border-slate-200 text-xs text-slate-500 italic text-center">
+                        Sin meses de bono contratados actualmente
                     </div>
                 `;
             }
@@ -23041,12 +23051,58 @@
                     <p class="text-[11px] text-cocoa/50">${escapeHtml(email)}</p>
                 </div>
 
-                <!-- 1. Clases Sueltas -->
+                <!-- 1. Bonos Mensuales por Mes Natural (Unificado) -->
+                <div class="p-3.5 rounded-2xl border ${todosPeriodosMensuales.length > 0 ? 'border-emerald-300 bg-emerald-50/50' : 'border-gray-200 bg-gray-50/80'} space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-calendar-star ${todosPeriodosMensuales.length > 0 ? 'text-emerald-700' : 'text-gray-400'} text-xl"></i>
+                            <div>
+                                <p class="text-xs font-bold text-cocoa">1. Bonos Mensuales por Mes Natural</p>
+                                <p class="text-[10px] ${todosPeriodosMensuales.length > 0 ? 'text-emerald-800 font-bold' : 'text-gray-500'}">Inicial (40 €) · Mensual (65 €) · Ilimitado (90 €)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 1: Botones para asignar cualquiera de los 3 bonos -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button type="button" onclick="asignarMesBonoInicialAdmin('${userId}')"
+                            class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+                            style="background-color: #8f6b2d !important; color: #ffffff !important; border: 1px solid #6e5221 !important;"
+                            title="Asignar Bono Inicial (40 € · 1 clase/semana)">
+                            <i class="ph-bold ph-plant text-xs"></i> <span>+ Inicial (40 €)</span>
+                        </button>
+                        <button type="button" onclick="asignarMesBonoMensualAdmin('${userId}')"
+                            class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+                            style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important;"
+                            title="Asignar Bono Mensual (65 € · 2 clases/semana)">
+                            <i class="ph-bold ph-calendar text-xs" style="color: #fef3c7 !important;"></i> <span>+ Mensual (65 €)</span>
+                        </button>
+                        <button type="button" onclick="asignarMesIlimitadoAdmin('${userId}')"
+                            class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+                            style="background-color: #047857 !important; color: #ffffff !important; border: 1px solid #065f46 !important;"
+                            title="Asignar Bono Ilimitado (90 € · mes completo)">
+                            <i class="ph-bold ph-infinity text-xs" style="color: #a7f3d0 !important;"></i> <span>+ Ilimitado (90 €)</span>
+                        </button>
+                    </div>
+
+                    <!-- Fila 2: Meses naturales contratados (activos y futuros) y botón Quitar -->
+                    <div class="pt-2 border-t border-cocoa/10 space-y-2">
+                        <p class="text-[11px] font-bold text-cocoa/80 flex items-center gap-1">
+                            <i class="ph-bold ph-calendar-check text-xs text-cocoa/60"></i>
+                            Meses naturales contratados:
+                        </p>
+                        <div class="space-y-1.5">
+                            ${htmlUnifiedMonthlyList}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Clases Sueltas -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-olive/20 bg-olive/5">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-ticket text-olive text-lg"></i>
                         <div>
-                            <p class="text-xs font-bold text-cocoa">1. Clases Sueltas</p>
+                            <p class="text-xs font-bold text-cocoa">2. Clases Sueltas</p>
                             <p class="text-[10px] text-cocoa/60">Saldo: <strong id="modal-saldo-yoga" class="text-olive font-black">${bonosActual}</strong></p>
                         </div>
                     </div>
@@ -23058,7 +23114,7 @@
                     </div>
                 </div>
 
-                <!-- 1b. Packs de clases: caducidad de cada bono (desplegable) -->
+                <!-- Packs de clases: caducidad de cada bono (desplegable) -->
                 <div class="p-3.5 rounded-2xl border border-olive/30 bg-olive/[0.04] space-y-2.5">
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center gap-2">
@@ -23078,12 +23134,12 @@
                     </div>
                 </div>
 
-                <!-- 2. Bono Bienvenida -->
+                <!-- 3. Bono Bienvenida -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-sparkle text-emerald-700 text-lg"></i>
                         <div>
-                            <p class="text-xs font-bold text-cocoa">2. Bono Bienvenida</p>
+                            <p class="text-xs font-bold text-cocoa">3. Bono Bienvenida</p>
                             <p class="text-[10px] text-emerald-800">Saldo: <strong id="modal-saldo-clases_gratis" class="text-emerald-700 font-black">${bienvenidaActual}</strong></p>
                         </div>
                     </div>
@@ -23093,12 +23149,12 @@
                     </div>
                 </div>
 
-                <!-- 3. Consulta Psicología -->
+                <!-- 4. Consulta Psicología -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-blue-200 bg-blue-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-brain text-blue-600 text-lg"></i>
                         <div>
-                            <p class="text-xs font-bold text-cocoa">3. Consulta Psicología</p>
+                            <p class="text-xs font-bold text-cocoa">4. Consulta Psicología</p>
                             <p class="text-[10px] text-blue-800">Saldo: <strong id="modal-saldo-psicologia" class="text-blue-700 font-black">${psicologiaActual}</strong></p>
                         </div>
                     </div>
@@ -23108,12 +23164,12 @@
                     </div>
                 </div>
 
-                <!-- 4. Consulta Nutrición -->
+                <!-- 5. Consulta Nutrición -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-purple-200 bg-purple-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-apple text-purple-600 text-lg"></i>
                         <div>
-                            <p class="text-xs font-bold text-cocoa">4. Consulta Nutrición</p>
+                            <p class="text-xs font-bold text-cocoa">5. Consulta Nutrición</p>
                             <p class="text-[10px] text-purple-800">Saldo: <strong id="modal-saldo-nutricion" class="text-purple-700 font-black">${nutricionActual}</strong></p>
                         </div>
                     </div>
@@ -23123,7 +23179,7 @@
                     </div>
                 </div>
 
-                <!-- 5. Bonos de Grupos -->
+                <!-- 6. Bonos de Grupos -->
                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60">
                     <div class="flex items-center gap-2">
                         <i class="ph-bold ph-users text-indigo-600 text-lg"></i>
@@ -23138,79 +23194,13 @@
                     </div>
                 </div>
 
-                <!-- 7. Mes Ilimitado -->
-                <div class="p-3.5 rounded-2xl border ${ilimitadoActivo ? 'border-emerald-300 bg-emerald-50/80' : 'border-gray-200 bg-gray-50/80'} space-y-2.5">
-                    <div class="flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center gap-2">
-                            <i class="ph-bold ph-infinity ${ilimitadoActivo ? 'text-emerald-700' : 'text-gray-400'} text-xl"></i>
-                            <div>
-                                <p class="text-xs font-bold text-cocoa">7. Bono Mensual Ilimitado</p>
-                                <p class="text-[10px] ${ilimitadoActivo ? 'text-emerald-700 font-bold' : 'text-gray-500'}">Meses naturales contratados</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <button type="button" onclick="retirarMesIlimitadoAdmin('${userId}', null, null)"
-                                class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
-                                style="background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #b91c1c !important;"
-                                title="Quitar un mes ilimitado o desactivar el bono completo">
-                                <i class="ph-bold ph-trash text-sm"></i> <span>Quitar Bono Ilimitado</span>
-                            </button>
-                            <button type="button" onclick="asignarMesIlimitadoAdmin('${userId}')"
-                                class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
-                                style="background-color: #047857 !important; color: #ffffff !important; border: 1px solid #065f46 !important;"
-                                title="Asignar un mes natural completo">
-                                <i class="ph-bold ph-plus text-sm" style="color: #a7f3d0 !important;"></i> <span>+ Asignar Mes</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="pt-2 flex flex-wrap items-center gap-2 border-t border-emerald-200/60">
-                        ${htmlMesesList}
-                    </div>
-                </div>
-
-                <!-- 7b. Bono Inicial y Bono Mensual -->
-                <div class="p-3.5 rounded-2xl border ${mesesMensualVisibles.length > 0 ? 'border-amber-300 bg-amber-50/80' : 'border-gray-200 bg-gray-50/80'} space-y-2.5">
-                    <div class="flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center gap-2">
-                            <i class="ph-bold ph-calendar-check ${mesesMensualVisibles.length > 0 ? 'text-amber-700' : 'text-gray-400'} text-xl"></i>
-                            <div>
-                                <p class="text-xs font-bold text-cocoa">7b. Bono Inicial (40 €) / Bono Mensual (65 €)</p>
-                                <p class="text-[10px] ${mesesMensualVisibles.length > 0 ? 'text-amber-800 font-bold' : 'text-gray-500'}">Meses naturales contratados</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <button type="button" onclick="retirarMesBonoMensualAdmin('${userId}', null, null)"
-                                class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
-                                style="background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #b91c1c !important;"
-                                title="Quitar periodos de Bono Inicial / Mensual">
-                                <i class="ph-bold ph-trash text-xs"></i> <span>Quitar</span>
-                            </button>
-                            <button type="button" onclick="asignarMesBonoInicialAdmin('${userId}')"
-                                class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
-                                style="background-color: #8f6b2d !important; color: #ffffff !important; border: 1px solid #6e5221 !important;"
-                                title="Asignar Bono Inicial (40 € · 1 clase/semana)">
-                                <i class="ph-bold ph-plant text-xs"></i> <span>+ Inicial (40 €)</span>
-                            </button>
-                            <button type="button" onclick="asignarMesBonoMensualAdmin('${userId}')"
-                                class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
-                                style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important;"
-                                title="Asignar Bono Mensual (65 € · 2 clases/semana)">
-                                <i class="ph-bold ph-plus text-xs" style="color: #fef3c7 !important;"></i> <span>+ Mensual (65 €)</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="pt-2 flex flex-wrap items-center gap-2 border-t border-amber-200/60">
-                        ${htmlMonthlyPeriodsList}
-                    </div>
-                </div>
-
-                <!-- 8. Clases Especiales -->
+                <!-- 7. Clases Especiales -->
                 <div class="p-3.5 rounded-2xl border border-slate-300 bg-slate-50/90 space-y-2.5">
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <i class="ph-bold ph-sparkle text-slate-700 text-xl"></i>
                             <div>
-                                <p class="text-xs font-bold text-cocoa">8. Clases Especiales</p>
+                                <p class="text-xs font-bold text-cocoa">7. Clases Especiales</p>
                                 <p class="text-[10px] text-slate-600">Saldos por mes natural</p>
                             </div>
                         </div>
