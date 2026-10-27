@@ -9296,8 +9296,8 @@
                     icon: 'info',
                     title: profileT('profile_bono_started_title', 'Bono ya iniciado'),
                     text: profileTReplace(
-                        'profile_bono_started_text',
-                        'Ya has utilizado {count} clase(s) en {month} con este bono. Al haber consumido clases, no es posible cambiarlo a otro mes.',
+                        clasesConsumidas === 1 ? 'profile_bono_started_text_one' : 'profile_bono_started_text_other',
+                        'Ya has utilizado {count} clases en {month} con este bono. Al haber consumido clases, no es posible cambiarlo a otro mes.',
                         { count: clasesConsumidas, month: labelMesActual }
                     ),
                     confirmButtonColor: '#795244'
@@ -10086,7 +10086,7 @@
             </div>
 
             <!-- CLASE ESPECIAL (COLOR CORPORATIVO TERRACOTTA GEN YOGA) -->
-            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbfb 0%, #fdf2ef 50%, #fce7e2 100%); border: 1.5px solid #E1654E; box-shadow: 0 1px 4px rgba(225, 101, 78, 0.15);" title="${saldoEspecialMostrar > 0 ? escapeHtml(profileTReplace('profile_special_classes_available', '{count} clase(s) especial(es) disponible(s)', { count: saldoEspecialMostrar })) : escapeHtml(profileT('profile_buy_special_bono', 'Comprar Bono Clase Especial'))}">
+            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbfb 0%, #fdf2ef 50%, #fce7e2 100%); border: 1.5px solid #E1654E; box-shadow: 0 1px 4px rgba(225, 101, 78, 0.15);" title="${saldoEspecialMostrar > 0 ? escapeHtml(profileTReplace(saldoEspecialMostrar === 1 ? 'profile_special_classes_available_one' : 'profile_special_classes_available_other', '{count} clases especiales disponibles', { count: saldoEspecialMostrar })) : escapeHtml(profileT('profile_buy_special_bono', 'Comprar Bono Clase Especial'))}">
                 <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #e1654e 0%, #c13d26 100%);">
                     <i class="ph-fill ph-sparkle text-white"></i>
                 </div>
