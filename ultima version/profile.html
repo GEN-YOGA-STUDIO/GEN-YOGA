@@ -8219,12 +8219,17 @@
 
             let classYearMonth = '';
             try {
-                const parts = new Intl.DateTimeFormat('en-GB', {
-                    timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit'
-                }).formatToParts(dateObj);
-                const year = parts.find(part => part.type === 'year')?.value;
-                const month = parts.find(part => part.type === 'month')?.value;
-                if (year && month) classYearMonth = `${year}-${month}`;
+                if (typeof normalizarMesClave === 'function') {
+                    classYearMonth = normalizarMesClave(dateObj) || '';
+                }
+                if (!classYearMonth) {
+                    const parts = new Intl.DateTimeFormat('en-GB', {
+                        timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit'
+                    }).formatToParts(dateObj);
+                    const year = parts.find(part => part.type === 'year')?.value;
+                    const month = parts.find(part => part.type === 'month')?.value;
+                    if (year && month) classYearMonth = `${year}-${month}`;
+                }
             } catch (_) {
                 const y = dateObj.getFullYear();
                 const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -8237,16 +8242,19 @@
             if (ymActual && classYearMonth && classYearMonth < ymActual) return [];
 
             const periods = (userMonthlyMembershipPeriods || []).filter(period => {
-                const end = Date.parse(period.ends_at);
-                if (Number.isFinite(end) && end <= ahoraMs) return false;
-                const periodMonthStr = String(period.membership_month || '').slice(0, 7);
+                const periodMonthStr = typeof normalizarMesClave === 'function'
+                    ? normalizarMesClave(period.membership_month || period.starts_at)
+                    : String(period.membership_month || period.starts_at || '').slice(0, 7);
                 if (ymActual && periodMonthStr && periodMonthStr < ymActual) return false;
                 if (classYearMonth && periodMonthStr === classYearMonth) {
                     return true;
                 }
                 const start = Date.parse(period.starts_at);
-                if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
-                return timestamp >= start && timestamp < end;
+                const end = Date.parse(period.ends_at);
+                if (Number.isFinite(start) && Number.isFinite(end)) {
+                    return timestamp >= start && timestamp < end;
+                }
+                return false;
             });
 
             // Ordenar por prioridad de precio: Bono Mensual (Plata · 65 €) antes que Bono Inicial (Bronce · 40 €)
@@ -8377,14 +8385,20 @@
             else if (!/does not exist|schema cache/i.test(monthlyPeriodsResult.error.message || '')) {
                 console.error('Error cargando meses del Bono Mensual:', monthlyPeriodsResult.error);
             }
-            const currentMonthPrefix = madridDateKey(new Date()).slice(0, 7);
+            const currentMonthPrefix = (typeof madridDateKey === 'function' && madridDateKey(new Date())) ? madridDateKey(new Date()).slice(0, 7) : new Date().toISOString().slice(0, 7);
             if (!bonosEspecialesResult.error) {
-                userSpecialBonos = (bonosEspecialesResult.data || []).filter(b => b.mes && String(b.mes).slice(0, 7) >= currentMonthPrefix);
+                userSpecialBonos = (bonosEspecialesResult.data || []).filter(b => {
+                    const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(b.mes) : (b.mes ? String(b.mes).slice(0, 7) : null);
+                    return !mKey || mKey >= currentMonthPrefix;
+                });
             }
             if (!reprogResult.error) userCreditosReprogramacion = reprogResult.data || [];
 
             userSpecialBonosMes = userSpecialBonos
-                .filter(b => b.mes && String(b.mes).slice(0, 7) === currentMonthPrefix)
+                .filter(b => {
+                    const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(b.mes) : (b.mes ? String(b.mes).slice(0, 7) : null);
+                    return !mKey || mKey === currentMonthPrefix;
+                })
                 .reduce((acc, b) => acc + toSafeNumber(b.saldo), 0);
 
             const now = Date.now();
@@ -8961,7 +8975,9 @@
         window.abrirDetalleBonosCliente = abrirDetalleBonosCliente;
 
         function obtenerBonosMensualesDeMes(yearMonth) {
-            const ym = String(yearMonth || '').slice(0, 7);
+            const ym = (typeof normalizarMesClave === 'function')
+                ? normalizarMesClave(yearMonth)
+                : String(yearMonth || '').slice(0, 7);
             if (!ym) return [];
             const ahoraMs = Date.now();
             const ymActual = (typeof getMadridYearMonthClient === 'function') ? getMadridYearMonthClient(new Date()) : '';
@@ -8973,32 +8989,48 @@
 
             // 1. Bono Ilimitado (90 € · Prioridad 1)
             (userUnlimitedPeriods || []).forEach(p => {
-                if (Date.parse(p.ends_at) > ahoraMs && String(p.membership_month || p.starts_at || '').slice(0, 7) === ym) {
-                    results.push({
-                        tipo: 'bono_ilimitado',
-                        nombre: 'Bono Ilimitado',
-                        color: 'dorado',
-                        precio: 90,
-                        orden: 1,
-                        maxClasses: Infinity,
-                        period: p
-                    });
+                const pYm = (typeof normalizarMesClave === 'function')
+                    ? normalizarMesClave(p.membership_month || p.starts_at)
+                    : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                if (pYm === ym) {
+                    const end = Date.parse(p.ends_at);
+                    const valido = !Number.isFinite(end) || end > ahoraMs || (ymActual && pYm >= ymActual);
+                    if (valido) {
+                        results.push({
+                            tipo: 'bono_ilimitado',
+                            nombre: 'Bono Ilimitado',
+                            color: 'dorado',
+                            precio: 90,
+                            orden: 1,
+                            maxClasses: Infinity,
+                            period: p,
+                            mesClave: ym
+                        });
+                    }
                 }
             });
 
             // 2. Bono Mensual (65 € · Prioridad 2) y Bono Inicial (40 € · Prioridad 3)
             (userMonthlyMembershipPeriods || []).forEach(p => {
-                if (Date.parse(p.ends_at) > ahoraMs && String(p.membership_month || p.starts_at || '').slice(0, 7) === ym) {
-                    const isInicial = esPeriodoBonoInicial(p);
-                    results.push({
-                        tipo: isInicial ? 'bono_inicial' : 'bono_mensual',
-                        nombre: isInicial ? 'Bono Inicial' : 'Bono Mensual',
-                        color: isInicial ? 'bronce' : 'plata',
-                        precio: isInicial ? 40 : 65,
-                        orden: isInicial ? 3 : 2,
-                        maxClasses: isInicial ? 1 : 2,
-                        period: p
-                    });
+                const pYm = (typeof normalizarMesClave === 'function')
+                    ? normalizarMesClave(p.membership_month || p.starts_at)
+                    : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                if (pYm === ym) {
+                    const end = Date.parse(p.ends_at);
+                    const valido = !Number.isFinite(end) || end > ahoraMs || (ymActual && pYm >= ymActual);
+                    if (valido) {
+                        const isInicial = esPeriodoBonoInicial(p);
+                        results.push({
+                            tipo: isInicial ? 'bono_inicial' : 'bono_mensual',
+                            nombre: isInicial ? 'Bono Inicial' : 'Bono Mensual',
+                            color: isInicial ? 'bronce' : 'plata',
+                            precio: isInicial ? 40 : 65,
+                            orden: isInicial ? 3 : 2,
+                            maxClasses: isInicial ? 1 : 2,
+                            period: p,
+                            mesClave: ym
+                        });
+                    }
                 }
             });
 
@@ -9006,6 +9038,63 @@
             return results.sort((a, b) => a.orden - b.orden);
         }
         window.obtenerBonosMensualesDeMes = obtenerBonosMensualesDeMes;
+
+        function usuarioTieneSaldosOBonosActivos() {
+            if (toSafeNumber(userBonos) > 0) return true;
+            if (userBonoMensualActivo) return true;
+            if (toSafeNumber(userSpecialBonosMes) > 0) return true;
+            if (Array.isArray(userSpecialBonos) && userSpecialBonos.some(b => toSafeNumber(b.saldo) > 0)) return true;
+            if (toSafeNumber(userSaldoClasesGratis) > 0) return true;
+            if (toSafeNumber(userSaldoYogaCompania) > 0) return true;
+            const talleresCreds = (userCreditosReprogramacion || []).filter(c => (c.tipo === 'taller' || c.tipo === 'credito_taller') && c.estado === 'disponible').length;
+            const saldoTall = toSafeNumber(currentUserProfile?.saldo_talleres) || 0;
+            if (talleresCreds + saldoTall > 0) return true;
+            if (toSafeNumber(userSaldoGrupal) > 0 || toSafeNumber(userSaldoPsicologia) > 0 || toSafeNumber(userSaldoNutricion) > 0) return true;
+            if (Array.isArray(userCreditosReprogramacion) && userCreditosReprogramacion.some(c => c.estado === 'disponible')) return true;
+
+            const ahoraMs = Date.now();
+            const ymActual = (typeof getMadridYearMonthClient === 'function') ? getMadridYearMonthClient(new Date()) : '';
+
+            // Revisar si tiene Bono Ilimitado vigente o futuro
+            if (Array.isArray(userUnlimitedPeriods) && userUnlimitedPeriods.length > 0) {
+                const tieneIlim = userUnlimitedPeriods.some(p => {
+                    const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(p.membership_month || p.starts_at) : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                    if (mKey && ymActual && mKey >= ymActual) return true;
+                    const end = Date.parse(p.ends_at);
+                    return Number.isFinite(end) && end > ahoraMs;
+                });
+                if (tieneIlim) return true;
+            }
+
+            // Revisar si tiene Bono Inicial o Mensual vigente o futuro
+            if (Array.isArray(userMonthlyMembershipPeriods) && userMonthlyMembershipPeriods.length > 0) {
+                const tieneMen = userMonthlyMembershipPeriods.some(p => {
+                    const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(p.membership_month || p.starts_at) : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                    if (mKey && ymActual && mKey >= ymActual) return true;
+                    const end = Date.parse(p.ends_at);
+                    return Number.isFinite(end) && end > ahoraMs;
+                });
+                if (tieneMen) return true;
+            }
+
+            if (typeof getMonthlyMembershipPeriodForDate === 'function' && getMonthlyMembershipPeriodForDate(new Date())) return true;
+            if (typeof getUnlimitedPeriodForDate === 'function' && getUnlimitedPeriodForDate(new Date())) return true;
+
+            return false;
+        }
+        window.usuarioTieneSaldosOBonosActivos = usuarioTieneSaldosOBonosActivos;
+
+        function actualizarAlertaNoBonos() {
+            const alertBox = document.getElementById('no-bonos-alert');
+            if (!alertBox) return;
+            const tieneSaldos = usuarioTieneSaldosOBonosActivos();
+            if (!tieneSaldos && !isAdmin && !esTrabajador()) {
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+        }
+        window.actualizarAlertaNoBonos = actualizarAlertaNoBonos;
 
         function obtenerBonoMensualDeMes(yearMonth) {
             const list = obtenerBonosMensualesDeMes(yearMonth);
@@ -9899,6 +9988,9 @@
                 }).join('');
             }
 
+            const totalSpecialSaldo = (userSpecialBonos || []).reduce((acc, b) => acc + toSafeNumber(b.saldo), 0);
+            const saldoEspecialMostrar = userSpecialBonosMes > 0 ? userSpecialBonosMes : totalSpecialSaldo;
+
             if (headerWrapper) {
                 headerWrapper.innerHTML = `
             ${bonosRecurrentesHtml}
@@ -9918,13 +10010,13 @@
             </div>
 
             <!-- CLASE ESPECIAL (COLOR CORPORATIVO TERRACOTTA GEN YOGA) -->
-            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbfb 0%, #fdf2ef 50%, #fce7e2 100%); border: 1.5px solid #E1654E; box-shadow: 0 1px 4px rgba(225, 101, 78, 0.15);" title="Comprar Bono Clase Especial">
+            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbfb 0%, #fdf2ef 50%, #fce7e2 100%); border: 1.5px solid #E1654E; box-shadow: 0 1px 4px rgba(225, 101, 78, 0.15);" title="${saldoEspecialMostrar > 0 ? `${saldoEspecialMostrar} Clase(s) especial(es) disponible(s)` : 'Comprar Bono Clase Especial'}">
                 <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #e1654e 0%, #c13d26 100%);">
                     <i class="ph-fill ph-sparkle text-white"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
                     <span class="${titleTxt} font-black uppercase tracking-wider text-[#c13d26]">${escapeHtml(profileT('profile_balance_special', 'Clase especial'))}</span>
-                    <span class="${countTxt} font-black text-[#882110] mt-0.5">${userSpecialBonosMes} ${availableLabel}</span>
+                    <span class="${countTxt} font-black text-[#882110] mt-0.5">${saldoEspecialMostrar} ${availableLabel}</span>
                 </div>
             </div>
 
@@ -10003,6 +10095,7 @@
 
             // Renderizar widget de bono recurrente
             renderWidgetBonoRecurrente();
+            if (typeof actualizarAlertaNoBonos === 'function') actualizarAlertaNoBonos();
 
             if (!profileWrapper) return;
 
@@ -10574,10 +10667,8 @@
                     }
                 }
 
-                const alertBox = document.getElementById('no-bonos-alert');
-                if (alertBox) {
-                    if (userBonos < 1 && !userBonoMensualActivo && !(typeof getMonthlyMembershipPeriodForDate === 'function' && getMonthlyMembershipPeriodForDate(new Date())) && !isAdmin && !esTrabajador()) alertBox.classList.remove('hidden');
-                    else alertBox.classList.add('hidden');
+                if (typeof actualizarAlertaNoBonos === 'function') {
+                    actualizarAlertaNoBonos();
                 }
             }
             await cargarConfiguracionesApp();
@@ -12059,6 +12150,7 @@
             renderizarCalendario();
             renderizarClases();
             refrescarInicioSiActivo();
+            if (typeof actualizarAlertaNoBonos === 'function') actualizarAlertaNoBonos();
         }
 
         // La tabla reservas_yoga está protegida por RLS: cada usuario solo ve sus
@@ -12245,7 +12337,11 @@
                         action = `<span class="px-4 py-2 rounded-full bg-sand/15 text-cocoa/40 text-xs font-bold uppercase">${escapeHtml(profileT('profile_booking_closed', 'Reserva Cerrada'))}</span>`;
                         aforoOEstadoTaller = `<span class="text-xs font-bold text-amber-800">${escapeHtml(profileT('profile_booking_closed', 'Reserva Cerrada'))}</span>`;
                     } else if (isClaseEspecial) {
-                        const tieneBonoEspecialMes = userSpecialBonos.some(b => b.mes && String(b.mes).slice(0, 7) === startMonthKey.slice(0, 7) && toSafeNumber(b.saldo) > 0);
+                        const tieneBonoEspecialMes = userSpecialBonos.some(b => {
+                            const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(b.mes) : (b.mes ? String(b.mes).slice(0, 7) : null);
+                            const targetYm = typeof normalizarMesClave === 'function' ? normalizarMesClave(startMonthKey) : startMonthKey.slice(0, 7);
+                            return (!mKey || mKey === targetYm) && toSafeNumber(b.saldo) > 0;
+                        });
                         if (tieneBonoEspecialMes) {
                             action = `<button onclick="reservar(${claseId})" class="text-white text-[11px] font-black px-6 py-2.5 rounded-full shadow-md cursor-pointer transition hover:scale-105" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);"><i class="ph-fill ph-sparkle text-amber-300 mr-1"></i> ${escapeHtml(profileT('profile_book_with_special_pass', 'RESERVAR CON BONO ESPECIAL'))}</button>`;
                         } else {
@@ -13778,7 +13874,11 @@
 
             let mensajeConfirmacion = '';
             if (isClaseEspecial) {
-                const tieneBonoEspecial = userSpecialBonos.some(b => b.mes && String(b.mes).slice(0, 7) === mesActividadStr.slice(0, 7) && toSafeNumber(b.saldo) > 0);
+                const tieneBonoEspecial = userSpecialBonos.some(b => {
+                    const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(b.mes) : (b.mes ? String(b.mes).slice(0, 7) : null);
+                    const targetYm = typeof normalizarMesClave === 'function' ? normalizarMesClave(mesActividadStr) : mesActividadStr.slice(0, 7);
+                    return (!mKey || mKey === targetYm) && toSafeNumber(b.saldo) > 0;
+                });
                 if (!tieneBonoEspecial && !isAdmin) {
                     if (skipPrompt) {
                         await comprarBonoEspecialStripe(null, mesActividadStr, claseId, { skipConfirmation: true });
@@ -17971,10 +18071,24 @@
             // 2. Clases Especiales: desglose por meses con saldo disponible (solo mes actual y futuros)
             if (u.special_passes && u.special_passes.length > 0) {
                 const specialsByMonth = new Map();
+                let saldoSinMes = 0;
                 for (const s of u.special_passes) {
-                    const mKey = normalizarMesClave(s.mes);
-                    if (!mKey || mKey < currentMonthKey) continue;
+                    const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(s.mes) : (s.mes ? String(s.mes).slice(0, 7) : null);
+                    if (!mKey) {
+                        saldoSinMes += toSafeNumber(s.saldo);
+                        continue;
+                    }
+                    if (mKey < currentMonthKey) continue;
                     specialsByMonth.set(mKey, (specialsByMonth.get(mKey) || 0) + toSafeNumber(s.saldo));
+                }
+                if (saldoSinMes > 0) {
+                    badges.push(`
+                        <button type="button" onclick="abrirGestionBonosUsuario('${escapeHtml(String(u.id))}')"
+                            class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-300 flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                            title="${saldoSinMes} Clase(s) especial(es) disponible(s) (Clic para gestionar)">
+                            <i class="ph-bold ph-sparkle text-slate-600"></i> ${saldoSinMes} Especial
+                        </button>
+                    `);
                 }
                 for (const [mKey, saldo] of specialsByMonth.entries()) {
                     if (saldo > 0) {
