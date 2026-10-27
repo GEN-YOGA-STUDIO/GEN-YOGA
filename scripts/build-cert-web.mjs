@@ -175,6 +175,18 @@ for (const dir of dirs) {
   await cp(path.join(origen, dir), path.join(destino, dir), { recursive: true });
 }
 
+// Ficheros estáticos que no son HTML/JS/CSS pero que las páginas referencian.
+// Sin ellos el navegador registra 404 en cada carga (manifest) y pierde el icono.
+for (const file of ['manifest.json', 'favicon.ico']) {
+  const origenFichero = path.join(origen, file);
+  try {
+    await cp(origenFichero, path.join(destino, file));
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    console.warn(`⚠️  No existe ${file} en ${origen}; se omite.`);
+  }
+}
+
 // Sin CNAME: genyoga.studio pertenece a producción.
 await writeFile(path.join(destino, '.nojekyll'), '', 'utf8');
 await writeFile(path.join(destino, 'robots.txt'), 'User-agent: *\nDisallow: /\n', 'utf8');
