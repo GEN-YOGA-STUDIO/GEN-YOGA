@@ -422,9 +422,9 @@ const translations = {
         "profile_tab_asistencias": "Asistencias",
         "profile_btn_edit_profile": "Editar perfil",
         "profile_saldos_label": "Mis saldos",
-        "profile_saldos_heading": "Mis Bonos y Saldos Disponibles",
+        "profile_saldos_heading": "Mis Bonos y Saldos",
         "profile_saldos_subheading": "Consulta tus packs activos, meses ilimitados comprados y bonos gratuitos disponibles.",
-        "profile_btn_guide_bonos": "¿Cómo funcionan mis bonos?",
+        "profile_btn_guide_bonos": "¿Cómo funcionan?",
         "profile_saldos_info_title": "Tus Bonos y Saldos Disponibles",
         "profile_saldos_info_intro": "En GEN Yoga dispones de diferentes tipos de saldo para tus prácticas y servicios:",
         "profile_saldos_info_packs_title": "Packs de Clases (4, 6 o 10 clases)",
@@ -2508,9 +2508,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isProfilePage) {
             langDiv.classList.add('is-profile-lang');
             langDiv.style.top = 'auto';
-            langDiv.style.right = 'auto';
+            langDiv.style.right = '18px';
             langDiv.style.bottom = isNative ? 'max(calc(env(safe-area-inset-bottom, 0px) + 12px), 18px)' : '18px';
-            langDiv.style.left = '18px';
+            langDiv.style.left = 'auto';
         } else if (marqueeHeight > 0) {
             if (isNative) {
                 langDiv.style.top = `calc(var(--gy-notch-shield-height, 42px) + ${marqueeHeight + 10}px)`;
