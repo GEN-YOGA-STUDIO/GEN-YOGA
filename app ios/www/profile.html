@@ -7058,7 +7058,9 @@
             if (!userId) return Promise.resolve();
             if (user) currentUser = user;
 
-            procesarCompraParametroUrl();
+            // La compra desde URL se procesa en checkProfile(), cuando ya están
+            // cargados los periodos de bono del usuario. Procesarla aquí abriría
+            // el diálogo sin datos y podría ofrecer un mes ya contratado.
 
             if (initializedUserId === userId && initAppPromise) {
                 return initAppPromise;
@@ -7129,6 +7131,10 @@
                 currentUser = null;
                 isAdmin = false;
                 currentUserRole = '';
+                document.documentElement.classList.remove('is-admin');
+                document.documentElement.classList.remove('is-profesor');
+                document.body.classList.remove('is-admin');
+                document.body.classList.remove('is-profesor');
                 userBonos = 0;
                 userLegacyBonos = 0;
                 userClassPacks = [];
@@ -7598,6 +7604,14 @@
             return fallback || key;
         }
 
+        function profileTReplace(key, fallback = '', vars = {}) {
+            let text = profileT(key, fallback);
+            Object.entries(vars || {}).forEach(([name, value]) => {
+                text = text.replaceAll(`{${name}}`, String(value ?? ''));
+            });
+            return text;
+        }
+
         function formatDisplayTime(date) {
             const d = safeParseDate(date);
             if (!d) return '--:--';
@@ -7657,7 +7671,6 @@
             const appView = document.getElementById('app-view');
             if (authContainer) authContainer.classList.add('hidden');
             if (appView) appView.classList.remove('hidden');
-            procesarCompraParametroUrl();
 
             // Los selectores y listeners son persistentes durante toda la vida de la página.
             // Reutilizarlos evita instancias y envíos duplicados tras TOKEN_REFRESHED/USER_UPDATED.
@@ -8216,7 +8229,8 @@
         }
 
         function formatUnlimitedMonth(period) {
-            return formatMadridDate(period?.starts_at, { month: 'long', year: 'numeric' });
+            const label = formatMadridDate(period?.starts_at, { month: 'long', year: 'numeric' });
+            return label ? `${label.charAt(0).toUpperCase()}${label.slice(1)}` : label;
         }
 
         function getMonthlyMembershipPeriodsForDate(value) {
@@ -8279,44 +8293,93 @@
         }
         window.getMonthlyMembershipPeriodForDate = getMonthlyMembershipPeriodForDate;
 
-        function obtenerUsoSemanalBonosMensuales(refDate = null) {
-            const baseDate = refDate ? new Date(refDate) : new Date();
-            const inicioSemana = new Date(baseDate);
-            const dia = inicioSemana.getDay();
-            const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
-            inicioSemana.setDate(diff);
-            inicioSemana.setHours(0, 0, 0, 0);
+        function getBloqueSemanalMesNatural(refDate = null) {
+            let base = refDate instanceof Date ? refDate : new Date(refDate || Date.now());
+            if (Number.isNaN(base.getTime())) base = new Date();
 
-            const finSemana = new Date(inicioSemana);
-            finSemana.setDate(finSemana.getDate() + 7);
+            const ym = (typeof getMadridYearMonthClient === 'function' ? getMadridYearMonthClient(base) : '')
+                || (typeof normalizarMesClave === 'function' ? normalizarMesClave(base) : '')
+                || base.toISOString().slice(0, 7);
+            const [year, month] = ym.split('-').map(Number);
+
+            let day = 1;
+            try {
+                const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', day: '2-digit' }).formatToParts(base);
+                day = Number(parts.find(p => p.type === 'day')?.value) || 1;
+            } catch (_) {
+                day = base.getDate();
+            }
+
+            const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+            const index = Math.min(4, Math.max(0, Math.floor((day - 1) / 7)));
+            const startDay = 1 + index * 7;
+            const endDay = Math.min(startDay + 6, daysInMonth);
+            const pad = value => String(value).padStart(2, '0');
+
+            return {
+                ym,
+                year,
+                month,
+                index,
+                startDay,
+                endDay,
+                daysInMonth,
+                startKey: `${ym}-${pad(startDay)}`,
+                endKey: `${ym}-${pad(endDay)}`
+            };
+        }
+        window.getBloqueSemanalMesNatural = getBloqueSemanalMesNatural;
+
+        function addDaysToDateKey(dateKey, days) {
+            const [year, month, day] = String(dateKey || '').split('-').map(Number);
+            if (!year || !month || !day) return '';
+            const dt = new Date(Date.UTC(year, month - 1, day + Number(days || 0), 12));
+            return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+        }
+        window.addDaysToDateKey = addDaysToDateKey;
+
+        function madridDateTimeToUtc(dateKey, hour = 0) {
+            const [year, month, day] = String(dateKey || '').split('-').map(Number);
+            if (!year || !month || !day) return null;
+            const utcGuess = Date.UTC(year, month - 1, day, Number(hour) || 0, 0, 0);
+            try {
+                const parts = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'Europe/Madrid',
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                }).formatToParts(new Date(utcGuess));
+                const val = type => Number(parts.find(p => p.type === type)?.value || 0);
+                let localHour = val('hour');
+                if (localHour === 24) localHour = 0;
+                const asUtc = Date.UTC(val('year'), val('month') - 1, val('day'), localHour, val('minute'), val('second'));
+                return new Date(utcGuess - (asUtc - utcGuess));
+            } catch (_) {
+                return new Date(utcGuess);
+            }
+        }
+        window.madridDateTimeToUtc = madridDateTimeToUtc;
+
+        function obtenerUsoSemanalBonosMensuales(refDate = null) {
+            const bloque = getBloqueSemanalMesNatural(refDate || new Date());
 
             let mensualUsadas = 0;
             let inicialUsadas = 0;
             let ilimitadoUsadas = 0;
-            let totalMensualesUsadas = 0;
 
             (userBookingsCache || []).forEach(b => {
                 if (b.estado === 'confirmada') {
                     const fVal = b.clases?.fecha_inicio || b.fecha_inicio || b.fecha;
                     if (!fVal) return;
-                    const f = new Date(fVal);
-                    if (f >= inicioSemana && f < finSemana) {
+                    const fechaKey = typeof madridDateKey === 'function' ? madridDateKey(fVal) : '';
+                    if (fechaKey && fechaKey >= bloque.startKey && fechaKey <= bloque.endKey) {
                         const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
-                        const esPack = b.tipo_reserva === 'pack_normal' || (b.bono_descontado === true && !b.usado_bono_mensual);
-                        const esBienvenida = b.tipo_reserva === 'bienvenida' || b.saldo_gratis_descontado === true;
-                        const esGratis = b.tipo_reserva === 'gratuita';
-                        const esEspecial = b.tipo_reserva === 'clase_especial';
 
                         if (esIlimitado) {
                             ilimitadoUsadas++;
                         } else if (b.tipo_reserva === 'bono_mensual') {
                             mensualUsadas++;
-                            totalMensualesUsadas++;
                         } else if (b.tipo_reserva === 'bono_inicial') {
                             inicialUsadas++;
-                            totalMensualesUsadas++;
-                        } else if (!esPack && !esBienvenida && !esGratis && !esEspecial) {
-                            totalMensualesUsadas++;
                         }
                     }
                 }
@@ -8326,13 +8389,14 @@
                 mensualUsadas,
                 inicialUsadas,
                 ilimitadoUsadas,
-                totalMensualesUsadas: Math.max(totalMensualesUsadas, mensualUsadas + inicialUsadas)
+                totalMensualesUsadas: mensualUsadas + inicialUsadas
             };
         }
         window.obtenerUsoSemanalBonosMensuales = obtenerUsoSemanalBonosMensuales;
 
         function formatMonthlyMonth(period) {
-            return formatMadridDate(period?.starts_at, { month: 'long', year: 'numeric' });
+            const label = formatMadridDate(period?.starts_at, { month: 'long', year: 'numeric' });
+            return label ? `${label.charAt(0).toUpperCase()}${label.slice(1)}` : label;
         }
 
         function esPeriodoBonoInicial(period) {
@@ -8567,9 +8631,9 @@
             const title = t('profile_saldos_info_title', 'Tus Bonos y Saldos Disponibles');
             const intro = t('profile_saldos_info_intro', 'En GEN Yoga dispones de diferentes tipos de saldo para tus prácticas y servicios:');
             const initialTitle = 'Bono Inicial (40 € / mes natural)';
-            const initialDesc = '1 clase regular por semana (lunes a domingo) durante el mes natural elegido. Válido para clases regulares de yoga.';
+            const initialDesc = '1 clase regular por semana del mes natural durante el mes elegido. Válido para clases regulares de yoga.';
             const monthlyTitle = 'Bono Mensual (65 € / mes natural)';
-            const monthlyDesc = '2 clases regulares por semana (lunes a domingo) durante el mes natural elegido. Válido para clases regulares de yoga.';
+            const monthlyDesc = '2 clases regulares por semana del mes natural durante el mes elegido. Válido para clases regulares de yoga.';
             const unlimitedTitle = t('profile_saldos_info_unlimited_title', 'Bono Mensual Ilimitado (90 € / mes natural)');
             const unlimitedDesc = 'Acceso ilimitado a todas las clases regulares de Yoga durante el mes natural activo. Incluye además 1 Bono de Clase Especial gratuito y 1 Invitado Gratuito para ese mes.';
             const packsTitle = 'Packs Flexibles y Clase Suelta (4 o 10 clases)';
@@ -8744,7 +8808,7 @@
                     if (!mesesMap.has(ym)) mesesMap.set(ym, []);
                     mesesMap.get(ym).push({
                         tipo: 'bono_ilimitado',
-                        nombre: 'Bono Ilimitado',
+                        nombre: profileT('common_monthly_plan', 'Bono Ilimitado'),
                         color: 'dorado',
                         precio: 90,
                         orden: 1,
@@ -8762,7 +8826,7 @@
                     if (!mesesMap.has(ym)) mesesMap.set(ym, []);
                     mesesMap.get(ym).push({
                         tipo: isInicial ? 'bono_inicial' : 'bono_mensual',
-                        nombre: isInicial ? 'Bono Inicial' : 'Bono Mensual',
+                        nombre: isInicial ? profileT('profile_balance_bono_inicial', 'Bono Inicial') : profileT('profile_balance_bono_mensual', 'Bono Mensual'),
                         color: isInicial ? 'bronce' : 'plata',
                         precio: isInicial ? 40 : 65,
                         orden: isInicial ? 3 : 2,
@@ -8778,7 +8842,7 @@
             mesesOrdenados.forEach(ym => {
                 const bonosMes = mesesMap.get(ym).sort((a, b) => a.orden - b.orden);
                 const esMesActual = ym === ymActual;
-                const mesLabel = naturalMonthOptionLabel ? naturalMonthOptionLabel(ym) : ym;
+                const mesLabel = typeof naturalMonthLabel === 'function' ? naturalMonthLabel(ym) : ym;
                 const tieneMultiples = bonosMes.length > 1;
                 const totalCupoSemanal = bonosMes.reduce((acc, b) => acc + (b.maxClasses === Infinity ? 0 : b.maxClasses), 0);
                 const tieneIlimitado = bonosMes.some(b => b.tipo === 'bono_ilimitado');
@@ -8790,15 +8854,15 @@
                         <div class="p-2.5 rounded-xl border border-amber-300 bg-amber-50/70 mb-2">
                             <div class="flex items-center justify-between text-xs">
                                 <span class="font-black text-[#78350f] flex items-center gap-1.5">
-                                    ⭐ ${escapeHtml(mesLabel)}: ${bonosMes.length} bonos activos
+                                    ⭐ ${escapeHtml(profileTReplace('profile_active_bonos_count', '{count} bonos activos', { count: bonosMes.length }))} · ${escapeHtml(mesLabel)}
                                 </span>
                                 <span class="text-[10px] font-bold text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full">
-                                    ${tieneIlimitado ? 'Tarifa Ilimitada' : `${totalCupoSemanal} clases/sem en total`}
+                                    ${tieneIlimitado ? escapeHtml(profileT('profile_unlimited_rate_label', 'Tarifa Ilimitada')) : escapeHtml(profileTReplace('profile_total_weekly_quota', '{total} clases/sem en total', { total: totalCupoSemanal }))}
                                 </span>
                             </div>
                             ${esMesActual && !tieneIlimitado ? `
                             <p class="text-[11px] text-amber-900/90 mt-1">
-                                Consumo esta semana: <strong>${usoSemanal.totalMensualesUsadas} / ${totalCupoSemanal} clases</strong> (prioridad: primero Bono Mensual, luego Bono Inicial).
+                                ${profileTReplace('profile_week_consumption', 'Consumo esta semana: {used} / {total} clases (prioridad: primero Bono Mensual, luego Bono Inicial).', { used: `<strong>${usoSemanal.totalMensualesUsadas}</strong>`, total: `<strong>${totalCupoSemanal}</strong>` })}
                             </p>` : ''}
                         </div>
                     `;
@@ -8815,67 +8879,67 @@
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-amber-400 bg-amber-50/80 px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-[9px] font-black uppercase tracking-wider bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs">🥇 Dorado · 90 €</span>
+                                        <span class="text-[9px] font-black uppercase tracking-wider bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs">🥇 ${escapeHtml(profileT('profile_metal_gold_price', 'Dorado · 90 €'))}</span>
                                         <span class="text-[11px] font-bold text-[#78350f]">${escapeHtml(mesLabel)}</span>
                                     </div>
-                                    <p class="text-[10px] text-[#78350f]/80 mt-1">Clases regulares ilimitadas · Incluye 1 clase especial gratis y 1 invitado.</p>
+                                    <p class="text-[10px] text-[#78350f]/80 mt-1">${escapeHtml(profileT('profile_unlimited_includes_short', 'Clases regulares ilimitadas · Incluye 1 clase especial gratis y 1 invitado.'))}</p>
                                     <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-[9px] text-[#78350f]/60">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</span>
+                                        <span class="text-[9px] text-[#78350f]/60">${escapeHtml(profileTReplace('profile_ends_on', 'Termina el {date}', { date: formatMadridDate(finIncluido) }))}</span>
                                         <button type="button" onclick="Swal.close(); abrirDetalleBonoMensualSemanas(null, 'bono_ilimitado', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-[#78350f] hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
-                                            <i class="ph-bold ph-calendar-check"></i> Ver semanas
+                                            <i class="ph-bold ph-calendar-check"></i> ${escapeHtml(profileT('profile_view_weeks', 'Ver semanas'))}
                                         </button>
                                         <button type="button" onclick="Swal.close(); iniciarCambioMesBonoCliente('bono_ilimitado', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-[#78350f] hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
-                                            <i class="ph-bold ph-arrows-clockwise"></i> Cambiar mes
+                                            <i class="ph-bold ph-arrows-clockwise"></i> ${escapeHtml(profileT('profile_change_month_short', 'Cambiar mes'))}
                                         </button>
                                     </div>
                                 </div>
-                                <span class="text-[9px] font-black uppercase tracking-wide text-amber-900 bg-amber-200/80 px-2 py-1 rounded-md shrink-0">${activo ? 'Activo' : 'Próximo'}</span>
+                                <span class="text-[9px] font-black uppercase tracking-wide text-amber-900 bg-amber-200/80 px-2 py-1 rounded-md shrink-0">${activo ? escapeHtml(profileT('profile_active_status', 'Activo')) : escapeHtml(profileT('profile_upcoming_status', 'Próximo'))}</span>
                             </div>
                         `;
                     } else if (item.tipo === 'bono_mensual') {
-                        const usadasEsteBono = esMesActual ? Math.min(2, Math.max(usoSemanal.mensualUsadas, usoSemanal.totalMensualesUsadas)) : 0;
+                        const usadasEsteBono = esMesActual ? usoSemanal.mensualUsadas : 0;
                         return `
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-300 bg-slate-50/80 px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-[9px] font-black uppercase tracking-wider bg-slate-700 text-white px-2 py-0.5 rounded-full shadow-2xs">🥈 Plata · 65 €</span>
+                                        <span class="text-[9px] font-black uppercase tracking-wider bg-slate-700 text-white px-2 py-0.5 rounded-full shadow-2xs">🥈 ${escapeHtml(profileT('profile_metal_silver_price', 'Plata · 65 €'))}</span>
                                         <span class="text-[11px] font-bold text-slate-800">${escapeHtml(mesLabel)}</span>
                                     </div>
-                                    <p class="text-[10px] text-slate-700 mt-1">2 clases regulares/semana (lunes a domingo)${esMesActual ? ` · Esta semana: <strong>${usadasEsteBono} / 2</strong>` : ''}</p>
+                                    <p class="text-[10px] text-slate-700 mt-1">${escapeHtml(profileT('profile_monthly_classes_week_desc', '2 clases regulares/semana del mes natural'))}${esMesActual ? ` · ${escapeHtml(profileT('profile_this_week', 'Esta semana del mes'))}: <strong>${usadasEsteBono} / 2</strong>` : ''}</p>
                                     <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-[9px] text-slate-500">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</span>
+                                        <span class="text-[9px] text-slate-500">${escapeHtml(profileTReplace('profile_ends_on', 'Termina el {date}', { date: formatMadridDate(finIncluido) }))}</span>
                                         <button type="button" onclick="Swal.close(); abrirDetalleBonoMensualSemanas(null, 'bono_mensual', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-slate-700 hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
-                                            <i class="ph-bold ph-calendar-check"></i> Ver semanas
+                                            <i class="ph-bold ph-calendar-check"></i> ${escapeHtml(profileT('profile_view_weeks', 'Ver semanas'))}
                                         </button>
                                         <button type="button" onclick="Swal.close(); iniciarCambioMesBonoCliente('bono_mensual', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-slate-700 hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
-                                            <i class="ph-bold ph-arrows-clockwise"></i> Cambiar mes
+                                            <i class="ph-bold ph-arrows-clockwise"></i> ${escapeHtml(profileT('profile_change_month_short', 'Cambiar mes'))}
                                         </button>
                                     </div>
                                 </div>
-                                <span class="text-[9px] font-black uppercase tracking-wide text-slate-800 bg-slate-200 px-2 py-1 rounded-md shrink-0">${activo ? 'Activo' : 'Próximo'}</span>
+                                <span class="text-[9px] font-black uppercase tracking-wide text-slate-800 bg-slate-200 px-2 py-1 rounded-md shrink-0">${activo ? escapeHtml(profileT('profile_active_status', 'Activo')) : escapeHtml(profileT('profile_upcoming_status', 'Próximo'))}</span>
                             </div>
                         `;
                     } else {
-                        const usadasEsteBono = esMesActual ? Math.min(1, Math.max(usoSemanal.inicialUsadas, Math.max(0, usoSemanal.totalMensualesUsadas - 2))) : 0;
+                        const usadasEsteBono = esMesActual ? usoSemanal.inicialUsadas : 0;
                         return `
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-[#c4824d]/40 bg-[#fffbf7] px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-[9px] font-black uppercase tracking-wider bg-[#8f6b2d] text-white px-2 py-0.5 rounded-full shadow-2xs">🥉 Bronce · 40 €</span>
+                                        <span class="text-[9px] font-black uppercase tracking-wider bg-[#8f6b2d] text-white px-2 py-0.5 rounded-full shadow-2xs">🥉 ${escapeHtml(profileT('profile_metal_bronze_price', 'Bronce · 40 €'))}</span>
                                         <span class="text-[11px] font-bold text-[#5e4213]">${escapeHtml(mesLabel)}</span>
                                     </div>
-                                    <p class="text-[10px] text-[#5e4213]/80 mt-1">1 clase regular/semana (lunes a domingo)${esMesActual ? ` · Esta semana: <strong>${usadasEsteBono} / 1</strong>` : ''}</p>
+                                    <p class="text-[10px] text-[#5e4213]/80 mt-1">${escapeHtml(profileT('profile_initial_classes_week_desc', '1 clase regular/semana del mes natural'))}${esMesActual ? ` · ${escapeHtml(profileT('profile_this_week', 'Esta semana del mes'))}: <strong>${usadasEsteBono} / 1</strong>` : ''}</p>
                                     <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-[9px] text-[#5e4213]/60">Termina el ${escapeHtml(formatMadridDate(finIncluido))}</span>
+                                        <span class="text-[9px] text-[#5e4213]/60">${escapeHtml(profileTReplace('profile_ends_on', 'Termina el {date}', { date: formatMadridDate(finIncluido) }))}</span>
                                         <button type="button" onclick="Swal.close(); abrirDetalleBonoMensualSemanas(null, 'bono_inicial', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-[#8f6b2d] hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
-                                            <i class="ph-bold ph-calendar-check"></i> Ver semanas
+                                            <i class="ph-bold ph-calendar-check"></i> ${escapeHtml(profileT('profile_view_weeks', 'Ver semanas'))}
                                         </button>
                                         <button type="button" onclick="Swal.close(); iniciarCambioMesBonoCliente('bono_inicial', '${p.id || ''}', '${p.membership_month || p.starts_at}')" class="text-[9px] text-[#8f6b2d] hover:text-black font-bold underline inline-flex items-center gap-0.5 cursor-pointer">
-                                            <i class="ph-bold ph-arrows-clockwise"></i> Cambiar mes
+                                            <i class="ph-bold ph-arrows-clockwise"></i> ${escapeHtml(profileT('profile_change_month_short', 'Cambiar mes'))}
                                         </button>
                                     </div>
                                 </div>
-                                <span class="text-[9px] font-black uppercase tracking-wide text-[#8f6b2d] bg-[#f5ede2] px-2 py-1 rounded-md shrink-0">${activo ? 'Activo' : 'Próximo'}</span>
+                                <span class="text-[9px] font-black uppercase tracking-wide text-[#8f6b2d] bg-[#f5ede2] px-2 py-1 rounded-md shrink-0">${activo ? escapeHtml(profileT('profile_active_status', 'Activo')) : escapeHtml(profileT('profile_upcoming_status', 'Próximo'))}</span>
                             </div>
                         `;
                     }
@@ -8891,7 +8955,7 @@
 
             const htmlBloqueMensuales = filasMensuales.length
                 ? filasMensuales.join('')
-                : '<p class="text-xs text-cocoa/45 py-1">No tienes bonos mensuales ni ilimitados contratados.</p>';
+                : `<p class="text-xs text-cocoa/45 py-1">${escapeHtml(profileT('profile_no_monthly_bonos', 'No tienes bonos mensuales ni ilimitados contratados.'))}</p>`;
 
             // 2. PACKS DE CLASES (FEFO)
             const packs = ordenarPacksPorCaducidad(packsVisibles(userClassPacks));
@@ -8903,7 +8967,7 @@
                     packPrimero = false;
                     return filaPackDetalle(pack, { primero });
                 }).join('')
-                : '<p class="text-xs text-cocoa/45 py-1">No tienes packs de clases activos.</p>';
+                : `<p class="text-xs text-cocoa/45 py-1">${escapeHtml(profileT('profile_no_active_packs', 'No tienes packs de clases activos.'))}</p>`;
 
             const resumen = resumenCaducidadPacks(userClassPacks);
 
@@ -8911,16 +8975,16 @@
             const filasOtros = [];
             if (toSafeNumber(userSaldoClasesGratis) > 0) {
                 filasOtros.push(`<div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-left">
-                    <div><p class="text-[11px] font-bold text-emerald-900">Bono de Bienvenida</p>
-                    <p class="text-[10px] text-emerald-700/80 mt-0.5">1 clase gratis · sin fecha de caducidad</p></div>
-                    <span class="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md">${toSafeNumber(userSaldoClasesGratis)} disp.</span>
+                    <div><p class="text-[11px] font-bold text-emerald-900">${escapeHtml(profileT('profile_welcome_bonus_title', 'Bono de Bienvenida'))}</p>
+                    <p class="text-[10px] text-emerald-700/80 mt-0.5">${escapeHtml(profileT('profile_welcome_bonus_no_expiry', '1 clase gratis · sin fecha de caducidad'))}</p></div>
+                    <span class="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md">${toSafeNumber(userSaldoClasesGratis)} ${escapeHtml(profileT('profile_available_short', 'disp.'))}</span>
                 </div>`);
             }
             if (toSafeNumber(userBonos) > 0 && packs.length === 0) {
                 filasOtros.push(`<div class="flex items-center justify-between gap-3 rounded-xl border border-cocoa/10 bg-white px-3 py-2 text-left">
-                    <div><p class="text-[11px] font-bold text-cocoa">Saldo de Clases Sueltas</p>
-                    <p class="text-[10px] text-cocoa/60 mt-0.5">Clases individuales disponibles en tu cuenta</p></div>
-                    <span class="text-[10px] font-black text-cocoa bg-cocoa/5 border border-cocoa/15 px-2 py-0.5 rounded-md">${toSafeNumber(userBonos)} disp.</span>
+                    <div><p class="text-[11px] font-bold text-cocoa">${escapeHtml(profileT('profile_single_class_balance', 'Saldo de Clases Sueltas'))}</p>
+                    <p class="text-[10px] text-cocoa/60 mt-0.5">${escapeHtml(profileT('profile_single_class_balance_desc', 'Clases individuales disponibles en tu cuenta'))}</p></div>
+                    <span class="text-[10px] font-black text-cocoa bg-cocoa/5 border border-cocoa/15 px-2 py-0.5 rounded-md">${toSafeNumber(userBonos)} ${escapeHtml(profileT('profile_available_short', 'disp.'))}</span>
                 </div>`);
             }
 
@@ -8929,30 +8993,31 @@
             const filasEspeciales = especialesVisibles.length
                 ? especialesVisibles.map(b => {
                     const finIncluido = finDeMesNatural(b.mes);
+                    const saldoBono = toSafeNumber(b.saldo);
                     return `<div class="flex items-center justify-between gap-3 rounded-xl border border-cocoa/10 bg-white px-3 py-2 text-left">
                         <div class="min-w-0">
-                            <p class="text-[11px] font-bold text-cocoa capitalize">${escapeHtml(formatDisplayMonth(b.mes))}</p>
-                            <p class="text-[10px] text-cocoa/55 mt-0.5">Caduca el ${escapeHtml(finIncluido ? formatMadridDate(finIncluido) : '—')}</p>
+                            <p class="text-[11px] font-bold text-cocoa">${escapeHtml(naturalMonthLabel(normalizarMesClave(b.mes)))}</p>
+                            <p class="text-[10px] text-cocoa/55 mt-0.5">${escapeHtml(profileT('profile_pack_expires', 'Caduca el'))} ${escapeHtml(finIncluido ? formatMadridDate(finIncluido) : '—')}</p>
                         </div>
-                        <span class="text-[10px] font-black text-cocoa bg-cocoa/5 border border-cocoa/15 px-2 py-0.5 rounded-md">${toSafeNumber(b.saldo)} ${toSafeNumber(b.saldo) === 1 ? 'bono' : 'bonos'}</span>
+                        <span class="text-[10px] font-black text-cocoa bg-cocoa/5 border border-cocoa/15 px-2 py-0.5 rounded-md">${escapeHtml(profileTReplace(saldoBono === 1 ? 'profile_bono_count_one' : 'profile_bono_count_other', saldoBono === 1 ? '{count} bono' : '{count} bonos', { count: saldoBono }))}</span>
                     </div>`;
                 }).join('')
-                : '<p class="text-xs text-cocoa/45 py-1">No tienes bonos de clase especial activos.</p>';
+                : `<p class="text-xs text-cocoa/45 py-1">${escapeHtml(profileT('profile_no_special_bonos', 'No tienes bonos de clase especial activos.'))}</p>`;
 
             await Swal.fire({
-                title: '<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-lg"><i class="ph-duotone ph-ticket text-olive"></i> Mis bonos y su caducidad</div>',
+                title: `<div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-lg"><i class="ph-duotone ph-ticket text-olive"></i> ${escapeHtml(profileT('profile_my_bonos_expiry_title', 'Mis bonos y su caducidad'))}</div>`,
                 html: `
             <div class="text-left font-sans space-y-4 my-2 max-h-[60vh] overflow-y-auto pr-1">
                 <div class="p-3 bg-cocoa/5 rounded-xl border border-cocoa/10">
-                    <p class="text-xs font-bold text-cocoa">${toSafeNumber(userBonos)} ${toSafeNumber(userBonos) === 1 ? 'clase de saldo/pack disponible' : 'clases de saldo/pack disponibles'}</p>
-                    <p class="text-[11px] text-cocoa/60 mt-0.5">${resumen ? escapeHtml(resumen) : 'Al reservar se prioriza siempre la modalidad mensual activa más alta, y los packs por orden de caducidad.'}</p>
+                    <p class="text-xs font-bold text-cocoa">${escapeHtml(profileTReplace(toSafeNumber(userBonos) === 1 ? 'profile_balance_available_one' : 'profile_balance_available_other', toSafeNumber(userBonos) === 1 ? '{count} clase de saldo/pack disponible' : '{count} clases de saldo/pack disponibles', { count: toSafeNumber(userBonos) }))}</p>
+                    <p class="text-[11px] text-cocoa/60 mt-0.5">${resumen ? escapeHtml(resumen) : escapeHtml(profileT('profile_booking_priority_note', 'Al reservar se prioriza siempre la modalidad mensual activa más alta, y los packs por orden de caducidad.'))}</p>
                 </div>
 
                 <!-- 1. Bonos Mensuales e Ilimitados (Prioridad #1) -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <p class="text-[10px] font-black uppercase tracking-wider text-amber-700">1. Bonos Mensuales e Ilimitados</p>
-                        <span class="text-[9px] font-bold text-cocoa/50">Prioridad #1 en reservas</span>
+                        <p class="text-[10px] font-black uppercase tracking-wider text-amber-700">${escapeHtml(profileT('profile_monthly_unlimited_block', '1. Bonos Mensuales e Ilimitados'))}</p>
+                        <span class="text-[9px] font-bold text-cocoa/50">${escapeHtml(profileT('profile_priority_one', 'Prioridad #1 en reservas'))}</span>
                     </div>
                     <div class="space-y-2">${htmlBloqueMensuales}</div>
                 </div>
@@ -8960,29 +9025,29 @@
                 <!-- 2. Bonos de Clases (Packs con caducidad FEFO) -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <p class="text-[10px] font-black uppercase tracking-wider text-olive">2. Packs de Clases</p>
-                        <span class="text-[9px] font-bold text-cocoa/50">Consumo por caducidad (FEFO)</span>
+                        <p class="text-[10px] font-black uppercase tracking-wider text-olive">${escapeHtml(profileT('profile_packs_block', '2. Packs de Clases'))}</p>
+                        <span class="text-[9px] font-bold text-cocoa/50">${escapeHtml(profileT('profile_fefo_note', 'Consumo por caducidad (FEFO)'))}</span>
                     </div>
                     <div class="space-y-2">${filasPacks}</div>
-                    ${packsVivos.length ? '<p class="text-[10px] text-cocoa/45 mt-2">Al reservar se usa siempre el bono que caduca antes, conservando los más nuevos.</p>' : ''}
+                    ${packsVivos.length ? `<p class="text-[10px] text-cocoa/45 mt-2">${escapeHtml(profileT('profile_fefo_help', 'Al reservar se usa siempre el bono que caduca antes, conservando los más nuevos.'))}</p>` : ''}
                 </div>
 
                 <!-- 3. Saldo Residual y Clases Sueltas -->
                 ${filasOtros.length ? `<div>
-                    <p class="text-[10px] font-black uppercase tracking-wider text-emerald-700 mb-2">3. Clases Sueltas y Otros Bonos</p>
+                    <p class="text-[10px] font-black uppercase tracking-wider text-emerald-700 mb-2">${escapeHtml(profileT('profile_singles_block', '3. Clases Sueltas y Otros Bonos'))}</p>
                     <div class="space-y-2">${filasOtros.join('')}</div>
                 </div>` : ''}
 
                 <!-- 4. Bono de Clase Especial (Mes Natural) -->
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-wider text-cocoa/70 mb-2">4. Bono de Clase Especial (mes natural)</p>
+                    <p class="text-[10px] font-black uppercase tracking-wider text-cocoa/70 mb-2">${escapeHtml(profileT('profile_special_block', '4. Bono de Clase Especial (mes natural)'))}</p>
                     <div class="space-y-2">${filasEspeciales}</div>
                 </div>
             </div>
         `,
                 showConfirmButton: true,
-                confirmButtonText: '<i class="ph-bold ph-shopping-cart-open mr-1"></i> Comprar más bonos',
-                cancelButtonText: 'Cerrar',
+                confirmButtonText: `<i class="ph-bold ph-shopping-cart-open mr-1"></i> ${escapeHtml(profileT('profile_buy_more_bonos', 'Comprar más bonos'))}`,
+                cancelButtonText: profileT('profile_close_button', 'Cerrar'),
                 confirmButtonColor: '#8C8658',
                 cancelButtonColor: '#795244',
                 customClass: {
@@ -9022,7 +9087,7 @@
                     if (valido) {
                         results.push({
                             tipo: 'bono_ilimitado',
-                            nombre: 'Bono Ilimitado',
+                            nombre: profileT('common_monthly_plan', 'Bono Ilimitado'),
                             color: 'dorado',
                             precio: 90,
                             orden: 1,
@@ -9046,7 +9111,7 @@
                         const isInicial = esPeriodoBonoInicial(p);
                         results.push({
                             tipo: isInicial ? 'bono_inicial' : 'bono_mensual',
-                            nombre: isInicial ? 'Bono Inicial' : 'Bono Mensual',
+                            nombre: isInicial ? profileT('profile_balance_bono_inicial', 'Bono Inicial') : profileT('profile_balance_bono_mensual', 'Bono Mensual'),
                             color: isInicial ? 'bronce' : 'plata',
                             precio: isInicial ? 40 : 65,
                             orden: isInicial ? 3 : 2,
@@ -9167,7 +9232,7 @@
             if (!period) return 0;
             // refDate puede llegar como Date, ISO o (por error) como el objeto
             // del periodo. Solo aceptamos fechas reales; en cualquier otro caso
-            // contamos la semana natural actual.
+            // contamos el bloque semanal del mes natural actual.
             let baseDate = new Date();
             if (refDate instanceof Date && !Number.isNaN(refDate.getTime())) {
                 baseDate = refDate;
@@ -9175,39 +9240,26 @@
                 const parsed = new Date(refDate);
                 if (!Number.isNaN(parsed.getTime())) baseDate = parsed;
             }
-            const inicioSemana = new Date(baseDate);
-            const dia = inicioSemana.getDay();
-            const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
-            inicioSemana.setDate(diff);
-            inicioSemana.setHours(0, 0, 0, 0);
-
-            const finSemana = new Date(inicioSemana);
-            finSemana.setDate(finSemana.getDate() + 7);
+            const bloque = getBloqueSemanalMesNatural(baseDate);
 
             let count = 0;
             (userBookingsCache || []).forEach(b => {
                 if (b.estado === 'confirmada') {
                     const fVal = b.clases?.fecha_inicio || b.fecha_inicio || b.fecha;
                     if (!fVal) return;
-                    const f = new Date(fVal);
-                    if (f >= inicioSemana && f < finSemana) {
-                        const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
-                        const esPack = b.tipo_reserva === 'pack_normal' || (b.bono_descontado === true && !b.usado_bono_mensual);
-                        const esBienvenida = b.tipo_reserva === 'bienvenida' || b.saldo_gratis_descontado === true;
-                        const esGratis = b.tipo_reserva === 'gratuita';
-                        const esEspecial = b.tipo_reserva === 'clase_especial';
+                    const fechaKey = typeof madridDateKey === 'function' ? madridDateKey(fVal) : '';
+                    if (!fechaKey || fechaKey < bloque.startKey || fechaKey > bloque.endKey) return;
 
-                        if (period.plan_type === 'bono_ilimitado' || period.max_classes_per_week === Infinity) {
-                            if (esIlimitado) count++;
-                        } else if (period.plan_type === 'bono_mensual') {
-                            if (b.tipo_reserva === 'bono_mensual' || (!esIlimitado && !esPack && !esBienvenida && !esGratis && !esEspecial && b.tipo_reserva !== 'bono_inicial')) count++;
-                        } else if (period.plan_type === 'bono_inicial') {
-                            if (b.tipo_reserva === 'bono_inicial') count++;
-                        } else {
-                            if (b.tipo_reserva === 'bono_inicial' || b.tipo_reserva === 'bono_mensual' || (!esIlimitado && !esPack && !esBienvenida && !esGratis && !esEspecial)) {
-                                count++;
-                            }
-                        }
+                    const esIlimitado = b.tipo_reserva === 'ilimitado' || b.usado_bono_mensual === true;
+
+                    if (period.plan_type === 'bono_ilimitado' || period.max_classes_per_week === Infinity) {
+                        if (esIlimitado) count++;
+                    } else if (period.plan_type === 'bono_mensual') {
+                        if (b.tipo_reserva === 'bono_mensual') count++;
+                    } else if (period.plan_type === 'bono_inicial') {
+                        if (b.tipo_reserva === 'bono_inicial') count++;
+                    } else if (b.tipo_reserva === 'bono_mensual' || b.tipo_reserva === 'bono_inicial') {
+                        count++;
                     }
                 }
             });
@@ -9223,11 +9275,14 @@
             if (!mesKey) return;
 
             const [yyyy, mm] = mesKey.split('-');
-            const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            const labelMesActual = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${yyyy}` : mesKey;
+            const mesActualFecha = new Date(Number(yyyy), Number(mm) - 1, 1);
+            const mesActualRaw = mesActualFecha.toLocaleDateString(getCurrentLocale(), { month: 'long', year: 'numeric' });
+            const labelMesActual = `${mesActualRaw.charAt(0).toUpperCase()}${mesActualRaw.slice(1)}`;
             const nombreBono = tipo === 'bono_ilimitado'
-                ? 'Bono Ilimitado (Dorado · 90 €)'
-                : (tipo === 'bono_mensual' ? 'Bono Mensual (Plata · 65 €)' : 'Bono Inicial (Bronce · 40 €)');
+                ? profileT('profile_change_month_bono_unlimited', 'Bono Ilimitado (Dorado · 90 €)')
+                : (tipo === 'bono_mensual'
+                    ? profileT('profile_change_month_bono_mensual', 'Bono Mensual (Plata · 65 €)')
+                    : profileT('profile_change_month_bono_inicial', 'Bono Inicial (Bronce · 40 €)'));
 
             // 1. Comprobar si se ha consumido alguna clase en este mes con este bono
             let clasesConsumidas = 0;
@@ -9279,8 +9334,12 @@
             if (clasesConsumidas > 0) {
                 await Swal.fire({
                     icon: 'info',
-                    title: 'Bono ya iniciado',
-                    text: `Ya has utilizado ${clasesConsumidas} clase${clasesConsumidas > 1 ? 's' : ''} en ${labelMesActual} con este bono. Al haber consumido clases, no es posible cambiarlo a otro mes.`,
+                    title: profileT('profile_bono_started_title', 'Bono ya iniciado'),
+                    text: profileTReplace(
+                        clasesConsumidas === 1 ? 'profile_bono_started_text_one' : 'profile_bono_started_text_other',
+                        'Ya has utilizado {count} clases en {month} con este bono. Al haber consumido clases, no es posible cambiarlo a otro mes.',
+                        { count: clasesConsumidas, month: labelMesActual }
+                    ),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -9302,30 +9361,36 @@
             if (!availableMonths.length) {
                 await Swal.fire({
                     icon: 'info',
-                    title: 'Sin meses disponibles',
-                    text: 'Ya dispones de este bono en todos los meses disponibles para cambio.',
+                    title: profileT('profile_no_months_available_title', 'Sin meses disponibles'),
+                    text: profileT('profile_no_months_available_text', 'Ya dispones de este bono en todos los meses disponibles para cambio.'),
                     confirmButtonColor: '#795244'
                 });
                 return;
             }
 
+            // Si el bono es de un mes futuro, el destino por defecto es el mes
+            // siguiente (nunca el mes en curso con pocos días restantes).
+            const defaultMonth = mesKey >= currentMonth
+                ? (availableMonths.find(m => m > mesKey) || availableMonths[0])
+                : availableMonths[0];
+
             const { value: nuevoMes } = await Swal.fire({
-                title: 'Cambiar mes del bono',
+                title: profileT('profile_change_month_title', 'Cambiar mes del bono'),
                 html: `
                     <div class="text-left font-sans space-y-2 text-xs text-cocoa/80 p-1 leading-relaxed">
-                        <p>No has consumido ninguna clase en <strong>${escapeHtml(labelMesActual)}</strong>.</p>
-                        <p>Selecciona el nuevo mes natural al que deseas trasladar tu <strong>${escapeHtml(nombreBono)}</strong>:</p>
+                        <p>${profileTReplace('profile_change_month_no_classes', 'No has consumido ninguna clase en {month}.', { month: `<strong>${escapeHtml(labelMesActual)}</strong>` })}</p>
+                        <p>${profileTReplace('profile_change_month_select', 'Selecciona el nuevo mes natural al que deseas trasladar tu {bono}:', { bono: `<strong>${escapeHtml(nombreBono)}</strong>` })}</p>
                         <div class="mt-2">
                             <select id="swal-select-nuevo-mes-cliente" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
-                                ${availableMonths.map(m => `<option value="${m}">${escapeHtml(naturalMonthOptionLabel(m))}</option>`).join('')}
+                                ${availableMonths.map(m => `<option value="${m}" ${m === defaultMonth ? 'selected' : ''}>${escapeHtml(monthOptionLabelWithRemaining(m))}</option>`).join('')}
                             </select>
                         </div>
-                        <p class="text-[11px] text-cocoa/55 mt-2">Tu bono se trasladará al mes seleccionado de forma inmediata con todas sus ventajas intactas.</p>
+                        <p class="text-[11px] text-cocoa/55 mt-2">${profileT('profile_change_month_note', 'Tu bono se trasladará al mes seleccionado de forma inmediata con todas sus ventajas intactas.')}</p>
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: 'Confirmar cambio',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: profileT('profile_confirm_change', 'Confirmar cambio'),
+                cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                 confirmButtonColor: '#8C8658',
                 cancelButtonColor: '#64748b',
                 focusConfirm: false,
@@ -9335,8 +9400,8 @@
             if (!nuevoMes) return;
 
             Swal.fire({
-                title: 'Cambiando mes...',
-                text: 'Actualizando tu bono al nuevo mes elegido.',
+                title: profileT('profile_changing_month', 'Cambiando mes...'),
+                text: profileT('profile_changing_month_text', 'Actualizando tu bono al nuevo mes elegido.'),
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -9397,15 +9462,15 @@
                 Swal.close();
                 await Swal.fire({
                     icon: 'success',
-                    title: 'Bono cambiado de mes',
-                    text: `Tu bono ha sido trasladado a ${naturalMonthOptionLabel(nuevoMes)} con éxito.`,
+                    title: profileT('profile_bono_month_changed_title', 'Bono cambiado de mes'),
+                    text: profileTReplace('profile_bono_month_changed_text', 'Tu bono ha sido trasladado a {month} con éxito.', { month: naturalMonthOptionLabel(nuevoMes) }),
                     timer: 2000,
                     showConfirmButton: false
                 });
             } else {
                 Swal.close();
-                const detalle = errorServidor ? ` Motivo: ${errorServidor}` : '';
-                await Swal.fire('Error', `No se pudo realizar el cambio de mes en este momento.${detalle}`, 'error');
+                const detalle = errorServidor ? ` ${profileT('profile_reason_label', 'Motivo:')} ${errorServidor}` : '';
+                await Swal.fire(profileT('profile_error_title', 'Error'), `${profileT('profile_change_month_error', 'No se pudo realizar el cambio de mes en este momento.')}${detalle}`, 'error');
             }
         }
         window.iniciarCambioMesBonoCliente = iniciarCambioMesBonoCliente;
@@ -9423,7 +9488,11 @@
             if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
 
             if (!currentUser || !currentUser.id) {
-                return Swal.fire('Inicia sesión', 'Debes iniciar sesión para consultar el desglose de tu bono mensual.', 'warning');
+                return Swal.fire(
+                    profileT('profile_sign_in', 'Inicia sesión'),
+                    profileT('profile_sign_in_week_breakdown', 'Debes iniciar sesión para consultar el desglose de tu bono mensual.'),
+                    'warning'
+                );
             }
 
             const ahoraMs = Date.now();
@@ -9438,9 +9507,9 @@
                 allUserPeriods.push({
                     id: p.id,
                     tipo: 'bono_ilimitado',
-                    nombre: 'Bono Ilimitado',
-                    tipoLabel: '🥇 Bono Ilimitado (90 €)',
-                    badgeColor: 'bg-amber-600 text-white',
+                    nombre: profileT('common_monthly_plan', 'Bono Ilimitado'),
+                    tipoLabel: `🥇 ${profileT('common_monthly_plan', 'Bono Ilimitado')} (90 €)`,
+                    badgeStyle: 'background-color:#b45309;color:#ffffff;',
                     maxClasses: Infinity,
                     mesKey: ym,
                     starts_at: p.starts_at,
@@ -9454,9 +9523,9 @@
                 allUserPeriods.push({
                     id: '',
                     tipo: 'bono_ilimitado',
-                    nombre: 'Bono Ilimitado',
-                    tipoLabel: '🥇 Bono Ilimitado (90 €)',
-                    badgeColor: 'bg-amber-600 text-white',
+                    nombre: profileT('common_monthly_plan', 'Bono Ilimitado'),
+                    tipoLabel: `🥇 ${profileT('common_monthly_plan', 'Bono Ilimitado')} (90 €)`,
+                    badgeStyle: 'background-color:#b45309;color:#ffffff;',
                     maxClasses: Infinity,
                     mesKey: ymActual,
                     starts_at: `${ymActual}-01T00:00:00.000Z`,
@@ -9473,10 +9542,14 @@
                 allUserPeriods.push({
                     id: p.id,
                     tipo: isInicial ? 'bono_inicial' : 'bono_mensual',
-                    nombre: isInicial ? 'Bono Inicial' : 'Bono Mensual',
-                    tipoLabel: isInicial ? '🥉 Bono Inicial (40 €)' : '🥈 Bono Mensual (65 €)',
-                    badgeColor: isInicial ? 'bg-[#8f6b2d] text-white' : 'bg-slate-700 text-white',
-                    maxClasses: isInicial ? 1 : 2,
+                    nombre: isInicial ? profileT('profile_balance_bono_inicial', 'Bono Inicial') : profileT('profile_balance_bono_mensual', 'Bono Mensual'),
+                    tipoLabel: isInicial
+                        ? `🥉 ${profileT('profile_balance_bono_inicial', 'Bono Inicial')} (40 €)`
+                        : `🥈 ${profileT('profile_balance_bono_mensual', 'Bono Mensual')} (65 €)`,
+                    badgeStyle: isInicial
+                        ? 'background-color:#8f6b2d;color:#ffffff;'
+                        : 'background-color:#334155;color:#ffffff;',
+                    maxClasses: Math.max(1, toSafeNumber(p.max_classes_per_week || (isInicial ? 1 : 2))),
                     mesKey: ym,
                     starts_at: p.starts_at,
                     ends_at: p.ends_at,
@@ -9508,22 +9581,25 @@
             }
 
             const targetMesKey = selectedPeriod.mesKey;
-            const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const nombresMesesCompletos = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const nombresMeses = getShortMonths();
             const [yyyyStr, mmStr] = (targetMesKey || ymActual).split('-');
             const yyyy = parseInt(yyyyStr, 10);
             const mm = parseInt(mmStr, 10);
-            const mesTitulo = `${nombresMesesCompletos[mm - 1]} ${yyyy}`;
+            const mesTituloRaw = new Date(yyyy, mm - 1, 1).toLocaleDateString(getCurrentLocale(), { month: 'long', year: 'numeric' });
+            const mesTitulo = `${mesTituloRaw.charAt(0).toUpperCase()}${mesTituloRaw.slice(1)}`;
 
-            // Consultar reservas del mes en Supabase
+            // Consultar reservas del mes en Supabase (mes natural Madrid)
             let userMonthBookings = [];
             try {
-                const startIso = `${targetMesKey}-01T00:00:00.000Z`;
-                const endD = new Date(yyyy, mm, 1);
-                const endIso = endD.toISOString();
+                const monthStart = madridDateTimeToUtc(`${targetMesKey}-01`, 0);
+                const nextMonthDate = new Date(Date.UTC(yyyy, mm, 1, 12));
+                const nextMonthKey = `${nextMonthDate.getUTCFullYear()}-${String(nextMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
+                const monthEnd = madridDateTimeToUtc(`${nextMonthKey}-01`, 0);
+                const startIso = monthStart.toISOString();
+                const endIso = monthEnd.toISOString();
 
                 const { data: dbRes } = await client.from('reservas_yoga')
-                    .select('id, tipo_reserva, usado_bono_mensual, estado, clases!inner(id, nombre, fecha_inicio, fecha_fin, profesional_id, profesionales(nombre))')
+                    .select('id, tipo_reserva, usado_bono_mensual, estado, clases!inner(id, nombre, fecha_inicio, fecha_fin, profesor_id, profesionales(nombre))')
                     .eq('user_id', currentUser.id)
                     .neq('estado', 'cancelada')
                     .gte('clases.fecha_inicio', startIso)
@@ -9547,40 +9623,34 @@
                 }));
             }
 
-            // Calcular semanas naturales del mes (Lunes a Domingo)
-            const daysInMonth = new Date(yyyy, mm, 0).getDate();
-            const monthFirstDate = new Date(yyyy, mm - 1, 1);
-            const monthLastDate = new Date(yyyy, mm - 1, daysInMonth, 23, 59, 59, 999);
+            // El desglose es por bono: no mezclar clases de pack, clase suelta
+            // ni reservas manuales con el cupo del plan seleccionado.
+            const tipoCupoSeleccionado = selectedPeriod.tipo === 'bono_inicial'
+                ? 'bono_inicial'
+                : (selectedPeriod.tipo === 'bono_mensual' ? 'bono_mensual' : null);
+            if (tipoCupoSeleccionado) {
+                userMonthBookings = (userMonthBookings || []).filter(r => r.tipo_reserva === tipoCupoSeleccionado);
+            }
 
-            let curMonday = new Date(yyyy, mm - 1, 1);
-            const dayOfW = curMonday.getDay();
-            const diffToMonday = curMonday.getDate() - dayOfW + (dayOfW === 0 ? -6 : 1);
-            curMonday.setDate(diffToMonday);
-            curMonday.setHours(0, 0, 0, 0);
+            // Bloques semanales anclados al mes natural: 1-7, 8-14, 15-21,
+            // 22-28 y 29-fin de mes (en febrero no hay quinto bloque).
+            const daysInMonth = new Date(Date.UTC(yyyy, mm, 0)).getUTCDate();
+            const dateRangeFormatter = new Intl.DateTimeFormat(getCurrentLocale(), { day: 'numeric', month: 'short', timeZone: 'UTC' });
+            const formatDiaBloque = day => dateRangeFormatter.format(new Date(Date.UTC(yyyy, mm - 1, day, 12)));
 
             const semanas = [];
-            let semanaNum = 1;
+            for (let index = 0; index < 5; index++) {
+                const startDay = 1 + index * 7;
+                if (startDay > daysInMonth) break;
+                const endDay = Math.min(startDay + 6, daysInMonth);
+                const startKey = `${targetMesKey}-${String(startDay).padStart(2, '0')}`;
+                const endKey = `${targetMesKey}-${String(endDay).padStart(2, '0')}`;
+                const rangoFechas = `${formatDiaBloque(startDay)} – ${formatDiaBloque(endDay)}`;
 
-            while (curMonday <= monthLastDate) {
-                const curSunday = new Date(curMonday);
-                curSunday.setDate(curSunday.getDate() + 6);
-                curSunday.setHours(23, 59, 59, 999);
-
-                const inicioVis = curMonday < monthFirstDate ? monthFirstDate : curMonday;
-                const finVis = curSunday > monthLastDate ? monthLastDate : curSunday;
-
-                const dIni = inicioVis.getDate();
-                const dFin = finVis.getDate();
-                const mIni = nombresMeses[inicioVis.getMonth()];
-                const mFin = nombresMeses[finVis.getMonth()];
-                const rangoFechas = (mIni === mFin)
-                    ? `${dIni} al ${dFin} de ${mIni}`
-                    : `${dIni} ${mIni} al ${dFin} ${mFin}`;
-
-                // Filtrar reservas que caen en esta semana (lunes 00:00 a domingo 23:59)
                 const reservasSemana = (userMonthBookings || []).filter(r => {
-                    const f = new Date(r.clases?.fecha_inicio || r.fecha_inicio);
-                    return f >= curMonday && f <= curSunday;
+                    const fVal = r.clases?.fecha_inicio || r.fecha_inicio;
+                    const fechaKey = typeof madridDateKey === 'function' ? madridDateKey(fVal) : '';
+                    return fechaKey && fechaKey >= startKey && fechaKey <= endKey;
                 });
 
                 const countUsadas = reservasSemana.length;
@@ -9590,10 +9660,10 @@
                 const agotada = !esIlimitado && countUsadas >= maxSemana;
 
                 semanas.push({
-                    num: semanaNum,
+                    num: index + 1,
                     rangoFechas,
-                    curMonday: new Date(curMonday),
-                    curSunday: new Date(curSunday),
+                    startKey,
+                    endKey,
                     reservas: reservasSemana,
                     usadas: countUsadas,
                     restantes,
@@ -9601,9 +9671,6 @@
                     esIlimitado,
                     maxSemana
                 });
-
-                curMonday.setDate(curMonday.getDate() + 7);
-                semanaNum++;
             }
 
             const semanasDisponibles = semanas.filter(s => s.esIlimitado || s.restantes > 0);
@@ -9621,7 +9688,11 @@
                             return `
                                 <button type="button" onclick="abrirDetalleBonoMensualSemanas(null, '${p.tipo}', '${p.id}', '${p.mesKey}')"
                                     class="px-3 py-1 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${isSel ? 'bg-cocoa text-white shadow-xs' : 'bg-cocoa/5 text-cocoa/80 hover:bg-cocoa/10 border border-cocoa/10'}">
-                                    ${pLabel} (${p.tipo === 'bono_inicial' ? 'Inicial' : (p.tipo === 'bono_mensual' ? 'Mensual' : 'Ilimitado')})
+                                    ${pLabel} (${p.tipo === 'bono_inicial'
+                                        ? escapeHtml(profileT('profile_month_tab_initial', 'Inicial'))
+                                        : (p.tipo === 'bono_mensual'
+                                            ? escapeHtml(profileT('profile_month_tab_monthly', 'Mensual'))
+                                            : escapeHtml(profileT('profile_month_tab_unlimited', 'Ilimitado')))})
                                 </button>
                             `;
                         }).join('')}
@@ -9634,24 +9705,28 @@
             if (semanasDisponibles.length > 0) {
                 semanasDisponiblesHtml = semanasDisponibles.map(s => {
                     const badgeTxt = s.esIlimitado
-                        ? 'Acceso Ilimitado'
-                        : `${s.restantes} de ${s.maxSemana} clase${s.maxSemana > 1 ? 's' : ''} libre${s.restantes > 1 ? 's' : ''}`;
+                        ? profileT('profile_unlimited_access', 'Acceso Ilimitado')
+                        : profileTReplace(
+                            s.restantes === 1 ? 'profile_week_quota_one' : 'profile_week_quota_other',
+                            s.restantes === 1 ? '{remaining} de {max} clase libre' : '{remaining} de {max} clases libres',
+                            { remaining: s.restantes, max: s.maxSemana }
+                        );
                     return `
                         <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-emerald-200/80 shadow-2xs">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-1.5">
-                                    <strong class="text-xs font-black text-emerald-950">Semana ${s.num}</strong>
-                                    <span class="text-[10px] text-cocoa/60">(${s.rangoFechas})</span>
+                                    <strong class="text-xs font-black text-emerald-950">${escapeHtml(profileT('profile_week_label', 'Semana'))} ${s.num}</strong>
+                                    <span class="text-[10px] text-cocoa/60">(${escapeHtml(s.rangoFechas)})</span>
                                 </div>
                                 <span class="text-[11px] font-bold text-emerald-800 flex items-center gap-1 mt-0.5">
-                                    <i class="ph-bold ph-check-circle text-emerald-600"></i> ${badgeTxt}
+                                    <i class="ph-bold ph-check-circle text-emerald-600"></i> ${escapeHtml(badgeTxt)}
                                 </span>
                             </div>
                             <button type="button" onclick="Swal.close(); if(typeof switchTab==='function'){switchTab('clases');}else{window.location.href='clases.html';}"
                                 class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 shrink-0"
                                 style="background-color: #5c6246 !important; color: #ffffff !important;"
-                                title="Reservar clase en el calendario">
-                                <i class="ph-bold ph-calendar-plus text-xs"></i> <span>Reservar</span>
+                                title="${escapeHtml(profileT('profile_book_class_calendar_title', 'Reservar clase en el calendario'))}">
+                                <i class="ph-bold ph-calendar-plus text-xs"></i> <span>${escapeHtml(profileT('profile_book_button', 'Reservar'))}</span>
                             </button>
                         </div>
                     `;
@@ -9659,7 +9734,7 @@
             } else {
                 semanasDisponiblesHtml = `
                     <p class="text-xs text-cocoa/60 italic p-2 text-center bg-white/60 rounded-xl border border-dashed border-cocoa/10">
-                        Has consumido las clases de todas las semanas de este mes.
+                        ${escapeHtml(profileT('profile_all_weeks_used', 'Has consumido las clases de todas las semanas de este mes.'))}
                     </p>
                 `;
             }
@@ -9669,19 +9744,21 @@
             if (semanasConReservas.length > 0) {
                 semanasGastadasHtml = semanasConReservas.map(s => {
                     const estadoSemana = s.agotada
-                        ? '<span class="text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md">Semana Gastada (Cupo Completo)</span>'
-                        : `<span class="text-[9px] font-bold bg-blue-50 text-blue-900 border border-blue-200 px-2 py-0.5 rounded-md">${s.usadas} reservada${s.usadas > 1 ? 's' : ''} · ${s.restantes} disp.</span>`;
+                        ? `<span class="text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md">${escapeHtml(profileT('profile_week_full_badge', 'Semana Gastada (Cupo Completo)'))}</span>`
+                        : `<span class="text-[9px] font-bold bg-blue-50 text-blue-900 border border-blue-200 px-2 py-0.5 rounded-md">${escapeHtml(profileTReplace(s.usadas === 1 ? 'profile_week_booked_badge_one' : 'profile_week_booked_badge_other', s.usadas === 1 ? '{used} reservada · {remaining} disp.' : '{used} reservadas · {remaining} disp.', { used: s.usadas, remaining: s.restantes }))}</span>`;
 
                     const clasesReservadasHtml = s.reservas.map(r => {
                         const fechaClase = new Date(r.clases?.fecha_inicio || r.fecha_inicio);
-                        const horaStr = fechaClase.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                        const diaStr = fechaClase.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-                        const profe = r.clases?.profesionales?.nombre ? ` · con ${r.clases.profesionales.nombre}` : '';
-                        const claseNom = r.clases?.nombre || 'Clase de Yoga';
+                        const horaStr = fechaClase.toLocaleTimeString(getCurrentLocale(), { hour: '2-digit', minute: '2-digit' });
+                        const diaStr = fechaClase.toLocaleDateString(getCurrentLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
+                        const profe = r.clases?.profesionales?.nombre
+                            ? ` · ${profileT('profile_with_teacher', 'con')} ${r.clases.profesionales.nombre}`
+                            : '';
+                        const claseNom = r.clases?.nombre || profileT('profile_default_yoga_class', 'Clase de Yoga');
                         return `
                             <div class="text-[11px] font-semibold text-cocoa flex items-center gap-1.5 bg-slate-50/90 px-2 py-1 rounded-lg border border-slate-200/70">
                                 <i class="ph-bold ph-calendar-check text-olive"></i>
-                                <span class="capitalize font-bold text-slate-800">${diaStr}</span> a las ${horaStr} — <span>${escapeHtml(claseNom)}</span><span class="text-cocoa/60">${escapeHtml(profe)}</span>
+                                <span class="capitalize font-bold text-slate-800">${escapeHtml(diaStr)}</span> ${escapeHtml(profileT('profile_at_time', 'a las'))} ${escapeHtml(horaStr)} — <span>${escapeHtml(claseNom)}</span><span class="text-cocoa/60">${escapeHtml(profe)}</span>
                             </div>
                         `;
                     }).join('');
@@ -9690,8 +9767,8 @@
                         <div class="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
                             <div class="flex items-center justify-between flex-wrap gap-1">
                                 <div class="flex items-center gap-1.5">
-                                    <strong class="text-xs font-black text-slate-900">Semana ${s.num}</strong>
-                                    <span class="text-[10px] text-cocoa/60">(${s.rangoFechas})</span>
+                                    <strong class="text-xs font-black text-slate-900">${escapeHtml(profileT('profile_week_label', 'Semana'))} ${s.num}</strong>
+                                    <span class="text-[10px] text-cocoa/60">(${escapeHtml(s.rangoFechas)})</span>
                                 </div>
                                 ${estadoSemana}
                             </div>
@@ -9704,24 +9781,24 @@
             } else {
                 semanasGastadasHtml = `
                     <p class="text-xs text-cocoa/60 italic p-2 text-center bg-white/60 rounded-xl border border-dashed border-cocoa/10">
-                        Aún no has reservado clases en este mes. ¡Todas tus semanas están disponibles!
+                        ${escapeHtml(profileT('profile_no_bookings_month', 'Aún no has reservado clases en este mes. ¡Todas tus semanas están disponibles!'))}
                     </p>
                 `;
             }
 
             let explicacionModalidad = '';
             if (selectedPeriod.tipo === 'bono_inicial') {
-                explicacionModalidad = 'Tu <strong>Bono Inicial (40 €)</strong> incluye <strong>1 clase regular por semana</strong> (lunes a domingo) durante todo el mes natural.';
+                explicacionModalidad = profileT('profile_explanation_inicial', 'Tu Bono Inicial (40 €) incluye 1 clase regular por semana del mes natural durante todo el mes.');
             } else if (selectedPeriod.tipo === 'bono_mensual') {
-                explicacionModalidad = 'Tu <strong>Bono Mensual (65 €)</strong> incluye <strong>2 clases regulares por semana</strong> (lunes a domingo) durante todo el mes natural.';
+                explicacionModalidad = profileT('profile_explanation_mensual', 'Tu Bono Mensual (65 €) incluye 2 clases regulares por semana del mes natural durante todo el mes.');
             } else {
-                explicacionModalidad = 'Tu <strong>Bono Ilimitado (90 €)</strong> incluye <strong>clases regulares ilimitadas</strong> + 1 clase especial gratis y 1 invitado para todo el mes natural.';
+                explicacionModalidad = profileT('profile_explanation_ilimitado', 'Tu Bono Ilimitado (90 €) incluye clases regulares ilimitadas + 1 clase especial gratis y 1 invitado para todo el mes natural.');
             }
 
             await Swal.fire({
                 title: `
                     <div class="flex items-center justify-center gap-2 text-cocoa font-serif font-black text-xl">
-                        <i class="ph-duotone ph-calendar-check text-olive"></i> Desglose de Semanas
+                        <i class="ph-duotone ph-calendar-check text-olive"></i> ${escapeHtml(profileT('profile_week_breakdown', 'Desglose de Semanas'))}
                     </div>
                 `,
                 html: `
@@ -9734,7 +9811,7 @@
                                 <h3 class="text-xs font-black text-cocoa uppercase tracking-wider">${escapeHtml(mesTitulo)}</h3>
                                 <p class="text-[11px] text-cocoa/75 mt-0.5">${explicacionModalidad}</p>
                             </div>
-                            <span class="text-[10px] font-black px-2.5 py-1 rounded-xl shadow-2xs ${selectedPeriod.badgeColor}">
+                            <span class="text-[10px] font-black px-2.5 py-1 rounded-xl shadow-2xs" style="${selectedPeriod.badgeStyle || ''}">
                                 ${selectedPeriod.tipoLabel}
                             </span>
                         </div>
@@ -9743,10 +9820,10 @@
                         <div class="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-black text-emerald-950 flex items-center gap-1.5">
-                                    <i class="ph-bold ph-sparkle text-emerald-700"></i> Semanas con Clases Disponibles
+                                    <i class="ph-bold ph-sparkle text-emerald-700"></i> ${escapeHtml(profileT('profile_weeks_available_title', 'Semanas con Clases Disponibles'))}
                                 </span>
                                 <span class="text-[10px] font-black text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
-                                    ${semanasDisponibles.length} semana${semanasDisponibles.length > 1 ? 's' : ''} libre${semanasDisponibles.length > 1 ? 's' : ''}
+                                    ${escapeHtml(profileTReplace(semanasDisponibles.length === 1 ? 'profile_weeks_free_one' : 'profile_weeks_free_other', semanasDisponibles.length === 1 ? '{count} semana libre' : '{count} semanas libres', { count: semanasDisponibles.length }))}
                                 </span>
                             </div>
                             <div class="space-y-1.5">
@@ -9758,10 +9835,10 @@
                         <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                                    <i class="ph-bold ph-bookmark-simple text-slate-700"></i> Clases Reservadas / Semanas Gastadas
+                                    <i class="ph-bold ph-bookmark-simple text-slate-700"></i> ${escapeHtml(profileT('profile_weeks_used_title', 'Clases Reservadas / Semanas Gastadas'))}
                                 </span>
                                 <span class="text-[10px] font-black text-slate-700 bg-slate-200 px-2 py-0.5 rounded-full">
-                                    ${userMonthBookings.length} clase${userMonthBookings.length > 1 ? 's' : ''} reservada${userMonthBookings.length > 1 ? 's' : ''}
+                                    ${escapeHtml(profileTReplace(userMonthBookings.length === 1 ? 'profile_classes_booked_one' : 'profile_classes_booked_other', userMonthBookings.length === 1 ? '{count} clase reservada' : '{count} clases reservadas', { count: userMonthBookings.length }))}
                                 </span>
                             </div>
                             <div class="space-y-1.5">
@@ -9771,8 +9848,8 @@
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: 'Ir al Calendario y Reservar',
-                cancelButtonText: 'Cerrar',
+                confirmButtonText: profileT('profile_go_calendar_and_book', 'Ir al Calendario y Reservar'),
+                cancelButtonText: profileT('profile_close_button', 'Cerrar'),
                 confirmButtonColor: '#5c6246',
                 cancelButtonColor: '#795244',
                 customClass: {
@@ -9803,17 +9880,17 @@
                            !!currentUserProfile?.bono_mensual_activo;
             const btnVerSemanas = tieneP
                 ? `<div class="mb-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between gap-2">
-                     <span class="text-[11px] font-bold text-emerald-950 flex items-center gap-1.5"><i class="ph-bold ph-calendar-check text-emerald-700"></i> Ya tienes un bono mensual contratado</span>
-                     <button type="button" onclick="Swal.close(); abrirDetalleBonoMensualSemanas(null);" class="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-olive hover:bg-olive/90 shadow-2xs cursor-pointer">Ver mis semanas</button>
+                     <span class="text-[11px] font-bold text-emerald-950 flex items-center gap-1.5"><i class="ph-bold ph-calendar-check text-emerald-700"></i> ${escapeHtml(profileT('profile_have_monthly_bono', 'Ya tienes un bono mensual contratado'))}</span>
+                     <button type="button" onclick="Swal.close(); abrirDetalleBonoMensualSemanas(null);" class="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-olive hover:bg-olive/90 shadow-2xs cursor-pointer">${escapeHtml(profileT('profile_view_my_weeks', 'Ver mis semanas'))}</button>
                    </div>`
                 : '';
 
             await Swal.fire({
-                title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">Modalidades de Bono Recurrente</div>`,
+                title: `<div class="brand-font text-xl font-bold text-cocoa pt-1">${escapeHtml(profileT('profile_choose_recurring_title', 'Modalidades de Bono Recurrente'))}</div>`,
                 html: `
                     <div class="text-left space-y-2.5 p-1 max-h-[70vh] overflow-y-auto pr-1">
                         ${btnVerSemanas}
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Elige tu mensualidad (cubre del día 1 al último día del mes natural elegido):</p>
+                        <p class="text-xs text-cocoa/80 leading-relaxed">${escapeHtml(profileT('profile_choose_recurring_hint', 'Elige tu mensualidad (cubre del día 1 al último día del mes natural elegido):'))}</p>
                         
                         <!-- 1. Bono Inicial (Bronce) -->
                         <div role="button" onclick="Swal.close(); comprarBonoInicial();" class="p-2.5 rounded-2xl border-2 border-[#8f6b2d]/50 hover:border-[#8f6b2d] bg-[#fffbf7] cursor-pointer transition shadow-2xs hover:scale-[1.01] group">
@@ -9823,11 +9900,11 @@
                                         <i class="ph-fill ph-plant text-lg"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-xs text-[#8f6b2d] uppercase tracking-wider">🥉 Bono Inicial (Bronce)</h4>
-                                        <p class="text-[11px] text-cocoa/75">1 clase regular por semana en el mes elegido</p>
+                                        <h4 class="font-bold text-xs text-[#8f6b2d] uppercase tracking-wider">🥉 ${escapeHtml(profileT('profile_balance_bono_inicial', 'Bono Inicial'))}</h4>
+                                        <p class="text-[11px] text-cocoa/75">${escapeHtml(profileT('profile_bono_inicial_short_desc', '1 clase regular por semana en el mes elegido'))}</p>
                                     </div>
                                 </div>
-                                <span class="text-sm font-black text-[#8f6b2d] shrink-0">40 € <span class="text-[10px] font-normal text-cocoa/60">/mes</span></span>
+                                <span class="text-sm font-black text-[#8f6b2d] shrink-0">40 € <span class="text-[10px] font-normal text-cocoa/60">${escapeHtml(profileT('profile_per_month_short', '/mes'))}</span></span>
                             </div>
                         </div>
 
@@ -9839,11 +9916,11 @@
                                         <i class="ph-fill ph-calendar-check text-lg"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider">🥈 Bono Mensual (Plata)</h4>
-                                        <p class="text-[11px] text-cocoa/75">2 clases regulares por semana en el mes elegido</p>
+                                        <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider">🥈 ${escapeHtml(profileT('profile_balance_bono_mensual', 'Bono Mensual'))}</h4>
+                                        <p class="text-[11px] text-cocoa/75">${escapeHtml(profileT('profile_bono_mensual_short_desc', '2 clases regulares por semana en el mes elegido'))}</p>
                                     </div>
                                 </div>
-                                <span class="text-sm font-black text-slate-800 shrink-0">65 € <span class="text-[10px] font-normal text-cocoa/60">/mes</span></span>
+                                <span class="text-sm font-black text-slate-800 shrink-0">65 € <span class="text-[10px] font-normal text-cocoa/60">${escapeHtml(profileT('profile_per_month_short', '/mes'))}</span></span>
                             </div>
                         </div>
 
@@ -9855,18 +9932,18 @@
                                         <i class="ph-fill ph-infinity text-lg"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-xs text-amber-900 uppercase tracking-wider">🥇 Bono Ilimitado (Dorado)</h4>
-                                        <p class="text-[11px] text-amber-950/80">Clases ilimitadas + 1 especial + 1 invitado gratis</p>
+                                        <h4 class="font-bold text-xs text-amber-900 uppercase tracking-wider">🥇 ${escapeHtml(profileT('common_monthly_plan', 'Bono Ilimitado'))}</h4>
+                                        <p class="text-[11px] text-amber-950/80">${escapeHtml(profileT('profile_bono_ilimitado_short_desc', 'Clases ilimitadas + 1 especial + 1 invitado gratis'))}</p>
                                     </div>
                                 </div>
-                                <span class="text-sm font-black text-amber-800 shrink-0">90 € <span class="text-[10px] font-normal text-cocoa/60">/mes</span></span>
+                                <span class="text-sm font-black text-amber-800 shrink-0">90 € <span class="text-[10px] font-normal text-cocoa/60">${escapeHtml(profileT('profile_per_month_short', '/mes'))}</span></span>
                             </div>
                         </div>
                     </div>
                 `,
                 showCancelButton: true,
                 showConfirmButton: false,
-                cancelButtonText: 'Cerrar',
+                cancelButtonText: profileT('profile_close_button', 'Cerrar'),
                 cancelButtonColor: '#795244',
                 customClass: {
                     popup: 'rounded-3xl !p-4 sm:!p-5 border border-cocoa/10 shadow-2xl max-w-md',
@@ -9964,13 +10041,13 @@
                 // Sin bono recurrente (blanco / vacío neutral)
                 bonosRecurrentesHtml = `
             <!-- 1. BONO RECURRENTE: SIN MES (BLANCO / VACÍO) -->
-            <div role="button" tabindex="0" onclick="abrirModalElegirBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: #ffffff; border: 1.5px solid rgba(38, 22, 12, 0.22); box-shadow: 0 1px 3px rgba(38, 22, 12, 0.06);" title="Elegir modalidad de Bono Recurrente (Inicial, Mensual o Ilimitado)">
+            <div role="button" tabindex="0" onclick="abrirModalElegirBonoMensual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: #ffffff; border: 1.5px solid rgba(38, 22, 12, 0.22); box-shadow: 0 1px 3px rgba(38, 22, 12, 0.06);" title="${escapeHtml(profileT('profile_choose_recurring_aria', 'Elegir modalidad de Bono Recurrente (Inicial, Mensual o Ilimitado)'))}">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-2xs text-cocoa/80 bg-cocoa/10">
                     <i class="ph-bold ph-repeat text-sm"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
-                    <span class="text-[9px] font-black uppercase tracking-wider text-cocoa/70">Bono recurrente</span>
-                    <span class="text-xs sm:text-[13px] font-black text-cocoa mt-0.5 whitespace-nowrap">Sin mes</span>
+                    <span class="text-[9px] font-black uppercase tracking-wider text-cocoa/70">${escapeHtml(profileT('profile_bono_recurring', 'Bono recurrente'))}</span>
+                    <span class="text-xs sm:text-[13px] font-black text-cocoa mt-0.5 whitespace-nowrap">${escapeHtml(profileT('profile_no_month', 'Sin mes'))}</span>
                 </div>
             </div>`;
             } else {
@@ -9978,7 +10055,7 @@
                     const esInicial = bono.tipo === 'bono_inicial';
                     const esMensual = bono.tipo === 'bono_mensual';
 
-                    let mesNombre = 'Sin mes';
+                    let mesNombre = profileT('profile_no_month', 'Sin mes');
                     if (bono.period) {
                         const raw = formatMadridDate(bono.period?.starts_at || (bono.period.membership_month ? `${bono.period.membership_month}T00:00:00.000Z` : new Date()), { month: 'long', year: 'numeric' });
                         if (raw && raw !== '--/--/----') {
@@ -9991,36 +10068,36 @@
                     if (esInicial) {
                         return `
             <!-- BONO INICIAL (BRONCE METÁLICO) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_inicial', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffbf7 0%, #f7ede2 50%, #edd3ba 100%); border: 1.5px solid #8f6b2d; box-shadow: 0 1px 4px rgba(143, 107, 45, 0.2);" title="Bono Inicial activo: ${escapeHtml(mesNombre)} (1 clase/semana) · Clic para ver desglose de semanas">
+            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_inicial', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffbf7 0%, #f7ede2 50%, #edd3ba 100%); border: 1.5px solid #8f6b2d; box-shadow: 0 1px 4px rgba(143, 107, 45, 0.2);" title="${escapeHtml(profileTReplace('profile_card_title_inicial', 'Bono Inicial activo: {month} (1 clase/semana) · Clic para ver desglose de semanas', { month: mesNombre }))}">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #8f6b2d 0%, #5e4213 100%);">
                     <i class="ph-fill ph-plant text-sm"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
-                    <span class="text-[9px] font-black uppercase tracking-wider text-[#8f6b2d]">Bono Inicial</span>
+                    <span class="text-[9px] font-black uppercase tracking-wider text-[#8f6b2d]">${escapeHtml(profileT('profile_balance_bono_inicial', 'Bono Inicial'))}</span>
                     <span class="text-xs sm:text-[13px] font-black text-[#5e4213] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
                 </div>
             </div>`;
                     } else if (esMensual) {
                         return `
             <!-- BONO MENSUAL (PLATA METÁLICA) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_mensual', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.22);" title="Bono Mensual activo: ${escapeHtml(mesNombre)} (2 clases/semana) · Clic para ver desglose de semanas">
+            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_mensual', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.22);" title="${escapeHtml(profileTReplace('profile_card_title_mensual', 'Bono Mensual activo: {month} (2 clases/semana) · Clic para ver desglose de semanas', { month: mesNombre }))}">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
                     <i class="ph-fill ph-calendar-check text-sm"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
-                    <span class="text-[9px] font-black uppercase tracking-wider text-[#334155]">Bono Mensual</span>
+                    <span class="text-[9px] font-black uppercase tracking-wider text-[#334155]">${escapeHtml(profileT('profile_balance_bono_mensual', 'Bono Mensual'))}</span>
                     <span class="text-xs sm:text-[13px] font-black text-[#0f172a] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
                 </div>
             </div>`;
                     } else {
                         return `
             <!-- BONO ILIMITADO (DORADO METÁLICO) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_ilimitado', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.2);" title="Bono Ilimitado activo: ${escapeHtml(mesNombre)} · Clic para ver desglose de semanas">
+            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_ilimitado', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.2);" title="${escapeHtml(profileTReplace('profile_card_title_ilimitado', 'Bono Ilimitado activo: {month} · Clic para ver desglose de semanas', { month: mesNombre }))}">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
                     <i class="ph-fill ph-infinity text-sm"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
-                    <span class="text-[9px] font-black uppercase tracking-wider text-[#92400e]">Bono Ilimitado</span>
+                    <span class="text-[9px] font-black uppercase tracking-wider text-[#92400e]">${escapeHtml(profileT('common_monthly_plan', 'Bono Ilimitado'))}</span>
                     <span class="text-xs sm:text-[13px] font-black text-[#78350f] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
                 </div>
             </div>`;
@@ -10039,7 +10116,7 @@
             <div class="h-7 w-px bg-cocoa/20 mx-2 sm:mx-3.5 self-center shrink-0" aria-hidden="true"></div>
 
             <!-- CLASES NORMALES (COLOR CORPORATIVO COCOA GEN YOGA) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonosCliente(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fdfbf7 0%, #f6f0ea 50%, #ede3d7 100%); border: 1.5px solid #26160C; box-shadow: 0 1px 4px rgba(38, 22, 12, 0.12);" title="Ver cada uno de mis bonos y su fecha de caducidad">
+            <div role="button" tabindex="0" onclick="abrirDetalleBonosCliente(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fdfbf7 0%, #f6f0ea 50%, #ede3d7 100%); border: 1.5px solid #26160C; box-shadow: 0 1px 4px rgba(38, 22, 12, 0.12);" title="${escapeHtml(profileT('profile_view_bonos_expiry_title', 'Ver cada uno de mis bonos y su fecha de caducidad'))}">
                 <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #442a18 0%, #26160C 100%);">
                     <i class="ph-fill ph-ticket"></i>
                 </div>
@@ -10050,7 +10127,7 @@
             </div>
 
             <!-- CLASE ESPECIAL (COLOR CORPORATIVO TERRACOTTA GEN YOGA) -->
-            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbfb 0%, #fdf2ef 50%, #fce7e2 100%); border: 1.5px solid #E1654E; box-shadow: 0 1px 4px rgba(225, 101, 78, 0.15);" title="${saldoEspecialMostrar > 0 ? `${saldoEspecialMostrar} Clase(s) especial(es) disponible(s)` : 'Comprar Bono Clase Especial'}">
+            <div role="button" tabindex="0" onclick="comprarBonoEspecialStripe(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffbfb 0%, #fdf2ef 50%, #fce7e2 100%); border: 1.5px solid #E1654E; box-shadow: 0 1px 4px rgba(225, 101, 78, 0.15);" title="${saldoEspecialMostrar > 0 ? escapeHtml(profileTReplace(saldoEspecialMostrar === 1 ? 'profile_special_classes_available_one' : 'profile_special_classes_available_other', '{count} clases especiales disponibles', { count: saldoEspecialMostrar })) : escapeHtml(profileT('profile_buy_special_bono', 'Comprar Bono Clase Especial'))}">
                 <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #e1654e 0%, #c13d26 100%);">
                     <i class="ph-fill ph-sparkle text-white"></i>
                 </div>
@@ -10062,7 +10139,7 @@
 
             ${userTotalTalleresDisponibles > 0 ? `
             <!-- 3. TALLERES (DORADA METÁLICA) -->
-            <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);" title="Ver y reservar talleres temáticos">
+            <div role="button" tabindex="0" onclick="abrirPestanaEventosTalleres(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="flex items-center ${bGap} ${bPad} rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] shrink-0" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);" title="${escapeHtml(profileT('profile_view_book_workshops_title', 'Ver y reservar talleres temáticos'))}">
                 <div class="${iconBox} flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
                     <i class="ph-fill ph-chalkboard-teacher"></i>
                 </div>
@@ -10192,11 +10269,11 @@
                 const specialUsed = isSpecialBenefitUsedForPeriod(period);
                 const guestUsed = isGuestBenefitUsedForPeriod(period);
                 return `<div class="rounded-2xl border ${isActive ? 'border-emerald-200 bg-emerald-50/60' : (isFuture ? 'border-terracotta/15 bg-terracotta/[0.04]' : 'border-cocoa/10 bg-cocoa/[0.03]')} p-3 text-left">
-            <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-black text-cocoa capitalize">${escapeHtml(formatUnlimitedMonth(period))}${period.legacy ? escapeHtml(profileT('profile_unlimited_previous', ' · anterior')) : ''}</p><p class="text-[10px] text-cocoa/55 mt-0.5">${escapeHtml(profileT('profile_period_from', 'Del'))} ${escapeHtml(formatMadridDate(period.starts_at))} ${escapeHtml(profileT('profile_period_to', 'al'))} ${escapeHtml(formatMadridDate(inclusiveEnd))}</p></div><span class="text-[9px] font-bold uppercase tracking-wide ${isActive ? 'text-emerald-700' : 'text-cocoa/50'}">${escapeHtml(status)}</span></div>
+            <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-black text-cocoa">${escapeHtml(formatUnlimitedMonth(period))}${period.legacy ? escapeHtml(profileT('profile_unlimited_previous', ' · anterior')) : ''}</p><p class="text-[10px] text-cocoa/55 mt-0.5">${escapeHtml(profileT('profile_period_from', 'Del'))} ${escapeHtml(formatMadridDate(period.starts_at))} ${escapeHtml(profileT('profile_period_to', 'al'))} ${escapeHtml(formatMadridDate(inclusiveEnd))}</p></div><span class="text-[9px] font-bold uppercase tracking-wide ${isActive ? 'text-emerald-700' : 'text-cocoa/50'}">${escapeHtml(status)}</span></div>
             <div class="mt-2.5 h-2 rounded-full bg-white border border-cocoa/5 overflow-hidden" role="progressbar" aria-label="${escapeHtml(profileT('profile_unlimited_aria_progress', 'Tiempo transcurrido del mes'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><div class="h-full rounded-full ${isEnded ? 'bg-cocoa/20' : 'bg-gradient-to-r from-terracotta to-golden'}" style="width:${progress}%"></div></div>
             <p class="mt-1.5 text-[10px] text-cocoa/50">${isFuture ? escapeHtml(profileT('profile_unlimited_starts', 'El tiempo comenzará el primer día del mes.')) : (isActive ? `${progress}% ${escapeHtml(profileT('profile_unlimited_progress', 'del mes transcurrido'))}` : escapeHtml(profileT('profile_unlimited_period_done', 'Periodo natural completado')))}</p>
             ${!isEnded ? `<div class="flex flex-wrap gap-1.5 mt-3">${benefitBadge(false, profileT('profile_unlimited_benefit_classes', 'Clases regulares ilimitadas'), '')}${benefitBadge(specialUsed, profileT('profile_unlimited_benefit_special_available', 'Especial disponible'), profileT('profile_unlimited_benefit_special_used', 'Especial utilizada'))}${benefitBadge(guestUsed, profileT('profile_unlimited_benefit_guest_available', 'Invitado disponible'), profileT('profile_unlimited_benefit_guest_used', 'Invitado utilizado'))}</div>` : ''}
-            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-cocoa/10 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">¿Error de mes?</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_ilimitado', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-amber-800 hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> Cambiar a otro mes</button></div>` : ''}
+            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-cocoa/10 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">${escapeHtml(profileT('profile_month_error', '¿Error de mes?'))}</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_ilimitado', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-amber-800 hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> ${escapeHtml(profileT('profile_change_to_other_month', 'Cambiar a otro mes'))}</button></div>` : ''}
         </div>`;
             }).join('') : `<p class="text-xs text-cocoa/45 py-3">${escapeHtml(profileT('profile_unlimited_none', 'Aún no has comprado ningún mes ilimitado.'))}</p>`;
 
@@ -10214,11 +10291,11 @@
                     ? profileT('profile_bono_mensual_status_active', 'Activo ahora')
                     : (isFuture ? profileT('profile_bono_mensual_status_future', 'Comprado · próximo') : profileT('profile_bono_mensual_status_ended', 'Finalizado'));
                 return `<div class="rounded-2xl border ${isActive ? 'border-[#8f6b2d]/40 bg-[#8f6b2d]/5' : (isFuture ? 'border-[#8f6b2d]/20 bg-[#8f6b2d]/[0.02]' : 'border-cocoa/10 bg-cocoa/[0.03]')} p-3 text-left">
-            <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-black text-cocoa capitalize">${escapeHtml(formatMonthlyMonth(period))}</p><p class="text-[10px] text-cocoa/55 mt-0.5">${escapeHtml(profileT('profile_period_from', 'Del'))} ${escapeHtml(formatMadridDate(period.starts_at))} ${escapeHtml(profileT('profile_period_to', 'al'))} ${escapeHtml(formatMadridDate(inclusiveEnd))}</p></div><span class="text-[9px] font-bold uppercase tracking-wide ${isActive ? 'text-[#8f6b2d]' : 'text-cocoa/50'}">${escapeHtml(status)}</span></div>
+            <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-black text-cocoa">${escapeHtml(formatMonthlyMonth(period))}</p><p class="text-[10px] text-cocoa/55 mt-0.5">${escapeHtml(profileT('profile_period_from', 'Del'))} ${escapeHtml(formatMadridDate(period.starts_at))} ${escapeHtml(profileT('profile_period_to', 'al'))} ${escapeHtml(formatMadridDate(inclusiveEnd))}</p></div><span class="text-[9px] font-bold uppercase tracking-wide ${isActive ? 'text-[#8f6b2d]' : 'text-cocoa/50'}">${escapeHtml(status)}</span></div>
             <div class="mt-2.5 h-2 rounded-full bg-white border border-cocoa/5 overflow-hidden" role="progressbar" aria-label="${escapeHtml(profileT('profile_unlimited_aria_progress', 'Tiempo transcurrido del mes'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><div class="h-full rounded-full ${isEnded ? 'bg-cocoa/20' : 'bg-gradient-to-r from-[#8f6b2d] to-[#b88c42]'}" style="width:${progress}%"></div></div>
             <p class="mt-1.5 text-[10px] text-cocoa/50">${isFuture ? escapeHtml(profileT('profile_unlimited_starts', 'El tiempo comenzará el primer día del mes.')) : (isActive ? `${progress}% ${escapeHtml(profileT('profile_unlimited_progress', 'del mes transcurrido'))}` : escapeHtml(profileT('profile_unlimited_period_done', 'Periodo natural completado')))}</p>
             ${!isEnded ? `<div class="flex flex-wrap gap-1.5 mt-3">${benefitBadge(false, profileT('profile_bono_inicial_benefit_classes', '1 clase regular por semana'), '')}</div>` : ''}
-            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-[#8f6b2d]/15 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">¿Error de mes?</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_inicial', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-[#8f6b2d] hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> Cambiar a otro mes</button></div>` : ''}
+            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-[#8f6b2d]/15 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">${escapeHtml(profileT('profile_month_error', '¿Error de mes?'))}</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_inicial', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-[#8f6b2d] hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> ${escapeHtml(profileT('profile_change_to_other_month', 'Cambiar a otro mes'))}</button></div>` : ''}
         </div>`;
             }).join('') : `<p class="text-xs text-cocoa/45 py-3">${escapeHtml(profileT('profile_bono_inicial_none', 'Aún no has contratado ningún Bono Inicial.'))}</p>`;
 
@@ -10236,11 +10313,11 @@
                     ? profileT('profile_bono_mensual_status_active', 'Activo ahora')
                     : (isFuture ? profileT('profile_bono_mensual_status_future', 'Comprado · próximo') : profileT('profile_bono_mensual_status_ended', 'Finalizado'));
                 return `<div class="rounded-2xl border ${isActive ? 'border-amber-200 bg-amber-50/60' : (isFuture ? 'border-amber-500/15 bg-amber-500/[0.04]' : 'border-cocoa/10 bg-cocoa/[0.03]')} p-3 text-left">
-            <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-black text-cocoa capitalize">${escapeHtml(formatMonthlyMonth(period))}</p><p class="text-[10px] text-cocoa/55 mt-0.5">${escapeHtml(profileT('profile_period_from', 'Del'))} ${escapeHtml(formatMadridDate(period.starts_at))} ${escapeHtml(profileT('profile_period_to', 'al'))} ${escapeHtml(formatMadridDate(inclusiveEnd))}</p></div><span class="text-[9px] font-bold uppercase tracking-wide ${isActive ? 'text-amber-800' : 'text-cocoa/50'}">${escapeHtml(status)}</span></div>
+            <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-black text-cocoa">${escapeHtml(formatMonthlyMonth(period))}</p><p class="text-[10px] text-cocoa/55 mt-0.5">${escapeHtml(profileT('profile_period_from', 'Del'))} ${escapeHtml(formatMadridDate(period.starts_at))} ${escapeHtml(profileT('profile_period_to', 'al'))} ${escapeHtml(formatMadridDate(inclusiveEnd))}</p></div><span class="text-[9px] font-bold uppercase tracking-wide ${isActive ? 'text-amber-800' : 'text-cocoa/50'}">${escapeHtml(status)}</span></div>
             <div class="mt-2.5 h-2 rounded-full bg-white border border-cocoa/5 overflow-hidden" role="progressbar" aria-label="${escapeHtml(profileT('profile_unlimited_aria_progress', 'Tiempo transcurrido del mes'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><div class="h-full rounded-full ${isEnded ? 'bg-cocoa/20' : 'bg-gradient-to-r from-amber-500 to-amber-700'}" style="width:${progress}%"></div></div>
             <p class="mt-1.5 text-[10px] text-cocoa/50">${isFuture ? escapeHtml(profileT('profile_unlimited_starts', 'El tiempo comenzará el primer día del mes.')) : (isActive ? `${progress}% ${escapeHtml(profileT('profile_unlimited_progress', 'del mes transcurrido'))}` : escapeHtml(profileT('profile_unlimited_period_done', 'Periodo natural completado')))}</p>
             ${!isEnded ? `<div class="flex flex-wrap gap-1.5 mt-3">${benefitBadge(false, profileT('profile_bono_mensual_benefit_classes', '2 clases regulares por semana'), '')}</div>` : ''}
-            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">¿Error de mes?</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_mensual', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-slate-700 hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> Cambiar a otro mes</button></div>` : ''}
+            ${!isEnded ? `<div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between"><span class="text-[10px] text-cocoa/55">${escapeHtml(profileT('profile_month_error', '¿Error de mes?'))}</span><button type="button" onclick="iniciarCambioMesBonoCliente('bono_mensual', '${period.id || ''}', '${period.membership_month || period.starts_at}')" class="text-[10px] text-slate-700 hover:text-black font-bold underline inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-arrows-clockwise text-xs"></i> ${escapeHtml(profileT('profile_change_to_other_month', 'Cambiar a otro mes'))}</button></div>` : ''}
         </div>`;
             }).join('') : `<p class="text-xs text-cocoa/45 py-3">${escapeHtml(profileT('profile_bono_mensual_none', 'Aún no has contratado ningún Bono Mensual.'))}</p>`;
 
@@ -10298,37 +10375,37 @@
             <div>
                 <div class="flex items-center justify-between gap-3 mb-2.5">
                     <div>
-                        <span class="block text-[10px] text-amber-800 font-black uppercase tracking-wider">Tarifa Plana Mensual</span>
-                        <p class="text-base sm:text-lg font-black text-cocoa mt-0.5">Bono Mensual Recurrente</p>
+                        <span class="block text-[10px] text-amber-800 font-black uppercase tracking-wider">${escapeHtml(profileT('profile_flat_rate_monthly', 'Tarifa Plana Mensual'))}</span>
+                        <p class="text-base sm:text-lg font-black text-cocoa mt-0.5">${escapeHtml(profileT('profile_recurring_bono_title', 'Bono Mensual Recurrente'))}</p>
                     </div>
                     <div class="w-9 h-9 rounded-xl bg-amber-100/80 text-amber-800 flex items-center justify-center shadow-2xs shrink-0">
                         <i class="ph-fill ph-repeat text-xl"></i>
                     </div>
                 </div>
                 <p class="text-xs text-cocoa/70 leading-relaxed mb-3">
-                    Disfruta de clases con tarifa plana durante el mes natural elegido. Elige la modalidad que mejor se adapte a tu ritmo:
+                    ${escapeHtml(profileT('profile_recurring_bono_desc', 'Disfruta de clases con tarifa plana durante el mes natural elegido. Elige la modalidad que mejor se adapte a tu ritmo:'))}
                 </p>
                 <div class="grid grid-cols-3 gap-1.5 mb-3 text-center">
                     <div class="p-2 rounded-xl bg-white/90 border border-[#8f6b2d]/30">
-                        <span class="block text-[9px] font-bold text-[#8f6b2d]">🥉 Inicial</span>
+                        <span class="block text-[9px] font-bold text-[#8f6b2d]">🥉 ${escapeHtml(profileT('profile_month_tab_initial', 'Inicial'))}</span>
                         <span class="block text-xs font-black text-cocoa mt-0.5">40 €</span>
-                        <span class="block text-[9px] text-cocoa/55">1 cl/sem</span>
+                        <span class="block text-[9px] text-cocoa/55">${escapeHtml(profileT('profile_one_class_week_short', '1 cl/sem'))}</span>
                     </div>
                     <div class="p-2 rounded-xl bg-white/90 border border-slate-300">
-                        <span class="block text-[9px] font-bold text-slate-700">🥈 Mensual</span>
+                        <span class="block text-[9px] font-bold text-slate-700">🥈 ${escapeHtml(profileT('profile_month_tab_monthly', 'Mensual'))}</span>
                         <span class="block text-xs font-black text-cocoa mt-0.5">65 €</span>
-                        <span class="block text-[9px] text-cocoa/55">2 cl/sem</span>
+                        <span class="block text-[9px] text-cocoa/55">${escapeHtml(profileT('profile_two_classes_week_short', '2 cl/sem'))}</span>
                     </div>
                     <div class="p-2 rounded-xl bg-white/90 border border-amber-300">
-                        <span class="block text-[9px] font-bold text-amber-700">🥇 Ilimitado</span>
+                        <span class="block text-[9px] font-bold text-amber-700">🥇 ${escapeHtml(profileT('profile_month_tab_unlimited', 'Ilimitado'))}</span>
                         <span class="block text-xs font-black text-cocoa mt-0.5">90 €</span>
-                        <span class="block text-[9px] text-cocoa/55">Todo inc.</span>
+                        <span class="block text-[9px] text-cocoa/55">${escapeHtml(profileT('profile_all_included_short', 'Todo inc.'))}</span>
                     </div>
                 </div>
             </div>
             <div>
                 <button type="button" onclick="abrirModalElegirBonoMensual(event)" class="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white transition shadow-sm hover:scale-[1.01] cursor-pointer" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;">
-                    <i class="ph-fill ph-calendar-plus mr-1"></i> Elegir modalidad de bono
+                    <i class="ph-fill ph-calendar-plus mr-1"></i> ${escapeHtml(profileT('profile_choose_bono_modal_cta', 'Elegir modalidad de bono'))}
                 </button>
             </div>
         </div>`;
@@ -10346,7 +10423,7 @@
                         <i class="ph-fill ph-plant text-xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_inicial_desc', '1 clase regular por semana (lunes a domingo) durante el mes natural elegido.'))}</p>
+                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_inicial_desc', '1 clase regular por semana del mes natural durante el mes elegido.'))}</p>
                 <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${initialMembershipRows}</div>
             </div>
             <div>
@@ -10367,7 +10444,7 @@
                         <i class="ph-fill ph-calendar-check text-xl"></i>
                     </div>
                 </div>
-                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_mensual_desc', '2 clases regulares por semana (lunes a domingo) durante el mes natural elegido.'))}</p>
+                <p class="text-xs text-cocoa/70 leading-relaxed mb-2.5">${escapeHtml(profileT('profile_bono_mensual_desc', '2 clases regulares por semana del mes natural durante el mes elegido.'))}</p>
                 <div class="space-y-1.5 mb-2.5 max-h-28 overflow-y-auto pr-1">${monthlyMembershipRows}</div>
             </div>
             <div>
@@ -10398,7 +10475,7 @@
                     monthlyCardsHtml += `
         <div class="col-span-full sm:col-span-2 text-center pt-1 pb-1">
             <button type="button" onclick="abrirModalElegirBonoMensual(event)" class="text-xs font-bold text-amber-800 hover:text-black underline inline-flex items-center gap-1 cursor-pointer">
-                <i class="ph-bold ph-plus-circle"></i> Ver o contratar otra modalidad de bono (Inicial, Mensual o Ilimitado)
+                <i class="ph-bold ph-plus-circle"></i> ${escapeHtml(profileT('profile_see_or_buy_other_bono', 'Ver o contratar otra modalidad de bono (Inicial, Mensual o Ilimitado)'))}
             </button>
         </div>`;
                 }
@@ -10543,6 +10620,8 @@
                 isAdmin = false;
                 currentUserRole = '';
                 currentUserProfile = null;
+                document.documentElement.classList.remove('is-admin');
+                document.documentElement.classList.remove('is-profesor');
                 document.body.classList.remove('is-admin');
                 document.body.classList.remove('is-profesor');
                 return;
@@ -10558,6 +10637,7 @@
                 if (rol === 'admin') {
                     isAdmin = true;
                     document.documentElement.classList.add('is-admin');
+                    document.documentElement.classList.remove('is-profesor');
                     document.body.classList.add('is-admin');
                     document.body.classList.remove('is-profesor');
 
@@ -10630,6 +10710,8 @@
 
                 if (STAFF_ROLES.includes(rol)) {
                     isAdmin = false;
+                    document.documentElement.classList.remove('is-admin');
+                    document.documentElement.classList.add('is-profesor');
                     document.body.classList.remove('is-admin');
                     document.body.classList.add('is-profesor');
 
@@ -10671,6 +10753,8 @@
 
                 } else {
                     isAdmin = false;
+                    document.documentElement.classList.remove('is-admin');
+                    document.documentElement.classList.remove('is-profesor');
                     document.body.classList.remove('is-admin');
                     document.body.classList.remove('is-profesor');
 
@@ -12561,8 +12645,8 @@
                 stripeCheckoutInProgress = false;
                 await Swal.fire({
                     icon: 'warning',
-                    title: 'Mes no disponible',
-                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    title: profileT('profile_month_not_available_title', 'Mes no disponible'),
+                    text: profileT('profile_month_not_available_text', 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.'),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -13406,14 +13490,9 @@
             let usoSemanal = typeof obtenerUsoSemanalBonosMensuales === 'function' ? obtenerUsoSemanalBonosMensuales(fechaClase) : { totalMensualesUsadas: 0, mensualUsadas: 0, inicialUsadas: 0 };
             if (currentUser?.id && client && periodosMensuales.length > 0) {
                 try {
-                    const baseDate = new Date(fechaClase);
-                    const diaSem = baseDate.getDay();
-                    const diffALunes = baseDate.getDate() - diaSem + (diaSem === 0 ? -6 : 1);
-                    const inicioSemanaDate = new Date(baseDate);
-                    inicioSemanaDate.setDate(diffALunes);
-                    inicioSemanaDate.setHours(0, 0, 0, 0);
-                    const finSemanaDate = new Date(inicioSemanaDate);
-                    finSemanaDate.setDate(finSemanaDate.getDate() + 7);
+                    const bloqueSemanal = getBloqueSemanalMesNatural(fechaClase);
+                    const inicioSemanaDate = madridDateTimeToUtc(bloqueSemanal.startKey, 0);
+                    const finSemanaDate = madridDateTimeToUtc(addDaysToDateKey(bloqueSemanal.endKey, 1), 0);
 
                     const { data: weeklyBookings, error: errWeekly } = await client
                         .from('reservas_yoga')
@@ -13426,32 +13505,23 @@
                     if (!errWeekly && Array.isArray(weeklyBookings)) {
                         let cntMensual = 0;
                         let cntInicial = 0;
-                        let cntTotal = 0;
                         let cntIlimitado = 0;
                         weeklyBookings.forEach(r => {
                             const esIlimitado = r.tipo_reserva === 'ilimitado' || r.usado_bono_mensual === true;
-                            const esPack = r.tipo_reserva === 'pack_normal' || (r.bono_descontado === true && !r.usado_bono_mensual);
-                            const esBienvenida = r.tipo_reserva === 'bienvenida' || r.saldo_gratis_descontado === true;
-                            const esGratis = r.tipo_reserva === 'gratuita';
-                            const esEspecial = r.tipo_reserva === 'clase_especial';
 
                             if (esIlimitado) {
                                 cntIlimitado++;
                             } else if (r.tipo_reserva === 'bono_mensual') {
                                 cntMensual++;
-                                cntTotal++;
                             } else if (r.tipo_reserva === 'bono_inicial') {
                                 cntInicial++;
-                                cntTotal++;
-                            } else if (!esPack && !esBienvenida && !esGratis && !esEspecial) {
-                                cntTotal++;
                             }
                         });
                         usoSemanal = {
                             mensualUsadas: cntMensual,
                             inicialUsadas: cntInicial,
                             ilimitadoUsadas: cntIlimitado,
-                            totalMensualesUsadas: Math.max(cntTotal, cntMensual + cntInicial)
+                            totalMensualesUsadas: cntMensual + cntInicial
                         };
                     }
                 } catch (eWeekly) {
@@ -13930,28 +14000,30 @@
                 if (automaticPostPayment) {
                     await Swal.fire({
                         icon: 'info',
-                        title: 'Compra en proceso de consolidación',
-                        text: 'El pago está confirmado, pero el pack aún no aparece en tu perfil. Recarga en unos segundos; conservaremos la clase pendiente.',
+                        title: profileT('profile_purchase_processing_title', 'Compra en proceso de consolidación'),
+                        text: profileT('profile_purchase_processing_text', 'El pago está confirmado, pero el pack aún no aparece en tu perfil. Recarga en unos segundos; conservaremos la clase pendiente.'),
                         confirmButtonColor: '#8C8658'
                     });
                     return false;
                 }
                 const esBonoMensualAgotado = periodosMensuales.length > 0 && !cupoMensualDisponible;
-                let modalTitle = 'Necesitas un bono o pack';
+                let modalTitle = profileT('profile_need_bono_pack_title', 'Necesitas un bono o pack');
                 let modalHtml = '';
                 if (esBonoMensualAgotado) {
-                    modalTitle = 'Cupo semanal alcanzado';
+                    modalTitle = profileT('profile_weekly_quota_reached_title', 'Cupo semanal alcanzado');
                     if (periodosMensuales.length > 1) {
-                        modalHtml = `Ya has reservado el cupo semanal máximo combinado de <strong>${limiteSemanal} clases</strong> permitido por tus bonos mensuales contratados para esta semana.<br><br>Para reservar clases adicionales en esta misma semana, puedes adquirir una <strong>clase suelta (15 €)</strong> o un <strong>pack de clases</strong>.`;
+                        modalHtml = profileTReplace('profile_weekly_quota_combined_text', 'Ya has reservado el cupo semanal máximo combinado de {limit} clases permitido por tus bonos mensuales contratados para esta semana.<br><br>Para reservar clases adicionales en esta misma semana, puedes adquirir una clase suelta (15 €) o un pack de clases.', { limit: `<strong>${limiteSemanal}</strong>` });
                     } else {
                         const esInicial = periodoMensual.plan_type === 'bono_inicial' || toSafeNumber(periodoMensual.max_classes_per_week) === 1;
-                        const nombrePlan = esInicial ? 'Bono Inicial (1 clase/semana)' : 'Bono Mensual (2 clases/semana)';
-                        modalHtml = `Ya has reservado el cupo máximo de <strong>${limiteSemanal} clase${limiteSemanal > 1 ? 's' : ''}</strong> de esta semana natural permitido por tu <strong>${escapeHtml(nombrePlan)}</strong>.<br><br>Para reservar clases adicionales en esta misma semana, puedes adquirir una <strong>clase suelta (15 €)</strong> o un <strong>pack de clases</strong>.`;
+                        const nombrePlan = esInicial
+                            ? profileT('profile_plan_initial_week', 'Bono Inicial (1 clase/semana)')
+                            : profileT('profile_plan_monthly_week', 'Bono Mensual (2 clases/semana)');
+                        modalHtml = profileTReplace('profile_weekly_quota_single_text', 'Ya has reservado el cupo máximo de {limit} de esta semana natural permitido por tu {plan}.<br><br>Para reservar clases adicionales en esta misma semana, puedes adquirir una clase suelta (15 €) o un pack de clases.', { limit: `<strong>${limiteSemanal}</strong>`, plan: `<strong>${escapeHtml(nombrePlan)}</strong>` });
                     }
                 } else if (esSesionGratuita) {
-                    modalHtml = `No dispones de un bono de clase gratuita activo ni de un pack de clases.<br><br>Elige una opción para poder confirmar tu plaza.`;
+                    modalHtml = profileT('profile_free_session_no_bono_text', 'No dispones de un bono de clase gratuita activo ni de un pack de clases.<br><br>Elige una opción para poder confirmar tu plaza.');
                 } else {
-                    modalHtml = `No tienes clases disponibles para esta reserva.<br><br>Elige una <strong>clase suelta</strong>, un pack de <strong>4 o 10 clases</strong> o bono mensual para reservar este horario.`;
+                    modalHtml = profileT('profile_no_classes_for_booking_text', 'No tienes clases disponibles para esta reserva.<br><br>Elige una clase suelta, un pack de 4 o 10 clases o bono mensual para reservar este horario.');
                 }
 
                 const result = await Swal.fire({
@@ -13959,8 +14031,8 @@
                     title: modalTitle,
                     html: modalHtml,
                     showCancelButton: true,
-                    confirmButtonText: 'Ver tarifas y packs',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: profileT('profile_view_rates_packs', 'Ver tarifas y packs'),
+                    cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                     confirmButtonColor: '#D27D60',
                     cancelButtonColor: '#9ca3af'
                 });
@@ -14076,31 +14148,28 @@
                 const v_inicial_max = periodosMensuales.filter(p => p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1).reduce((sum, p) => sum + toSafeNumber(p.max_classes_per_week || 1), 0);
                 const gastadasSemana = Math.max(usoSemanal.totalMensualesUsadas, usoSemanal.mensualUsadas + usoSemanal.inicialUsadas);
 
-                // Si aún no se han consumido v_mensual_max clases esta semana y el usuario tiene Bono Mensual activo: usa Bono Mensual
-                // Si ya se consumieron v_mensual_max clases (p.ej. 2) y el usuario tiene Bono Inicial activo: pasa a Bono Inicial
-                let usaMensual = false;
-                if (v_mensual_max > 0 && (usoSemanal.mensualUsadas < v_mensual_max && gastadasSemana < v_mensual_max)) {
-                    usaMensual = true;
-                } else if (v_inicial_max > 0) {
-                    usaMensual = false;
-                } else {
-                    usaMensual = v_mensual_max > 0;
-                }
+                // El servidor consume primero el Bono Mensual (hasta agotar su
+                // cupo) y solo después pasa al Bono Inicial. El mensaje debe
+                // reflejar exactamente esa prioridad.
+                const usaMensual = v_mensual_max > 0 && usoSemanal.mensualUsadas < v_mensual_max;
 
                 const nombreBonoUsado = usaMensual
-                    ? `${escapeHtml(profileT('rates_bono_mensual_title', 'Bono Mensual'))} (2 clases/semana)`
-                    : `${escapeHtml(profileT('rates_bono_inicial_title', 'Bono Inicial'))} (1 clase/semana)`;
+                    ? `${escapeHtml(profileT('rates_bono_mensual_title', 'Bono Mensual'))} (${escapeHtml(profileT('profile_two_classes_week_long', '2 clases/semana'))})`
+                    : `${escapeHtml(profileT('rates_bono_inicial_title', 'Bono Inicial'))} (${escapeHtml(profileT('profile_one_class_week_long', '1 clase/semana'))})`;
                 const detalleCombinado = periodosMensuales.length > 1
-                    ? `<br><span class="text-[11px] text-cocoa/70">Cupo semanal combinado: clase ${gastadasSemana + 1} de ${totalLimiteSemanal}.</span>`
+                    ? `<br><span class="text-[11px] text-cocoa/70">${escapeHtml(profileTReplace('profile_combined_weekly_quota_detail', 'Cupo semanal combinado: clase {used} de {total}.', { used: gastadasSemana + 1, total: totalLimiteSemanal }))}</span>`
                     : '';
                 mensajeConfirmacion = `${escapeHtml(profileT('profile_unlimited_confirm_prefix', '¿Quieres reservar esta clase con tu'))} <b>${nombreBonoUsado}</b>?${detalleCombinado}`;
             } else {
                 const esBonoMensualAgotado = periodosMensuales.length > 0 && !cupoMensualDisponible;
                 if (esBonoMensualAgotado) {
+                    const planLabel = (periodoMensual.plan_type === 'bono_inicial' || toSafeNumber(periodoMensual.max_classes_per_week) === 1)
+                        ? profileT('rates_bono_inicial_title', 'Bono Inicial')
+                        : profileT('rates_bono_mensual_title', 'Bono Mensual');
                     const descPlan = periodosMensuales.length > 1
-                        ? `tus bonos mensuales (${limiteSemanal} clases/sem combinadas)`
-                        : `tu ${(periodoMensual.plan_type === 'bono_inicial' || toSafeNumber(periodoMensual.max_classes_per_week) === 1) ? 'Bono Inicial' : 'Bono Mensual'} (${limiteSemanal} clase${limiteSemanal > 1 ? 's' : ''}/sem)`;
-                    mensajeConfirmacion = `Has completado el cupo semanal de <b>${escapeHtml(descPlan)}</b>.<br><br>¿Deseas reservar esta clase adicional usando <b>1 crédito de tu pack de clases</b>?`;
+                        ? profileTReplace('profile_combined_plans_desc', 'tus bonos mensuales ({limit} clases/sem combinadas)', { limit: limiteSemanal })
+                        : profileTReplace('profile_single_plan_desc', 'tu {plan} ({limit} clases/sem)', { plan: planLabel, limit: limiteSemanal });
+                    mensajeConfirmacion = profileTReplace('profile_weekly_quota_completed_text', 'Has completado el cupo semanal de <b>{plan}</b>.<br><br>¿Deseas reservar esta clase adicional usando <b>1 crédito de tu pack de clases</b>?', { plan: escapeHtml(descPlan) });
                 } else {
                     mensajeConfirmacion = `${escapeHtml(profileT('profile_credit_confirm_prefix', '¿Quieres reservar esta clase usando un'))} <b>${escapeHtml(profileT('profile_class_credit', 'bono de clases'))}</b>?`;
                 }
@@ -24490,7 +24559,7 @@
                 title: 'Asignar Bono Inicial',
                 html: `
                     <div class="text-left font-sans space-y-3 my-2">
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 1 clase regular por semana (lunes a domingo).</p>
+                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 1 clase regular por semana del mes natural.</p>
                         <div>
                             <label class="block text-xs font-bold text-cocoa mb-1">Mes Natural:</label>
                             <select id="swal-select-mes-inicial-admin" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
@@ -24667,7 +24736,7 @@
                 title: 'Asignar Bono Mensual',
                 html: `
                     <div class="text-left font-sans space-y-3 my-2">
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 2 clases regulares por semana (lunes a domingo).</p>
+                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el <strong>mes natural completo</strong> que deseas asignar a este alumno. Tendrá derecho a 2 clases regulares por semana del mes natural.</p>
                         <div>
                             <label class="block text-xs font-bold text-cocoa mb-1">Mes Natural:</label>
                             <select id="swal-select-mes-mensual-admin" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
@@ -33228,6 +33297,54 @@
             return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} · ${profileT('profile_month_range_from', 'del 1 al')} ${daysInMonth}`;
         }
 
+        function naturalMonthLabel(yearMonth) {
+            const [year, month] = yearMonth.split('-').map(Number);
+            const firstDay = new Date(Date.UTC(year, month - 1, 1, 12));
+            const monthName = firstDay.toLocaleDateString(getCurrentLocale(), { month: 'long', year: 'numeric', timeZone: 'UTC' });
+            return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}`;
+        }
+
+        function getMadridDayOfMonth(date = new Date()) {
+            const parts = new Intl.DateTimeFormat('en-GB', {
+                timeZone: 'Europe/Madrid', day: '2-digit'
+            }).formatToParts(date);
+            const day = Number(parts.find(part => part.type === 'day')?.value);
+            return Number.isFinite(day) && day > 0 ? day : 1;
+        }
+
+        function getDaysRemainingInNaturalMonth(yearMonth, date = new Date()) {
+            if (!yearMonth || yearMonth !== getMadridYearMonthClient(date)) return null;
+            const [year, month] = yearMonth.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            return Math.max(0, daysInMonth - getMadridDayOfMonth(date));
+        }
+
+        function monthOptionLabelWithRemaining(yearMonth) {
+            const base = naturalMonthOptionLabel(yearMonth);
+            const remaining = getDaysRemainingInNaturalMonth(yearMonth);
+            if (remaining === null) return base;
+            const suffix = remaining === 1
+                ? profileT('profile_month_day_left', 'queda 1 día')
+                : profileTReplace('profile_month_days_left', 'quedan {days} días', { days: remaining });
+            return `${base} · ${suffix}`;
+        }
+
+        function preferredPurchaseMonth(availableMonths, isMonthCovered = null) {
+            if (!Array.isArray(availableMonths) || availableMonths.length === 0) return '';
+            const currentMonth = getMadridYearMonthClient();
+            const remaining = getDaysRemainingInNaturalMonth(currentMonth);
+            const isCovered = typeof isMonthCovered === 'function' ? isMonthCovered : () => false;
+            const firstFree = availableMonths.find(month => !isCovered(month));
+
+            if (remaining !== null && remaining < 7) {
+                const nextFree = availableMonths.find(month => month > currentMonth && !isCovered(month));
+                if (nextFree) return nextFree;
+                const nextMonth = availableMonths.find(month => month > currentMonth);
+                if (nextMonth) return nextMonth;
+            }
+            return firstFree || availableMonths[0];
+        }
+
         // Stripe Checkout integration for Bono Ilimitado (90 € / mes natural)
         async function comprarBonoIlimitado(event) {
             if (event) {
@@ -33252,7 +33369,7 @@
             if (!availableMonths.length) {
                 await Swal.fire(
                     profileT('profile_months_already_bought', 'Meses ya cubiertos'),
-                    'Ya dispones del Bono Ilimitado (Dorado · 90 €) para todos los meses disponibles para compra anticipada.',
+                    profileT('profile_months_all_covered_unlimited', 'Ya dispones de Bono Ilimitado (Dorado · 90 €) para todos los meses disponibles para compra anticipada.'),
                     'info'
                 );
                 return;
@@ -33270,11 +33387,11 @@
                                 const otherPlans = bonos.filter(p => p.tipo !== 'bono_ilimitado');
                                 let labelExtra = '';
                                 if (hasIlimitado) {
-                                    labelExtra = ' · ya contratado (Bono Ilimitado)';
+                                    labelExtra = ` · ${profileT('profile_option_unlimited_already', 'ya contratado (Bono Ilimitado)')}`;
                                 } else if (otherPlans.length > 0) {
-                                    labelExtra = ` · activo (${otherPlans.map(p => p.nombre).join(' + ')})`;
+                                    labelExtra = ` · ${profileTReplace('profile_option_active_plans', 'activo ({plans})', { plans: otherPlans.map(p => p.nombre).join(' + ') })}`;
                                 }
-                                return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(naturalMonthOptionLabel(month))}${escapeHtml(labelExtra)}</option>`;
+                                return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(monthOptionLabelWithRemaining(month))}${escapeHtml(labelExtra)}</option>`;
                             }).join('')}
                         </select>
                         <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_unlimited_includes', 'Incluye clases regulares ilimitadas, una clase especial y un invitado durante ese mes.'))}</p>
@@ -33289,7 +33406,7 @@
                 color: '#333',
                 didOpen: () => {
                     const select = document.getElementById('swal-membership-month');
-                    if (select) select.value = availableMonths[0];
+                    if (select) select.value = preferredPurchaseMonth(availableMonths, month => obtenerBonosMensualesDeMes(month).some(p => p.tipo === 'bono_ilimitado'));
                 },
                 preConfirm: () => document.getElementById('swal-membership-month')?.value || null
             });
@@ -33299,8 +33416,8 @@
             if (membershipMonth < currentMonth) {
                 await Swal.fire({
                     icon: 'warning',
-                    title: 'Mes no disponible',
-                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    title: profileT('profile_month_not_available_title', 'Mes no disponible'),
+                    text: profileT('profile_month_not_available_text', 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.'),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -33311,8 +33428,8 @@
             if (yaTieneIlimitado) {
                 await Swal.fire({
                     icon: 'info',
-                    title: 'Mes ya cubierto con Bono Ilimitado',
-                    text: `Ya dispones del Bono Ilimitado (Dorado · 90 €) para ${naturalMonthOptionLabel(membershipMonth)}, el cual te otorga clases regulares ilimitadas.`,
+                    title: profileT('profile_unlimited_month_covered_title', 'Mes ya cubierto con Bono Ilimitado'),
+                    text: profileTReplace('profile_unlimited_month_covered_text', 'Ya dispones del Bono Ilimitado (Dorado · 90 €) para {month}, el cual te otorga clases regulares ilimitadas.', { month: naturalMonthOptionLabel(membershipMonth) }),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -33322,17 +33439,17 @@
                 const nombres = bonosExistentes.map(p => p.nombre).join(' + ');
                 const confirmMejora = await Swal.fire({
                     icon: 'question',
-                    title: '¿Mejorar a Bono Ilimitado?',
+                    title: profileT('profile_add_extra_bono_unlimited_title', '¿Mejorar a Bono Ilimitado?'),
                     html: `
                         <div class="text-left space-y-2 text-xs text-cocoa/80 p-1 leading-relaxed">
-                            <p>Actualmente dispones de <strong>${escapeHtml(nombres)}</strong> para el mes de <strong>${escapeHtml(naturalMonthOptionLabel(membershipMonth))}</strong>.</p>
-                            <p class="text-amber-800 font-semibold">Al adquirir el <strong>Bono Ilimitado (Dorado · 90 €)</strong> pasarás a tener clases regulares ilimitadas, 1 clase especial y 1 pase de invitado durante todo el mes natural.</p>
-                            <p class="text-[11px] text-cocoa/60 pt-1">¿Deseas continuar a la pasarela de pago seguro?</p>
+                            <p>${profileTReplace('profile_add_extra_bono_text', 'Actualmente dispones de {bonos} para el mes de {month}.', { bonos: `<strong>${escapeHtml(nombres)}</strong>`, month: `<strong>${escapeHtml(naturalMonthOptionLabel(membershipMonth))}</strong>` })}</p>
+                            <p class="text-amber-800 font-semibold">${profileT('profile_add_extra_bono_unlimited_warning', 'Al adquirir el Bono Ilimitado (Dorado · 90 €) pasarás a tener clases regulares ilimitadas, 1 clase especial y 1 pase de invitado durante todo el mes natural.')}</p>
+                            <p class="text-[11px] text-cocoa/60 pt-1">${escapeHtml(profileT('profile_continue_to_payment_question', '¿Deseas continuar a la pasarela de pago seguro?'))}</p>
                         </div>
                     `,
                     showCancelButton: true,
-                    confirmButtonText: 'Sí, continuar al pago',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: profileT('profile_yes_continue_payment', 'Sí, continuar al pago'),
+                    cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                     confirmButtonColor: '#b45309',
                     cancelButtonColor: '#64748b'
                 });
@@ -33424,7 +33541,7 @@
             if (!availableMonths.length) {
                 await Swal.fire(
                     profileT('profile_months_already_bought', 'Meses ya cubiertos'),
-                    'Ya dispones de Bono Ilimitado (Dorado · 90 €) para todos los meses disponibles para compra anticipada.',
+                    profileT('profile_months_all_covered_unlimited', 'Ya dispones de Bono Ilimitado (Dorado · 90 €) para todos los meses disponibles para compra anticipada.'),
                     'info'
                 );
                 return;
@@ -33441,14 +33558,14 @@
                                 const hasIlimitado = bonos.some(p => p.tipo === 'bono_ilimitado');
                                 let labelExtra = '';
                                 if (hasIlimitado) {
-                                    labelExtra = ' · ya tienes Bono Ilimitado (clases infinitas)';
+                                    labelExtra = ` · ${profileT('profile_option_unlimited_infinite', 'ya tienes Bono Ilimitado (clases infinitas)')}`;
                                 } else if (bonos.length > 0) {
-                                    labelExtra = ` · ya dispones de ${bonos.map(p => p.nombre).join(' + ')}`;
+                                    labelExtra = ` · ${profileTReplace('profile_option_already_plans', 'ya dispones de {plans}', { plans: bonos.map(p => p.nombre).join(' + ') })}`;
                                 }
-                                return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(naturalMonthOptionLabel(month))}${escapeHtml(labelExtra)}</option>`;
+                                return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(monthOptionLabelWithRemaining(month))}${escapeHtml(labelExtra)}</option>`;
                             }).join('')}
                         </select>
-                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_inicial_includes', 'Incluye 1 clase regular por semana (lunes a domingo) durante ese mes.'))}</p>
+                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_inicial_includes', 'Incluye 1 clase regular por semana del mes natural durante ese mes.'))}</p>
                     </div>
                 `,
                 showCancelButton: true,
@@ -33460,7 +33577,7 @@
                 color: '#333',
                 didOpen: () => {
                     const select = document.getElementById('swal-membership-month-inicial');
-                    if (select) select.value = availableMonths[0];
+                    if (select) select.value = preferredPurchaseMonth(availableMonths, month => obtenerBonosMensualesDeMes(month).some(p => p.tipo === 'bono_inicial'));
                 },
                 preConfirm: () => document.getElementById('swal-membership-month-inicial')?.value || null
             });
@@ -33470,8 +33587,8 @@
             if (membershipMonth < currentMonth) {
                 await Swal.fire({
                     icon: 'warning',
-                    title: 'Mes no disponible',
-                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    title: profileT('profile_month_not_available_title', 'Mes no disponible'),
+                    text: profileT('profile_month_not_available_text', 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.'),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -33482,8 +33599,8 @@
             if (yaTieneIlimitado) {
                 await Swal.fire({
                     icon: 'info',
-                    title: 'Ya dispones de Bono Ilimitado',
-                    text: `Ya dispones del Bono Ilimitado (Dorado · 90 €) para ${naturalMonthOptionLabel(membershipMonth)}, el cual te otorga clases regulares ilimitadas. No necesitas bonos adicionales para este mes.`,
+                    title: profileT('profile_already_unlimited_title', 'Ya dispones de Bono Ilimitado'),
+                    text: profileTReplace('profile_already_unlimited_text', 'Ya dispones del Bono Ilimitado (Dorado · 90 €) para {month}, el cual te otorga clases regulares ilimitadas. No necesitas bonos adicionales para este mes.', { month: naturalMonthOptionLabel(membershipMonth) }),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -33493,17 +33610,17 @@
                 const nombres = bonosExistentes.map(p => p.nombre).join(' + ');
                 const confirmAdicional = await Swal.fire({
                     icon: 'question',
-                    title: '¿Añadir Bono Inicial adicional?',
+                    title: profileT('profile_add_extra_bono_inicial_title', '¿Añadir Bono Inicial adicional?'),
                     html: `
                         <div class="text-left space-y-2 text-xs text-cocoa/80 p-1 leading-relaxed">
-                            <p>Actualmente ya dispones de <strong>${escapeHtml(nombres)}</strong> para el mes de <strong>${escapeHtml(naturalMonthOptionLabel(membershipMonth))}</strong>.</p>
-                            <p class="text-amber-800 font-semibold">Al adquirir el <strong>Bono Inicial (Bronce · 40 €)</strong> sumarás <strong>1 clase semanal más</strong> a tu cupo de dicho mes natural.</p>
-                            <p class="text-[11px] text-cocoa/60 pt-1">¿Deseas continuar a la pasarela de pago seguro?</p>
+                            <p>${profileTReplace('profile_add_extra_bono_text', 'Actualmente dispones de {bonos} para el mes de {month}.', { bonos: `<strong>${escapeHtml(nombres)}</strong>`, month: `<strong>${escapeHtml(naturalMonthOptionLabel(membershipMonth))}</strong>` })}</p>
+                            <p class="text-amber-800 font-semibold">${profileT('profile_add_extra_bono_inicial_warning', 'Al adquirir el Bono Inicial (Bronce · 40 €) sumarás 1 clase semanal más a tu cupo de dicho mes natural.')}</p>
+                            <p class="text-[11px] text-cocoa/60 pt-1">${escapeHtml(profileT('profile_continue_to_payment_question', '¿Deseas continuar a la pasarela de pago seguro?'))}</p>
                         </div>
                     `,
                     showCancelButton: true,
-                    confirmButtonText: 'Sí, continuar al pago',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: profileT('profile_yes_continue_payment', 'Sí, continuar al pago'),
+                    cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                     confirmButtonColor: '#8f6b2d',
                     cancelButtonColor: '#64748b'
                 });
@@ -33595,7 +33712,7 @@
             if (!availableMonths.length) {
                 await Swal.fire(
                     profileT('profile_months_already_bought', 'Meses ya cubiertos'),
-                    'Ya dispones de Bono Ilimitado (Dorado · 90 €) para todos los meses disponibles para compra anticipada.',
+                    profileT('profile_months_all_covered_unlimited', 'Ya dispones de Bono Ilimitado (Dorado · 90 €) para todos los meses disponibles para compra anticipada.'),
                     'info'
                 );
                 return;
@@ -33612,14 +33729,14 @@
                                 const hasIlimitado = bonos.some(p => p.tipo === 'bono_ilimitado');
                                 let labelExtra = '';
                                 if (hasIlimitado) {
-                                    labelExtra = ' · ya tienes Bono Ilimitado (clases infinitas)';
+                                    labelExtra = ` · ${profileT('profile_option_unlimited_infinite', 'ya tienes Bono Ilimitado (clases infinitas)')}`;
                                 } else if (bonos.length > 0) {
-                                    labelExtra = ` · ya dispones de ${bonos.map(p => p.nombre).join(' + ')}`;
+                                    labelExtra = ` · ${profileTReplace('profile_option_already_plans', 'ya dispones de {plans}', { plans: bonos.map(p => p.nombre).join(' + ') })}`;
                                 }
-                                return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(naturalMonthOptionLabel(month))}${escapeHtml(labelExtra)}</option>`;
+                                return `<option value="${escapeHtml(month)}" ${hasIlimitado ? 'disabled' : ''}>${escapeHtml(monthOptionLabelWithRemaining(month))}${escapeHtml(labelExtra)}</option>`;
                             }).join('')}
                         </select>
-                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_mensual_includes', 'Incluye 2 clases regulares por semana (lunes a domingo) durante ese mes.'))}</p>
+                        <p class="text-xs text-gray-500">${escapeHtml(profileT('profile_bono_mensual_includes', 'Incluye 2 clases regulares por semana del mes natural durante ese mes.'))}</p>
                     </div>
                 `,
                 showCancelButton: true,
@@ -33631,7 +33748,7 @@
                 color: '#333',
                 didOpen: () => {
                     const select = document.getElementById('swal-membership-month-mensual');
-                    if (select) select.value = availableMonths[0];
+                    if (select) select.value = preferredPurchaseMonth(availableMonths, month => obtenerBonosMensualesDeMes(month).some(p => p.tipo === 'bono_mensual'));
                 },
                 preConfirm: () => document.getElementById('swal-membership-month-mensual')?.value || null
             });
@@ -33641,8 +33758,8 @@
             if (membershipMonth < currentMonth) {
                 await Swal.fire({
                     icon: 'warning',
-                    title: 'Mes no disponible',
-                    text: 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.',
+                    title: profileT('profile_month_not_available_title', 'Mes no disponible'),
+                    text: profileT('profile_month_not_available_text', 'Una vez transcurrido el mes, ya no se pueden reservar bonos de meses anteriores.'),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -33653,8 +33770,8 @@
             if (yaTieneIlimitado) {
                 await Swal.fire({
                     icon: 'info',
-                    title: 'Ya dispones de Bono Ilimitado',
-                    text: `Ya dispones del Bono Ilimitado (Dorado · 90 €) para ${naturalMonthOptionLabel(membershipMonth)}, el cual te otorga clases regulares ilimitadas. No necesitas bonos adicionales para este mes.`,
+                    title: profileT('profile_already_unlimited_title', 'Ya dispones de Bono Ilimitado'),
+                    text: profileTReplace('profile_already_unlimited_text', 'Ya dispones del Bono Ilimitado (Dorado · 90 €) para {month}, el cual te otorga clases regulares ilimitadas. No necesitas bonos adicionales para este mes.', { month: naturalMonthOptionLabel(membershipMonth) }),
                     confirmButtonColor: '#795244'
                 });
                 return;
@@ -33664,17 +33781,17 @@
                 const nombres = bonosExistentes.map(p => p.nombre).join(' + ');
                 const confirmAdicional = await Swal.fire({
                     icon: 'question',
-                    title: '¿Añadir Bono Mensual adicional?',
+                    title: profileT('profile_add_extra_bono_mensual_title', '¿Añadir Bono Mensual adicional?'),
                     html: `
                         <div class="text-left space-y-2 text-xs text-cocoa/80 p-1 leading-relaxed">
-                            <p>Actualmente ya dispones de <strong>${escapeHtml(nombres)}</strong> para el mes de <strong>${escapeHtml(naturalMonthOptionLabel(membershipMonth))}</strong>.</p>
-                            <p class="text-amber-800 font-semibold">Al adquirir el <strong>Bono Mensual (Plata · 65 €)</strong> sumarás <strong>2 clases semanales más</strong> a tu cupo de dicho mes natural.</p>
-                            <p class="text-[11px] text-cocoa/60 pt-1">¿Deseas continuar a la pasarela de pago seguro?</p>
+                            <p>${profileTReplace('profile_add_extra_bono_text', 'Actualmente dispones de {bonos} para el mes de {month}.', { bonos: `<strong>${escapeHtml(nombres)}</strong>`, month: `<strong>${escapeHtml(naturalMonthOptionLabel(membershipMonth))}</strong>` })}</p>
+                            <p class="text-amber-800 font-semibold">${profileT('profile_add_extra_bono_mensual_warning', 'Al adquirir el Bono Mensual (Plata · 65 €) sumarás 2 clases semanales más a tu cupo de dicho mes natural.')}</p>
+                            <p class="text-[11px] text-cocoa/60 pt-1">${escapeHtml(profileT('profile_continue_to_payment_question', '¿Deseas continuar a la pasarela de pago seguro?'))}</p>
                         </div>
                     `,
                     showCancelButton: true,
-                    confirmButtonText: 'Sí, continuar al pago',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: profileT('profile_yes_continue_payment', 'Sí, continuar al pago'),
+                    cancelButtonText: profileT('profile_cancel_button', 'Cancelar'),
                     confirmButtonColor: '#475569',
                     cancelButtonColor: '#64748b'
                 });

@@ -306,10 +306,16 @@ export const CERT_PAYMENT_ORIGINS: ReadonlyArray<string> = [
   'https://gen-yoga-studio.github.io',
   'https://q19-cert.github.io',
 ]
+export const NATIVE_APP_ORIGINS: ReadonlyArray<string> = [
+  'capacitor://localhost',
+  'https://localhost',
+  'ionic://localhost',
+]
 const LIVE_PAYMENT_ORIGINS = new Set([
   PRODUCTION_SITE_ORIGIN,
   'https://www.genyoga.studio',
   ...CERT_PAYMENT_ORIGINS,
+  ...NATIVE_APP_ORIGINS,
 ])
 
 export class HttpError extends Error {
@@ -356,8 +362,9 @@ function normaliseAllowedOrigin(rawValue: string, variableName: string): string 
     throw new Error(`${variableName} contiene una URL no válida: ${rawValue}`)
   }
 
-  if (parsed.protocol !== 'https:') {
-    throw new Error(`Todos los valores de ${variableName} deben utilizar HTTPS.`)
+  const allowedProtocols = new Set(['https:', 'capacitor:', 'ionic:'])
+  if (!allowedProtocols.has(parsed.protocol)) {
+    throw new Error(`Todos los valores de ${variableName} deben utilizar HTTPS o esquemas nativos autorizados.`)
   }
   if (
     parsed.username ||
@@ -366,9 +373,9 @@ function normaliseAllowedOrigin(rawValue: string, variableName: string): string 
     parsed.hash ||
     (parsed.pathname && parsed.pathname !== '/')
   ) {
-    throw new Error(`${variableName} solo puede contener orígenes HTTPS, sin rutas ni parámetros.`)
+    throw new Error(`${variableName} solo puede contener orígenes HTTPS o nativos, sin rutas ni parámetros.`)
   }
-  return parsed.origin
+  return parsed.origin !== 'null' ? parsed.origin : `${parsed.protocol}//${parsed.host}`
 }
 
 function buildOriginSet(variableName: string, defaultOrigins: string[]): ReadonlySet<string> {
@@ -393,7 +400,10 @@ function buildAllowedOrigins(siteOrigin: string): ReadonlySet<string> {
 
 function buildPaymentAllowedOrigins(): ReadonlySet<string> {
   requireEnv('PAYMENT_ALLOWED_ORIGINS')
-  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [...CERT_PAYMENT_ORIGINS])
+  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [
+    ...CERT_PAYMENT_ORIGINS,
+    ...NATIVE_APP_ORIGINS,
+  ])
   if (paymentAllowedOrigins.size === 0) {
     throw new Error('PAYMENT_ALLOWED_ORIGINS debe incluir al menos un origen productivo.')
   }
@@ -632,8 +642,11 @@ export function getRequestOrigin(req: Request): string | null {
   if (origin) return origin
   const referer = req.headers.get('referer')?.trim()
   if (referer) {
+    if (referer.startsWith('capacitor://localhost')) return 'capacitor://localhost'
+    if (referer.startsWith('ionic://localhost')) return 'ionic://localhost'
     try {
-      return new URL(referer).origin
+      const parsed = new URL(referer)
+      return parsed.origin !== 'null' ? parsed.origin : `${parsed.protocol}//${parsed.host}`
     } catch {}
   }
   return null

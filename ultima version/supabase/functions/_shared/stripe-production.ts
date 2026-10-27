@@ -11,6 +11,7 @@ export const PURCHASE_TYPES = {
   PACK_6: 'pack_6',
   PACK_10: 'pack_10',
   BONO_ILIMITADO: 'bono_ilimitado',
+  BONO_INICIAL: 'bono_inicial',
   BONO_MENSUAL: 'bono_mensual',
   MIRIAM_PSICO_INDIVIDUAL_1A: 'miriam_psico_individual_1a',
   MIRIAM_PSICO_INDIVIDUAL_SIG: 'miriam_psico_individual_sig',
@@ -40,6 +41,11 @@ export const PACK_PRODUCT_IDS = {
   PACK_4: 'prod_V0ITB6mD71fwnD',
   PACK_6: 'prod_V0IUpyuvd7uX00',
   PACK_10: 'prod_V0IUYoGJJbX7FW',
+} as const
+
+export const MONTHLY_PRODUCT_IDS = {
+  BONO_INICIAL: 'prod_VVkU2penYA08Qe',
+  BONO_MENSUAL: 'prod_VVkT3C71EAUJmt',
 } as const
 
 export const PROMO_PRODUCT_IDS = {
@@ -300,10 +306,16 @@ export const CERT_PAYMENT_ORIGINS: ReadonlyArray<string> = [
   'https://gen-yoga-studio.github.io',
   'https://q19-cert.github.io',
 ]
+export const NATIVE_APP_ORIGINS: ReadonlyArray<string> = [
+  'capacitor://localhost',
+  'https://localhost',
+  'ionic://localhost',
+]
 const LIVE_PAYMENT_ORIGINS = new Set([
   PRODUCTION_SITE_ORIGIN,
   'https://www.genyoga.studio',
   ...CERT_PAYMENT_ORIGINS,
+  ...NATIVE_APP_ORIGINS,
 ])
 
 export class HttpError extends Error {
@@ -350,8 +362,9 @@ function normaliseAllowedOrigin(rawValue: string, variableName: string): string 
     throw new Error(`${variableName} contiene una URL no válida: ${rawValue}`)
   }
 
-  if (parsed.protocol !== 'https:') {
-    throw new Error(`Todos los valores de ${variableName} deben utilizar HTTPS.`)
+  const allowedProtocols = new Set(['https:', 'capacitor:', 'ionic:'])
+  if (!allowedProtocols.has(parsed.protocol)) {
+    throw new Error(`Todos los valores de ${variableName} deben utilizar HTTPS o esquemas nativos autorizados.`)
   }
   if (
     parsed.username ||
@@ -360,9 +373,9 @@ function normaliseAllowedOrigin(rawValue: string, variableName: string): string 
     parsed.hash ||
     (parsed.pathname && parsed.pathname !== '/')
   ) {
-    throw new Error(`${variableName} solo puede contener orígenes HTTPS, sin rutas ni parámetros.`)
+    throw new Error(`${variableName} solo puede contener orígenes HTTPS o nativos, sin rutas ni parámetros.`)
   }
-  return parsed.origin
+  return parsed.origin !== 'null' ? parsed.origin : `${parsed.protocol}//${parsed.host}`
 }
 
 function buildOriginSet(variableName: string, defaultOrigins: string[]): ReadonlySet<string> {
@@ -387,7 +400,10 @@ function buildAllowedOrigins(siteOrigin: string): ReadonlySet<string> {
 
 function buildPaymentAllowedOrigins(): ReadonlySet<string> {
   requireEnv('PAYMENT_ALLOWED_ORIGINS')
-  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [...CERT_PAYMENT_ORIGINS])
+  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [
+    ...CERT_PAYMENT_ORIGINS,
+    ...NATIVE_APP_ORIGINS,
+  ])
   if (paymentAllowedOrigins.size === 0) {
     throw new Error('PAYMENT_ALLOWED_ORIGINS debe incluir al menos un origen productivo.')
   }
@@ -443,7 +459,7 @@ export function readProductionConfig(options: {
     throw new Error('Los productos de pago único no pueden compartir Price ID.')
   }
   if (oneTimePriceIds.includes(priceBonoMensual)) {
-    throw new Error('El Price recurrente antiguo no puede reutilizar un Price de pago único.')
+    throw new Error('El Price del Bono Mensual no puede reutilizar el Price de otro producto.')
   }
 
   const { siteUrl, siteOrigin } = normaliseSiteUrl(requireEnv('SITE_URL'))
@@ -546,13 +562,37 @@ export async function loadAndValidateCatalog(
     throw new Error('STRIPE_PRICE_BONO_ILIMITADO debe ser un pago único de un mes natural.')
   }
 
-  validateCommonPrice(bonoMensual, config.priceBonoMensual, 9000)
-  if (
-    bonoMensual.type !== 'recurring' ||
-    bonoMensual.recurring?.interval !== 'month' ||
-    bonoMensual.recurring.interval_count !== 1
-  ) {
-    throw new Error('STRIPE_PRICE_BONO_MENSUAL debe ser una suscripción mensual.')
+  // El Bono Mensual pasó de suscripción legacy de 90 EUR a pago único de
+  // 65 EUR. Se aceptan ambas formas para no romper el despliegue mientras el
+  // secreto STRIPE_PRICE_BONO_MENSUAL siga apuntando al Price antiguo (sus
+  // renovaciones se gestionan por invoice.paid, no por checkout).
+  const legacyMonthlySubscription =
+    bonoMensual.type === 'recurring' &&
+    bonoMensual.recurring?.interval === 'month' &&
+    bonoMensual.recurring.interval_count === 1 &&
+    bonoMensual.unit_amount === 9000
+  const currentMonthlyOneTime =
+    bonoMensual.type === 'one_time' &&
+    !bonoMensual.recurring &&
+    bonoMensual.unit_amount === 6500
+
+  if (legacyMonthlySubscription) {
+    validateCommonPrice(bonoMensual, config.priceBonoMensual, 9000)
+    console.warn(
+      'STRIPE_PRICE_BONO_MENSUAL apunta al Price recurrente legacy de 90 EUR; ' +
+      'configura el Price de pago único de 65 EUR para el nuevo Bono Mensual.',
+    )
+  } else if (currentMonthlyOneTime) {
+    validateCommonPrice(
+      bonoMensual,
+      config.priceBonoMensual,
+      6500,
+      MONTHLY_PRODUCT_IDS.BONO_MENSUAL,
+    )
+  } else {
+    throw new Error(
+      'STRIPE_PRICE_BONO_MENSUAL debe ser el pago único de 65 EUR o la suscripción legacy de 90 EUR/mes.',
+    )
   }
 
   return { claseSuelta, pack4, pack6, pack10, bonoIlimitado, bonoMensual }
@@ -602,8 +642,11 @@ export function getRequestOrigin(req: Request): string | null {
   if (origin) return origin
   const referer = req.headers.get('referer')?.trim()
   if (referer) {
+    if (referer.startsWith('capacitor://localhost')) return 'capacitor://localhost'
+    if (referer.startsWith('ionic://localhost')) return 'ionic://localhost'
     try {
-      return new URL(referer).origin
+      const parsed = new URL(referer)
+      return parsed.origin !== 'null' ? parsed.origin : `${parsed.protocol}//${parsed.host}`
     } catch {}
   }
   return null
@@ -726,16 +769,22 @@ export async function bookPaidTallerClass(
   const { userId, purchaseType, paymentStatus, claseId } = args
   if (!userId || paymentStatus !== 'paid' || !claseId) return 'skipped'
   const t = String(purchaseType || '').toLowerCase()
-  if (!(t === 'taller' || t.includes('taller'))) return 'skipped'
+  const isTaller = t === 'taller' || t.includes('taller')
+  const isEspecial = t === 'clase_especial' || t.includes('especial')
+  if (!isTaller && !isEspecial) return 'skipped'
   try {
     const { data: clase } = await supabase
       .from('clases')
-      .select('id,fecha_inicio,capacidad_max,tipo_clase,activa')
+      .select('id,fecha_inicio,capacidad_max,tipo_clase,activa,es_especial')
       .eq('id', claseId)
       .maybeSingle()
     if (!clase || (clase as { activa?: boolean }).activa === false) return 'skipped'
     if (!clase.fecha_inicio || new Date(clase.fecha_inicio).getTime() <= Date.now()) return 'skipped'
-    if (String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase() !== 'taller') return 'skipped'
+    const tipo = String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase()
+    const esEsp = (clase as { es_especial?: boolean }).es_especial === true || tipo === 'clase_especial' || tipo === 'especial'
+    if (isTaller && tipo !== 'taller') return 'skipped'
+    if (isEspecial && !esEsp) return 'skipped'
+
     const { data: existing } = await supabase
       .from('reservas_yoga')
       .select('id')
@@ -744,6 +793,7 @@ export async function bookPaidTallerClass(
       .eq('estado', 'confirmada')
       .limit(1)
     if (existing && (existing as unknown[]).length > 0) return 'skipped'
+
     const { data: occ } = await supabase
       .from('reservas_yoga')
       .select('id')
@@ -751,11 +801,35 @@ export async function bookPaidTallerClass(
       .eq('estado', 'confirmada')
     const cap = Number((clase as { capacidad_max?: number }).capacidad_max) || 10
     if (((occ as unknown[]) || []).length >= cap) return 'skipped'
-    const { error } = await supabase
-      .from('reservas_yoga')
-      .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada' })
-    if (error) return 'failed'
-    return 'booked'
+
+    if (isEspecial) {
+      const classMonth = new Date(clase.fecha_inicio).toISOString().slice(0, 7) + '-01'
+      const { data: bEsp } = await supabase
+        .from('bonos_clases_especiales')
+        .select('id, saldo')
+        .eq('user_id', userId)
+        .eq('mes', classMonth)
+        .gt('saldo', 0)
+        .order('id', { ascending: true })
+        .limit(1)
+      if (bEsp && bEsp.length > 0) {
+        await supabase
+          .from('bonos_clases_especiales')
+          .update({ saldo: Math.max(0, (Number(bEsp[0].saldo) || 1) - 1), updated_at: new Date().toISOString() })
+          .eq('id', bEsp[0].id)
+      }
+      const { error } = await supabase
+        .from('reservas_yoga')
+        .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada', bono_descontado: true, tipo_reserva: 'clase_especial' })
+      if (error) return 'failed'
+      return 'booked'
+    } else {
+      const { error } = await supabase
+        .from('reservas_yoga')
+        .insert({ clase_id: claseId, user_id: userId, estado: 'confirmada' })
+      if (error) return 'failed'
+      return 'booked'
+    }
   } catch (_) {
     return 'failed'
   }
@@ -1017,10 +1091,23 @@ export function validateCheckoutPurchase(
     purchaseType = PURCHASE_TYPES.BONO_ILIMITADO
     price = catalog.bonoIlimitado
     expectedAmount = 9000
-  } else if (priceId === catalog.bonoMensual.id) {
+  } else if (
+    itemProduct === MONTHLY_PRODUCT_IDS.BONO_INICIAL ||
+    metadata.purchase_type === PURCHASE_TYPES.BONO_INICIAL
+  ) {
+    purchaseType = PURCHASE_TYPES.BONO_INICIAL
+    price = lineItems[0].price
+    expectedAmount = 4000
+  } else if (
+    priceId === catalog.bonoMensual.id ||
+    itemProduct === MONTHLY_PRODUCT_IDS.BONO_MENSUAL ||
+    metadata.purchase_type === PURCHASE_TYPES.BONO_MENSUAL
+  ) {
     purchaseType = PURCHASE_TYPES.BONO_MENSUAL
-    price = catalog.bonoMensual
-    expectedAmount = 9000
+    price = lineItems[0].price || catalog.bonoMensual
+    // El Price legacy era de 90 EUR/mes; el vigente es 65 EUR de pago único.
+    // Validamos contra el importe real del Price para admitir ambos.
+    expectedAmount = price.unit_amount ?? 6500
   } else if (itemProduct === PROMO_PRODUCT_IDS.PROMO_50_CLASE || metadata.purchase_type === PURCHASE_TYPES.PROMO_50_CLASE || metadata.purchase_type === 'promo_50' || metadata.purchase_type === 'promo') {
     purchaseType = PURCHASE_TYPES.PROMO_50_CLASE
     price = lineItems[0].price
@@ -1048,6 +1135,14 @@ export function validateCheckoutPurchase(
       price = lineItems[0].price
       const validDetails = assertValidPromoPrice(price, purchaseType)
       expectedAmount = validDetails.amount ?? price.unit_amount ?? session.amount_total
+    } else if (rawMetaType === PURCHASE_TYPES.BONO_INICIAL) {
+      purchaseType = PURCHASE_TYPES.BONO_INICIAL
+      price = lineItems[0].price
+      expectedAmount = 4000
+    } else if (rawMetaType === PURCHASE_TYPES.BONO_MENSUAL) {
+      purchaseType = PURCHASE_TYPES.BONO_MENSUAL
+      price = lineItems[0].price
+      expectedAmount = 6500
     } else if (rawMetaType.startsWith('prod_') || rawMetaType.startsWith('price_') || (itemProduct && itemProduct.startsWith('prod_'))) {
       purchaseType = rawMetaType as PurchaseType
       price = lineItems[0].price
@@ -1063,9 +1158,7 @@ export function validateCheckoutPurchase(
   if (session.currency?.toLowerCase() !== 'eur' || session.amount_total !== expectedAmount) {
     throw new HttpError(400, 'El importe de la sesión no coincide con el producto.')
   }
-  const expectedMode = purchaseType === PURCHASE_TYPES.BONO_MENSUAL
-    ? 'subscription'
-    : 'payment'
+  const expectedMode = price.type === 'recurring' ? 'subscription' : 'payment'
   if (session.mode !== expectedMode || session.status !== 'complete') {
     throw new HttpError(400, 'El tipo o estado de la sesión no coincide con el producto.')
   }
@@ -1097,12 +1190,20 @@ export function validateCheckoutPurchase(
   const membershipMonth = metadata.membership_month?.trim() || null
   if (
     (purchaseType === PURCHASE_TYPES.BONO_ILIMITADO ||
+      purchaseType === PURCHASE_TYPES.BONO_MENSUAL ||
+      purchaseType === PURCHASE_TYPES.BONO_INICIAL ||
       purchaseType === PURCHASE_TYPES.CLASE_ESPECIAL) &&
     (!membershipMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth))
   ) {
     throw new HttpError(400, 'La sesión no contiene un mes natural válido.')
   }
-  if (purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO && purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL && membershipMonth) {
+  if (
+    purchaseType !== PURCHASE_TYPES.BONO_ILIMITADO &&
+    purchaseType !== PURCHASE_TYPES.BONO_MENSUAL &&
+    purchaseType !== PURCHASE_TYPES.BONO_INICIAL &&
+    purchaseType !== PURCHASE_TYPES.CLASE_ESPECIAL &&
+    membershipMonth
+  ) {
     throw new HttpError(400, 'El producto no admite un mes natural seleccionado.')
   }
 
