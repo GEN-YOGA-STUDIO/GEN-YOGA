@@ -92,6 +92,9 @@ export async function runExtendedChecks({ browser, base, supaUrl, supaKey, isCer
       ['/tarifas.html', 'tarifas'],
       ['/maestros.html', 'maestros'],
       ['/profile.html', 'login'],
+      ['/success.html', 'success'],
+      ['/cancel.html', 'cancel'],
+      ['/politica-privacidad.html', 'privacidad'],
     ];
     const allIssues = [];
     for (const [p, label] of pagesToAudit) {
@@ -342,6 +345,158 @@ export async function runExtendedChecks({ browser, base, supaUrl, supaKey, isCer
         if (ce && cc) add('entrega', `${label} comprimido y cacheado`, 'pass', `${ce}; ${cc}`);
         else add('entrega', `${label} sin compresión o caché`, 'warn', `content-encoding=${ce || 'ninguno'}, cache-control=${cc || 'ninguno'}`, { kind: 'infra' });
       }
+    }
+
+    // ------------------------------------------------------------ Modales (interacción humana)
+    {
+      // Landing: modal de historia abre y cierra con X, Escape y backdrop
+      await goto('/', 1800);
+      await dismissWelcome();
+      const verMasBtn = page.locator('button[onclick*="openModal"]').first();
+      if (await verMasBtn.count()) {
+        await verMasBtn.click({ timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(800);
+        const modalOpen = await page.evaluate(() => {
+          const m = document.getElementById('modal-overlay');
+          return m && !m.classList.contains('hidden');
+        }).catch(() => false);
+        if (modalOpen) {
+          add('contenido', 'modal de historia abre al pulsar "Ver más"', 'pass');
+          // Cerrar con Escape
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(600);
+          const closedEsc = await page.evaluate(() => {
+            const m = document.getElementById('modal-overlay');
+            return m && m.classList.contains('hidden');
+          }).catch(() => false);
+          if (closedEsc) add('contenido', 'modal cierra con Escape', 'pass');
+          else add('contenido', 'modal no cierra con Escape', 'warn', 'El modal no responde a la tecla Escape: problema de accesibilidad.', { kind: 'a11y' });
+          // Reabrir y cerrar con X
+          await verMasBtn.click({ timeout: 5000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          const closeBtn = page.locator('#modal-overlay button[aria-label*="Cerrar"], #modal-overlay button[onclick*="closeModal"]').first();
+          if (await closeBtn.count()) {
+            await closeBtn.click({ timeout: 5000 }).catch(() => {});
+            await page.waitForTimeout(600);
+            const closedX = await page.evaluate(() => {
+              const m = document.getElementById('modal-overlay');
+              return m && m.classList.contains('hidden');
+            }).catch(() => false);
+            if (closedX) add('contenido', 'modal cierra con botón X', 'pass');
+            else add('contenido', 'modal no cierra con botón X', 'warn', 'El botón de cierre no funciona.', { kind: 'a11y' });
+          }
+        } else {
+          add('contenido', 'modal de historia no abre', 'warn', 'El botón "Ver más" no abre el modal de presentación.', { kind: 'contenido' });
+        }
+      }
+    }
+
+    // ------------------------------------------------------------ Deep links (navegación directa)
+    {
+      // profile.html?action=register&prompt=register (deep link de registro)
+      await goto('/profile.html?action=register&prompt=register', 2000);
+      const hasRegisterForm = await page.evaluate(() => {
+        return !!document.querySelector('input[type="email"], input[name="email"], #register-form, .register-form');
+      }).catch(() => false);
+      if (hasRegisterForm) add('contenido', 'deep link de registro muestra formulario', 'pass');
+      else add('contenido', 'deep link de registro sin formulario', 'warn', 'profile.html?action=register no muestra el formulario de registro.', { kind: 'contenido' });
+
+      // clases.html#calendario-publico (deep link de calendario)
+      await goto('/clases.html#calendario-publico', 2500);
+      const calOpen = await page.evaluate(() => {
+        return document.body.classList.contains('gy-calendar-open') ||
+          !!document.querySelector('#public-calendar-panel:not([hidden])') ||
+          !!document.querySelector('#calendar-desktop:visible, #calendar-mobile:visible');
+      }).catch(() => false);
+      if (calOpen) add('contenido', 'deep link #calendario-publico auto-abre', 'pass');
+      else add('contenido', 'deep link #calendario-publico no abre', 'warn', 'El calendario no se abre automáticamente con el hash.', { kind: 'contenido' });
+    }
+
+    // ------------------------------------------------------------ Validación de formularios (humano real)
+    {
+      await goto('/profile.html', 2000);
+      // Buscar campos del formulario de registro/login
+      const emailInput = page.locator('input[type="email"]').first();
+      const passwordInput = page.locator('input[type="password"]').first();
+      if (await emailInput.count() && await passwordInput.count()) {
+        // Test: email vacío no envía
+        await emailInput.fill('').catch(() => {});
+        await passwordInput.fill('').catch(() => {});
+        const submitBtn = page.locator('button[type="submit"]').first();
+        if (await submitBtn.count()) {
+          await submitBtn.click({ timeout: 3000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          // Verificar que no hay error de JS
+          const jsErrors = pageErrors.length;
+          if (jsErrors === 0) add('cliente', 'formulario vacío no rompe JS', 'pass');
+          else add('cliente', 'formulario vacío rompe JS', 'fail', pageErrors[0], { kind: 'cliente' });
+        }
+        // Test: email malformado
+        await emailInput.fill('no-es-email').catch(() => {});
+        await passwordInput.fill('123').catch(() => {});
+        if (await submitBtn.count()) {
+          await submitBtn.click({ timeout: 3000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          const jsErrors2 = pageErrors.length;
+          if (jsErrors2 === 0) add('cliente', 'email malformado no rompe JS', 'pass');
+          else add('cliente', 'email malformado rompe JS', 'fail', pageErrors[pageErrors.length - 1], { kind: 'cliente' });
+        }
+      }
+    }
+
+    // ------------------------------------------------------------ Cert-specific checks (solo en cert)
+    if (isCert) {
+      // Verificar que todas las páginas tienen noindex
+      const certPages = ['/', '/clases.html', '/tarifas.html', '/maestros.html', '/profile.html', '/success.html', '/cancel.html', '/politica-privacidad.html'];
+      let noindexCount = 0;
+      for (const p of certPages) {
+        const html = htmlText(await fetchWithTimeout(`${BASE}${p}`));
+        if (/<meta\s+name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html)) noindexCount++;
+      }
+      if (noindexCount === certPages.length) add('cert', 'todas las páginas marcadas noindex', 'pass');
+      else add('cert', 'páginas sin noindex en cert', 'fail', `${certPages.length - noindexCount} página(s) sin noindex: pueden indexarse en buscadores.`, { kind: 'cert' });
+
+      // Verificar robots.txt Disallow: /
+      const robots = await fetchWithTimeout(`${BASE}/robots.txt`);
+      const robotsText = htmlText(robots);
+      if (/Disallow:\s*\//i.test(robotsText)) add('cert', 'robots.txt bloquea indexación', 'pass');
+      else add('cert', 'robots.txt no bloquea indexación', 'warn', 'robots.txt no tiene Disallow: / — el cert podría indexarse.', { kind: 'seo' });
+
+      // Verificar cert banner presente
+      await goto('/', 1800);
+      await dismissWelcome();
+      const hasBanner = await page.evaluate(() => !!document.getElementById('gy-cert-banner')).catch(() => false);
+      if (hasBanner) add('cert', 'banner de entorno de pruebas presente', 'pass');
+      else add('cert', 'banner de entorno de pruebas ausente', 'warn', 'El banner de cert no se muestra: un usuario podría confundir cert con producción.', { kind: 'cert' });
+
+      // Verificar manifest.json accesible
+      const manifest = await fetchWithTimeout(`${BASE}/manifest.json`);
+      if (manifest.status === 200 && typeof manifest.body === 'object') add('cert', 'manifest.json accesible en cert', 'pass');
+      else add('cert', 'manifest.json no accesible en cert', 'warn', `HTTP ${manifest.status}`, { kind: 'pwa' });
+
+      // Verificar favicon.ico accesible
+      const favicon = await fetchWithTimeout(`${BASE}/favicon.ico`);
+      if (favicon.status === 200) add('cert', 'favicon.ico accesible en cert', 'pass');
+      else add('cert', 'favicon.ico no accesible en cert', 'warn', `HTTP ${favicon.status}`, { kind: 'pwa' });
+    }
+
+    // ------------------------------------------------------------ Responsive (breakpoints adicionales)
+    {
+      const breakpoints = [
+        { width: 320, height: 568, label: 'móvil pequeño (320px)' },
+        { width: 768, height: 1024, label: 'tablet (768px)' },
+        { width: 1440, height: 900, label: 'escritorio (1440px)' },
+      ];
+      for (const bp of breakpoints) {
+        await page.setViewportSize({ width: bp.width, height: bp.height });
+        await goto('/', 1500);
+        await dismissWelcome();
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth).catch(() => 0);
+        if (overflow <= 4) add('contenido', `sin desbordamiento horizontal en ${bp.label}`, 'pass');
+        else add('contenido', `desbordamiento horizontal en ${bp.label}`, 'warn', `+${overflow}px de desbordamiento`, { kind: 'contenido' });
+      }
+      // Restaurar viewport móvil por defecto
+      await page.setViewportSize({ width: 390, height: 844 });
     }
 
     if (pageErrors.length) {

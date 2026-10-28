@@ -164,6 +164,24 @@ const collectA11y = () => {
   const h1Count = [...document.querySelectorAll('h1')].filter(isVisible).length;
   const images = all.filter((el) => el.tagName === 'IMG');
 
+  // Skip link: enlace que salta al contenido principal
+  const skipLink = [...document.querySelectorAll('a[href^="#"]')].some((a) => {
+    const text = (a.innerText || a.getAttribute('aria-label') || '').toLowerCase();
+    return text.includes('saltar') || text.includes('skip') || text.includes('contenido') || text.includes('main');
+  });
+
+  // Jerarquía de títulos: h1 → h2 → h3 (sin saltos)
+  const headings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')].filter(isVisible);
+  const headingIssues = [];
+  let lastLevel = 0;
+  for (const h of headings) {
+    const level = Number(h.tagName[1]);
+    if (lastLevel > 0 && level > lastLevel + 1) {
+      headingIssues.push(`${h.tagName} después de h${lastLevel}`);
+    }
+    lastLevel = level;
+  }
+
   return {
     url: location.href,
     lang: document.documentElement.lang || '',
@@ -188,6 +206,8 @@ const collectA11y = () => {
     smallText: smallText.slice(0, 10),
     contrastFailures: contrastFailures.sort((a, b) => a.ratio - b.ratio).slice(0, 8),
     contrastChecked: seenText.size,
+    hasSkipLink: skipLink,
+    headingIssues,
   };
 };
 
@@ -219,6 +239,8 @@ export async function auditA11y(page, label, opts = {}) {
   if (raw.duplicateIds.length) push('a11y-duplicate-id', 'medium', `IDs duplicados (${raw.duplicateIds.slice(0, 4).join(', ')}): rompen labels y anclas.`);
   if (raw.h1Count === 0) push('a11y-h1', 'low', 'La página no tiene un H1 visible: empeora la orientación y el SEO.');
   if (raw.h1Count > 1) push('a11y-h1-multiple', 'low', `${raw.h1Count} H1 visibles: la jerarquía de títulos es ambigua.`);
+  if (!raw.hasSkipLink) push('a11y-skip-link', 'low', 'No hay enlace "saltar al contenido": dificulta la navegación con teclado.');
+  if (raw.headingIssues && raw.headingIssues.length) push('a11y-heading-hierarchy', 'low', `Jerarquía de títulos incorrecta: ${raw.headingIssues.slice(0, 3).join(', ')}.`);
   if (raw.smallText.length) push('a11y-font', 'low', `${raw.smallText.length} texto(s) por debajo de ${MIN_FONT_PX}px (${raw.smallText.slice(0, 3).map((x) => `${x.text} ${x.size}px`).join(' · ')}).`);
   if (raw.contrastFailures.length) {
     const worst = raw.contrastFailures[0];
@@ -246,6 +268,8 @@ export async function auditA11y(page, label, opts = {}) {
       smallText: raw.smallText.length,
       worstContrast: raw.contrastFailures[0]?.ratio ?? null,
       duplicateIds: raw.duplicateIds,
+      hasSkipLink: raw.hasSkipLink,
+      headingIssues: raw.headingIssues?.length ?? 0,
     },
   };
 }
