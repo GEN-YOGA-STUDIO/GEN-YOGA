@@ -569,3 +569,23 @@ html.is-native-app .modal-backdrop {
 @tailwind components;
 @tailwind utilities;
 
+/* ======================================================= */
+/* FOCO VISIBLE POR TECLADO (WCAG 2.4.7) — QA              */
+/* ======================================================= */
+/* Varios controles anulan el outline de forma heredada o en línea
+   (p. ej. i18n.js pinta los botones de idioma con style.outline='none',
+   y Tailwind aporta focus:outline-none). Sin indicador de foco, un usuario
+   de teclado no sabe qué control está activo. Esta regla restaura el foco
+   SOLO en foco de teclado (:focus-visible) con !important para prevalecer
+   sobre outline:none en línea.
+   Se usa un anillo DOS TONOS porque el sitio alterna fondos claros (crema)
+   y oscuros/coloreados (pie marrón, tarjetas doradas, botones coral):
+   el contorno oscuro #26160c contrasta sobre fondos claros y el halo claro
+   exterior #ffffff contrasta sobre fondos oscuros, de modo que siempre hay
+   al menos un borde con contraste >= 3:1 (WCAG 1.4.11) sea cual sea el fondo. */
+:focus-visible {
+    outline: 3px solid #26160c !important;
+    outline-offset: 0;
+    box-shadow: 0 0 0 6px #ffffff !important;
+}
+

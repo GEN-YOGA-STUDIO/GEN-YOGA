@@ -3,6 +3,19 @@
 
     const TIME_ZONE = 'Europe/Madrid';
     const CALENDAR_HASH = '#calendario-publico';
+    const CALENDAR_HASH_ALIASES = Object.freeze([
+        CALENDAR_HASH,
+        '#calendario',
+        '#horario',
+        '#horarios',
+        '#calendar',
+        '#agenda'
+    ]);
+
+    function isCalendarHash(hash) {
+        return CALENDAR_HASH_ALIASES.includes((hash || '').toLowerCase());
+    }
+
     const WEEK_DAYS_BASE = 6;
     const REFRESH_INTERVAL_MS = 60_000;
     const MAX_DEEP_LINK_DAYS = 120;
@@ -1656,7 +1669,8 @@
         } else {
             state.oferta = '';
         }
-        const week = validDateKey(url.searchParams.get('week'));
+        const rawWeek = (url.searchParams.get('week') || url.searchParams.get('semana') || '').trim();
+        const week = validDateKey(rawWeek);
         const classId = safePositiveInteger(url.searchParams.get('class') || url.searchParams.get('clase'));
         const teacher = normalizeTeacherParam(url.searchParams.get('teacher') || url.searchParams.get('profesional') || url.searchParams.get('profesor') || '');
         const rawStyle = url.searchParams.get('style') || url.searchParams.get('type') || url.searchParams.get('tipo') || url.searchParams.get('clase_tipo') || '';
@@ -1667,11 +1681,27 @@
             style = '';
         }
 
-        state.weekStart = week ? mondayFor(week) : defaultWeekStart();
-        if (state.weekStart < SEASON_START_WEEK) {
-            state.weekStart = SEASON_START_WEEK;
+        const currentWeekMonday = defaultWeekStart();
+        const isCurrentKeyword = ['actual', 'current', 'hoy', 'today', 'now', 'semana-actual'].includes(rawWeek.toLowerCase());
+
+        if (isCurrentKeyword) {
+            state.weekStart = currentWeekMonday;
+            state.explicitWeek = false;
+        } else if (week) {
+            const requestedMonday = mondayFor(week);
+            // Si el enlace apunta a una semana del pasado (p. ej. enlace antiguo guardado en Linktree o compartido en WhatsApp)
+            // y no es para una clase concreta, redirigir automáticamente a la semana actual en curso.
+            if (requestedMonday < currentWeekMonday && !classId) {
+                state.weekStart = currentWeekMonday;
+                state.explicitWeek = false;
+            } else {
+                state.weekStart = requestedMonday < SEASON_START_WEEK ? SEASON_START_WEEK : requestedMonday;
+                state.explicitWeek = true;
+            }
+        } else {
+            state.weekStart = currentWeekMonday;
+            state.explicitWeek = false;
         }
-        state.explicitWeek = Boolean(week);
         state.classId = classId;
         state.teacher = teacher;
         state.style = style;
@@ -1763,7 +1793,15 @@
         } else {
             url.searchParams.delete('mode');
         }
-        url.searchParams.set('week', state.weekStart);
+        // Solo fijar ?week= si el usuario está viendo una semana distinta de la actual.
+        // Así, al compartir o copiar el enlace desde el navegador, siempre se comparte
+        // el link genérico que lleva dinámicamente a la semana en curso.
+        if (state.weekStart && state.weekStart !== defaultWeekStart()) {
+            url.searchParams.set('week', state.weekStart);
+        } else {
+            url.searchParams.delete('week');
+        }
+        url.searchParams.delete('semana');
         if (state.style) url.searchParams.set('style', state.style);
         else url.searchParams.delete('style');
         url.searchParams.delete('type');
@@ -1783,15 +1821,15 @@
 
     function clearCalendarUrl() {
         const url = new URL(root.location.href);
-        ['mode', 'week', 'style', 'type', 'teacher', 'class', 'clase'].forEach(key => url.searchParams.delete(key));
+        ['mode', 'week', 'semana', 'style', 'type', 'teacher', 'class', 'clase'].forEach(key => url.searchParams.delete(key));
         url.hash = '';
         root.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
     }
 
     function shouldAutoOpenFromUrl() {
         const url = new URL(root.location.href);
-        return url.hash === CALENDAR_HASH
-            || ['mode', 'week', 'style', 'type', 'tipo', 'teacher', 'profesional', 'profesor', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro'].some(key => url.searchParams.has(key));
+        return isCalendarHash(url.hash)
+            || ['mode', 'week', 'semana', 'style', 'type', 'tipo', 'teacher', 'profesional', 'profesor', 'class', 'clase', 'oferta', 'promo', 'filter', 'filtro'].some(key => url.searchParams.has(key));
     }
 
     function startPolling() {
@@ -1872,11 +1910,18 @@
         if (Object.prototype.hasOwnProperty.call(options, 'classId')) {
             state.classId = safePositiveInteger(options.classId);
         }
-        if (Object.prototype.hasOwnProperty.call(options, 'week')) {
-            const valid = validDateKey(options.week);
-            if (valid) {
-                state.weekStart = mondayFor(valid);
-                state.explicitWeek = true;
+        if (Object.prototype.hasOwnProperty.call(options, 'week') || Object.prototype.hasOwnProperty.call(options, 'semana')) {
+            const raw = String(options.week || options.semana || '').trim();
+            if (['actual', 'current', 'hoy', 'today', 'now', 'semana-actual'].includes(raw.toLowerCase())) {
+                state.weekStart = defaultWeekStart();
+                state.explicitWeek = false;
+            } else {
+                const valid = validDateKey(raw);
+                if (valid) {
+                    const mon = mondayFor(valid);
+                    state.weekStart = mon < defaultWeekStart() && !options.classId ? defaultWeekStart() : mon;
+                    state.explicitWeek = state.weekStart !== defaultWeekStart();
+                }
             }
         }
     }
@@ -1921,7 +1966,7 @@
 
     function close() {
         if (!state.open) return;
-        if (state.historyPushed && root.location.hash === CALENDAR_HASH) {
+        if (state.historyPushed && isCalendarHash(root.location.hash)) {
             state.historyPushed = false;
             root.history.back();
             return;
@@ -1945,7 +1990,7 @@
         state.weekStart = nextWeek;
         state.classId = null;
         state.selectedDay = '';
-        state.explicitWeek = true;
+        state.explicitWeek = state.weekStart !== defaultWeekStart();
         state.targetResolved = true;
         updateUrl('replace');
         loadWeek();
@@ -2037,7 +2082,7 @@
             state.weekStart = defaultWeekStart();
             state.classId = null;
             state.selectedDay = todayKeyMadrid() < SEASON_START_DATE ? SEASON_START_DATE : todayKeyMadrid();
-            state.explicitWeek = true;
+            state.explicitWeek = false;
             state.targetResolved = true;
             updateUrl('replace');
             loadWeek();
@@ -2142,7 +2187,7 @@
         });
         root.addEventListener('languageChanged', () => render());
         const handleLocationChange = () => {
-            if (root.location.hash === CALENDAR_HASH) {
+            if (isCalendarHash(root.location.hash)) {
                 parseUrlState();
                 if (!state.open) open({ historyMode: 'none' });
                 else {

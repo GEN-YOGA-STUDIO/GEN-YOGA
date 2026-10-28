@@ -1085,7 +1085,7 @@
                         src="about:blank"
                         data-src="https://www.youtube-nocookie.com/embed/2C_eBw8H-Vk?playsinline=1&enablejsapi=1&origin=https://genyoga.studio"
                         title="Vídeo de presentación de GEN Yoga" data-i18n-title="modal_history_video_title" loading="lazy"
-                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen></iframe>
                 </div>
 
@@ -1574,6 +1574,12 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => {
+            const h = (window.location.hash || '').toLowerCase();
+            if (['#horario', '#horarios', '#calendario', '#calendario-publico', '#calendar', '#agenda'].includes(h)) {
+                window.location.replace('clases.html#calendario-publico');
+                return;
+            }
+
             const overlay = document.getElementById('modal-overlay');
             if (overlay) {
                 overlay.addEventListener('click', (e) => {
@@ -1586,6 +1592,13 @@
                         window.openModal('historia');
                     }
                 }, 150);
+            }
+        });
+
+        window.addEventListener('hashchange', () => {
+            const h = (window.location.hash || '').toLowerCase();
+            if (['#horario', '#horarios', '#calendario', '#calendario-publico', '#calendar', '#agenda'].includes(h)) {
+                window.location.replace('clases.html#calendario-publico');
             }
         });
 
@@ -1954,7 +1967,7 @@
 
             // 3. CONSULTAS
             function renderConsultasScreen() {
-                const waUrl = 'https://wa.me/34621123769?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría solicitar información y cita para una consulta de salud integrativa.');
+                const waUrl = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría solicitar información y cita para una consulta de salud integrativa.');
                 return `
                     <div class="ami-top">
                         <div style="width:32px"></div>
@@ -1990,7 +2003,7 @@
 
             // 4. EVENTOS
             function renderEventosScreen() {
-                const waTaller = 'https://wa.me/34621123769?text=' + encodeURIComponent('Hola GEN Yoga, quiero reservar plaza para el Taller Intensivo de Alineación.');
+                const waTaller = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, quiero reservar plaza para el Taller Intensivo de Alineación.');
                 return `
                     <div class="ami-top">
                         <div style="width:32px"></div>
@@ -2082,7 +2095,7 @@
                                 <div class="dot">📍</div>
                                 <div><b>Ubicación del estudio</b><small>Calle San Carlos 2 · Albacete</small></div>
                             </div>
-                            <div class="native-menu-item" onclick="window.open('https://wa.me/34621123769','_blank')">
+                            <div class="native-menu-item" onclick="window.open('https://wa.me/34624435679','_blank')">
                                 <div class="dot">💬</div>
                                 <div><b>Atención y soporte</b><small>WhatsApp oficial GEN Yoga</small></div>
                             </div>

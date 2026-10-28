@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.0.13 — 28 oct 2026 · Incidencia
+
+- **Descripción:** Segunda pasada QA adversarial: anillo de foco de teclado WCAG 2.4.7 en las 9 paginas (contorno oscuro + halo claro con contraste >=3:1), WhatsApp del menu nativo alineado al oficial, aliases de hash/semana del calendario, textos de packs sincronizados ES/EN, aria-label en ojo de contrasena y subpestanas, contraste de carpetas claras; verificado consola/red, viewports 320-768px, enlaces, EN y teclado (ámbito: qa)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.0.13`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.0.13.md`
+
 ## v18.0.12 — 27 oct 2026 · Incidencia
 
 - **Descripción:** Evitar corte del borde izquierdo del boton de bono recurrente al hacer hover en la barra de bonos (ámbito: perfil)

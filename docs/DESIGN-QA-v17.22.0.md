@@ -244,3 +244,38 @@ Servidor estático sin caché sobre la raíz del repo, CSS recompilado, `localSt
 **Comparación con el baseline (v17.21):** contraste 64 → 0, targets 35 → 0, inputs sin nombre 4 → 0, `h1` ausentes 3 → 0, `main` ausentes 5 → 0, scroll horizontal 8/8 páginas → 0. La página nueva `404.html` entra en el gate `check:web` como novena página y `favicon.ico`/`manifest.json` dejan de responder 404.
 
 **Verificaciones adicionales:** `npm test` completo en verde (617 líneas, 0 fallos), `check:web` → "passed for 9 pages", `check:i18n` (265 claves en ES y EN), `check:marketing`, `check:calendar`, `check:app-sync` y `check:app-twins` (855 archivos sincronizados en los gemelos).
+
+---
+
+## 15. Segunda pasada adversarial (usuario distinto) — posterior a la primera release
+
+Nueva auditoría sobre el sitio ya desplegado, replanteada como si un usuario distinto llegara por primera vez. Servidor estático sin caché (8100) + `playwright-core` para teclado y foco.
+
+| Ronda | Ángulo | Resultado |
+|---|---|---|
+| 1 | Carga limpia de 8 páginas, errores de consola + peticiones 4xx/5xx | **0 errores de consola, 0 peticiones fallidas** (146 peticiones) |
+| 2 | Viewports 320/375/768 px × 8 páginas (24 combinaciones) | **0 scroll horizontal, 0 targets < 24 px** (la decoración "fuera de ancho" es marquee/`ambient-shape` recortada a propósito) |
+| 3 | Rastreo de enlaces internos desde las 9 páginas | **31 enlaces, 0 rotos** |
+| 4 | Enlaces antiguos/manipulados (`?clase=999999999`, `?week=noesfecha`, `session_id` falsa…) | **0 errores de consola**; `success.html` con sesión Stripe inválida degrada bien ("No pudimos verificar el pago" + "Volver a Tarifas") |
+| 5 | Cambio a EN y búsqueda de textos sin traducir | Falso positivo (ver F7) |
+| 6 | Teclado: orden de tabulación, foco visible, focus trap | **Fallo real confirmado (F8)** y corregido |
+
+### F7 — `profile_no_bookings_*` en español con idioma EN → NO SE REPRODUCE (falso positivo)
+
+La primera medición (con el tool de navegador) señaló que `profile_no_bookings_title` / `profile_no_bookings_desc` se quedaban en español al pasar a EN. La reproducción aislada con `playwright-core` descarta el fallo: tras `window.setLanguage('en')` el nodo queda en **"You have no active bookings" / "Use the Classes…"**, y se mantiene así incluso tras forzar `renderizarConsolidadoDia()`. Las claves existen en el diccionario EN (`i18n.js:1681-1684`) y `profileT()` resuelve vía `window.t`. El texto en español original era el fallback estático del HTML, sustituido correctamente al aplicar la traducción. **No se corrige: no hay bug.**
+
+### F8 — Foco de teclado invisible en los controles → CONFIRMADO y CORREGIDO
+
+Síntoma: al tabular, `#lang-btn-es` / `#lang-btn-en` (y otros controles) no mostraban indicador de foco. Causa: `i18n.js` inyecta a esos botones `style.outline='none'` **en línea** (más `i18n.js:2548`), y varias fuentes/`focus:outline-none` de Tailwind anulan el outline por defecto. Sin anillo, un usuario de teclado no sabe qué control está activo (WCAG 2.4.7).
+
+Corrección en `tailwind-input.css` (compila a `tailwind-compiled.css`, enlazado por las 9 páginas): regla global `:focus-visible` con **anillo de dos tonos** — contorno oscuro `#26160c` + halo claro exterior `#ffffff` — ambos con `!important` para prevalecer sobre el `outline:none` en línea. El diseño de dos tonos garantiza ≥ 3:1 (WCAG 1.4.11) sea cual sea el fondo, ya que el sitio alterna fondos claros (crema) y oscuros/coloreados (pie marrón, tarjetas coral/doradas).
+
+**Verificación:** barrido de tabulación real por las 9 páginas con `playwright` (lee el anillo ya asentado, esperando la transición de 0.2 s): **0 controles sin indicador visible**; todos con contraste ≥ 3:1 contra su fondo. `npm test` completo en verde después del cambio (24 checks, incluido `check:e2e`).
+
+### Cambios coherentes detectados en el árbol de trabajo (conservados)
+
+La segunda pasada encontró en el working tree mejoras QA ya escritas (de la misma campaña, no commiteadas), verificadas y conservadas en esta release:
+- **`index.html`:** número de WhatsApp del menú nativo/consultas/eventos corregido `34621123769` → `34624435679` (alineado con el oficial `+34 624 435 679` del pie); redirección de aliases de hash de calendario (`#horario`, `#calendario`, `#agenda`…) a `clases.html#calendario-publico`; retirada de `web-share` del `allow` del iframe YouTube.
+- **`public-calendar.js`:** aliases de hash y del parámetro `semana`.
+- **`i18n.js`/`profile.html`:** textos de packs sincronizados (se elimina el "6 clases" inexistente, se menciona el bono mensual) en ES y EN; `aria-label` en los botones de ojo de contraseña y en las sub-pestañas.
+- **`clases.html`:** contraste de texto elevado en las carpetas claras 3/4.
