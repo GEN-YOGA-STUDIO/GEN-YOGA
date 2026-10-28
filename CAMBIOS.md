@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.1.0 — 28 oct 2026 · Desarrollo
+
+- **Descripción:** Robustecimiento de CI/CD: empaquetado de manifest y favicon en Pages, resiliencia de CLI en autofix y monitoreo de activos y drift en el chequeo de produccion (ámbito: ci)
+- **Validación:** npm test
+- **Tag:** `v18.1`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v18.1.0.md`
+
 ## v18.0.13 — 28 oct 2026 · Incidencia
 
 - **Descripción:** Segunda pasada QA adversarial: anillo de foco de teclado WCAG 2.4.7 en las 9 paginas (contorno oscuro + halo claro con contraste >=3:1), WhatsApp del menu nativo alineado al oficial, aliases de hash/semana del calendario, textos de packs sincronizados ES/EN, aria-label en ojo de contrasena y subpestanas, contraste de carpetas claras; verificado consola/red, viewports 320-768px, enlaces, EN y teclado (ámbito: qa)

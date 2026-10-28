@@ -64,6 +64,8 @@ async function checkSource(label, base) {
   check(`${label}: img/ con contenido`, imgCount > 10, `vistos: ${imgCount}`);
   const fontCount = await countWoff2(path.join(abs, 'fonts'));
   check(`${label}: fonts/ con woff2`, fontCount >= 7, `vistos: ${fontCount}`);
+  check(`${label}: manifest.json presente`, await exists(path.join(abs, 'manifest.json')));
+  check(`${label}: favicon.ico presente`, await exists(path.join(abs, 'favicon.ico')));
   check(`${label}: .well-known/assetlinks.json`, await exists(path.join(abs, '.well-known', 'assetlinks.json')));
   check(`${label}: .well-known/apple-app-site-association`, await exists(path.join(abs, '.well-known', 'apple-app-site-association')));
 }
@@ -77,6 +79,7 @@ check(`CNAME idéntico (raíz y ultima: ${rootCname})`, rootCname === ultimaCnam
 
 const workflow = await readFile(path.join(root, '.github', 'workflows', 'deploy-pages.yml'), 'utf8');
 check('workflow despliega .well-known', workflow.includes('.well-known'));
+check('workflow despliega manifest.json y favicon.ico', workflow.includes('manifest.json') && workflow.includes('.ico'));
 
 console.log('');
 if (errors.length > 0) {
