@@ -51,6 +51,12 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
+      - name: Asegurar etiquetas del bucle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create "plan-mejoras" --color 1D76DB --description "Plan de mejoras del chequeo nocturno" 2>/dev/null || true
+          gh label create "aplicar-mejoras" --color BFD4F2 --description "Activa la aplicación del plan de mejoras" 2>/dev/null || true
       - name: Instalar dependencias
         run: npm ci --no-audit --no-fund
       - name: Instalar Chromium
@@ -91,8 +97,57 @@ jobs:
       - name: Publicar resumen en GitHub Actions
         if: always()
         run: |
-          node scripts/nightly-step-summary.mjs nightly-reports/cert-action.json >> "$GITHUB_STEP_SUMMARY" || true
+          # El análisis escribe el plan; el resumen lo lee ya fresco.
           node scripts/analizar-informe-diario.mjs --cert --append-summary || true
+          node scripts/nightly-step-summary.mjs nightly-reports/cert-action.json >> "$GITHUB_STEP_SUMMARY" || true
+          node scripts/plan-issue.mjs --cert > nightly-reports/plan-issue-cert.md || true
+      - name: Crear/actualizar issue del plan de cert
+        id: plan-issue
+        if: always()
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          script: |
+            const fs = require('fs');
+            const MARK = '<!-- plan-mejoras-cert -->';
+            const TITLE = '🧭 Plan de mejoras · certificación';
+            const { owner, repo } = context.repo;
+            let body;
+            try {
+              body = fs.readFileSync('nightly-reports/plan-issue-cert.md', 'utf8');
+            } catch {
+              core.notice('Sin plan-issue-cert.md: no se crea/actualiza el issue del plan de cert.');
+              return;
+            }
+            if (!body.includes(MARK)) return;
+            const signature = (body.match(/<!-- plan-signature: ([a-f0-9]+) -->/) || [])[1] || '';
+            const autoCount = (body.match(/^\| \*\*M\d+\*\*/gm) || []).length;
+            const list = await github.paginate(github.rest.issues.listForRepo, { owner, repo, state: 'open', per_page: 100 });
+            const dup = list.find((i) => !i.pull_request && ((i.body || '').includes(MARK) || i.title === TITLE));
+            const labels = ['plan-mejoras', 'cert'];
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const footer = `\n\n---\nEjecución: ${runUrl}`;
+            if (dup) {
+              const oldSig = ((dup.body || '').match(/<!-- plan-signature: ([a-f0-9]+) -->/) || [])[1];
+              await github.rest.issues.update({ owner, repo, issue_number: dup.number, body: body + footer });
+              const names = (dup.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+              const missing = labels.filter((l) => !names.includes(l));
+              if (missing.length) await github.rest.issues.addLabels({ owner, repo, issue_number: dup.number, labels: missing });
+              if (autoCount === 0 && names.includes('aplicar-mejoras')) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: dup.number, name: 'aplicar-mejoras' }).catch(() => {});
+              }
+              if (signature && oldSig !== signature) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: dup.number,
+                  body: `🧭 **Plan de cert actualizado** (${autoCount} propuesta(s) auto-aplicable(s)).\n\n${runUrl}`,
+                });
+              }
+              core.setOutput('number', String(dup.number));
+            } else {
+              const created = await github.rest.issues.create({
+                owner, repo, title: TITLE, body: body + footer, labels,
+              });
+              core.setOutput('number', String(created.data.number));
+            }
       - name: Generar autorreporte para la IA
         if: always()
         run: CERT_MODE=1 node scripts/nightly-issue-body.mjs nightly-reports/cert-action.json > nightly-reports/cert-issue-body.md || echo "sin cuerpo"

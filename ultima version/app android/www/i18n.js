@@ -2870,7 +2870,7 @@ document.addEventListener('DOMContentLoaded', () => {
         langDiv.style.display = 'flex';
         langDiv.style.alignItems = 'center';
         langDiv.style.gap = isNative ? '2px' : '4px';
-        langDiv.style.fontSize = isNative ? '12px' : '11px';
+        langDiv.style.fontSize = '12px';
         langDiv.style.color = '#f8f6f2'; // Brand cream text
         langDiv.style.boxShadow = isNative ? '0 4px 14px rgba(38, 22, 12, 0.35)' : '0 6px 16px rgba(38, 22, 12, 0.2)';
         langDiv.style.userSelect = 'none';
@@ -2883,7 +2883,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         langDiv.innerHTML = `
             <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">ES</button>
-            <span style="color:rgba(248, 246, 242, 0.95); font-size:11px; pointer-events:none; user-select:none;">/</span>
+            <span style="color:rgba(248, 246, 242, 0.95); font-size:12px; pointer-events:none; user-select:none;">/</span>
             <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.85; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">EN</button>
         `;
         document.body.appendChild(langDiv);

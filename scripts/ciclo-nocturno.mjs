@@ -43,22 +43,43 @@ async function main() {
   const t0 = Date.now();
 
   // 1. Ejecutar el chequeo de salud
-  console.log(`\n--- [1/3] Ejecución de batería de salud (${prefix}) ---`);
+  console.log(`\n--- [1/4] Ejecución de batería de salud (${prefix}) ---`);
   const checkArgs = ['scripts/check-nightly-production.mjs'];
   if (isCert) checkArgs.push('--cert');
   const checkCode = await run('node', checkArgs);
 
-  // 2. Ejecutar análisis diario de inteligencia
-  console.log(`\n--- [2/3] Análisis inteligente diario y cálculo de Health Score ---`);
+  // 2. Ejecutar análisis diario de inteligencia + plan de mejoras
+  console.log(`\n--- [2/4] Análisis inteligente diario, salud explicable y plan de mejoras ---`);
   const analArgs = ['scripts/analizar-informe-diario.mjs'];
   if (isCert) analArgs.push('--cert');
   await run('node', analArgs);
 
   // 3. Generar Step Summary
-  console.log(`\n--- [3/3] Resumen estructurado del informe ---`);
+  console.log(`\n--- [3/4] Resumen estructurado del informe ---`);
   const summaryArgs = ['scripts/nightly-step-summary.mjs'];
   if (isCert) summaryArgs.push('nightly-reports/cert-action.json');
   await run('node', summaryArgs);
+
+  // 4. Mostrar el plan accionable (sin aplicarlo)
+  console.log(`\n--- [4/4] Plan de mejoras (revisión, no aplicación) ---`);
+  const planFile = path.join(reportsDir, isCert ? 'plan-mejoras-cert.json' : 'plan-mejoras.json');
+  let plan = null;
+  if (existsSync(planFile)) {
+    try { plan = JSON.parse(readFileSync(planFile, 'utf8')); } catch {}
+  }
+  if (plan) {
+    console.log(`Salud ${plan.health?.score}/100 (${plan.health?.grade}) · ${plan.summary.total} propuesta(s) · ${plan.summary.auto} auto-aplicables`);
+    for (const it of plan.items.slice(0, 5)) {
+      console.log(`  • ${it.id} [${it.priority}] ${it.autoApplicable ? 'auto' : 'manual'} · ${it.title}`);
+    }
+    if (plan.items.length > 5) console.log(`  … y ${plan.items.length - 5} más en nightly-reports/${isCert ? 'plan-mejoras-cert' : 'plan-mejoras'}.md`);
+    if (plan.summary.auto) {
+      console.log(`\n👉 Para aplicar (explícito): npm run mejoras:aplicar -- --solo ${plan.items.find((i) => i.autoApplicable)?.id || 'M01'}`);
+      console.log(`   O añade la etiqueta 'aplicar-mejoras' al issue del plan en GitHub.`);
+    }
+  } else {
+    console.log('Sin plan generado (revisa el análisis diario).');
+  }
 
   const durMin = ((Date.now() - t0) / 1000 / 60).toFixed(1);
 
@@ -79,6 +100,14 @@ async function main() {
       console.log(`- Superados: ${actionData.summary.passed}`);
       console.log(`- Avisos informativos: ${actionData.summary.warned}`);
     }
+    if (plan?.health) {
+      console.log(`- Salud: ${plan.health.score}/100 (${plan.health.grade}) · funcional ${plan.health.functionalScore} · experiencia ${plan.health.experienceScore}`);
+      if (plan.health.personas) console.log(`- Personas: ${plan.health.personas.passed}/${plan.health.personas.total} limpias · fricción ${plan.health.personas.friction}/100`);
+    }
+    if (plan?.summary?.total) {
+      console.log(`- Mejoras pendientes (no aplicadas): ${plan.summary.total} · ${plan.summary.auto} auto-aplicables`);
+      console.log(`  Revisa nightly-reports/${isCert ? 'plan-mejoras-cert' : 'plan-mejoras'}.md`);
+    }
     console.log(`\n🎉 El estudio y la plataforma web/apps están 100% listos para abrir por la mañana.`);
 
     if (doNotify || process.env.ALERT_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL) {
@@ -98,8 +127,8 @@ async function main() {
       }
     }
     console.log(`\n👉 Guía de acción para la mañana:`);
-    console.log(`   1. Ver detalle completo en docs/FALLOS_PARA_IA.md`);
-    console.log(`   2. Para autolimpiar/corregir: ejecutar 'opencode run' o revisar PR automático de nightly-autofix.`);
+    console.log(`   1. Ver detalle completo en docs/FALLOS_PARA_IA.md y nightly-reports/${isCert ? 'plan-mejoras-cert' : 'plan-mejoras'}.md`);
+    console.log(`   2. Para autolimpiar/corregir: ejecutar 'npm run mejoras:aplicar -- --solo M01' o revisar el PR automático de nightly-autofix.`);
     console.log(`   3. Verificar solución con: npm run ${isCert ? 'check:cert' : 'check:nightly'}`);
 
     if (doNotify || process.env.ALERT_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL) {

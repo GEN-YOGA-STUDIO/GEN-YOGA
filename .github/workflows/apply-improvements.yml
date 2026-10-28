@@ -1,0 +1,266 @@
+name: Aplicar mejoras del plan (IA)
+
+# Activación EXPLÍCITA, nunca automática:
+#   - Manual: Actions → "Aplicar mejoras del plan (IA)" → Run workflow
+#     (issue_number opcional; ids opcional, p. ej. "M01,M04"; max por defecto 3).
+#   - Por etiqueta: añade `aplicar-mejoras` al issue del plan.
+#
+# Requisitos (una vez):
+#   - Issue del plan creado por nightly-health/cert-health (etiqueta plan-mejoras).
+#   - Secreto LLM: ANTHROPIC_API_KEY (o OPENAI_API_KEY / GEMINI_API_KEY).
+#   - Variable opcional MEJORAS_MODEL (p. ej. anthropic/claude-sonnet-4-5).
+#
+# Seguridad:
+#   - Solo OWNER/MEMBER/COLLABORATOR con permiso write pueden activar por etiqueta.
+#   - El agente NUNCA toca main: abre PR para revisión humana.
+#   - La verificación completa (check:nightly o check:cert) debe pasar antes del PR.
+#   - No se ejecutan propuestas `manual` (Supabase/Stripe/despliegue/datos).
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Número del issue del plan (vacío = buscar el abierto con plan-mejoras)'
+        required: false
+        default: ''
+      ids:
+        description: 'IDs separados por coma (vacío = todos los auto-aplicables)'
+        required: false
+        default: ''
+      max:
+        description: 'Máximo de propuestas si no se especifican IDs'
+        required: false
+        default: '3'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: apply-improvements-${{ github.event.issue.number || inputs.issue_number || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: Aplicar y verificar
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+       github.event.label.name == 'aplicar-mejoras' &&
+       github.event.issue.pull_request == null)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
+      GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
+      MEJORAS_MODEL: ${{ vars.MEJORAS_MODEL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+    steps:
+      - name: Resolver issue, plan y selección
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ISSUE: ${{ github.event.issue.number }}
+          SENDER: ${{ github.event.sender.login }}
+          INPUT_ISSUE: ${{ inputs.issue_number }}
+          INPUT_IDS: ${{ inputs.ids }}
+          INPUT_MAX: ${{ inputs.max }}
+        run: |
+          set -euo pipefail
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+
+          # Puerta de permisos para activación por etiqueta. Un workflow_dispatch
+          # ya exige permiso de escritura en el repo para poder lanzarse.
+          if [ "$EVENT_NAME" = "issues" ]; then
+            PERM=$(gh api "repos/$GH_REPO/collaborators/$SENDER/permission" --jq .permission 2>/dev/null || echo none)
+            case "$PERM" in
+              admin|maintain|write) ;;
+              *) echo "::error::Solo OWNER/MEMBER/COLLABORATOR con write pueden activar mejoras (permiso: $PERM)."; exit 1 ;;
+            esac
+          fi
+
+          N="${INPUT_ISSUE:-${EVENT_ISSUE:-}}"
+          if [ -z "$N" ]; then
+            N=$(gh issue list --state open --label plan-mejoras --limit 50 --json number,body \
+              --jq '[.[] | select((.body // "") | contains("<!-- plan-mejoras"))] | sort_by(.number) | reverse | .[0].number // empty')
+          fi
+          if [ -z "$N" ]; then
+            echo "::error::No hay issue de plan abierto. Ejecuta antes el chequeo nocturno."
+            exit 1
+          fi
+          STATE=$(gh issue view "$N" --json state -q .state)
+          if [ "$STATE" != "OPEN" ]; then
+            echo "::error::El issue #$N está cerrado."
+            exit 1
+          fi
+          BODY=$(gh issue view "$N" --json body -q .body)
+          if ! printf '%s' "$BODY" | grep -q '<!-- plan-mejoras'; then
+            echo "::error::El issue #$N no es un issue de plan de mejoras."
+            exit 1
+          fi
+          DATA=$(printf '%s' "$BODY" | grep -o 'plan-data: [A-Za-z0-9+/=]*' | head -1 | sed 's/^plan-data: //')
+          if [ -z "$DATA" ]; then
+            echo "::error::El issue #$N no contiene datos de plan. Vuelve a ejecutar el chequeo nocturno."
+            exit 1
+          fi
+          printf '%s' "$DATA" | base64 -d > /tmp/plan.json
+          node -e "JSON.parse(require('fs').readFileSync('/tmp/plan.json','utf8'))"
+
+          AUTO=$(node -e "const p=require('/tmp/plan.json'); console.log(p.items.filter(i=>i.autoApplicable).map(i=>i.id).join(','))")
+          if [ -z "$AUTO" ]; then
+            gh issue comment "$N" --body "ℹ️ No hay propuestas auto-aplicables en el plan actual. Nada que aplicar."
+            echo "number=$N" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          IDS="${INPUT_IDS:-$AUTO}"
+          IDS=$(IDS="$IDS" node -e "
+            const p = require('/tmp/plan.json');
+            const auto = new Set(p.items.filter(i => i.autoApplicable).map(i => i.id));
+            const ids = String(process.env.IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+            const bad = ids.filter(x => !auto.has(x));
+            if (bad.length) { console.error('IDs no auto-aplicables o inexistentes: ' + bad.join(',')); process.exit(1); }
+            console.log(ids.join(','));
+          ")
+          ENVNAME=$(node -p "require('/tmp/plan.json').env")
+          BASE=$(node -p "require('/tmp/plan.json').base")
+          MAX="${INPUT_MAX:-3}"
+
+          echo "number=$N" >> "$GITHUB_OUTPUT"
+          echo "ids=$IDS" >> "$GITHUB_OUTPUT"
+          echo "max=$MAX" >> "$GITHUB_OUTPUT"
+          echo "env=$ENVNAME" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          echo "Plan #$N · entorno $ENVNAME · IDs: $IDS · máx: $MAX"
+
+      - name: Marcar issue en curso
+        if: steps.target.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ steps.target.outputs.number }}
+          IDS: ${{ steps.target.outputs.ids }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create "mejoras-en-curso" --color FBCA04 --description "Aplicación de mejoras en curso" 2>/dev/null || true
+          gh label create "mejoras-aplicadas" --color 0E8A16 --description "Mejoras aplicadas y PR abierto" 2>/dev/null || true
+          gh label create "mejoras-error" --color D93F0B --description "La aplicación de mejoras falló" 2>/dev/null || true
+          gh issue edit "$ISSUE" --remove-label "aplicar-mejoras" --add-label "mejoras-en-curso" 2>/dev/null || gh issue edit "$ISSUE" --add-label "mejoras-en-curso"
+          gh issue comment "$ISSUE" --body "🤖 **Aplicación de mejoras activada** por @${GITHUB_ACTOR}.
+
+          - Propuestas: \`$IDS\`
+          - Verificación: suite nocturna completa antes de abrir PR.
+          - Ejecución: [ver progreso]($RUN_URL)
+
+          El agente no toca \`main\`: si todo pasa, abrirá un PR para revisión humana."
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.target.outputs.enabled == 'true'
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.target.outputs.enabled == 'true'
+        with:
+          node-version: 22
+
+      - name: Instalar dependencias y Chromium
+        if: steps.target.outputs.enabled == 'true'
+        run: |
+          npm ci --no-audit --no-fund
+          CORE_VER=$(node -p "require('./node_modules/playwright-core/package.json').version")
+          npx -y playwright@$CORE_VER install --with-deps chromium
+
+      - name: Instalar OpenCode
+        if: steps.target.outputs.enabled == 'true'
+        run: |
+          if ! command -v opencode >/dev/null 2>&1; then
+            npm i -g opencode-ai || curl -fsSL https://opencode.ai/install | bash
+          fi
+          # Si la instalación fue por curl, el binario vive fuera del PATH de pasos posteriores.
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.opencode/bin:$PATH"
+          command -v opencode
+          opencode --version
+
+      - name: Aplicar plan con OpenCode y verificar
+        id: apply
+        if: steps.target.outputs.enabled == 'true'
+        timeout-minutes: 54
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROD_BASE_URL: ${{ steps.target.outputs.base }}
+          MEJORAS_TIMEOUT_MIN: '22'
+          MEJORAS_VERIFY_TIMEOUT_MIN: '28'
+          # En CI no hay terminal para aprobar permisos de edición/ejecución.
+          MEJORAS_AUTO: '1'
+        run: |
+          set -o pipefail
+          mkdir -p nightly-reports
+          ARGS=(aplicar --activar --desde-plan /tmp/plan.json --pr --max "${{ steps.target.outputs.max }}")
+          if [ -n "${{ steps.target.outputs.ids }}" ]; then
+            ARGS+=(--solo "${{ steps.target.outputs.ids }}")
+          fi
+          node scripts/mejoras.mjs "${ARGS[@]}" 2>&1 | tee nightly-reports/apply-log.txt
+
+      - name: Subir logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: apply-improvements-log
+          path: |
+            nightly-reports/apply-log.txt
+            nightly-reports/mejoras-*
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Comentar resultado
+        if: always() && steps.target.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ steps.target.outputs.number }}
+          OUTCOME: ${{ steps.apply.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          URL=""
+          if [ -f nightly-reports/mejoras-ultima.json ]; then
+            URL=$(node -e "try{console.log(require('./nightly-reports/mejoras-ultima.json').prUrl||'')}catch{console.log('')}")
+          fi
+          gh issue edit "$ISSUE" --remove-label "mejoras-en-curso" 2>/dev/null || true
+          if [ "$OUTCOME" = "success" ] && [ -n "$URL" ]; then
+            gh issue edit "$ISSUE" --add-label "mejoras-aplicadas" 2>/dev/null || true
+            gh issue comment "$ISSUE" --body "✅ **Mejoras aplicadas y verificadas.**
+
+          - PR: $URL
+          - Verificación: suite nocturna completa en verde.
+          - Revisión humana pendiente antes de fusionar.
+
+          [Ver ejecución]($RUN_URL)"
+          elif [ "$OUTCOME" = "success" ]; then
+            gh issue comment "$ISSUE" --body "ℹ️ El proceso terminó sin cambios aplicables o sin PR.
+
+          Revisa el log adjunto en la ejecución: $RUN_URL"
+          else
+            gh issue edit "$ISSUE" --add-label "mejoras-error" 2>/dev/null || true
+            {
+              echo "⚠️ **La aplicación de mejoras no terminó en verde.**"
+              echo ""
+              echo "No se ha fusionado nada. Los cambios, si existen, quedan en el log/artefacto para revisión."
+              echo ""
+              echo '```'
+              tail -40 nightly-reports/apply-log.txt 2>/dev/null | head -c 3000 || echo "sin log"
+              echo '```'
+              echo ""
+              echo "[Ver ejecución]($RUN_URL)"
+            } > /tmp/comment.md
+            gh issue comment "$ISSUE" --body-file /tmp/comment.md
+            exit 1
+          fi

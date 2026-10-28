@@ -55,6 +55,10 @@ const testUser = fullReport?.testUser || actionData?.testUser || 'prueba@prueba.
 const commit = fullReport?.commit || actionData?.commit || process.env.GITHUB_SHA?.slice(0, 7) || '';
 const certInfo = fullReport?.cert || actionData?.cert;
 
+const planFile = path.join(reportsDir, isCert ? 'plan-mejoras-cert.json' : 'plan-mejoras.json');
+let plan = null;
+try { plan = JSON.parse(readFileSync(planFile, 'utf8')); } catch { /* aún no generado */ }
+
 const passed = fullReport?.summary?.passed ?? (fullReport?.results?.filter((r) => r.status === 'pass').length ?? 0);
 const failed = fullReport?.summary?.failed ?? (actionData?.summary?.failed ?? actionData?.failures?.length ?? 0);
 const warned = fullReport?.summary?.warned ?? (fullReport?.warnings?.length ?? 0);
@@ -86,6 +90,19 @@ if (certInfo?.version) {
 }
 lines.push(`| **Resultado Global** | ${failed === 0 ? '✅ **TODO CORRECTO**' : '❌ **FALLOS PENDIENTES**'} |`);
 lines.push(`| **Comprobaciones** | Total: **${total}** \| ✅ Pasadas: **${passed}** \| ❌ Falladas: **${failed}** \| ⚠️ Avisos: **${warned}** |`);
+if (plan?.health) {
+  const h = plan.health;
+  const badge = h.grade === 'EXCELENTE' ? '🟢' : h.grade === 'BUENO' ? '🔵' : h.grade === 'ATENCIÓN' ? '🟠' : '🔴';
+  lines.push(`| **Salud** | ${badge} **${h.score}/100 (${h.grade})** \| Funcional **${h.functionalScore}** · Experiencia **${h.experienceScore}** |`);
+}
+if (plan?.health?.coverage) {
+  const c = plan.health.coverage;
+  lines.push(`| **Cobertura** | ${c.ratio >= 1 ? '✅' : '⚠️'} **${c.present}/${c.expected}** suites${c.missing?.length ? ` (faltan: ${c.missing.join(', ')})` : ''} |`);
+}
+if (plan?.health?.personas || actionData?.personas) {
+  const p = plan?.health?.personas || actionData.personas;
+  lines.push(`| **Personas** | 🧑‍🤝‍🧑 ${p.passed}/${p.total} limpias \| fricción **${p.friction}/100** \| ${p.deadEnds} bloqueo(s) \| ${p.findings} hallazgo(s) |`);
+}
 lines.push('');
 
 // 3. Desglose por suites si tenemos el reporte completo
@@ -113,15 +130,36 @@ if (fullReport?.results?.length) {
   lines.push('');
 }
 
-// 4. Detalle de fallos (action items)
-const failures = actionData?.failures || [];
+// 3.5. Plan de mejoras accionable
+if (plan?.items?.length) {
+  const auto = plan.items.filter((i) => i.autoApplicable);
+  lines.push('### 🧭 Plan de mejoras');
+  lines.push('');
+  lines.push(`**${plan.summary.total} propuesta(s)**: ${plan.summary.p1} P1 · ${plan.summary.p2} P2 · ${plan.summary.p3} P3 · ${plan.summary.auto} auto-aplicables · ${plan.summary.manual} manuales.`);
+  lines.push('');
+  lines.push('| ID | Prioridad | Categoría | Propuesta | Aplicación |');
+  lines.push('| :---: | :---: | :--- | :--- | :---: |');
+  for (const it of plan.items.slice(0, 8)) {
+    lines.push(`| **${it.id}** | ${it.priority} | ${it.category} | ${String(it.title).replace(/\|/g, '\\|').slice(0, 90)} | ${it.autoApplicable ? '🤖 auto' : '🙋 manual'} |`);
+  }
+  if (plan.items.length > 8) lines.push(`| … | | | ${plan.items.length - 8} propuesta(s) más | |`);
+  lines.push('');
+  if (auto.length) {
+    lines.push(`> 🤖 **Aplicar con IA**: etiqueta \`aplicar-mejoras\` en el issue del plan, o \`npm run mejoras:aplicar -- --solo ${auto[0].id}\` en local.`);
+    lines.push('');
+  }
+}
+
+// 4. Detalle de fallos (action items + bloqueos de personas, que no duplican
+//    propuestas en el plan pero sí deben verse en el resumen)
+const failures = [...(actionData?.failures || []), ...(actionData?.personaFailures || [])];
 if (failures.length > 0) {
   lines.push('### 🚨 Detalle de Fallos');
   lines.push('');
   lines.push('| ID | Severidad | Suite | Comprobación | Detalle | Sospechosos |');
   lines.push('| :---: | :---: | :--- | :--- | :--- | :--- |');
   for (const f of failures) {
-    const sevBadge = f.severity === 'high' ? '🔴 ALTA' : '🟠 MEDIA';
+    const sevBadge = f.severity === 'high' ? '🔴 ALTA' : f.severity === 'low' ? '🟡 BAJA' : '🟠 MEDIA';
     const detail = (f.detail || '').replace(/\|/g, '\\|').slice(0, 150);
     const files = (f.suspectedFiles || []).map((s) => `\`${s}\``).slice(0, 2).join(', ') || '-';
     lines.push(`| **${f.id}** | ${sevBadge} | \`${f.suite}\` | ${f.check} | ${detail} | ${files} |`);

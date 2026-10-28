@@ -12,11 +12,15 @@
 // - Reintento único ante excepciones de red/navegador (anti-flaky).
 // - Exit 1 si hay al menos un fallo bloqueante.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import tls from 'node:tls';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { buildBriefing } from './nightly-briefing.mjs';
+import { computeCoverage } from './nightly-intelligence.mjs';
+import { runExtendedChecks } from './check-extended.mjs';
+import { renderPersonaMarkdown, simulatePersonas } from './personas-simulation.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // CERT_MODE=1: valida el entorno de certificación (base alternativa) con las
@@ -46,6 +50,9 @@ let lastShot = null;
 let browser = null;
 let activePage = null;
 const pendingSnaps = [];
+let personaReport = null;
+let perfSummary = [];
+const skipPersonas = process.env.SKIP_PERSONAS === '1';
 
 // Sospechosos habituales por suite (la IA los usa como punto de partida;
 // suspectsFor() añade además los ficheros citados en el propio error).
@@ -67,6 +74,14 @@ const SUITE_FILES = {
   medios: ['img/', 'index.html', 'clases.html', 'maestros.html'],
   seguridad: ['cancel.html', 'success.html', 'profile.html'],
   datos: ['supabase/migrations/', 'clases.html', 'tarifas.html'],
+  a11y: ['index.html', 'clases.html', 'tarifas.html', 'maestros.html', 'profile.html', 'tailwind-compiled.css'],
+  enlaces: ['index.html', 'clases.html', 'tarifas.html', 'maestros.html', '404.html'],
+  'seo-plus': ['index.html', 'sitemap.xml', 'robots.txt'],
+  pwa: ['manifest.json', 'index.html', 'img/'],
+  'datos-vivos': ['clases.html', 'tarifas.html', 'public-calendar.js'],
+  'i18n-live': ['i18n.js', 'index.html', 'clases.html'],
+  entrega: ['.github/workflows/deploy-pages.yml'],
+  personas: ['index.html', 'clases.html', 'tarifas.html', 'profile.html'],
 };
 const SUITE_REPRO = {
   disponibilidad: ['Abrir la URL indicada en un navegador', 'Debe responder HTTP 200 en <15s'],
@@ -86,6 +101,14 @@ const SUITE_REPRO = {
   medios: ['Comprobar que todas las etiquetas img cargan sin 404 ni 0x0px en BASE'],
   seguridad: ['Comprobar Open Redirect y limpieza de sesión en BASE'],
   datos: ['Comprobar registros de profesionales, productos y clases en Supabase'],
+  a11y: ['Abrir cada página en móvil y escritorio', 'Comprobar contraste, nombres accesibles, alt, etiquetas y tamaño de fuente', 'Recorrer la landing solo con Tab'],
+  enlaces: ['Abrir la URL indicada', 'Debe responder 200 (o 404 real con salida a inicio)'],
+  'seo-plus': ['Comprobar JSON-LD, canonical, og:image y sitemap en BASE'],
+  pwa: ['Comprobar manifest.json, iconos y theme-color en BASE'],
+  'datos-vivos': ['Abrir clases.html y tarifas.html', 'Comprobar que los datos de Supabase se pintan sin fallback ni tokens'],
+  'i18n-live': ['Cambiar ES→EN y volver en la landing', 'El H1 y el menú deben traducirse sin claves crudas'],
+  entrega: ['Comprobar content-encoding y cache-control de HTML/JS'],
+  personas: ['Ejecutar node scripts/personas-simulation.mjs --full', 'Reproducir el paso bloqueado con el dispositivo de la persona'],
 };
 function suiteKey(suite) { return SUITE_FILES[suite] ? suite : suite.split('-')[0]; }
 function severityFor(suite, name = '', detail = '') {
@@ -127,28 +150,35 @@ async function snap(page, name) {
   } catch { /* página cerrada: sin captura */ }
   return lastShot;
 }
-function rec(suite, name, status, detail = '') {
-  results.push({ suite, name, status, detail });
+function rec(suite, name, status, detail = '', meta = {}) {
+  const entry = { suite, name, status, detail };
+  if (meta && Object.keys(meta).length) entry.meta = meta;
+  results.push(entry);
   if (status === 'fail') {
     errors.push(`${suite} · ${name}${detail ? ` — ${detail}` : ''}`);
     console.error(`  ❌ [${suite}] ${name}${detail ? `: ${detail}` : ''}`);
-    actionSeq++;
-    const item = {
-      id: `F${String(actionSeq).padStart(2, '0')}`,
-      suite, check: name, detail,
-      url: lastUrl, severity: severityFor(suite, name, detail),
-      suspectedFiles: suspectsFor(suite, detail, lastConsole),
-      repro: reproFor(suite),
-      evidence: { console: lastConsole.slice(0, 4), screenshot: lastShot },
-    };
-    actionItems.push(item);
-    if (!lastShot && activePage) {
-      const p = activePage;
-      const snapName = `${suite}-${name.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-      const snapPromise = snap(p, snapName).then((shotPath) => {
-        if (shotPath) item.evidence.screenshot = shotPath;
-      }).catch(() => {});
-      pendingSnaps.push(snapPromise);
+    // `actionable:false` deja el fallo en el informe (y en la salud) pero no
+    // crea una propuesta duplicada: sus hallazgos ya generan el plan.
+    if (meta.actionable !== false) {
+      actionSeq++;
+      const item = {
+        id: `F${String(actionSeq).padStart(2, '0')}`,
+        suite, check: name, detail,
+        url: lastUrl, severity: meta.severity || severityFor(suite, name, detail),
+        suspectedFiles: suspectsFor(suite, detail, lastConsole),
+        repro: reproFor(suite),
+        evidence: { console: lastConsole.slice(0, 4), screenshot: lastShot },
+        ...(meta.kind ? { kind: meta.kind } : {}),
+      };
+      actionItems.push(item);
+      if (!lastShot && activePage) {
+        const p = activePage;
+        const snapName = `${suite}-${name.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+        const snapPromise = snap(p, snapName).then((shotPath) => {
+          if (shotPath) item.evidence.screenshot = shotPath;
+        }).catch(() => {});
+        pendingSnaps.push(snapPromise);
+      }
     }
   }
   else if (status === 'warn') { warnings.push(`${suite} · ${name}${detail ? ` — ${detail}` : ''}`); console.log(`  ⚠️ [${suite}] ${name}${detail ? `: ${detail}` : ''}`); }
@@ -156,7 +186,7 @@ function rec(suite, name, status, detail = '') {
 }
 const pass = (s, n, d = '') => rec(s, n, 'pass', d);
 const fail = (s, n, d = '') => rec(s, n, 'fail', d);
-const warn = (s, n, d = '') => rec(s, n, 'warn', d);
+const warn = (s, n, d = '', m = {}) => rec(s, n, 'warn', d, m);
 
 async function fetchTimeout(url, { timeoutMs = 20000, ...opts } = {}) {
   const ctrl = new AbortController();
@@ -267,27 +297,64 @@ async function writeReports() {
   const passed = results.filter((r) => r.status === 'pass').length;
   const failed = errors.length;
   const warned = warnings.length;
+  const warningDetails = results
+    .filter((r) => r.status === 'warn')
+    .map((r) => ({ suite: r.suite, name: r.name, detail: r.detail || '', meta: r.meta || {} }));
   const report = {
     date: new Date().toISOString(), env: isCert ? 'certificacion' : 'produccion',
     base: BASE, testUser: EMAIL, commit: COMMIT,
     cert: certManifest ? { version: certManifest.version, construido: certManifest.construido, supabase: certManifest.supabase } : null,
     summary: { passed, failed, warned, total: results.length },
-    results, errors, warnings,
+    results, errors, warnings, warningDetails,
+    perfSummary,
+    personasSkipped: skipPersonas,
   };
-  const high = actionItems.filter((f) => f.severity === 'high').length;
+  report.coverage = computeCoverage(report, { skipPersonas });
+  // Los fallos de personas no generan actionItems (sus hallazgos ya alimentan
+  // el plan), pero el issue de fallos debe explicar por qué el chequeo está en
+  // rojo. Se adjuntan aparte para no duplicar propuestas.
+  const personaFailures = (personaReport?.personas || [])
+    .filter((p) => p.status === 'fail')
+    .map((p, i) => {
+      const failedSteps = (p.steps || []).filter((s) => s.status === 'fail');
+      return {
+        id: `P${String(i + 1).padStart(2, '0')}`,
+        suite: 'personas',
+        check: `${p.id} · ${p.name}`,
+        detail: failedSteps.map((s) => `${s.title}: ${s.detail}`).slice(0, 3).join(' · ') || 'recorrido bloqueado',
+        url: BASE,
+        severity: 'high',
+        suspectedFiles: [...new Set((p.findings || []).flatMap((f) => f.files || []))].slice(0, 6),
+        repro: [`node scripts/personas-simulation.mjs --persona ${p.id} --full`],
+        evidence: { persona: p.id, screenshot: null, console: p.metrics?.consoleErrors || [] },
+      };
+    });
+  const high = actionItems.filter((f) => f.severity === 'high').length + personaFailures.length;
   const action = {
     date: new Date().toISOString(), env: isCert ? 'certificacion' : 'produccion',
     base: BASE, testUser: EMAIL, commit: COMMIT,
     cert: certManifest ? { version: certManifest.version, construido: certManifest.construido, supabase: certManifest.supabase } : null,
     summary: { failed, high, medium: failed - high, passed, warned, total: results.length },
     failures: actionItems,
+    personaFailures,
+    warningDetails,
+    coverage: report.coverage,
+    perfSummary,
+    personas: personaReport?.summary || null,
   };
   await writeFile(path.join(outDir, `${PREFIX}-${date}.json`), JSON.stringify(report, null, 2));
+  await writeFile(path.join(outDir, `${PREFIX}-${date}-action.json`), JSON.stringify(action, null, 2));
   await writeFile(path.join(outDir, `${PREFIX}-action.json`), JSON.stringify(action, null, 2));
+  if (personaReport) {
+    await writeFile(path.join(outDir, `personas-${date}.json`), JSON.stringify(personaReport, null, 2));
+    await writeFile(path.join(outDir, `personas-${date}.md`), renderPersonaMarkdown(personaReport));
+  }
   const md = [
     `# ${isCert ? 'Validación de certificación' : 'Chequeo nocturno'} ${BASE} — ${date}`,
     ``,
     `Base: ${BASE} · Usuario: ${EMAIL} · Total: ${results.length} · ✅ ${passed} · ❌ ${failed} · ⚠️ ${warned}`,
+    `Cobertura de suites: ${report.coverage.present}/${report.coverage.expected}${report.coverage.missing.length ? ` (faltan: ${report.coverage.missing.join(', ')})` : ''}`,
+    personaReport ? `Personas: ${personaReport.summary.passed}/${personaReport.summary.total} limpias · fricción ${personaReport.summary.friction}/100 · ${personaReport.summary.deadEnds} bloqueo(s)` : '',
     ``,
     ...results.map((r) => `- ${r.status === 'pass' ? '✅' : r.status === 'fail' ? '❌' : '⚠️'} **[${r.suite}]** ${r.name}${r.detail ? ` — ${r.detail}` : ''}`),
     ``,
@@ -305,7 +372,19 @@ async function writeReports() {
     const mine = action;
     const prodAction = PREFIX === 'cert' ? otherAction : mine;
     const certAction = PREFIX === 'cert' ? mine : otherAction;
-    await writeFile(path.join(root, 'docs', 'FALLOS_PARA_IA.md'), buildBriefing(prodAction, certAction));
+    const briefing = buildBriefing(prodAction, certAction);
+    // Copia siempre en el informe; el fichero versionado solo se pisa si está
+    // limpio. Así una edición local sin commit del usuario nunca se pierde.
+    await writeFile(path.join(outDir, 'FALLOS_PARA_IA.md'), briefing);
+    let dirty = true;
+    try {
+      dirty = execFileSync('git', ['status', '--porcelain', '--', 'docs/FALLOS_PARA_IA.md'], { cwd: root, encoding: 'utf8' }).trim().length > 0;
+    } catch { /* sin git: no arriesgar el fichero versionado */ }
+    if (dirty) {
+      console.log('  ⚠️ docs/FALLOS_PARA_IA.md tiene cambios sin commit: no se sobrescribe (copia en nightly-reports).');
+    } else {
+      await writeFile(path.join(root, 'docs', 'FALLOS_PARA_IA.md'), briefing);
+    }
   } catch (e) {
     console.log(`  ⚠️ briefing no generado: ${String((e && e.message) || e).slice(0, 100)}`);
   }
@@ -421,7 +500,10 @@ console.log('\n--- A. Disponibilidad de genyoga.studio (HTTP 200 + tiempo) ---')
       if (r.status === 200) {
         assetsOk++;
       } else if (!isCert && (a === 'manifest.json' || a === 'favicon.ico') && r.status === 404) {
-        warn('disponibilidad', `asset ${a}`, 'HTTP 404 en producción (pendiente de publicar con deploy-pages actualizado)');
+        warn('disponibilidad', `asset ${a}`, 'HTTP 404 en producción (pendiente de publicar con deploy-pages actualizado)', {
+          kind: 'deploy-pending',
+          actionable: false,
+        });
         assetsOk++;
       } else {
         fail('disponibilidad', `asset ${a}`, `HTTP ${r.status}`);
@@ -645,16 +727,26 @@ browser = await chromium.launch({
   args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
 });
 const perf = [];
+// Un solo juego de listeners por página. Antes se añadían en cada navegación:
+// los estados viejos seguían contando peticiones/bytes y podían duplicar
+// errores. Cada goto estrena estado y los listeners escriben en el actual.
+const trackSlots = new WeakMap();
 function track(page) {
-  const st = { errors: [], localFailed: [], externalFailed: [], bytes: 0, reqs: 0 };
-  page.on('pageerror', (e) => {
-    const stack = (e && e.stack) || '';
-    const head = String((e && e.message) || e).slice(0, 200);
-    const loc = (stack.match(/https?:\/\/[^)\s]*\.(?:html|js)[^)\s:]*(?::\d+)?/) || [])[0] || '';
-    st.errors.push([head, loc, stack.slice(0, 400)].filter(Boolean).join(' | ').slice(0, 600));
-  });
-  page.on('console', (m) => {
-    if (m.type() === 'error') {
+  let slot = trackSlots.get(page);
+  if (!slot) {
+    slot = { current: null };
+    trackSlots.set(page, slot);
+    page.on('pageerror', (e) => {
+      const st = slot.current;
+      if (!st) return;
+      const stack = (e && e.stack) || '';
+      const head = String((e && e.message) || e).slice(0, 200);
+      const loc = (stack.match(/https?:\/\/[^)\s]*\.(?:html|js)[^)\s:]*(?::\d+)?/) || [])[0] || '';
+      st.errors.push([head, loc, stack.slice(0, 400)].filter(Boolean).join(' | ').slice(0, 600));
+    });
+    page.on('console', (m) => {
+      const st = slot.current;
+      if (!st || m.type() !== 'error') return;
       const t = m.text();
       const loc = (m.location() && `${m.location().url || ''}`) || '';
       if (t.includes('compute-pressure')) return;
@@ -662,20 +754,25 @@ function track(page) {
       if (t.includes('/auth/v1/logout')) return; // logout cuando el token ya fue revocado o expiró
       if ((t.includes('monthly_membership_periods') || loc.includes('monthly_membership_periods')) && t.includes('status of 404')) return; // tabla nueva pendiente de migración en Supabase
       st.errors.push(`console: ${t.slice(0, 200)}${loc ? ` | ${loc.slice(0, 120)}` : ''}`);
-    }
-  });
-  page.on('response', async (res) => {
-    try {
-      const body = await res.body().catch(() => null);
-      st.reqs++;
-      if (body) st.bytes += body.length;
-      if (res.status() >= 400) {
-        const u = res.url();
-        if (u.includes('/auth/v1/token') || u.includes('reset-password-with-code')) return; // sondas de login falso
-        (u.startsWith(BASE) ? st.localFailed : st.externalFailed).push(`${res.status()} ${u.slice(0, 130)}`);
-      }
-    } catch { /* noop */ }
-  });
+    });
+    page.on('response', async (res) => {
+      const st = slot.current;
+      if (!st) return;
+      try {
+        const body = await res.body().catch(() => null);
+        if (slot.current !== st) return; // la navegación ya cambió: no atribuir a posteriori
+        st.reqs++;
+        if (body) st.bytes += body.length;
+        if (res.status() >= 400) {
+          const u = res.url();
+          if (u.includes('/auth/v1/token') || u.includes('reset-password-with-code')) return; // sondas de login falso
+          (u.startsWith(BASE) ? st.localFailed : st.externalFailed).push(`${res.status()} ${u.slice(0, 130)}`);
+        }
+      } catch { /* noop */ }
+    });
+  }
+  const st = { errors: [], localFailed: [], externalFailed: [], bytes: 0, reqs: 0 };
+  slot.current = st;
   return st;
 }
 async function gotoTracked(page, urlPath, settleMs = 2500) {
@@ -768,6 +865,7 @@ async function welcomeClosed(page) {
 async function section(suite, fn) {
   activePage = null;
   resetEvidence();
+  lastUrl = '';
   const mark = errors.length;
   const wmark = warnings.length;
   const rmark = results.length;
@@ -787,6 +885,7 @@ async function section(suite, fn) {
     await new Promise((r) => setTimeout(r, 3000));
     activePage = null;
     resetEvidence();
+    lastUrl = '';
     try {
       await fn();
       warn(suite, 'flaky (aviso)', `falló una vez (${shortErr(e1)}); OK al reintentar`);
@@ -2207,16 +2306,83 @@ await section('retorno', async () => {
 console.log(`\n--- H. Rendimiento (${isCert ? 'cert' : 'producción'}) ---`);
 {
   resetEvidence();
+  // Agrupar por página: el chequeo navega varias veces las mismas URLs dentro
+  // de otros flujos. Reportar cada navegación como un check extra inflaba el
+  // recuento y penalizaba dos veces la misma página.
+  const byPage = new Map();
   for (const p of perf) {
-    const kb = Math.round(p.bytes / 1024);
-    if (p.loadMs > 15000) fail('rendimiento', `${p.page}`, `carga en ${p.loadMs}ms (>15s)`);
-    else if (p.reqs > 80) fail('rendimiento', `${p.page}`, `${p.reqs} peticiones (>80)`);
-    else pass('rendimiento', `${p.page}: ${p.loadMs}ms, ${kb}KB, ${p.reqs} peticiones`);
+    const key = String(p.page || '').split('?')[0];
+    if (!key) continue;
+    const list = byPage.get(key) || [];
+    list.push(p);
+    byPage.set(key, list);
   }
+  perfSummary = [];
+  for (const [page, list] of byPage) {
+    const worst = list.reduce((a, b) => (b.loadMs > a.loadMs ? b : a));
+    const maxReqs = Math.max(...list.map((x) => x.reqs));
+    const maxBytes = Math.max(...list.map((x) => x.bytes));
+    const loads = list.map((x) => x.loadMs).sort((a, b) => a - b);
+    const median = loads[Math.floor(loads.length / 2)];
+    const kb = Math.round(maxBytes / 1024);
+    perfSummary.push({ page, worstMs: worst.loadMs, medianMs: median, maxReqs, maxBytes, samples: list.length });
+    const label = `${page}: ${worst.loadMs}ms, ${kb}KB, ${maxReqs} peticiones`;
+    if (worst.loadMs > 15000) fail('rendimiento', page, `carga en ${worst.loadMs}ms (>15s)`);
+    else if (maxReqs > 80) fail('rendimiento', page, `${maxReqs} peticiones (>80)`);
+    else pass('rendimiento', label, list.length > 1 ? `${list.length} mediciones · mediana ${median}ms` : '');
+  }
+  perfSummary.sort((a, b) => b.worstMs - a.worstMs);
   const t0 = Date.now();
   const ping = await fetchTimeout(`${BASE}/`, { timeoutMs: 20000 });
   if (ping.ok) pass('rendimiento', `TTFB home: ${ping.ms}ms`);
   else { lastUrl = `${BASE}/`; fail('rendimiento', 'home inalcanzable', ping.error); }
+}
+
+// ---------------------------------------------------------------- I. Comprobaciones extendidas
+console.log(`\n--- I. A11y, enlaces, SEO+, PWA, datos vivos, i18n y entrega ---`);
+await section('extendido', async () => {
+  resetEvidence();
+  lastUrl = BASE;
+  const ext = await runExtendedChecks({
+    browser,
+    base: BASE,
+    supaUrl: SUPA_URL,
+    supaKey: SUPA_KEY,
+    isCert,
+    log: () => {},
+  });
+  for (const r of ext) rec(r.suite, r.name, r.status, r.detail, r.meta);
+});
+
+// ---------------------------------------------------------------- J. Personas
+if (skipPersonas) {
+  console.log('\n--- J. Personas: omitidas (SKIP_PERSONAS=1) ---');
+} else {
+  console.log(`\n--- J. Simulación de personas reales ---`);
+  await section('personas', async () => {
+    resetEvidence();
+    lastUrl = BASE;
+    personaReport = await simulatePersonas({
+      browser,
+      base: BASE,
+      email: EMAIL,
+      password: PASSWORD,
+      full: process.env.PERSONAS_FULL !== '0',
+      artifactsDir: outDir,
+      log: () => {},
+    });
+    for (const p of personaReport.personas) {
+      const detail = `${p.metrics.clicks} toques · ${(p.metrics.totalMs / 1000).toFixed(0)}s · fricción ${p.metrics.friction}/100${p.metrics.deadEnds ? ` · ${p.metrics.deadEnds} bloqueo(s)` : ''}`;
+      rec('personas', `${p.id} · ${p.name}`, p.status, detail, {
+        kind: 'personas',
+        persona: p.id,
+        severity: p.status === 'fail' ? 'high' : 'low',
+        actionable: false,
+      });
+    }
+    const s = personaReport.summary;
+    console.log(`  Personas: ${s.passed}/${s.total} limpias · ${s.warned} aviso(s) · ${s.failed} bloqueo(s) · fricción ${s.friction}/100`);
+  });
 }
 
 if (browser) await browser.close().catch(() => {});

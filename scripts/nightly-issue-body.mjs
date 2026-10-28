@@ -8,6 +8,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
+import { failureSignature } from './nightly-intelligence.mjs';
 
 const envIsCert = process.env.CERT_MODE === '1';
 const arg = process.argv[2];
@@ -62,8 +63,11 @@ if (!action) {
   process.exit(0);
 }
 
-const failures = action.failures || [];
-const sigRaw = failures.map((f) => `${f.suite}::${f.check}`).sort().join('|');
+const failures = [...(action.failures || []), ...(action.personaFailures || [])];
+// La firma incluye el detalle normalizado: un cambio real en el mismo check
+// (p. ej. otro error de consola) vuelve a disparar el autofix; el mismo fallo
+// repetido no genera ruido ni bucles.
+const sigRaw = failures.map((f) => failureSignature(f)).sort().join('|');
 const sigHash = crypto.createHash('sha256').update(sigRaw).digest('hex').slice(0, 16);
 
 const passedCount = action.summary?.passed ?? 0;
@@ -88,6 +92,13 @@ L.push(`- Commit verificado: ${action.commit || '(desconocido)'}`);
 if (action.cert?.version) L.push(`- Versión bajo prueba: ${action.cert.version} (construido ${(action.cert.construido || '').slice(0, 16)}, supabase ${action.cert.supabase || '?'})`);
 L.push(`- Balance: ❌ ${failedCount} fallos · ⚠️ ${warnedCount} avisos · ✅ ${passedCount} superados (${totalCount} checks ejecutados)`);
 L.push(`- Severidad: 🔴 ${highCount} alta · 🟡 ${mediumCount} media`);
+if (action.coverage && action.coverage.ratio < 1) {
+  L.push(`- ⚠️ Cobertura incompleta: ${action.coverage.present}/${action.coverage.expected} suites (faltan: ${action.coverage.missing.join(', ')}). Un verde parcial no es un verde.`);
+}
+if (action.personas) {
+  const p = action.personas;
+  L.push(`- 🧑‍🤝‍🧑 Personas: ${p.passed}/${p.total} recorridos limpios · fricción ${p.friction}/100 · ${p.deadEnds} bloqueo(s) · ${p.findings} hallazgo(s)`);
+}
 L.push(`- Descarga del artefacto: \`gh run download <ID_RUN> -n ${isCert ? 'cert-report' : 'nightly-report'}\` (incluye JSON completo y capturas en \`img/\`)`);
 L.push('');
 

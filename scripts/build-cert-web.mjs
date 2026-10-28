@@ -26,6 +26,10 @@ const PRODUCCION_URL = `https://${PRODUCCION_PROYECTO}.supabase.co`;
 const PRODUCCION_CLAVE = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 
 const destino = path.resolve(root, process.argv[2] || '_cert');
+// Host base del entorno de cert (se sobreescribe el dominio de producción en
+// canonical/sitemap/og-image para que el artefacto de cert sea coherente).
+const BASE_CERT = process.env.CERT_BASE_URL
+  || 'https://gen-yoga-studio.github.io/GEN-YOGA-CERT';
 
 function exigir(name) {
   const v = process.env[name]?.trim();
@@ -119,7 +123,8 @@ for (const file of htmls) {
   const src = await readFile(path.join(origen, file), 'utf8');
   let out = src
     .replaceAll(PRODUCCION_URL, urlCert)
-    .replaceAll(PRODUCCION_CLAVE, claveCert);
+    .replaceAll(PRODUCCION_CLAVE, claveCert)
+    .replaceAll('https://genyoga.studio', BASE_CERT);
 
   if (/<meta\s+name=["']robots["'][^>]*>/i.test(out)) {
     out = out.replace(/<meta\s+name=["']robots["'][^>]*>/i, robotsMeta);
@@ -167,7 +172,7 @@ for (const file of htmls) {
 // JS, CSS y sitemap: solo se sustituye la configuración si aparece.
 for (const file of jsCssXml) {
   const src = await readFile(path.join(origen, file), 'utf8');
-  const out = src.replaceAll(PRODUCCION_URL, urlCert).replaceAll(PRODUCCION_CLAVE, claveCert);
+  const out = src.replaceAll(PRODUCCION_URL, urlCert).replaceAll(PRODUCCION_CLAVE, claveCert).replaceAll('https://genyoga.studio', BASE_CERT);
   await writeFile(path.join(destino, file), out, 'utf8');
 }
 

@@ -56,7 +56,7 @@ jobs:
       (github.event_name == 'issues' && github.event.label.name == 'ai-fix') ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure')
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
     env:
       GEN_YOGA_TEST_EMAIL: ${{ secrets.GEN_YOGA_TEST_EMAIL }}
       GEN_YOGA_TEST_PASSWORD: ${{ secrets.GEN_YOGA_TEST_PASSWORD }}
@@ -182,8 +182,9 @@ jobs:
         run: |
           if ! command -v opencode >/dev/null 2>&1; then
             npm i -g opencode-ai || curl -fsSL https://opencode.ai/install | bash
-            export PATH="$HOME/.opencode/bin:$PATH"
           fi
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.opencode/bin:$PATH"
           command -v opencode
           opencode --version
       - name: Ejecutar agente
@@ -207,7 +208,8 @@ jobs:
             echo ""
             cat /tmp/issue.txt
           } > /tmp/prompt.txt
-          timeout 15m opencode run "$(cat /tmp/prompt.txt)" > autofix-log.txt 2>&1 || echo "AGENT_EXIT=$?" >> autofix-log.txt
+          # --auto: en CI no hay terminal para aprobar permisos de edición.
+          timeout 15m opencode run --auto "$(cat /tmp/prompt.txt)" > autofix-log.txt 2>&1 || echo "AGENT_EXIT=$?" >> autofix-log.txt
           tail -60 autofix-log.txt
       - name: Verificar y abrir PR
         if: steps.gate.outputs.enabled == 'true'
@@ -225,7 +227,7 @@ jobs:
             gh issue comment "$N" --body "🤖 El agente terminó sin proponer cambios. Log (cola): $(tail -20 autofix-log.txt | head -c 1500)"
             exit 0
           fi
-          if timeout 12m $VERIFY > verify-log.txt 2>&1; then
+          if timeout 20m $VERIFY > verify-log.txt 2>&1; then
             D=$(date +%F)
             BR="autofix/nightly-$D-$N"
             git checkout -b "$BR"

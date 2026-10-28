@@ -1,27 +1,35 @@
 // scripts/analizar-informe-diario.mjs
-// Sistema de análisis inteligente diario para los informes del chequeo nocturno.
+// Análisis diario del chequeo nocturno + plan de mejoras accionable.
 //
-// Compara la pasada de hoy con el histórico de días anteriores:
-//   - Tendencia de éxito (Pass Rate) y nuevos fallos
-//   - Evolución de latencia (TTFB y tiempos de carga)
-//   - Deriva de avisos (avisos nuevos vs recurrentes crónicos)
-//   - Semáforo de caducidad del certificado SSL/TLS
-//   - Puntuación sintética de salud (Health Score 0-100)
+// Ya no calcula un "health score" opaco: usa nightly-intelligence.mjs para
+// separar salud funcional (rompe el negocio) de salud de experiencia (fricción,
+// a11y, SEO, PWA) y explica cada punto perdido.
 //
-// Salida:
-//   - Consola (formateado)
-//   - Archivo nightly-reports/analisis-diario.md
+// Salidas:
+//   - nightly-reports/<prefix>-analisis-diario.md
+//   - nightly-reports/plan-mejoras.json  (producción)
+//   - nightly-reports/plan-mejoras.md
+//   - nightly-reports/plan-mejoras-cert.json/.md (certificación)
 //   - Opcional: --append-summary (vuelca a $GITHUB_STEP_SUMMARY)
 //
-// Uso: node scripts/analizar-informe-diario.mjs [--cert] [--append-summary]
+// Uso: node scripts/analizar-informe-diario.mjs [--cert] [--append-summary] [--no-plan]
 import { appendFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import {
+  buildPlan,
+  loadLatestAction,
+  loadLatestPersonas,
+  loadPreviousAction,
+  renderPlanMarkdown,
+} from './nightly-intelligence.mjs';
 
 const isCert = process.argv.includes('--cert') || process.env.CERT_MODE === '1';
 const appendSummary = process.argv.includes('--append-summary');
+const writePlan = !process.argv.includes('--no-plan');
 const root = process.cwd();
+const env = isCert ? 'certificacion' : 'produccion';
+const prefix = isCert ? 'cert' : 'nightly';
 
-// Buscar informes en nightly-reports o en 'ultima version/nightly-reports' como fallback
 function getReportsDir() {
   const p1 = path.join(root, 'nightly-reports');
   const p2 = path.join(root, 'ultima version', 'nightly-reports');
@@ -31,7 +39,6 @@ function getReportsDir() {
 }
 
 const reportsDir = getReportsDir();
-const prefix = isCert ? 'cert' : 'nightly';
 const fileRegex = new RegExp(`^${prefix}-\\d{4}-\\d{2}-\\d{2}\\.json$`);
 
 function loadAllReports() {
@@ -59,83 +66,114 @@ if (!history.length) {
 
 const today = history[history.length - 1];
 const yesterday = history.length > 1 ? history[history.length - 2] : null;
-const previousDays = history.slice(0, -1);
 
-// 1. Métricas de hoy
+const action = loadLatestAction(root, env);
+const previousAction = loadPreviousAction(root, env);
+const personaLoaded = loadLatestPersonas(root);
+const personaReport = personaLoaded && String(personaLoaded.date || '').slice(0, 10) === today.fileDate ? personaLoaded : null;
+
+const plan = buildPlan({
+  action,
+  fullReport: today,
+  personaReport,
+  previousAction,
+  skipPersonas: Boolean(today.personasSkipped),
+});
+const health = plan.health;
+
+// ---------------------------------------------------------------- comparativa
 const totalToday = today.summary?.total || today.results?.length || 0;
 const passedToday = today.summary?.passed || today.results?.filter((r) => r.status === 'pass').length || 0;
 const failedToday = today.summary?.failed || today.errors?.length || 0;
 const warnedToday = today.summary?.warned || today.warnings?.length || 0;
 const passRateToday = totalToday > 0 ? ((passedToday / totalToday) * 100).toFixed(1) : '100.0';
 
-// 2. Métricas de ayer / histórico
 const totalYest = yesterday ? (yesterday.summary?.total || yesterday.results?.length || 0) : totalToday;
 const passedYest = yesterday ? (yesterday.summary?.passed || yesterday.results?.filter((r) => r.status === 'pass').length || 0) : passedToday;
 const failedYest = yesterday ? (yesterday.summary?.failed || yesterday.errors?.length || 0) : 0;
 const warnedYest = yesterday ? (yesterday.summary?.warned || yesterday.warnings?.length || 0) : warnedToday;
 const passRateYest = totalYest > 0 ? ((passedYest / totalYest) * 100).toFixed(1) : '100.0';
 
-// 3. Extracción de latencias de rendimiento
-function getPerfMetrics(report) {
-  const perf = {};
-  if (!report?.results) return perf;
-  for (const r of report.results) {
-    if (r.suite === 'disponibilidad' && r.name.includes('→ 200 en')) {
-      const page = r.name.split('→')[0].trim();
-      const ms = Number((r.name.match(/en\s+(\d+)ms/) || [])[1]) || 0;
-      perf[page] = ms;
-    }
-    if (r.suite === 'rendimiento' && r.name.includes('TTFB home:')) {
-      perf['TTFB'] = Number((r.name.match(/TTFB home:\s*(\d+)ms/) || [])[1]) || 0;
+function warningText(w) {
+  if (typeof w === 'string') return w;
+  return `${w.suite || '?'} · ${w.name || '?'}${w.detail ? ` — ${w.detail}` : ''}`;
+}
+function warningKey(w) {
+  if (typeof w === 'string') return w.split('—')[0].trim();
+  return `${w.suite || '?'}::${w.name || '?'}`;
+}
+const warningsToday = (today.warningDetails?.length ? today.warningDetails : today.warnings) || [];
+const warningsYest = (yesterday?.warningDetails?.length ? yesterday.warningDetails : yesterday?.warnings) || [];
+const yKeys = new Set(warningsYest.map(warningKey));
+const newWarnings = warningsToday.filter((w) => !yKeys.has(warningKey(w)));
+const recurringWarnings = warningsToday.filter((w) => yKeys.has(warningKey(w)));
+
+// ---------------------------------------------------------------- rendimiento
+function getPerf(report) {
+  const out = {};
+  if (Array.isArray(report?.perfSummary)) {
+    for (const p of report.perfSummary) if (p.page) out[p.page] = p.worstMs ?? p.ms ?? 0;
+  } else if (report?.results) {
+    for (const r of report.results) {
+      if (r.suite !== 'rendimiento') continue;
+      const m = String(r.name || '').match(/^([^:]+):\s*(\d+)ms/);
+      if (!m || m[1] === 'TTFB home') continue;
+      const page = m[1].split('?')[0];
+      out[page] = Math.max(out[page] || 0, Number(m[2]));
     }
   }
-  return perf;
+  for (const r of report?.results || []) {
+    if (r.suite === 'rendimiento') {
+      const ttfb = String(r.name || '').match(/TTFB home:\s*(\d+)ms/);
+      if (ttfb) out.TTFB = Number(ttfb[1]);
+    }
+  }
+  return out;
 }
+const perfToday = getPerf(today);
+const perfYest = getPerf(yesterday);
+const sslDays = health.sslDays;
 
-const perfToday = getPerfMetrics(today);
-const perfYest = getPerfMetrics(yesterday);
+// ---------------------------------------------------------------- redacción
+const badge = health.grade === 'EXCELENTE' ? '🟢 EXCELENTE'
+  : health.grade === 'BUENO' ? '🔵 BUENO'
+    : health.grade === 'ATENCIÓN' ? '🟠 ATENCIÓN' : '🔴 CRÍTICO';
 
-// 4. Extracción de SSL y días restantes
-function getSslDays(report) {
-  if (!report?.results) return null;
-  const ssl = report.results.find((r) => r.suite === 'disponibilidad' && r.name.includes('SSL/TLS'));
-  if (!ssl) return null;
-  const m = ssl.name.match(/(\d+)\s*días restantes/);
-  return m ? Number(m[1]) : null;
-}
-
-const sslDays = getSslDays(today);
-
-// 5. Análisis de avisos: Nuevos vs Recurrentes
-const warningsToday = today.warnings || [];
-const warningsYest = yesterday?.warnings || [];
-const newWarnings = warningsToday.filter((w) => !warningsYest.some((yw) => yw.split('—')[0].trim() === w.split('—')[0].trim()));
-const recurringWarnings = warningsToday.filter((w) => warningsYest.some((yw) => yw.split('—')[0].trim() === w.split('—')[0].trim()));
-
-// 6. Cálculo del Health Score (0 - 100)
-let healthScore = 100;
-// Penalización por fallos (-30 si hay fallos)
-healthScore -= Math.min(60, failedToday * 30);
-// Penalización por avisos crónicos (-3 por cada uno)
-healthScore -= Math.min(20, recurringWarnings.length * 3);
-// Penalización por avisos nuevos (-2 por cada uno)
-healthScore -= Math.min(10, newWarnings.length * 2);
-// Penalización si TTFB > 700ms
-if (perfToday['TTFB'] && perfToday['TTFB'] > 700) healthScore -= 10;
-// Penalización si SSL <= 14 días
-if (sslDays !== null && sslDays <= 14) healthScore -= 15;
-healthScore = Math.max(0, healthScore);
-
-const healthBadge = healthScore >= 95 ? '🟢 EXCELENTE' : healthScore >= 75 ? '🟡 ATENCIÓN' : '🔴 CRÍTICO';
-
-// 7. Redacción del análisis diario
 const lines = [];
 lines.push(`## 🧠 Análisis Inteligente Diario del Chequeo Nocturno [${isCert ? 'Certificación' : 'Producción'}]`);
 lines.push('');
-lines.push(`> **Diagnóstico del Día (${today.fileDate})**: Salud General **${healthBadge}** (**${healthScore}/100 pts**)`);
+lines.push(`> **Diagnóstico del Día (${today.fileDate})**: Salud General **${badge}** (**${health.score}/100 pts**)`);
+lines.push(`> Funcional **${health.functionalScore}/100** · Experiencia **${health.experienceScore}/100** · Cobertura **${health.coverage.present}/${health.coverage.expected}** suites`);
 lines.push('');
 
-// Tabla de comparación con el histórico
+lines.push('### 🩺 Salud explicable');
+lines.push('');
+lines.push('| Dimensión | Puntuación | Qué mide |');
+lines.push('| :--- | :---: | :--- |');
+lines.push(`| **Funcional** | **${health.functionalScore}/100** | Caídas, pagos, auth, backend, SSL, cobertura y rendimiento. |`);
+lines.push(`| **Experiencia** | **${health.experienceScore}/100** | A11y, SEO, PWA, i18n, entrega y fricción de personas. |`);
+lines.push(`| **Global** | **${health.score}/100** | 75% funcional + 25% experiencia. |`);
+lines.push('');
+if (health.penalties.length) {
+  lines.push('**Puntos perdidos:**');
+  for (const p of health.penalties) lines.push(`- ${p.side === 'functional' ? '⚙️' : '🎨'} **${p.label}** (−${p.points})`);
+  lines.push('');
+} else {
+  lines.push('**Sin penalizaciones:** no hay fallos, deuda pendiente ni fricción medible.');
+  lines.push('');
+}
+if (health.coverage.missing.length) {
+  lines.push(`> ⚠️ **Cobertura incompleta:** faltan ${health.coverage.missing.join(', ')}. Un verde parcial no es un verde.`);
+  lines.push('');
+}
+if (health.personas) {
+  const p = health.personas;
+  lines.push(`> 🧑‍🤝‍🧑 **Personas:** ${p.passed}/${p.total} recorridos limpios · fricción media ${p.friction}/100 · ${p.deadEnds} bloqueo(s) · ${p.findings} hallazgo(s).`);
+  lines.push('');
+}
+lines.push(`> 🔁 **Fallos:** ${health.newFailures} nuevo(s) · ${health.recurringFailures} recurrente(s) · ${health.resolvedFailures} resuelto(s) respecto a la pasada anterior.`);
+lines.push('');
+
 lines.push('### 📈 Comparativa Evolutiva (Hoy vs Pasada Anterior)');
 lines.push('');
 lines.push('| Métrica | Hoy | Pasada Anterior | Tendencia |');
@@ -146,80 +184,82 @@ lines.push(`| **Total Comprobaciones** | **${totalToday}** | ${totalYest} | ${to
 lines.push(`| **Fallos Bloqueantes** | **${failedToday}** | ${failedYest} | ${failedToday === 0 ? '🟢 0 fallos' : `🔴 ${failedToday} fallo(s)`} |`);
 lines.push(`| **Avisos Totales** | **${warnedToday}** | ${warnedYest} | ${warnedToday <= warnedYest ? '🟢 Estable/Baja' : `🟡 +${warnedToday - warnedYest} avisos`} |`);
 
-if (perfToday['TTFB'] !== undefined) {
-  const yTtfb = perfYest['TTFB'] || perfToday['TTFB'];
-  const diffTtfb = perfToday['TTFB'] - yTtfb;
-  lines.push(`| **Latencia TTFB** | **${perfToday['TTFB']}ms** | ${yTtfb}ms | ${diffTtfb <= 0 ? `🟢 ${diffTtfb}ms` : diffTtfb > 150 ? `🟡 +${diffTtfb}ms` : `🟢 +${diffTtfb}ms`} |`);
+if (perfToday.TTFB !== undefined) {
+  const yTtfb = perfYest.TTFB || perfToday.TTFB;
+  const diffTtfb = perfToday.TTFB - yTtfb;
+  lines.push(`| **Latencia TTFB** | **${perfToday.TTFB}ms** | ${yTtfb}ms | ${diffTtfb <= 0 ? `🟢 ${diffTtfb}ms` : diffTtfb > 150 ? `🟡 +${diffTtfb}ms` : `🟢 +${diffTtfb}ms`} |`);
 }
-
 if (sslDays !== null) {
-  lines.push(`| **Certificado SSL/TLS** | **${sslDays} días** | ${sslDays + 1} días | ${sslDays > 30 ? '🟢 Válido' : sslDays > 14 ? '🟡 Renovar pronto' : '🔴 RENOVAR URGENTE'} |`);
+  lines.push(`| **Certificado SSL/TLS** | **${sslDays} días** | — | ${sslDays > 30 ? '🟢 Válido' : sslDays > 14 ? '🟡 Renovar pronto' : '🔴 RENOVAR URGENTE'} |`);
 }
 lines.push('');
 
-// Sección de rendimiento de páginas
-if (Object.keys(perfToday).length > 0) {
+const perfPages = Object.entries(perfToday).filter(([page]) => page !== 'TTFB');
+if (perfPages.length) {
   lines.push('### ⚡ Tiempos de Respuesta de Páginas Clave');
   lines.push('');
-  lines.push('| Página | Tiempo Hoy | Tiempo Anterior | Estado |');
-  lines.push('| :--- | :---: | :---: | :---: |');
-  for (const [page, ms] of Object.entries(perfToday)) {
-    if (page === 'TTFB') continue;
+  lines.push('| Página | Peor Hoy | Mediana | Pasada Anterior | Estado |');
+  lines.push('| :--- | :---: | :---: | :---: | :---: |');
+  const summaryByPage = new Map((today.perfSummary || []).map((p) => [p.page, p]));
+  for (const [page, ms] of perfPages) {
     const prev = perfYest[page] || ms;
     const diff = ms - prev;
-    const status = ms < 400 ? '🟢 Rápido' : ms < 1000 ? '🟡 Normal' : '🔴 Lento';
-    lines.push(`| \`${page}\` | **${ms}ms** | ${prev}ms | ${status} (${diff >= 0 ? `+${diff}` : diff}ms) |`);
+    const median = summaryByPage.get(page)?.medianMs;
+    const status = ms < 1000 ? '🟢 Rápido' : ms < 3000 ? '🟡 Normal' : '🔴 Lento';
+    lines.push(`| \`${page}\` | **${ms}ms** | ${median ?? '—'}ms | ${prev}ms | ${status} (${diff >= 0 ? `+${diff}` : diff}ms) |`);
   }
   lines.push('');
 }
 
-// Detección de avisos nuevos vs recurrentes
 lines.push('### 🔍 Diagnóstico de Avisos y Derivas');
 lines.push('');
-if (newWarnings.length > 0) {
+if (newWarnings.length) {
   lines.push(`#### ⚠️ Avisos Nuevos Detectados Hoy (${newWarnings.length}):`);
-  for (const nw of newWarnings) {
-    lines.push(`- 🆕 ${nw}`);
-  }
+  for (const w of newWarnings) lines.push(`- 🆕 ${warningText(w)}`);
   lines.push('');
 } else {
-  lines.push('- ✅ **Cero avisos nuevos**: Ninguna anomalía imprevista introducida en la última pasada.');
+  lines.push('- ✅ **Cero avisos nuevos**: ninguna anomalía imprevista en la última pasada.');
   lines.push('');
 }
-
-if (recurringWarnings.length > 0) {
-  lines.push(`<details>`);
+if (recurringWarnings.length) {
+  lines.push('<details>');
   lines.push(`<summary>📌 <b>Ver ${recurringWarnings.length} aviso(s) recurrente(s) de fondo</b></summary>`);
   lines.push('');
-  for (const rw of recurringWarnings) {
-    lines.push(`- 🔄 ${rw}`);
-  }
+  for (const w of recurringWarnings) lines.push(`- 🔄 ${warningText(w)}`);
   lines.push('</details>');
   lines.push('');
 }
 
-// Conclusión y Recomendación
 lines.push('### 📋 Recomendaciones Accionables');
 lines.push('');
-if (failedToday > 0) {
-  lines.push('1. 🚨 **Acción Inmediata**: Hay fallos bloqueantes en producción. Revisar el issue creado o ejecutar `npm run check:nightly` localmente para reproducir.');
-} else if (healthScore < 85) {
-  lines.push('1. 🟡 **Atención**: Producción está libre de fallos, pero se observan avisos recurrentes o variaciones de latencia.');
+if (health.severity.high > 0) {
+  lines.push('1. 🚨 **Acción inmediata**: hay fallos de alta severidad. Revisa el issue creado o ejecuta `npm run check:nightly` para reproducir.');
+} else if (failedToday > 0) {
+  lines.push('1. 🟠 **Corregir fallos**: producción tiene fallos no críticos; revisa el detalle y el plan de mejoras.');
+} else if (plan.summary.total > 0) {
+  const first = plan.items[0];
+  lines.push(`1. 🔧 **Sin fallos, con mejoras pendientes**: ${plan.summary.total} propuesta(s), ${plan.summary.auto} auto-aplicables. Empieza por \`${first.id}\` con \`npm run mejoras:aplicar -- --solo ${first.id}\`.`);
 } else {
-  lines.push('1. ✅ **Todo en orden**: El sistema opera dentro de los umbrales nominales de disponibilidad, privacidad y rendimiento.');
+  lines.push('1. ✅ **Todo en orden**: sin fallos ni deuda pendiente medible.');
 }
-
+if (plan.summary.manual > 0) {
+  lines.push(`2. 🙋 **${plan.summary.manual} propuesta(s) requieren intervención manual** (Supabase/Stripe, despliegue o datos de prueba): están marcadas como \`manual\` en el plan.`);
+}
 if (sslDays !== null && sslDays <= 20) {
-  lines.push(`2. 🔐 **Renovación SSL**: El certificado TLS vence en ${sslDays} días. Verificar la renovación automática.`);
+  lines.push(`3. 🔐 **Renovación SSL**: el certificado vence en ${sslDays} días. Verifica la renovación automática.`);
 }
-if (newWarnings.length > 0) {
-  lines.push(`3. 🔎 **Inspeccionar nuevos avisos**: Comprobar si los ${newWarnings.length} avisos nuevos corresponden a cambios recientes en la web.`);
+if (health.personas?.deadEnds) {
+  lines.push(`4. 🧑‍🤝‍🧑 **Recorridos bloqueados**: ${health.personas.deadEnds} persona(s) no completaron su objetivo; revisa la simulación antes de mirar métricas finas.`);
 }
 lines.push('');
+
+lines.push('---');
+lines.push('');
+lines.push(renderPlanMarkdown(plan));
 
 const reportMd = lines.join('\n');
 
-// Guardar el informe analítico
+// ---------------------------------------------------------------- guardado
 const outAnalisis = path.join(reportsDir, `${prefix}-analisis-diario.md`);
 try {
   writeFileSync(outAnalisis, reportMd);
@@ -228,7 +268,17 @@ try {
   console.error(`Error guardando análisis diario: ${e.message}`);
 }
 
-// Si se pide append a GitHub Step Summary
+if (writePlan) {
+  const planBase = isCert ? 'plan-mejoras-cert' : 'plan-mejoras';
+  try {
+    writeFileSync(path.join(reportsDir, `${planBase}.json`), JSON.stringify(plan, null, 2));
+    writeFileSync(path.join(reportsDir, `${planBase}.md`), renderPlanMarkdown(plan));
+    console.log(`🧭 Plan de mejoras: ${path.join(reportsDir, `${planBase}.md`)} (${plan.summary.total} propuestas, ${plan.summary.auto} auto-aplicables)`);
+  } catch (e) {
+    console.error(`Error guardando plan de mejoras: ${e.message}`);
+  }
+}
+
 if (appendSummary && process.env.GITHUB_STEP_SUMMARY) {
   try {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, '\n' + reportMd + '\n');
@@ -238,5 +288,4 @@ if (appendSummary && process.env.GITHUB_STEP_SUMMARY) {
   }
 }
 
-// Imprimir en consola
 console.log('\n' + reportMd);
