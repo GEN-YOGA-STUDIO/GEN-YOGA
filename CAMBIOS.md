@@ -32,6 +32,10 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 - **Contabilidad B:** sin importe (0)
 - **Informe:** `docs/informes/v18.1.0.md`
 
+### 29 oct 2026 · Automatización (sin cambio de versión web)
+
+- **Subida programada CERT → PRO**: Configuración de ejecución programada (schedule) en .github/workflows/deploy-pages.yml para las 00:01 CET (Madrid) del 1 de noviembre de 2026 (23:01 UTC del 31 de octubre). Incluye ventana de seguridad a las 00:15 CET, gestión de espera desatendida para cert-health y tarea programada de respaldo local en Windows Task Scheduler (scripts/deploy_scheduled_nov1.ps1).
+
 ## v18.0.13 — 28 oct 2026 · Incidencia
 
 - **Descripción:** Segunda pasada QA adversarial: anillo de foco de teclado WCAG 2.4.7 en las 9 paginas (contorno oscuro + halo claro con contraste >=3:1), WhatsApp del menu nativo alineado al oficial, aliases de hash/semana del calendario, textos de packs sincronizados ES/EN, aria-label en ojo de contrasena y subpestanas, contraste de carpetas claras; verificado consola/red, viewports 320-768px, enlaces, EN y teclado (ámbito: qa)

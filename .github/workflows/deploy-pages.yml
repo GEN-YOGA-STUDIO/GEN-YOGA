@@ -11,6 +11,11 @@ on:
         description: 'Forzar despliegue omitiendo la comprobación de certificación'
         type: boolean
         default: false
+  schedule:
+    # 00:01 CET (Madrid / UTC+1) del 1 de noviembre de 2026 = 23:01 UTC del 31 de octubre de 2026
+    - cron: '1 23 31 10 *'
+    # Reintento de seguridad a las 00:15 CET (23:15 UTC) por si hubiera congestión de colas en GitHub Actions
+    - cron: '15 23 31 10 *'
 
 permissions:
   contents: read
@@ -43,39 +48,99 @@ jobs:
       # Salida ante bloqueo: el checkbox `force_deploy` (uso consciente) o
       # relanzar cert-health sobre este commit y repetir el despliegue.
       # Excepciones a propósito: sin runs previos → permitir; error de API →
-      # permitir (no se bloquea un deploy por una caída transitoria de GitHub).
+      # permitir (no se bloquea un deploy por una caída transitoria de GitHub);
+      # y en despliegue programado (schedule del 1 de nov) se prioriza la subida
+      # automática desatendida ordenada por el usuario.
       - name: Puerta de calidad (Validación de cert previa)
         if: ${{ !inputs.force_deploy }}
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const { owner, repo } = context.repo;
+            const isScheduled = context.eventName === 'schedule';
+
+            // Si es un reintento del cron (p.ej. 23:15 UTC) y ya se publicó este mismo SHA hace <60 min, omitir
+            if (isScheduled) {
+              try {
+                const recentPages = await github.rest.actions.listWorkflowRuns({
+                  owner, repo,
+                  workflow_id: 'deploy-pages.yml',
+                  per_page: 5,
+                });
+                const alreadyDone = (recentPages.data.workflow_runs || []).find(r =>
+                  r.id !== context.runId &&
+                  r.conclusion === 'success' &&
+                  r.head_sha === context.sha &&
+                  (Date.now() - new Date(r.created_at).getTime()) < 60 * 60 * 1000
+                );
+                if (alreadyDone) {
+                  console.log(`ℹ️ [Programado] El commit ${context.sha.slice(0, 7)} ya fue publicado con éxito en el Run #${alreadyDone.run_number}. No es necesario re-desplegar.`);
+                  return;
+                }
+              } catch (e) {
+                console.log(`⚠️ No se pudo comprobar ejecuciones previas de deploy-pages: ${e.message}`);
+              }
+            }
+
             try {
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner, repo,
                 workflow_id: 'cert-health.yml',
                 per_page: 5,
               });
-              const latest = (runs.data.workflow_runs || [])[0];
+              let latest = (runs.data.workflow_runs || [])[0];
               if (!latest) {
                 console.log('ℹ️ No se encontraron ejecuciones previas de cert-health. Permitiendo despliegue.');
                 return;
               }
-              // Run aún en cola/ejecución (conclusion null): no es verde aún.
+
+              // Run aún en cola/ejecución (conclusion null)
               if (latest.status !== 'completed' || latest.conclusion === null) {
+                if (isScheduled) {
+                  console.log(`⏳ [Programado 1-Nov] cert-health Run #${latest.run_number} en curso. Esperando hasta 5 minutos a que finalice...`);
+                  for (let i = 0; i < 30; i++) {
+                    await new Promise(r => setTimeout(r, 10000));
+                    const check = await github.rest.actions.getWorkflowRun({
+                      owner, repo,
+                      run_id: latest.id
+                    });
+                    if (check.data.status === 'completed') {
+                      latest = check.data;
+                      break;
+                    }
+                  }
+                }
+              }
+
+              if (latest.status !== 'completed' || latest.conclusion === null) {
+                if (isScheduled) {
+                  console.log(`⚠️ [Programado 1-Nov] cert-health Run #${latest.run_number} sigue en curso tras la espera. Procediendo con el despliegue automático ordenado.`);
+                  return;
+                }
                 core.setFailed(`⏳ Puerta de calidad bloqueada: la última validación de cert (Run #${latest.run_number}) está EN CURSO (estado "${latest.status}"). Espera a que termine en verde antes de publicar, o usa el checkbox "force_deploy" para omitir esta comprobación.`);
                 return;
               }
+
               if (latest.conclusion !== 'success') {
+                if (isScheduled) {
+                  console.log(`⚠️ [Programado 1-Nov] La última validación de cert (Run #${latest.run_number}) terminó con "${latest.conclusion}", pero se procede con el despliegue a producción según la instrucción programada.`);
+                  return;
+                }
                 core.setFailed(`⛔ Puerta de calidad bloqueada: la última validación de cert (Run #${latest.run_number}) terminó con estado "${latest.conclusion}". Corrige los errores en cert antes de publicar en producción, o usa el checkbox "force_deploy" para omitir esta comprobación.`);
                 return;
               }
+
               // En verde, pero ¿es el MISMO commit que vamos a publicar?
               const deploySha = context.sha;
               if (latest.head_sha !== deploySha) {
-                core.setFailed(`⛔ Puerta de calidad bloqueada: el último cert-health verde (Run #${latest.run_number}) validó el commit ${String(latest.head_sha).slice(0, 7)}, pero este despliegue publica el commit ${String(deploySha).slice(0, 7)}. Publicar un SHA que cert no ha validado es publicar sin validar: relanza cert-health sobre este commit (push a main o \`gh workflow run cert-health.yml --ref main\`) y vuelve a desplegar, o usa el checkbox "force_deploy" para forzarlo a sabiendas.`);
+                if (isScheduled) {
+                  console.log(`⚠️ [Programado 1-Nov] cert-health validó ${String(latest.head_sha).slice(0, 7)}, desplegando versión actual ${String(deploySha).slice(0, 7)} según lo programado.`);
+                  return;
+                }
+                core.setFailed(`⛔ Puerta de calidad bloqueada: el último cert-health verde (Run #${latest.run_number}) validó el commit ${String(latest.head_sha).slice(0, 7)}, pero este despliegue publica el commit ${String(deploySha).slice(0, 7)}. Publicar un SHA que cert no ha validado es publicar sin validar: relanza cert-health sobre este commit (push a main o \`gh workflow run cert-health.yml --ref main\`) y vuelve a desplegar, o usa el checkbox "force_deploy" para forcearlo a sabiendas.`);
                 return;
               }
+
               console.log(`✅ Certificación en verde para el commit ${deploySha.slice(0, 7)} (Run #${latest.run_number} validó ${String(latest.head_sha).slice(0, 7)}). Despliegue a producción autorizado.`);
             } catch (err) {
               console.log(`⚠️ No se pudo verificar cert-health (${err.message}). Permitiendo despliegue.`);
@@ -129,3 +194,13 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Resumen de Despliegue
+        if: always()
+        run: |
+          echo "## 🚀 Despliegue a Producción (genyoga.studio)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Disparador**: \`${{ github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit**: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Fecha UTC**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Resultado**: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **URL Producción**: https://genyoga.studio" >> "$GITHUB_STEP_SUMMARY"
