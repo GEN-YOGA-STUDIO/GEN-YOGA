@@ -24,6 +24,8 @@ EXCLUDED_DIRS = {
     '.git', '.github', 'node_modules', 'android', 'ios', 'build', '.gradle',
     'app android', 'app ios', 'docs', 'ultima version',
     '.cursor', '.gemini', 'scratch', 'scripts', '.idea', '.temp',
+    # Artefacto de certificación: no debe viajar dentro de las apps.
+    '_cert',
     # Backend Supabase (migraciones, funciones, config): nunca va en los bundles
     # de las apps — el WebView lo consume por CDN/red, no por fichero local.
     'supabase',

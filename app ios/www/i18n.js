@@ -1020,7 +1020,7 @@ const translations = {
         "success_redirecting": "Redirigiéndote a tu perfil en <span id=\"countdown\">5</span> segundos...",
         "success_go_profile": "Ir a mi Perfil",
         "success_manage_invoices": "Gestionar mis Facturas / Suscripción",
-        "success_error_invalid_session": "El enlace no contiene una sesión de pago LIVE válida. No se ha confirmado ninguna compra.",
+        "success_error_invalid_session": "El enlace no contiene una sesión de pago válida. No se ha confirmado ninguna compra.",
         "success_guest_title": "¡Clase Adquirida!",
         "success_guest_intro": "Has comprado <strong>1 clase suelta</strong> como invitado. Selecciona a continuación la clase de Yoga a la que deseas asistir e introduce tus datos para confirmar tu plaza.",
         "success_guest_select_label": "1. Selecciona tu clase de Yoga",
@@ -2226,7 +2226,7 @@ const translations = {
         "success_redirecting": "Redirecting you to your profile in <span id=\"countdown\">5</span> seconds...",
         "success_go_profile": "Go to my profile",
         "success_manage_invoices": "Manage my invoices / subscription",
-        "success_error_invalid_session": "The link does not contain a valid LIVE payment session. No purchase has been confirmed.",
+        "success_error_invalid_session": "The link does not contain a valid payment session. No purchase has been confirmed.",
         "success_guest_title": "Class Purchased!",
         "success_guest_intro": "You have purchased <strong>1 single class</strong> as a guest. Choose the yoga class you want to attend below and enter your details to confirm your spot.",
         "success_guest_select_label": "1. Choose your yoga class",
@@ -2834,18 +2834,30 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const isNative = !!(document.documentElement && document.documentElement.classList && document.documentElement.classList.contains('is-native-app'));
         const isProfilePage = window.location.pathname.includes('profile.html');
+        const isSmallScreen = window.matchMedia('(max-width: 767px)').matches;
+        const certBanner = document.getElementById('gy-cert-banner');
+        const certBannerHeight = certBanner ? certBanner.getBoundingClientRect().height : 0;
         if (isProfilePage) {
             langDiv.classList.add('is-profile-lang');
-            langDiv.style.top = 'auto';
-            langDiv.style.right = '18px';
-            langDiv.style.bottom = isNative ? 'max(calc(env(safe-area-inset-bottom, 0px) + 12px), 18px)' : '18px';
+            if (isSmallScreen) {
+                // En móvil la píldora flotante inferior tapaba el enlace
+                // "¿Has olvidado tu contraseña?". En pantallas pequeñas se
+                // coloca arriba a la derecha, lejos del formulario y del botón INICIO.
+                langDiv.style.top = `max(calc(var(--gy-notch-shield-height, 0px) + 14px), ${Math.ceil(certBannerHeight + 14)}px)`;
+                langDiv.style.right = '16px';
+                langDiv.style.bottom = 'auto';
+            } else {
+                langDiv.style.top = 'auto';
+                langDiv.style.right = '18px';
+                langDiv.style.bottom = isNative ? 'max(calc(env(safe-area-inset-bottom, 0px) + 12px), 18px)' : '18px';
+            }
             langDiv.style.left = 'auto';
         } else if (marqueeHeight > 0) {
             if (isNative) {
                 langDiv.style.top = `calc(var(--gy-notch-shield-height, 42px) + ${marqueeHeight + 10}px)`;
                 langDiv.style.right = '16px';
             } else {
-                langDiv.style.top = (marqueeHeight + 16) + 'px'; // Positioned mathematically below the marquee banner
+                langDiv.style.top = (certBannerHeight + marqueeHeight + 16) + 'px'; // Debajo del banner de cert y del marquee
                 langDiv.style.right = '24px';
             }
             langDiv.style.bottom = 'auto';
@@ -2855,7 +2867,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 langDiv.style.top = 'calc(var(--gy-notch-shield-height, 42px) + 14px)';
                 langDiv.style.right = '16px';
             } else {
-                langDiv.style.top = '16px';
+                langDiv.style.top = Math.ceil(certBannerHeight + 16) + 'px';
                 langDiv.style.right = '24px';
             }
             langDiv.style.bottom = 'auto';
@@ -2882,9 +2894,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         langDiv.innerHTML = `
-            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">ES</button>
+            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:4px 8px; min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">ES</button>
             <span style="color:rgba(248, 246, 242, 0.95); font-size:12px; pointer-events:none; user-select:none;">/</span>
-            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.85; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">EN</button>
+            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:4px 8px; min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.85; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">EN</button>
         `;
         document.body.appendChild(langDiv);
     }

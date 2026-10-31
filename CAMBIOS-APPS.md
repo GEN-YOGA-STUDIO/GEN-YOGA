@@ -27,7 +27,7 @@ Historial independiente de versiones de las aplicaciones nativas para **Google P
   - Botón prominente "DESAPUNTARME" / "Desapuntarme" en rojo accesible directamente en todas las vistas de clases reservadas y modales de detalle.
   - Devolución inmediata del bono de clase en la cuenta del usuario.
   - Blindaje con `try ... finally` en `cancelar(reservaId)` para eliminar cualquier bloqueo permanente del UI.
-  - Ventana de gracia de 60 minutos para reservas hechas recientemente y límite por defecto ajustado a 2 horas.
+  - Límite de cancelación establecido estrictamente a 24 horas antes del inicio de la clase.
 - **Build:** #281 (`versionCode` 281 en Android, `CURRENT_PROJECT_VERSION` 281 en iOS, `MARKETING_VERSION` 2.0).
 - **Tiendas:** Compilación y despliegue directo a Apple App Store Connect / TestFlight.
 

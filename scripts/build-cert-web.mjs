@@ -51,6 +51,11 @@ const MODO_MISMA_BD = process.env.CERT_ALLOW_PRODUCTION_DB === '1'
 let mismoProyecto = MODO_MISMA_BD;
 let urlCert;
 let claveCert;
+// Seguridad: en certificación los pagos LIVE quedan bloqueados salvo permiso
+// explícito. El cert comparte la BD de producción, así que un clic accidental
+// en "comprar" cobraría de verdad. Para pruebas de pago con Stripe TEST debe
+// existir un backend de cert aislado; no se habilita por defecto.
+const pagosLive = process.env.CERT_ALLOW_LIVE_PAYMENTS === '1';
 
 if (MODO_MISMA_BD) {
   urlCert = PRODUCCION_URL;
@@ -159,12 +164,52 @@ for (const file of htmls) {
     }
   }
 
-  // Banner visible de entorno de pruebas (no bloquea clics: pointer-events none).
-  const banner = mismoProyecto
-    ? '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · misma base de datos que producción · pagos habilitados para pruebas</div>'
-    : '<div id="gy-cert-banner" aria-hidden="true" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(38,22,12,.92);color:#f8f6f2;font:600 11px/22px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;pointer-events:none">ENTORNO DE PRUEBAS (cert) · pagos habilitados para pruebas</div>';
+  // Banner visible de entorno de pruebas. Es fijo para permanecer visible,
+  // pero el body reserva su altura (34 px escritorio / 48 px móvil) para no
+  // tapar el marquee, el botón INICIO ni los títulos. En móvil el texto puede
+  // ocupar dos líneas; el padding se dimensiona para ambas.
+  const textoBanner = pagosLive
+    ? 'CERT · ENTORNO DE PRUEBAS · PAGOS LIVE HABILITADOS · MISMA BD QUE PRODUCCIÓN'
+    : 'CERT · ENTORNO DE PRUEBAS · PAGOS DESACTIVADOS · MISMA BD QUE PRODUCCIÓN';
+  const banner = `<style id="gy-cert-banner-style">
+  #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; pointer-events:none; }
+  body { padding-top:34px !important; }
+  @media (max-width:640px) { body { padding-top:48px !important; } }
+  html { scroll-padding-top:44px; }
+</style>
+<div id="gy-cert-banner" role="note">${textoBanner}</div>`;
   if (!out.includes('gy-cert-banner')) {
     out = out.replace(/(<body[^>]*>)/i, `$1\n  ${banner}`);
+  }
+
+  // Guard de pagos: el cert comparte la BD de producción. Sin un backend de
+  // Stripe TEST aislado, cualquier checkout acabaría en un cargo real. Se
+  // intercepta la llamada a la Edge Function antes de que salga del navegador.
+  if (!pagosLive) {
+    const guard = `<script id="gy-cert-payment-guard">
+(function () {
+  window.__GY_CERT_PAYMENTS_DISABLED__ = true;
+  var originalFetch = window.fetch;
+  if (typeof originalFetch !== 'function') return;
+  window.fetch = function (input, init) {
+    var url = typeof input === 'string' ? input : ((input && input.url) || '');
+    if (url.indexOf('/functions/v1/create-checkout-session') !== -1) {
+      var message = 'Entorno de certificación: los pagos están desactivados. No se ha realizado ningún cargo.';
+      console.warn('[cert] Checkout bloqueado:', url);
+      if (window.Swal && typeof window.Swal.fire === 'function') {
+        window.Swal.fire({ icon: 'info', title: 'Pagos desactivados en certificación', text: message, confirmButtonColor: '#956857' });
+      } else {
+        window.alert(message);
+      }
+      return Promise.reject(new Error(message));
+    }
+    return originalFetch.apply(this, arguments);
+  };
+})();
+</script>`;
+    if (!out.includes('gy-cert-payment-guard')) {
+      out = out.replace(/(<\/head>)/i, `  ${guard}\n  $1`);
+    }
   }
   await writeFile(path.join(destino, file), out, 'utf8');
 }
@@ -202,8 +247,11 @@ await writeFile(
       entorno: 'certificacion',
       version: pkg.version,
       supabase: urlCert.replace('https://', ''),
+      pagos: pagosLive ? 'live-habilitados' : 'desactivados',
       construido: new Date().toISOString(),
-      aviso: 'Entorno de pruebas. No usar con datos ni pagos reales.',
+      aviso: pagosLive
+        ? 'Entorno de pruebas con pagos LIVE habilitados explícitamente. No usar con datos reales.'
+        : 'Entorno de pruebas. Pagos desactivados en el navegador y datos compartidos con producción.',
     },
     null,
     2,

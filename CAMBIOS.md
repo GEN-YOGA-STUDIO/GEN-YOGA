@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.2.0 — 31 oct 2026 · Desarrollo
+
+- **Descripción:** Permitir edicion libre de titulo y descripcion en creacion y edicion de talleres y eventos (ámbito: eventos)
+- **Validación:** npm test
+- **Tag:** `v18.2`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v18.2.0.md`
+
 ## v18.1.0 — 28 oct 2026 · Desarrollo
 
 - **Descripción:** Robustecimiento de CI/CD: empaquetado de manifest y favicon en Pages, resiliencia de CLI en autofix y monitoreo de activos y drift en el chequeo de produccion (ámbito: ci)

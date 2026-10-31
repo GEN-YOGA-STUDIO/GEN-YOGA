@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="application-version" content="18.1">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=18.1">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=18.1">
+    <meta name="application-version" content="18.2">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=18.2">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=18.2">
     <link rel="icon" href="favicon.ico" sizes="any" type="image/x-icon">
     <link rel="manifest" href="manifest.json">
     <title>Tarifas y Bonos de Clases | GEN Yoga</title>
@@ -27,13 +27,13 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <!-- Tailwind and Custom Fonts -->
-    <link rel="stylesheet" href="tailwind-compiled.css?v=18.1">
+    <link rel="stylesheet" href="tailwind-compiled.css?v=18.2">
     
     <!-- Phosphor Icons & SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
-    <script src="i18n.js?v=18.1"></script>
-    <script src="capacitor-bridge.js?v=18.1" defer></script>
+    <script src="i18n.js?v=18.2"></script>
+    <script src="capacitor-bridge.js?v=18.2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
     
     <style>
@@ -164,10 +164,21 @@
             }
         }
 
+        /* El color del texto debe seguir el estado real de la pestaña: blanco
+           sobre el fondo oscuro activo y cocoa sobre el fondo arena inactivo.
+           Antes se forzaba blanco en las cuatro y las inactivas quedaban con
+           un contraste de 1,97:1 (WCAG AA exige 4,5:1). */
         #tab-ofertas,
         #tab-yoga,
         #tab-psicologia,
         #tab-talleres {
+            color: #26160c !important;
+        }
+
+        #tab-ofertas[aria-selected="true"],
+        #tab-yoga[aria-selected="true"],
+        #tab-psicologia[aria-selected="true"],
+        #tab-talleres[aria-selected="true"] {
             color: #ffffff !important;
         }
 
@@ -266,7 +277,7 @@
     </style>
 </head>
 <body data-page-title-key="page_title_tarifas" class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans overflow-x-hidden">
-    <a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;" onfocus="this.style.left='8px';this.style.top='8px';this.style.width='auto';this.style.height='auto';this.style.overflow='visible';" onblur="this.style.left='-9999px';this.style.top='auto';this.style.width='1px';this.style.height='1px';this.style.overflow='hidden';">Saltar al contenido principal</a>
+    <a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:44px;height:44px;overflow:hidden;" onfocus="this.style.left='8px';this.style.top='8px';this.style.width='auto';this.style.height='auto';this.style.overflow='visible';" onblur="this.style.left='-9999px';this.style.top='auto';this.style.width='1px';this.style.height='1px';this.style.overflow='hidden';">Saltar al contenido principal</a>
     <!-- Fixed Presentation Layer -->
     <main id="main-content" class="fixed-viewport">
         
@@ -303,23 +314,23 @@
             <div class="flex justify-center gap-3 flex-wrap" role="tablist" aria-label="Tipos de tarifas" data-i18n-aria-label="rates_tab_types">
                 <button id="tab-ofertas" type="button" role="tab" aria-controls="section-ofertas" aria-selected="true"
                     onclick="switchCategory('ofertas')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#047857] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5">
+                    class="px-7 py-2.5 min-h-[44px] inline-flex items-center justify-center text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#047857] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95 gap-1.5">
                     <i class="ph-fill ph-gift" aria-hidden="true"></i>
                     <span data-i18n="rates_tab_offers">Ofertas</span>
                 </button>
                 <button id="tab-yoga" type="button" role="tab" aria-controls="section-yoga" aria-selected="false"
                     onclick="switchCategory('yoga')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#26160c] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-7 py-2.5 min-h-[44px] inline-flex items-center justify-center text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#26160c] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
                     <span data-i18n="rates_tab_yoga">Clases</span>
                 </button>
                 <button id="tab-psicologia" type="button" role="tab" aria-controls="section-psicologia" aria-selected="false"
                     onclick="switchCategory('psicologia')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#26160c] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-7 py-2.5 min-h-[44px] inline-flex items-center justify-center text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#26160c] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
                     <span data-i18n="rates_tab_psy">Consultas</span>
                 </button>
                 <button id="tab-talleres" type="button" role="tab" aria-controls="section-talleres" aria-selected="false"
                     onclick="switchCategory('talleres')"
-                    class="px-7 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#26160c] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-7 py-2.5 min-h-[44px] inline-flex items-center justify-center text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-[#26160c] transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
                     <span data-i18n="rates_tab_workshops">Eventos</span>
                 </button>
             </div>
@@ -332,7 +343,7 @@
                 class="max-w-3xl mx-auto w-full px-4 transition-all duration-300" style="display: block; opacity: 1; transform: translateY(0);">
                 
                 <article class="tariff-card flex flex-col justify-between bg-white/95 backdrop-blur-md border-2 border-emerald-500/40 rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl relative overflow-hidden ring-4 ring-emerald-500/10 w-full text-left mx-auto">
-                    <div class="absolute top-0 right-0 bg-emerald-700 text-white text-[10px] sm:text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl shadow-sm" data-i18n="rates_welcome_badge">
+                    <div class="absolute top-0 right-0 bg-emerald-700 text-white text-[12px] sm:text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl shadow-sm" data-i18n="rates_welcome_badge">
                         ★ 100% Gratuito
                     </div>
                     <div>
@@ -391,7 +402,7 @@
                             <span data-i18n="rates_welcome_create">Crear Cuenta y Recibir Bono (0 €)</span>
                         </a>
                         <a href="clases.html#calendario-publico"
-                            class="text-center text-xs sm:text-sm font-semibold text-emerald-800 hover:text-cocoa transition py-2 px-3 underline decoration-transparent hover:decoration-current">
+                            class="text-center inline-flex items-center justify-center text-xs sm:text-sm font-semibold text-emerald-800 hover:text-cocoa transition py-2 px-3 min-h-[44px] underline decoration-transparent hover:decoration-current">
                             <span data-i18n="rates_welcome_view_schedule">Ver clases y horarios regulares →</span>
                         </a>
                     </div>
@@ -748,7 +759,7 @@
             <div class="flex items-center gap-2 justify-start">
                 <a href="https://www.google.com/maps/place/GEN+Yoga/@38.9949298,-1.8671035,511m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd665fc18e428caf:0x9efcbd7f5fdb3e1e!8m2!3d38.9949257!4d-1.8645286!16s%2Fg%2F11zd4y51p2?entry=ttu&g_ep=EgoyMDI2MDgwNC4wIKXMDSoASAFQAw%3D%3D"
                     target="_blank" rel="noopener noreferrer"
-                    class="hover:text-sand flex items-center gap-2 text-xs md:text-sm font-normal tracking-[0.1em] text-[#795244] transition-colors py-2 min-h-[24px]">
+                    class="hover:text-sand flex items-center gap-2 text-xs md:text-sm font-normal tracking-[0.1em] text-[#795244] transition-colors py-2 min-h-[44px]">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.45 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path>
@@ -758,19 +769,19 @@
             </div>
             <div class="flex items-center gap-6 justify-center text-[#795244]">
                 <a href="https://wa.me/34624435679" target="_blank" rel="noopener noreferrer"
-                    class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center p-2"
+                    class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center justify-center p-2 min-w-[44px] min-h-[44px]"
                     aria-label="WhatsApp (+34 624 435 679)" title="WhatsApp / Teléfono: +34 624 435 679">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-current" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12.04 2c-5.46 0-9.45 4.45-9.45 9.45 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.45-4.45 9.45-9.45 0-2.65-1.03-5.14-2.9-7.01A9.45 9.45 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.45-.14.17-.29.45-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.45-.51.11-.11.25-.29.45-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.13.17 1.77 2.7 4.29 3.79.45.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.07-.12-.23-.19-.48-.31"/>
                     </svg>
                 </a>
-                <a href="mailto:hola@genyoga.studio" class="hover:opacity-75 transition flex items-center p-2" aria-label="Email">
+                <a href="mailto:hola@genyoga.studio" class="hover:opacity-75 transition flex items-center justify-center p-2 min-w-[44px] min-h-[44px]" aria-label="Email">
                     <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <rect width="20" height="16" x="2" y="4" rx="2"></rect>
                         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
                     </svg>
                 </a>
-                <a href="https://www.instagram.com/genyoga.studio" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center p-2">
+                <a href="https://www.instagram.com/genyoga.studio" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:opacity-75 transition-colors duration-300 transform hover:scale-110 flex items-center justify-center p-2 min-w-[44px] min-h-[44px]">
                     <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
                         <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -779,13 +790,13 @@
                 </a>
             </div>
             <div class="flex items-center gap-3 text-right text-xs">
-                <a href="politica-privacidad.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-90 text-[10px]">v18.1 | &copy; 2026 Gen Yoga</span>
+                <a href="politica-privacidad.html" class="hover:underline inline-flex items-center py-2 min-h-[44px]" data-i18n="footer_privacy">Política de privacidad</a>
+                <span id="app-version-label" class="opacity-90 text-[12px]">v18.2 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
     <script>
-        const APP_VERSION = '18.1';
+        const APP_VERSION = '18.2';
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -868,7 +879,7 @@
                 if (!btn) return;
                 const isActive = key === targetKey;
                 btn.style.backgroundColor = isActive ? activeColors[key] : '#c3b89a';
-                btn.style.color = '#ffffff';
+                btn.style.color = isActive ? '#ffffff' : '#26160c';
                 btn.setAttribute('aria-selected', String(isActive));
                 btn.tabIndex = isActive ? 0 : -1;
             });

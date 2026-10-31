@@ -266,7 +266,7 @@ if (isCert) {
       const host = String(certManifest.supabase || '');
       if (host && host.includes(PROD_SUPA_HOST)) {
         if (process.env.CERT_ALLOW_PRODUCTION_DB === '1' || certManifest.aviso) {
-          warn('cert', 'AISLAMIENTO', 'el cert apunta a la BD de producción en modo desarrollo web/apps (pagos habilitados para pruebas)');
+          warn('cert', 'AISLAMIENTO', 'el cert apunta a la BD de producción en modo desarrollo web/apps (pagos desactivados por defecto)');
         } else {
           fail('cert', 'AISLAMIENTO', 'el cert apunta al Supabase DE PRODUCCIÓN: no es un entorno de pruebas válido');
         }
@@ -2238,7 +2238,7 @@ await section('retorno', async () => {
     {
       const errVisible = await page.locator('#verification-error').isVisible().catch(() => false);
       const errMsg = await page.locator('#verification-error-message').textContent().catch(() => '');
-      if (errVisible && (errMsg || '').includes('sesión de pago LIVE válida')) {
+      if (errVisible && (errMsg || '').includes('sesión de pago válida')) {
         pass('retorno', 'success sin sesión: error correcto');
       } else fail('retorno', 'success sin sesión', `visible=${errVisible}`);
       const retryHidden = await page.locator('#verification-retry').evaluate((el) => el.classList.contains('hidden')).catch(() => null);

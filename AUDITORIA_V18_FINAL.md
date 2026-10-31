@@ -26,7 +26,7 @@ La auditoría completa de la versión 18 (web) y la versión 2.0.1 (apps) ha enc
 - **Cancelación y recuperación de bonos:** Botón prominente "DESAPUNTARME" en todas las vistas de clases reservadas
 - **Devolución inmediata del bono:** Al desapuntarse, el bono se devuelve inmediatamente a la cuenta del usuario
 - **Blindaje con try/finally:** Para eliminar cualquier bloqueo permanente del UI
-- **Ventana de gracia:** 60 minutos para reservas recientes y límite por defecto de 2 horas
+- **Ventana de gracia:** límite estricto de cancelación de 24 horas
 
 ---
 

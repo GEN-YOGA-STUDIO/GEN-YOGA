@@ -583,8 +583,8 @@ await section('success.html', async () => {
   const errBox = page.locator('#verification-error');
   const errMsg = await page.locator('#verification-error-message').textContent().catch(() => '');
   const errVisible = await errBox.isVisible().catch(() => false);
-  if (errVisible && (errMsg || '').includes('sesión de pago LIVE válida')) {
-    pass('success.html: sin sesión muestra el error correcto ("sesión de pago LIVE válida")');
+  if (errVisible && (errMsg || '').includes('sesión de pago válida')) {
+    pass('success.html: sin sesión muestra el error correcto ("sesión de pago válida")');
   } else {
     fail(`success.html: sin sesión no muestra el error esperado (visible: ${errVisible})`);
   }

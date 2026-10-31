@@ -258,6 +258,7 @@ try {
     console.log('\n4/10 Capacitor sync (aviso si falla: check:links lo decide)');
     runOk('npx cap sync android', {}, cwdAndroid());
     runOk('npx cap sync ios', {}, cwdIos());
+    try { execSync(process.platform === 'win32' ? 'powershell -Command "Start-Sleep -Milliseconds 1000"' : 'sleep 1'); } catch (_) {}
     run(`${py} scripts/sync_apps.py`, {}, 'Sync post-cap para asentar bundles en disco');
   }
 
