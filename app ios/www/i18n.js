@@ -2953,7 +2953,7 @@ function initCookieConsentBanner() {
         banner.style.bottom = '0';
         banner.style.left = '0';
         banner.style.right = '0';
-        banner.style.zIndex = '9999';
+        banner.style.zIndex = '100002';
         banner.style.backgroundColor = '#2c221e';
         banner.style.color = '#f8f6f2';
         banner.style.borderTop = '2px solid #ab593d';

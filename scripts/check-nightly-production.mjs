@@ -856,6 +856,7 @@ async function checkInternalLinks(page, pageName) {
 }
 // Cierra la oferta de bienvenida si está visible (no falla si no está).
 async function dismissWelcome(page) {
+  await page.locator('#cookie-accept-all').first().click({ timeout: 1500 }).catch(() => {});
   await page.locator('#flash-welcome-modal button[onclick="cerrarFlashWelcomeModal()"]').first().click({ timeout: 4000 }).catch(() => {});
   await page.waitForTimeout(700);
 }

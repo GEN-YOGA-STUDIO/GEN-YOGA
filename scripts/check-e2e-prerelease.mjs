@@ -109,6 +109,11 @@ async function gotoTracked(page, file, settleMs = 2500) {
   await page.goto(`${base}/${file}`, { waitUntil: 'load', timeout: 45000 });
   const loadMs = Date.now() - t0;
   await page.waitForTimeout(settleMs);
+  const cookieBtn = page.locator('#cookie-accept-all');
+  if (await cookieBtn.isVisible().catch(() => false)) {
+    await cookieBtn.click().catch(() => {});
+    await page.waitForTimeout(300);
+  }
   perf.push({ page: file, loadMs, bytes: st.bytes, reqs: st.reqs });
   return st;
 }

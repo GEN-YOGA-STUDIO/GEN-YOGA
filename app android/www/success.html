@@ -164,6 +164,16 @@
                         <input type="text" id="guest-apellidos" maxlength="120" autocomplete="family-name" class="w-full px-3 py-2 bg-white border border-cocoa/20 rounded-lg focus:ring-2 focus:ring-olive outline-none shadow-sm text-sm text-cocoa transition" placeholder="Tus apellidos" data-i18n="success_guest_surname_placeholder">
                     </div>
                 </div>
+
+                <!-- Casilla de aceptación obligatoria RGPD -->
+                <div class="pt-2 flex items-start gap-2 text-left">
+                    <input type="checkbox" id="guest-privacy-check" name="guest-privacy-check" required
+                        class="mt-1 w-4 h-4 text-[#ab593d] bg-white border-2 border-cocoa/30 rounded focus:ring-2 focus:ring-[#ab593d] cursor-pointer shrink-0">
+                    <label for="guest-privacy-check" class="text-xs text-cocoa/80 leading-snug cursor-pointer">
+                        <span data-i18n="rgpd_checkbox_label">He leído la información legal y acepto la</span>
+                        <a href="politica-privacidad.html" target="_blank" rel="noopener noreferrer" class="font-bold underline text-[#ab593d] hover:text-black" data-i18n="footer_privacy">política de privacidad</a>. *
+                    </label>
+                </div>
             </div>
 
             <button type="button" onclick="confirmarReservaInvitado()" class="mt-6 w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
@@ -714,6 +724,15 @@
             }
             if (!nombre) {
                 Swal.fire({ icon: 'warning', title: tr('alert_warning', 'Atención'), text: tr('success_guest_name_required', 'El nombre es un campo obligatorio.') });
+                return;
+            }
+            const privacyCheck = document.getElementById('guest-privacy-check');
+            if (privacyCheck && !privacyCheck.checked) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: tr('alert_warning', 'Atención'),
+                    text: tr('rgpd_alert_required', 'Debes leer la información legal y marcar la casilla de aceptación de la política de privacidad.')
+                });
                 return;
             }
 
