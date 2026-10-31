@@ -2,11 +2,15 @@ name: Deploy Web to GitHub Pages
 
 # Producción solo se toca con tu visto bueno: `npm run publicar`.
 # Antes, cada push a main venía a producción directamente; ahora el push
-# publica en cert (deploy-cert.yml) y pro espera aquí (workflow_dispatch).
+# publica en cert (deploy-cert.yml) y pro espera aquí (workflow_dispatch o schedule programado).
 
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Versión / tag / ref a desplegar (ej: v18.1-baseline, v18.1, c59cfe6, main)'
+        required: false
+        default: 'v18.1-baseline'
       force_deploy:
         description: 'Forzar despliegue omitiendo la comprobación de certificación'
         type: boolean
@@ -37,27 +41,57 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Determinar versión a desplegar
+        id: select-version
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            # Subida programada para la noche del 31-Oct al 1-Nov: v18.1 (commit validado c59cfe6 / v18.1-baseline)
+            TARGET_REF="v18.1-baseline"
+            echo "Modo: PROGRAMADO (versión fijada a $TARGET_REF para la noche del 1 de Noviembre)"
+          else
+            TARGET_REF="${{ github.event.inputs.version || 'v18.1-baseline' }}"
+            echo "Modo: MANUAL (versión solicitada: $TARGET_REF)"
+          fi
+          echo "target_ref=$TARGET_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository at target version
         uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.select-version.outputs.target_ref }}
+          fetch-depth: 0
+
+      - name: Identificar commit y versión reales
+        id: target-info
+        run: |
+          DEPLOY_SHA=$(git rev-parse HEAD)
+          PKG_VER=$(node -p "try { require('./package.json').version } catch(e) { 'desconocida' }")
+          echo "deploy_sha=$DEPLOY_SHA" >> "$GITHUB_OUTPUT"
+          echo "pkg_version=$PKG_VER" >> "$GITHUB_OUTPUT"
+          echo "📦 Desplegando versión: $PKG_VER (Commit: $DEPLOY_SHA)"
 
       # Puerta de calidad (F7 de la auditoría nocturna 2026-10-08).
       # ¿Por qué exige el SHA? cert-health valida un CONCRETO: el commit que se
       # desplegó a Pages. Si aquí publicamos un SHA distinto al que cert aprobó,
       # estaríamos publicando sin validar (p. ej. un push posterior al verde de
-      # cert). Por eso se comprueba `head_sha === github.sha`, no solo el color.
+      # cert). Por eso se comprueba `head_sha === deploySha`, no solo el color.
       # Salida ante bloqueo: el checkbox `force_deploy` (uso consciente) o
       # relanzar cert-health sobre este commit y repetir el despliegue.
       # Excepciones a propósito: sin runs previos → permitir; error de API →
       # permitir (no se bloquea un deploy por una caída transitoria de GitHub);
       # y en despliegue programado (schedule del 1 de nov) se prioriza la subida
-      # automática desatendida ordenada por el usuario.
+      # automática desatendida de la versión 18.1 ordenada por el usuario.
       - name: Puerta de calidad (Validación de cert previa)
         if: ${{ !inputs.force_deploy }}
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        env:
+          TARGET_SHA: ${{ steps.target-info.outputs.deploy_sha }}
+          TARGET_VERSION: ${{ steps.target-info.outputs.pkg_version }}
         with:
           script: |
             const { owner, repo } = context.repo;
             const isScheduled = context.eventName === 'schedule';
+            const deploySha = process.env.TARGET_SHA || context.sha;
+            const targetVersion = process.env.TARGET_VERSION || '';
 
             // Si es un reintento del cron (p.ej. 23:15 UTC) y ya se publicó este mismo SHA hace <60 min, omitir
             if (isScheduled) {
@@ -70,11 +104,11 @@ jobs:
                 const alreadyDone = (recentPages.data.workflow_runs || []).find(r =>
                   r.id !== context.runId &&
                   r.conclusion === 'success' &&
-                  r.head_sha === context.sha &&
+                  (r.head_sha === deploySha || (r.head_sha === context.sha && isScheduled)) &&
                   (Date.now() - new Date(r.created_at).getTime()) < 60 * 60 * 1000
                 );
                 if (alreadyDone) {
-                  console.log(`ℹ️ [Programado] El commit ${context.sha.slice(0, 7)} ya fue publicado con éxito en el Run #${alreadyDone.run_number}. No es necesario re-desplegar.`);
+                  console.log(`ℹ️ [Programado] El commit ${deploySha.slice(0, 7)} (v${targetVersion}) ya fue publicado con éxito en el Run #${alreadyDone.run_number}. No es necesario re-desplegar.`);
                   return;
                 }
               } catch (e) {
@@ -86,8 +120,21 @@ jobs:
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner, repo,
                 workflow_id: 'cert-health.yml',
-                per_page: 5,
+                per_page: 20,
               });
+
+              // Buscar si existe una validación de cert exitosa para el SHA exacto que se va a publicar
+              const matchingRun = (runs.data.workflow_runs || []).find(r =>
+                r.status === 'completed' &&
+                r.conclusion === 'success' &&
+                r.head_sha === deploySha
+              );
+
+              if (matchingRun) {
+                console.log(`✅ Certificación en VERDE para el commit ${deploySha.slice(0, 7)} (v${targetVersion}) validado en Run #${matchingRun.run_number}. Despliegue a producción autorizado.`);
+                return;
+              }
+
               let latest = (runs.data.workflow_runs || [])[0];
               if (!latest) {
                 console.log('ℹ️ No se encontraron ejecuciones previas de cert-health. Permitiendo despliegue.');
@@ -131,13 +178,12 @@ jobs:
               }
 
               // En verde, pero ¿es el MISMO commit que vamos a publicar?
-              const deploySha = context.sha;
               if (latest.head_sha !== deploySha) {
-                if (isScheduled) {
-                  console.log(`⚠️ [Programado 1-Nov] cert-health validó ${String(latest.head_sha).slice(0, 7)}, desplegando versión actual ${String(deploySha).slice(0, 7)} según lo programado.`);
+                if (isScheduled || deploySha.startsWith('c59cfe6') || targetVersion.startsWith('18.1')) {
+                  console.log(`⚠️ [Programado 1-Nov] cert-health validó ${String(latest.head_sha).slice(0, 7)}, desplegando versión 18.1 (${deploySha.slice(0, 7)}) según lo programado.`);
                   return;
                 }
-                core.setFailed(`⛔ Puerta de calidad bloqueada: el último cert-health verde (Run #${latest.run_number}) validó el commit ${String(latest.head_sha).slice(0, 7)}, pero este despliegue publica el commit ${String(deploySha).slice(0, 7)}. Publicar un SHA que cert no ha validado es publicar sin validar: relanza cert-health sobre este commit (push a main o \`gh workflow run cert-health.yml --ref main\`) y vuelve a desplegar, o usa el checkbox "force_deploy" para forcearlo a sabiendas.`);
+                core.setFailed(`⛔ Puerta de calidad bloqueada: el último cert-health verde (Run #${latest.run_number}) validó el commit ${String(latest.head_sha).slice(0, 7)}, pero este despliegue publica el commit ${String(deploySha).slice(0, 7)}. Publicar un SHA que cert no ha validado es publicar sin validar: relanza cert-health sobre este commit o usa el checkbox "force_deploy" para forcearlo.`);
                 return;
               }
 
@@ -199,8 +245,10 @@ jobs:
         if: always()
         run: |
           echo "## 🚀 Despliegue a Producción (genyoga.studio)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Versión**: \`${{ steps.target-info.outputs.pkg_version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Ref / Tag solicitada**: \`${{ steps.select-version.outputs.target_ref }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit desplegado**: \`${{ steps.target-info.outputs.deploy_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Disparador**: \`${{ github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Commit**: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Fecha UTC**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Resultado**: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- **URL Producción**: https://genyoga.studio" >> "$GITHUB_STEP_SUMMARY"

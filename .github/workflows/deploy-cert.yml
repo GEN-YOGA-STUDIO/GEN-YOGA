@@ -1,12 +1,18 @@
 name: Deploy Cert
 
-# Entorno de certificación: cada push a main publica aquí primero.
-# Producción NO se toca con este workflow (para eso está npm run publicar).
+# Entorno de certificación: cada push a main publica aquí primero,
+# o mediante workflow_dispatch seleccionando una versión/rama concreta.
+# Producción NO se toca con este workflow (para eso está npm run publicar o deploy-pages.yml).
 
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión, tag o ref a desplegar en Certificación (ej: v18.1-baseline, feature/v18.2-taller-titulo-libre, main)'
+        required: false
+        default: 'main'
 
 permissions:
   contents: read
@@ -24,6 +30,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version || github.ref }}
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -55,6 +64,7 @@ jobs:
           CERT_SUPABASE_URL: ${{ secrets.CERT_SUPABASE_URL }}
           CERT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.CERT_SUPABASE_PUBLISHABLE_KEY }}
           CERT_ALLOW_PRODUCTION_DB: "1"
+          CERT_ALLOW_LIVE_PAYMENTS: "0"
         run: node scripts/build-cert-web.mjs _cert
 
       - name: Checkout cert repo (GEN-YOGA-CERT)
