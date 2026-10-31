@@ -2933,6 +2933,78 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnEs) btnEs.addEventListener('click', () => setLanguage('es'));
     if (btnEn) btnEn.addEventListener('click', () => setLanguage('en'));
     
+
+// --- Banner de Cookies (AEPD / RGPD / LSSICE) ---
+function initCookieConsentBanner() {
+    try {
+        const isNative = !!(window.Capacitor?.isNativePlatform && window.Capacitor.isNativePlatform());
+        if (isNative) return;
+
+        const consent = localStorage.getItem('gy_cookie_consent');
+        if (consent) return;
+
+        if (document.getElementById('cookie-consent-banner')) return;
+
+        const banner = document.createElement('div');
+        banner.id = 'cookie-consent-banner';
+        banner.setAttribute('role', 'region');
+        banner.setAttribute('aria-label', 'Consentimiento de cookies');
+        banner.style.position = 'fixed';
+        banner.style.bottom = '0';
+        banner.style.left = '0';
+        banner.style.right = '0';
+        banner.style.zIndex = '9999';
+        banner.style.backgroundColor = '#2c221e';
+        banner.style.color = '#f8f6f2';
+        banner.style.borderTop = '2px solid #ab593d';
+        banner.style.boxShadow = '0 -4px 20px rgba(0,0,0,0.35)';
+        banner.style.padding = '16px 20px';
+        banner.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+        const bannerText = typeof t === 'function' ? t('cookie_banner_text') : 'Utilizamos cookies propias y de terceros con fines técnicos, analíticos y de seguridad conforme a nuestra <a href="politica-privacidad.html" style="color:#e06b53; text-decoration:underline; font-weight:600;">Política de Privacidad</a> y <a href="aviso-legal.html" style="color:#e06b53; text-decoration:underline; font-weight:600;">Aviso Legal</a>. Puedes aceptar todas las cookies o rechazar las no necesarias.';
+        const rejectText = typeof t === 'function' ? t('cookie_reject') : 'Rechazar no necesarias';
+        const acceptText = typeof t === 'function' ? t('cookie_accept') : 'Aceptar todas';
+
+        banner.innerHTML = `
+            <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: space-between;">
+                <div id="cookie-banner-text-content" style="font-size: 13px; line-height: 1.5; color: #f8f6f2; flex: 1;" data-i18n="cookie_banner_text">
+                    ${bannerText}
+                </div>
+                <div style="display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; width: 100%;">
+                    <button id="cookie-reject-all" type="button" style="cursor: pointer; background: transparent; border: 1px solid #f8f6f2; color: #f8f6f2; padding: 8px 16px; border-radius: 9999px; font-size: 12px; font-weight: 600; transition: all 0.2s;" data-i18n="cookie_reject">
+                        ${rejectText}
+                    </button>
+                    <button id="cookie-accept-all" type="button" style="cursor: pointer; background: #ab593d; border: 1px solid #ab593d; color: #ffffff; padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 8px rgba(171, 89, 61, 0.4);" data-i18n="cookie_accept">
+                        ${acceptText}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(banner);
+
+        const acceptBtn = document.getElementById('cookie-accept-all');
+        const rejectBtn = document.getElementById('cookie-reject-all');
+
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', () => {
+                try { localStorage.setItem('gy_cookie_consent', JSON.stringify({ choice: 'all', timestamp: new Date().toISOString() })); } catch (e) {}
+                banner.remove();
+            });
+        }
+
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', () => {
+                try { localStorage.setItem('gy_cookie_consent', JSON.stringify({ choice: 'necessary', timestamp: new Date().toISOString() })); } catch (e) {}
+                banner.remove();
+            });
+        }
+    } catch (err) {
+        console.warn('Cookie consent init error:', err);
+    }
+}
+
     // Set initial states
     setLanguage(currentLang);
+    initCookieConsentBanner();
 });
