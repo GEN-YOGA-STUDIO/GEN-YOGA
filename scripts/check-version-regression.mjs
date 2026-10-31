@@ -233,13 +233,14 @@ const runtimeSelectors = [
   ['maestros.html', '#maestros-grid-section'],
   ['profile.html', '#login-email'],
   ['politica-privacidad.html', '#privacy-main-title'],
+  ['aviso-legal.html', '#legal-main-title'],
   ['success.html', '#countdown'],
   ['cancel.html', '#countdown-dynamic'],
 ];
 
 const pages = [
   'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
-  'profile.html', 'politica-privacidad.html', 'success.html', 'cancel.html',
+  'profile.html', 'politica-privacidad.html', 'aviso-legal.html', 'success.html', 'cancel.html',
 ];
 const browserJs = [
   'capacitor-bridge.js', 'i18n.js', 'public-calendar.js',

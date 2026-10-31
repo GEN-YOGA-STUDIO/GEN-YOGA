@@ -29,10 +29,10 @@ check('package.json raíz tiene versión semver', /^\d+\.\d+\.\d+$/.test(full), 
 
 const pages = [
   '404.html', 'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
-  'profile.html', 'politica-privacidad.html', 'success.html', 'cancel.html',
+  'profile.html', 'politica-privacidad.html', 'aviso-legal.html', 'success.html', 'cancel.html',
 ];
 
-console.log('\n--- 2. Versión visual coherente en las 9 páginas ---');
+console.log(`\n--- 2. Versión visual coherente en las ${pages.length} páginas ---`);
 for (const page of pages) {
   const source = await read(page);
   const pinned = [...source.matchAll(/\?v=(\d+\.\d+)/g)].map((m) => m[1]);

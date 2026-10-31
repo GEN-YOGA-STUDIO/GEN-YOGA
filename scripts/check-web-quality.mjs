@@ -6,6 +6,7 @@ import { Script } from 'node:vm';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const expectedPages = [
   '404.html',
+  'aviso-legal.html',
   'cancel.html',
   'clases.html',
   'index.html',

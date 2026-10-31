@@ -28,7 +28,7 @@ const exists = async (abs) => {
 // Ficheros web que deben ser idénticos entre la raíz y cada bundle móvil.
 const tracked = [
   '404.html', 'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
-  'profile.html', 'politica-privacidad.html', 'success.html', 'cancel.html',
+  'profile.html', 'politica-privacidad.html', 'aviso-legal.html', 'success.html', 'cancel.html',
   'capacitor-bridge.js', 'i18n.js', 'public-calendar.js', 'public-calendar.css',
   'teacher-profiles.js', 'facilities-carousel.js', 'marketing-report.js', 'tailwind-compiled.css',
   'favicon.ico', 'manifest.json',

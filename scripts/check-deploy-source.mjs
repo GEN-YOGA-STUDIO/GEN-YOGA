@@ -29,7 +29,7 @@ const exists = async (abs) => {
 };
 
 const expectedPages = [
-  '404.html', 'cancel.html', 'clases.html', 'index.html', 'maestros.html',
+  '404.html', 'aviso-legal.html', 'cancel.html', 'clases.html', 'index.html', 'maestros.html',
   'politica-privacidad.html', 'profile.html', 'success.html', 'tarifas.html',
 ];
 
@@ -54,7 +54,7 @@ async function checkSource(label, base) {
   const abs = path.join(root, base);
   const html = (await readdir(abs)).filter((n) => n.toLowerCase().endsWith('.html')).sort();
   const missingPages = expectedPages.filter((p) => !html.includes(p));
-  check(`${label}: 9 páginas HTML`, missingPages.length === 0, `faltan: ${missingPages.join(', ')}`);
+  check(`${label}: ${expectedPages.length} páginas HTML`, missingPages.length === 0, `faltan: ${missingPages.join(', ')}`);
   const js = (await readdir(abs)).filter((n) => n.toLowerCase().endsWith('.js'));
   check(`${label}: JS presente (bridge/i18n)`, js.includes('capacitor-bridge.js') && js.includes('i18n.js'), `vistos: ${js.join(', ') || 'ninguno'}`);
   const css = (await readdir(abs)).filter((n) => n.toLowerCase().endsWith('.css'));

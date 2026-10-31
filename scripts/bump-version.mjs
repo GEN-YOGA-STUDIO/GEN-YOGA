@@ -71,6 +71,7 @@ const files = [
   'maestros.html',
   'profile.html',
   'politica-privacidad.html',
+  'aviso-legal.html',
   'success.html',
   'cancel.html',
   'supabase/functions/create-checkout-session/index.ts'

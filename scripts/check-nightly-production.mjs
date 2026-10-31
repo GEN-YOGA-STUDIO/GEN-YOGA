@@ -836,7 +836,7 @@ async function checkInternalLinks(page, pageName) {
   return page.evaluate(() => {
     const validPages = new Set([
       'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
-      'profile.html', 'politica-privacidad.html', 'success.html', 'cancel.html'
+      'profile.html', 'politica-privacidad.html', 'aviso-legal.html', 'success.html', 'cancel.html'
     ]);
     const bad = [];
     for (const a of document.querySelectorAll('a[href]')) {
@@ -1297,7 +1297,7 @@ await section('contenido', async () => {
       const privContent = await page.evaluate(() => {
         const t = (document.body.innerText || '').toLowerCase();
         return {
-          hasEmail: t.includes('hola@genyoga.studio'),
+          hasEmail: t.includes('hola@genyoga.studio') || t.includes('info@genyoga.studio'),
           hasRgpd: t.includes('rgpd') || t.includes('protección de datos'),
           hasRights: t.includes('acceder') && t.includes('rectificar') && t.includes('eliminar'),
         };

@@ -60,6 +60,7 @@ function assertSafeTarget() {
 
 const htmlFiles = [
   '404.html',
+  'aviso-legal.html',
   'cancel.html',
   'clases.html',
   'index.html',

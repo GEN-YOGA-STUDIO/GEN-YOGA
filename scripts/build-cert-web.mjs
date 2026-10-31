@@ -87,6 +87,7 @@ const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 
 const PAGINAS_ESPERADAS = [
   '404.html',
+  'aviso-legal.html',
   'cancel.html',
   'clases.html',
   'index.html',
