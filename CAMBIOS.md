@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.3.0 — 3 nov 2026 · Desarrollo
+
+- **Descripción:** Modelo mensual de 8 clases para Bono Mensual y 4 clases para Bono Inicial sin límite semanal
+- **Validación:** npm test
+- **Tag:** `v18.3`
+- **Contabilidad B:** sin importe (0)
+- **Informe:** `docs/informes/v18.3.0.md`
+
 ## v18.2.2 — 3 nov 2026 · Incidencia
 
 - **Descripción:** Carga y visualizacion de periodos de Bono Mensual e Ilimitado en modales de asignacion de alumnos
