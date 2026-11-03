@@ -416,6 +416,9 @@
                         { month: 'long', year: 'numeric', timeZone: 'UTC' }
                     );
                     successMessage.textContent = fmtTr('success_bono_month', { month: monthLabel }, 'Tu Bono Ilimitado para {month} ya está registrado. Podrás usarlo desde el día 1 hasta el último día de ese mes natural.');
+                } else if (successMessage && (data.purchaseType === 'bono_mensual' || data.purchaseType === 'bono_inicial')) {
+                    const bonoLabel = data.purchaseType === 'bono_inicial' ? 'Bono Inicial (4 clases)' : 'Bono Mensual (8 clases)';
+                    successMessage.textContent = `Tu ${bonoLabel} ya está registrado y activo en tu cuenta. ¡Ya puedes reservar tus clases!`;
                 } else if (successMessage && data.purchaseType === 'clase_suelta') {
                     successMessage.textContent = tr('success_single_class', 'Tu clase suelta ya está registrada como un bono independiente y caducará 60 días naturales después de la compra.');
                 } else if (successMessage && /^pack_(4|6|10)$/.test(data.purchaseType || '')) {
@@ -440,9 +443,9 @@
             const searchParams = new URLSearchParams(window.location.search);
             stripeSessionId = searchParams.get('session_id');
             
-            if (!stripeSessionId || !stripeSessionId.startsWith('cs_live_')) {
+            if (!stripeSessionId || (!stripeSessionId.startsWith('cs_live_') && !stripeSessionId.startsWith('cs_cert_'))) {
                 mostrarErrorVerificacion(
-                    tr('success_error_invalid_session', 'El enlace no contiene una sesión de pago LIVE válida. No se ha confirmado ninguna compra.'),
+                    tr('success_error_invalid_session', 'El enlace no contiene una sesión de pago válida. No se ha confirmado ninguna compra.'),
                     false
                 );
                 return;
@@ -479,7 +482,7 @@
         }
 
         async function reintentarVerificacion() {
-            if (!stripeSessionId || !stripeSessionId.startsWith('cs_live_')) return;
+            if (!stripeSessionId || (!stripeSessionId.startsWith('cs_live_') && !stripeSessionId.startsWith('cs_cert_'))) return;
             if (window.__gyVerifyBusy) return;
             window.__gyVerifyBusy = true;
             document.getElementById('verification-error').classList.add('hidden');

@@ -165,13 +165,35 @@ for (const file of htmls) {
     }
   }
 
+  // Ajustes de compatibilidad de certificación para el flujo de pago y verificación
+  if (file === 'success.html') {
+    out = out.replaceAll(
+      "(!stripeSessionId.startsWith('cs_live_') && !stripeSessionId.startsWith('cs_cert_'))",
+      "(!stripeSessionId.startsWith('cs_live_') && !stripeSessionId.startsWith('cs_cert_') && !stripeSessionId.startsWith('cs_test_'))"
+    );
+  }
+  if (file === 'profile.html') {
+    out = out.replaceAll(
+      "paymentSessionId.startsWith('cs_live_')",
+      "(paymentSessionId.startsWith('cs_live_') || paymentSessionId.startsWith('cs_cert_') || paymentSessionId.startsWith('cs_test_'))"
+    );
+  }
+  out = out.replaceAll(
+    "if (parsed.hostname !== 'checkout.stripe.com') throw new Error('Dominio no permitido.');",
+    "if (parsed.hostname !== 'checkout.stripe.com' && !parsed.hostname.includes('github.io') && parsed.hostname !== window.location.hostname) throw new Error('Dominio no permitido.');"
+  );
+  out = out.replaceAll(
+    "if (parsed.protocol !== 'https:' || parsed.hostname !== 'checkout.stripe.com') {",
+    "if ((parsed.protocol !== 'https:' && parsed.protocol !== 'http:') || (parsed.hostname !== 'checkout.stripe.com' && !parsed.hostname.includes('github.io') && parsed.hostname !== window.location.hostname)) {"
+  );
+
   // Banner visible de entorno de pruebas. Es fijo para permanecer visible,
   // pero el body reserva su altura (34 px escritorio / 48 px móvil) para no
   // tapar el marquee, el botón INICIO ni los títulos. En móvil el texto puede
   // ocupar dos líneas; el padding se dimensiona para ambas.
   const textoBanner = pagosLive
     ? 'CERT · ENTORNO DE PRUEBAS · PAGOS LIVE HABILITADOS · MISMA BD QUE PRODUCCIÓN'
-    : 'CERT · ENTORNO DE PRUEBAS · PAGOS DESACTIVADOS · MISMA BD QUE PRODUCCIÓN';
+    : 'CERT · ENTORNO DE PRUEBAS · SIMULACIÓN DE PAGOS CON TARJETA ACTIVA (SIN CARGO REAL) · MISMA BD QUE PRODUCCIÓN';
   const banner = `<style id="gy-cert-banner-style">
   #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; pointer-events:none; }
   body { padding-top:34px !important; }
@@ -183,33 +205,337 @@ for (const file of htmls) {
     out = out.replace(/(<body[^>]*>)/i, `$1\n  ${banner}`);
   }
 
-  // Guard de pagos: el cert comparte la BD de producción. Sin un backend de
-  // Stripe TEST aislado, cualquier checkout acabaría en un cargo real. Se
-  // intercepta la llamada a la Edge Function antes de que salga del navegador.
+  // Simulador de pagos de certificación: permite probar el flujo completo con
+  // tarjeta simulada, retorno a success.html y confirmación de la compra sin
+  // conectar a Stripe en producción ni requerir tarjeta real.
   if (!pagosLive) {
-    const guard = `<script id="gy-cert-payment-guard">
+    const simulator = `<script id="gy-cert-payment-simulator">
 (function () {
-  window.__GY_CERT_PAYMENTS_DISABLED__ = true;
+  window.__GY_CERT_PAYMENTS_SIMULATOR__ = true;
   var originalFetch = window.fetch;
   if (typeof originalFetch !== 'function') return;
+
+  var CATALOG_MAP = {
+    'bono_mensual_65': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual' },
+    'bono_mensual': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual' },
+    'bono_inicial_40': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial' },
+    'bono_inicial': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial' },
+    'bono_ilimitado': { title: 'Bono Ilimitado', price: '80,00 €', type: 'bono_ilimitado' },
+    'pack_4': { title: 'Pack de 4 Clases', price: '48,00 €', type: 'pack_4' },
+    'pack_6': { title: 'Pack de 6 Clases', price: '65,00 €', type: 'pack_6' },
+    'pack_10': { title: 'Pack de 10 Clases', price: '95,00 €', type: 'pack_10' },
+    'clase_suelta': { title: '1 Clase Suelta de Yoga', price: '14,00 €', type: 'clase_suelta' },
+    'clase_especial': { title: 'Clase Especial: Flow & Meditación', price: '18,00 €', type: 'clase_especial' },
+    'taller_intro_power_vinyasa': { title: 'Taller: Intro Power Vinyasa', price: '25,00 €', type: 'taller_intro_power_vinyasa' },
+    'miriam_psico_individual_1a': { title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: '60,00 €', type: 'miriam_psico_individual_1a' },
+    'miriam_psico_individual_sig': { title: 'Acompañamiento psicoterapéutico (siguientes)', price: '55,00 €', type: 'miriam_psico_individual_sig' },
+    'miriam_psico_pareja_1a': { title: 'Terapia de pareja (1ª sesión)', price: '80,00 €', type: 'miriam_psico_pareja_1a' },
+    'miriam_psico_pareja_sig': { title: 'Terapia de pareja (siguientes)', price: '75,00 €', type: 'miriam_psico_pareja_sig' },
+    'miriam_grupo_autoayuda': { title: 'Grupo de Autoayuda con Miriam', price: '25,00 €', type: 'miriam_grupo_autoayuda' },
+    'miriam_grupo_terapeutico': { title: 'Grupo Terapéutico con Miriam', price: '35,00 €', type: 'miriam_grupo_terapeutico' },
+    'prod_VDmmlmsGGhMebt': { title: 'Sesión Grupal con Miriam', price: '30,00 €', type: 'prod_VDmmlmsGGhMebt' },
+    'silvia_ayurveda_1a': { title: 'Consulta de Ayurveda (1ª sesión)', price: '65,00 €', type: 'silvia_ayurveda_1a' },
+    'silvia_ayurveda_sig': { title: 'Consulta de Ayurveda (seguimiento)', price: '50,00 €', type: 'silvia_ayurveda_sig' },
+    'isabel_pni_1a': { title: 'Consulta de PNI (1ª sesión)', price: '80,00 €', type: 'isabel_pni_1a' },
+    'isabel_pni_sig': { title: 'Consulta de PNI (seguimiento)', price: '60,00 €', type: 'isabel_pni_sig' }
+  };
+
+  function getProductInfo(lookupKey, membershipMonth) {
+    var raw = String(lookupKey || '').toLowerCase();
+    var found = CATALOG_MAP[raw];
+    if (!found) {
+      if (raw.indexOf('mensual') !== -1) found = CATALOG_MAP['bono_mensual'];
+      else if (raw.indexOf('inicial') !== -1) found = CATALOG_MAP['bono_inicial'];
+      else if (raw.indexOf('ilimitado') !== -1) found = CATALOG_MAP['bono_ilimitado'];
+      else if (raw.indexOf('pack_4') !== -1) found = CATALOG_MAP['pack_4'];
+      else if (raw.indexOf('pack_6') !== -1) found = CATALOG_MAP['pack_6'];
+      else if (raw.indexOf('pack_10') !== -1) found = CATALOG_MAP['pack_10'];
+      else if (raw.indexOf('suelta') !== -1) found = CATALOG_MAP['clase_suelta'];
+    }
+    if (!found) {
+      found = { title: lookupKey || 'Producto GEN Yoga', price: '-- €', type: lookupKey || 'clase_suelta' };
+    }
+    var title = found.title;
+    if (found.type === 'bono_ilimitado' && membershipMonth) {
+      title += ' (' + membershipMonth + ')';
+    }
+    return { title: title, price: found.price, type: found.type };
+  }
+
+  function injectModalStyles() {
+    if (document.getElementById('gy-cert-sim-styles')) return;
+    var style = document.createElement('style');
+    style.id = 'gy-cert-sim-styles';
+    style.textContent = [
+      '#gy-cert-modal-overlay { position:fixed; inset:0; z-index:999999; background:rgba(38,22,12,0.82); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:16px; font-family:"Outfit",system-ui,sans-serif; color:#26160c; animation:gyFadeIn .2s ease-out; }',
+      '@keyframes gyFadeIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }',
+      '.gy-sim-card { background:#fff; border-radius:24px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,.45); border:1px solid #ebdccb; overflow:hidden; }',
+      '.gy-sim-header { background:linear-gradient(135deg,#26160c 0%,#4a2818 100%); color:#f8f6f2; padding:18px 22px; position:relative; }',
+      '.gy-sim-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fbd38d; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; margin-bottom:6px; }',
+      '.gy-sim-title { font-family:"Playfair Display",Georgia,serif; font-size:19px; font-weight:700; margin:0; color:#f8f6f2; }',
+      '.gy-sim-subtitle { font-size:11px; color:rgba(248,246,242,.75); margin-top:2px; }',
+      '.gy-sim-body { padding:20px 22px; display:flex; flex-direction:column; gap:14px; }',
+      '.gy-sim-item { background:#faf6f0; border:1px solid #ebdccb; border-radius:14px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }',
+      '.gy-sim-item-name { font-size:13px; font-weight:700; color:#26160c; }',
+      '.gy-sim-item-user { font-size:11px; color:rgba(38,22,12,.6); margin-top:2px; }',
+      '.gy-sim-item-price { font-size:19px; font-weight:900; color:#956857; font-family:"Playfair Display",Georgia,serif; }',
+      '.gy-sim-card-box { background:#fcfbf9; border:1.5px solid #dcd3c7; border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; }',
+      '.gy-sim-card-header { display:flex; justify-content:space-between; align-items:center; font-size:10px; font-weight:700; color:rgba(38,22,12,.55); text-transform:uppercase; letter-spacing:.05em; }',
+      '.gy-sim-card-num { font-family:monospace; font-size:14px; font-weight:600; color:#26160c; letter-spacing:.08em; }',
+      '.gy-sim-card-row { display:flex; justify-content:space-between; font-size:11px; color:rgba(38,22,12,.7); font-family:monospace; }',
+      '.gy-sim-info { background:#eef7ee; border:1px solid #c3e6cb; border-radius:12px; padding:9px 12px; font-size:11px; color:#1e6331; line-height:1.4; display:flex; gap:8px; align-items:center; }',
+      '.gy-sim-actions { display:flex; flex-direction:column; gap:8px; margin-top:4px; }',
+      '.gy-sim-btn-pay { background:#956857; color:#fff; border:none; border-radius:12px; padding:13px 18px; font-size:13px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; box-shadow:0 4px 12px rgba(149,104,87,.35); transition:all .15s; display:flex; align-items:center; justify-content:center; gap:8px; }',
+      '.gy-sim-btn-pay:hover { background:#26160c; }',
+      '.gy-sim-btn-pay:disabled { opacity:.65; cursor:not-allowed; }',
+      '.gy-sim-btn-cancel { background:transparent; border:1px solid #dcd3c7; border-radius:10px; padding:9px 14px; font-size:11px; font-weight:700; color:rgba(38,22,12,.7); text-transform:uppercase; cursor:pointer; }',
+      '.gy-sim-btn-cancel:hover { background:#faf6f0; color:#26160c; }',
+      '.gy-sim-spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:gySpin .6s linear infinite; display:inline-block; }',
+      '@keyframes gySpin { to{transform:rotate(360deg)} }'
+    ].join('\\n');
+    document.head.appendChild(style);
+  }
+
+  function mostrarModalSimulacionPago(checkoutPayload) {
+    injectModalStyles();
+    if (window.Swal && typeof window.Swal.close === 'function') {
+      window.Swal.close();
+    }
+
+    var lookupKey = checkoutPayload.lookup_key || '';
+    var userId = checkoutPayload.user_id || 'guest';
+    var membershipMonth = checkoutPayload.membership_month || '';
+    var targetClassId = checkoutPayload.target_class_id || null;
+    var guestName = checkoutPayload.guest_name || '';
+    var fromOrigin = checkoutPayload.from || 'tarifas';
+    var info = getProductInfo(lookupKey, membershipMonth);
+
+    var existingOverlay = document.getElementById('gy-cert-modal-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'gy-cert-modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+
+    var userDesc = (userId === 'guest')
+      ? ('Invitado' + (guestName ? (': ' + guestName) : ''))
+      : 'Usuario registrado';
+
+    overlay.innerHTML = [
+      '<div class="gy-sim-card">',
+      '  <div class="gy-sim-header">',
+      '    <div class="gy-sim-badge">🧪 Certificación · Pasarela Simulada</div>',
+      '    <h2 class="gy-sim-title">Comprobación de Pago</h2>',
+      '    <div class="gy-sim-subtitle">Prueba del flujo de compra sin cobro real ni conexión a Stripe LIVE</div>',
+      '  </div>',
+      '  <div class="gy-sim-body">',
+      '    <div class="gy-sim-item">',
+      '      <div>',
+      '        <div class="gy-sim-item-name">' + info.title + '</div>',
+      '        <div class="gy-sim-item-user">' + userDesc + '</div>',
+      '      </div>',
+      '      <div class="gy-sim-item-price">' + info.price + '</div>',
+      '    </div>',
+      '    <div class="gy-sim-card-box">',
+      '      <div class="gy-sim-card-header">',
+      '        <span>Tarjeta de prueba</span>',
+      '        <span>VISA / MC TEST</span>',
+      '      </div>',
+      '      <div class="gy-sim-card-num">•••• •••• •••• 4242</div>',
+      '      <div class="gy-sim-card-row">',
+      '        <span>Caduca: 12/28</span>',
+      '        <span>CVC: 123</span>',
+      '        <span>Titular: ' + (guestName || 'Usuario CERT') + '</span>',
+      '      </div>',
+      '    </div>',
+      '    <div class="gy-sim-info">',
+      '      <span>✓</span>',
+      '      <span>Al confirmar, se simulará el pago bancario y se verificará el retorno y consolidación en <strong>success.html</strong>.</span>',
+      '    </div>',
+      '    <div class="gy-sim-actions">',
+      '      <button id="gy-sim-btn-submit" type="button" class="gy-sim-btn-pay">',
+      '        💳 Pagar ' + info.price + ' (Simular Éxito)',
+      '      </button>',
+      '      <button id="gy-sim-btn-abandon" type="button" class="gy-sim-btn-cancel">',
+      '        ✕ Simular Abandono (Ir a Cancelación)',
+      '      </button>',
+      '      <button id="gy-sim-btn-close" type="button" style="background:transparent;border:none;font-size:11px;color:rgba(38,22,12,.4);cursor:pointer;padding:4px;">',
+      '        Cerrar modal',
+      '      </button>',
+      '    </div>',
+      '  </div>',
+      '</div>'
+    ].join('\\n');
+
+    document.body.appendChild(overlay);
+
+    var submitBtn = document.getElementById('gy-sim-btn-submit');
+    var abandonBtn = document.getElementById('gy-sim-btn-abandon');
+    var closeBtn = document.getElementById('gy-sim-btn-close');
+
+    submitBtn.addEventListener('click', function () {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="gy-sim-spinner"></span> Autorizando pago simulado...';
+      abandonBtn.disabled = true;
+
+      var simSessionId = 'cs_cert_sim_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+      var sessionPayload = {
+        sessionId: simSessionId,
+        lookupKey: lookupKey,
+        purchaseType: info.type,
+        userId: userId,
+        membershipMonth: membershipMonth,
+        targetClassId: targetClassId,
+        guestName: guestName,
+        guestEmail: checkoutPayload.guest_email || 'test-cert@genyoga.studio',
+        guestPhone: checkoutPayload.guest_phone || '600123456',
+        from: fromOrigin,
+        price: info.price,
+        title: info.title,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        localStorage.setItem('gy_cert_session_' + simSessionId, JSON.stringify(sessionPayload));
+        sessionStorage.setItem('gy_cert_session_' + simSessionId, JSON.stringify(sessionPayload));
+        localStorage.setItem('gy_cert_last_session', simSessionId);
+        if (targetClassId) {
+          localStorage.setItem('pending_booking_clase_id', String(targetClassId));
+        }
+      } catch (err) {
+        console.warn('[cert-simulator] Storage error:', err);
+      }
+
+      setTimeout(function () {
+        window.location.assign('success.html?session_id=' + encodeURIComponent(simSessionId));
+      }, 700);
+    });
+
+    abandonBtn.addEventListener('click', function () {
+      overlay.remove();
+      window.location.assign('cancel.html?from=' + encodeURIComponent(fromOrigin));
+    });
+
+    closeBtn.addEventListener('click', function () {
+      overlay.remove();
+    });
+  }
+
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : ((input && input.url) || '');
+
+    // 1) Interceptar creación de sesión de checkout
     if (url.indexOf('/functions/v1/create-checkout-session') !== -1) {
-      var message = 'Entorno de certificación: los pagos están desactivados. No se ha realizado ningún cargo.';
-      console.warn('[cert] Checkout bloqueado:', url);
-      if (window.Swal && typeof window.Swal.fire === 'function') {
-        window.Swal.fire({ icon: 'info', title: 'Pagos desactivados en certificación', text: message, confirmButtonColor: '#956857' });
-      } else {
-        window.alert(message);
-      }
-      return Promise.reject(new Error(message));
+      console.log('[cert-simulator] Interceptada llamada a create-checkout-session');
+      var body = {};
+      try {
+        if (init && init.body) {
+          body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+        }
+      } catch (_) {}
+
+      mostrarModalSimulacionPago(body);
+      return new Promise(function () {});
     }
+
+    // 2) Interceptar consulta y verificación de sesión en success.html
+    if (url.indexOf('/functions/v1/get-checkout-session') !== -1) {
+      var getBody = {};
+      try {
+        if (init && init.body) {
+          getBody = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+        }
+      } catch (_) {}
+
+      var sessionId = String(getBody.session_id || '').trim();
+      if (sessionId.indexOf('cs_cert_') === 0 || sessionId.indexOf('cs_test_') === 0) {
+        console.log('[cert-simulator] Resolviendo verificación simulada para:', sessionId);
+        var stored = null;
+        try {
+          var raw = localStorage.getItem('gy_cert_session_' + sessionId) ||
+                    sessionStorage.getItem('gy_cert_session_' + sessionId) ||
+                    localStorage.getItem('gy_cert_session_' + localStorage.getItem('gy_cert_last_session'));
+          if (raw) stored = JSON.parse(raw);
+        } catch (_) {}
+
+        var info = getProductInfo(stored && stored.lookupKey, stored && stored.membershipMonth);
+        var isGuest = !stored || stored.userId === 'guest';
+        var pType = (stored && stored.purchaseType) || info.type || 'clase_suelta';
+        var isConsultation = /^(?:miriam_psico_|miriam_grupo_|prod_VDmmlmsGGhMebt|silvia_ayurveda_|isabel_pni_)/.test(pType);
+        var isWorkshop = /^(?:clase_especial|taller_intro_power_vinyasa)/.test(pType);
+
+        var rawName = (stored && stored.guestName) || 'Invitado CERT';
+        var nameParts = rawName.trim().split(/\\s+/);
+
+        var simResponse = {
+          isGuest: isGuest,
+          purchaseIsGuest: isGuest,
+          isGuestConsultation: isConsultation,
+          isGuestWorkshop: isWorkshop,
+          purchaseType: pType,
+          membershipMonth: (stored && stored.membershipMonth) || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0')),
+          claseId: (stored && stored.targetClassId) || null,
+          email: (stored && stored.guestEmail) || 'tester-cert@genyoga.studio',
+          phone: (stored && stored.guestPhone) || '600123456',
+          nombre: nameParts[0] || 'Invitado',
+          apellidos: nameParts.slice(1).join(' ') || 'CERT',
+          alreadyRedeemed: false,
+          paymentStatus: 'paid'
+        };
+
+        return Promise.resolve(new Response(JSON.stringify(simResponse), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      }
+    }
+
+    // 3) Interceptar reserva de clase de invitado tras compra simulada
+    if (url.indexOf('/functions/v1/book-guest-class') !== -1) {
+      var bookBody = {};
+      try {
+        if (init && init.body) {
+          bookBody = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+        }
+      } catch (_) {}
+
+      var bSessionId = String(bookBody.session_id || '').trim();
+      if (bSessionId.indexOf('cs_cert_') === 0 || bSessionId.indexOf('cs_test_') === 0) {
+        console.log('[cert-simulator] Confirmando reserva de invitado simulada:', bookBody);
+        return Promise.resolve(new Response(JSON.stringify({
+          success: true,
+          message: 'Plaza reservada con éxito en modo certificación'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      }
+    }
+
+    // 4) Interceptar acceso al portal de facturación en certificación
+    if (url.indexOf('/functions/v1/create-portal-session') !== -1) {
+      var portalBody = {};
+      try {
+        if (init && init.body) portalBody = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+      } catch (_) {}
+      if (String(portalBody.session_id || '').indexOf('cs_cert_') === 0) {
+        var msg = 'En certificación el portal de facturación de Stripe está simulado. En producción conecta con el Customer Portal de Stripe para gestionar facturas y suscripciones.';
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+          window.Swal.fire({ icon: 'info', title: 'Portal simulado en CERT', text: msg, confirmButtonColor: '#956857' });
+        } else {
+          window.alert(msg);
+        }
+        return Promise.reject(new Error(msg));
+      }
+    }
+
     return originalFetch.apply(this, arguments);
   };
 })();
 </script>`;
-    if (!out.includes('gy-cert-payment-guard')) {
-      out = out.replace(/(<\/head>)/i, `  ${guard}\n  $1`);
+    if (!out.includes('gy-cert-payment-simulator')) {
+      out = out.replace(/(<\/head>)/i, `  ${simulator}\n  $1`);
     }
   }
   await writeFile(path.join(destino, file), out, 'utf8');
@@ -248,11 +574,11 @@ await writeFile(
       entorno: 'certificacion',
       version: pkg.version,
       supabase: urlCert.replace('https://', ''),
-      pagos: pagosLive ? 'live-habilitados' : 'desactivados',
+      pagos: pagosLive ? 'live-habilitados' : 'simulacion-tarjeta-activa',
       construido: new Date().toISOString(),
       aviso: pagosLive
         ? 'Entorno de pruebas con pagos LIVE habilitados explícitamente. No usar con datos reales.'
-        : 'Entorno de pruebas. Pagos desactivados en el navegador y datos compartidos con producción.',
+        : 'Entorno de pruebas con pasarela de pagos simulada. Permite validar compras con tarjeta sin cargos reales ni conexión a Stripe.',
     },
     null,
     2,

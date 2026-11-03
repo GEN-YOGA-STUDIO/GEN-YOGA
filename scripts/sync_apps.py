@@ -33,6 +33,8 @@ EXCLUDED_DIRS = {
     'vibe_images',
     # Cuarentena de restos/obsoletos: nunca debe entrar en los bundles.
     '_legacy',
+    # Reportes y capturas de pruebas nocturnas
+    'nightly-reports',
 }
 EXCLUDED_EXTS = {
     '.aab', '.apk', '.zip', '.rar', '.p8', '.keystore', '.jks', '.log',
