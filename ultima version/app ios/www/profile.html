@@ -6669,16 +6669,29 @@
                 console.warn('Error al cargar periodos mensuales para popup de bonos:', e);
             }
 
+            // Periodos ilimitados activos
+            let periodosIlimitadosAlumno = [];
+            try {
+                const { data: uData } = await client.from('unlimited_membership_periods')
+                    .select('id, membership_month, starts_at, ends_at')
+                    .eq('user_id', userId)
+                    .gte('ends_at', new Date().toISOString())
+                    .order('membership_month', { ascending: true });
+                if (uData && uData.length > 0) periodosIlimitadosAlumno = uData;
+            } catch (e) {
+                console.warn('Error al cargar periodos ilimitados para popup de bonos:', e);
+            }
+
             const nombre = `${u.nombre || ''} ${u.apellidos || ''}`.trim() || u.email || 'Alumno';
             const bonos = toSafeNumber(u.bonos);
             const compania = toSafeNumber(u.saldo_yoga_compania);
             const consultasGratis = toSafeNumber(u.saldo_consultas_gratis);
             const psico = toSafeNumber(u.saldo_psicologia);
             const nutri = toSafeNumber(u.saldo_nutricion);
-            const ilimitado = !!u.bono_mensual_activo;
+            const ilimitadoLegacy = !!u.bono_mensual_activo;
 
             let mesStr = '';
-            if (ilimitado && u.bono_mensual_inicio) {
+            if (ilimitadoLegacy && u.bono_mensual_inicio) {
                 const d = new Date(u.bono_mensual_inicio);
                 const nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
                 mesStr = ` (${nombres[d.getMonth()]} ${String(d.getFullYear()).slice(-2)})`;
@@ -6686,7 +6699,17 @@
 
             const rows = [];
 
-            if (ilimitado) {
+            if (periodosIlimitadosAlumno.length > 0) {
+                const nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                periodosIlimitadosAlumno.forEach(p => {
+                    const d = new Date(p.starts_at || (p.membership_month + '-01'));
+                    const mesLabel = isNaN(d.getTime()) ? '' : ` (${nombres[d.getMonth()]} ${String(d.getFullYear()).slice(-2)})`;
+                    rows.push(`<div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="flex items-center gap-2 text-sm"><i class="ph-bold ph-infinity text-purple-600"></i> Bono Ilimitado</span>
+                        <span class="text-sm font-bold text-purple-700">Activo${mesLabel}</span>
+                    </div>`);
+                });
+            } else if (ilimitadoLegacy) {
                 rows.push(`<div class="flex items-center justify-between py-2 border-b border-gray-100">
                     <span class="flex items-center gap-2 text-sm"><i class="ph-bold ph-infinity text-purple-600"></i> Bono Ilimitado</span>
                     <span class="text-sm font-bold text-purple-700">Activo${mesStr}</span>
@@ -28805,10 +28828,17 @@
                     const email = String(cliente?.email || '').trim();
                     const identifier = getIdentificadorPerfil(cliente);
                     const saldo = toSafeNumber(cliente?.bonos);
-                    const tieneMensual = (typeof tieneUsuarioBonoMensual === 'function' && tieneUsuarioBonoMensual(cliente)) ||
-                        (typeof tieneUsuarioBonoInicial === 'function' && tieneUsuarioBonoInicial(cliente));
+                    const tieneMensual = typeof tieneUsuarioBonoMensual === 'function' && tieneUsuarioBonoMensual(cliente);
+                    const tieneInicial = typeof tieneUsuarioBonoInicial === 'function' && tieneUsuarioBonoInicial(cliente);
                     const tieneIlimitado = typeof tieneUsuarioBonoIlimitado === 'function' ? tieneUsuarioBonoIlimitado(cliente) : Boolean(cliente?.bono_mensual_activo);
-                    const mensual = (tieneIlimitado || tieneMensual) ? 'Mensual activo' : 'Mensual inactivo';
+                    let mensual = 'Mensual inactivo';
+                    if (tieneIlimitado) {
+                        mensual = 'Ilimitado activo';
+                    } else if (tieneMensual) {
+                        mensual = 'Bono Mensual activo';
+                    } else if (tieneInicial) {
+                        mensual = 'Bono Inicial activo';
+                    }
                     const selectionText = `${label} · ${identifier}`;
                     return {
                         id,
@@ -28817,9 +28847,9 @@
                         selectionText,
                         meta: config.showYogaBalance
                             ? `${identifier} · bonos ind: ${saldo} · ${mensual}`
-                            : identifier,
+                            : `${identifier} · ${mensual}`,
                         optionId: `${idPrefix}-option-${index}`,
-                        searchText: normalizarBusquedaAlumnosAdmin(`${label} ${email} ${identifier} ${selectionText}`)
+                        searchText: normalizarBusquedaAlumnosAdmin(`${label} ${email} ${identifier} ${selectionText} ${mensual} ${saldo} ${tieneIlimitado ? 'ilimitado' : ''} ${tieneMensual ? 'mensual' : ''} ${tieneInicial ? 'inicial' : ''}`)
                     };
                 })
                 .filter(record => record.id)
@@ -29026,6 +29056,60 @@
             };
         }
 
+        async function obtenerClientesParaAsignar() {
+            const [profilesRes, monthlyRes, unlimitedRes] = await Promise.allSettled([
+                client.from('profiles')
+                    .select('id, nombre, apellidos, email, rol, bonos, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin')
+                    .order('email'),
+                client.from('monthly_membership_periods')
+                    .select('id, user_id, membership_month, starts_at, ends_at, max_classes_per_week, plan_type')
+                    .order('membership_month', { ascending: true }),
+                client.from('unlimited_membership_periods')
+                    .select('id, user_id, membership_month, starts_at, ends_at')
+                    .order('membership_month', { ascending: true })
+            ]);
+
+            let perfiles = [];
+            if (profilesRes.status === 'fulfilled' && profilesRes.value?.data) {
+                perfiles = profilesRes.value.data;
+            } else if (profilesRes.status === 'fulfilled' && profilesRes.value?.error && /bono_mensual_activo/i.test(profilesRes.value.error.message || '')) {
+                const retry = await client.from('profiles').select('id, nombre, apellidos, email, rol, bonos').order('email');
+                perfiles = retry.data || [];
+            } else if (Array.isArray(allUsersCache) && allUsersCache.length > 0) {
+                perfiles = allUsersCache;
+            }
+
+            const monthlyPeriods = (monthlyRes.status === 'fulfilled' && monthlyRes.value?.data) ? monthlyRes.value.data : [];
+            const unlimitedPeriods = (unlimitedRes.status === 'fulfilled' && unlimitedRes.value?.data) ? unlimitedRes.value.data : [];
+
+            const monthlyByUser = new Map();
+            for (const m of monthlyPeriods) {
+                if (!m.user_id) continue;
+                if (!monthlyByUser.has(m.user_id)) monthlyByUser.set(m.user_id, []);
+                monthlyByUser.get(m.user_id).push(m);
+            }
+
+            const unlimitedByUser = new Map();
+            for (const u of unlimitedPeriods) {
+                if (!u.user_id) continue;
+                if (!unlimitedByUser.has(u.user_id)) unlimitedByUser.set(u.user_id, []);
+                unlimitedByUser.get(u.user_id).push(u);
+            }
+
+            perfiles.forEach(p => {
+                const uid = String(p.id);
+                const cachedUser = Array.isArray(allUsersCache) ? allUsersCache.find(x => String(x.id) === uid) : null;
+                p.monthly_periods = monthlyByUser.get(uid) || (cachedUser && Array.isArray(cachedUser.monthly_periods) ? cachedUser.monthly_periods : []);
+                p.unlimited_periods = unlimitedByUser.get(uid) || (cachedUser && Array.isArray(cachedUser.unlimited_periods) ? cachedUser.unlimited_periods : []);
+            });
+
+            if (!Array.isArray(allUsersCache) || allUsersCache.length === 0) {
+                allUsersCache = perfiles;
+            }
+
+            return perfiles.filter(esClienteAsignable);
+        }
+
         async function abrirModalAsignarClaseYoga(claseId) {
             if (!tieneAccesoGestionAlumnos()) return;
 
@@ -29061,26 +29145,8 @@
                 return;
             }
 
-            let perfiles = [];
-            let queryRes = await client.from('profiles')
-                .select('id, nombre, apellidos, email, rol, bonos, bono_mensual_activo')
-                .order('email');
-
-            if (queryRes.error && /bono_mensual_activo/i.test(queryRes.error.message || '')) {
-                console.warn('Falta columna bono_mensual_activo en profiles. Reintentando consulta básica.');
-                queryRes = await client.from('profiles')
-                    .select('id, nombre, apellidos, email, rol, bonos')
-                    .order('email');
-            }
-
-            if (queryRes.error) {
-                Swal.fire('Error', 'No se pudieron cargar los usuarios: ' + queryRes.error.message, 'error');
-                return;
-            }
-            perfiles = queryRes.data || [];
-
-            const clientes = perfiles.filter(esClienteAsignable);
-            if (clientes.length === 0) {
+            const clientes = await obtenerClientesParaAsignar();
+            if (!clientes || clientes.length === 0) {
                 Swal.fire('Sin clientes', 'No hay clientes disponibles para asignar.', 'info');
                 return;
             }
@@ -29328,16 +29394,11 @@
                 }
             }
 
-            const { data: perfiles, error } = await client.from('profiles')
-                .select('id, nombre, apellidos, email, rol')
-                .order('email');
-
-            if (error) {
-                Swal.fire('Error', 'No se pudieron cargar los clientes.', 'error');
+            const clientes = await obtenerClientesParaAsignar();
+            if (!clientes || clientes.length === 0) {
+                Swal.fire('Sin clientes', 'No hay clientes disponibles para asignar.', 'info');
                 return;
             }
-
-            const clientes = (perfiles || []).filter(esClienteAsignable);
 
             let profesionalObj = null;
             if (!isVirtual) {
@@ -31831,17 +31892,8 @@
                 return;
             }
 
-            const { data: perfiles, error } = await client.from('profiles')
-                .select('id, nombre, apellidos, email, rol')
-                .order('email');
-
-            if (error) {
-                Swal.fire('Error', 'No se pudieron cargar los clientes.', 'error');
-                return;
-            }
-
-            const clientes = (perfiles || []).filter(esClienteAsignable);
-            if (clientes.length === 0) {
+            const clientes = await obtenerClientesParaAsignar();
+            if (!clientes || clientes.length === 0) {
                 Swal.fire('Sin clientes', 'No hay clientes disponibles para asignar.', 'info');
                 return;
             }
