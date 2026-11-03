@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.2.1 — 3 nov 2026 · Incidencia
+
+- **Descripción:** Corrección urgente de fulfillment y activación de Bono Mensual en Stripe
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.2.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.2.1.md`
+
 ## v18.2.0 — 3 nov 2026 · Desarrollo
 
 - **Descripción:** Permitir edicion libre de titulo y descripcion en creacion y edicion de talleres y eventos (ámbito: eventos)

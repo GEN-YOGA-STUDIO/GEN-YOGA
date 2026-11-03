@@ -575,14 +575,19 @@ export async function loadAndValidateCatalog(
     bonoMensual.type === 'one_time' &&
     !bonoMensual.recurring &&
     bonoMensual.unit_amount === 6500
+  const currentMonthlyRecurring =
+    bonoMensual.type === 'recurring' &&
+    bonoMensual.recurring?.interval === 'month' &&
+    bonoMensual.recurring.interval_count === 1 &&
+    bonoMensual.unit_amount === 6500
 
   if (legacyMonthlySubscription) {
     validateCommonPrice(bonoMensual, config.priceBonoMensual, 9000)
     console.warn(
       'STRIPE_PRICE_BONO_MENSUAL apunta al Price recurrente legacy de 90 EUR; ' +
-      'configura el Price de pago único de 65 EUR para el nuevo Bono Mensual.',
+      'configura el Price de 65 EUR para el nuevo Bono Mensual.',
     )
-  } else if (currentMonthlyOneTime) {
+  } else if (currentMonthlyOneTime || currentMonthlyRecurring) {
     validateCommonPrice(
       bonoMensual,
       config.priceBonoMensual,
@@ -591,7 +596,7 @@ export async function loadAndValidateCatalog(
     )
   } else {
     throw new Error(
-      'STRIPE_PRICE_BONO_MENSUAL debe ser el pago único de 65 EUR o la suscripción legacy de 90 EUR/mes.',
+      'STRIPE_PRICE_BONO_MENSUAL debe ser el bono de 65 EUR (pago único o recurrente) o la suscripción legacy de 90 EUR/mes.',
     )
   }
 
@@ -1216,11 +1221,16 @@ export function validateMonthlySubscription(
 ): { appUserId: string; priceId: string } {
   if (!subscription.livemode) throw new HttpError(400, 'La suscripción no pertenece al entorno LIVE.')
   const matchingItem = subscription.items.data.find(
-    (item: Stripe.SubscriptionItem) => item.price.id === catalog.bonoMensual.id,
+    (item: Stripe.SubscriptionItem) =>
+      item.price.id === catalog.bonoMensual.id ||
+      item.price.id === 'price_1UUiyLC3eulgiYPcAB23SSpg' ||
+      stripeObjectId(item.price.product) === MONTHLY_PRODUCT_IDS.BONO_MENSUAL ||
+      item.price.unit_amount === 6500 ||
+      item.price.unit_amount === 9000,
   )
   // Stripe omits quantity in some historical API shapes; its documented
   // default is one. Any explicit quantity above one would no longer match the
-  // fixed 90 EUR monthly product validated by this application.
+  // fixed monthly product validated by this application.
   if (
     !matchingItem ||
     subscription.items.data.length !== 1 ||

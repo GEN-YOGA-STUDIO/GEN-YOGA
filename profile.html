@@ -6656,6 +6656,19 @@
                 console.warn('Error al cargar packs para popup de bonos:', e);
             }
 
+            // v18.2: Periodos mensuales activos (Bono Mensual 2/sem y Bono Inicial 1/sem)
+            let periodosMensualesAlumno = [];
+            try {
+                const { data: mData } = await client.from('monthly_membership_periods')
+                    .select('id, plan_type, membership_month, starts_at, ends_at, max_classes_per_week')
+                    .eq('user_id', userId)
+                    .gte('ends_at', new Date().toISOString())
+                    .order('membership_month', { ascending: true });
+                if (mData && mData.length > 0) periodosMensualesAlumno = mData;
+            } catch (e) {
+                console.warn('Error al cargar periodos mensuales para popup de bonos:', e);
+            }
+
             const nombre = `${u.nombre || ''} ${u.apellidos || ''}`.trim() || u.email || 'Alumno';
             const bonos = toSafeNumber(u.bonos);
             const compania = toSafeNumber(u.saldo_yoga_compania);
@@ -6678,6 +6691,21 @@
                     <span class="flex items-center gap-2 text-sm"><i class="ph-bold ph-infinity text-purple-600"></i> Bono Ilimitado</span>
                     <span class="text-sm font-bold text-purple-700">Activo${mesStr}</span>
                 </div>`);
+            }
+
+            if (periodosMensualesAlumno.length > 0) {
+                const nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                periodosMensualesAlumno.forEach(p => {
+                    const d = new Date(p.starts_at || (p.membership_month + '-01'));
+                    const mesLabel = isNaN(d.getTime()) ? '' : ` (${nombres[d.getMonth()]} ${String(d.getFullYear()).slice(-2)})`;
+                    const planNombre = p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1
+                        ? 'Bono Inicial (1 clase/sem)'
+                        : 'Bono Mensual (2 clases/sem)';
+                    rows.push(`<div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="flex items-center gap-2 text-sm"><i class="ph-bold ph-calendar-check text-purple-600"></i> ${planNombre}</span>
+                        <span class="text-sm font-bold text-purple-700">Activo${mesLabel}</span>
+                    </div>`);
+                });
             }
 
             rows.push(`<div class="flex items-center justify-between py-2 border-b border-gray-100">
@@ -6749,7 +6777,9 @@
         function getTextoBusquedaPerfil(profile) {
             const bonosTextos = [];
             const tieneIlimitado = typeof tieneUsuarioBonoIlimitado === 'function' ? tieneUsuarioBonoIlimitado(profile) : false;
+            const tieneMensual = (typeof tieneUsuarioBonoMensual === 'function' && tieneUsuarioBonoMensual(profile)) || (typeof tieneUsuarioBonoInicial === 'function' && tieneUsuarioBonoInicial(profile));
             if (tieneIlimitado) bonosTextos.push('ilimitado vip mensual bono ilimitado');
+            if (tieneMensual) bonosTextos.push('mensual bono mensual inicial bono inicial');
             if (profile?.special_passes && profile.special_passes.some(s => toSafeNumber(s.saldo) > 0)) bonosTextos.push('especial especiales clase especial');
             if (toSafeNumber(profile?.bonos) > 0) bonosTextos.push('bono bonos suelto suelta clase suelta');
             if (toSafeNumber(profile?.saldo_clases_gratis) > 0) bonosTextos.push('bienvenida gratis');
@@ -28775,7 +28805,10 @@
                     const email = String(cliente?.email || '').trim();
                     const identifier = getIdentificadorPerfil(cliente);
                     const saldo = toSafeNumber(cliente?.bonos);
-                    const mensual = (typeof tieneUsuarioBonoIlimitado === 'function' ? tieneUsuarioBonoIlimitado(cliente) : cliente?.bono_mensual_activo) ? 'Mensual activo' : 'Mensual inactivo';
+                    const tieneMensual = (typeof tieneUsuarioBonoMensual === 'function' && tieneUsuarioBonoMensual(cliente)) ||
+                        (typeof tieneUsuarioBonoInicial === 'function' && tieneUsuarioBonoInicial(cliente));
+                    const tieneIlimitado = typeof tieneUsuarioBonoIlimitado === 'function' ? tieneUsuarioBonoIlimitado(cliente) : Boolean(cliente?.bono_mensual_activo);
+                    const mensual = (tieneIlimitado || tieneMensual) ? 'Mensual activo' : 'Mensual inactivo';
                     const selectionText = `${label} · ${identifier}`;
                     return {
                         id,

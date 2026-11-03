@@ -75,8 +75,7 @@ serve(async (req) => {
     // workshop must be recorded before success.html renders. The Checkout Session
     // remains the idempotency boundary shared with the webhook. Guest regular
     // yoga classes keep their existing redemption flow and are fulfilled on class pick.
-    const shouldFulfillOnReturn = purchase.purchaseType !== PURCHASE_TYPES.BONO_MENSUAL &&
-      (!isGuest || isGuestConsultation || isGuestWorkshop)
+    const shouldFulfillOnReturn = (!isGuest || isGuestConsultation || isGuestWorkshop)
     if (shouldFulfillOnReturn) {
       const { error: fulfillError } = await supabase.rpc('stripe_fulfill_checkout', {
         p_event_id: `checkout_return:${session.id}`,
@@ -88,7 +87,7 @@ serve(async (req) => {
         p_purchase_type: purchase.purchaseType,
         p_price_id: purchase.price.id,
         p_payment_intent_id: stripeObjectId(session.payment_intent),
-        p_subscription_id: null,
+        p_subscription_id: stripeObjectId(session.subscription),
         p_customer_id: stripeObjectId(session.customer),
         p_amount_total: session.amount_total,
         p_currency: session.currency,
