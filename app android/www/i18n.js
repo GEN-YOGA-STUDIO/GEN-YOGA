@@ -2926,9 +2926,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         langDiv.innerHTML = `
-            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">ES</button>
+            <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:4px 8px; min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1; touch-action:manipulation; -webkit-tap-highlight-color:transparent;">ES</button>
             <span style="color:rgba(248, 246, 242, 0.95); font-size:12px; pointer-events:none; user-select:none;">/</span>
-            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:${isNative ? '4px 10px' : '4px 8px'}; min-width:${isNative ? '34px' : '32px'}; min-height:${isNative ? '32px' : '24px'}; display:${isNative ? 'inline-flex' : 'inline'}; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.85; ${isNative ? 'touch-action:manipulation; -webkit-tap-highlight-color:transparent;' : ''}">EN</button>
+            <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:4px 8px; min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.85; touch-action:manipulation; -webkit-tap-highlight-color:transparent;">EN</button>
         `;
         document.body.appendChild(langDiv);
     }
@@ -2977,10 +2977,10 @@ function initCookieConsentBanner() {
                     ${bannerText}
                 </div>
                 <div style="display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; width: 100%;">
-                    <button id="cookie-reject-all" type="button" style="cursor: pointer; background: transparent; border: 1px solid #f8f6f2; color: #f8f6f2; padding: 8px 16px; border-radius: 9999px; font-size: 12px; font-weight: 600; transition: all 0.2s;" data-i18n="cookie_reject">
+                    <button id="cookie-reject-all" type="button" style="cursor: pointer; background: transparent; border: 1px solid #f8f6f2; color: #f8f6f2; padding: 10px 18px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-size: 13px; font-weight: 600; transition: all 0.2s;" data-i18n="cookie_reject">
                         ${rejectText}
                     </button>
-                    <button id="cookie-accept-all" type="button" style="cursor: pointer; background: #ab593d; border: 1px solid #ab593d; color: #ffffff; padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 8px rgba(171, 89, 61, 0.4);" data-i18n="cookie_accept">
+                    <button id="cookie-accept-all" type="button" style="cursor: pointer; background: #ab593d; border: 1px solid #ab593d; color: #ffffff; padding: 10px 20px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-size: 13px; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 8px rgba(171, 89, 61, 0.4);" data-i18n="cookie_accept">
                         ${acceptText}
                     </button>
                 </div>

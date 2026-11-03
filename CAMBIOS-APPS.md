@@ -17,6 +17,20 @@ Historial independiente de versiones de las aplicaciones nativas para **Google P
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea -->
 
+## v18.3.1 (Build 282) — 03 nov 2026 · Parche / Hotfix
+
+- **Ámbito:** Apps móviles nativas (Android e iOS) y pipelines CI/CD.
+- **Alineación de versiones App Store Connect & Google Play:**
+  - `MARKETING_VERSION` en iOS re-sincronizada a `18.3` (Build 282) superando la cota obligatoria de App Store Connect (`>17.11`).
+  - `versionCode` en Android incrementado a `282` (`versionName: "18.3"`), resolviendo la colisión de versión previa en Play Console.
+- **Correcciones en CI/CD:**
+  - Verificación estricta de subida en `deploy-ios.yml` con control de errores en `xcrun altool`.
+  - Corrección de evaluación de secreto `PLAY_SERVICE_ACCOUNT_JSON` en `deploy-android.yml`.
+  - Orden de `actions/checkout` corregido en `nightly-autofix.yml`.
+  - Manejo de banners de consentimiento y accesibilidad táctil blindados en `cert-health.yml`.
+- **Build:** #282 (`versionCode` 282 en Android, `CURRENT_PROJECT_VERSION` 282 en iOS, `MARKETING_VERSION` 18.3).
+- **Tiendas:** Compilación y despliegue a Google Play (internal) y Apple App Store Connect / TestFlight.
+
 ## v2.0.1 (Build 281) — 26 oct 2026 · Parche / Hotfix
 
 - **Ámbito:** Apps móviles independientes (Android e iOS).

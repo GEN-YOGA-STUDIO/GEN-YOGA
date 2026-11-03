@@ -1479,6 +1479,7 @@ await section('auth', async () => {
     const page = await ctx.newPage();
     activePage = page;
     const st = await gotoTracked(page, '/profile.html', 4000);
+    await dismissWelcome(page);
 
     // F1. Credenciales falsas → error elegante, sin crash.
     await page.locator('#login-email').fill('test-inexistente@genyoga.studio');
@@ -1574,6 +1575,7 @@ await section('cliente', async () => {
     let signupCalls = 0;
     await page.route('**/auth/v1/signup', (route) => { signupCalls++; route.abort(); }); // backstop: jamás crear cuentas
     const st = await gotoTracked(page, '/profile.html', 4000);
+    await dismissWelcome(page);
 
     // I1. Registro: la validación nativa bloquea sin crear cuentas (0 llamadas).
     await page.evaluate(() => toggleAuth('register'));

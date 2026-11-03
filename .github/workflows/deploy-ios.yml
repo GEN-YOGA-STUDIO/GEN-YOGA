@@ -140,11 +140,19 @@ jobs:
           IPA_FILE=$(find build/ipa -name "*.ipa" | head -n 1)
           echo "Found IPA file: $IPA_FILE"
           
-          xcrun altool --upload-app \
+          echo "Uploading $IPA_FILE to App Store Connect..."
+          UPLOAD_OUT=$(xcrun altool --upload-app \
             --type ios \
             --file "$IPA_FILE" \
             --apiKey "$KEY_ID" \
-            --apiIssuer "$ISSUER_ID"
+            --apiIssuer "$ISSUER_ID" 2>&1)
+          EXIT_CODE=$?
+          echo "$UPLOAD_OUT"
+          if [ $EXIT_CODE -ne 0 ] || echo "$UPLOAD_OUT" | grep -qi "UPLOAD FAILED\|ERROR:"; then
+            echo "❌ Falló la subida del paquete a App Store Connect."
+            exit 1
+          fi
+          echo "✅ Subida a App Store Connect completada correctamente."
 
       - name: Upload IPA Artifact
         if: always()

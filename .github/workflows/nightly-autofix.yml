@@ -65,6 +65,7 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Resolver número de issue
         id: issue
         env:
@@ -165,8 +166,6 @@ jobs:
           gh label create "autofix-intentado" --color F9D0C4 --description "Un solo intento de autofix por issue" 2>/dev/null || true
           gh issue edit "$N" --add-label "autofix-intentado"
           gh issue comment "$N" --body "🤖 Autofix en marcha: un agente OpenCode intentará corregirlo y abrirá PR si la verificación pasa. Ejecución: $RUN_URL"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        if: steps.gate.outputs.enabled == 'true'
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.gate.outputs.enabled == 'true'
         with:
