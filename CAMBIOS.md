@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.3.1 — 3 nov 2026 · Incidencia
+
+- **Descripción:** Auditoría legal RGPD y LSSICE verificada en formularios, cookies y textos legales
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.3.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.3.1.md`
+
 ## v18.3.0 — 3 nov 2026 · Desarrollo
 
 - **Descripción:** Modelo mensual de 8 clases para Bono Mensual y 4 clases para Bono Inicial sin límite semanal

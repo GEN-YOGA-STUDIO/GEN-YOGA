@@ -1278,6 +1278,14 @@
                             <label class="text-xs font-bold uppercase tracking-wider text-cocoa/60 block mb-1">Teléfono Móvil (9 dígitos)</label>
                             <input id="swal-guest-telefono" type="tel" maxlength="15" class="w-full px-3 py-2 border border-cocoa/20 rounded-xl bg-ivory text-cocoa text-sm outline-none focus:ring-2 focus:ring-olive" placeholder="Ej: 612 345 678" autocomplete="tel">
                         </div>
+                        <div class="pt-2 flex items-start gap-2 text-left">
+                            <input type="checkbox" id="swal-guest-privacy-check" required
+                                class="mt-1 w-4 h-4 text-[#ab593d] bg-white border-2 border-cocoa/30 rounded focus:ring-2 focus:ring-[#ab593d] cursor-pointer shrink-0">
+                            <label for="swal-guest-privacy-check" class="text-xs text-cocoa/80 leading-snug cursor-pointer">
+                                <span>He leído la información legal y acepto la</span>
+                                <a href="politica-privacidad.html" target="_blank" rel="noopener noreferrer" class="font-bold underline text-[#ab593d] hover:text-black">política de privacidad</a>. *
+                            </label>
+                        </div>
                     </div>
                 `,
                 showCancelButton: true,
@@ -1297,6 +1305,11 @@
                     let cleanTel = rawTel.replace(/\D/g, '');
                     if (rawTel && cleanTel.length !== 9) {
                         Swal.showValidationMessage('El teléfono móvil debe tener 9 dígitos numéricos.');
+                        return false;
+                    }
+                    const privacyCheck = document.getElementById('swal-guest-privacy-check');
+                    if (!privacyCheck || !privacyCheck.checked) {
+                        Swal.showValidationMessage('Debes leer la información legal y marcar la casilla de aceptación de la política de privacidad.');
                         return false;
                     }
                     return { nombre, apellidos, telefono: cleanTel || null };
