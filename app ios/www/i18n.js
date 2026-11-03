@@ -354,8 +354,6 @@ const translations = {
         "nav_login_short": "Iniciar Sesión",
         "nav_register_short": "Regístrate Gratis",
         "nav_perfil_subtitle": "Acceso, reservas y bonos",
-        "classes_consultas_calendar_btn": "Ver disponibilidad",
-        "calendar_mode_classes": "Clases de Yoga",
         "calendar_mode_consultations": "Consultas (Psicología / Nutrición)",
         "calendar_week_nav": "Navegación por semanas",
         "calendar_mode_filter": "Filtrar calendario",

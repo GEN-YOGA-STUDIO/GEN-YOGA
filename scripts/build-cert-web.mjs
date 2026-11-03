@@ -193,14 +193,20 @@ for (const file of htmls) {
   // ocupar dos líneas; el padding se dimensiona para ambas.
   const textoBanner = pagosLive
     ? 'CERT · ENTORNO DE PRUEBAS · PAGOS LIVE HABILITADOS · MISMA BD QUE PRODUCCIÓN'
-    : 'CERT · ENTORNO DE PRUEBAS · SIMULACIÓN DE PAGOS CON TARJETA ACTIVA (SIN CARGO REAL) · MISMA BD QUE PRODUCCIÓN';
+    : 'CERT · ENTORNO DE PRUEBAS · SIMULACIÓN DE PAGOS ACTIVA (SIN CARGO REAL) · MISMA BD QUE PRODUCCIÓN';
   const banner = `<style id="gy-cert-banner-style">
-  #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; pointer-events:none; }
+  #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; }
+  #gy-cert-banner * { pointer-events:auto; }
+  #gy-cert-reset-btn { margin-left:10px; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.32); color:#fff; border-radius:6px; padding:2px 8px; font-size:10px; font-weight:700; cursor:pointer; vertical-align:middle; transition:background .15s; }
+  #gy-cert-reset-btn:hover { background:rgba(255,255,255,0.3); }
   body { padding-top:34px !important; }
   @media (max-width:640px) { body { padding-top:48px !important; } }
   html { scroll-padding-top:44px; }
 </style>
-<div id="gy-cert-banner" role="note">${textoBanner}</div>`;
+<div id="gy-cert-banner" role="note">
+  <span>${textoBanner}</span>
+  ${!pagosLive ? '<button id="gy-cert-reset-btn" type="button" title="Restablecer bonos y compras simuladas en este navegador">🧹 Limpiar compras simuladas</button>' : ''}
+</div>`;
   if (!out.includes('gy-cert-banner')) {
     out = out.replace(/(<body[^>]*>)/i, `$1\n  ${banner}`);
   }
@@ -208,6 +214,8 @@ for (const file of htmls) {
   // Simulador de pagos de certificación: permite probar el flujo completo con
   // tarjeta simulada, retorno a success.html y confirmación de la compra sin
   // conectar a Stripe en producción ni requerir tarjeta real.
+  // IMPORTANTE: En CERT, consolida y carga en los perfiles exactamente lo comprado
+  // (Bono Mensual, Bono Inicial, Bono Ilimitado, Packs y Consultas).
   if (!pagosLive) {
     const simulator = `<script id="gy-cert-payment-simulator">
 (function () {
@@ -216,28 +224,30 @@ for (const file of htmls) {
   if (typeof originalFetch !== 'function') return;
 
   var CATALOG_MAP = {
-    'bono_mensual_65': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual' },
-    'bono_mensual': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual' },
-    'bono_inicial_40': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial' },
-    'bono_inicial': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial' },
-    'bono_ilimitado': { title: 'Bono Ilimitado', price: '80,00 €', type: 'bono_ilimitado' },
-    'pack_4': { title: 'Pack de 4 Clases', price: '48,00 €', type: 'pack_4' },
-    'pack_6': { title: 'Pack de 6 Clases', price: '65,00 €', type: 'pack_6' },
-    'pack_10': { title: 'Pack de 10 Clases', price: '95,00 €', type: 'pack_10' },
-    'clase_suelta': { title: '1 Clase Suelta de Yoga', price: '14,00 €', type: 'clase_suelta' },
-    'clase_especial': { title: 'Clase Especial: Flow & Meditación', price: '18,00 €', type: 'clase_especial' },
-    'taller_intro_power_vinyasa': { title: 'Taller: Intro Power Vinyasa', price: '25,00 €', type: 'taller_intro_power_vinyasa' },
-    'miriam_psico_individual_1a': { title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: '60,00 €', type: 'miriam_psico_individual_1a' },
-    'miriam_psico_individual_sig': { title: 'Acompañamiento psicoterapéutico (siguientes)', price: '55,00 €', type: 'miriam_psico_individual_sig' },
-    'miriam_psico_pareja_1a': { title: 'Terapia de pareja (1ª sesión)', price: '80,00 €', type: 'miriam_psico_pareja_1a' },
-    'miriam_psico_pareja_sig': { title: 'Terapia de pareja (siguientes)', price: '75,00 €', type: 'miriam_psico_pareja_sig' },
-    'miriam_grupo_autoayuda': { title: 'Grupo de Autoayuda con Miriam', price: '25,00 €', type: 'miriam_grupo_autoayuda' },
-    'miriam_grupo_terapeutico': { title: 'Grupo Terapéutico con Miriam', price: '35,00 €', type: 'miriam_grupo_terapeutico' },
-    'prod_VDmmlmsGGhMebt': { title: 'Sesión Grupal con Miriam', price: '30,00 €', type: 'prod_VDmmlmsGGhMebt' },
-    'silvia_ayurveda_1a': { title: 'Consulta de Ayurveda (1ª sesión)', price: '65,00 €', type: 'silvia_ayurveda_1a' },
-    'silvia_ayurveda_sig': { title: 'Consulta de Ayurveda (seguimiento)', price: '50,00 €', type: 'silvia_ayurveda_sig' },
-    'isabel_pni_1a': { title: 'Consulta de PNI (1ª sesión)', price: '80,00 €', type: 'isabel_pni_1a' },
-    'isabel_pni_sig': { title: 'Consulta de PNI (seguimiento)', price: '60,00 €', type: 'isabel_pni_sig' }
+    'bono_mensual_65': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
+    'bono_mensual': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
+    'bono_inicial_40': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
+    'bono_inicial': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
+    'bono_ilimitado': { title: 'Bono Ilimitado', price: '80,00 €', type: 'bono_ilimitado', isUnlimited: true },
+    'pack_4': { title: 'Pack de 4 Clases', price: '48,00 €', type: 'pack_4', credits: 4 },
+    'pack_6': { title: 'Pack de 6 Clases', price: '65,00 €', type: 'pack_6', credits: 6 },
+    'pack_10': { title: 'Pack de 10 Clases', price: '95,00 €', type: 'pack_10', credits: 10 },
+    'clase_suelta': { title: '1 Clase Suelta de Yoga', price: '14,00 €', type: 'clase_suelta', credits: 1 },
+    'clase_especial': { title: 'Clase Especial: Flow & Meditación', price: '18,00 €', type: 'clase_especial', credits: 1, isSpecial: true },
+    'taller_intro_power_vinyasa': { title: 'Taller: Intro Power Vinyasa', price: '25,00 €', type: 'taller_intro_power_vinyasa', isWorkshop: true },
+    'miriam_psico_individual_1a': { title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: '60,00 €', type: 'miriam_psico_individual_1a', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_psico_individual_sig': { title: 'Acompañamiento psicoterapéutico (siguientes)', price: '55,00 €', type: 'miriam_psico_individual_sig', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_psico_pareja_1a': { title: 'Terapia de pareja (1ª sesión)', price: '80,00 €', type: 'miriam_psico_pareja_1a', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_psico_pareja_sig': { title: 'Terapia de pareja (siguientes)', price: '75,00 €', type: 'miriam_psico_pareja_sig', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_grupo_autoayuda': { title: 'Grupo de Autoayuda con Miriam', price: '25,00 €', type: 'miriam_grupo_autoayuda', isGroup: true },
+    'miriam_grupo_terapeutico': { title: 'Grupo Terapéutico con Miriam', price: '35,00 €', type: 'miriam_grupo_terapeutico', isGroup: true },
+    'prod_VDmmlmsGGhMebt': { title: 'Sesión Grupal con Miriam', price: '30,00 €', type: 'prod_VDmmlmsGGhMebt', isGroup: true },
+    'silvia_ayurveda_1a': { title: 'Consulta de Ayurveda (1ª sesión)', price: '65,00 €', type: 'silvia_ayurveda_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'silvia_ayurveda_sig': { title: 'Consulta de Ayurveda (seguimiento)', price: '50,00 €', type: 'silvia_ayurveda_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'silvia_ayurveda_bono3': { title: 'Bono Ayurveda 3 sesiones', price: '140,00 €', type: 'silvia_ayurveda_bono3', isConsultation: true, consultationType: 'nutricion', quantity: 3 },
+    'silvia_ayurveda_bono6': { title: 'Bono Ayurveda 6 sesiones', price: '260,00 €', type: 'silvia_ayurveda_bono6', isConsultation: true, consultationType: 'nutricion', quantity: 6 },
+    'isabel_pni_1a': { title: 'Consulta de PNI (1ª sesión)', price: '80,00 €', type: 'isabel_pni_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'isabel_pni_sig': { title: 'Consulta de PNI (seguimiento)', price: '60,00 €', type: 'isabel_pni_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 }
   };
 
   function getProductInfo(lookupKey, membershipMonth) {
@@ -253,14 +263,392 @@ for (const file of htmls) {
       else if (raw.indexOf('suelta') !== -1) found = CATALOG_MAP['clase_suelta'];
     }
     if (!found) {
-      found = { title: lookupKey || 'Producto GEN Yoga', price: '-- €', type: lookupKey || 'clase_suelta' };
+      found = { title: lookupKey || 'Producto GEN Yoga', price: '-- €', type: lookupKey || 'clase_suelta', credits: 1 };
     }
     var title = found.title;
     if (found.type === 'bono_ilimitado' && membershipMonth) {
       title += ' (' + membershipMonth + ')';
     }
-    return { title: title, price: found.price, type: found.type };
+    return {
+      title: title,
+      price: found.price,
+      type: found.type,
+      credits: found.credits,
+      maxPerWeek: found.maxPerWeek,
+      planType: found.planType,
+      isUnlimited: found.isUnlimited,
+      isSpecial: found.isSpecial,
+      isWorkshop: found.isWorkshop,
+      isConsultation: found.isConsultation,
+      isGroup: found.isGroup,
+      consultationType: found.consultationType,
+      quantity: found.quantity
+    };
   }
+
+  function getMonthBounds(monthStr) {
+    var now = new Date();
+    var parts = String(monthStr || '').split('-');
+    var year = (parts.length === 2 && !isNaN(parseInt(parts[0], 10))) ? parseInt(parts[0], 10) : now.getFullYear();
+    var month = (parts.length === 2 && !isNaN(parseInt(parts[1], 10))) ? parseInt(parts[1], 10) - 1 : now.getMonth();
+    var start = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+    var end = new Date(Date.UTC(month === 11 ? year + 1 : year, (month + 1) % 12, 1, 0, 0, 0));
+    var mStr = year + '-' + String(month + 1).padStart(2, '0');
+    return {
+      monthStr: mStr,
+      monthDate: mStr + '-01',
+      startsAt: start.toISOString(),
+      endsAt: end.toISOString()
+    };
+  }
+
+  function getActiveCertUserId(preferredUserId) {
+    if (preferredUserId && preferredUserId !== 'guest') return preferredUserId;
+    try {
+      var cached = localStorage.getItem('gen_cached_user_id');
+      if (cached) return cached;
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1) {
+          var raw = localStorage.getItem(k);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            var uid = parsed && parsed.user && parsed.user.id;
+            if (uid) return uid;
+          }
+        }
+      }
+    } catch (_) {}
+    return preferredUserId || 'guest';
+  }
+
+  function getCertPurchases() {
+    try {
+      return JSON.parse(localStorage.getItem('gy_cert_purchases_v1') || '[]');
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function saveCertPurchase(item) {
+    try {
+      var list = getCertPurchases();
+      list.unshift(item);
+      localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(list));
+    } catch (e) {
+      console.warn('[cert-simulator] Error guardando compra simulada:', e);
+    }
+  }
+
+  function augmentCertQueryResult(table, result) {
+    if (!result) return result;
+    var currentUserId = getActiveCertUserId();
+    var allPurchases = getCertPurchases();
+    var purchases = allPurchases.filter(function (p) {
+      return p.userId === currentUserId || (currentUserId !== 'guest' && p.userId === 'guest');
+    });
+    if (purchases.length === 0) return result;
+
+    var data = result.data;
+
+    // 1. Bono Mensual y Bono Inicial (monthly_membership_periods)
+    if (table === 'monthly_membership_periods') {
+      var monthlyList = purchases.filter(function (p) {
+        return p.purchaseType === 'bono_mensual' || p.purchaseType === 'bono_inicial';
+      });
+      if (monthlyList.length > 0) {
+        var cList = Array.isArray(data) ? data.slice() : [];
+        monthlyList.forEach(function (sim) {
+          var exists = cList.some(function (row) {
+            var rMonth = String(row.membership_month || '').slice(0, 7);
+            var sMonth = String(sim.membershipMonth || '').slice(0, 7);
+            return rMonth === sMonth && (row.plan_type === sim.planType);
+          });
+          if (!exists) {
+            cList.unshift({
+              id: sim.id,
+              user_id: currentUserId,
+              membership_month: sim.membershipMonth + '-01',
+              starts_at: sim.startsAt,
+              ends_at: sim.endsAt,
+              purchased_at: sim.purchasedAt,
+              max_classes_per_week: sim.maxClassesPerWeek,
+              plan_type: sim.planType
+            });
+          }
+        });
+        return { data: cList, error: null };
+      }
+    }
+
+    // 2. Bono Ilimitado (unlimited_membership_periods)
+    if (table === 'unlimited_membership_periods') {
+      var uList = purchases.filter(function (p) {
+        return p.purchaseType === 'bono_ilimitado';
+      });
+      if (uList.length > 0) {
+        var curU = Array.isArray(data) ? data.slice() : [];
+        uList.forEach(function (sim) {
+          var existsU = curU.some(function (row) {
+            return String(row.membership_month || '').slice(0, 7) === String(sim.membershipMonth || '').slice(0, 7);
+          });
+          if (!existsU) {
+            curU.unshift({
+              id: sim.id,
+              user_id: currentUserId,
+              membership_month: sim.membershipMonth + '-01',
+              starts_at: sim.startsAt,
+              ends_at: sim.endsAt,
+              purchased_at: sim.purchasedAt
+            });
+          }
+        });
+        return { data: curU, error: null };
+      }
+    }
+
+    // 3. Packs de clases (class_credit_packs)
+    if (table === 'class_credit_packs') {
+      var packList = purchases.filter(function (p) {
+        return p.purchaseType === 'pack_4' || p.purchaseType === 'pack_6' || p.purchaseType === 'pack_10' || p.purchaseType === 'clase_suelta';
+      });
+      if (packList.length > 0) {
+        var curP = Array.isArray(data) ? data.slice() : [];
+        packList.forEach(function (sim) {
+          var existsP = curP.some(function (row) {
+            return row.checkout_session_id === sim.sessionId || row.id === sim.id;
+          });
+          if (!existsP) {
+            curP.unshift({
+              id: sim.id,
+              user_id: currentUserId,
+              checkout_session_id: sim.sessionId,
+              pack_type: sim.purchaseType,
+              credits_total: sim.creditsTotal,
+              credits_remaining: sim.creditsRemaining,
+              purchased_at: sim.purchasedAt,
+              expires_at: sim.expiresAt
+            });
+          }
+        });
+        return { data: curP, error: null };
+      }
+    }
+
+    // 4. Clases especiales (bonos_clases_especiales)
+    if (table === 'bonos_clases_especiales') {
+      var specialList = purchases.filter(function (p) {
+        return p.purchaseType === 'bono_ilimitado' || p.purchaseType === 'clase_especial';
+      });
+      if (specialList.length > 0) {
+        var curS = Array.isArray(data) ? data.slice() : [];
+        specialList.forEach(function (sim) {
+          var existsS = curS.some(function (row) {
+            return row.checkout_session_id === sim.sessionId || row.id === sim.id;
+          });
+          if (!existsS) {
+            curS.push({
+              id: sim.id,
+              user_id: currentUserId,
+              mes: sim.membershipMonth + '-01',
+              saldo: 1,
+              origen: (sim.purchaseType === 'bono_ilimitado' ? 'bono_ilimitado' : 'compra_stripe'),
+              checkout_session_id: sim.sessionId,
+              created_at: sim.purchasedAt
+            });
+          }
+        });
+        return { data: curS, error: null };
+      }
+    }
+
+    // 5. Perfil de usuario (profiles)
+    if (table === 'profiles') {
+      if (data && typeof data === 'object') {
+        var isArr = Array.isArray(data);
+        var targetProfiles = isArr ? data : [data];
+        targetProfiles.forEach(function (prof) {
+          if (!prof || (prof.id !== currentUserId && currentUserId !== 'guest')) return;
+          var activePacks = purchases.filter(function (p) {
+            return (p.purchaseType === 'pack_4' || p.purchaseType === 'pack_6' || p.purchaseType === 'pack_10' || p.purchaseType === 'clase_suelta')
+              && Date.parse(p.expiresAt) > Date.now();
+          });
+          var packCreds = activePacks.reduce(function (sum, p) { return sum + (p.creditsRemaining || 0); }, 0);
+          if (packCreds > 0) {
+            prof.bonos = (Number(prof.bonos) || 0) + packCreds;
+          }
+
+          var activeUnlimited = purchases.find(function (p) {
+            var now = Date.now();
+            return p.purchaseType === 'bono_ilimitado' && Date.parse(p.startsAt) <= now && Date.parse(p.endsAt) > now;
+          });
+          if (activeUnlimited) {
+            prof.bono_mensual_activo = true;
+            prof.bono_mensual_inicio = activeUnlimited.startsAt;
+            prof.bono_mensual_fin = activeUnlimited.endsAt;
+          }
+
+          // Consultas
+          var psicoCount = purchases.filter(function (p) { return p.purchaseType.indexOf('psico') !== -1; }).length;
+          if (psicoCount > 0) prof.saldo_psicologia = (Number(prof.saldo_psicologia) || 0) + psicoCount;
+
+          var nutriCount = purchases.reduce(function (sum, p) {
+            if (p.purchaseType.indexOf('ayurveda') !== -1 || p.purchaseType.indexOf('pni') !== -1) {
+              return sum + (p.purchaseType.indexOf('bono3') !== -1 ? 3 : (p.purchaseType.indexOf('bono6') !== -1 ? 6 : 1));
+            }
+            return sum;
+          }, 0);
+          if (nutriCount > 0) prof.saldo_nutricion = (Number(prof.saldo_nutricion) || 0) + nutriCount;
+
+          var grupoCount = purchases.filter(function (p) { return p.purchaseType.indexOf('grupo') !== -1; }).length;
+          if (grupoCount > 0) prof.saldo_grupal = (Number(prof.saldo_grupal) || 0) + grupoCount;
+        });
+        return { data: isArr ? targetProfiles : targetProfiles[0], error: null };
+      }
+    }
+
+    return result;
+  }
+
+  function getSimBonoForReservation() {
+    var currentUserId = getActiveCertUserId();
+    var all = getCertPurchases();
+    var purchases = all.filter(function (p) {
+      return p.userId === currentUserId || (currentUserId !== 'guest' && p.userId === 'guest');
+    });
+    var now = Date.now();
+
+    // 1. Bono Ilimitado
+    var u = purchases.find(function (p) {
+      return p.purchaseType === 'bono_ilimitado' && Date.parse(p.startsAt) <= now && Date.parse(p.endsAt) > now;
+    });
+    if (u) return { bono: u, kind: 'ilimitado' };
+
+    // 2. Bono Mensual o Inicial
+    var m = purchases.find(function (p) {
+      return (p.purchaseType === 'bono_mensual' || p.purchaseType === 'bono_inicial')
+        && Date.parse(p.startsAt) <= now && Date.parse(p.endsAt) > now
+        && (p.creditsRemaining > 0);
+    });
+    if (m) return { bono: m, kind: 'mensual' };
+
+    // 3. Packs
+    var pk = purchases.find(function (p) {
+      return (p.purchaseType === 'pack_4' || p.purchaseType === 'pack_6' || p.purchaseType === 'pack_10' || p.purchaseType === 'clase_suelta')
+        && Date.parse(p.expiresAt) > now
+        && (p.creditsRemaining > 0);
+    });
+    if (pk) return { bono: pk, kind: 'pack' };
+
+    return null;
+  }
+
+  function recordSimReservation(claseId, match) {
+    try {
+      if (match && match.bono) {
+        var all = getCertPurchases();
+        all.forEach(function (p) {
+          if (p.id === match.bono.id && p.creditsRemaining > 0) {
+            p.creditsRemaining -= 1;
+          }
+        });
+        localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(all));
+      }
+    } catch (e) {
+      console.warn('[cert-simulator] Error deduciendo bono en reserva simulada:', e);
+    }
+  }
+
+  function wrapSupabaseForCert(c) {
+    if (!c || c.__gy_cert_wrapped) return c;
+    c.__gy_cert_wrapped = true;
+
+    var origFrom = c.from;
+    c.from = function (table) {
+      var query = origFrom.apply(this, arguments);
+      if (table === 'monthly_membership_periods' ||
+          table === 'unlimited_membership_periods' ||
+          table === 'class_credit_packs' ||
+          table === 'profiles' ||
+          table === 'bonos_clases_especiales') {
+        var origThen = query.then;
+        query.then = function (onFulfilled, onRejected) {
+          return origThen.call(query, function (res) {
+            try {
+              var augmented = augmentCertQueryResult(table, res);
+              return onFulfilled ? onFulfilled(augmented) : augmented;
+            } catch (err) {
+              console.warn('[cert-simulator] Error en interceptor de ' + table + ':', err);
+              return onFulfilled ? onFulfilled(res) : res;
+            }
+          }, onRejected);
+        };
+      }
+      return query;
+    };
+
+    var origRpc = c.rpc;
+    c.rpc = function (fn, args) {
+      var rpcPromise = origRpc.apply(this, arguments);
+      if (fn === 'reservar_con_bono') {
+        return rpcPromise.then(function (res) {
+          if (!res || !res.error) return res;
+          var simMatch = getSimBonoForReservation();
+          if (simMatch) {
+            console.log('[cert-simulator] Aceptando reserva con bono simulado de CERT:', simMatch);
+            recordSimReservation(args && args.p_clase_id, simMatch);
+            return { data: null, error: null };
+          }
+          return res;
+        });
+      }
+      return rpcPromise;
+    };
+
+    return c;
+  }
+
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    var origCreateClient = window.supabase.createClient;
+    window.supabase.createClient = function () {
+      var inst = origCreateClient.apply(this, arguments);
+      return wrapSupabaseForCert(inst);
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.client) wrapSupabaseForCert(window.client);
+    if (window.supabaseClient) wrapSupabaseForCert(window.supabaseClient);
+
+    var resetBtn = document.getElementById('gy-cert-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var doReset = function () {
+          localStorage.removeItem('gy_cert_purchases_v1');
+          localStorage.removeItem('gy_cert_reservas_v1');
+          localStorage.removeItem('gy_cert_last_session');
+          window.location.reload();
+        };
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+          window.Swal.fire({
+            title: '¿Limpiar compras simuladas?',
+            text: 'Se restablecerán los bonos y compras de prueba creados en CERT para este navegador.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#956857',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, limpiar',
+            cancelButtonText: 'Cancelar'
+          }).then(function (r) {
+            if (r.isConfirmed) doReset();
+          });
+        } else if (confirm('¿Deseas restablecer las compras simuladas en CERT?')) {
+          doReset();
+        }
+      });
+    }
+  });
 
   function injectModalStyles() {
     if (document.getElementById('gy-cert-sim-styles')) return;
@@ -380,12 +768,61 @@ for (const file of htmls) {
       abandonBtn.disabled = true;
 
       var simSessionId = 'cs_cert_sim_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+      var effUserId = getActiveCertUserId(userId);
+      var bounds = getMonthBounds(membershipMonth);
+      var pType = info.type;
+
+      var purchaseRecord = {
+        id: Date.now(),
+        sessionId: simSessionId,
+        userId: effUserId,
+        purchaseType: pType,
+        lookupKey: lookupKey,
+        title: info.title,
+        price: info.price,
+        membershipMonth: bounds.monthStr,
+        startsAt: bounds.startsAt,
+        endsAt: bounds.endsAt,
+        purchasedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 60 * 86400000).toISOString(),
+        creditsTotal: info.credits || (pType === 'bono_mensual' ? 8 : (pType === 'bono_inicial' ? 4 : 1)),
+        creditsRemaining: info.credits || (pType === 'bono_mensual' ? 8 : (pType === 'bono_inicial' ? 4 : 1)),
+        planType: info.planType || (pType === 'bono_inicial' ? 'bono_inicial' : 'bono_mensual'),
+        maxClassesPerWeek: info.maxPerWeek || (pType === 'bono_inicial' ? 1 : 2)
+      };
+
+      saveCertPurchase(purchaseRecord);
+
+      // Intento no bloqueante de consolidación en base de datos si el usuario tiene permisos
+      try {
+        var clientToUse = window.client || (window.supabase && typeof window.supabase.createClient === 'function' ? window.supabase.createClient('${urlCert}', '${claveCert}') : null);
+        if (clientToUse && effUserId && effUserId !== 'guest') {
+          if (pType === 'bono_mensual') {
+            clientToUse.rpc('admin_asignar_mes_bono_mensual', { p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: true }).catch(function(){});
+          } else if (pType === 'bono_inicial') {
+            clientToUse.rpc('admin_asignar_mes_bono_inicial', { p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: true }).catch(function(){});
+          } else if (pType === 'bono_ilimitado') {
+            clientToUse.rpc('admin_asignar_mes_ilimitado', { p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: true }).catch(function(){});
+          } else if (pType === 'pack_4' || pType === 'pack_6' || pType === 'pack_10' || pType === 'clase_suelta') {
+            var cr = pType === 'pack_4' ? 4 : (pType === 'pack_6' ? 6 : (pType === 'pack_10' ? 10 : 1));
+            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'yoga', p_delta: cr }).catch(function(){});
+          } else if (pType.indexOf('psico') !== -1) {
+            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'psicologia', p_delta: 1 }).catch(function(){});
+          } else if (pType.indexOf('ayurveda') !== -1 || pType.indexOf('pni') !== -1) {
+            var deltaN = pType.indexOf('bono3') !== -1 ? 3 : (pType.indexOf('bono6') !== -1 ? 6 : 1);
+            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'nutricion', p_delta: deltaN }).catch(function(){});
+          } else if (pType.indexOf('grupo') !== -1) {
+            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'grupos', p_delta: 1 }).catch(function(){});
+          }
+        }
+      } catch (_) {}
+
       var sessionPayload = {
         sessionId: simSessionId,
         lookupKey: lookupKey,
-        purchaseType: info.type,
-        userId: userId,
-        membershipMonth: membershipMonth,
+        purchaseType: pType,
+        userId: effUserId,
+        membershipMonth: bounds.monthStr,
         targetClassId: targetClassId,
         guestName: guestName,
         guestEmail: checkoutPayload.guest_email || 'test-cert@genyoga.studio',

@@ -6103,8 +6103,7 @@
                 cat === 'consulta_grupal' ||
                 tipoId === 44 || tipoId === 65 || tipoId === 66 ||
                 isAutoayuda || isTerapeutico ||
-                nom.includes('grupo') ||
-                (toSafeNumber(c.capacidad_max) > 1);
+                nom.includes('grupo');
         }
         window.esClaseGrupalConsulta = esClaseGrupalConsulta;
 
@@ -13412,16 +13411,15 @@
 
         // --- 6. LOGICA RESERVAS ---
         let isReserving = false;
-        let isReservingClass = false;
 
         // Antidoble-clic: bloquea TODO el flujo (modales incluidos) hasta terminar.
         async function reservar(claseId, options = {}) {
-            if (isReservingClass) return false;
-            isReservingClass = true;
+            if (isReserving) return false;
+            isReserving = true;
             try {
                 return await reservarInner(claseId, options);
             } finally {
-                isReservingClass = false;
+                isReserving = false;
             }
         }
 
@@ -13434,7 +13432,6 @@
                 return false;
             }
             claseId = normalizedClassId;
-            if (isReserving) return false; // Evitar cruce con otra reserva en curso
 
             // Validación de rol: sólo los alumnos pueden reservar
             const rol = (currentUserRole || '').toLowerCase().trim();
@@ -27184,7 +27181,7 @@
                 });
             }
 
-            if (isReserving) return;
+            if (isReservingConsulta) return;
 
             try {
                 const config = getConsultaConfig(tipo);

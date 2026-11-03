@@ -187,19 +187,33 @@
                 setRedirectMessage(tOk('cancel_dest_rates', 'tarifas'));
             }
 
-            // Countdown timer redirect
+            // Countdown timer redirect (se cancela si el usuario pulsa un botón)
             let seconds = 5;
             const dynamicCountdownEl = document.getElementById('countdown-dynamic');
-            
-            const interval = setInterval(() => {
-                seconds--;
-                if (dynamicCountdownEl) dynamicCountdownEl.textContent = seconds;
-                
-                if (seconds <= 0) {
-                    clearInterval(interval);
-                    window.location.href = redirectUrl;
-                }
-            }, 1000);
+            let redirectInterval = null;
+
+            function startRedirect() {
+                redirectInterval = setInterval(() => {
+                    seconds--;
+                    if (dynamicCountdownEl) dynamicCountdownEl.textContent = Math.max(0, seconds);
+                    if (seconds <= 0) {
+                        clearInterval(redirectInterval);
+                        redirectInterval = null;
+                        window.location.href = redirectUrl;
+                    }
+                }, 1000);
+            }
+            startRedirect();
+
+            // Evitar redirección automática si el usuario interactúa con los botones
+            [btnPrimary, btnSecondary].forEach(btn => {
+                if (btn) btn.addEventListener('click', () => {
+                    if (redirectInterval) {
+                        clearInterval(redirectInterval);
+                        redirectInterval = null;
+                    }
+                });
+            });
         });
     </script>
 </body>

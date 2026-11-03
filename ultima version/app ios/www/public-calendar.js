@@ -763,12 +763,8 @@
     }
 
     function bookingCutoffHours() {
-        try {
-            if (typeof lastReservaVal !== 'undefined') {
-                const value = Number(lastReservaVal);
-                if (Number.isFinite(value) && value >= 0 && value <= 168) return value;
-            }
-        } catch (_) {}
+        // Valor por defecto de seguridad: reservas cierran 1 hora antes del inicio.
+        // El valor real de la política se lee desde configuración en el cliente de reservas (profile.html).
         return 1;
     }
 
