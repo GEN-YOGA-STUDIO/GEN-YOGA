@@ -1,10 +1,23 @@
 # Certificación aislada
 
-La web de certificación no debe usar el proyecto Supabase ni Stripe LIVE de
-producción. El antiguo directorio `subir cert` era una copia manual incompleta y
-podía mezclar versiones y datos reales.
+La recomendación de seguridad es que la web de certificación no use el proyecto
+Supabase ni Stripe LIVE de producción. El antiguo directorio `subir cert` era una
+copia manual incompleta y podía mezclar versiones y datos reales.
 
-## Requisitos
+## Modo actual: misma BD, pagos desactivados
+
+Mientras no exista un proyecto Supabase de certificación con su propio backend,
+el workflow `.github/workflows/deploy-cert.yml` usa
+`CERT_ALLOW_PRODUCTION_DB=1`: el cert sirve la misma base de datos que
+producción para validar solo cambios de web/apps.
+
+Para que eso no cobre a clientes reales, `scripts/build-cert-web.mjs` inyecta un
+guard que bloquea en el navegador cualquier llamada a
+`create-checkout-session`, y el banner del cert lo indica. Los pagos LIVE solo se
+habilitan con `CERT_ALLOW_LIVE_PAYMENTS=1` de forma explícita y consciente; no
+debe activarse mientras el cert comparta la BD de producción.
+
+## Requisitos para un cert realmente aislado
 
 1. Crear un proyecto Supabase exclusivo de certificación.
 2. Aplicar allí las migraciones necesarias y usar únicamente datos de prueba.
@@ -35,10 +48,12 @@ Guarda estos tres secretos en el repo `GEN-YOGA` (Settings → Secrets → Actio
 | `CERT_SUPABASE_PUBLISHABLE_KEY` | clave pública (`sb_publishable_…`) de ese proyecto | mismo panel → `sb_publishable_…` |
 | `CERT_REPO_TOKEN` | PAT con **Contents: write** sobre `GEN-YOGA-CERT` | <https://github.com/settings/tokens> (scopes `repo` o `contents:write`) |
 
-El build **se niega explícitamente** a usar la URL o la clave de producción, así
-que un secreto mal puesto sale en rojo y no mezcla entornos. Mientras falte
-algún secreto, el workflow falla con el mensaje «Certificación necesita su
-propio proyecto Supabase con datos de prueba» (ver `docs/CERTIFICATION_SETUP.md`).
+El build **se niega** a usar la URL o la clave de producción en modo aislado, y
+solo admite la misma BD con `CERT_ALLOW_PRODUCTION_DB=1`. Mientras falte algún
+secreto de cert, el workflow usa el modo misma-BD. En ese modo los pagos quedan
+desactivados por defecto (ver arriba). Para un aislamiento real, define
+`CERT_SUPABASE_URL` y `CERT_SUPABASE_PUBLISHABLE_KEY` (ver
+`docs/CERTIFICATION_SETUP.md`).
 
 Para reintentar un despliegue sin esperar a un push: `npm run cert`.
 

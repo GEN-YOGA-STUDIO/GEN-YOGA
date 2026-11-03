@@ -580,7 +580,7 @@
         const rawClassType = String(raw?.tipo_clase || '').toLowerCase().trim();
         const rawName = String(raw?.nombre || '').trim();
         const isIntroOrOpen = /introductor|bienvenida|abierta|gratis|prueba/i.test(rawName);
-        const isClaseEspecial = !isIntroOrOpen && (
+        const isClaseEspecial = !isIntroOrOpen && rawClassType !== 'taller' && (
             rawClassType === 'clase_especial'
             || rawClassType === 'especial'
             || rawName.toLowerCase().includes('flow y meditación')
