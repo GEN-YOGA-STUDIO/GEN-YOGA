@@ -1572,7 +1572,7 @@
             let lookupKey = rawLookupKey;
             if (lookupKey === 'prod_V5uBKuweMRE6ig') lookupKey = 'clase_especial';
             else if (lookupKey === 'prod_VDY8mI9bZ3SQeb') lookupKey = 'taller_25';
-            else if (lookupKey === 'prod_V5uCPKKKH5K74P') lookupKey = 'taller_intro_power_vinyasa';
+            else if (lookupKey === 'prod_V5uCPKKKH5K74P' || lookupKey === 'taller_35' || lookupKey === 'taller-35') lookupKey = 'taller_35';
 
             const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
             const session = sessionRes?.data?.session;
@@ -1776,7 +1776,7 @@
             let lookupKey = rawLookupKey;
             if (lookupKey === 'prod_V5uBKuweMRE6ig') lookupKey = 'clase_especial';
             else if (lookupKey === 'prod_VDY8mI9bZ3SQeb') lookupKey = 'taller_25';
-            else if (lookupKey === 'prod_V5uCPKKKH5K74P') lookupKey = 'taller_intro_power_vinyasa';
+            else if (lookupKey === 'prod_V5uCPKKKH5K74P' || lookupKey === 'taller_35' || lookupKey === 'taller-35') lookupKey = 'taller_35';
 
             const isClaseEspecial = options?.isTaller === false || lookupKey === 'clase_especial';
 
@@ -1867,6 +1867,8 @@
                             capacidad_max,
                             tipo_clase,
                             tipo_clase_id,
+                            metodo_pago,
+                            stripe_lookup_key,
                             es_especial,
                             activa,
                             profesionales (id, nombre, apellidos, color)
@@ -2024,11 +2026,39 @@
                 : fmtT('rates_events_subtitle_special', { teacher: profName, duration: duracion },
                     `Con ${profName} · Sesión Temática (${duracion} min)`);
 
-            let precio = isTaller ? '25' : '20';
+            let precio = null;
             let lookupKey = null;
 
-            // Resolución dinámica de producto y precio oficial desde tipos_clases y stripe_productos
-            if (taller.tipo_clase_id && window.tiposClasesMap && window.stripeProductosMap) {
+            // 1. Prioridad: Tarifa de Stripe seleccionada en el creador o editor de eventos (stripe_lookup_key o metodo_pago)
+            const rawLookup = String(taller.stripe_lookup_key || taller.metodo_pago || '').trim();
+            const normLookup = rawLookup.toLowerCase();
+
+            if (normLookup === 'taller_35' || normLookup === 'taller-35' || normLookup === 'taller35' || normLookup === 'prod_v5ucpkkkh5k74p' || (isTaller && normLookup.includes('35'))) {
+                precio = '35';
+                lookupKey = 'taller_35';
+            } else if (normLookup === 'taller_25' || normLookup === 'taller-25' || normLookup === 'taller25' || normLookup === 'prod_vdy8mi9bz3sqeb' || (isTaller && normLookup.includes('25'))) {
+                precio = '25';
+                lookupKey = 'taller_25';
+            } else if (normLookup === 'clase_especial' || normLookup === 'prod_v5ubkuwemre6ig' || (!isTaller && normLookup)) {
+                precio = '20';
+                lookupKey = 'clase_especial';
+            } else if (rawLookup && window.stripeProductosMap && window.stripeProductosMap.has(rawLookup)) {
+                const prod = window.stripeProductosMap.get(rawLookup);
+                if (prod) {
+                    if (prod.unit_amount) precio = String(Math.round(prod.unit_amount / 100));
+                    else if (prod.precio_formateado) {
+                        const m = prod.precio_formateado.match(/(\d{1,3})/);
+                        if (m) precio = m[1];
+                    }
+                    if (prod.id === 'prod_V5uBKuweMRE6ig' || !isTaller) lookupKey = 'clase_especial';
+                    else if (prod.id === 'prod_VDY8mI9bZ3SQeb') lookupKey = 'taller_25';
+                    else if (prod.id === 'prod_V5uCPKKKH5K74P') lookupKey = 'taller_35';
+                    else lookupKey = prod.id;
+                }
+            }
+
+            // 2. Fallback secundario si el evento no guardó tarifa: resolución desde tipos_clases y stripe_productos
+            if (!precio && taller.tipo_clase_id && window.tiposClasesMap && window.stripeProductosMap) {
                 const tipo = window.tiposClasesMap.get(taller.tipo_clase_id);
                 if (tipo && tipo.stripe_product_id) {
                     const prod = window.stripeProductosMap.get(tipo.stripe_product_id);
@@ -2044,7 +2074,7 @@
                         } else if (prod.id === 'prod_VDY8mI9bZ3SQeb') {
                             lookupKey = 'taller_25';
                         } else if (prod.id === 'prod_V5uCPKKKH5K74P') {
-                            lookupKey = 'taller_intro_power_vinyasa';
+                            lookupKey = 'taller_35';
                         } else {
                             lookupKey = prod.id;
                         }
@@ -2052,10 +2082,18 @@
                 }
             }
 
-            const textoCompleto = `${taller.nombre} ${taller.descripcion || ''}`;
-            const precioMatch = textoCompleto.match(/(\d{1,3})\s*€/);
-            if (precioMatch && !taller.tipo_clase_id) {
-                precio = precioMatch[1];
+            // 3. Fallback por texto del nombre o descripción si no se resolvió
+            if (!precio) {
+                const textoCompleto = `${taller.nombre} ${taller.descripcion || ''}`;
+                const precioMatch = textoCompleto.match(/(\d{1,3})\s*€/);
+                if (precioMatch) {
+                    precio = precioMatch[1];
+                }
+            }
+
+            // 4. Fallback final por tipo de evento
+            if (!precio) {
+                precio = isTaller ? '25' : '20';
             }
 
             const precioSub = isTaller
@@ -2082,12 +2120,9 @@
                 fmtT('rates_events_bullet_special_3', {}, 'Disponible para compra suelta o reserva con bono')
             ];
 
-            const lowerTitle = title.toLowerCase();
-            if (!lookupKey || lookupKey === 'prod_V5uBKuweMRE6ig') {
-                if (lowerTitle.includes('power vinyasa')) {
-                    lookupKey = 'taller_intro_power_vinyasa';
-                } else if (isTaller) {
-                    lookupKey = (precio === '25') ? 'taller_25' : 'taller_intro_power_vinyasa';
+            if (!lookupKey || (lookupKey === 'prod_V5uBKuweMRE6ig' && isTaller)) {
+                if (isTaller) {
+                    lookupKey = (precio === '35') ? 'taller_35' : 'taller_25';
                 } else {
                     lookupKey = 'clase_especial';
                 }

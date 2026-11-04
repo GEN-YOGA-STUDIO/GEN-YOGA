@@ -29,6 +29,8 @@
         'profesor_id',
         'tipo_clase',
         'tipo_clase_id',
+        'metodo_pago',
+        'stripe_lookup_key',
         'activa',
         'es_especial',
         'es_gratuita',
@@ -653,6 +655,8 @@
             isSpecial,
             isFree: isOfficialFree,
             classTypeId: safePositiveInteger(raw?.tipo_clase_id),
+            stripeLookupKey: String(raw?.stripe_lookup_key || raw?.metodo_pago || '').trim(),
+            metodoPago: String(raw?.metodo_pago || '').trim(),
             companionModality: String(raw?.companion_modality || '').toLowerCase().trim(),
             style: canonicalStyle(name)
         };
@@ -770,6 +774,13 @@
 
     function resolveWorkshopPriceHint(item) {
         if (!item) return 'Plaza 25 €';
+        const rawLookup = String(item.stripeLookupKey || item.metodoPago || '').toLowerCase().trim();
+        if (rawLookup === 'taller_35' || rawLookup === 'taller-35' || rawLookup === 'taller35' || rawLookup === 'prod_v5ucpkkkh5k74p' || rawLookup.includes('35')) {
+            return 'Plaza 35 €';
+        }
+        if (rawLookup === 'taller_25' || rawLookup === 'taller-25' || rawLookup === 'taller25' || rawLookup === 'prod_vdy8mi9bz3sqeb' || rawLookup.includes('25')) {
+            return 'Plaza 25 €';
+        }
         if (item.classTypeId && state.workshopPrices.has(`id:${item.classTypeId}`)) {
             return `Plaza ${state.workshopPrices.get(`id:${item.classTypeId}`)}`;
         }

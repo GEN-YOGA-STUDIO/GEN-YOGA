@@ -11233,10 +11233,11 @@
                         return;
                     }
 
+                    const { lookupKey: autoLookup, precio: autoPrecio } = isClaseEsp ? { lookupKey: 'clase_especial', precio: '20' } : resolverPrecioYTallerLookup(targetEspecial);
                     const confirmText = puedeReservarGratis ? '¡Sí, reservar plaza (0 €)!' : 'Reservar plaza';
                     const noteText = puedeReservarGratis
                         ? (isClaseEsp ? 'Tienes 1 clase especial incluida este mes con tu Bono Ilimitado (0 €).' : 'Tienes un crédito disponible para reservar este taller (0 €).')
-                        : `Precio: ${isClaseEsp ? '20 €' : '25 €'}.`;
+                        : `Precio: ${isClaseEsp ? '20 €' : `${autoPrecio || '25'} €`}.`;
 
                     setTimeout(() => {
                         Swal.fire({
@@ -12436,13 +12437,10 @@
             }
 
             if (!lookupKey) {
-                const lower = (c.nombre || '').toLowerCase();
-                if (lower.includes('power vinyasa') || precio === '25') {
-                    lookupKey = 'taller_intro_power_vinyasa';
-                } else if (precio === '35') {
+                if (precio === '35') {
                     lookupKey = 'taller_35';
                 } else {
-                    lookupKey = 'taller_intro_power_vinyasa';
+                    lookupKey = 'taller_25';
                 }
             }
 
@@ -32193,7 +32191,9 @@
                     activa: true,
                     es_especial: true,
                     descripcion: notas,
-                    duracion_minutos: duracion
+                    duracion_minutos: duracion,
+                    metodo_pago: metodoPagoTaller,
+                    stripe_lookup_key: metodoPagoTaller
                 });
             }
 
