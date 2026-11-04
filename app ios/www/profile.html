@@ -21127,10 +21127,22 @@
                     tarifaTallerContainer.classList.remove('hidden');
                     if (tarifaTallerSelect) {
                         const rawLookup = String(clase.stripe_lookup_key || clase.metodo_pago || '').toLowerCase().trim();
-                        if (rawLookup === 'taller_35' || rawLookup === 'taller-35' || rawLookup === 'taller35' || rawLookup === 'prod_v5ucpkkkh5k74p') {
+                        if (rawLookup === 'taller_35' || rawLookup === 'taller-35' || rawLookup === 'taller35' || rawLookup === 'prod_v5ucpkkkh5k74p' || rawLookup.includes('35')) {
                             tarifaTallerSelect.value = 'taller_35';
                         } else if (rawLookup.includes('power') || rawLookup === 'taller_intro_power_vinyasa') {
                             tarifaTallerSelect.value = 'taller_intro_power_vinyasa';
+                        } else if (rawLookup === 'taller_25' || rawLookup === 'taller-25' || rawLookup === 'taller25' || rawLookup === 'prod_vdy8mi9bz3sqeb' || rawLookup.includes('25')) {
+                            tarifaTallerSelect.value = 'taller_25';
+                        } else if (clase.stripe_lookup_key || clase.metodo_pago) {
+                            const val = String(clase.stripe_lookup_key || clase.metodo_pago).trim();
+                            let opt = tarifaTallerSelect.querySelector(`option[value="${val}"]`);
+                            if (!opt) {
+                                opt = document.createElement('option');
+                                opt.value = val;
+                                opt.textContent = `Tarifa Stripe personalizada — ${val}`;
+                                tarifaTallerSelect.appendChild(opt);
+                            }
+                            tarifaTallerSelect.value = val;
                         } else {
                             tarifaTallerSelect.value = 'taller_25';
                         }

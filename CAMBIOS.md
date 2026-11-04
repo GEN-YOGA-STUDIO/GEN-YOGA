@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.3.3 — 4 nov 2026 · Incidencia
+
+- **Descripción:** Sincronizar precio de talleres en calendario público con su tarifa Stripe asignada (ámbito: talleres)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.3.3`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.3.3.md`
+
 ## v18.3.2 — 4 nov 2026 · Incidencia
 
 - **Descripción:** Sincronizar precio y checkout Stripe de talleres con la tarifa seleccionada por los administradores (35 € / 25 €) (ámbito: talleres)

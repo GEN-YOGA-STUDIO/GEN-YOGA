@@ -123,6 +123,11 @@ assert.equal(calendarApi.canonicalStyle('Yoga para Hombres'), 'yoga-alineacion')
 assert.equal(calendarApi.canonicalStyle('Yoga para Todos'), 'yoga-para-todos');
 assert.equal(calendarApi.canonicalStyle('Yoga Aryuveda'), 'ayurveda');
 assert.equal(calendarApi.canonicalStyle('Clase Especial (Taller)'), 'taller');
+assert.equal(typeof calendarApi.resolveWorkshopPriceHint, 'function', 'resolveWorkshopPriceHint debe estar publicado');
+assert.equal(calendarApi.resolveWorkshopPriceHint({ stripeLookupKey: 'taller_35' }), 'Plaza 35 €');
+assert.equal(calendarApi.resolveWorkshopPriceHint({ stripeLookupKey: 'taller_25' }), 'Plaza 25 €');
+assert.equal(calendarApi.resolveWorkshopPriceHint({ metodoPago: 'prod_V5uCPKKKH5K74P' }), 'Plaza 35 €');
+assert.equal(calendarApi.resolveWorkshopPriceHint({ stripeLookupKey: 'clase_especial' }), 'Plaza 20 €');
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Ángel Javier' }, '2026-08-07'), false);
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Ángel Javier' }, '2026-08-05'), true);
 assert.equal(calendarApi.isPublicScheduleSlot({ nombre: 'Yanira' }, '2026-08-07'), true);
@@ -191,6 +196,8 @@ assert.match(
 assert.match(calendarScript, /\.eq\('activa',\s*true\)/);
 assert.match(calendarScript, /(?:\.in\('tipo_clase',\s*\['yoga',\s*'taller'\]\)|\.or\('tipo_clase\.eq\.taller|\.eq\('tipo_clase',\s*'yoga'\))/);
 assert.match(calendarScript, /\.rpc\('get_public_weekly_schedule'/);
+assert.match(calendarScript, /function enrichWithStripeLookup/, 'Debe existir enrichWithStripeLookup en public-calendar.js');
+assert.match(calendarScript, /enrichWithStripeLookup\(data\)/, 'Debe enriquecer los datos de get_public_weekly_schedule con enrichWithStripeLookup');
 assert.match(calendarScript, /postgres_changes[\s\S]*table:\s*'clases'/);
 assert.doesNotMatch(calendarScript, /reservas_yoga.*select|select\([^)]*user_id/i);
 assert.match(calendarScript, /timeZone:\s*TIME_ZONE/);

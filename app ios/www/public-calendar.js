@@ -774,16 +774,43 @@
 
     function resolveWorkshopPriceHint(item) {
         if (!item) return 'Plaza 25 €';
-        const rawLookup = String(item.stripeLookupKey || item.metodoPago || '').toLowerCase().trim();
-        if (rawLookup === 'taller_35' || rawLookup === 'taller-35' || rawLookup === 'taller35' || rawLookup === 'prod_v5ucpkkkh5k74p' || rawLookup.includes('35')) {
+
+        // 1. Prioridad: Tarifa Stripe directa asignada al taller / evento (stripe_lookup_key o metodo_pago)
+        const rawLookup = String(item.stripeLookupKey || item.metodoPago || '').trim();
+        const normLookup = rawLookup.toLowerCase();
+
+        if (normLookup === 'taller_35' || normLookup === 'taller-35' || normLookup === 'taller35' || normLookup === 'prod_v5ucpkkkh5k74p' || (rawLookup && normLookup.includes('35'))) {
             return 'Plaza 35 €';
         }
-        if (rawLookup === 'taller_25' || rawLookup === 'taller-25' || rawLookup === 'taller25' || rawLookup === 'prod_vdy8mi9bz3sqeb' || rawLookup.includes('25')) {
+        if (normLookup === 'taller_25' || normLookup === 'taller-25' || normLookup === 'taller25' || normLookup === 'prod_vdy8mi9bz3sqeb' || (rawLookup && normLookup.includes('25'))) {
             return 'Plaza 25 €';
         }
+        if (normLookup === 'clase_especial' || normLookup === 'prod_v5ubkuwemre6ig' || (rawLookup && normLookup.includes('20'))) {
+            return 'Plaza 20 €';
+        }
+
+        // Si es un producto Stripe conocido en stripe_productos o lookup mapeado
+        if (rawLookup) {
+            if (state.workshopPrices.has(`prod:${rawLookup}`)) {
+                return `Plaza ${state.workshopPrices.get(`prod:${rawLookup}`)}`;
+            }
+            if (state.workshopPrices.has(`prod:${normLookup}`)) {
+                return `Plaza ${state.workshopPrices.get(`prod:${normLookup}`)}`;
+            }
+            if (state.workshopPrices.has(normLookup)) {
+                return `Plaza ${state.workshopPrices.get(normLookup)}`;
+            }
+            if (state.workshopPrices.has(`lookup:${normLookup}`)) {
+                return `Plaza ${state.workshopPrices.get(`lookup:${normLookup}`)}`;
+            }
+        }
+
+        // 2. Tarifa Stripe configurada en tipos_clases (por su ID o relación)
         if (item.classTypeId && state.workshopPrices.has(`id:${item.classTypeId}`)) {
             return `Plaza ${state.workshopPrices.get(`id:${item.classTypeId}`)}`;
         }
+
+        // 3. Coincidencia por nombre de estilo
         const normName = (item.name || '').toLowerCase().trim();
         if (state.workshopPrices.has(`name:${normName}`)) {
             return `Plaza ${state.workshopPrices.get(`name:${normName}`)}`;
@@ -796,6 +823,9 @@
         const match = (item.name || '').match(/(\d{1,3})\s*€/);
         if (match) return `Plaza ${match[1]} €`;
 
+        if (item.classType === 'clase_especial') {
+            return 'Plaza 20 €';
+        }
         if (state.workshopPrices.has('prod:prod_VDY8mI9bZ3SQeb')) {
             return `Plaza ${state.workshopPrices.get('prod:prod_VDY8mI9bZ3SQeb')}`;
         }
@@ -1239,6 +1269,16 @@
             state.typeColors.clear();
             state.workshopPrices.clear();
 
+            // Mapear lookup keys estándar de talleres y eventos
+            state.workshopPrices.set('taller_35', '35 €');
+            state.workshopPrices.set('lookup:taller_35', '35 €');
+            state.workshopPrices.set('taller_25', '25 €');
+            state.workshopPrices.set('lookup:taller_25', '25 €');
+            state.workshopPrices.set('taller_intro_power_vinyasa', '25 €');
+            state.workshopPrices.set('lookup:taller_intro_power_vinyasa', '25 €');
+            state.workshopPrices.set('clase_especial', '20 €');
+            state.workshopPrices.set('lookup:clase_especial', '20 €');
+
             data.forEach(type => {
                 const color = normaliseColor(type.color);
                 const typeId = safePositiveInteger(type.id);
@@ -1260,6 +1300,9 @@
                 const formatted = p.unit_amount ? `${Math.round(p.unit_amount / 100)} €` : (p.precio_formateado ? String(p.precio_formateado).replace(',00', '').trim() : null);
                 if (formatted) {
                     state.workshopPrices.set(`prod:${p.id}`, formatted);
+                    state.workshopPrices.set(`prod:${p.id.toLowerCase()}`, formatted);
+                    state.workshopPrices.set(p.id, formatted);
+                    state.workshopPrices.set(p.id.toLowerCase(), formatted);
                     state.workshopPrices.set(`name:${(p.nombre || '').toLowerCase().trim()}`, formatted);
                 }
             });
@@ -1350,6 +1393,31 @@
         return filtered;
     }
 
+    async function enrichWithStripeLookup(rawRows) {
+        if (!rawRows || !rawRows.length || !state.client) return rawRows;
+        const ids = rawRows.map(r => safePositiveInteger(r?.id)).filter(Boolean);
+        if (!ids.length) return rawRows;
+        try {
+            const { data: extras, error } = await state.client
+                .from('clases')
+                .select('id, stripe_lookup_key, metodo_pago')
+                .in('id', ids);
+            if (!error && Array.isArray(extras)) {
+                const map = new Map(extras.map(e => [e.id, e]));
+                rawRows.forEach(r => {
+                    const extra = map.get(r.id);
+                    if (extra) {
+                        if (extra.stripe_lookup_key) r.stripe_lookup_key = extra.stripe_lookup_key;
+                        if (extra.metodo_pago) r.metodo_pago = extra.metodo_pago;
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('No se pudieron enriquecer las tarifas Stripe de las clases:', e?.message || e);
+        }
+        return rawRows;
+    }
+
     async function fetchWeekData(weekStart) {
         if (state.mode === 'todo' || state.mode === 'global') {
             const [yogaAndWorkshops, consultations] = await Promise.all([
@@ -1360,6 +1428,7 @@
                         });
                         if (!error && Array.isArray(data)) {
                             state.rpcAvailable = true;
+                            await enrichWithStripeLookup(data);
                             return data
                                 .map(row => normalizeClassRow(row, true))
                                 .filter(Boolean)
@@ -1554,6 +1623,7 @@
 
                 if (!error && Array.isArray(data)) {
                     state.rpcAvailable = true;
+                    await enrichWithStripeLookup(data);
                     return {
                         exactAvailability: true,
                         classes: data
@@ -1583,6 +1653,7 @@
 
             if (!error && Array.isArray(data)) {
                 state.rpcAvailable = true;
+                await enrichWithStripeLookup(data);
                 return {
                     exactAvailability: true,
                     classes: data
@@ -2309,6 +2380,7 @@
         isPublicScheduleSlot,
         consultationStartMinutesFor,
         consultationDurationMinutesFor,
-        getEventState
+        getEventState,
+        resolveWorkshopPriceHint
     });
 })(typeof window !== 'undefined' ? window : globalThis);
