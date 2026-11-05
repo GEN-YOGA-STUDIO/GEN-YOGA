@@ -187,7 +187,7 @@
             <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-6 shadow-inner">
                 <i class="ph-fill ph-check-circle text-5xl"></i>
             </div>
-            <h1 class="brand-font text-3xl font-black text-cocoa mb-3" data-i18n="success_consultation_title">¡Consulta adquirida!</h1>
+            <h1 id="guest-consultation-heading" class="brand-font text-3xl font-black text-cocoa mb-3" data-i18n="success_consultation_title">¡Consulta adquirida!</h1>
             <p id="guest-consultation-message" class="text-cocoa/75 text-sm mb-5 leading-relaxed" data-i18n="success_consultation_default_message">
                 Stripe ha confirmado el pago y tu consulta ha quedado registrada correctamente.
             </p>
@@ -199,7 +199,7 @@
                 Escríbenos para concertar la fecha de tu consulta. Indica el nombre o teléfono y el correo utilizados durante el pago para localizarla rápidamente.
             </p>
             <div class="flex flex-col gap-3 w-full">
-                <a href="mailto:hola@genyoga.studio?subject=Concertar%20consulta%20GEN%20Yoga" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                <a id="guest-consultation-contact" href="mailto:hola@genyoga.studio?subject=Concertar%20consulta%20GEN%20Yoga" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
                     <i class="ph-bold ph-envelope-simple text-base"></i> <span data-i18n="success_consultation_contact">Contactar con GEN Yoga</span>
                 </a>
                 <a href="tarifas.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm" data-i18n="success_consultation_back_rates">
@@ -392,10 +392,20 @@
                     'isabel_pni_sig': 'Consulta de PNI (seguimiento)',
                     'clase_especial': 'Clase Especial: Flow & Meditación',
                     'taller_intro_power_vinyasa': 'Taller: Introducción a Power Vinyasa',
+                    'taller_25': 'Taller GEN Yoga',
+                    'taller_35': 'Taller GEN Yoga',
+                    'taller': 'Taller GEN Yoga',
                 };
                 const titleEl = document.getElementById('guest-consultation-title');
                 const msgEl = document.getElementById('guest-consultation-message');
                 const itemName = itemTitles[data.purchaseType] || tr('success_item_fallback', 'Reserva');
+                const guestWorkshop = isWorkshopPurchaseType(data.purchaseType);
+                const headingEl = document.getElementById('guest-consultation-heading');
+                if (headingEl) {
+                    headingEl.textContent = guestWorkshop
+                        ? tr('success_workshop_title', '¡Plaza reservada!')
+                        : tr('success_consultation_title', '¡Consulta adquirida!');
+                }
                 if (titleEl) titleEl.textContent = itemName;
                 const customerName = [data.nombre, data.apellidos].filter(Boolean).join(' ');
                 const idInfo = [customerName, data.phone].filter(Boolean).join(' · ');
@@ -404,6 +414,16 @@
                     if (data.email) text += fmtTr('success_consultation_receipt', { email: escapeHtml(data.email) }, ' Tu recibo de compra se ha enviado a <strong>{email}</strong>.');
                     if (idInfo) text += fmtTr('success_consultation_identify', { data: escapeHtml(idInfo) }, ' Para el día de la sesión podrás identificarte en el centro con tus datos (<strong>{data}</strong>).');
                     msgEl.innerHTML = text;
+                }
+                const instructionsEl = document.getElementById('guest-consultation-instructions');
+                if (instructionsEl) {
+                    instructionsEl.textContent = guestWorkshop
+                        ? tr('success_workshop_instructions', 'Tu plaza para el taller queda reservada. Preséntate en el centro el día y la hora indicados; puedes identificarte con tus datos.')
+                        : tr('success_consultation_instructions', 'Escríbenos para concertar la fecha de tu consulta. Indica el nombre o teléfono y el correo utilizados durante el pago para localizarla rápidamente.');
+                }
+                const contactLink = document.getElementById('guest-consultation-contact');
+                if (contactLink && guestWorkshop) {
+                    contactLink.href = 'mailto:hola@genyoga.studio?subject=Consulta%20sobre%20mi%20taller%20GEN%20Yoga';
                 }
                 document.getElementById('guest-consultation-success').classList.remove('hidden');
             } else {
@@ -536,7 +556,7 @@
         }
 
         function isWorkshopPurchaseType(purchaseType) {
-            return /^(?:clase_especial|taller_intro_power_vinyasa)$/.test(
+            return /^(?:clase_especial|taller_intro_power_vinyasa|taller_25|taller_35|taller)$/.test(
                 String(purchaseType || '')
             );
         }
@@ -666,34 +686,28 @@
                     return;
                 }
 
-                // Fetch current bookings to calculate free spots
-                const claseIds = clases.map(c => c.id);
-                const { data: reservas, error: errRes } = await client
-                    .from('reservas_yoga')
-                    .select('clase_id')
-                    .in('clase_id', claseIds)
-                    .eq('estado', 'confirmada');
-
-                if (errRes) throw errRes;
-
+                // En el flujo de invitado no se puede leer reservas_yoga (RLS):
+                // mostramos todas las clases sin contador de plazas y dejamos que
+                // el servidor valide el aforo al confirmar la reserva.
                 const bookingsMap = {};
-                (reservas || []).forEach(r => {
-                    bookingsMap[r.clase_id] = (bookingsMap[r.clase_id] || 0) + 1;
-                });
+                const bookingsKnown = false;
 
                 const options = [{ label: tr('success_classes_choose', '-- Elige una clase de Yoga --') }];
                 
                 clases.forEach(c => {
                     const ocupadas = bookingsMap[c.id] || 0;
                     const capacidad = c.capacidad_max || 0;
-                    const libres = Math.max(0, capacidad - ocupadas);
-                    
-                    if (libres > 0) {
+                    const libres = bookingsKnown ? Math.max(0, capacidad - ocupadas) : null;
+
+                    if (!bookingsKnown || libres > 0) {
                         const dateStr = formatDateTimeLocalized(c.fecha_inicio);
                         const profName = `${c.profesionales?.nombre || ''} ${c.profesionales?.apellidos || ''}`.trim() || tr('success_instructor', 'Instructor');
+                        const spotsSuffix = bookingsKnown
+                            ? ` · ${libres} ${tr('success_classes_spots', 'libres')}`
+                            : '';
                         options.push({
                             value: c.id,
-                            label: `${dateStr} · ${getPublicYogaClassName(c.nombre) || tr('success_yoga_class', 'Clase de Yoga')} (${tr('success_classes_with', 'con')} ${profName}) · ${libres} ${tr('success_classes_spots', 'libres')}`
+                            label: `${dateStr} · ${getPublicYogaClassName(c.nombre) || tr('success_yoga_class', 'Clase de Yoga')} (${tr('success_classes_with', 'con')} ${profName})${spotsSuffix}`
                         });
                     }
                 });

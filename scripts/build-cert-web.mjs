@@ -228,26 +228,54 @@ for (const file of htmls) {
     'bono_mensual': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
     'bono_inicial_40': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
     'bono_inicial': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
-    'bono_ilimitado': { title: 'Bono Ilimitado', price: '80,00 €', type: 'bono_ilimitado', isUnlimited: true },
-    'pack_4': { title: 'Pack de 4 Clases', price: '48,00 €', type: 'pack_4', credits: 4 },
+    'bono_ilimitado': { title: 'Bono Ilimitado', price: '90,00 €', type: 'bono_ilimitado', isUnlimited: true },
+    'pack_4': { title: 'Pack de 4 Clases', price: '50,00 €', type: 'pack_4', credits: 4 },
     'pack_6': { title: 'Pack de 6 Clases', price: '65,00 €', type: 'pack_6', credits: 6 },
     'pack_10': { title: 'Pack de 10 Clases', price: '95,00 €', type: 'pack_10', credits: 10 },
-    'clase_suelta': { title: '1 Clase Suelta de Yoga', price: '14,00 €', type: 'clase_suelta', credits: 1 },
-    'clase_especial': { title: 'Clase Especial: Flow & Meditación', price: '18,00 €', type: 'clase_especial', credits: 1, isSpecial: true },
+    'clase_suelta': { title: '1 Clase Suelta de Yoga', price: '15,00 €', type: 'clase_suelta', credits: 1 },
+    'clase_especial': { title: 'Clase Especial: Flow & Meditación', price: '20,00 €', type: 'clase_especial', credits: 1, isSpecial: true },
     'taller_intro_power_vinyasa': { title: 'Taller: Intro Power Vinyasa', price: '25,00 €', type: 'taller_intro_power_vinyasa', isWorkshop: true },
-    'miriam_psico_individual_1a': { title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: '60,00 €', type: 'miriam_psico_individual_1a', isConsultation: true, consultationType: 'psicologia' },
-    'miriam_psico_individual_sig': { title: 'Acompañamiento psicoterapéutico (siguientes)', price: '55,00 €', type: 'miriam_psico_individual_sig', isConsultation: true, consultationType: 'psicologia' },
-    'miriam_psico_pareja_1a': { title: 'Terapia de pareja (1ª sesión)', price: '80,00 €', type: 'miriam_psico_pareja_1a', isConsultation: true, consultationType: 'psicologia' },
-    'miriam_psico_pareja_sig': { title: 'Terapia de pareja (siguientes)', price: '75,00 €', type: 'miriam_psico_pareja_sig', isConsultation: true, consultationType: 'psicologia' },
-    'miriam_grupo_autoayuda': { title: 'Grupo de Autoayuda con Miriam', price: '25,00 €', type: 'miriam_grupo_autoayuda', isGroup: true },
-    'miriam_grupo_terapeutico': { title: 'Grupo Terapéutico con Miriam', price: '35,00 €', type: 'miriam_grupo_terapeutico', isGroup: true },
+    'taller_25': { title: 'Taller GEN Yoga (25 €)', price: '25,00 €', type: 'taller_25', isWorkshop: true },
+    'taller_35': { title: 'Taller GEN Yoga (35 €)', price: '35,00 €', type: 'taller_35', isWorkshop: true },
+    'taller': { title: 'Taller GEN Yoga', price: '25,00 €', type: 'taller', isWorkshop: true },
+    'miriam_psico_individual_1a': { title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: '75,00 €', type: 'miriam_psico_individual_1a', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_psico_individual_sig': { title: 'Acompañamiento psicoterapéutico (siguientes)', price: '65,00 €', type: 'miriam_psico_individual_sig', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_psico_pareja_1a': { title: 'Terapia de pareja (1ª sesión)', price: '120,00 €', type: 'miriam_psico_pareja_1a', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_psico_pareja_sig': { title: 'Terapia de pareja (siguientes)', price: '100,00 €', type: 'miriam_psico_pareja_sig', isConsultation: true, consultationType: 'psicologia' },
+    'miriam_grupo_autoayuda': { title: 'Grupo de Autoayuda con Miriam', price: '30,00 €', type: 'miriam_grupo_autoayuda', isGroup: true },
+    'miriam_grupo_terapeutico': { title: 'Grupo Terapéutico con Miriam', price: '30,00 €', type: 'miriam_grupo_terapeutico', isGroup: true },
     'prod_VDmmlmsGGhMebt': { title: 'Sesión Grupal con Miriam', price: '30,00 €', type: 'prod_VDmmlmsGGhMebt', isGroup: true },
-    'silvia_ayurveda_1a': { title: 'Consulta de Ayurveda (1ª sesión)', price: '65,00 €', type: 'silvia_ayurveda_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
-    'silvia_ayurveda_sig': { title: 'Consulta de Ayurveda (seguimiento)', price: '50,00 €', type: 'silvia_ayurveda_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
-    'silvia_ayurveda_bono3': { title: 'Bono Ayurveda 3 sesiones', price: '140,00 €', type: 'silvia_ayurveda_bono3', isConsultation: true, consultationType: 'nutricion', quantity: 3 },
-    'silvia_ayurveda_bono6': { title: 'Bono Ayurveda 6 sesiones', price: '260,00 €', type: 'silvia_ayurveda_bono6', isConsultation: true, consultationType: 'nutricion', quantity: 6 },
+    'silvia_ayurveda_1a': { title: 'Consulta de Ayurveda (1ª sesión)', price: '80,00 €', type: 'silvia_ayurveda_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'silvia_ayurveda_sig': { title: 'Consulta de Ayurveda (seguimiento)', price: '60,00 €', type: 'silvia_ayurveda_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'silvia_ayurveda_bono3': { title: 'Bono Ayurveda 3 sesiones', price: '170,00 €', type: 'silvia_ayurveda_bono3', isConsultation: true, consultationType: 'nutricion', quantity: 3 },
+    'silvia_ayurveda_bono6': { title: 'Bono Ayurveda 6 sesiones', price: '280,00 €', type: 'silvia_ayurveda_bono6', isConsultation: true, consultationType: 'nutricion', quantity: 6 },
     'isabel_pni_1a': { title: 'Consulta de PNI (1ª sesión)', price: '80,00 €', type: 'isabel_pni_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
-    'isabel_pni_sig': { title: 'Consulta de PNI (seguimiento)', price: '60,00 €', type: 'isabel_pni_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 }
+    'isabel_pni_sig': { title: 'Consulta de PNI (seguimiento)', price: '60,00 €', type: 'isabel_pni_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    // Alias por product_id de Stripe: el flujo real puede enviar el ID en lugar
+    // del lookup_key (p. ej. clases con stripe_product_id asignado). Mantener
+    // aquí el mismo importe que valida el backend evita importes '-- €'.
+    'prod_V5uBKuweMRE6ig': { title: 'Clase Especial', price: '20,00 €', type: 'clase_especial', credits: 1, isSpecial: true },
+    'prod_V5uCPKKKH5K74P': { title: 'Taller GEN Yoga (35 €)', price: '35,00 €', type: 'taller_35', isWorkshop: true },
+    'prod_VDY8mI9bZ3SQeb': { title: 'Taller GEN Yoga (25 €)', price: '25,00 €', type: 'taller_25', isWorkshop: true },
+    'prod_VDmmlmsGGhMebt': { title: 'Sesión Grupal Miriam', price: '30,00 €', type: 'prod_VDmmlmsGGhMebt', isGroup: true },
+    'prod_V0ITB6mD71fwnD': { title: 'Pack de 4 Clases', price: '50,00 €', type: 'pack_4', credits: 4 },
+    'prod_V0IUpyuvd7uX00': { title: 'Pack de 6 Clases', price: '65,00 €', type: 'pack_6', credits: 6 },
+    'prod_V0IUYoGJJbX7FW': { title: 'Pack de 10 Clases', price: '95,00 €', type: 'pack_10', credits: 10 },
+    'prod_VVkU2penYA08Qe': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
+    'prod_VVkT3C71EAUJmt': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
+    'prod_V9eGZTzwCNJ55q': { title: '1ª Clase con 50% Dto.', price: '7,50 €', type: 'promo_50_clase', credits: 1 },
+    'prod_V1pKHgtMwPkCpC': { title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: '75,00 €', type: 'miriam_psico_individual_1a', isConsultation: true, consultationType: 'psicologia' },
+    'prod_V1pLmzpCRU8ZpL': { title: 'Acompañamiento psicoterapéutico (siguientes)', price: '65,00 €', type: 'miriam_psico_individual_sig', isConsultation: true, consultationType: 'psicologia' },
+    'prod_V1pLCY3t5sprlK': { title: 'Terapia de pareja (1ª sesión)', price: '120,00 €', type: 'miriam_psico_pareja_1a', isConsultation: true, consultationType: 'psicologia' },
+    'prod_V1pLWNLzr9Vb3g': { title: 'Terapia de pareja (siguientes)', price: '100,00 €', type: 'miriam_psico_pareja_sig', isConsultation: true, consultationType: 'psicologia' },
+    'prod_V1pwyAFdIdxWG5': { title: 'Consulta de Ayurveda (1ª sesión)', price: '80,00 €', type: 'silvia_ayurveda_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'prod_V1pxtuahf6l09m': { title: 'Consulta de Ayurveda (seguimiento)', price: '60,00 €', type: 'silvia_ayurveda_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'prod_V1psYkVdT3ZgxH': { title: 'Bono Ayurveda 3 sesiones', price: '170,00 €', type: 'silvia_ayurveda_bono3', isConsultation: true, consultationType: 'nutricion', quantity: 3 },
+    'prod_V1psDxhdrLmncY': { title: 'Bono Ayurveda 6 sesiones', price: '280,00 €', type: 'silvia_ayurveda_bono6', isConsultation: true, consultationType: 'nutricion', quantity: 6 },
+    'prod_V1ppAeiDF9dlkZ': { title: 'Consulta de PNI (1ª sesión)', price: '80,00 €', type: 'isabel_pni_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'prod_V1pqPF6rtJf0SW': { title: 'Consulta de PNI (seguimiento)', price: '60,00 €', type: 'isabel_pni_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
+    'prod_UqBwGSWJNVAK0j': { title: '1 Clase Suelta de Yoga', price: '15,00 €', type: 'clase_suelta', credits: 1 },
+    'prod_UqBxkWuX2OeIz8': { title: 'Bono Ilimitado', price: '90,00 €', type: 'bono_ilimitado', isUnlimited: true }
   };
 
   function getProductInfo(lookupKey, membershipMonth) {
@@ -899,8 +927,8 @@ for (const file of htmls) {
         var info = getProductInfo(stored && stored.lookupKey, stored && stored.membershipMonth);
         var isGuest = !stored || stored.userId === 'guest';
         var pType = (stored && stored.purchaseType) || info.type || 'clase_suelta';
-        var isConsultation = /^(?:miriam_psico_|miriam_grupo_|prod_VDmmlmsGGhMebt|silvia_ayurveda_|isabel_pni_)/.test(pType);
-        var isWorkshop = /^(?:clase_especial|taller_intro_power_vinyasa)/.test(pType);
+        var isConsultation = /^(?:miriam_psico_|miriam_grupo_|miriam_psico_grupal|bono_grupal|bonos_grupos|prod_VDmmlmsGGhMebt|silvia_ayurveda_|isabel_pni_)/.test(pType);
+        var isWorkshop = /^(?:clase_especial|taller_intro_power_vinyasa|taller_25|taller_35|taller)$/.test(pType);
 
         var rawName = (stored && stored.guestName) || 'Invitado CERT';
         var nameParts = rawName.trim().split(/\\s+/);

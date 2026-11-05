@@ -156,7 +156,7 @@ el de cert (02:15Z) llegó a las 04:08Z. Consecuencias prácticas:
 
 ## Activar el autofix (una vez)
 
-Checklist de settings del repo (estado verificado el 2026-10-08 con `gh variable list` / `gh secret list` / `gh label list`):
+Checklist de settings del repo (estado verificado el 2026-11-05 con `gh variable list` / `gh secret list` / `gh label list`):
 
 - [x] Variable de repositorio `AUTOFIX_ENABLED=true` (Settings → Secrets and variables → Actions → Variables). *(Creada 2026-10-08)*.
 - [x] Etiqueta `autofix-intentado` en el repositorio para control de intentos. *(Creada; el gate la añade al issue en cada intento y los health workflows la retiran ante una regresión)*.

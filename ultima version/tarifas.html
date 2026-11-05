@@ -658,7 +658,7 @@
                             <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
                                 <div class="flex items-center justify-between gap-2">
                                     <p class="font-bold text-cocoa text-xs" data-i18n="rates_ayur_item_bond3">Bono Salud Integrativa (3 sesiones)</p>
-                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">170 € · 3 consultas</span>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">170 € · <span data-i18n="rates_ayur_bond3_qty">3 consultas</span></span>
                                 </div>
                                 <button onclick="iniciarCheckoutConsultaStripe('silvia_ayurveda_bono3', 'Bono Salud Integrativa (3 sesiones)', 170)"
                                     class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
@@ -668,7 +668,7 @@
                             <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left flex flex-col gap-2">
                                 <div class="flex items-center justify-between gap-2">
                                     <p class="font-bold text-cocoa text-xs" data-i18n="rates_ayur_item_bond6">Bono Salud Integrativa (6 sesiones)</p>
-                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">280 € · 6 consultas</span>
+                                    <span class="text-[10px] font-bold text-[#8f6b2d] bg-[#8f6b2d]/10 px-2 py-0.5 rounded-md whitespace-nowrap">280 € · <span data-i18n="rates_ayur_bond6_qty">6 consultas</span></span>
                                 </div>
                                 <button onclick="iniciarCheckoutConsultaStripe('silvia_ayurveda_bono6', 'Bono Salud Integrativa (6 sesiones)', 280)"
                                     class="w-full py-2 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-[10px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm flex items-center justify-center gap-1">
@@ -1030,6 +1030,11 @@
 
         window.addEventListener('languageChanged', () => {
             renderSelectedYogaClassSummary();
+            // Las tarjetas de Eventos se generan con texto traducido en el momento
+            // del render; al cambiar de idioma hay que repintarlas desde la caché.
+            if (Array.isArray(talleresDinamicosCache)) {
+                renderizarListaTalleres(talleresDinamicosCache);
+            }
         });
 
         async function inspectRequestedYogaClass() {
@@ -1101,14 +1106,14 @@
             }
 
             const result = await Swal.fire({
-                title: 'Clase suelta de Yoga · 15 €',
-                text: '¿Cómo deseas realizar tu compra?',
+                title: fmtT('rates_guest_purchase_title', {}, 'Clase suelta de Yoga · 15 €'),
+                text: fmtT('rates_guest_purchase_text', {}, '¿Cómo deseas realizar tu compra?'),
                 icon: 'question',
                 showCancelButton: true,
                 showDenyButton: true,
-                confirmButtonText: '<i class="ph-bold ph-user mr-1.5"></i> Comprar como Invitado (15 €)',
-                denyButtonText: '<i class="ph-bold ph-sign-in mr-1.5"></i> Acceder a mi Perfil',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: '<i class="ph-bold ph-user mr-1.5"></i> ' + fmtT('rates_guest_purchase_guest_btn', {}, 'Comprar como Invitado (15 €)'),
+                denyButtonText: '<i class="ph-bold ph-sign-in mr-1.5"></i> ' + fmtT('rates_guest_purchase_profile_btn', {}, 'Acceder a mi Perfil'),
+                cancelButtonText: fmtT('rates_common_cancel', {}, 'Cancelar'),
                 confirmButtonColor: '#956857',
                 denyButtonColor: '#047857',
                 cancelButtonColor: '#9ca3af',
@@ -1460,12 +1465,12 @@
             if (!userId) {
                 if (isMultiSessionBono) {
                     const result = await Swal.fire({
-                        title: 'Cuenta Requerida',
-                        text: 'Para adquirir y gestionar bonos de múltiples sesiones es necesario tener una cuenta registrada.',
+                        title: fmtT('rates_multisession_account_title', {}, 'Cuenta Requerida'),
+                        text: fmtT('rates_multisession_account_text', {}, 'Para adquirir y gestionar bonos de múltiples sesiones es necesario tener una cuenta registrada.'),
                         icon: 'info',
                         showCancelButton: true,
-                        confirmButtonText: 'Iniciar Sesión / Registrarme',
-                        cancelButtonText: 'Cancelar',
+                        confirmButtonText: fmtT('rates_common_sign_up', {}, 'Iniciar Sesión / Registrarme'),
+                        cancelButtonText: fmtT('rates_common_cancel', {}, 'Cancelar'),
                         confirmButtonColor: '#795244',
                         cancelButtonColor: '#d33',
                         background: '#fff',
@@ -1478,14 +1483,14 @@
                 }
 
                 const result = await Swal.fire({
-                    title: title || 'Comprar Consulta',
-                    text: '¿Quieres comprar esta consulta iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado sin registrarte?',
+                    title: title || fmtT('rates_consult_title', {}, 'Comprar Consulta'),
+                    text: fmtT('rates_consult_guest_text', {}, '¿Quieres comprar esta consulta iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado sin registrarte?'),
                     icon: 'question',
                     showCancelButton: true,
                     showDenyButton: true,
-                    confirmButtonText: 'Pagar como Invitado',
-                    denyButtonText: 'Iniciar Sesión',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: fmtT('rates_common_pay_guest', {}, 'Pagar como Invitado'),
+                    denyButtonText: fmtT('rates_common_sign_in', {}, 'Iniciar Sesión'),
+                    cancelButtonText: fmtT('rates_common_cancel', {}, 'Cancelar'),
                     confirmButtonColor: '#795244',
                     denyButtonColor: '#6a6540',
                     cancelButtonColor: '#d33',
@@ -1585,21 +1590,21 @@
             if (lookupKey === 'clase_especial') {
                 if (!userId) {
                     const result = await Swal.fire({
-                        title: title || 'Clase Especial',
+                        title: title || fmtT('rates_special_title', {}, 'Clase Especial'),
                         html: `
                             <div class="text-left text-xs text-cocoa/80 space-y-2.5">
-                                <p>Para reservar tu plaza en <strong>${escapeHtml(title)}</strong> (${price || '20'} €) necesitas acceder con tu cuenta de GEN Yoga o darte de alta.</p>
+                                <p>${fmtT('rates_special_login_text', { item: escapeHtml(title), price: price || '20' }, `Para reservar tu plaza en <strong>${escapeHtml(title)}</strong> (${price || '20'} €) necesitas acceder con tu cuenta de GEN Yoga o darte de alta.`)}</p>
                                 <p class="text-[11px] text-cocoa/60 bg-sand/20 p-2.5 rounded-xl border border-cocoa/10">
-                                    ✨ Recuerda: si dispones de <strong>Bono Ilimitado mensual</strong>, tienes <strong>1 Clase Especial incluida cada mes</strong> sin coste adicional.
+                                    ${fmtT('rates_special_login_hint', {}, '✨ Recuerda: si dispones de <strong>Bono Ilimitado mensual</strong>, tienes <strong>1 Clase Especial incluida cada mes</strong> sin coste adicional.')}
                                 </p>
                             </div>
                         `,
                         icon: 'info',
                         showCancelButton: true,
                         showDenyButton: true,
-                        confirmButtonText: 'Iniciar Sesión / Registrarme',
-                        denyButtonText: 'Ver en Horario',
-                        cancelButtonText: 'Cancelar',
+                        confirmButtonText: fmtT('rates_common_sign_up', {}, 'Iniciar Sesión / Registrarme'),
+                        denyButtonText: fmtT('rates_common_view_schedule', {}, 'Ver en Horario'),
+                        cancelButtonText: fmtT('rates_common_cancel', {}, 'Cancelar'),
                         confirmButtonColor: '#6a6540',
                         denyButtonColor: '#AB593D',
                         cancelButtonColor: '#d33',
@@ -1662,14 +1667,17 @@
 
             if (!userId) {
                 const result = await Swal.fire({
-                    title: title || 'Comprar Plaza de Taller',
-                    text: `¿Quieres reservar y pagar ${title}${price ? ` (${price} €)` : ''} iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado?`,
+                    title: title || fmtT('rates_workshop_title', {}, 'Comprar Plaza de Taller'),
+                    text: fmtT('rates_workshop_guest_text', {
+                        item: title,
+                        price: price ? ` (${price} €)` : ''
+                    }, `¿Quieres reservar y pagar ${title}${price ? ` (${price} €)` : ''} iniciando sesión con tu cuenta de GEN Yoga, o prefieres continuar y pagar como invitado?`),
                     icon: 'question',
                     showCancelButton: true,
                     showDenyButton: true,
-                    confirmButtonText: 'Pagar como Invitado',
-                    denyButtonText: 'Iniciar Sesión',
-                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: fmtT('rates_common_pay_guest', {}, 'Pagar como Invitado'),
+                    denyButtonText: fmtT('rates_common_sign_in', {}, 'Iniciar Sesión'),
+                    cancelButtonText: fmtT('rates_common_cancel', {}, 'Cancelar'),
                     confirmButtonColor: '#AB593D',
                     denyButtonColor: '#6a6540',
                     cancelButtonColor: '#d33',
@@ -1788,14 +1796,14 @@
 
                 if (!hasSession) {
                     const result = await Swal.fire({
-                        title: title || 'Reservar Taller',
-                        text: `¿Quieres reservar tu plaza en "${title}" iniciando sesión con tu cuenta de GEN Yoga, o prefieres ver los detalles en el calendario?`,
+                        title: title || fmtT('rates_workshop_book_title', {}, 'Reservar Taller'),
+                        text: fmtT('rates_workshop_calendar_text', { item: title }, `¿Quieres reservar tu plaza en "${title}" iniciando sesión con tu cuenta de GEN Yoga, o prefieres ver los detalles en el calendario?`),
                         icon: 'question',
                         showCancelButton: true,
                         showDenyButton: true,
-                        confirmButtonText: 'Iniciar Sesión',
-                        denyButtonText: 'Ver en Calendario',
-                        cancelButtonText: 'Cancelar',
+                        confirmButtonText: fmtT('rates_common_sign_in', {}, 'Iniciar Sesión'),
+                        denyButtonText: fmtT('rates_common_view_calendar', {}, 'Ver en Calendario'),
+                        cancelButtonText: fmtT('rates_common_cancel', {}, 'Cancelar'),
                         confirmButtonColor: '#AB593D',
                         denyButtonColor: '#6a6540',
                         cancelButtonColor: '#d33',
