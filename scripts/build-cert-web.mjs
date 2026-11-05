@@ -197,11 +197,11 @@ for (const file of htmls) {
   const banner = `<style id="gy-cert-banner-style">
   #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; }
   #gy-cert-banner * { pointer-events:auto; }
-  #gy-cert-reset-btn { margin-left:10px; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.32); color:#fff; border-radius:6px; padding:0 12px; font-size:12px; font-weight:700; cursor:pointer; vertical-align:middle; transition:background .15s; display:inline-flex; align-items:center; justify-content:center; min-height:44px; }
-  #gy-cert-reset-btn:hover { background:rgba(255,255,255,0.3); }
-  body { padding-top:56px !important; }
-  @media (max-width:640px) { body { padding-top:64px !important; } }
-  html { scroll-padding-top:56px; }
+  #gy-cert-reset-btn { position:fixed; right:12px; bottom:12px; z-index:9998; background:rgba(38,22,12,.92); border:1px solid rgba(255,255,255,0.32); color:#fff; border-radius:999px; padding:0 16px; font-size:12px; font-weight:700; cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; justify-content:center; min-height:44px; box-shadow:0 6px 18px rgba(0,0,0,.25); }
+  #gy-cert-reset-btn:hover { background:rgba(38,22,12,1); }
+  body { padding-top:34px !important; }
+  @media (max-width:640px) { body { padding-top:48px !important; } }
+  html { scroll-padding-top:44px; }
 </style>
 <div id="gy-cert-banner" role="note">
   <span>${textoBanner}</span>
