@@ -6687,7 +6687,7 @@
             const consultasGratis = toSafeNumber(u.saldo_consultas_gratis);
             const psico = toSafeNumber(u.saldo_psicologia);
             const nutri = toSafeNumber(u.saldo_nutricion);
-            const ilimitadoLegacy = !!u.bono_mensual_activo;
+            const ilimitadoLegacy = !!(u.bono_mensual_activo && (!u.bono_mensual_fin || new Date(u.bono_mensual_fin) >= new Date()));
 
             let mesStr = '';
             if (ilimitadoLegacy && u.bono_mensual_inicio) {
@@ -9649,8 +9649,12 @@
                 });
             });
 
-            // Legacy unlimited flag
-            if (allUserPeriods.length === 0 && currentUserProfile?.bono_mensual_activo) {
+            // Legacy unlimited flag (solo si está estrictamente vigente)
+            const isLegacyUnlimitedValid = currentUserProfile?.bono_mensual_activo &&
+                (!currentUserProfile?.bono_mensual_fin || new Date(currentUserProfile.bono_mensual_fin) >= new Date()) &&
+                (!currentUserProfile?.bono_mensual_inicio || String(currentUserProfile.bono_mensual_inicio).slice(0, 7) >= ymActual);
+
+            if (allUserPeriods.length === 0 && isLegacyUnlimitedValid) {
                 allUserPeriods.push({
                     id: '',
                     tipo: 'bono_ilimitado',
@@ -9961,7 +9965,7 @@
             const hoyYm = typeof getMadridYearMonthClient === 'function' ? getMadridYearMonthClient(new Date()) : new Date().toISOString().slice(0, 7);
             const tieneP = (userMonthlyMembershipPeriods || []).some(p => String(p.membership_month || p.starts_at || '').slice(0, 7) >= hoyYm) ||
                            (userUnlimitedPeriods || []).some(p => String(p.membership_month || p.starts_at || '').slice(0, 7) >= hoyYm) ||
-                           !!currentUserProfile?.bono_mensual_activo;
+                           (!!currentUserProfile?.bono_mensual_activo && (!currentUserProfile?.bono_mensual_fin || new Date(currentUserProfile.bono_mensual_fin) >= new Date()));
             const btnVerSemanas = tieneP
                 ? `<div class="mb-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between gap-2">
                      <span class="text-[11px] font-bold text-emerald-950 flex items-center gap-1.5"><i class="ph-bold ph-calendar-check text-emerald-700"></i> ${escapeHtml(profileT('profile_have_monthly_bono', 'Ya tienes un bono mensual contratado'))}</span>
@@ -17684,7 +17688,33 @@
             }
         }
 
+        async function ejecutarLimpiezaMesesCaducadosAdmin() {
+            try {
+                const currentMonthKey = (typeof normalizarMesClave === 'function' && typeof madridDateKey === 'function' && madridDateKey(new Date()))
+                    ? madridDateKey(new Date()).slice(0, 7)
+                    : new Date().toISOString().slice(0, 7);
+                const currentMonthStart = currentMonthKey + '-01';
+
+                // 1. Invocar RPC canónica de base de datos si está disponible
+                try {
+                    await client.rpc('limpiar_meses_caducados');
+                } catch (_) {}
+
+                // 2. Limpieza preventiva directa desde cliente admin con RLS
+                await Promise.allSettled([
+                    client.from('unlimited_membership_periods').delete().lt('membership_month', currentMonthStart),
+                    client.from('monthly_membership_periods').delete().lt('membership_month', currentMonthStart),
+                    client.from('bonos_clases_especiales').delete().lt('mes', currentMonthStart)
+                ]);
+            } catch (err) {
+                console.warn('Aviso en ejecución de limpieza de meses caducados:', err);
+            }
+        }
+        window.ejecutarLimpiezaMesesCaducadosAdmin = ejecutarLimpiezaMesesCaducadosAdmin;
+
         async function cargarUsuariosAdmin() {
+            await ejecutarLimpiezaMesesCaducadosAdmin();
+
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic"><i class="ph-duotone ph-spinner animate-spin"></i> Cargando...</td></tr>';
 
@@ -17749,12 +17779,52 @@
                 packsByUser.get(p.user_id).push(p);
             }
 
+            const currentMonthKey = (typeof normalizarMesClave === 'function' && typeof madridDateKey === 'function' && madridDateKey(new Date()))
+                ? madridDateKey(new Date()).slice(0, 7)
+                : new Date().toISOString().slice(0, 7);
+
             users.forEach(u => {
-                u.unlimited_periods = periodsByUser.get(u.id) || [];
-                u.monthly_periods = monthlyByUser.get(u.id) || [];
-                u.special_passes = specialsByUser.get(u.id) || [];
+                const rawUnlimited = periodsByUser.get(u.id) || [];
+                u.unlimited_periods = rawUnlimited.filter(p => {
+                    const mKey = typeof normalizarMesClave === 'function'
+                        ? normalizarMesClave(p.membership_month || p.starts_at)
+                        : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                    return mKey && mKey >= currentMonthKey;
+                });
+
+                const rawMonthly = monthlyByUser.get(u.id) || [];
+                u.monthly_periods = rawMonthly.filter(m => {
+                    const mKey = typeof normalizarMesClave === 'function'
+                        ? normalizarMesClave(m.membership_month || m.starts_at)
+                        : String(m.membership_month || m.starts_at || '').slice(0, 7);
+                    return mKey && mKey >= currentMonthKey;
+                });
+
+                const rawSpecials = specialsByUser.get(u.id) || [];
+                u.special_passes = rawSpecials.filter(s => {
+                    const mKey = typeof normalizarMesClave === 'function'
+                        ? normalizarMesClave(s.mes)
+                        : String(s.mes || '').slice(0, 7);
+                    return mKey && mKey >= currentMonthKey;
+                });
+
                 u.reprog_credits = reprogByUser.get(u.id) || [];
                 u.class_packs = ordenarPacksPorCaducidad(packsByUser.get(u.id) || []);
+
+                // Sincronizar perfiles cuyo bono mensual ya caducó (el 1 de cada mes se borran automáticamente)
+                if (u.bono_mensual_activo && u.unlimited_periods.length === 0) {
+                    const finPasado = !u.bono_mensual_fin || new Date(u.bono_mensual_fin) <= new Date();
+                    if (finPasado) {
+                        u.bono_mensual_activo = false;
+                        u.bono_mensual_inicio = null;
+                        u.bono_mensual_fin = null;
+                        client.from('profiles').update({
+                            bono_mensual_activo: false,
+                            bono_mensual_inicio: null,
+                            bono_mensual_fin: null
+                        }).eq('id', u.id).then(() => {}).catch(() => {});
+                    }
+                }
             });
 
             allUsersCache = users;
@@ -18204,6 +18274,9 @@
                     if (mKeyInicio && mKeyInicio < currentMonthKey) {
                         return false; // Pertenece a un mes pasado
                     }
+                }
+                if (!u.bono_mensual_fin && !u.bono_mensual_inicio) {
+                    return false;
                 }
                 return true;
             }
@@ -18908,7 +18981,11 @@
                         } else {
                             await client.from('unlimited_membership_periods').delete().eq('user_id', userId);
                         }
-                        const { data: remaining } = await client.from('unlimited_membership_periods').select('id, starts_at, ends_at').eq('user_id', userId);
+                        const nowIso = new Date().toISOString();
+                        const { data: remaining } = await client.from('unlimited_membership_periods')
+                            .select('id, starts_at, ends_at')
+                            .eq('user_id', userId)
+                            .gt('ends_at', nowIso);
                         const remainingCount = (remaining || []).length;
                         const minStart = remainingCount ? remaining.reduce((min, p) => !min || p.starts_at < min ? p.starts_at : min, null) : null;
                         const maxEnd = remainingCount ? remaining.reduce((max, p) => !max || p.ends_at > max ? p.ends_at : max, null) : null;
@@ -23644,6 +23721,23 @@
         async function abrirGestionBonosUsuario(userId) {
             if (!isAdmin && !esTrabajador()) return;
 
+            const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const currentMonthKey = (typeof normalizarMesClave === 'function' && typeof madridDateKey === 'function' && madridDateKey(new Date()))
+                ? madridDateKey(new Date()).slice(0, 7)
+                : new Date().toISOString().slice(0, 7);
+            const currentMonthStart = currentMonthKey + '-01';
+
+            // v18.4: Purga preventiva inmediata de meses pasados para este usuario (el día 1 de cada mes los meses anteriores desaparecen automáticamente)
+            try {
+                await Promise.allSettled([
+                    client.from('unlimited_membership_periods').delete().eq('user_id', userId).lt('membership_month', currentMonthStart),
+                    client.from('monthly_membership_periods').delete().eq('user_id', userId).lt('membership_month', currentMonthStart),
+                    client.from('bonos_clases_especiales').delete().eq('user_id', userId).lt('mes', currentMonthStart)
+                ]);
+            } catch (delErr) {
+                console.warn('Aviso al purgar meses pasados en gestión de bonos:', delErr);
+            }
+
             // Consultar datos frescos del perfil del usuario
             let u = (allUsersCache || []).find(x => String(x.id) === String(userId)) || {};
             try {
@@ -23667,12 +23761,13 @@
             const nutricionActual = toSafeNumber(u.saldo_nutricion);
             const grupalActual = toSafeNumber(u.saldo_grupal);
 
-            // Consultar meses ilimitados del usuario
+            // Consultar meses ilimitados del usuario (solo vigentes y futuros)
             let userMonths = [];
             try {
                 const { data: pData } = await client.from('unlimited_membership_periods')
                     .select('id, membership_month, starts_at, ends_at')
                     .eq('user_id', userId)
+                    .gte('membership_month', currentMonthStart)
                     .order('membership_month', { ascending: true });
                 if (pData && pData.length > 0) {
                     userMonths = pData;
@@ -23681,12 +23776,13 @@
                 console.warn('Error leyendo unlimited_membership_periods:', err);
             }
 
-            // Consultar meses del Bono Mensual (2 clases/semana) del usuario
+            // Consultar meses del Bono Mensual (2 clases/semana) del usuario (solo vigentes y futuros)
             let userMonthlyPeriods = [];
             try {
                 const { data: mData } = await client.from('monthly_membership_periods')
                     .select('id, membership_month, starts_at, ends_at, max_classes_per_week, plan_type')
                     .eq('user_id', userId)
+                    .gte('membership_month', currentMonthStart)
                     .order('membership_month', { ascending: true });
                 if (mData && mData.length > 0) {
                     userMonthlyPeriods = mData;
@@ -23695,18 +23791,34 @@
                 console.warn('Error leyendo monthly_membership_periods:', err);
             }
 
-            // Consultar clases especiales del usuario
+            // Consultar clases especiales del usuario (solo vigentes y futuras)
             let userSpecialPasses = [];
             try {
                 const { data: spData } = await client.from('bonos_clases_especiales')
                     .select('id, mes, saldo, origen')
                     .eq('user_id', userId)
+                    .gte('mes', currentMonthStart)
                     .order('mes', { ascending: true });
                 if (spData && spData.length > 0) {
                     userSpecialPasses = spData;
                 }
             } catch (err) {
                 console.warn('Error leyendo bonos_clases_especiales en modal:', err);
+            }
+
+            // Si el usuario no tiene periodos ilimitados vigentes ni futuros, asegurar bono_mensual_activo = false
+            if (userMonths.length === 0 && u.bono_mensual_activo) {
+                const finPasado = !u.bono_mensual_fin || new Date(u.bono_mensual_fin) <= new Date();
+                if (finPasado) {
+                    u.bono_mensual_activo = false;
+                    u.bono_mensual_inicio = null;
+                    u.bono_mensual_fin = null;
+                    client.from('profiles').update({
+                        bono_mensual_activo: false,
+                        bono_mensual_inicio: null,
+                        bono_mensual_fin: null
+                    }).eq('id', userId).then(() => {}).catch(() => {});
+                }
             }
 
             // v18.4: Consultar solo los packs de clases ACTIVOS del usuario con su fecha de caducidad
@@ -23733,9 +23845,7 @@
             }
             const packsResumenAdmin = resumenCaducidadPacks(userClassPacks);
 
-            const ilimitadoActivo = userMonths.length > 0 || !!u.bono_mensual_activo;
-            const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const currentMonthKey = madridDateKey(new Date()).slice(0, 7);
+            const ilimitadoActivo = userMonths.length > 0 || (!!u.bono_mensual_activo && (!u.bono_mensual_fin || new Date(u.bono_mensual_fin) >= new Date()));
 
             // Agrupar bonos de clases especiales por mes de forma estricta (solo mes actual y futuros)
             const specialPassesByMonth = new Map();
@@ -23813,16 +23923,19 @@
                 });
             }
 
-            // Si tiene el flag bono_mensual_activo pero no hay ningún periodo ilimitado (activo/futuro) en la lista
+            // Solo si tiene el flag legacy bono_mensual_activo con fecha fin estrictamente futura y no hay ningún periodo ilimitado en BD
             const tieneIlimitadoEnLista = todosPeriodosMensuales.some(p => p.tipo === 'ilimitado');
-            if (!tieneIlimitadoEnLista && u.bono_mensual_activo) {
-                todosPeriodosMensuales.push({
-                    tipo: 'ilimitado',
-                    badgeTipo: '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded border border-emerald-300 shadow-2xs">🥇 Ilimitado (90 €)</span>',
-                    mKey: currentMonthKey,
-                    periodId: '',
-                    accionQuitar: `retirarMesIlimitadoAdmin('${userId}', null, null)`
-                });
+            if (!tieneIlimitadoEnLista && u.bono_mensual_activo && u.bono_mensual_fin && new Date(u.bono_mensual_fin) > new Date()) {
+                const mKeyLegacy = normalizarMesClave(u.bono_mensual_inicio || u.bono_mensual_fin);
+                if (mKeyLegacy && mKeyLegacy >= currentMonthKey) {
+                    todosPeriodosMensuales.push({
+                        tipo: 'ilimitado',
+                        badgeTipo: '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded border border-emerald-300 shadow-2xs">🥇 Ilimitado (90 €)</span>',
+                        mKey: mKeyLegacy,
+                        periodId: '',
+                        accionQuitar: `retirarMesIlimitadoAdmin('${userId}', null, '${mKeyLegacy}')`
+                    });
+                }
             }
 
             // 2. Bono Inicial y Bono Mensual (monthly_membership_periods)
@@ -24317,6 +24430,10 @@
 
         async function retirarMesIlimitadoAdmin(userId, periodId = null, mesStr = null) {
             const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const currentMonthKey = (typeof normalizarMesClave === 'function' && typeof madridDateKey === 'function' && madridDateKey(new Date()))
+                ? madridDateKey(new Date()).slice(0, 7)
+                : new Date().toISOString().slice(0, 7);
+            const currentMonthStart = currentMonthKey + '-01';
             
             let selectedPeriodId = periodId;
             let selectedMes = mesStr;
@@ -24328,6 +24445,7 @@
                     const { data: pData } = await client.from('unlimited_membership_periods')
                         .select('id, membership_month, starts_at')
                         .eq('user_id', userId)
+                        .gte('membership_month', currentMonthStart)
                         .order('membership_month', { ascending: true });
                     if (pData && pData.length > 0) userPeriods = pData;
                 } catch (e) {
@@ -24459,22 +24577,26 @@
                     if (!resultData.bono_mensual_activo) {
                         uCache.bono_mensual_inicio = null;
                         uCache.bono_mensual_fin = null;
-                        uCache.unlimited_membership_periods = [];
+                        uCache.unlimited_periods = [];
                     }
                 } else if (!parsedPeriodId && !mesDate) {
                     uCache.bono_mensual_activo = false;
                     uCache.bono_mensual_inicio = null;
                     uCache.bono_mensual_fin = null;
-                    uCache.unlimited_membership_periods = [];
+                    uCache.unlimited_periods = [];
                 }
-                if (Array.isArray(uCache.unlimited_membership_periods)) {
+                if (Array.isArray(uCache.unlimited_periods)) {
                     if (parsedPeriodId) {
-                        uCache.unlimited_membership_periods = uCache.unlimited_membership_periods.filter(p => Number(p.id) !== Number(parsedPeriodId));
+                        uCache.unlimited_periods = uCache.unlimited_periods.filter(p => Number(p.id) !== Number(parsedPeriodId));
                     } else if (mesDate) {
                         const mK = normalizarMesClave(mesDate);
-                        uCache.unlimited_membership_periods = uCache.unlimited_membership_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mK);
+                        uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mK);
                     }
-                    if (uCache.unlimited_membership_periods.length === 0 && (!resultData || !resultData.bono_mensual_activo)) {
+                    const remainingActive = uCache.unlimited_periods.filter(p => {
+                        const mK = normalizarMesClave(p.membership_month || p.starts_at);
+                        return mK && mK >= currentMonthKey;
+                    });
+                    if (remainingActive.length === 0 && (!resultData || !resultData.bono_mensual_activo)) {
                         uCache.bono_mensual_activo = false;
                         uCache.bono_mensual_inicio = null;
                         uCache.bono_mensual_fin = null;

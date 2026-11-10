@@ -2259,7 +2259,8 @@
                     const nombre = userProfile?.nombre || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Alumno';
                     const email = currentUser.email || '';
                     const bonos = userProfile?.bonos !== undefined ? userProfile.bonos : 0;
-                    const bonoMensual = userProfile?.bono_mensual_activo ? 'Bono mensual activo' : `${bonos} CLASE${bonos === 1 ? '' : 'S'} DISPONIBLE${bonos === 1 ? '' : 'S'}`;
+                    const isBonoMensualVigente = !!(userProfile?.bono_mensual_activo && (!userProfile?.bono_mensual_fin || new Date(userProfile.bono_mensual_fin) >= new Date()));
+                    const bonoMensual = isBonoMensualVigente ? 'Bono mensual activo' : `${bonos} CLASE${bonos === 1 ? '' : 'S'} DISPONIBLE${bonos === 1 ? '' : 'S'}`;
 
                     let caducidadHtml = '';
                     if (userProfile?.bono_mensual_fin) {
@@ -2622,7 +2623,8 @@
                     `;
                 } else {
                     const bonos = userProfile?.bonos || 0;
-                    if (bonos > 0 || userProfile?.bono_mensual_activo) {
+                    const isBonoMensualVigente = !!(userProfile?.bono_mensual_activo && (!userProfile?.bono_mensual_fin || new Date(userProfile.bono_mensual_fin) >= new Date()));
+                    if (bonos > 0 || isBonoMensualVigente) {
                         actionBtn = `<button class="a-btn" id="native-btn-confirm-res" onclick="confirmNativeBooking('${cl.id}')">Confirmar Reserva con Bono (${bonos} disponible${bonos === 1 ? '' : 's'})</button>`;
                     } else {
                         actionBtn = `<button class="a-btn" onclick="closeNativeDetail();openNativeTarifasSheet()">Comprar bonos para reservar</button>`;
