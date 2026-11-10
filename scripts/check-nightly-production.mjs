@@ -2157,6 +2157,10 @@ await section('compra', async () => {
         else fail('compra', 'consultas: precio impreso ≠ cobrado', bad.slice(0, 4).join(' | '));
       }
       if (cat === 'talleres') {
+        await page.waitForFunction(() => {
+          const el = document.getElementById('talleres-cards-container');
+          return el && !el.hasAttribute('aria-busy') && !el.innerText.includes('Cargando');
+        }, { timeout: 15000 }).catch(() => {});
         const cards = await page.locator('#talleres-cards-container > *:visible').all().catch(() => []);
         if (!cards.length) warn('compra', 'talleres', 'sin tarjetas dinámicas (aviso)');
         for (const c of cards.slice(0, 6)) {
