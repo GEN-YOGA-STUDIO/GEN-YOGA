@@ -392,8 +392,8 @@ await section('tarifas', async () => {
   // clases de verdad (lectura). La intercepción garantiza 0 sesiones y 0 cargos.
   // El botón vive en section-yoga: se activa su pestaña visible primero.
   await page.locator('[onclick*="switchCategory(\'yoga\')"]:visible').first().click({ timeout: 8000 }).catch(() => {});
-  await page.waitForTimeout(500);
   const buyBtn = page.locator('#buy-single-class-button');
+  await buyBtn.waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
   if (!(await buyBtn.isVisible().catch(() => false))) {
     fail('tarifas: "Comprar clase" no queda visible ni activando la pestaña Yoga');
   } else {

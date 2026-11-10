@@ -111,6 +111,8 @@ Cada pasada escribe `nightly-reports/plan-mejoras.json` y `.md` (o `plan-mejoras
 
 Propuestas con `autoApplicable: true` son cambios de código web verificables. Las `manual` requieren Supabase/Stripe, un despliegue o datos de prueba y la IA no las toca.
 
+Los tres avisos de `[cliente]` que dependen de reservas (`cancelación`, `reserva consulta`, `cancelación consulta`) se resuelven con los pasos de [`DATOS_PRUEBA_CERT.md`](DATOS_PRUEBA_CERT.md).
+
 ### Aplicar en local
 
 ```bash

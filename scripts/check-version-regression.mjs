@@ -230,6 +230,10 @@ const runtimeSelectors = [
   ['index.html', '#logo-img'], ['index.html', '.btn-nav-mobile'],
   ['clases.html', '#btn-inicio'], ['clases.html', '#sticky-header'],
   ['tarifas.html', 'a#btn-inicio'],
+  ['ofertas.html', 'a#btn-inicio'],
+  ['clases_yoga.html', 'a#btn-inicio'],
+  ['consultas.html', 'a#btn-inicio'],
+  ['eventos.html', 'a#btn-inicio'],
   ['maestros.html', '#maestros-grid-section'],
   ['profile.html', '#login-email'],
   ['politica-privacidad.html', '#privacy-main-title'],
@@ -239,7 +243,7 @@ const runtimeSelectors = [
 ];
 
 const pages = [
-  'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
+  'index.html', 'clases.html', 'clases_yoga.html', 'consultas.html', 'eventos.html', 'ofertas.html', 'tarifas.html', 'maestros.html',
   'profile.html', 'politica-privacidad.html', 'aviso-legal.html', 'success.html', 'cancel.html',
 ];
 const browserJs = [

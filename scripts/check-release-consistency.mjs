@@ -28,7 +28,7 @@ console.log(`\n--- 1. Versión raíz: ${full} ---`);
 check('package.json raíz tiene versión semver', /^\d+\.\d+\.\d+$/.test(full), `visto: ${full}`);
 
 const pages = [
-  '404.html', 'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
+  '404.html', 'index.html', 'clases.html', 'clases_yoga.html', 'consultas.html', 'eventos.html', 'ofertas.html', 'tarifas.html', 'maestros.html',
   'profile.html', 'politica-privacidad.html', 'aviso-legal.html', 'success.html', 'cancel.html',
 ];
 

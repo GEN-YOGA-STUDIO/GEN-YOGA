@@ -29,7 +29,9 @@ const exists = async (abs) => {
 };
 
 const expectedPages = [
-  '404.html', 'aviso-legal.html', 'cancel.html', 'clases.html', 'index.html', 'maestros.html',
+  '404.html', 'aviso-legal.html', 'cancel.html', 'clases.html',
+  'clases_yoga.html', 'consultas.html', 'eventos.html',
+  'index.html', 'maestros.html', 'ofertas.html',
   'politica-privacidad.html', 'profile.html', 'success.html', 'tarifas.html',
 ];
 

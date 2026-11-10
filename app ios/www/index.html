@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="application-version" content="18.3" />
+    <meta name="application-version" content="18.4" />
     <meta name="description"
         content="GEN Yoga en Albacete: clases de yoga, bienestar integral y consultas guiadas por profesionales." />
-    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=18.3" />
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=18.3" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png?v=18.4" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png?v=18.4" />
     <link rel="icon" href="favicon.ico" sizes="any" type="image/x-icon">
     <link rel="manifest" href="manifest.json">
     <title>GEN Yoga | Studio</title>
@@ -76,11 +76,11 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://jkjifmrrlyncuwpjhxvk.supabase.co" crossorigin />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-    <script src="i18n.js?v=18.3"></script>
-    <script src="capacitor-bridge.js?v=18.3" defer></script>
+    <script src="i18n.js?v=18.4"></script>
+    <script src="capacitor-bridge.js?v=18.4" defer></script>
     <link rel="preload" as="image" href="img/logo1.webp" fetchpriority="high" />
 
-    <link rel="stylesheet" href="tailwind-compiled.css?v=18.3" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=18.4" />
 
     <style>
         @media (max-height: 820px) {
@@ -750,7 +750,8 @@
             font-family: inherit;
         }
 
-        #native-detail-sheet {
+        #native-detail-sheet,
+        #native-tarifas-sheet {
             display: none;
             position: fixed;
             inset: 0;
@@ -760,7 +761,8 @@
             -webkit-backdrop-filter: blur(8px);
             align-items: flex-end;
         }
-        #native-detail-sheet.open {
+        #native-detail-sheet.open,
+        #native-tarifas-sheet.open {
             display: flex;
         }
         .native-sheet-body {
@@ -976,7 +978,7 @@
                             Política de privacidad
                         </a>
                     </div>
-                    <span id="app-version-label-mobile" class="opacity-90 text-[12px]">v18.3 | &copy; 2026 Gen Yoga</span>
+                    <span id="app-version-label-mobile" class="opacity-90 text-[12px]">v18.4 | &copy; 2026 Gen Yoga</span>
                 </div>
             </div>
         </div>
@@ -1076,7 +1078,7 @@
                             class="hover:text-sand transition underline decoration-transparent hover:decoration-sand inline-flex items-center py-2 min-h-[44px]"
                             data-i18n="footer_privacy">Política de privacidad</a>
                     </div>
-                    <span id="app-version-label" class="opacity-90 text-[12px]">v18.3 | &copy; 2026 Gen Yoga</span>
+                    <span id="app-version-label" class="opacity-90 text-[12px]">v18.4 | &copy; 2026 Gen Yoga</span>
                 </div>
             </div>
         </footer>
@@ -1371,6 +1373,13 @@
         <!-- Sheet Modal de Detalle de Clase / Reserva -->
         <div id="native-detail-sheet" onclick="if(event.target===this)closeNativeDetail()">
             <div class="native-sheet-body" id="native-detail-content">
+                <!-- Se rellena dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Sheet Modal de Tarifas / Comprar Bonos -->
+        <div id="native-tarifas-sheet" onclick="if(event.target===this)closeNativeTarifasSheet()">
+            <div class="native-sheet-body" id="native-tarifas-content">
                 <!-- Se rellena dinámicamente -->
             </div>
         </div>
@@ -1777,11 +1786,14 @@
 
             // Estado de la app nativa
             let currentTab = 'home';
+            let nativeTabHistory = ['home'];
             let currentUser = null;
             let userProfile = null;
             let userReservations = [];
             let allWeeklyClasses = [];
+            let allUpcomingTalleres = [];
             let selectedDateKey = '';
+            let authMode = 'login'; // 'login' | 'register' | 'recovery'
 
             function getMadridTodayDateStr() {
                 const now = new Date();
@@ -1800,9 +1812,41 @@
                 return d.toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', weekday: 'short', day: 'numeric', month: 'short' });
             }
 
+            function updateNativeAvatar() {
+                const avatarBtn = document.getElementById('native-avatar-btn');
+                if (!avatarBtn) return;
+                if (currentUser) {
+                    const n = userProfile?.nombre || currentUser.user_metadata?.full_name || currentUser.email || 'A';
+                    avatarBtn.textContent = n.charAt(0).toUpperCase();
+                    avatarBtn.style.background = 'var(--p)';
+                    avatarBtn.style.color = '#fff';
+                } else {
+                    avatarBtn.textContent = '👤';
+                    avatarBtn.style.background = 'rgba(230,225,216,0.5)';
+                    avatarBtn.style.color = 'var(--ink)';
+                }
+            }
+
+            function updateNativeTopStatus() {
+                const clockEl = document.getElementById('native-top-clock');
+                if (!clockEl) return;
+                try {
+                    const now = new Date();
+                    const horaStr = now.toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', hour12: false });
+                    const diaSem = now.toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', weekday: 'short' }).toUpperCase();
+                    clockEl.textContent = `${diaSem} ${horaStr}`;
+                } catch (_) {
+                    clockEl.textContent = 'GEN';
+                }
+            }
+
             // Cambiar de pestaña
             window.nativeGo = function(tabId) {
                 if (!['home', 'clases', 'consultas', 'eventos', 'perfil'].includes(tabId)) tabId = 'home';
+                if (currentTab !== tabId) {
+                    nativeTabHistory.push(tabId);
+                    if (nativeTabHistory.length > 20) nativeTabHistory.shift();
+                }
                 currentTab = tabId;
 
                 document.querySelectorAll('#native-tabbar button').forEach(btn => {
@@ -1812,9 +1856,47 @@
                 if (activeBtn) activeBtn.classList.add('on');
 
                 renderCurrentScreen();
+                updateNativeAvatar();
+                updateNativeTopStatus();
 
                 const content = document.getElementById('native-app-content');
                 if (content) content.scrollTop = 0;
+            };
+
+            window.__handleNativeBack = function() {
+                const sheet = document.getElementById('native-detail-sheet');
+                if (sheet && sheet.classList.contains('open')) {
+                    closeNativeDetail();
+                    return true;
+                }
+                const tarifasSheet = document.getElementById('native-tarifas-sheet');
+                if (tarifasSheet && tarifasSheet.classList.contains('open')) {
+                    closeNativeTarifasSheet();
+                    return true;
+                }
+                if (nativeTabHistory.length > 1) {
+                    nativeTabHistory.pop();
+                    const prevTab = nativeTabHistory[nativeTabHistory.length - 1] || 'home';
+                    nativeGo(prevTab);
+                    return true;
+                } else if (currentTab !== 'home') {
+                    nativeGo('home');
+                    return true;
+                }
+                return false;
+            };
+
+            window.setNativeAuthMode = function(mode) {
+                authMode = mode;
+                renderCurrentScreen();
+            };
+
+            window.refreshNativeSchedule = async function(btn) {
+                if (btn) btn.style.opacity = '0.5';
+                await loadNativeWeeklySchedule();
+                await loadNativeTalleres();
+                if (currentUser) await loadNativeUserData();
+                renderCurrentScreen();
             };
 
             function renderCurrentScreen() {
@@ -1858,7 +1940,7 @@
                             <div class="ami-book" onclick="openNativeDetail('${cl.id}')" style="background:linear-gradient(135deg,#4e342e,#241310)">
                                 <small>${fecha} · ${hora}</small>
                                 <b>${nombre}</b>
-                                <span>${prof} · Pulsa para ver →</span>
+                                <span>${prof} · Ver reserva →</span>
                             </div>
                         `;
                     }).join('');
@@ -1888,6 +1970,33 @@
                     `;
                 }
 
+                let adHtml = '';
+                if (allUpcomingTalleres && allUpcomingTalleres.length > 0) {
+                    const primerTaller = allUpcomingTalleres[0];
+                    const adFecha = formatMadridDateDisplay(primerTaller.fecha_inicio);
+                    const adHora = formatMadridTime(primerTaller.fecha_inicio);
+                    const adProf = primerTaller.profesionales?.nombre || 'GEN Yoga';
+                    adHtml = `
+                        <div class="ami-ad" onclick="nativeGo('eventos')">
+                            <small>★ PRÓXIMO TALLER · GEN YOGA</small>
+                            <b>${(primerTaller.nombre || 'Taller Intensivo').toUpperCase()}</b>
+                            <span>${adFecha} · ${adHora} · ${adProf} · Plazas limitadas</span>
+                            <br><u>Ver detalles y reservar →</u>
+                        </div>
+                    `;
+                } else {
+                    adHtml = `
+                        <div class="ami-ad" onclick="nativeGo('eventos')">
+                            <small>★ ANUNCIO · GEN YOGA</small>
+                            <b>Sábado intensivo de Alineación</b>
+                            <span>Próxima convocatoria · Plazas limitadas · desde 25 €</span>
+                            <br><u>Reservar taller →</u>
+                        </div>
+                    `;
+                }
+
+                const bonosText = currentUser ? (userProfile?.bonos !== undefined ? `${userProfile.bonos} CLASE${userProfile.bonos === 1 ? '' : 'S'}` : 'MI SALDO') : '1ª CLASE 0 €';
+
                 return `
                     <div class="ami-top">
                         <div style="width:32px"></div>
@@ -1898,17 +2007,12 @@
                     <div class="ami-title">GEN YOGA.</div>
                     <p class="a-sub">Tu refugio, tu energía, tu momento. Ecosistema de salud integrativa junto a Farmacia Q19.</p>
 
-                    <div class="ami-ad" onclick="nativeGo('eventos')">
-                        <small>★ ANUNCIO · GEN YOGA</small>
-                        <b>Sábado intensivo de Alineación</b>
-                        <span>8 nov · 10:00 · Plazas limitadas · desde 25 €</span>
-                        <br><u>Reservar taller →</u>
-                    </div>
+                    ${adHtml}
 
                     ${nextSessionHtml}
 
                     <div class="ami-foto" onclick="nativeGo('clases')" style="background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.6)),linear-gradient(135deg,#8a7a68,#3d3630);min-height:140px">
-                        <b>BOOK A CLASS →</b>
+                        <b>HORARIOS & RESERVAS →</b>
                     </div>
 
                     <div class="ami-grid-2">
@@ -1922,7 +2026,7 @@
                             <b style="font-size:18px">FARMACIA Q19</b>
                         </div>
                         <div class="ami-foto" onclick="nativeGo('perfil')" style="min-height:125px;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#9a8f5e,#3a3524)">
-                            <b style="font-size:18px">1ª CLASE 0 €</b>
+                            <b style="font-size:18px">${bonosText}</b>
                         </div>
                     </div>
                 `;
@@ -1953,6 +2057,8 @@
                     </div>
                 `).join('');
 
+                const userBookedIds = new Set((userReservations || []).map(r => String(r.clase_id || r.clases?.id)));
+
                 const dayClasses = allWeeklyClasses.filter(c => {
                     const cKey = new Date(c.fecha_inicio).toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
                     return cKey === selectedDateKey;
@@ -1974,9 +2080,16 @@
                         const nombre = (c.nombre || 'Yoga').toUpperCase();
                         const libres = c.plazas_libres !== undefined ? c.plazas_libres : Math.max(0, (c.capacidad_max || 12) - (c.ocupadas || 0));
                         const isLibre = libres > 0;
-                        const chip = isLibre
-                            ? `<span class="ami-left">● ${libres} LIBRE${libres > 1 ? 'S' : ''}</span>`
-                            : `<span class="ami-left no">● COMPLETO</span>`;
+                        const isBooked = userBookedIds.has(String(c.id));
+
+                        let chip = '';
+                        if (isBooked) {
+                            chip = `<span class="ami-left" style="background:#2e6b4f;color:#fff">✓ RESERVADA</span>`;
+                        } else if (isLibre) {
+                            chip = `<span class="ami-left">● ${libres} LIBRE${libres > 1 ? 'S' : ''}</span>`;
+                        } else {
+                            chip = `<span class="ami-left no">● COMPLETO</span>`;
+                        }
 
                         let emoji = '⚡';
                         let grad = 'linear-gradient(135deg,#8a7a68,#3d3630)';
@@ -2008,7 +2121,12 @@
                     </div>
                     <div class="ami-kicker">ESCOGE TUS SESIONES</div>
                     <div class="ami-title">CLASSES.</div>
-                    <div class="ami-kicker" style="font-size:12px;margin-top:8px">HORARIO SEMANAL</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                        <div class="ami-kicker" style="font-size:12px">HORARIO SEMANAL</div>
+                        <button type="button" onclick="refreshNativeSchedule(this)" style="background:none;border:none;font-size:11px;font-weight:800;color:var(--p);cursor:pointer;padding:4px 8px;display:flex;align-items:center;gap:4px">
+                            <span>🔄</span> Actualizar
+                        </button>
+                    </div>
                     <div class="ami-week">${weekBarHtml}</div>
                     <div style="display:flex;flex-direction:column;gap:6px">${classRowsHtml}</div>
                 `;
@@ -2022,6 +2140,11 @@
             // 3. CONSULTAS
             function renderConsultasScreen() {
                 const waUrl = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría solicitar información y cita para una consulta de salud integrativa.');
+                const waPsico = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría pedir cita de Psicoterapia con Miriam Alfaro.');
+                const waAyur = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría pedir cita de Ayurveda con Silvia Jaén.');
+                const waPni = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría pedir cita de PNI Clínica con Isabel Rodríguez.');
+                const waGrupo = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría información sobre el Grupo Terapéutico de los miércoles con Miriam Alfaro.');
+
                 return `
                     <div class="ami-top">
                         <div style="width:32px"></div>
@@ -2036,28 +2159,85 @@
                         <div class="top"><span>PSICOLOGÍA · MIRIAM ALFARO</span><span class="pr"><b>75 €</b><small>1ª SESIÓN</small></span></div>
                         <h3>PSICOTERAPIA & GESTIÓN EMOCIONAL</h3>
                         <p>60 min · Sesiones individuales y grupo terapéutico los miércoles · Enfoque integrativo</p>
-                        <div class="foot"><span>CON CITA PREVIA</span><button class="ami-bookbtn" onclick="window.open('${waUrl}','_system')">PEDIR CITA</button></div>
+                        <div class="foot"><span>CON CITA PREVIA</span><button class="ami-bookbtn" onclick="window.open('${waPsico}','_system')">PEDIR CITA</button></div>
                     </div>
 
                     <div class="ami-price">
                         <div class="top"><span>AYURVEDA · SILVIA JAEN</span><span class="pr"><b>80 €</b><small>1ª CONSULTA</small></span></div>
                         <h3>CONSULTA PERSONAL AYURVEDA</h3>
                         <p>60 min · Diagnóstico de doshas, pautas de alimentación y hábitos según la estación</p>
-                        <div class="foot"><span>CON CITA PREVIA</span><button class="ami-bookbtn" onclick="window.open('${waUrl}','_system')">PEDIR CITA</button></div>
+                        <div class="foot"><span>CON CITA PREVIA</span><button class="ami-bookbtn" onclick="window.open('${waAyur}','_system')">PEDIR CITA</button></div>
                     </div>
 
                     <div class="ami-price">
                         <div class="top"><span>PNI CLÍNICA · ISABEL RODRÍGUEZ</span><span class="pr"><b>80 €</b><small>1ª CONSULTA</small></span></div>
                         <h3>PSICONEUROINMUNOLOGÍA</h3>
                         <p>60 min · Salud intestinal, sistema inmune, inflamación celular y biorritmos</p>
-                        <div class="foot"><span>CON CITA PREVIA</span><button class="ami-bookbtn" onclick="window.open('${waUrl}','_system')">PEDIR CITA</button></div>
+                        <div class="foot"><span>CON CITA PREVIA</span><button class="ami-bookbtn" onclick="window.open('${waPni}','_system')">PEDIR CITA</button></div>
+                    </div>
+
+                    <div class="ami-price" style="background:linear-gradient(135deg,#fcfaf6,#f0ebe1)">
+                        <div class="top"><span>GRUPO TERAPÉUTICO · MIÉRCOLES</span><span class="pr"><b>30 €</b><small>/SESIÓN</small></span></div>
+                        <h3>GRUPO TERAPÉUTICO GUIADO</h3>
+                        <p>Espacio seguro y confidencial de crecimiento personal y apoyo mutuo guiado por psicóloga integrativa.</p>
+                        <div class="foot"><span>PLAZAS REDUCIDAS</span><button class="ami-bookbtn" onclick="window.open('${waGrupo}','_system')">UNIRME AL GRUPO</button></div>
                     </div>
                 `;
             }
 
             // 4. EVENTOS
             function renderEventosScreen() {
-                const waTaller = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, quiero reservar plaza para el Taller Intensivo de Alineación.');
+                const waBase = 'https://wa.me/34624435679?text=';
+                let talleresListHtml = '';
+
+                if (allUpcomingTalleres && allUpcomingTalleres.length > 0) {
+                    talleresListHtml = allUpcomingTalleres.map(t => {
+                        const fechaStr = formatMadridDateDisplay(t.fecha_inicio);
+                        const horaStr = formatMadridTime(t.fecha_inicio);
+                        const prof = t.profesionales?.nombre || 'Equipo GEN Yoga';
+                        const dur = t.duracion_minutos || 120;
+                        const waMsg = encodeURIComponent(`Hola GEN Yoga, quiero reservar plaza para el taller "${t.nombre}" del ${fechaStr} a las ${horaStr}.`);
+                        return `
+                            <div class="ami-price" style="margin-top:10px">
+                                <div class="top"><span>${prof.toUpperCase()} · ${dur} MIN</span><span class="pr"><b>${fechaStr}</b><small>${horaStr}</small></span></div>
+                                <h3>${(t.nombre || 'Taller Intensivo').toUpperCase()}</h3>
+                                <p>${t.descripcion || 'Sesión práctica monográfica de profundización y ajuste postural.'}</p>
+                                <div class="foot">
+                                    <span>PLAZAS LIMITADAS</span>
+                                    <button class="ami-bookbtn" onclick="window.open('${waBase}${waMsg}', '_system')">RESERVAR TALLER</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    const waTaller = waBase + encodeURIComponent('Hola GEN Yoga, quiero reservar plaza para el Taller Intensivo de Alineación.');
+                    talleresListHtml = `
+                        <div class="ami-foto" onclick="window.open('${waTaller}','_system')" style="background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.6)),linear-gradient(135deg,#a9814f,#4a3015);min-height:160px">
+                            <b style="font-size:20px">TALLERES INTENSIVOS →</b>
+                        </div>
+
+                        <div class="ami-row" onclick="window.open('${waTaller}','_system')">
+                            <div class="ami-thumb" style="background:linear-gradient(135deg,#9a8f5e,#3a3524)">⭐</div>
+                            <div style="flex:1">
+                                <b>Masterclasses especiales</b><br>
+                                <small style="opacity:.6">Maestros invitados y sesiones monográficas de fin de semana</small>
+                            </div>
+                            <span style="font-size:20px;color:#8a857c">›</span>
+                        </div>
+
+                        <div class="ami-row" onclick="window.open('${waTaller}','_system')">
+                            <div class="ami-thumb" style="background:linear-gradient(135deg,#8a7a68,#3d3630)">💚</div>
+                            <div style="flex:1">
+                                <b>Salud & bienestar integrativo</b><br>
+                                <small style="opacity:.6">Talleres prácticos junto a los profesionales de Farmacia Q19</small>
+                            </div>
+                            <span style="font-size:20px;color:#8a857c">›</span>
+                        </div>
+
+                        <button class="a-btn" onclick="window.open('${waTaller}','_system')">Reservar taller por WhatsApp</button>
+                    `;
+                }
+
                 return `
                     <div class="ami-top">
                         <div style="width:32px"></div>
@@ -2067,30 +2247,9 @@
                     <div class="ami-kicker">TALLERES & MASTERCLASSES</div>
                     <div class="ami-title">EVENTS.</div>
                     <p class="a-sub">Profundización, práctica y autoconocimiento en el estudio.</p>
-
-                    <div class="ami-foto" onclick="window.open('${waTaller}','_system')" style="background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.6)),linear-gradient(135deg,#a9814f,#4a3015);min-height:160px">
-                        <b style="font-size:20px">TALLERES INTENSIVOS →</b>
+                    <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+                        ${talleresListHtml}
                     </div>
-
-                    <div class="ami-row" onclick="window.open('${waTaller}','_system')">
-                        <div class="ami-thumb" style="background:linear-gradient(135deg,#9a8f5e,#3a3524)">⭐</div>
-                        <div style="flex:1">
-                            <b>Masterclasses especiales</b><br>
-                            <small style="opacity:.6">Maestros invitados y sesiones monográficas de fin de semana</small>
-                        </div>
-                        <span style="font-size:20px;color:#8a857c">›</span>
-                    </div>
-
-                    <div class="ami-row" onclick="window.open('${waTaller}','_system')">
-                        <div class="ami-thumb" style="background:linear-gradient(135deg,#8a7a68,#3d3630)">💚</div>
-                        <div style="flex:1">
-                            <b>Salud & bienestar integrativo</b><br>
-                            <small style="opacity:.6">Talleres prácticos junto a los profesionales de Farmacia Q19</small>
-                        </div>
-                        <span style="font-size:20px;color:#8a857c">›</span>
-                    </div>
-
-                    <button class="a-btn" onclick="window.open('${waTaller}','_system')">Reservar taller por WhatsApp</button>
                 `;
             }
 
@@ -2101,6 +2260,13 @@
                     const email = currentUser.email || '';
                     const bonos = userProfile?.bonos !== undefined ? userProfile.bonos : 0;
                     const bonoMensual = userProfile?.bono_mensual_activo ? 'Bono mensual activo' : `${bonos} CLASE${bonos === 1 ? '' : 'S'} DISPONIBLE${bonos === 1 ? '' : 'S'}`;
+
+                    let caducidadHtml = '';
+                    if (userProfile?.bono_mensual_fin) {
+                        caducidadHtml = `<small style="display:block;margin-top:4px;opacity:.7">Válido hasta: ${formatMadridDateDisplay(userProfile.bono_mensual_fin)}</small>`;
+                    } else if (userProfile?.bonos_caducidad) {
+                        caducidadHtml = `<small style="display:block;margin-top:4px;opacity:.7">Caducidad: ${formatMadridDateDisplay(userProfile.bonos_caducidad)}</small>`;
+                    }
 
                     const userRes = userReservations || [];
                     const resItems = userRes.length > 0 ? userRes.map(r => {
@@ -2119,7 +2285,13 @@
                                 <button onclick="cancelNativeBooking('${r.id}')" style="background:none;border:none;color:#c0392b;font-weight:700;font-size:12px;cursor:pointer;padding:6px">Cancelar</button>
                             </div>
                         `;
-                    }).join('') : '<p class="a-sub" style="margin-top:6px">No tienes reservas activas en este momento.</p>';
+                    }).join('') : `
+                        <div class="ami-coming" style="text-align:center;padding:18px 14px">
+                            <b>SIN RESERVAS ACTIVAS</b>
+                            <span>No tienes ninguna clase reservada actualmente. ¡Explora el horario y asegura tu esterilla!</span>
+                            <button class="a-btn" style="margin-top:10px;padding:10px" onclick="nativeGo('clases')">+ Ver Horarios y Reservar</button>
+                        </div>
+                    `;
 
                     return `
                         <div class="ami-top">
@@ -2127,23 +2299,25 @@
                             <div class="ami-logo">GEN</div>
                             <div style="width:32px"></div>
                         </div>
-                        <div class="ami-kicker">YOUR ACCOUNT</div>
+                        <div class="ami-kicker">TU ESPACIO PERSONAL</div>
                         <div class="ami-title">ME.</div>
 
                         <div class="ami-coming">
                             <small>MEMBERSHIP · ESTADO</small>
                             <b>${bonoMensual}</b>
                             <span>${nombre} · ${email}</span>
+                            ${caducidadHtml}
+                            <button class="a-btn" style="margin-top:12px;padding:10px;font-size:13px" onclick="openNativeTarifasSheet()">Ver Tarifas / Recargar Bonos →</button>
                         </div>
 
-                        <h4 style="margin-top:16px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.6">Mis reservas activas</h4>
+                        <h4 style="margin-top:18px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.6">Mis reservas activas</h4>
                         <div class="native-menu-list">${resItems}</div>
 
-                        <h4 style="margin-top:18px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.6">Opciones de cuenta</h4>
+                        <h4 style="margin-top:20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.6">Opciones de cuenta</h4>
                         <div class="native-menu-list">
-                            <div class="native-menu-item" onclick="window.location.href='tarifas.html'">
+                            <div class="native-menu-item" onclick="openNativeTarifasSheet()">
                                 <div class="dot">💳</div>
-                                <div><b>Comprar bonos y clases</b><small>Ver tarifas y recargar créditos</small></div>
+                                <div><b>Comprar bonos y tarifas</b><small>Bono 4 clases, mensual 8 clases y sueltas</small></div>
                             </div>
                             <div class="native-menu-item" onclick="window.open('https://www.google.com/maps/place/GEN+Yoga/@38.9949298,-1.8671035,511m','_blank')">
                                 <div class="dot">📍</div>
@@ -2161,6 +2335,36 @@
                     `;
                 }
 
+                // Usuario no logueado: Segmented Control (Iniciar Sesión | Crear Cuenta | Recuperar)
+                let authFormHtml = '';
+                if (authMode === 'register') {
+                    authFormHtml = `
+                        <form id="native-register-form" onsubmit="event.preventDefault();nativeRegister();" style="margin-top:14px">
+                            <input class="a-input" id="native-reg-name" type="text" placeholder="👤 Nombre y apellidos" required autocomplete="name">
+                            <input class="a-input" id="native-reg-email" type="email" placeholder="📧 Tu email" required autocomplete="email">
+                            <input class="a-input" id="native-reg-pass" type="password" placeholder="🔒 Contraseña (mínimo 6 caracteres)" required minlength="6" autocomplete="new-password">
+                            <button type="submit" class="a-btn" id="native-register-btn">Crear mi cuenta gratis →</button>
+                        </form>
+                    `;
+                } else if (authMode === 'recovery') {
+                    authFormHtml = `
+                        <form id="native-recovery-form" onsubmit="event.preventDefault();nativeRecoverPassword();" style="margin-top:14px">
+                            <p class="a-sub" style="font-size:13px;margin-top:4px">Introduce tu email y te enviaremos un enlace seguro para restablecer tu contraseña.</p>
+                            <input class="a-input" id="native-rec-email" type="email" placeholder="📧 Tu email registrado" required autocomplete="email">
+                            <button type="submit" class="a-btn" id="native-recovery-btn">Enviar enlace de recuperación →</button>
+                        </form>
+                    `;
+                } else {
+                    // Login
+                    authFormHtml = `
+                        <form id="native-login-form" onsubmit="event.preventDefault();nativeLogin();" style="margin-top:14px">
+                            <input class="a-input" id="native-input-email" type="email" placeholder="📧 Tu email" required autocomplete="email">
+                            <input class="a-input" id="native-input-pass" type="password" placeholder="🔒 Tu contraseña" required autocomplete="current-password">
+                            <button type="submit" class="a-btn" id="native-login-btn">Iniciar sesión →</button>
+                        </form>
+                    `;
+                }
+
                 return `
                     <div class="ami-top">
                         <div style="width:32px"></div>
@@ -2169,7 +2373,7 @@
                     </div>
                     <div class="ami-kicker">ALBACETE · SAN CARLOS 2</div>
                     <div class="ami-title">GEN YOGA.</div>
-                    <p class="a-sub">Tu refugio, tu energía, tu momento. Inicia sesión o recibe tu 1ª clase a 0 € sin compromiso.</p>
+                    <p class="a-sub">Tu refugio, tu energía, tu momento. Inicia sesión o crea tu cuenta para disfrutar de tu 1ª clase a 0 €.</p>
 
                     <div class="ami-coming">
                         <small>BONO BIENVENIDA · 100% GRATIS</small>
@@ -2177,16 +2381,16 @@
                         <span>sin cuota de alta · sin compromiso</span>
                     </div>
 
-                    <h1 class="sr-only">Iniciar sesión - GEN Yoga</h1>
-                    <form id="native-login-form" onsubmit="event.preventDefault();nativeLogin();" style="margin-top:14px">
-                        <input class="a-input" id="native-input-email" type="email" placeholder="📧 Tu email" required autocomplete="email">
-                        <input class="a-input" id="native-input-pass" type="password" placeholder="🔒 Tu contraseña" required autocomplete="current-password">
-                        <button type="submit" class="a-btn" id="native-login-btn">Iniciar sesión →</button>
-                    </form>
+                    <div style="display:flex;background:rgba(78,52,46,0.08);border-radius:14px;padding:4px;gap:4px;margin-top:14px">
+                        <button type="button" onclick="setNativeAuthMode('login')" style="flex:1;border:none;border-radius:10px;padding:8px 4px;font-size:11px;font-weight:800;cursor:pointer;${authMode === 'login' ? 'background:var(--p);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1)' : 'background:transparent;color:var(--ink);opacity:0.7'}">ENTRAR</button>
+                        <button type="button" onclick="setNativeAuthMode('register')" style="flex:1;border:none;border-radius:10px;padding:8px 4px;font-size:11px;font-weight:800;cursor:pointer;${authMode === 'register' ? 'background:var(--p);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1)' : 'background:transparent;color:var(--ink);opacity:0.7'}">REGISTRO (0 €)</button>
+                        <button type="button" onclick="setNativeAuthMode('recovery')" style="flex:1;border:none;border-radius:10px;padding:8px 4px;font-size:11px;font-weight:800;cursor:pointer;${authMode === 'recovery' ? 'background:var(--p);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1)' : 'background:transparent;color:var(--ink);opacity:0.7'}">RECUPERAR</button>
+                    </div>
+
+                    <h1 class="sr-only">Gestión de cuenta - GEN Yoga</h1>
+                    ${authFormHtml}
 
                     <div style="text-align:center;margin-top:12px">
-                        <button class="a-link" onclick="window.location.href='profile.html'">¿Olvidaste tu contraseña o necesitas registrarte?</button>
-                        <br>
                         <button class="a-link" style="opacity:.6;margin-top:6px" onclick="nativeGo('home')">Continuar explorando el estudio</button>
                     </div>
                 `;
@@ -2208,6 +2412,7 @@
                     if (error) throw error;
                     currentUser = data.user;
                     await loadNativeUserData();
+                    updateNativeAvatar();
                     nativeGo('home');
                 } catch (err) {
                     alert('No se pudo iniciar sesión: ' + (err.message || 'Verifica tus credenciales.'));
@@ -2219,13 +2424,92 @@
                 }
             };
 
+            window.nativeRegister = async function() {
+                const name = (document.getElementById('native-reg-name')?.value || '').trim();
+                const email = (document.getElementById('native-reg-email')?.value || '').trim();
+                const pass = (document.getElementById('native-reg-pass')?.value || '').trim();
+                const btn = document.getElementById('native-register-btn');
+                if (!name || !email || !pass || !nativeSupa) return;
+
+                if (pass.length < 6) {
+                    alert('La contraseña debe tener al menos 6 caracteres.');
+                    return;
+                }
+
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Creando tu cuenta...';
+                }
+
+                try {
+                    const { data, error } = await nativeSupa.auth.signUp({
+                        email: email,
+                        password: pass,
+                        options: {
+                            data: {
+                                full_name: name,
+                                nombre: name
+                            }
+                        }
+                    });
+                    if (error) throw error;
+
+                    if (data.session && data.session.user) {
+                        currentUser = data.session.user;
+                        await loadNativeUserData();
+                        updateNativeAvatar();
+                        alert('¡Bienvenido a GEN Yoga! Tu cuenta ha sido creada y dispones de tu 1ª clase a 0 €.');
+                        nativeGo('home');
+                    } else {
+                        alert('¡Cuenta creada! Te hemos enviado un correo de confirmación a ' + email + '. Por favor, pulsa el enlace en tu email para activar tu cuenta.');
+                        setNativeAuthMode('login');
+                    }
+                } catch (err) {
+                    alert('No se pudo crear la cuenta: ' + (err.message || 'Inténtalo de nuevo.'));
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'Crear mi cuenta gratis →';
+                    }
+                }
+            };
+
+            window.nativeRecoverPassword = async function() {
+                const email = (document.getElementById('native-rec-email')?.value || '').trim();
+                const btn = document.getElementById('native-recovery-btn');
+                if (!email || !nativeSupa) return;
+
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Enviando...';
+                }
+
+                try {
+                    const { error } = await nativeSupa.auth.resetPasswordForEmail(email, {
+                        redirectTo: 'https://genyoga.studio/profile.html#type=recovery'
+                    });
+                    if (error) throw error;
+                    alert('Te hemos enviado las instrucciones para restablecer tu contraseña a ' + email + '. Revisa tu bandeja de entrada o spam.');
+                    setNativeAuthMode('login');
+                } catch (err) {
+                    alert('Error al solicitar recuperación: ' + (err.message || 'Verifica el correo ingresado.'));
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'Enviar enlace de recuperación →';
+                    }
+                }
+            };
+
             window.nativeLogout = async function() {
+                if (!confirm('¿Deseas cerrar la sesión en este dispositivo?')) return;
                 if (nativeSupa) {
                     await nativeSupa.auth.signOut();
                 }
                 currentUser = null;
                 userProfile = null;
                 userReservations = [];
+                updateNativeAvatar();
                 renderCurrentScreen();
             };
 
@@ -2234,7 +2518,7 @@
                 try {
                     const { data: prof } = await nativeSupa
                         .from('profiles')
-                        .select('id, nombre, apellidos, email, bonos, bono_mensual_activo')
+                        .select('id, nombre, apellidos, email, bonos, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, saldo_clases_gratis')
                         .eq('id', currentUser.id)
                         .maybeSingle();
                     if (prof) userProfile = prof;
@@ -2292,6 +2576,24 @@
                 }
             }
 
+            async function loadNativeTalleres() {
+                if (!nativeSupa) return;
+                try {
+                    const { data: talleres, error } = await nativeSupa
+                        .from('clases')
+                        .select('id, nombre, descripcion, fecha_inicio, fecha_fin, duracion_minutos, capacidad_max, tipo_clase, metodo_pago, stripe_lookup_key, es_especial, activa, profesionales(id, nombre, apellidos)')
+                        .or('tipo_clase.eq.taller,tipo_clase.eq.especial,es_especial.eq.true')
+                        .eq('activa', true)
+                        .gte('fecha_inicio', new Date().toISOString())
+                        .order('fecha_inicio', { ascending: true });
+                    if (!error && talleres) {
+                        allUpcomingTalleres = talleres;
+                    }
+                } catch (e) {
+                    console.warn('Error cargando talleres en app:', e);
+                }
+            }
+
             window.openNativeDetail = function(claseId) {
                 const cl = allWeeklyClasses.find(c => String(c.id) === String(claseId))
                     || userReservations.find(r => String(r.clases?.id) === String(claseId))?.clases;
@@ -2304,15 +2606,26 @@
                 const prof = cl.profesionales?.nombre || 'Equipo GEN Yoga';
                 const libres = cl.plazas_libres !== undefined ? cl.plazas_libres : Math.max(0, (cl.capacidad_max || 12) - (cl.ocupadas || 0));
 
+                const existingRes = (userReservations || []).find(r => String(r.clases?.id || r.clase_id) === String(cl.id));
+
                 let actionBtn = '';
                 if (!currentUser) {
                     actionBtn = `<button class="a-btn" onclick="closeNativeDetail();nativeGo('perfil')">Inicia sesión para reservar</button>`;
+                } else if (existingRes) {
+                    actionBtn = `
+                        <div style="background:#e3f3e9;color:#1e4620;padding:12px;border-radius:14px;font-weight:700;font-size:13px;text-align:center;margin-bottom:8px">
+                            ✓ Tu plaza está confirmada para esta sesión
+                        </div>
+                        <button class="a-btn" style="background:#c0392b" onclick="cancelNativeBooking('${existingRes.id}');closeNativeDetail();">
+                            Desapuntarme de esta clase
+                        </button>
+                    `;
                 } else {
                     const bonos = userProfile?.bonos || 0;
                     if (bonos > 0 || userProfile?.bono_mensual_activo) {
-                        actionBtn = `<button class="a-btn" id="native-btn-confirm-res" onclick="confirmNativeBooking('${cl.id}')">Confirmar Reserva con Bono</button>`;
+                        actionBtn = `<button class="a-btn" id="native-btn-confirm-res" onclick="confirmNativeBooking('${cl.id}')">Confirmar Reserva con Bono (${bonos} disponible${bonos === 1 ? '' : 's'})</button>`;
                     } else {
-                        actionBtn = `<button class="a-btn" onclick="closeNativeDetail();window.location.href='tarifas.html'">Comprar bonos para reservar</button>`;
+                        actionBtn = `<button class="a-btn" onclick="closeNativeDetail();openNativeTarifasSheet()">Comprar bonos para reservar</button>`;
                     }
                 }
 
@@ -2327,7 +2640,7 @@
                     <div class="ami-kicker" style="margin-top:14px">GEN YOGA · SAN CARLOS 2</div>
                     <p class="a-sub" style="margin-top:4px">Sesión de práctica guiada con atención personalizada, ajustes posturales y respiración consciente.</p>
                     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-                        <span class="ami-left">● ${libres > 0 ? libres + ' PLAZAS LIBRES' : 'COMPLETO'}</span>
+                        <span class="ami-left">${existingRes ? '✓ RESERVADA' : (libres > 0 ? '● ' + libres + ' LIBRES' : '● COMPLETO')}</span>
                         <span style="font-size:12px;padding:3px 10px;background:#eee;border-radius:99px;font-weight:700">60 MIN</span>
                         <span style="font-size:12px;padding:3px 10px;background:#eee;border-radius:99px;font-weight:700">${fecha} · ${horaInicio}</span>
                     </div>
@@ -2345,6 +2658,79 @@
             window.closeNativeDetail = function() {
                 const sheet = document.getElementById('native-detail-sheet');
                 if (sheet) sheet.classList.remove('open');
+            };
+
+            window.openNativeTarifasSheet = function() {
+                const sheetBody = document.getElementById('native-tarifas-content');
+                if (!sheetBody) return;
+
+                sheetBody.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                        <button class="a-link" onclick="closeNativeTarifasSheet()">← Volver</button>
+                        <span class="ami-kicker" style="font-size:10px">PRECIOS OFICIALES</span>
+                    </div>
+                    <div class="ami-title" style="font-size:26px">TARIFAS Y BONOS.</div>
+                    <p class="a-sub" style="font-size:13px;margin-bottom:12px">Elige la modalidad que mejor se adapte a tu ritmo de práctica en GEN Yoga.</p>
+
+                    <div class="ami-price">
+                        <div class="top"><span>YOGA REGULAR · MENSUAL</span><span class="pr"><b>65 €</b><small>/MES NATURAL</small></span></div>
+                        <h3>BONO MENSUAL (8 CLASES)</h3>
+                        <p>8 clases al mes para distribuir como quieras · Sin límite semanal · Válido durante el mes natural</p>
+                        <div class="foot">
+                            <span>MODALIDAD RECOMENDADA</span>
+                            <button class="ami-bookbtn" onclick="comprarTarifa('bono_mensual')">CONTRATAR</button>
+                        </div>
+                    </div>
+
+                    <div class="ami-price">
+                        <div class="top"><span>INICIACIÓN · 30 DÍAS</span><span class="pr"><b>45 €</b><small>4 CLASES</small></span></div>
+                        <h3>BONO INICIAL (4 CLASES)</h3>
+                        <p>4 sesiones para gastar a tu ritmo durante 30 días · Sin límite por semana · Ideal para comenzar</p>
+                        <div class="foot">
+                            <span>INICIACIÓN FLEXIBLE</span>
+                            <button class="ami-bookbtn" onclick="comprarTarifa('bono_inicial')">CONTRATAR</button>
+                        </div>
+                    </div>
+
+                    <div class="ami-price">
+                        <div class="top"><span>SESIÓN SUELTA</span><span class="pr"><b>15 €</b><small>1 CLASE</small></span></div>
+                        <h3>CLASE SUELTA INDIVIDUAL</h3>
+                        <p>Acceso a 1 sesión regular de yoga de 60 o 75 minutos</p>
+                        <div class="foot">
+                            <span>SIN COMPROMISO</span>
+                            <button class="ami-bookbtn" onclick="comprarTarifa('clase_suelta')">COMPRAR</button>
+                        </div>
+                    </div>
+
+                    <div class="ami-price">
+                        <div class="top"><span>TALLERES Y MASTERCLASSES</span><span class="pr"><b>25 - 35 €</b><small>/SESIÓN</small></span></div>
+                        <h3>TALLERES MONOGRÁFICOS</h3>
+                        <p>Intensivos de fin de semana, alineación postural y salud integrativa</p>
+                        <div class="foot">
+                            <span>PLAZAS LIMITADAS</span>
+                            <button class="ami-bookbtn" onclick="closeNativeTarifasSheet();nativeGo('eventos')">VER TALLERES</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:14px;text-align:center">
+                        <button class="a-btn" style="background:transparent;border:2px solid var(--p);color:var(--p);box-shadow:none" onclick="window.open('https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, tengo dudas sobre las tarifas y bonos.'), '_system')">
+                            💬 ¿Dudas? Pregúntanos por WhatsApp
+                        </button>
+                    </div>
+                `;
+
+                const sheet = document.getElementById('native-tarifas-sheet');
+                if (sheet) sheet.classList.add('open');
+            };
+
+            window.closeNativeTarifasSheet = function() {
+                const sheet = document.getElementById('native-tarifas-sheet');
+                if (sheet) sheet.classList.remove('open');
+            };
+
+            window.comprarTarifa = function(lookupKey) {
+                closeNativeTarifasSheet();
+                window.location.href = `profile.html?buy=${encodeURIComponent(lookupKey)}`;
             };
 
             window.confirmNativeBooking = async function(claseId) {
@@ -2429,11 +2815,15 @@
                             userProfile = null;
                             userReservations = [];
                         }
+                        updateNativeAvatar();
                         renderCurrentScreen();
                     });
                 }
 
                 await loadNativeWeeklySchedule();
+                await loadNativeTalleres();
+                updateNativeAvatar();
+                updateNativeTopStatus();
                 nativeGo('home');
             });
         })();

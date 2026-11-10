@@ -835,7 +835,7 @@ async function checkUiIntegrity(page, pageName) {
 async function checkInternalLinks(page, pageName) {
   return page.evaluate(() => {
     const validPages = new Set([
-      'index.html', 'clases.html', 'tarifas.html', 'maestros.html',
+      'index.html', 'clases.html', 'clases_yoga.html', 'consultas.html', 'eventos.html', 'ofertas.html', 'tarifas.html', 'maestros.html',
       'profile.html', 'politica-privacidad.html', 'aviso-legal.html', 'success.html', 'cancel.html'
     ]);
     const bad = [];

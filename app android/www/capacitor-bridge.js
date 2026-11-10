@@ -85,6 +85,21 @@
           return true;
         }
       }
+      // Sheet modales de la app nativa (index.html):
+      if (typeof window.closeNativeDetail === 'function') {
+        var sheet = document.getElementById('native-detail-sheet');
+        if (sheet && sheet.classList.contains('open')) {
+          window.closeNativeDetail();
+          return true;
+        }
+      }
+      if (typeof window.closeNativeTarifasSheet === 'function') {
+        var tarifasSheet = document.getElementById('native-tarifas-sheet');
+        if (tarifasSheet && tarifasSheet.classList.contains('open')) {
+          window.closeNativeTarifasSheet();
+          return true;
+        }
+      }
       // Calendario público (clases.html): cerrar el panel antes de salir de la página.
       if (document.body && document.body.classList.contains('gy-calendar-open') &&
           window.GENPublicCalendar && typeof window.GENPublicCalendar.close === 'function') {
@@ -220,6 +235,9 @@
       App.addListener('backButton', function () {
         if (closeAnyModal()) return;
         try {
+          if (typeof window.__handleNativeBack === 'function' && window.__handleNativeBack()) {
+            return;
+          }
           if (window.history && window.history.length > 1) window.history.back();
           else if (typeof App.minimizeApp === 'function') App.minimizeApp().catch(function () {});
         } catch (e) { /* ignorar */ }

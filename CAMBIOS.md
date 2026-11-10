@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.4.0 — 10 nov 2026 · Desarrollo
+
+- **Descripción:** Subdivisión de tarifas en 4 páginas independientes con enlaces directos (ofertas, clases_yoga, consultas, eventos) (ámbito: tarifas)
+- **Validación:** npm test
+- **Tag:** `v18.4`
+- **Contabilidad B:** línea «Pendiente 25» añadida
+- **Informe:** `docs/informes/v18.4.0.md`
+
 ## v18.3.3 — 4 nov 2026 · Incidencia
 
 - **Descripción:** Sincronizar precio de talleres en calendario público con su tarifa Stripe asignada (ámbito: talleres)
