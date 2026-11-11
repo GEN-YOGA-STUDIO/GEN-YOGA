@@ -7327,7 +7327,7 @@
             if (!rawIdentifier || !password) return;
 
             Swal.fire({
-                title: 'Entrando...',
+                title: typeof window.t === 'function' ? window.t('login_loading') : 'Entrando...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
                 background: '#fff',
@@ -7356,13 +7356,13 @@
             if (error) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Ups...',
-                    text: 'Credenciales incorrectas. Comprueba tu email o teléfono y contraseña.',
+                    title: typeof window.t === 'function' ? window.t('login_error_title') : 'Ups...',
+                    text: typeof window.t === 'function' ? window.t('login_error_invalid') : 'Credenciales incorrectas. Comprueba tu email o teléfono y contraseña.',
                     showCancelButton: true,
                     confirmButtonColor: '#D27D60',
                     cancelButtonColor: '#795244',
-                    confirmButtonText: 'Reintentar',
-                    cancelButtonText: '¿Olvidaste tu contraseña?'
+                    confirmButtonText: typeof window.t === 'function' ? window.t('login_error_retry') : 'Reintentar',
+                    cancelButtonText: typeof window.t === 'function' ? window.t('login_error_forgot') : '¿Olvidaste tu contraseña?'
                 }).then((result) => {
                     if (result.dismiss === Swal.DismissReason.cancel) {
                         toggleAuth('recover');
