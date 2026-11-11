@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.4.5 — 11 nov 2026 · Incidencia
+
+- **Descripción:** Quitar required fijo del campo telefono oculto en registro por email que bloqueaba el envio del formulario en Chrome (ámbito: perfil)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.4.5`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.4.5.md`
+
 ## v18.4.4 — 11 nov 2026 · Incidencia
 
 - **Descripción:** Traducir el aviso de contrasenas no coincidentes en la recuperacion de contrasena (ámbito: perfil)
