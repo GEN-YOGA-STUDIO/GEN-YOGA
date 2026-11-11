@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.4.10 — 11 nov 2026 · Incidencia
+
+- **Descripción:** Completar las traducciones al ingles de los avisos de registro y recuperacion de contrasena y corregir llamada a t() con texto literal (ámbito: perfil)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.4.10`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.4.10.md`
+
 ## v18.4.9 — 11 nov 2026 · Incidencia
 
 - **Descripción:** Incluir version.json en el build de cert para que el pie muestre la version tambien en certificacion (ámbito: web)
