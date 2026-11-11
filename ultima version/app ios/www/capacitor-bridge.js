@@ -93,6 +93,13 @@
           return true;
         }
       }
+      if (typeof window.closeNativeConfirm === 'function') {
+        var confirmSheet = document.getElementById('native-confirm-sheet');
+        if (confirmSheet && confirmSheet.classList.contains('open')) {
+          window.closeNativeConfirm();
+          return true;
+        }
+      }
       if (typeof window.closeNativeTarifasSheet === 'function') {
         var tarifasSheet = document.getElementById('native-tarifas-sheet');
         if (tarifasSheet && tarifasSheet.classList.contains('open')) {
