@@ -1023,7 +1023,7 @@ for (const dir of dirs) {
 
 // Ficheros estáticos que no son HTML/JS/CSS pero que las páginas referencian.
 // Sin ellos el navegador registra 404 en cada carga (manifest) y pierde el icono.
-for (const file of ['manifest.json', 'favicon.ico']) {
+for (const file of ['manifest.json', 'favicon.ico', 'version.json']) {
   const origenFichero = path.join(origen, file);
   try {
     await cp(origenFichero, path.join(destino, file));
