@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.4.8 — 11 nov 2026 · Incidencia
+
+- **Descripción:** Mostrar siempre la version completa desplegada (p. ej. v18.4.8) en el pie de todas las paginas, actualizada automaticamente en cada cambio via version.json y version-badge.js (ámbito: web)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.4.8`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.4.8.md`
+
 ## v18.4.7 — 11 nov 2026 · Incidencia
 
 - **Descripción:** Eliminar escrituras directas del frontend a profiles: la sincronizacion de bonos mensuales caducados usa la RPC canonica limpiar_meses_caducados (ámbito: perfil)
