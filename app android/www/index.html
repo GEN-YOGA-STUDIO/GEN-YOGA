@@ -323,6 +323,27 @@
             justify-content: space-between;
             margin: 2px 0 8px;
         }
+        .native-top-logo-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .native-top-logo {
+            height: 32px;
+            max-height: 32px;
+            width: auto;
+            object-fit: contain;
+            filter: brightness(0);
+            opacity: 0.9;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        .native-top-logo-wrap:active .native-top-logo {
+            transform: scale(0.96);
+            opacity: 0.72;
+        }
         .ami-logo {
             font-weight: 800;
             font-size: 28px;
@@ -1332,8 +1353,12 @@
     <div id="native-app-view">
         <!-- Top bar con notch safe area -->
         <header class="native-top-bar">
-            <span class="text-xs font-bold tracking-widest text-cocoa/60" id="native-top-clock">GEN</span>
-            <div class="ami-logo">GEN</div>
+            <div class="w-8 flex items-center justify-start">
+                <span class="sr-only" id="native-top-clock"></span>
+            </div>
+            <div class="native-top-logo-wrap" onclick="nativeGo('home')" role="button" tabindex="0" aria-label="Inicio GEN Yoga">
+                <img src="img/logo1.webp" alt="GEN Yoga Logo" class="native-top-logo" />
+            </div>
             <button type="button" onclick="nativeGo('perfil')" class="w-8 h-8 rounded-full bg-sand/40 text-cocoa flex items-center justify-center text-sm font-bold border border-sand shadow-sm" id="native-avatar-btn" aria-label="Mi Perfil">👤</button>
         </header>
 
@@ -1832,7 +1857,7 @@
                     const diaSem = now.toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', weekday: 'short' }).toUpperCase();
                     clockEl.textContent = `${diaSem} ${horaStr}`;
                 } catch (_) {
-                    clockEl.textContent = 'GEN';
+                    clockEl.textContent = '';
                 }
             }
 
@@ -1994,12 +2019,7 @@
                 const bonosText = currentUser ? (userProfile?.bonos !== undefined ? `${userProfile.bonos} CLASE${userProfile.bonos === 1 ? '' : 'S'}` : 'MI SALDO') : '1ª CLASE 0 €';
 
                 return `
-                    <div class="ami-top">
-                        <div style="width:32px"></div>
-                        <div class="ami-logo">GEN</div>
-                        <div style="width:32px"></div>
-                    </div>
-                    <div class="ami-kicker">ALBACETE · SAN CARLOS 2</div>
+                    <div class="ami-kicker" style="margin-top:6px">ALBACETE · SAN CARLOS 2</div>
                     <div class="ami-title">GEN YOGA.</div>
                     <p class="a-sub">Tu refugio, tu energía, tu momento. Ecosistema de salud integrativa junto a Farmacia Q19.</p>
 
@@ -2110,12 +2130,7 @@
                 }
 
                 return `
-                    <div class="ami-top">
-                        <div style="width:32px"></div>
-                        <div class="ami-logo">GEN</div>
-                        <div style="width:32px"></div>
-                    </div>
-                    <div class="ami-kicker">ESCOGE TUS SESIONES</div>
+                    <div class="ami-kicker" style="margin-top:6px">ESCOGE TUS SESIONES</div>
                     <div class="ami-title">CLASSES.</div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
                         <div class="ami-kicker" style="font-size:12px">HORARIO SEMANAL</div>
@@ -2142,12 +2157,7 @@
                 const waGrupo = 'https://wa.me/34624435679?text=' + encodeURIComponent('Hola GEN Yoga, me gustaría información sobre el Grupo Terapéutico de los miércoles con Miriam Alfaro.');
 
                 return `
-                    <div class="ami-top">
-                        <div style="width:32px"></div>
-                        <div class="ami-logo">GEN</div>
-                        <div style="width:32px"></div>
-                    </div>
-                    <div class="ami-kicker">SALUD INTEGRATIVA</div>
+                    <div class="ami-kicker" style="margin-top:6px">SALUD INTEGRATIVA</div>
                     <div class="ami-title">CARE.</div>
                     <p class="a-sub">Psicoterapia, ayurveda y PNI. Sesiones privadas con cita previa junto a Farmacia Q19.</p>
 
@@ -2235,12 +2245,7 @@
                 }
 
                 return `
-                    <div class="ami-top">
-                        <div style="width:32px"></div>
-                        <div class="ami-logo">GEN</div>
-                        <div style="width:32px"></div>
-                    </div>
-                    <div class="ami-kicker">TALLERES & MASTERCLASSES</div>
+                    <div class="ami-kicker" style="margin-top:6px">TALLERES & MASTERCLASSES</div>
                     <div class="ami-title">EVENTS.</div>
                     <p class="a-sub">Profundización, práctica y autoconocimiento en el estudio.</p>
                     <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
@@ -2291,12 +2296,7 @@
                     `;
 
                     return `
-                        <div class="ami-top">
-                            <div style="width:32px"></div>
-                            <div class="ami-logo">GEN</div>
-                            <div style="width:32px"></div>
-                        </div>
-                        <div class="ami-kicker">TU ESPACIO PERSONAL</div>
+                        <div class="ami-kicker" style="margin-top:6px">TU ESPACIO PERSONAL</div>
                         <div class="ami-title">ME.</div>
 
                         <div class="ami-coming">
@@ -2363,12 +2363,7 @@
                 }
 
                 return `
-                    <div class="ami-top">
-                        <div style="width:32px"></div>
-                        <div class="ami-logo">GEN</div>
-                        <div style="width:32px"></div>
-                    </div>
-                    <div class="ami-kicker">ALBACETE · SAN CARLOS 2</div>
+                    <div class="ami-kicker" style="margin-top:6px">ALBACETE · SAN CARLOS 2</div>
                     <div class="ami-title">GEN YOGA.</div>
                     <p class="a-sub">Tu refugio, tu energía, tu momento. Inicia sesión o crea tu cuenta para disfrutar de tu 1ª clase a 0 €.</p>
 

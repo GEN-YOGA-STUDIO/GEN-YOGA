@@ -17,6 +17,14 @@ Historial independiente de versiones de las aplicaciones nativas para **Google P
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea -->
 
+## v18.3.2 (Build 283) — 11 nov 2026 · Parche / Hotfix
+
+- **Ámbito:** Apps móviles independientes (Android e iOS).
+- **Descripción:** Añadido logo oficial GEN en cabecera de iOS y eliminado texto duplicado GEN; actualizadas splash screens oficiales
+- **Build:** #283 (versionCode / CURRENT_PROJECT_VERSION)
+- **Tiendas:** Preparado para subida a Google Play y Apple TestFlight.
+
+
 ## v18.3.1 (Build 282) — 03 nov 2026 · Parche / Hotfix
 
 - **Ámbito:** Apps móviles nativas (Android e iOS) y pipelines CI/CD.
