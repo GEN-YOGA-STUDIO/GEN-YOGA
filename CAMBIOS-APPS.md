@@ -17,6 +17,14 @@ Historial independiente de versiones de las aplicaciones nativas para **Google P
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea -->
 
+## v18.3.3 (Build 284) — 11 nov 2026 · Parche / Hotfix
+
+- **Ámbito:** Apps móviles independientes (Android e iOS).
+- **Descripción:** Castellano por defecto en app nativa y selector de idioma en configuración
+- **Build:** #284 (versionCode / CURRENT_PROJECT_VERSION)
+- **Tiendas:** Preparado para subida a Google Play y Apple TestFlight.
+
+
 ## v18.3.2 (Build 283) — 11 nov 2026 · Parche / Hotfix
 
 - **Ámbito:** Apps móviles independientes (Android e iOS).

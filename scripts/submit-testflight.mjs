@@ -160,37 +160,73 @@ for (const loc of locales?.data || []) {
   console.log(`  ✅ Novedades en locale ${loc.attributes?.locale}`);
 }
 
-// 5. Enviar a revisión.
-// Si la versión arrastra una submission previa atascada, Apple devuelve 403
-// en el POST: hay que borrarla primero (GET relationship → DELETE → POST).
-async function trySubmit() {
-  return await auth('POST', '/v1/appStoreVersionSubmissions', {
-    data: { type: 'appStoreVersionSubmissions', relationships: { appStoreVersion: { data: { type: 'appStoreVersions', id: version.id } } } },
-  });
-}
+// 5. Enviar a revisión usando la API moderna de Apple (Review Submissions API).
+// Apple retiró el endpoint 'POST /v1/appStoreVersionSubmissions'. La forma oficial
+// actual consiste en: crear/reutilizar una reviewSubmission -> añadir reviewSubmissionItem -> parchear submitted: true.
+console.log('  🚀 Preparando envío a revisión en App Store Connect...');
 
-async function clearStaleSubmission() {
-  try {
-    const rel = await auth('GET', `/v1/appStoreVersions/${version.id}/relationships/appStoreVersionSubmission`);
-    const staleId = rel?.data?.id;
-    if (!staleId) return false;
-    await auth('DELETE', `/v1/appStoreVersionSubmissions/${staleId}`);
-    console.log(`  🧹 submission previa atascada eliminada (${staleId})`);
-    return true;
-  } catch (e) {
-    console.log(`  ⚠️ no se pudo inspeccionar/limpiar submissions: ${String(e.message).slice(0, 140)}`);
-    return false;
-  }
-}
-
-let submission = null;
+let reviewSubmission = null;
 try {
-  submission = await trySubmit();
-} catch (e) {
-  console.log(`  ⚠️ primer intento: ${String(e.message).slice(0, 160)}`);
-  await clearStaleSubmission();
-  await sleep(10000);
-  submission = await trySubmit();
+  // Buscar si ya existe una reviewSubmission activa para la app y plataforma
+  const existingSubs = await auth('GET', `/v1/apps/${app.id}/reviewSubmissions?filter[platform]=${PLATFORM}&limit=10`);
+  const subs = existingSubs?.data || [];
+
+  const inFlight = subs.find((s) => ['WAITING_FOR_REVIEW', 'IN_REVIEW'].includes(s.attributes?.state));
+  if (inFlight) {
+    console.log(`  ℹ️ Ya existe una entrega en revisión en Apple (id: ${inFlight.id}, estado: ${inFlight.attributes?.state}).`);
+    reviewSubmission = inFlight;
+  } else {
+    // Buscar si hay una en borrador (READY_FOR_REVIEW)
+    reviewSubmission = subs.find((s) => s.attributes?.state === 'READY_FOR_REVIEW');
+    if (!reviewSubmission) {
+      const created = await auth('POST', '/v1/reviewSubmissions', {
+        data: {
+          type: 'reviewSubmissions',
+          attributes: { platform: PLATFORM },
+          relationships: { app: { data: { type: 'apps', id: app.id } } },
+        },
+      });
+      reviewSubmission = created.data;
+      console.log(`  ✅ Creada reviewSubmission (${reviewSubmission.id})`);
+    } else {
+      console.log(`  ♻️ Reutilizando reviewSubmission en borrador (${reviewSubmission.id})`);
+    }
+
+    // Asociar la appStoreVersion a la reviewSubmission
+    try {
+      await auth('POST', '/v1/reviewSubmissionItems', {
+        data: {
+          type: 'reviewSubmissionItems',
+          relationships: {
+            reviewSubmission: { data: { type: 'reviewSubmissions', id: reviewSubmission.id } },
+            appStoreVersion: { data: { type: 'appStoreVersions', id: version.id } },
+          },
+        },
+      });
+      console.log(`  ✅ Versión ${VERSION} vinculada a la reviewSubmission`);
+    } catch (itemErr) {
+      if (String(itemErr.message).includes('409') || String(itemErr.message).includes('already') || String(itemErr.message).includes('DUPLICATE')) {
+        console.log(`  ℹ️ La versión ya estaba vinculada a la reviewSubmission`);
+      } else {
+        throw itemErr;
+      }
+    }
+
+    // Enviar a revisión: submitted = true
+    const submitted = await auth('PATCH', `/v1/reviewSubmissions/${reviewSubmission.id}`, {
+      data: {
+        type: 'reviewSubmissions',
+        id: reviewSubmission.id,
+        attributes: { submitted: true },
+      },
+    });
+    reviewSubmission = submitted.data;
+    console.log(`  🎉 ¡Versión enviada a revisión formal de Apple! (submission: ${reviewSubmission.id}, estado: ${reviewSubmission.attributes?.state})`);
+  }
+} catch (submitErr) {
+  console.warn(`  ⚠️ Aviso al enviar automáticamente a revisión: ${submitErr.message}`);
+  console.log(`  ℹ️ El build ${BUILD} ya está subido, validado y asociado a la versión ${VERSION} en App Store Connect.`);
+  console.log(`  👉 Puedes pulsar "Enviar a revisión" en https://appstoreconnect.apple.com/apps/${app.id}/appstore/ios/version/deliverable`);
 }
-console.log(`  ✅ Enviada a revisión (submission ${submission?.data?.id})`);
-console.log('\n🎉 La versión está en cola de revisión de Apple. Te avisarán por email.');
+
+console.log('\n🎉 Proceso completado. App Store Connect tiene el build listo y asociado.');
