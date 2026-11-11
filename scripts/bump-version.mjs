@@ -91,10 +91,20 @@ for (const rel of files) {
   content = content.replace(/\bv\d+\.\d+(\.\d+)?\b/g, `v${targetShort}`);
   content = content.replace(/const APP_VERSION = '\d+\.\d+(\.\d+)?'/g, `const APP_VERSION = '${targetShort}'`);
   content = content.replace(/const APP_RELEASE = '\d+\.\d+(\.\d+)?'/g, `const APP_RELEASE = '${targetShort}'`);
+  content = content.replace(/(id="app-version-label(?:-mobile)?"[^>]*>)v\d+\.\d+(\.\d+)?/g, `$1v${targetFull}`);
 
   fs.writeFileSync(filePath, content, 'utf8');
   console.log(`✅ Actualizado ${rel}`);
 }
+
+// version.json: fuente única de la versión visible en el pie de la web
+const versionJsonPath = path.join(root, 'version.json');
+fs.writeFileSync(
+  versionJsonPath,
+  JSON.stringify({ version: targetFull, short: targetShort, updatedAt: new Date().toISOString().slice(0, 10) }, null, 2) + '\n',
+  'utf8'
+);
+console.log(`✅ Actualizado version.json (${targetFull})`);
 
 if (syncApps) {
   // 4. Android build.gradle (tanto en 'app android' como en 'ultima version/app android')
