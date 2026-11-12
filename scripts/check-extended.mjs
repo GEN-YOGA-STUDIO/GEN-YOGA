@@ -81,6 +81,13 @@ export async function runExtendedChecks({ browser, base, supaUrl, supaKey, isCer
   const dismissWelcome = async () => {
     await page.locator('#flash-welcome-modal button[onclick="cerrarFlashWelcomeModal()"]').first()
       .click({ timeout: 3000 }).catch(() => {});
+    await page.evaluate(() => {
+      const m = document.getElementById('flash-welcome-modal');
+      if (m) {
+        m.classList.remove('pointer-events-auto', 'opacity-100');
+        m.classList.add('pointer-events-none', 'opacity-0');
+      }
+    }).catch(() => {});
     await page.waitForTimeout(500);
   };
 

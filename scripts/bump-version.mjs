@@ -98,13 +98,21 @@ for (const rel of files) {
 }
 
 // version.json: fuente única de la versión visible en el pie de la web
-const versionJsonPath = path.join(root, 'version.json');
-fs.writeFileSync(
-  versionJsonPath,
-  JSON.stringify({ version: targetFull, short: targetShort, updatedAt: new Date().toISOString().slice(0, 10) }, null, 2) + '\n',
-  'utf8'
-);
-console.log(`✅ Actualizado version.json (${targetFull})`);
+const versionPayload = JSON.stringify({ version: targetFull, short: targetShort, updatedAt: new Date().toISOString().slice(0, 10) }, null, 2) + '\n';
+const versionPaths = [
+  path.join(root, 'version.json'),
+  path.join(root, 'ultima version', 'version.json'),
+  path.join(root, 'app android', 'www', 'version.json'),
+  path.join(root, 'app ios', 'www', 'version.json'),
+  path.join(root, 'ultima version', 'app android', 'www', 'version.json'),
+  path.join(root, 'ultima version', 'app ios', 'www', 'version.json')
+];
+for (const vp of versionPaths) {
+  if (fs.existsSync(path.dirname(vp))) {
+    fs.writeFileSync(vp, versionPayload, 'utf8');
+    console.log(`✅ Actualizado ${path.relative(root, vp)} (${targetFull})`);
+  }
+}
 
 if (syncApps) {
   // 4. Android build.gradle (tanto en 'app android' como en 'ultima version/app android')

@@ -31,9 +31,6 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: true
-
 jobs:
   deploy:
     environment:
@@ -143,18 +140,16 @@ jobs:
 
               // Run aún en cola/ejecución (conclusion null)
               if (latest.status !== 'completed' || latest.conclusion === null) {
-                if (isScheduled) {
-                  console.log(`⏳ [Programado 1-Nov] cert-health Run #${latest.run_number} en curso. Esperando hasta 5 minutos a que finalice...`);
-                  for (let i = 0; i < 30; i++) {
-                    await new Promise(r => setTimeout(r, 10000));
-                    const check = await github.rest.actions.getWorkflowRun({
-                      owner, repo,
-                      run_id: latest.id
-                    });
-                    if (check.data.status === 'completed') {
-                      latest = check.data;
-                      break;
-                    }
+                console.log(`⏳ cert-health Run #${latest.run_number} (${String(latest.head_sha).slice(0, 7)}) en curso. Esperando hasta 5 minutos a que finalice...`);
+                for (let i = 0; i < 30; i++) {
+                  await new Promise(r => setTimeout(r, 10000));
+                  const check = await github.rest.actions.getWorkflowRun({
+                    owner, repo,
+                    run_id: latest.id
+                  });
+                  if (check.data.status === 'completed') {
+                    latest = check.data;
+                    break;
                   }
                 }
               }
@@ -209,6 +204,7 @@ jobs:
             cp "ultima version"/*.xml _site/ 2>/dev/null || true
             cp "ultima version"/*.txt _site/ 2>/dev/null || true
             cp "ultima version"/manifest.json _site/ 2>/dev/null || true
+            cp "ultima version"/version.json _site/ 2>/dev/null || true
             cp "ultima version"/*.ico _site/ 2>/dev/null || true
             if [ -d "ultima version/img" ]; then cp -r "ultima version/img" _site/; fi
             if [ -d "ultima version/fonts" ]; then cp -r "ultima version/fonts" _site/; fi
@@ -222,10 +218,16 @@ jobs:
             cp *.xml _site/ 2>/dev/null || true
             cp *.txt _site/ 2>/dev/null || true
             cp manifest.json _site/ 2>/dev/null || true
+            cp version.json _site/ 2>/dev/null || true
             cp *.ico _site/ 2>/dev/null || true
             if [ -d "img" ]; then cp -r img _site/; fi
             if [ -d "fonts" ]; then cp -r fonts _site/; fi
             if [ -d ".well-known" ]; then cp -r .well-known _site/; fi
+          fi
+
+          if [ ! -f "_site/version.json" ]; then
+            echo "::error::version.json no se encontró en _site/"
+            exit 1
           fi
           
           touch _site/.nojekyll
