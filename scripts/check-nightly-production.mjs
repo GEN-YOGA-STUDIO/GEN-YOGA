@@ -780,8 +780,9 @@ async function gotoTracked(page, urlPath, settleMs = 2500) {
   lastUrl = `${BASE}${urlPath}`;
   const t0 = Date.now();
   await page.goto(lastUrl, { waitUntil: 'load', timeout: 45000 });
+  const loadMs = Date.now() - t0;
   await page.waitForTimeout(settleMs);
-  perf.push({ page: urlPath, loadMs: Date.now() - t0, bytes: st.bytes, reqs: st.reqs });
+  perf.push({ page: urlPath, loadMs, bytes: st.bytes, reqs: st.reqs });
   return st;
 }
 async function assertClean(suite, st, page = null) {
