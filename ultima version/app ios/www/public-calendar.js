@@ -565,8 +565,8 @@
             : raw?.profesionales?.visible_publico;
         // v16.3: la rama de consultas no filtraba por visibilidad y mostraba
         // huecos de profesionales ocultos. Solo se excluye el 'false' explícito
-        // para no alterar las filas del RPC (ya filtradas en servidor).
-        if (professionalVisible === false) return null;
+        // en consultas para no ocultar talleres o clases activas de instructores colaboradores.
+        if (state.mode === 'consultas' && professionalVisible === false) return null;
         const professor = {
             id: safePositiveInteger(raw?.profesor_id ?? professional?.id),
             nombre: String(raw?.profesor_nombre ?? professional?.nombre ?? '').trim(),
@@ -788,14 +788,14 @@
         if (normLookup === 'clase_especial' || normLookup === 'prod_v5ubkuwemre6ig' || (rawLookup && normLookup.includes('20'))) {
             return 'Plaza 20 €';
         }
-        if (normLookup === 'prod_vcurmnswezmxrl' || normLookup === 'taller_formacion' || (rawLookup && normLookup.includes('formacion'))) {
+        if (normLookup === 'prod_vcurmnswezmxrl' || normLookup === 'taller_formacion' || (rawLookup && normLookup.includes('formacion')) || (rawLookup && normLookup.includes('10'))) {
             if (state.workshopPrices.has(`prod:${rawLookup}`)) {
                 return `Plaza ${state.workshopPrices.get(`prod:${rawLookup}`)}`;
             }
             if (state.workshopPrices.has(`prod:${normLookup}`)) {
                 return `Plaza ${state.workshopPrices.get(`prod:${normLookup}`)}`;
             }
-            return 'Plaza Taller de formación';
+            return 'Plaza 10 €';
         }
 
         // Si es un producto Stripe conocido en stripe_productos o lookup mapeado
@@ -1287,10 +1287,10 @@
             state.workshopPrices.set('lookup:taller_intro_power_vinyasa', '25 €');
             state.workshopPrices.set('clase_especial', '20 €');
             state.workshopPrices.set('lookup:clase_especial', '20 €');
-            state.workshopPrices.set('prod_VcUrMnsweZMxrl', 'Taller de formación');
-            state.workshopPrices.set('prod:prod_vcurmnswezmxrl', 'Taller de formación');
-            state.workshopPrices.set('lookup:prod_VcUrMnsweZMxrl', 'Taller de formación');
-            state.workshopPrices.set('taller_formacion', 'Taller de formación');
+            state.workshopPrices.set('prod_VcUrMnsweZMxrl', '10 €');
+            state.workshopPrices.set('prod:prod_vcurmnswezmxrl', '10 €');
+            state.workshopPrices.set('lookup:prod_VcUrMnsweZMxrl', '10 €');
+            state.workshopPrices.set('taller_formacion', '10 €');
 
             data.forEach(type => {
                 const color = normaliseColor(type.color);
@@ -1338,7 +1338,6 @@
             .from('clases')
             .select(DIRECT_SELECT)
             .eq('activa', true)
-            .eq('profesionales.visible_publico', true)
             .gte('fecha_inicio', bounds.start)
             .lt('fecha_inicio', bounds.end)
             .order('fecha_inicio')
@@ -1805,7 +1804,6 @@
             .select(DIRECT_SELECT)
             .eq('id', classId)
             .eq('activa', true)
-            .eq('profesionales.visible_publico', true)
             .maybeSingle();
         if (error) throw error;
         return data ? normalizeClassRow(data, false) : null;
@@ -1820,8 +1818,13 @@
         let query = state.client
             .from('clases')
             .select(DIRECT_SELECT)
-            .eq('activa', true)
-            .eq('profesionales.visible_publico', true)
+            .eq('activa', true);
+
+        if (state.mode === 'consultas') {
+            query = query.eq('profesionales.visible_publico', true);
+        }
+
+        query = query
             .gte('fecha_inicio', start.toISOString())
             .lt('fecha_inicio', end.toISOString())
             .order('fecha_inicio')

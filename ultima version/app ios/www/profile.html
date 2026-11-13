@@ -4687,7 +4687,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.4.11 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.4.12 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -5076,6 +5076,7 @@
                             <option value="taller_25" selected>Taller GEN Yoga — 25,00 €</option>
                             <option value="taller_intro_power_vinyasa">Taller Introducción Power Vinyasa — 25,00 €</option>
                             <option value="taller_35">Taller GEN Yoga — 35,00 €</option>
+                            <option value="prod_VcUrMnsweZMxrl">Taller de formación — 10,00 €</option>
                         </select>
                         <p class="text-[10px] text-cocoa/60">Tarifa oficial de Stripe que se cobrará al alumno al reservar su plaza.</p>
                     </div>
@@ -5593,7 +5594,7 @@
                             class="w-full px-4 py-3 bg-sand/20 border border-cocoa/20 rounded-xl outline-none text-cocoa font-bold cursor-not-allowed opacity-90 transition">
                             <option value="clase_especial" selected>Clase Especial — 20,00 €</option>
                         </select>
-                        <p id="taller-tarifa-help" class="text-[10px] text-cocoa/50 mt-1 ml-1">Tarifa oficial fija asociada automáticamente (Clase Especial: 20 € · En talleres puedes seleccionar entre 35 € y 25 €).</p>
+                        <p id="taller-tarifa-help" class="text-[10px] text-cocoa/50 mt-1 ml-1">Tarifa oficial fija asociada automáticamente (Clase Especial: 20 € · En talleres puedes seleccionar entre 10 €, 25 € y 35 €).</p>
                     </div>
                     <div class="md:col-span-2">
                         <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Título de
@@ -6412,7 +6413,7 @@
             'prod_VDY8mI9bZ3SQeb': { name: 'Taller con descuento', precio: '25,00 €', unit_amount: 2500 },
             'prod_V9eGZTzwCNJ55q': { name: 'Clase suelta PROMOCIÓN 50%', precio: '7,50 €', unit_amount: 750 },
             'prod_V5uCPKKKH5K74P': { name: 'Taller GEN Yoga', precio: '35,00 €', unit_amount: 3500 },
-            'prod_VcUrMnsweZMxrl': { name: 'Taller de formación', precio: 'Taller de formación', unit_amount: 0 },
+            'prod_VcUrMnsweZMxrl': { name: 'Taller de formación', precio: '10,00 €', unit_amount: 1000 },
             'prod_V5uBKuweMRE6ig': { name: 'Clase Especial', precio: '20,00 €', unit_amount: 2000 },
             'prod_V1pxtuahf6l09m': { name: 'Consulta de Ayurveda sucesiva con Silvia', precio: '60,00 €', unit_amount: 6000 },
             'prod_V1pwyAFdIdxWG5': { name: 'Consulta de Ayurveda inicial con Silvia', precio: '80,00 €', unit_amount: 8000 },
@@ -11652,7 +11653,7 @@
 
             const showHiddenProfesionales = isAdmin;
             const diaTieneClases = (dateKey) => allClasesCache.some(c => {
-                if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false) {
+                if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false && c.tipo_clase !== 'taller' && !c.es_especial && c.tipo_clase !== 'yoga') {
                     return false;
                 }
                 return formatDateLocal(new Date(c.fecha_inicio)) === dateKey;
@@ -11920,7 +11921,7 @@
             const monthNames = monthFallback.map((name, idx) => (typeof window.t === 'function' ? (window.t('month_' + idx) || name) : name));
 
             allClasesCache.forEach(c => {
-                if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false) {
+                if (!showHiddenProfesionales && c.profesionales && c.profesionales.visible_publico === false && c.tipo_clase !== 'taller' && !c.es_especial && c.tipo_clase !== 'yoga') {
                     return;
                 }
                 const fechaObj = new Date(c.fecha_inicio);
@@ -12228,7 +12229,7 @@
 
             allClasesCache.forEach(c => {
                 if (c.profesionales) {
-                    if (!showHiddenProfesionales && c.profesionales.visible_publico === false) {
+                    if (!showHiddenProfesionales && c.profesionales.visible_publico === false && c.tipo_clase !== 'taller' && !c.es_especial && c.tipo_clase !== 'yoga') {
                         return;
                     }
                     profesoresMap.set(c.profesionales.id, c.profesionales.nombre);
@@ -12417,7 +12418,7 @@
                 return { lookupKey: 'taller_35', precio: '35' };
             }
             if (lookupKey === 'prod_VcUrMnsweZMxrl' || lookupKey === 'taller_formacion') {
-                return { lookupKey: 'prod_VcUrMnsweZMxrl', precio: precio || 'Taller de formación' };
+                return { lookupKey: 'prod_VcUrMnsweZMxrl', precio: precio || '10' };
             }
             if (lookupKey === 'clase_especial' || lookupKey === 'prod_V5uBKuweMRE6ig' || c.tipo_clase === 'clase_especial' || c.tipo_clase === 'especial' || (typeof esClaseEspecialTipo === 'function' && esClaseEspecialTipo(c))) {
                 return { lookupKey: 'clase_especial', precio: '20' };
@@ -12663,7 +12664,7 @@
                 return;
             }
 
-            let visibles = (clases || []).filter(c => (isAdmin || c.profesionales?.visible_publico !== false) && c.activa !== false);
+            let visibles = (clases || []).filter(c => (isAdmin || c.tipo_clase === 'taller' || c.es_especial || c.profesionales?.visible_publico !== false) && c.activa !== false);
             if (!isAdmin && esTrabajador()) {
                 visibles = visibles.filter(esClaseDelProfesionalActual);
                 // Fallback directo por IDs autorizados del profesor si no hubo coincidencia en JS
@@ -13066,7 +13067,7 @@
             const showHiddenProfesionales = isAdmin;
 
             if (!showHiddenProfesionales) {
-                clasesAMostrar = clasesAMostrar.filter(c => !c.profesionales || c.profesionales.visible_publico !== false);
+                clasesAMostrar = clasesAMostrar.filter(c => !c.profesionales || c.profesionales.visible_publico !== false || c.tipo_clase === 'taller' || c.es_especial || c.tipo_clase === 'yoga');
             }
 
             // Aplicar filtros adicionales
@@ -19135,6 +19136,13 @@
                     <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Color Identificativo</label>
                     <input id="swal-prof-color" type="color" class="w-full h-10 rounded cursor-pointer border border-gray-200" value="#2d8a8e">
                 </div>
+                <div class="p-3 bg-sand/10 rounded-xl border border-cocoa/15">
+                    <label class="flex items-center gap-2.5 text-xs font-bold text-cocoa cursor-pointer">
+                        <input type="checkbox" id="swal-prof-visible-publico" class="accent-olive w-4 h-4" checked>
+                        <span>Visible en maestros.html (Ficha pública)</span>
+                    </label>
+                    <p class="text-[11px] text-cocoa/60 mt-1 pl-6">Si se desmarca, este profesional no aparecerá en el listado público de maestros, pero seguirá disponible en el panel de administración para impartir clases y talleres.</p>
+                </div>
             </div>
         `,
                 focusConfirm: false,
@@ -19149,6 +19157,7 @@
                     const descripcion = document.getElementById('swal-prof-descripcion')?.value?.trim();
                     const foto_url = document.getElementById('swal-prof-foto')?.value?.trim();
                     const color = document.getElementById('swal-prof-color')?.value;
+                    const visible_publico = Boolean(document.getElementById('swal-prof-visible-publico')?.checked);
 
                     const catClases = document.getElementById('swal-prof-cat-clases')?.checked;
                     const catPsico = document.getElementById('swal-prof-cat-psico')?.checked;
@@ -19178,7 +19187,8 @@
                         especialidad: `${especialidadTexto} | ${[...new Set(selectedCats)].join(', ')}`,
                         descripcion,
                         foto_url: fotoSegura || null,
-                        color: safeCssColor(color, '#2d8a8e')
+                        color: safeCssColor(color, '#2d8a8e'),
+                        visible_publico
                     };
                 }
             });
@@ -19271,12 +19281,24 @@
                 if (p.notificaciones_email_activas) {
                     badges.push('<span class="inline-flex items-center gap-1 py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-emerald-100 text-emerald-800 border border-emerald-300" title="Alertas de correo activas"><i class="ph-bold ph-envelope"></i> Email On</span>');
                 }
+                const esVisiblePublico = p.visible_publico !== false;
+                if (esVisiblePublico) {
+                    badges.push('<span class="inline-flex items-center gap-1 py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-emerald-100 text-emerald-800 border border-emerald-300" title="Visible en maestros.html (Ficha pública)"><i class="ph-bold ph-eye"></i> Visible en Maestros</span>');
+                } else {
+                    badges.push('<span class="inline-flex items-center gap-1 py-0.5 px-2 rounded-full text-[8px] font-bold tracking-wider uppercase bg-amber-100 text-amber-800 border border-amber-300" title="Oculto en maestros.html (Solo visible en administración)"><i class="ph-bold ph-eye-slash"></i> Oculto en Maestros</span>');
+                }
 
                 return `
         <div class="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-cocoa/10 hover:shadow-md hover:scale-[1.01] transition duration-300 group flex flex-col items-center relative min-h-[260px] w-full sm:w-[300px]">
             
             <!-- Botones de Acción (Top Right) -->
             <div style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 10;">
+                <button onclick="toggleVisibilidadProfesorPorId(${profesionalId}, ${!esVisiblePublico})"
+                    class="hover:bg-olive hover:text-white transition flex items-center justify-center shadow-sm"
+                    style="width: 32px; height: 32px; border-radius: 50%; background-color: ${esVisiblePublico ? 'rgba(16,185,129,0.15)' : 'rgba(217,119,6,0.15)'}; border: 1px solid ${esVisiblePublico ? 'rgba(16,185,129,0.3)' : 'rgba(217,119,6,0.3)'}; color: ${esVisiblePublico ? '#047857' : '#b45309'};"
+                    title="${esVisiblePublico ? 'Ocultar en maestros.html' : 'Hacer visible en maestros.html'}">
+                    <i class="ph-bold ${esVisiblePublico ? 'ph-eye' : 'ph-eye-slash'} text-sm"></i>
+                </button>
                 <button onclick="abrirConfiguracionNotificacionesProfesor(${profesionalId})"
                     class="hover:bg-olive hover:text-white transition flex items-center justify-center shadow-sm"
                     style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(140,134,88,0.15); border: 1px solid rgba(140,134,88,0.25); color: #8C8658;"
@@ -19389,6 +19411,13 @@
                     <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Color Identificativo</label>
                     <input id="swal-prof-color" type="color" class="w-full h-10 rounded cursor-pointer border border-gray-200" value="${safeCssColor(profesor.color, '#2d8a8e')}">
                 </div>
+                <div class="p-3 bg-sand/10 rounded-xl border border-cocoa/15">
+                    <label class="flex items-center gap-2.5 text-xs font-bold text-cocoa cursor-pointer">
+                        <input type="checkbox" id="swal-prof-visible-publico" class="accent-olive w-4 h-4" ${profesor.visible_publico !== false ? 'checked' : ''}>
+                        <span>Visible en maestros.html (Ficha pública)</span>
+                    </label>
+                    <p class="text-[11px] text-cocoa/60 mt-1 pl-6">Si se desmarca, este profesional no aparecerá en el listado público de maestros, pero seguirá disponible en el panel de administración para impartir clases y talleres.</p>
+                </div>
                 <div class="pt-2 border-t border-gray-100">
                     <button type="button" onclick="Swal.close(); setTimeout(() => abrirConfiguracionNotificacionesProfesor(${id}), 100);"
                         class="w-full py-2.5 px-3 bg-olive/10 hover:bg-olive/20 text-olive font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition">
@@ -19408,6 +19437,7 @@
                     const descripcion = document.getElementById('swal-prof-descripcion')?.value?.trim();
                     const foto_url = document.getElementById('swal-prof-foto')?.value?.trim();
                     const color = document.getElementById('swal-prof-color')?.value;
+                    const visible_publico = Boolean(document.getElementById('swal-prof-visible-publico')?.checked);
 
                     const catClases = document.getElementById('swal-prof-cat-clases')?.checked;
                     const catPsico = document.getElementById('swal-prof-cat-psico')?.checked;
@@ -19436,7 +19466,8 @@
                         especialidad: `${especialidadTexto} | ${[...new Set(selectedCats)].join(', ')}`,
                         descripcion,
                         foto_url: fotoSegura || null,
-                        color: safeCssColor(color, '#2d8a8e')
+                        color: safeCssColor(color, '#2d8a8e'),
+                        visible_publico
                     };
                 }
             });
@@ -19481,6 +19512,42 @@
                 }
             }
         }
+
+        window.toggleVisibilidadProfesorPorId = async function (profId, visible) {
+            if (!isAdmin) return;
+            const cid = safePositiveInteger(profId);
+            if (!cid) return;
+
+            try {
+                const { error } = await client
+                    .from('profesionales')
+                    .update({ visible_publico: visible })
+                    .eq('id', cid);
+
+                if (error) {
+                    Swal.fire('Error', amableError(error.message), 'error');
+                    return;
+                }
+
+                await cargarProfesionalesCache();
+                cargarProfesoresAdmin();
+
+                const toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+                toast.fire({
+                    icon: 'success',
+                    title: visible ? 'Profesor visible en maestros.html' : 'Profesor oculto de maestros.html'
+                });
+            } catch (err) {
+                console.error('Error al alternar visibilidad pública del profesor:', err);
+                Swal.fire('Error', 'No se pudo actualizar la visibilidad: ' + (err?.message || err), 'error');
+            }
+        };
 
         // --- SISTEMA DE ANÁLISIS Y DETECCIÓN DE POSIBLES DUPLICADOS ---
         let duplicatePairsFound = [];
@@ -21222,21 +21289,37 @@
                 if (isTallerSesion) {
                     tarifaTallerContainer.classList.remove('hidden');
                     if (tarifaTallerSelect) {
+                        // Reconstruir limpiamente las opciones oficiales de talleres
+                        tarifaTallerSelect.innerHTML = `
+                            <option value="taller_25">Taller GEN Yoga — 25,00 €</option>
+                            <option value="taller_intro_power_vinyasa">Taller Introducción Power Vinyasa — 25,00 €</option>
+                            <option value="taller_35">Taller GEN Yoga — 35,00 €</option>
+                            <option value="prod_VcUrMnsweZMxrl">Taller de formación — 10,00 €</option>
+                        `;
+
                         const rawLookup = String(clase.stripe_lookup_key || clase.metodo_pago || '').toLowerCase().trim();
                         if (rawLookup === 'taller_35' || rawLookup === 'taller-35' || rawLookup === 'taller35' || rawLookup === 'prod_v5ucpkkkh5k74p' || rawLookup.includes('35')) {
                             tarifaTallerSelect.value = 'taller_35';
                         } else if (rawLookup.includes('power') || rawLookup === 'taller_intro_power_vinyasa') {
                             tarifaTallerSelect.value = 'taller_intro_power_vinyasa';
+                        } else if (rawLookup === 'prod_vcurmnswezmxrl' || rawLookup === 'taller_formacion' || rawLookup.includes('formacion') || rawLookup.includes('10')) {
+                            tarifaTallerSelect.value = 'prod_VcUrMnsweZMxrl';
                         } else if (rawLookup === 'taller_25' || rawLookup === 'taller-25' || rawLookup === 'taller25' || rawLookup === 'prod_vdy8mi9bz3sqeb' || rawLookup.includes('25')) {
                             tarifaTallerSelect.value = 'taller_25';
                         } else if (clase.stripe_lookup_key || clase.metodo_pago) {
                             const val = String(clase.stripe_lookup_key || clase.metodo_pago).trim();
                             let opt = tarifaTallerSelect.querySelector(`option[value="${val}"]`);
+                            const detalle = typeof obtenerDetalleStripeProducto === 'function' ? obtenerDetalleStripeProducto(val) : null;
+                            const nombreTarifa = detalle?.name || detalle?.nombre || val;
+                            const precioTarifa = detalle?.precio || detalle?.precio_formateado || '';
+                            const labelText = precioTarifa ? `${nombreTarifa} — ${precioTarifa}` : nombreTarifa;
                             if (!opt) {
                                 opt = document.createElement('option');
                                 opt.value = val;
-                                opt.textContent = `Tarifa Stripe personalizada — ${val}`;
+                                opt.textContent = labelText;
                                 tarifaTallerSelect.appendChild(opt);
+                            } else {
+                                opt.textContent = labelText;
                             }
                             tarifaTallerSelect.value = val;
                         } else {
@@ -29904,7 +29987,7 @@
                 { id: 'prod_VDY8mI9bZ3SQeb', name: 'Taller con descuento', formatted_price: '25,00 €', unit_amount: 2500, active: true, price: { unit_amount: 2500, formatted: '25,00 €' } },
                 { id: 'prod_V9eGZTzwCNJ55q', name: 'Clase suelta PROMOCION 50%', formatted_price: '7,50 €', unit_amount: 750, active: true, price: { unit_amount: 750, formatted: '7,50 €' } },
                 { id: 'prod_V5uCPKKKH5K74P', name: 'Taller Gen Yoga', formatted_price: '35,00 €', unit_amount: 3500, active: true, price: { unit_amount: 3500, formatted: '35,00 €' } },
-                { id: 'prod_VcUrMnsweZMxrl', name: 'Taller de formación', formatted_price: 'Consultar', unit_amount: 0, active: true, price: { unit_amount: 0, formatted: 'Consultar' } },
+                { id: 'prod_VcUrMnsweZMxrl', name: 'Taller de formación', formatted_price: '10,00 €', unit_amount: 1000, active: true, price: { unit_amount: 1000, formatted: '10,00 €' } },
                 { id: 'prod_V5uBKuweMRE6ig', name: 'Clase especial', formatted_price: '20,00 €', unit_amount: 2000, active: true, price: { unit_amount: 2000, formatted: '20,00 €' } },
                 { id: 'prod_V1pxtuahf6l09m', name: 'Consulta de Ayurveda sucesiva con Silvia', formatted_price: '60,00 €', unit_amount: 6000, active: true, price: { unit_amount: 6000, formatted: '60,00 €' } },
                 { id: 'prod_V1pwyAFdIdxWG5', name: 'Consulta de Ayurveda inicial con Silvia', formatted_price: '80,00 €', unit_amount: 8000, active: true, price: { unit_amount: 8000, formatted: '80,00 €' } },
@@ -31865,6 +31948,8 @@
                     const rawLookup = String(c.stripe_lookup_key || c.metodo_pago || '').toLowerCase().trim();
                     if (rawLookup === 'taller_25' || rawLookup === 'taller-25' || rawLookup === 'taller25' || rawLookup === 'prod_vdy8mi9bz3sqeb' || rawLookup === 'taller_intro_power_vinyasa') {
                         precioAdminTexto = '25,00 € (Stripe)';
+                    } else if (rawLookup === 'prod_vcurmnswezmxrl' || rawLookup === 'taller_formacion' || rawLookup.includes('formacion') || rawLookup.includes('10')) {
+                        precioAdminTexto = '10,00 € (Stripe)';
                     } else {
                         precioAdminTexto = '35,00 € (Stripe)';
                     }
@@ -32200,14 +32285,14 @@
                             <option value="taller_25" selected>Taller GEN Yoga — 25,00 €</option>
                             <option value="taller_intro_power_vinyasa">Taller Introducción Power Vinyasa — 25,00 €</option>
                             <option value="taller_35">Taller GEN Yoga — 35,00 €</option>
-                            <option value="prod_VcUrMnsweZMxrl">Taller de formación (prod_VcUrMnsweZMxrl)</option>
+                            <option value="prod_VcUrMnsweZMxrl">Taller de formación — 10,00 €</option>
                         `;
                         metodoPagoSelect.value = 'taller_25';
                         metodoPagoSelect.disabled = false;
                         metodoPagoSelect.classList.remove('cursor-not-allowed', 'opacity-90', 'bg-sand/20');
                         metodoPagoSelect.classList.add('bg-white', 'cursor-pointer');
-                        if (tarifaBadge) tarifaBadge.innerHTML = '<i class="ph-bold ph-tag"></i> Tarifa seleccionable (25 € / 35 €)';
-                        if (tarifaHelp) tarifaHelp.textContent = 'Selecciona la tarifa oficial de Stripe para este taller (25 € tarifa oficial o 35 € estándar).';
+                        if (tarifaBadge) tarifaBadge.innerHTML = '<i class="ph-bold ph-tag"></i> Tarifa seleccionable (10 € / 25 € / 35 €)';
+                        if (tarifaHelp) tarifaHelp.textContent = 'Selecciona la tarifa oficial de Stripe para este taller (10 € taller de formación, 25 € tarifa oficial o 35 € estándar).';
                     }
                 }
             } catch (err) {

@@ -789,7 +789,7 @@
                 <a href="aviso-legal.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_legal">Aviso legal</a>
                 <span class="opacity-40 text-white/60">|</span>
                 <a href="politica-privacidad.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-90 text-xs">v18.4.11 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-90 text-xs">v18.4.12 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
@@ -2074,6 +2074,7 @@
                 precio = '25';
                 lookupKey = 'taller_25';
             } else if (normLookup === 'prod_vcurmnswezmxrl' || normLookup === 'taller_formacion' || (isTaller && normLookup.includes('formacion'))) {
+                precio = '10';
                 lookupKey = 'prod_VcUrMnsweZMxrl';
             } else if (normLookup === 'clase_especial' || normLookup === 'prod_v5ubkuwemre6ig' || (!isTaller && normLookup)) {
                 precio = '20';
@@ -2089,6 +2090,7 @@
                     if (prod.id === 'prod_V5uBKuweMRE6ig' || !isTaller) lookupKey = 'clase_especial';
                     else if (prod.id === 'prod_VDY8mI9bZ3SQeb') lookupKey = 'taller_25';
                     else if (prod.id === 'prod_V5uCPKKKH5K74P') lookupKey = 'taller_35';
+                    else if (prod.id === 'prod_VcUrMnsweZMxrl') lookupKey = 'prod_VcUrMnsweZMxrl';
                     else lookupKey = prod.id;
                 }
             }
@@ -2111,6 +2113,8 @@
                             lookupKey = 'taller_25';
                         } else if (prod.id === 'prod_V5uCPKKKH5K74P') {
                             lookupKey = 'taller_35';
+                        } else if (prod.id === 'prod_VcUrMnsweZMxrl') {
+                            lookupKey = 'prod_VcUrMnsweZMxrl';
                         } else {
                             lookupKey = prod.id;
                         }
@@ -2158,7 +2162,7 @@
 
             if (!lookupKey || (lookupKey === 'prod_V5uBKuweMRE6ig' && isTaller)) {
                 if (isTaller) {
-                    lookupKey = (precio === '35') ? 'taller_35' : 'taller_25';
+                    lookupKey = (precio === '35') ? 'taller_35' : (precio === '10' ? 'prod_VcUrMnsweZMxrl' : 'taller_25');
                 } else {
                     lookupKey = 'clase_especial';
                 }

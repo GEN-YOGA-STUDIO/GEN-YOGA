@@ -123,6 +123,33 @@
                 transform: scale(1.045);
             }
 
+            .teacher-card__avatar-fallback {
+                position: relative;
+                z-index: 2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: clamp(150px, 18vw, 210px);
+                height: clamp(150px, 18vw, 210px);
+                border-radius: 50%;
+                margin: auto;
+                box-shadow: 0 12px 28px rgba(38,22,12,0.1);
+                border: 4px solid #ffffff;
+                transition: transform 300ms ease;
+            }
+
+            .group:hover .teacher-card__avatar-fallback {
+                transform: scale(1.045);
+            }
+
+            .teacher-card__avatar-initials {
+                font-family: 'Cinzel', serif;
+                font-size: clamp(3rem, 4.5vw, 4.5rem);
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                user-select: none;
+            }
+
             .teachers-hero__portrait--left-top {
                 z-index: 2;
                 top: clamp(54px, 9vh, 88px);
@@ -644,6 +671,28 @@
                 object-position: center bottom;
             }
 
+            .teacher-modal__avatar-fallback {
+                position: relative;
+                z-index: 2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: clamp(130px, 16vw, 180px);
+                height: clamp(130px, 16vw, 180px);
+                border-radius: 50%;
+                margin: auto;
+                box-shadow: 0 10px 24px rgba(38,22,12,0.1);
+                border: 4px solid #ffffff;
+            }
+
+            .teacher-modal__avatar-initials {
+                font-family: 'Cinzel', serif;
+                font-size: clamp(2.6rem, 3.8vw, 3.8rem);
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                user-select: none;
+            }
+
             .teacher-modal__quote {
                 position: relative;
                 z-index: 2;
@@ -1042,7 +1091,7 @@
                 <a href="aviso-legal.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_legal">Aviso legal</a>
                 <span class="opacity-40 text-white/60">|</span>
                 <a href="politica-privacidad.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-90 text-[12px]">v18.4.11 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-90 text-[12px]">v18.4.12 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
 
@@ -1500,6 +1549,9 @@
                     updated.foto_cutout = 'img/maestra-yanira-recortada.webp';
                     if (!isEnglish) updated.especialidad = 'Vinyasa & Yoga Restaurativo | clases,talleres';
                 }
+                if (!updated.foto_cutout && p.foto_url) {
+                    updated.foto_cutout = p.foto_url;
+                }
                 return updated;
             });
 
@@ -1563,13 +1615,22 @@
             return '';
         }
 
+        function getTeacherInitials(nombre) {
+            const clean = String(nombre || '').trim();
+            if (!clean) return '??';
+            const parts = clean.split(/\s+/).filter(Boolean);
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+
         function getTeacherPhoto(nombre) {
             const n = (nombre || '').toLowerCase();
             if (n.includes('ángel') || n.includes('angel')) return withTeacherAssetVersion('img/maestro-angel-recortado.webp');
             if (n.includes('miriam')) return withTeacherAssetVersion('img/maestra-miriam-recortada.webp');
             if (n.includes('yanira')) return withTeacherAssetVersion('img/maestra-yanira-recortada.webp');
             if (n.includes('isabel')) return withTeacherAssetVersion('img/maestra-isabel-recortada.webp');
-            return withTeacherAssetVersion('img/maestra-silvia-recortada.webp');
+            if (n.includes('silvia')) return withTeacherAssetVersion('img/maestra-silvia-recortada.webp');
+            return '';
         }
 
         function getTeacherCutoutPhoto(nombre) {
@@ -1578,7 +1639,8 @@
             if (n.includes('miriam')) return withTeacherAssetVersion('img/maestra-miriam-recortada.webp');
             if (n.includes('yanira')) return withTeacherAssetVersion('img/maestra-yanira-recortada.webp');
             if (n.includes('isabel')) return withTeacherAssetVersion('img/maestra-isabel-recortada.webp');
-            return withTeacherAssetVersion('img/maestra-silvia-recortada.webp');
+            if (n.includes('silvia')) return withTeacherAssetVersion('img/maestra-silvia-recortada.webp');
+            return '';
         }
 
         function renderProfesionalesLanding(profesionales) {
@@ -1599,12 +1661,17 @@
             profesionales.forEach((prof, index) => {
                 const nombre = prof.nombre || 'PROFESOR';
                 const especialidadTexto = getEspecialidadTexto(prof.especialidad) || t('teachers_fallback_spec');
-                const photoUrl = withTeacherAssetVersion(prof.foto_cutout || getTeacherPhoto(nombre));
+                const rawPhoto = prof.foto_cutout || prof.foto_url || getTeacherPhoto(nombre);
+                const photoUrl = rawPhoto ? withTeacherAssetVersion(rawPhoto) : '';
                 const teacherSlug = getTeacherSlug(prof);
                 const profileHref = buildTeacherProfileHref(prof);
                 const portraitAlt = window.currentLang === 'en'
                     ? `Black-and-white portrait of ${nombre}`
                     : `Retrato en blanco y negro de ${nombre}`;
+                const initials = getTeacherInitials(nombre);
+                const profColor = (prof.color && /^#[0-9a-f]{6}$/i.test(prof.color)) ? prof.color : '#8C8658';
+                const avatarBg = `linear-gradient(135deg, ${profColor}15, ${profColor}30)`;
+                const avatarBorder = `outline: 2px solid ${profColor}40;`;
 
                 const card = document.createElement('article');
                 card.className = 'teacher-card group';
@@ -1613,7 +1680,16 @@
                 card.innerHTML = `
                     <a class="teacher-card__trigger" href="${escapeHtmlPublic(profileHref)}" aria-label="${escapeHtmlPublic(`${t('teachers_view_card')} ${nombre}`)}">
                         <div class="teacher-card__figure">
-                            <img src="${escapeHtmlPublic(photoUrl)}" alt="${escapeHtmlPublic(portraitAlt)}" class="teacher-card__portrait" loading="lazy" />
+                            ${photoUrl ? `
+                                <img src="${escapeHtmlPublic(photoUrl)}" alt="${escapeHtmlPublic(portraitAlt)}" class="teacher-card__portrait" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+                                <div class="teacher-card__avatar-fallback" style="display:none; background:${avatarBg}; color:${profColor}; ${avatarBorder}">
+                                    <span class="teacher-card__avatar-initials">${escapeHtmlPublic(initials)}</span>
+                                </div>
+                            ` : `
+                                <div class="teacher-card__avatar-fallback" style="display:flex; background:${avatarBg}; color:${profColor}; ${avatarBorder}">
+                                    <span class="teacher-card__avatar-initials">${escapeHtmlPublic(initials)}</span>
+                                </div>
+                            `}
                         </div>
 
                         <h2 class="teacher-card__name">${escapeHtmlPublic(nombre)}</h2>
@@ -1717,7 +1793,8 @@
             const copy = getTeacherModalCopy();
             const nombre = prof.nombre || 'Profesor';
             const esp = getEspecialidadTexto(prof.especialidad) || 'GEN Yoga';
-            const photoUrl = withTeacherAssetVersion(prof.foto_cutout || getTeacherCutoutPhoto(nombre));
+            const rawPhoto = prof.foto_cutout || prof.foto_url || getTeacherCutoutPhoto(nombre);
+            const photoUrl = rawPhoto ? withTeacherAssetVersion(rawPhoto) : '';
             const aboutItems = parsed.sobreMi.length ? parsed.sobreMi : [rawBio || esp];
             const qualificationItems = parsed.titulos;
             const sessionItems = parsed.teAcompano.length ? parsed.teAcompano : [esp];
@@ -1727,6 +1804,10 @@
             const portraitAlt = window.currentLang === 'en'
                 ? `Black-and-white portrait of ${nombre}`
                 : `Retrato en blanco y negro de ${nombre}`;
+            const initials = getTeacherInitials(nombre);
+            const profColor = (prof.color && /^#[0-9a-f]{6}$/i.test(prof.color)) ? prof.color : '#8C8658';
+            const avatarBg = `linear-gradient(135deg, ${profColor}15, ${profColor}30)`;
+            const avatarBorder = `outline: 2px solid ${profColor}40;`;
 
             body.innerHTML = `
                 <div class="teacher-modal__layout">
@@ -1737,7 +1818,16 @@
                         </div>
 
                         <div class="teacher-modal__portrait-stage">
-                            <img src="${escapeHtmlPublic(photoUrl)}" alt="${escapeHtmlPublic(portraitAlt)}" class="teacher-modal__portrait" />
+                            ${photoUrl ? `
+                                <img src="${escapeHtmlPublic(photoUrl)}" alt="${escapeHtmlPublic(portraitAlt)}" class="teacher-modal__portrait" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+                                <div class="teacher-modal__avatar-fallback" style="display:none; background:${avatarBg}; color:${profColor}; ${avatarBorder}">
+                                    <span class="teacher-modal__avatar-initials">${escapeHtmlPublic(initials)}</span>
+                                </div>
+                            ` : `
+                                <div class="teacher-modal__avatar-fallback" style="display:flex; background:${avatarBg}; color:${profColor}; ${avatarBorder}">
+                                    <span class="teacher-modal__avatar-initials">${escapeHtmlPublic(initials)}</span>
+                                </div>
+                            `}
                         </div>
 
                         ${quoteText ? `<p class="teacher-modal__quote">“${escapeHtmlPublic(quoteText)}”</p>` : '<span aria-hidden="true"></span>'}

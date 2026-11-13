@@ -202,6 +202,7 @@ export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = 
   },
   [PURCHASE_TYPES.TALLER_FORMACION]: {
     name: 'Taller de formación',
+    amount: 1000,
     productId: WORKSHOP_PRODUCT_IDS.TALLER_FORMACION,
     guestAllowed: true,
   },
