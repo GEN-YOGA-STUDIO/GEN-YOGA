@@ -18,7 +18,7 @@ async function exists(absolutePath) {
 async function collectWebFiles(directory) {
   const results = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if (['.git', 'node_modules', 'supabase', 'scripts', 'app android', 'app ios', 'docs', 'ultima version', '.github', 'build', '.gradle', '_legacy'].includes(entry.name)) continue;
+    if (['.git', 'node_modules', 'supabase', 'scripts', 'app android', 'app ios', 'docs', 'ultima version', '.github', 'build', '.gradle', '_legacy', 'scratch', '_cert', 'Sesion 29&#x3a;9&#x3a;2026'].includes(entry.name)) continue;
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) {
       results.push(...await collectWebFiles(absolute));
@@ -60,15 +60,17 @@ async function checkTarget(label, directory) {
       errors.push(`${label}/${relative}: intenta capturar u ocultar el puntero`);
     }
 
-    for (const rule of webSource.matchAll(/([^{}]+)\{([^{}]*)\}/gs)) {
-      if (!/\bcursor\s*:/i.test(rule[2])) continue;
-      const globalSelector = rule[1]
-        .split(',')
-        .map((selector) => selector.trim().replace(/\s+/g, ' '))
-        .find((selector) => /^(?:\*|html(?::root)?|body|body \*|html(?::root)? body(?: \*)?)$/i.test(selector));
-      if (globalSelector) {
-        errors.push(`${label}/${relative}: fuerza el cursor globalmente sobre ${globalSelector}`);
-        break;
+    if (/\bcursor\s*:/i.test(webSource)) {
+      for (const rule of webSource.matchAll(/([^{}]+)\{([^{}]*)\}/gs)) {
+        if (!/\bcursor\s*:/i.test(rule[2])) continue;
+        const globalSelector = rule[1]
+          .split(',')
+          .map((selector) => selector.trim().replace(/\s+/g, ' '))
+          .find((selector) => /^(?:\*|html(?::root)?|body|body \*|html(?::root)? body(?: \*)?)$/i.test(selector));
+        if (globalSelector) {
+          errors.push(`${label}/${relative}: fuerza el cursor globalmente sobre ${globalSelector}`);
+          break;
+        }
       }
     }
   }
