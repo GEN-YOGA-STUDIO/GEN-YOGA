@@ -31,6 +31,7 @@ export const PURCHASE_TYPES = {
   TALLER_35: 'taller_35',
   TALLER_25: 'taller_25',
   TALLER: 'taller',
+  TALLER_FORMACION: 'prod_VcUrMnsweZMxrl',
   PROMO_50_CLASE: 'promo_50_clase',
 } as const
 
@@ -69,6 +70,7 @@ export const WORKSHOP_PRODUCT_IDS = {
   CLASE_ESPECIAL: 'prod_V5uBKuweMRE6ig',
   TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P',
   TALLER_25: 'prod_VDY8mI9bZ3SQeb',
+  TALLER_FORMACION: 'prod_VcUrMnsweZMxrl',
 } as const
 
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
@@ -198,6 +200,11 @@ export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = 
     productId: WORKSHOP_PRODUCT_IDS.TALLER_25,
     guestAllowed: true,
   },
+  [PURCHASE_TYPES.TALLER_FORMACION]: {
+    name: 'Taller de formación',
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_FORMACION,
+    guestAllowed: true,
+  },
 }
 
 export type PromoDetails = {
@@ -235,6 +242,9 @@ export function getWorkshopDetails(purchaseType: string): WorkshopDetails | null
   }
   if (norm === 'taller_35' || norm === 'taller-35' || norm === 'taller35' || norm === WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA.toLowerCase()) {
     return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_35] || null
+  }
+  if (norm === 'taller_formacion' || norm === 'taller-formacion' || norm === 'tallerformacion' || norm === WORKSHOP_PRODUCT_IDS.TALLER_FORMACION.toLowerCase() || norm.includes('formacion') || norm === 'prod_vcurmnswezmxrl') {
+    return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_FORMACION] || null
   }
   if (WORKSHOP_CATALOG[norm as PurchaseType]) {
     return WORKSHOP_CATALOG[norm as PurchaseType]!
@@ -944,7 +954,8 @@ export function assertValidWorkshopPrice(
     (purchaseType.includes('taller') && (
       stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_25 ||
       stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA ||
-      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL
+      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL ||
+      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_FORMACION
     ))
   if (!price.livemode || price.currency.toLowerCase() !== 'eur' || !isAllowedProduct) {
     throw new HttpError(400, 'El producto comprado no coincide con el producto autorizado de Stripe.')

@@ -4687,7 +4687,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.4.10 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.4.11 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -6412,6 +6412,7 @@
             'prod_VDY8mI9bZ3SQeb': { name: 'Taller con descuento', precio: '25,00 €', unit_amount: 2500 },
             'prod_V9eGZTzwCNJ55q': { name: 'Clase suelta PROMOCIÓN 50%', precio: '7,50 €', unit_amount: 750 },
             'prod_V5uCPKKKH5K74P': { name: 'Taller GEN Yoga', precio: '35,00 €', unit_amount: 3500 },
+            'prod_VcUrMnsweZMxrl': { name: 'Taller de formación', precio: 'Taller de formación', unit_amount: 0 },
             'prod_V5uBKuweMRE6ig': { name: 'Clase Especial', precio: '20,00 €', unit_amount: 2000 },
             'prod_V1pxtuahf6l09m': { name: 'Consulta de Ayurveda sucesiva con Silvia', precio: '60,00 €', unit_amount: 6000 },
             'prod_V1pwyAFdIdxWG5': { name: 'Consulta de Ayurveda inicial con Silvia', precio: '80,00 €', unit_amount: 8000 },
@@ -12415,6 +12416,9 @@
             if (lookupKey === 'taller_35' || lookupKey === 'taller-35' || lookupKey === 'prod_V5uCPKKKH5K74P') {
                 return { lookupKey: 'taller_35', precio: '35' };
             }
+            if (lookupKey === 'prod_VcUrMnsweZMxrl' || lookupKey === 'taller_formacion') {
+                return { lookupKey: 'prod_VcUrMnsweZMxrl', precio: precio || 'Taller de formación' };
+            }
             if (lookupKey === 'clase_especial' || lookupKey === 'prod_V5uBKuweMRE6ig' || c.tipo_clase === 'clase_especial' || c.tipo_clase === 'especial' || (typeof esClaseEspecialTipo === 'function' && esClaseEspecialTipo(c))) {
                 return { lookupKey: 'clase_especial', precio: '20' };
             }
@@ -12429,6 +12433,8 @@
                         lookupKey = 'taller_25';
                     } else if (tipo.stripe_product_id === 'prod_V5uCPKKKH5K74P') {
                         lookupKey = 'taller_35';
+                    } else if (tipo.stripe_product_id === 'prod_VcUrMnsweZMxrl') {
+                        lookupKey = 'prod_VcUrMnsweZMxrl';
                     } else {
                         lookupKey = tipo.stripe_product_id;
                     }
@@ -29898,6 +29904,7 @@
                 { id: 'prod_VDY8mI9bZ3SQeb', name: 'Taller con descuento', formatted_price: '25,00 €', unit_amount: 2500, active: true, price: { unit_amount: 2500, formatted: '25,00 €' } },
                 { id: 'prod_V9eGZTzwCNJ55q', name: 'Clase suelta PROMOCION 50%', formatted_price: '7,50 €', unit_amount: 750, active: true, price: { unit_amount: 750, formatted: '7,50 €' } },
                 { id: 'prod_V5uCPKKKH5K74P', name: 'Taller Gen Yoga', formatted_price: '35,00 €', unit_amount: 3500, active: true, price: { unit_amount: 3500, formatted: '35,00 €' } },
+                { id: 'prod_VcUrMnsweZMxrl', name: 'Taller de formación', formatted_price: 'Consultar', unit_amount: 0, active: true, price: { unit_amount: 0, formatted: 'Consultar' } },
                 { id: 'prod_V5uBKuweMRE6ig', name: 'Clase especial', formatted_price: '20,00 €', unit_amount: 2000, active: true, price: { unit_amount: 2000, formatted: '20,00 €' } },
                 { id: 'prod_V1pxtuahf6l09m', name: 'Consulta de Ayurveda sucesiva con Silvia', formatted_price: '60,00 €', unit_amount: 6000, active: true, price: { unit_amount: 6000, formatted: '60,00 €' } },
                 { id: 'prod_V1pwyAFdIdxWG5', name: 'Consulta de Ayurveda inicial con Silvia', formatted_price: '80,00 €', unit_amount: 8000, active: true, price: { unit_amount: 8000, formatted: '80,00 €' } },
@@ -32139,6 +32146,8 @@
                         option.value = tipo.id;
                         option.textContent = tipo.nombre;
                         option.dataset.duracion = tipo.duracion_predeterminada;
+                        option.dataset.stripeProductId = tipo.stripe_product_id || '';
+                        option.dataset.metodoPago = tipo.metodo_pago || '';
                         tipoSelect.appendChild(option);
                     });
 
@@ -32148,6 +32157,24 @@
                             if (nombreInput) nombreInput.value = selected.textContent;
                             if (selected.dataset.duracion && duracionSelect) {
                                 duracionSelect.value = String(selected.dataset.duracion);
+                            }
+                            const mPago = selected.dataset.metodoPago || selected.dataset.stripeProductId;
+                            if (mPago && metodoPagoSelect && !esClaseEspecial) {
+                                let found = false;
+                                for (let i = 0; i < metodoPagoSelect.options.length; i++) {
+                                    if (metodoPagoSelect.options[i].value === mPago) {
+                                        metodoPagoSelect.selectedIndex = i;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    const opt = document.createElement('option');
+                                    opt.value = mPago;
+                                    opt.textContent = `${selected.textContent} (${mPago})`;
+                                    metodoPagoSelect.appendChild(opt);
+                                    metodoPagoSelect.value = mPago;
+                                }
                             }
                         }
                     };
@@ -32173,6 +32200,7 @@
                             <option value="taller_25" selected>Taller GEN Yoga — 25,00 €</option>
                             <option value="taller_intro_power_vinyasa">Taller Introducción Power Vinyasa — 25,00 €</option>
                             <option value="taller_35">Taller GEN Yoga — 35,00 €</option>
+                            <option value="prod_VcUrMnsweZMxrl">Taller de formación (prod_VcUrMnsweZMxrl)</option>
                         `;
                         metodoPagoSelect.value = 'taller_25';
                         metodoPagoSelect.disabled = false;

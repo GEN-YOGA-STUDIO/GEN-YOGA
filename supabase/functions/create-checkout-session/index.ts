@@ -410,6 +410,7 @@ serve(async (req) => {
         WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL,
         WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
         WORKSHOP_PRODUCT_IDS.TALLER_25,
+        WORKSHOP_PRODUCT_IDS.TALLER_FORMACION,
       ])
       if (fixedPriceIds.has(dynPriceId) || fixedProductIds.has(dynProductId)) {
         throw new HttpError(400, 'Ese producto debe comprarse por su flujo habitual.')

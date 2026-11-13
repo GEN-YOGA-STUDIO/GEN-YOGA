@@ -788,6 +788,15 @@
         if (normLookup === 'clase_especial' || normLookup === 'prod_v5ubkuwemre6ig' || (rawLookup && normLookup.includes('20'))) {
             return 'Plaza 20 €';
         }
+        if (normLookup === 'prod_vcurmnswezmxrl' || normLookup === 'taller_formacion' || (rawLookup && normLookup.includes('formacion'))) {
+            if (state.workshopPrices.has(`prod:${rawLookup}`)) {
+                return `Plaza ${state.workshopPrices.get(`prod:${rawLookup}`)}`;
+            }
+            if (state.workshopPrices.has(`prod:${normLookup}`)) {
+                return `Plaza ${state.workshopPrices.get(`prod:${normLookup}`)}`;
+            }
+            return 'Plaza Taller de formación';
+        }
 
         // Si es un producto Stripe conocido en stripe_productos o lookup mapeado
         if (rawLookup) {
@@ -1278,6 +1287,10 @@
             state.workshopPrices.set('lookup:taller_intro_power_vinyasa', '25 €');
             state.workshopPrices.set('clase_especial', '20 €');
             state.workshopPrices.set('lookup:clase_especial', '20 €');
+            state.workshopPrices.set('prod_VcUrMnsweZMxrl', 'Taller de formación');
+            state.workshopPrices.set('prod:prod_vcurmnswezmxrl', 'Taller de formación');
+            state.workshopPrices.set('lookup:prod_VcUrMnsweZMxrl', 'Taller de formación');
+            state.workshopPrices.set('taller_formacion', 'Taller de formación');
 
             data.forEach(type => {
                 const color = normaliseColor(type.color);

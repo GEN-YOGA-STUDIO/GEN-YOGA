@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.4.11 — 13 nov 2026 · Incidencia
+
+- **Descripción:** Habilitar tipo de taller Taller de formacion vinculado al producto Stripe prod_VcUrMnsweZMxrl (ámbito: talleres)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.4.11`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.4.11.md`
+
 ## v18.4.10 — 11 nov 2026 · Incidencia
 
 - **Descripción:** Completar las traducciones al ingles de los avisos de registro y recuperacion de contrasena y corregir llamada a t() con texto literal (ámbito: perfil)

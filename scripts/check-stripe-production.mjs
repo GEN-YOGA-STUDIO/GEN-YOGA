@@ -91,6 +91,7 @@ for (const [productId, label] of [
   ['prod_V5uBKuweMRE6ig', 'Clase Especial'],
   ['prod_V5uCPKKKH5K74P', 'Taller Introducción Power Vinyasa'],
   ['prod_VDY8mI9bZ3SQeb', 'Taller 25 euros'],
+  ['prod_VcUrMnsweZMxrl', 'Taller de formación'],
   ['prod_V9eGZTzwCNJ55q', 'Promo 50% GEN YOGA'],
   ['prod_VVkU2penYA08Qe', 'Bono Inicial (40 € · 1 clase/semana)'],
   ['prod_VVkT3C71EAUJmt', 'Bono Mensual (65 € · 2 clases/semana)'],

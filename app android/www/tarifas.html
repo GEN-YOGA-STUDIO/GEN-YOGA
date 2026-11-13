@@ -789,7 +789,7 @@
                 <a href="aviso-legal.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_legal">Aviso legal</a>
                 <span class="opacity-40 text-white/60">|</span>
                 <a href="politica-privacidad.html" class="hover:underline inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
-                <span id="app-version-label" class="opacity-90 text-xs">v18.4.10 | &copy; 2026 Gen Yoga</span>
+                <span id="app-version-label" class="opacity-90 text-xs">v18.4.11 | &copy; 2026 Gen Yoga</span>
             </div>
         </footer>
     </div>
@@ -1602,6 +1602,7 @@
             if (lookupKey === 'prod_V5uBKuweMRE6ig') lookupKey = 'clase_especial';
             else if (lookupKey === 'prod_VDY8mI9bZ3SQeb') lookupKey = 'taller_25';
             else if (lookupKey === 'prod_V5uCPKKKH5K74P' || lookupKey === 'taller_35' || lookupKey === 'taller-35') lookupKey = 'taller_35';
+            else if (lookupKey === 'prod_VcUrMnsweZMxrl' || lookupKey === 'taller_formacion') lookupKey = 'prod_VcUrMnsweZMxrl';
 
             const sessionRes = await (supabaseClient?.auth?.getSession?.() || Promise.resolve({ data: { session: null } }));
             const session = sessionRes?.data?.session;
@@ -1809,6 +1810,7 @@
             if (lookupKey === 'prod_V5uBKuweMRE6ig') lookupKey = 'clase_especial';
             else if (lookupKey === 'prod_VDY8mI9bZ3SQeb') lookupKey = 'taller_25';
             else if (lookupKey === 'prod_V5uCPKKKH5K74P' || lookupKey === 'taller_35' || lookupKey === 'taller-35') lookupKey = 'taller_35';
+            else if (lookupKey === 'prod_VcUrMnsweZMxrl' || lookupKey === 'taller_formacion') lookupKey = 'prod_VcUrMnsweZMxrl';
 
             const isClaseEspecial = options?.isTaller === false || lookupKey === 'clase_especial';
 
@@ -2071,6 +2073,8 @@
             } else if (normLookup === 'taller_25' || normLookup === 'taller-25' || normLookup === 'taller25' || normLookup === 'prod_vdy8mi9bz3sqeb' || (isTaller && normLookup.includes('25'))) {
                 precio = '25';
                 lookupKey = 'taller_25';
+            } else if (normLookup === 'prod_vcurmnswezmxrl' || normLookup === 'taller_formacion' || (isTaller && normLookup.includes('formacion'))) {
+                lookupKey = 'prod_VcUrMnsweZMxrl';
             } else if (normLookup === 'clase_especial' || normLookup === 'prod_v5ubkuwemre6ig' || (!isTaller && normLookup)) {
                 precio = '20';
                 lookupKey = 'clase_especial';
