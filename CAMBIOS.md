@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.4.13 — 13 nov 2026 · Incidencia
+
+- **Descripción:** Asegurar visibilidad de talleres y tarifa de 10 euros en dropdown de edicion y perfil de usuario
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.4.13`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.4.13.md`
+
 ## v18.4.12 — 13 nov 2026 · Incidencia
 
 - **Descripción:** Vincular taller 8061 a tarifa Stripe de 10 euros, ocultar Manuela de maestros y fallback de avatar (ámbito: talleres)
