@@ -4687,7 +4687,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.4.13 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.4.14 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -6162,7 +6162,12 @@
             const raw = String(value || '').trim();
             if (!raw) return '';
 
-            if (/^(\.\/|\/)?img\/[a-zA-Z0-9_\-\.\/]+\.(webp|jpg|jpeg|png|svg)$/i.test(raw)) {
+            // Descartar nombres o texto simple sin ruta ni extensión de imagen
+            if (!raw.includes('/') && !/\.(webp|jpg|jpeg|png|svg|avif|gif)$/i.test(raw)) {
+                return '';
+            }
+
+            if (/^(\.\/|\/)?img\/[a-zA-Z0-9_\-\.\/]+\.(webp|jpg|jpeg|png|svg|avif|gif)$/i.test(raw)) {
                 return raw;
             }
 
@@ -6174,6 +6179,10 @@
                 const isAppOrigin = url.protocol === 'capacitor:' || url.protocol === 'ionic:' || url.protocol === 'file:'
                     || url.origin === window.location.origin;
                 if (url.protocol !== 'https:' && !isLocalPreview && !isAppOrigin) return '';
+                const pathLower = url.pathname.toLowerCase();
+                const hasImgExt = /\.(webp|jpg|jpeg|png|svg|avif|gif)$/i.test(pathLower);
+                const isStorage = pathLower.includes('/storage/') || pathLower.includes('/images/') || pathLower.includes('/avatars/');
+                if (!hasImgExt && !isStorage) return '';
                 return url.href;
             } catch (_) {
                 return '';
@@ -6190,12 +6199,16 @@
         function getTeacherPhotoFallback(prof) {
             if (!prof) return '';
             if (typeof prof === 'string') {
-                const n = prof.toLowerCase();
+                const n = prof.toLowerCase().trim();
                 if (n.includes('ángel') || n.includes('angel')) return withTeacherPhotoVersion('img/maestro-angel-recortado.webp');
                 if (n.includes('silvia')) return withTeacherPhotoVersion('img/maestra-silvia-recortada.webp');
                 if (n.includes('miriam') || n.includes('respira')) return withTeacherPhotoVersion('img/maestra-miriam-recortada.webp');
                 if (n.includes('isabel') || n.includes('isarodriguez')) return withTeacherPhotoVersion('img/maestra-isabel-recortada.webp');
                 if (n.includes('yanira')) return withTeacherPhotoVersion('img/maestra-yanira-recortada.webp');
+                // Si es solo un nombre de profesor (no una ruta/URL de imagen), no devolver nada para usar el círculo de inicial
+                if (!n.includes('/') && !/\.(webp|jpg|jpeg|png|svg|avif|gif)$/i.test(n)) {
+                    return '';
+                }
                 const safe = safeImageUrl(prof);
                 return safe ? withTeacherPhotoVersion(safe) : '';
             }
@@ -6209,6 +6222,26 @@
             if (n.includes('isabel') || n.includes('isarodriguez')) return withTeacherPhotoVersion('img/maestra-isabel-recortada.webp');
             if (n.includes('yanira')) return withTeacherPhotoVersion('img/maestra-yanira-recortada.webp');
             return '';
+        }
+
+        window.onTeacherAvatarError = function(img, initial, color) {
+            if (!img || !img.parentElement) return;
+            const profColor = (color && /^#[0-9a-f]{6}$/i.test(color)) ? color : '#8C8658';
+            const init = escapeHtml(String(initial || 'P').trim().charAt(0).toUpperCase() || 'P');
+            img.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center font-bold text-[11px] leading-none select-none rounded-full" style="background: linear-gradient(135deg, ${profColor}28, ${profColor}50); color: ${profColor}; font-family: 'Cinzel', serif;">${init}</div>`;
+        };
+
+        function renderTeacherAvatarHtml(photoUrl, name, color = '#8C8658', extraClass = '') {
+            const cleanName = String(name || 'P').trim();
+            const initial = cleanName ? cleanName.charAt(0).toUpperCase() : 'P';
+            const profColor = (color && /^#[0-9a-f]{6}$/i.test(color)) ? color : '#8C8658';
+            const fallbackInner = `<div class="w-full h-full flex items-center justify-center font-bold text-[11px] leading-none select-none rounded-full ${extraClass}" style="background: linear-gradient(135deg, ${profColor}28, ${profColor}50); color: ${profColor}; font-family: 'Cinzel', serif;">${escapeHtml(initial)}</div>`;
+            const safePhoto = safeImageUrl(photoUrl);
+            if (!safePhoto) {
+                return fallbackInner;
+            }
+            const fullPhoto = withTeacherPhotoVersion(safePhoto);
+            return `<img src="${escapeHtml(fullPhoto)}" alt="" class="w-full h-full object-cover" onerror="window.onTeacherAvatarError && window.onTeacherAvatarError(this, '${escapeHtml(initial)}', '${escapeHtml(profColor)}')">`;
         }
 
         function safeCssColor(value, fallback = '#8c8658') {
@@ -12969,7 +13002,7 @@
                 const mes = formatDisplayMonth(fecha);
                 const hora = formatDisplayTime(c.fecha_inicio);
                 const profName = String(c.profesionales?.nombre || 'Staff GEN');
-                const profFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profName);
+                const profFoto = getTeacherPhotoFallback(c.profesionales);
                 const reservaId = safePositiveInteger(c.miReserva?.id) || 0;
                 const nombreClase = String(c.nombre || 'Clase de Yoga');
                 const esBonoNormal = !!c.miReserva?.bono_descontado || !!c.miReserva?.usado_bono_mensual || !!c.miReserva?.class_pack_id;
@@ -13001,10 +13034,7 @@
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="flex items-center gap-2.5 min-w-0">
                                         <div class="w-10 h-10 rounded-xl overflow-hidden bg-sand/30 border border-cocoa/10 flex items-center justify-center shrink-0">
-                                            ${profFoto
-                        ? `<img src="${escapeHtml(profFoto)}" alt="${escapeHtml(profName)}" class="w-full h-full object-cover">`
-                        : `<i class="ph-bold ph-flower-lotus ${isCompanion ? 'text-amber-700' : 'text-olive'} text-xl"></i>`
-                    }
+                                            ${renderTeacherAvatarHtml(profFoto, profName, c.profesionales?.color)}
                                         </div>
                                         <div class="min-w-0">
                                             <h4 class="font-bold text-cocoa text-sm truncate" title="${escapeHtml(nombreClase)}">${escapeHtml(nombreClase)}</h4>
@@ -13316,10 +13346,9 @@
                     const adminTrash = `<button onclick="borrarClase(${claseId})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-1 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash text-base"></i></button>`;
 
                     const profesorName = String(c.profesionales?.nombre || 'Staff GEN Yoga');
-                    const profesorFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profesorName);
-                    const profesorAvatar = profesorFoto
-                        ? `<img src="${escapeHtml(profesorFoto)}" alt="" class="w-full h-full object-cover">`
-                        : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${escapeHtml(profesorName.charAt(0))}</div>`;
+                    const profesorColor = c.profesionales?.color || '#8C8658';
+                    const profesorFoto = getTeacherPhotoFallback(c.profesionales);
+                    const profesorAvatar = renderTeacherAvatarHtml(profesorFoto, profesorName, profesorColor);
 
                     const freeBadge = '';
 
@@ -15904,10 +15933,9 @@
                     const hora = formatDisplayTime(c.fecha_inicio);
                     const p = c.profesionales;
                     const profesorName = String(p?.nombre || 'Staff GEN');
-                    const profesorFoto = getTeacherPhotoFallback(p) || getTeacherPhotoFallback(profesorName);
-                    const profesorAvatar = profesorFoto
-                        ? `<img src="${escapeHtml(profesorFoto)}" alt="" class="w-full h-full object-cover">`
-                        : `<div class="w-full h-full bg-q19-100 flex items-center justify-center text-q19-600 text-[10px] font-bold">${escapeHtml(profesorName.charAt(0))}</div>`;
+                    const profesorColor = p?.color || '#8C8658';
+                    const profesorFoto = getTeacherPhotoFallback(p);
+                    const profesorAvatar = renderTeacherAvatarHtml(profesorFoto, profesorName, profesorColor);
 
                     let profHTML = '';
                     if (p) {
@@ -26434,7 +26462,7 @@
             <div class="text-left">
                 <div class="bg-sand/20 rounded-2xl p-4 mb-4 border border-cocoa/10 flex items-center gap-3">
                     <div class="w-12 h-12 rounded-full overflow-hidden border border-cocoa/10 flex-shrink-0">
-                        ${profPhoto ? `<img src="${escapeHtml(profPhoto)}" class="w-full h-full object-cover">` : `<div class="w-full h-full ${esClaseGrupal ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} flex items-center justify-center font-bold">${escapeHtml(profName.charAt(0))}</div>`}
+                        ${renderTeacherAvatarHtml(profPhoto, profName, prof?.color || (esClaseGrupal ? '#8B5CF6' : '#3B82F6'), 'text-base')}
                     </div>
                     <div>
                         <div class="flex items-center gap-2 min-w-0">
@@ -27001,10 +27029,9 @@
                     const adminTrash = (!isAdmin || c.isVirtual) ? '' : `<button onclick="borrarConsultaAdmin('psicologia', ${inlineJsString(rawId)})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
 
                     const profesionalName = String(c.profesionales?.nombre || 'Staff GEN');
-                    const profesionalFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profesionalName);
-                    const profesionalAvatar = profesionalFoto
-                        ? `<img src="${escapeHtml(profesionalFoto)}" alt="" class="w-full h-full object-cover">`
-                        : `<div class="w-full h-full ${esGrupal ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-[#3B82F6]'} flex items-center justify-center text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
+                    const profesionalColor = c.profesionales?.color || (esGrupal ? '#8B5CF6' : '#3B82F6');
+                    const profesionalFoto = getTeacherPhotoFallback(c.profesionales);
+                    const profesionalAvatar = renderTeacherAvatarHtml(profesionalFoto, profesionalName, profesionalColor);
 
                     const freeBadge = '';
 
@@ -27258,10 +27285,9 @@
                     const adminTrash = (!isAdmin || c.isVirtual) ? '' : `<button onclick="borrarConsultaAdmin('nutricion', ${inlineJsString(rawId)})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
 
                     const profesionalName = String(c.profesionales?.nombre || 'Staff GEN');
-                    const profesionalFoto = getTeacherPhotoFallback(c.profesionales) || getTeacherPhotoFallback(profesionalName);
-                    const profesionalAvatar = profesionalFoto
-                        ? `<img src="${escapeHtml(profesionalFoto)}" alt="" class="w-full h-full object-cover">`
-                        : `<div class="w-full h-full bg-purple-50 flex items-center justify-center text-[#8B5CF6] text-[10px] font-bold">${escapeHtml(profesionalName.charAt(0))}</div>`;
+                    const profesionalColor = c.profesionales?.color || '#8B5CF6';
+                    const profesionalFoto = getTeacherPhotoFallback(c.profesionales);
+                    const profesionalAvatar = renderTeacherAvatarHtml(profesionalFoto, profesionalName, profesionalColor);
 
                     const freeBadge = isFree
                         ? `<span class="text-[9px] font-bold text-pink-800 bg-pink-100 border border-pink-300 px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1"><i class="ph-fill ph-sparkle"></i> ${escapeHtml(profileT('profile_free_session', 'Sesión Gratuita'))}</span>`
@@ -28618,10 +28644,8 @@
                         cancelAction = `onclick="cancelarConsulta(${inlineJsString(b.tipo)}, ${reservaId})"`;
                     }
 
-                    const profesionalFoto = getTeacherPhotoFallback(b.profesionalFoto) || b.profesionalFoto;
-                    const pAvatar = profesionalFoto
-                        ? `<img src="${escapeHtml(profesionalFoto)}" class="w-full h-full object-cover" alt="">`
-                        : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${escapeHtml((b.profesional || 'P').charAt(0))}</div>`;
+                    const profesionalFoto = getTeacherPhotoFallback(b.profesionalFoto);
+                    const pAvatar = renderTeacherAvatarHtml(profesionalFoto, b.profesional, null);
                     const fechaLarga = formatDisplayLongDate(b.fecha);
 
                     const row = document.createElement('div');
@@ -28795,10 +28819,8 @@
                         cancelAction = `onclick="cancelarConsulta(${inlineJsString(b.tipo)}, ${reservaId})"`;
                     }
 
-                    const profesionalFoto = getTeacherPhotoFallback(b.profesionalFoto) || getTeacherPhotoFallback(b.profesional);
-                    const pAvatar = profesionalFoto
-                        ? `<img src="${escapeHtml(profesionalFoto)}" class="w-full h-full object-cover" alt="">`
-                        : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${escapeHtml((b.profesional || 'P').charAt(0))}</div>`;
+                    const profesionalFoto = getTeacherPhotoFallback(b.profesionalFoto);
+                    const pAvatar = renderTeacherAvatarHtml(profesionalFoto, b.profesional, null);
                     const fechaLarga = formatDisplayLongDate(b.fecha);
 
                     const row = document.createElement('div');
@@ -30602,11 +30624,7 @@
             const avatarWrap = document.getElementById('notif-prof-avatar-wrap');
             if (avatarWrap) {
                 const foto = getTeacherPhotoFallback(prof);
-                if (foto) {
-                    avatarWrap.innerHTML = `<img src="${escapeHtml(foto)}" class="w-full h-full object-cover">`;
-                } else {
-                    avatarWrap.innerHTML = escapeHtml((prof.nombre || 'P').charAt(0).toUpperCase());
-                }
+                avatarWrap.innerHTML = renderTeacherAvatarHtml(foto, prof.nombre, prof.color);
             }
 
             const masterSwitch = document.getElementById('notif-prof-activas');
@@ -33287,7 +33305,7 @@
                     const tieneHueco = ocupadas < capacidad;
 
                     const profName = String(s.profesionales?.nombre || 'Staff GEN');
-                    const profFoto = getTeacherPhotoFallback(s.profesionales) || getTeacherPhotoFallback(profName);
+                    const profFoto = getTeacherPhotoFallback(s.profesionales);
 
                     // Badge de estado y capacidad
                     let badgeCapacidad = '';
@@ -33441,7 +33459,7 @@
                                 <div class="flex items-center gap-2 mt-1.5 text-xs text-cocoa/70 flex-wrap">
                                     <div class="flex items-center gap-1.5">
                                         <div class="w-5 h-5 rounded-full overflow-hidden bg-sand/30 shrink-0">
-                                            <img src="${escapeHtml(profFoto)}" alt="" class="w-full h-full object-cover">
+                                            ${renderTeacherAvatarHtml(profFoto, profName, s.profesionales?.color)}
                                         </div>
                                         <span class="font-bold text-cocoa">${escapeHtml(profName)}</span>
                                     </div>

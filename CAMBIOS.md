@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.4.14 — 13 nov 2026 · Incidencia
+
+- **Descripción:** Mostrar inicial estilizada en circulo si profesor no tiene foto y evitar icono de imagen rota
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.4.14`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.4.14.md`
+
 ## v18.4.13 — 13 nov 2026 · Incidencia
 
 - **Descripción:** Asegurar visibilidad de talleres y tarifa de 10 euros en dropdown de edicion y perfil de usuario
