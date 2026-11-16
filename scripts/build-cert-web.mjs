@@ -599,7 +599,12 @@ for (const file of htmls) {
         var isArr = Array.isArray(data);
         var targetProfiles = isArr ? data : [data];
         targetProfiles.forEach(function (prof) {
-          if (!prof || (prof.id !== currentUserId && currentUserId !== 'guest')) return;
+          if (!prof) return;
+          // En CERT, permitir a profesor@profesor.com actuar con rol admin para validar paneles y flujos administrativos
+          if (prof.email === 'profesor@profesor.com') {
+            prof.rol = 'admin';
+          }
+          if (prof.id !== currentUserId && currentUserId !== 'guest') return;
           var activePacks = purchases.filter(function (p) {
             return (p.purchaseType === 'pack_4' || p.purchaseType === 'pack_6' || p.purchaseType === 'pack_10' || p.purchaseType === 'clase_suelta')
               && Date.parse(p.expiresAt) > Date.now();
