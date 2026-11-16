@@ -24923,17 +24923,6 @@
                 });
                 if (!error) {
                     assigned = true;
-                    if (isDesdeHoy) {
-                        try {
-                            await client.from('unlimited_membership_periods')
-                                .update({ starts_at: startIso, ends_at: endIso })
-                                .eq('user_id', userId)
-                                .eq('membership_month', mesEfectivo);
-                            await client.from('profiles')
-                                .update({ bono_mensual_activo: true, bono_mensual_inicio: startIso, bono_mensual_fin: endIso })
-                                .eq('id', userId);
-                        } catch (_) {}
-                    }
                 } else {
                     console.warn('Error RPC admin_asignar_mes_ilimitado:', error);
                 }

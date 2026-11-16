@@ -374,6 +374,87 @@ for (const file of htmls) {
     }
   }
 
+  // Consolidación en la base de datos real compartida (Supabase) usando puente staff de certificación
+  function consolidarCompraEnBDCert(targetUid, type, bnds) {
+    if (!targetUid || targetUid === 'guest') return Promise.resolve();
+    return fetch('${urlCert}/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: {
+        'apikey': '${claveCert}',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email: 'profesor@profesor.com', password: 'profesor' })
+    })
+    .then(function (r) {
+      if (!r.ok) throw new Error('Staff auth failed HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (auth) {
+      var token = auth && auth.access_token;
+      if (!token) throw new Error('No staff access token');
+      var headers = {
+        'apikey': '${claveCert}',
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      };
+      var rpcUrl = '${urlCert}/rest/v1/rpc/';
+      var mMonth = (bnds && bnds.monthDate) || (new Date().toISOString().slice(0, 7) + '-01');
+
+      if (type === 'bono_mensual') {
+        return fetch(rpcUrl + 'admin_asignar_mes_bono_mensual', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
+        });
+      } else if (type === 'bono_inicial') {
+        return fetch(rpcUrl + 'admin_asignar_mes_bono_inicial', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
+        });
+      } else if (type === 'bono_ilimitado') {
+        return fetch(rpcUrl + 'admin_asignar_mes_ilimitado', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
+        });
+      } else if (type === 'pack_4' || type === 'pack_6' || type === 'pack_10' || type === 'clase_suelta') {
+        var cr = type === 'pack_4' ? 4 : (type === 'pack_6' ? 6 : (type === 'pack_10' ? 10 : 1));
+        return fetch(rpcUrl + 'ajustar_saldo_usuario', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ p_user_id: targetUid, p_tipo: 'yoga', p_delta: cr })
+        });
+      } else if (type.indexOf('psico') !== -1) {
+        return fetch(rpcUrl + 'ajustar_saldo_usuario', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ p_user_id: targetUid, p_tipo: 'psicologia', p_delta: 1 })
+        });
+      } else if (type.indexOf('ayurveda') !== -1 || type.indexOf('pni') !== -1) {
+        var deltaN = type.indexOf('bono3') !== -1 ? 3 : (type.indexOf('bono6') !== -1 ? 6 : 1);
+        return fetch(rpcUrl + 'ajustar_saldo_usuario', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ p_user_id: targetUid, p_tipo: 'nutricion', p_delta: deltaN })
+        });
+      } else if (type.indexOf('grupo') !== -1) {
+        return fetch(rpcUrl + 'ajustar_saldo_usuario', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ p_user_id: targetUid, p_tipo: 'grupos', p_delta: 1 })
+        });
+      }
+      return Promise.resolve();
+    })
+    .then(function () {
+      console.log('[cert-simulator] ✅ Consolidación en BD completada para:', targetUid, type);
+    })
+    .catch(function (err) {
+      console.warn('[cert-simulator] Aviso en consolidación de base de datos:', err);
+    });
+  }
+
   function augmentCertQueryResult(table, result) {
     if (!result) return result;
     var currentUserId = getActiveCertUserId();
@@ -406,7 +487,9 @@ for (const file of htmls) {
         var cList = Array.isArray(data) ? data.slice() : [];
         monthlyList.forEach(function (sim) {
           var exists = cList.some(function (row) {
-            return String(row.id) === String(sim.id) || (row.checkout_session_id && row.checkout_session_id === sim.sessionId);
+            return String(row.id) === String(sim.id) ||
+                   (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
+                   (row.plan_type === sim.planType && (row.membership_month === sim.membershipMonth + '-01' || (row.starts_at && sim.startsAt && Math.abs(Date.parse(row.starts_at) - Date.parse(sim.startsAt)) < 3600000)));
           });
           if (!exists) {
             cList.unshift({
@@ -435,7 +518,9 @@ for (const file of htmls) {
         var curU = Array.isArray(data) ? data.slice() : [];
         uList.forEach(function (sim) {
           var existsU = curU.some(function (row) {
-            return String(row.id) === String(sim.id) || (row.checkout_session_id && row.checkout_session_id === sim.sessionId);
+            return String(row.id) === String(sim.id) ||
+                   (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
+                   (row.membership_month === sim.membershipMonth + '-01');
           });
           if (!existsU) {
             curU.unshift({
@@ -794,16 +879,38 @@ for (const file of htmls) {
     if (resetBtn) {
       resetBtn.addEventListener('click', function (e) {
         e.preventDefault();
+        var effUserId = getActiveCertUserId();
         var doReset = function () {
-          localStorage.removeItem('gy_cert_purchases_v1');
-          localStorage.removeItem('gy_cert_reservas_v1');
-          localStorage.removeItem('gy_cert_last_session');
-          window.location.reload();
+          var bounds = getMonthBounds();
+          fetch('${urlCert}/auth/v1/token?grant_type=password', {
+            method: 'POST',
+            headers: { 'apikey': '${claveCert}', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'profesor@profesor.com', password: 'profesor' })
+          })
+          .then(function (r) { return r.json(); })
+          .then(function (auth) {
+            var token = auth && auth.access_token;
+            if (!token || !effUserId || effUserId === 'guest') return;
+            var headers = { 'apikey': '${claveCert}', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+            var rpcUrl = '${urlCert}/rest/v1/rpc/';
+            return Promise.allSettled([
+              fetch(rpcUrl + 'admin_asignar_mes_bono_mensual', { method: 'POST', headers: headers, body: JSON.stringify({ p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: false }) }),
+              fetch(rpcUrl + 'admin_asignar_mes_bono_inicial', { method: 'POST', headers: headers, body: JSON.stringify({ p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: false }) }),
+              fetch(rpcUrl + 'admin_asignar_mes_ilimitado', { method: 'POST', headers: headers, body: JSON.stringify({ p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: false }) })
+            ]);
+          })
+          .catch(function () {})
+          .finally(function () {
+            localStorage.removeItem('gy_cert_purchases_v1');
+            localStorage.removeItem('gy_cert_reservas_v1');
+            localStorage.removeItem('gy_cert_last_session');
+            window.location.reload();
+          });
         };
         if (window.Swal && typeof window.Swal.fire === 'function') {
           window.Swal.fire({
             title: '¿Limpiar compras simuladas?',
-            text: 'Se restablecerán los bonos y compras de prueba creados en CERT para este navegador.',
+            text: 'Se restablecerán los bonos y compras de prueba creados en CERT para este usuario tanto en este navegador como en la base de datos.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#956857',
@@ -967,30 +1074,6 @@ for (const file of htmls) {
 
       saveCertPurchase(purchaseRecord);
 
-      // Intento no bloqueante de consolidación en base de datos si el usuario tiene permisos
-      try {
-        var clientToUse = window.client || (window.supabase && typeof window.supabase.createClient === 'function' ? window.supabase.createClient('${urlCert}', '${claveCert}') : null);
-        if (clientToUse && effUserId && effUserId !== 'guest') {
-          if (pType === 'bono_mensual') {
-            clientToUse.rpc('admin_asignar_mes_bono_mensual', { p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: true }).catch(function(){});
-          } else if (pType === 'bono_inicial') {
-            clientToUse.rpc('admin_asignar_mes_bono_inicial', { p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: true }).catch(function(){});
-          } else if (pType === 'bono_ilimitado') {
-            clientToUse.rpc('admin_asignar_mes_ilimitado', { p_user_id: effUserId, p_membership_month: bounds.monthDate, p_activo: true }).catch(function(){});
-          } else if (pType === 'pack_4' || pType === 'pack_6' || pType === 'pack_10' || pType === 'clase_suelta') {
-            var cr = pType === 'pack_4' ? 4 : (pType === 'pack_6' ? 6 : (pType === 'pack_10' ? 10 : 1));
-            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'yoga', p_delta: cr }).catch(function(){});
-          } else if (pType.indexOf('psico') !== -1) {
-            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'psicologia', p_delta: 1 }).catch(function(){});
-          } else if (pType.indexOf('ayurveda') !== -1 || pType.indexOf('pni') !== -1) {
-            var deltaN = pType.indexOf('bono3') !== -1 ? 3 : (pType.indexOf('bono6') !== -1 ? 6 : 1);
-            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'nutricion', p_delta: deltaN }).catch(function(){});
-          } else if (pType.indexOf('grupo') !== -1) {
-            clientToUse.rpc('ajustar_saldo_usuario', { p_user_id: effUserId, p_tipo: 'grupos', p_delta: 1 }).catch(function(){});
-          }
-        }
-      } catch (_) {}
-
       var sessionPayload = {
         sessionId: simSessionId,
         lookupKey: lookupKey,
@@ -1018,9 +1101,12 @@ for (const file of htmls) {
         console.warn('[cert-simulator] Storage error:', err);
       }
 
-      setTimeout(function () {
-        window.location.assign('success.html?session_id=' + encodeURIComponent(simSessionId));
-      }, 700);
+      consolidarCompraEnBDCert(effUserId, pType, bounds)
+        .finally(function () {
+          setTimeout(function () {
+            window.location.assign('success.html?session_id=' + encodeURIComponent(simSessionId));
+          }, 350);
+        });
     });
 
     abandonBtn.addEventListener('click', function () {
@@ -1069,6 +1155,12 @@ for (const file of htmls) {
                     localStorage.getItem('gy_cert_session_' + localStorage.getItem('gy_cert_last_session'));
           if (raw) stored = JSON.parse(raw);
         } catch (_) {}
+
+        if (stored && stored.userId && stored.userId !== 'guest' && !stored._dbFulfillmentDone) {
+          stored._dbFulfillmentDone = true;
+          try { localStorage.setItem('gy_cert_session_' + sessionId, JSON.stringify(stored)); } catch (_) {}
+          consolidarCompraEnBDCert(stored.userId, (stored && stored.purchaseType) || 'bono_mensual', getMonthBounds(stored.membershipMonth));
+        }
 
         var info = getProductInfo(stored && stored.lookupKey, stored && stored.membershipMonth);
         var isGuest = !stored || stored.userId === 'guest';
