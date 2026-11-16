@@ -336,6 +336,7 @@ for (const file of htmls) {
 
   function getActiveCertUserId(preferredUserId) {
     if (preferredUserId && preferredUserId !== 'guest') return preferredUserId;
+    if (window.currentUser && window.currentUser.id) return window.currentUser.id;
     try {
       var cached = localStorage.getItem('gen_cached_user_id');
       if (cached) return cached;
@@ -376,8 +377,20 @@ for (const file of htmls) {
     if (!result) return result;
     var currentUserId = getActiveCertUserId();
     var allPurchases = getCertPurchases();
+    if (currentUserId && currentUserId !== 'guest') {
+      var updatedAny = false;
+      allPurchases.forEach(function (p) {
+        if (p.userId === 'guest') {
+          p.userId = currentUserId;
+          updatedAny = true;
+        }
+      });
+      if (updatedAny) {
+        try { localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(allPurchases)); } catch (_) {}
+      }
+    }
     var purchases = allPurchases.filter(function (p) {
-      return p.userId === currentUserId || (currentUserId !== 'guest' && p.userId === 'guest');
+      return p.userId === currentUserId || (currentUserId !== 'guest' && p.userId === 'guest') || (p.userId && currentUserId && String(p.userId) === String(currentUserId));
     });
     if (purchases.length === 0) return result;
 
@@ -640,6 +653,13 @@ for (const file of htmls) {
       var tipoReserva = match.kind === 'ilimitado' ? 'ilimitado' : (match.bono && match.bono.purchaseType === 'bono_inicial' ? 'bono_inicial' : 'bono_mensual');
       if (match.kind === 'pack') tipoReserva = 'pack_normal';
 
+      var matchedClass = null;
+      try {
+        if (Array.isArray(window.allClasesCache)) {
+          matchedClass = window.allClasesCache.find(function (c) { return String(c.id) === String(claseId); });
+        }
+      } catch (_) {}
+
       saveCertReservation({
         id: newResId,
         clase_id: Number(claseId),
@@ -648,13 +668,14 @@ for (const file of htmls) {
         bono_descontado: match.kind === 'pack',
         usado_bono_mensual: match.kind === 'ilimitado' || match.kind === 'mensual',
         tipo_reserva: tipoReserva,
+        clases: matchedClass,
         created_at: new Date().toISOString()
       });
 
       if (match && match.bono) {
         var all = getCertPurchases();
         all.forEach(function (p) {
-          if (p.id === match.bono.id && p.creditsRemaining > 0) {
+          if (String(p.id) === String(match.bono.id) && p.creditsRemaining > 0) {
             p.creditsRemaining -= 1;
           }
         });
@@ -663,6 +684,38 @@ for (const file of htmls) {
     } catch (e) {
       console.warn('[cert-simulator] Error deduciendo bono en reserva simulada:', e);
     }
+  }
+
+  function wrapBuilder(builder, table) {
+    if (!builder || typeof builder !== 'object') return builder;
+    return new Proxy(builder, {
+      get: function (target, prop) {
+        if (prop === 'then') {
+          return function (onFulfilled, onRejected) {
+            return target.then(function (res) {
+              try {
+                var augmented = augmentCertQueryResult(table, res);
+                return onFulfilled ? onFulfilled(augmented) : augmented;
+              } catch (err) {
+                console.warn('[cert-simulator] Error en interceptor de ' + table + ':', err);
+                return onFulfilled ? onFulfilled(res) : res;
+              }
+            }, onRejected);
+          };
+        }
+        var val = target[prop];
+        if (typeof val === 'function') {
+          return function () {
+            var res = val.apply(target, arguments);
+            if (res && typeof res === 'object' && typeof res.then === 'function') {
+              return wrapBuilder(res, table);
+            }
+            return res;
+          };
+        }
+        return val;
+      }
+    });
   }
 
   function wrapSupabaseForCert(c) {
@@ -678,18 +731,7 @@ for (const file of htmls) {
           table === 'profiles' ||
           table === 'bonos_clases_especiales' ||
           table === 'reservas_yoga') {
-        var origThen = query.then;
-        query.then = function (onFulfilled, onRejected) {
-          return origThen.call(query, function (res) {
-            try {
-              var augmented = augmentCertQueryResult(table, res);
-              return onFulfilled ? onFulfilled(augmented) : augmented;
-            } catch (err) {
-              console.warn('[cert-simulator] Error en interceptor de ' + table + ':', err);
-              return onFulfilled ? onFulfilled(res) : res;
-            }
-          }, onRejected);
-        };
+        return wrapBuilder(query, table);
       }
       return query;
     };
