@@ -4691,7 +4691,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.3 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.4 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -6709,13 +6709,29 @@
             let periodosMensualesAlumno = [];
             try {
                 const { data: mData } = await client.from('monthly_membership_periods')
-                    .select('id, plan_type, membership_month, starts_at, ends_at, max_classes_per_week')
+                    .select('id, user_id, plan_type, membership_month, starts_at, ends_at, max_classes_per_week')
                     .eq('user_id', userId)
                     .order('membership_month', { ascending: true });
                 if (mData && mData.length > 0) {
-                    periodosMensualesAlumno = mData.filter(p => {
+                    const rawSorted = mData.slice().sort((a, b) => {
+                        const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
+                        const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
+                        if (aIsReal && !bIsReal) return -1;
+                        if (!aIsReal && bIsReal) return 1;
+                        return 0;
+                    });
+                    const seenP = new Set();
+                    periodosMensualesAlumno = rawSorted.filter(p => {
                         const endsMs = p.ends_at ? new Date(p.ends_at).getTime() : 0;
-                        return endsMs > ahoraMs || (p.membership_month && p.membership_month >= currentMonthStart);
+                        if (endsMs && endsMs <= ahoraMs && (!p.membership_month || p.membership_month < currentMonthStart)) return false;
+                        const plan = p.plan_type || 'bono_mensual';
+                        const ym = (typeof normalizarMesClave === 'function')
+                            ? normalizarMesClave(p.membership_month || p.starts_at)
+                            : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                        const k = `${plan}_${ym}`;
+                        if (seenP.has(k)) return false;
+                        seenP.add(k);
+                        return true;
                     });
                 }
             } catch (e) {
@@ -6726,13 +6742,27 @@
             let periodosIlimitadosAlumno = [];
             try {
                 const { data: uData } = await client.from('unlimited_membership_periods')
-                    .select('id, membership_month, starts_at, ends_at')
+                    .select('id, user_id, membership_month, starts_at, ends_at')
                     .eq('user_id', userId)
                     .order('membership_month', { ascending: true });
                 if (uData && uData.length > 0) {
-                    periodosIlimitadosAlumno = uData.filter(p => {
+                    const rawSorted = uData.slice().sort((a, b) => {
+                        const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
+                        const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
+                        if (aIsReal && !bIsReal) return -1;
+                        if (!aIsReal && bIsReal) return 1;
+                        return 0;
+                    });
+                    const seenU = new Set();
+                    periodosIlimitadosAlumno = rawSorted.filter(p => {
                         const endsMs = p.ends_at ? new Date(p.ends_at).getTime() : 0;
-                        return endsMs > ahoraMs || (p.membership_month && p.membership_month >= currentMonthStart);
+                        if (endsMs && endsMs <= ahoraMs && (!p.membership_month || p.membership_month < currentMonthStart)) return false;
+                        const ym = (typeof normalizarMesClave === 'function')
+                            ? normalizarMesClave(p.membership_month || p.starts_at)
+                            : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                        if (seenU.has(ym)) return false;
+                        seenU.add(ym);
+                        return true;
                     });
                 }
             } catch (e) {
@@ -8670,7 +8700,7 @@
                     .eq('user_id', currentUser.id)
                     .order('expires_at', { ascending: false }),
                 client.from('unlimited_membership_periods')
-                    .select('id, membership_month, starts_at, ends_at, purchased_at')
+                    .select('id, user_id, membership_month, starts_at, ends_at, purchased_at')
                     .eq('user_id', currentUser.id)
                     .order('membership_month', { ascending: false }),
                 client.from('unlimited_guest_passes')
@@ -8696,7 +8726,7 @@
                     .eq('user_id', currentUser.id)
                     .eq('estado', 'disponible'),
                 client.from('monthly_membership_periods')
-                    .select('id, membership_month, starts_at, ends_at, purchased_at, max_classes_per_week, plan_type')
+                    .select('id, user_id, membership_month, starts_at, ends_at, purchased_at, max_classes_per_week, plan_type')
                     .eq('user_id', currentUser.id)
                     .order('membership_month', { ascending: false })
             ]);
@@ -8705,12 +8735,46 @@
             else if (!/does not exist|schema cache/i.test(packsResult.error.message || '')) {
                 console.error('Error cargando packs de clases:', packsResult.error);
             }
-            if (!periodsResult.error) userUnlimitedPeriods = periodsResult.data || [];
-            else if (!/does not exist|schema cache/i.test(periodsResult.error.message || '')) {
+            if (!periodsResult.error) {
+                const rawUnlimited = (periodsResult.data || []).slice().sort((a, b) => {
+                    const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
+                    const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
+                    if (aIsReal && !bIsReal) return -1;
+                    if (!aIsReal && bIsReal) return 1;
+                    return 0;
+                });
+                const seenU = new Set();
+                userUnlimitedPeriods = rawUnlimited.filter(p => {
+                    const ym = (typeof normalizarMesClave === 'function')
+                        ? normalizarMesClave(p.membership_month || p.starts_at)
+                        : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                    if (seenU.has(ym)) return false;
+                    seenU.add(ym);
+                    return true;
+                });
+            } else if (!/does not exist|schema cache/i.test(periodsResult.error.message || '')) {
                 console.error('Error cargando meses del Bono Ilimitado:', periodsResult.error);
             }
-            if (!monthlyPeriodsResult.error) userMonthlyMembershipPeriods = monthlyPeriodsResult.data || [];
-            else if (!/does not exist|schema cache/i.test(monthlyPeriodsResult.error.message || '')) {
+            if (!monthlyPeriodsResult.error) {
+                const rawPeriods = (monthlyPeriodsResult.data || []).slice().sort((a, b) => {
+                    const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
+                    const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
+                    if (aIsReal && !bIsReal) return -1;
+                    if (!aIsReal && bIsReal) return 1;
+                    return 0;
+                });
+                const seenKeys = new Set();
+                userMonthlyMembershipPeriods = rawPeriods.filter(p => {
+                    const plan = p.plan_type || 'bono_mensual';
+                    const ym = (typeof normalizarMesClave === 'function')
+                        ? normalizarMesClave(p.membership_month || p.starts_at)
+                        : String(p.membership_month || p.starts_at || '').slice(0, 7);
+                    const k = `${plan}_${ym}`;
+                    if (seenKeys.has(k)) return false;
+                    seenKeys.add(k);
+                    return true;
+                });
+            } else if (!/does not exist|schema cache/i.test(monthlyPeriodsResult.error.message || '')) {
                 console.error('Error cargando meses del Bono Mensual:', monthlyPeriodsResult.error);
             }
             const currentMonthPrefix = (typeof madridDateKey === 'function' && madridDateKey(new Date())) ? madridDateKey(new Date()).slice(0, 7) : new Date().toISOString().slice(0, 7);
@@ -9335,16 +9399,24 @@
                 if (coincide) {
                     const valido = !Number.isFinite(pEnd) || pEnd > ahoraMs || (ymActual && pYm >= ymActual);
                     if (valido) {
-                        results.push({
-                            tipo: 'bono_ilimitado',
-                            nombre: profileT('common_monthly_plan', 'Bono Ilimitado'),
-                            color: 'dorado',
-                            precio: 90,
-                            orden: 1,
-                            maxClasses: Infinity,
-                            period: p,
-                            mesClave: ym
-                        });
+                        const existIdx = results.findIndex(r => r.tipo === 'bono_ilimitado' && r.mesClave === ym);
+                        if (existIdx === -1) {
+                            results.push({
+                                tipo: 'bono_ilimitado',
+                                nombre: profileT('common_monthly_plan', 'Bono Ilimitado'),
+                                color: 'dorado',
+                                precio: 90,
+                                orden: 1,
+                                maxClasses: Infinity,
+                                period: p,
+                                mesClave: ym
+                            });
+                        } else {
+                            const curP = results[existIdx].period;
+                            const isNewReal = p && !isNaN(Number(p.id)) && Number(p.id) > 0 && !String(p.id).startsWith('cert_') && Number(p.id) < 1000000000000;
+                            const isOldSim = curP && (isNaN(Number(curP.id)) || String(curP.id).startsWith('cert_') || Number(curP.id) >= 1000000000000);
+                            if (isNewReal && isOldSim) results[existIdx].period = p;
+                        }
                     }
                 }
             });
@@ -9361,16 +9433,25 @@
                     const valido = !Number.isFinite(pEnd) || pEnd > ahoraMs || (ymActual && pYm >= ymActual);
                     if (valido) {
                         const isInicial = esPeriodoBonoInicial(p);
-                        results.push({
-                            tipo: isInicial ? 'bono_inicial' : 'bono_mensual',
-                            nombre: isInicial ? profileT('profile_balance_bono_inicial', 'Bono Inicial') : profileT('profile_balance_bono_mensual', 'Bono Mensual'),
-                            color: isInicial ? 'bronce' : 'plata',
-                            precio: isInicial ? 40 : 65,
-                            orden: isInicial ? 3 : 2,
-                            maxClasses: isInicial ? 4 : 8,
-                            period: p,
-                            mesClave: ym
-                        });
+                        const planTipo = isInicial ? 'bono_inicial' : 'bono_mensual';
+                        const existIdx = results.findIndex(r => r.tipo === planTipo && r.mesClave === ym);
+                        if (existIdx === -1) {
+                            results.push({
+                                tipo: planTipo,
+                                nombre: isInicial ? profileT('profile_balance_bono_inicial', 'Bono Inicial') : profileT('profile_balance_bono_mensual', 'Bono Mensual'),
+                                color: isInicial ? 'bronce' : 'plata',
+                                precio: isInicial ? 40 : 65,
+                                orden: isInicial ? 3 : 2,
+                                maxClasses: isInicial ? 4 : 8,
+                                period: p,
+                                mesClave: ym
+                            });
+                        } else {
+                            const curP = results[existIdx].period;
+                            const isNewReal = p && !isNaN(Number(p.id)) && Number(p.id) > 0 && !String(p.id).startsWith('cert_') && Number(p.id) < 1000000000000;
+                            const isOldSim = curP && (isNaN(Number(curP.id)) || String(curP.id).startsWith('cert_') || Number(curP.id) >= 1000000000000);
+                            if (isNewReal && isOldSim) results[existIdx].period = p;
+                        }
                     }
                 }
             });
@@ -10237,14 +10318,24 @@
             // 1. Bonos del mes actual (pueden ser varios si se solapan)
             const bonosMesActual = typeof obtenerBonosMensualesDeMes === 'function' ? obtenerBonosMensualesDeMes(hoyYm) : [];
             if (bonosMesActual.length > 0) {
-                bonosRecurrentesHeader.push(...bonosMesActual);
+                bonosMesActual.forEach(b => {
+                    const yaExiste = bonosRecurrentesHeader.some(exist =>
+                        exist.tipo === b.tipo && ((exist.mesClave || exist.period?.membership_month) === (b.mesClave || b.period?.membership_month))
+                    );
+                    if (!yaExiste) {
+                        bonosRecurrentesHeader.push(b);
+                    }
+                });
             }
 
-            // 2. Si no hay bonos en el mes actual o solo hay 1, buscar en meses futuros contratados
+            // 2. Si no hay bonos en el mes actual o solo hay 1 o 2, buscar en meses futuros contratados
             if (bonosRecurrentesHeader.length === 0) {
                 const planProx = typeof obtenerPlanMensualActualOProximo === 'function' ? obtenerPlanMensualActualOProximo() : null;
                 if (planProx && planProx.todosLosPlanes && planProx.todosLosPlanes.length > 0) {
-                    bonosRecurrentesHeader.push(...planProx.todosLosPlanes);
+                    planProx.todosLosPlanes.forEach(p => {
+                        const yaExiste = bonosRecurrentesHeader.some(exist => exist.tipo === p.tipo && ((exist.mesClave || exist.period?.membership_month) === (p.mesClave || p.period?.membership_month)));
+                        if (!yaExiste) bonosRecurrentesHeader.push(p);
+                    });
                 } else if (planProx && planProx.period) {
                     bonosRecurrentesHeader.push(planProx);
                 }
@@ -10253,7 +10344,9 @@
                 if (nextYm) {
                     const bonosProx = typeof obtenerBonosMensualesDeMes === 'function' ? obtenerBonosMensualesDeMes(nextYm) : [];
                     bonosProx.forEach(bp => {
-                        const yaExiste = bonosRecurrentesHeader.some(b => (b.period && bp.period && b.period.id === bp.period.id) || (b.tipo === bp.tipo && !bp.period));
+                        const yaExiste = bonosRecurrentesHeader.some(b =>
+                            b.tipo === bp.tipo && ((b.mesClave || b.period?.membership_month) === (bp.mesClave || bp.period?.membership_month))
+                        );
                         if (!yaExiste && bonosRecurrentesHeader.length < 3) {
                             bonosRecurrentesHeader.push({ ...bp, esFuturo: true });
                         }
@@ -24006,15 +24099,27 @@
             let userMonths = [];
             try {
                 const { data: pData } = await client.from('unlimited_membership_periods')
-                    .select('id, membership_month, starts_at, ends_at')
+                    .select('id, user_id, membership_month, starts_at, ends_at')
                     .eq('user_id', userId)
                     .order('starts_at', { ascending: true });
                 if (pData && pData.length > 0) {
                     const ahora = Date.now();
-                    userMonths = pData.filter(p => {
+                    const rawSorted = pData.slice().sort((a, b) => {
+                        const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
+                        const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
+                        if (aIsReal && !bIsReal) return -1;
+                        if (!aIsReal && bIsReal) return 1;
+                        return 0;
+                    });
+                    const seenUAdmin = new Set();
+                    userMonths = rawSorted.filter(p => {
                         const endsMs = p.ends_at ? new Date(p.ends_at).getTime() : 0;
                         const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(p.membership_month || p.starts_at) : String(p.membership_month || p.starts_at || '').slice(0, 7);
-                        return endsMs > ahora || (mKey && mKey >= currentMonthKey);
+                        if (!endsMs && (!mKey || mKey < currentMonthKey)) return false;
+                        if (endsMs && endsMs <= ahora && (!mKey || mKey < currentMonthKey)) return false;
+                        if (seenUAdmin.has(mKey)) return false;
+                        seenUAdmin.add(mKey);
+                        return true;
                     });
                 }
             } catch (err) {
@@ -24025,15 +24130,29 @@
             let userMonthlyPeriods = [];
             try {
                 const { data: mData } = await client.from('monthly_membership_periods')
-                    .select('id, membership_month, starts_at, ends_at, max_classes_per_week, plan_type')
+                    .select('id, user_id, membership_month, starts_at, ends_at, max_classes_per_week, plan_type')
                     .eq('user_id', userId)
                     .order('starts_at', { ascending: true });
                 if (mData && mData.length > 0) {
                     const ahora = Date.now();
-                    userMonthlyPeriods = mData.filter(m => {
+                    const rawSorted = mData.slice().sort((a, b) => {
+                        const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
+                        const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
+                        if (aIsReal && !bIsReal) return -1;
+                        if (!aIsReal && bIsReal) return 1;
+                        return 0;
+                    });
+                    const seenMAdmin = new Set();
+                    userMonthlyPeriods = rawSorted.filter(m => {
                         const endsMs = m.ends_at ? new Date(m.ends_at).getTime() : 0;
                         const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(m.membership_month || m.starts_at) : String(m.membership_month || m.starts_at || '').slice(0, 7);
-                        return endsMs > ahora || (mKey && mKey >= currentMonthKey);
+                        if (!endsMs && (!mKey || mKey < currentMonthKey)) return false;
+                        if (endsMs && endsMs <= ahora && (!mKey || mKey < currentMonthKey)) return false;
+                        const plan = m.plan_type || 'bono_mensual';
+                        const k = `${plan}_${mKey}`;
+                        if (seenMAdmin.has(k)) return false;
+                        seenMAdmin.add(k);
+                        return true;
                     });
                 }
             } catch (err) {
@@ -24044,12 +24163,25 @@
             let userSpecialPasses = [];
             try {
                 const { data: spData } = await client.from('bonos_clases_especiales')
-                    .select('id, mes, saldo, origen')
+                    .select('id, user_id, mes, saldo, origen')
                     .eq('user_id', userId)
                     .gte('mes', currentMonthStart)
                     .order('mes', { ascending: true });
                 if (spData && spData.length > 0) {
-                    userSpecialPasses = spData;
+                    const rawSorted = spData.slice().sort((a, b) => {
+                        const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
+                        const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
+                        if (aIsReal && !bIsReal) return -1;
+                        if (!aIsReal && bIsReal) return 1;
+                        return 0;
+                    });
+                    const seenSAdmin = new Set();
+                    userSpecialPasses = rawSorted.filter(sp => {
+                        const mKey = typeof normalizarMesClave === 'function' ? normalizarMesClave(sp.mes) : String(sp.mes || '').slice(0, 7);
+                        if (seenSAdmin.has(mKey)) return false;
+                        seenSAdmin.add(mKey);
+                        return true;
+                    });
                 }
             } catch (err) {
                 console.warn('Error leyendo bonos_clases_especiales en modal:', err);
@@ -24862,18 +24994,21 @@
                 await delEsp;
             } catch (e) {}
 
-            // 6. Recalcular y sincronizar estado en tabla profiles
+            // 6. Recalcular y sincronizar estado en tabla profiles vía RPC protegida
             try {
                 const { data: remPeriods } = await client.from('unlimited_membership_periods')
                     .select('id, starts_at, ends_at')
                     .eq('user_id', userId)
                     .gt('ends_at', new Date().toISOString());
                 const tieneVigentes = remPeriods && remPeriods.length > 0;
-                await client.from('profiles').update({
-                    bono_mensual_activo: tieneVigentes,
-                    bono_mensual_inicio: tieneVigentes ? remPeriods.reduce((min, p) => !min || p.starts_at < min ? p.starts_at : min, null) : null,
-                    bono_mensual_fin: tieneVigentes ? remPeriods.reduce((max, p) => !max || p.ends_at > max ? p.ends_at : max, null) : null
-                }).eq('id', userId);
+                const minStart = tieneVigentes ? remPeriods.reduce((min, p) => !min || p.starts_at < min ? p.starts_at : min, null) : null;
+                const maxEnd = tieneVigentes ? remPeriods.reduce((max, p) => !max || p.ends_at > max ? p.ends_at : max, null) : null;
+                await client.rpc('admin_configurar_bono_mensual', {
+                    p_user_id: userId,
+                    p_activo: tieneVigentes,
+                    p_inicio: minStart,
+                    p_fin: maxEnd
+                });
             } catch (profErr) {
                 console.warn('Aviso sincronizando profiles:', profErr);
             }
@@ -29428,14 +29563,36 @@
             for (const m of monthlyPeriods) {
                 if (!m.user_id) continue;
                 if (!monthlyByUser.has(m.user_id)) monthlyByUser.set(m.user_id, []);
-                monthlyByUser.get(m.user_id).push(m);
+                const list = monthlyByUser.get(m.user_id);
+                const plan = m.plan_type || 'bono_mensual';
+                const ym = (typeof normalizarMesClave === 'function')
+                    ? normalizarMesClave(m.membership_month || m.starts_at)
+                    : String(m.membership_month || m.starts_at || '').slice(0, 7);
+                const exists = list.some(item => {
+                    const itemPlan = item.plan_type || 'bono_mensual';
+                    const itemYm = (typeof normalizarMesClave === 'function')
+                        ? normalizarMesClave(item.membership_month || item.starts_at)
+                        : String(item.membership_month || item.starts_at || '').slice(0, 7);
+                    return itemPlan === plan && itemYm === ym;
+                });
+                if (!exists) list.push(m);
             }
 
             const unlimitedByUser = new Map();
             for (const u of unlimitedPeriods) {
                 if (!u.user_id) continue;
                 if (!unlimitedByUser.has(u.user_id)) unlimitedByUser.set(u.user_id, []);
-                unlimitedByUser.get(u.user_id).push(u);
+                const list = unlimitedByUser.get(u.user_id);
+                const ym = (typeof normalizarMesClave === 'function')
+                    ? normalizarMesClave(u.membership_month || u.starts_at)
+                    : String(u.membership_month || u.starts_at || '').slice(0, 7);
+                const exists = list.some(item => {
+                    const itemYm = (typeof normalizarMesClave === 'function')
+                        ? normalizarMesClave(item.membership_month || item.starts_at)
+                        : String(item.membership_month || item.starts_at || '').slice(0, 7);
+                    return itemYm === ym;
+                });
+                if (!exists) list.push(u);
             }
 
             perfiles.forEach(p => {

@@ -567,21 +567,28 @@ for (const file of htmls) {
         var cList = Array.isArray(data) ? data.slice() : [];
         monthlyList.forEach(function (sim) {
           var targetUid = sim.userId || currentUserId;
+          var simPlan = sim.planType || (sim.purchaseType === 'bono_inicial' ? 'bono_inicial' : 'bono_mensual');
+          var simMonth = String(sim.membershipMonth || (sim.startsAt ? sim.startsAt.slice(0, 7) : '')).slice(0, 7);
           var exists = cList.some(function (row) {
+            var sameUser = !row.user_id || String(row.user_id) === String(targetUid);
+            var rowPlan = row.plan_type || 'bono_mensual';
+            var samePlan = (rowPlan === simPlan);
+            var rowMonth = String(row.membership_month || row.starts_at || '').slice(0, 7);
+            var sameMonth = rowMonth && simMonth && rowMonth === simMonth;
             return String(row.id) === String(sim.id) ||
                    (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (String(row.user_id) === String(targetUid) && row.plan_type === sim.planType && (row.membership_month === sim.membershipMonth + '-01' || String(row.membership_month).slice(0, 7) === sim.membershipMonth));
+                   (sameUser && samePlan && sameMonth);
           });
           if (!exists) {
             cList.unshift({
               id: sim.id,
               user_id: targetUid,
-              membership_month: sim.membershipMonth + '-01',
+              membership_month: (simMonth ? simMonth + '-01' : (sim.membershipMonth ? sim.membershipMonth + '-01' : null)),
               starts_at: sim.startsAt,
               ends_at: sim.endsAt,
               purchased_at: sim.purchasedAt,
               max_classes_per_week: sim.maxClassesPerWeek,
-              plan_type: sim.planType,
+              plan_type: simPlan,
               checkout_session_id: sim.sessionId
             });
           }
@@ -599,16 +606,20 @@ for (const file of htmls) {
         var curU = Array.isArray(data) ? data.slice() : [];
         uList.forEach(function (sim) {
           var targetUid = sim.userId || currentUserId;
+          var simMonth = String(sim.membershipMonth || (sim.startsAt ? sim.startsAt.slice(0, 7) : '')).slice(0, 7);
           var existsU = curU.some(function (row) {
+            var sameUser = !row.user_id || String(row.user_id) === String(targetUid);
+            var rowMonth = String(row.membership_month || row.starts_at || '').slice(0, 7);
+            var sameMonth = rowMonth && simMonth && rowMonth === simMonth;
             return String(row.id) === String(sim.id) ||
                    (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (String(row.user_id) === String(targetUid) && (row.membership_month === sim.membershipMonth + '-01' || String(row.membership_month).slice(0, 7) === sim.membershipMonth));
+                   (sameUser && sameMonth);
           });
           if (!existsU) {
             curU.unshift({
               id: sim.id,
               user_id: targetUid,
-              membership_month: sim.membershipMonth + '-01',
+              membership_month: (simMonth ? simMonth + '-01' : (sim.membershipMonth ? sim.membershipMonth + '-01' : null)),
               starts_at: sim.startsAt,
               ends_at: sim.endsAt,
               purchased_at: sim.purchasedAt,
@@ -630,7 +641,10 @@ for (const file of htmls) {
         packList.forEach(function (sim) {
           var targetUid = sim.userId || currentUserId;
           var existsP = curP.some(function (row) {
-            return row.checkout_session_id === sim.sessionId || row.id === sim.id;
+            var sameUser = !row.user_id || String(row.user_id) === String(targetUid);
+            return (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
+                   String(row.id) === String(sim.id) ||
+                   (sameUser && row.pack_type === sim.purchaseType && Math.abs(new Date(row.purchased_at || 0).getTime() - new Date(sim.purchasedAt || 0).getTime()) < 60000);
           });
           if (!existsP) {
             curP.unshift({
@@ -659,16 +673,20 @@ for (const file of htmls) {
         specialList.forEach(function (sim) {
           if (typeof sim.saldo !== 'undefined' && Number(sim.saldo) <= 0) return;
           var targetUid = sim.userId || currentUserId;
+          var simMonth = String(sim.membershipMonth || (sim.startsAt ? sim.startsAt.slice(0, 7) : '')).slice(0, 7);
           var existsS = curS.some(function (row) {
-            return row.checkout_session_id === sim.sessionId ||
+            var sameUser = !row.user_id || String(row.user_id) === String(targetUid);
+            var rowMonth = String(row.mes || '').slice(0, 7);
+            var sameMonth = rowMonth && simMonth && rowMonth === simMonth;
+            return (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
                    String(row.id) === String(sim.id) ||
-                   (String(row.user_id) === String(targetUid) && String(row.mes).slice(0, 7) === sim.membershipMonth);
+                   (sameUser && sameMonth);
           });
           if (!existsS) {
             curS.push({
               id: sim.id,
               user_id: targetUid,
-              mes: sim.membershipMonth + '-01',
+              mes: (simMonth ? simMonth + '-01' : sim.membershipMonth + '-01'),
               saldo: typeof sim.saldo !== 'undefined' ? Number(sim.saldo) : 1,
               origen: (sim.purchaseType === 'bono_ilimitado' ? 'bono_ilimitado' : 'compra_stripe'),
               checkout_session_id: sim.sessionId,
