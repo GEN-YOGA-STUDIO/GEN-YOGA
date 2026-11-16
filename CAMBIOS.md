@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.5.1 — 16 nov 2026 · Incidencia
+
+- **Descripción:** mostrar los 3 bonos en perfil y ajuste footer landing en cert (ámbito: bonos)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.5.1`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.5.1.md`
+
 ## v18.5.0 — 16 nov 2026 · Desarrollo
 
 - **Descripción:** Actualización de los bonos (inicial, mensual e ilimitado) a 30 días naturales desde la compra (ámbito: bonos)

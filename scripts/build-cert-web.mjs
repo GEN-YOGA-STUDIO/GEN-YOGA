@@ -204,12 +204,22 @@ for (const file of htmls) {
     ? `CERT · ENTORNO DE PRUEBAS · ${versionBadge} · PAGOS LIVE HABILITADOS · MISMA BD QUE PRODUCCIÓN`
     : `CERT · ENTORNO DE PRUEBAS · ${versionBadge} · SIMULACIÓN DE PAGOS ACTIVA (SIN CARGO REAL) · MISMA BD QUE PRODUCCIÓN`;
   const banner = `<style id="gy-cert-banner-style">
-  #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; }
+  :root { --gy-cert-banner-h: 34px; }
+  @media (max-width:640px) { :root { --gy-cert-banner-h: 48px; } }
+  #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; }
   #gy-cert-banner * { pointer-events:auto; }
-  #gy-cert-reset-btn { position:fixed; right:12px; bottom:12px; z-index:9998; background:rgba(38,22,12,.92); border:1px solid rgba(255,255,255,0.32); color:#fff; border-radius:999px; padding:0 16px; font-size:12px; font-weight:700; cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; justify-content:center; min-height:44px; box-shadow:0 6px 18px rgba(0,0,0,.25); }
-  #gy-cert-reset-btn:hover { background:rgba(38,22,12,1); }
-  body { padding-top:34px !important; }
-  @media (max-width:640px) { body { padding-top:48px !important; } }
+  #gy-cert-reset-btn { background:rgba(210,125,96,0.35); border:1px solid rgba(255,255,255,0.45); color:#fff; border-radius:999px; padding:3px 12px; font-size:11px; font-weight:700; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; line-height:1; }
+  #gy-cert-reset-btn:hover { background:rgba(210,125,96,0.8); }
+  body { padding-top:var(--gy-cert-banner-h) !important; box-sizing:border-box !important; }
+  @media (min-width:1024px) {
+    body.lg\:h-screen, body { height:100vh !important; box-sizing:border-box !important; overflow-y:auto !important; }
+    #web-marketing-view {
+      height:calc(100vh - var(--gy-cert-banner-h)) !important;
+      min-height:calc(100vh - var(--gy-cert-banner-h)) !important;
+      max-height:calc(100vh - var(--gy-cert-banner-h)) !important;
+      overflow-y:auto !important;
+    }
+  }
   html { scroll-padding-top:44px; }
 </style>
 <div id="gy-cert-banner" role="note">

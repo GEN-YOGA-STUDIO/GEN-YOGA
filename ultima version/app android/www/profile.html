@@ -2080,7 +2080,7 @@
                 <div class="flex items-center gap-3">
                     <img src="img/logo1.webp" alt="GEN Yoga Logo" loading="eager" decoding="async"
                         class="h-28 md:h-36 lg:h-44 w-auto object-contain drop-shadow-md filter-terracotta">
-                    <span class="text-xs font-black tracking-widest uppercase px-3 py-1 rounded-full bg-[#e06b53]/15 text-[#e06b53] border border-[#e06b53]/30">v18.5.0</span>
+                    <span class="text-xs font-black tracking-widest uppercase px-3 py-1 rounded-full bg-[#e06b53]/15 text-[#e06b53] border border-[#e06b53]/30">v18.5</span>
                 </div>
 
                 <p class="font-sans text-3xl md:text-4xl lg:text-[2.75rem] font-extrabold leading-tight text-[#e06b53] max-w-xl"
@@ -2462,7 +2462,7 @@
                         <a href="index.html" class="flex items-center gap-2 group shrink-0" aria-label="Inicio GEN Yoga">
                             <img src="img/logo1.webp" alt="GEN Yoga Logo" loading="eager"
                                 class="h-8 sm:h-11 w-auto object-contain drop-shadow-xs group-hover:scale-105 transition duration-200 brightness-0">
-                            <span class="text-[10px] font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-cocoa/10 text-cocoa/70 border border-cocoa/15 select-none">v18.5.0</span>
+                            <span class="text-[10px] font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-cocoa/10 text-cocoa/70 border border-cocoa/15 select-none">v18.5</span>
                         </a>
 
                         <div class="profile-header-actions flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink-0">
@@ -4691,7 +4691,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.0 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.1 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -10220,18 +10220,21 @@
                 } else if (planProx && planProx.period) {
                     bonosRecurrentesHeader.push(planProx);
                 }
-            } else if (bonosRecurrentesHeader.length === 1) {
+            } else if (bonosRecurrentesHeader.length < 3) {
                 const nextYm = typeof addMonthsToYearMonth === 'function' ? addMonthsToYearMonth(hoyYm, 1) : null;
                 if (nextYm) {
                     const bonosProx = typeof obtenerBonosMensualesDeMes === 'function' ? obtenerBonosMensualesDeMes(nextYm) : [];
-                    if (bonosProx.length > 0) {
-                        bonosRecurrentesHeader.push({ ...bonosProx[0], esFuturo: true });
-                    }
+                    bonosProx.forEach(bp => {
+                        const yaExiste = bonosRecurrentesHeader.some(b => (b.period && bp.period && b.period.id === bp.period.id) || (b.tipo === bp.tipo && !bp.period));
+                        if (!yaExiste && bonosRecurrentesHeader.length < 3) {
+                            bonosRecurrentesHeader.push({ ...bp, esFuturo: true });
+                        }
+                    });
                 }
             }
 
-            // Máximo 2 botones de bono recurrente si el alumno dispone de más de uno
-            const bonosAMostrar = bonosRecurrentesHeader.slice(0, 2);
+            // Mostrar todos los bonos recurrentes activos contratados (si tiene los 3: Inicial, Mensual e Ilimitado, se muestran los 3)
+            const bonosAMostrar = bonosRecurrentesHeader;
 
             let bonosRecurrentesHtml = '';
             if (bonosAMostrar.length === 0) {
