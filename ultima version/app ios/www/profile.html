@@ -4691,7 +4691,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.2 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.3 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -24202,7 +24202,7 @@
                         starts_at: p.starts_at,
                         ends_at: p.ends_at,
                         periodId: p.id || '',
-                        accionQuitar: `retirarMesBonoMensualAdmin('${userId}', '${p.id || ''}', '${mKey}')`
+                        accionQuitar: `retirarMesBonoMensualAdmin('${userId}', '${p.id || ''}', '${mKey}', 'bono_inicial')`
                     });
                 } else {
                     todosPeriodosMensuales.push({
@@ -24212,7 +24212,7 @@
                         starts_at: p.starts_at,
                         ends_at: p.ends_at,
                         periodId: p.id || '',
-                        accionQuitar: `retirarMesBonoMensualAdmin('${userId}', '${p.id || ''}', '${mKey}')`
+                        accionQuitar: `retirarMesBonoMensualAdmin('${userId}', '${p.id || ''}', '${mKey}', 'bono_mensual')`
                     });
                 }
             }
@@ -24782,7 +24782,33 @@
                 : null;
             const mesDate = selectedMes ? (normalizarMesClave(selectedMes) + '-01') : null;
 
-            // 1. Invocar RPC dedicada SECURITY DEFINER admin_retirar_mes_ilimitado
+            // 1. Limpieza inmediata en localStorage de certificación (simulación de compras en CERT)
+            try {
+                const rawCert = localStorage.getItem('gy_cert_purchases_v1');
+                if (rawCert) {
+                    let certPurchases = JSON.parse(rawCert);
+                    if (Array.isArray(certPurchases)) {
+                        certPurchases = certPurchases.filter(p => {
+                            if (p.purchaseType !== 'bono_ilimitado') return true;
+                            const matchUser = !p.userId || String(p.userId) === String(userId) || p.userId === 'guest';
+                            if (!matchUser) return true;
+                            if (selectedPeriodId && String(p.id) === String(selectedPeriodId)) return false;
+                            if (selectedMes) {
+                                const mK = normalizarMesClave(selectedMes);
+                                const pK = normalizarMesClave(p.membershipMonth || p.startsAt);
+                                if (pK === mK) return false;
+                            }
+                            if (!selectedPeriodId && !selectedMes) return false;
+                            return true;
+                        });
+                        localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(certPurchases));
+                    }
+                }
+            } catch (certDelErr) {
+                console.warn('Aviso limpiando cert purchases:', certDelErr);
+            }
+
+            // 2. Invocar RPC dedicada SECURITY DEFINER admin_retirar_mes_ilimitado
             try {
                 const { data, error } = await client.rpc('admin_retirar_mes_ilimitado', {
                     p_user_id: userId,
@@ -24799,7 +24825,7 @@
                 console.warn('Fallo RPC admin_retirar_mes_ilimitado:', rpcErr);
             }
 
-            // 2. Si no tuvo éxito y hay un period_id concreto, intentar admin_retirar_periodo_ilimitado
+            // 3. Si no tuvo éxito y hay un period_id numérico concreto, intentar admin_retirar_periodo_ilimitado
             if (!success && parsedPeriodId) {
                 try {
                     const { error: rpc2Err } = await client.rpc('admin_retirar_periodo_ilimitado', {
@@ -24815,57 +24841,76 @@
                 }
             }
 
-            // 3. Fallback adicional si se retira todo o el usuario ya no tiene meses: admin_configurar_bono_mensual
-            if (!success && (!parsedPeriodId && !mesDate)) {
-                try {
-                    const { error: cfgErr } = await client.rpc('admin_configurar_bono_mensual', {
-                        p_user_id: userId,
-                        p_activo: false,
-                        p_inicio: null,
-                        p_fin: null
-                    });
-                    if (!cfgErr) {
-                        success = true;
-                    } else {
-                        console.warn('Fallo fallback admin_configurar_bono_mensual:', cfgErr);
-                    }
-                } catch (cfgErr) {
-                    console.warn('Fallo fallback admin_configurar_bono_mensual:', cfgErr);
+            // 4. Fallback directo en tabla unlimited_membership_periods
+            try {
+                let delQ = client.from('unlimited_membership_periods').delete().eq('user_id', userId);
+                if (parsedPeriodId) {
+                    delQ = delQ.eq('id', parsedPeriodId);
+                } else if (mesDate) {
+                    delQ = delQ.eq('membership_month', mesDate);
                 }
+                await delQ;
+                success = true;
+            } catch (delErr) {
+                console.warn('Aviso fallback delete unlimited_membership_periods:', delErr);
             }
 
-            // Actualizar caché en memoria inmediatamente
+            // 5. Retirar clase especial asociada al bono ilimitado en ese mes
+            try {
+                let delEsp = client.from('bonos_clases_especiales').delete().eq('user_id', userId).eq('origen', 'bono_ilimitado');
+                if (mesDate) delEsp = delEsp.eq('mes', mesDate);
+                await delEsp;
+            } catch (e) {}
+
+            // 6. Recalcular y sincronizar estado en tabla profiles
+            try {
+                const { data: remPeriods } = await client.from('unlimited_membership_periods')
+                    .select('id, starts_at, ends_at')
+                    .eq('user_id', userId)
+                    .gt('ends_at', new Date().toISOString());
+                const tieneVigentes = remPeriods && remPeriods.length > 0;
+                await client.from('profiles').update({
+                    bono_mensual_activo: tieneVigentes,
+                    bono_mensual_inicio: tieneVigentes ? remPeriods.reduce((min, p) => !min || p.starts_at < min ? p.starts_at : min, null) : null,
+                    bono_mensual_fin: tieneVigentes ? remPeriods.reduce((max, p) => !max || p.ends_at > max ? p.ends_at : max, null) : null
+                }).eq('id', userId);
+            } catch (profErr) {
+                console.warn('Aviso sincronizando profiles:', profErr);
+            }
+
+            // 7. Actualizar caché en memoria inmediatamente
             const uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
             if (uCache) {
-                if (resultData && typeof resultData.bono_mensual_activo === 'boolean') {
-                    uCache.bono_mensual_activo = resultData.bono_mensual_activo;
-                    if (!resultData.bono_mensual_activo) {
-                        uCache.bono_mensual_inicio = null;
-                        uCache.bono_mensual_fin = null;
-                        uCache.unlimited_periods = [];
-                    }
-                } else if (!parsedPeriodId && !mesDate) {
-                    uCache.bono_mensual_activo = false;
-                    uCache.bono_mensual_inicio = null;
-                    uCache.bono_mensual_fin = null;
-                    uCache.unlimited_periods = [];
-                }
                 if (Array.isArray(uCache.unlimited_periods)) {
-                    if (parsedPeriodId) {
-                        uCache.unlimited_periods = uCache.unlimited_periods.filter(p => Number(p.id) !== Number(parsedPeriodId));
-                    } else if (mesDate) {
+                    if (selectedPeriodId) {
+                        uCache.unlimited_periods = uCache.unlimited_periods.filter(p => String(p.id) !== String(selectedPeriodId));
+                    }
+                    if (mesDate) {
                         const mK = normalizarMesClave(mesDate);
                         uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mK);
                     }
+                    if (!selectedPeriodId && !mesDate) {
+                        uCache.unlimited_periods = [];
+                    }
                     const remainingActive = uCache.unlimited_periods.filter(p => {
+                        const endsMs = p.ends_at ? new Date(p.ends_at).getTime() : 0;
                         const mK = normalizarMesClave(p.membership_month || p.starts_at);
-                        return mK && mK >= currentMonthKey;
+                        return endsMs > Date.now() || (mK && mK >= currentMonthKey);
                     });
-                    if (remainingActive.length === 0 && (!resultData || !resultData.bono_mensual_activo)) {
+                    if (remainingActive.length === 0) {
                         uCache.bono_mensual_activo = false;
                         uCache.bono_mensual_inicio = null;
                         uCache.bono_mensual_fin = null;
                     }
+                }
+            }
+
+            if (typeof currentUser !== 'undefined' && currentUser && String(currentUser.id) === String(userId)) {
+                if (uCache) {
+                    currentUser.bono_mensual_activo = uCache.bono_mensual_activo;
+                    currentUser.bono_mensual_inicio = uCache.bono_mensual_inicio;
+                    currentUser.bono_mensual_fin = uCache.bono_mensual_fin;
+                    currentUser.unlimited_periods = uCache.unlimited_periods;
                 }
             }
 
@@ -25273,12 +25318,13 @@
         }
         window.asignarMesBonoMensualAdmin = asignarMesBonoMensualAdmin;
 
-        async function retirarMesBonoMensualAdmin(userId, periodId = null, monthKey = null) {
+        async function retirarMesBonoMensualAdmin(userId, periodId = null, monthKey = null, planType = null) {
+            const labelTipo = planType === 'bono_inicial' ? 'Bono Inicial' : (planType === 'bono_mensual' ? 'Bono Mensual' : 'Bono Mensual / Inicial');
             const { isConfirmed } = await Swal.fire({
-                title: '¿Retirar Bono?',
+                title: `¿Retirar ${labelTipo}?`,
                 text: monthKey
-                    ? `Se eliminará el bono para el mes ${monthKey}.`
-                    : 'Se eliminarán los periodos de Bono Inicial / Mensual de este alumno.',
+                    ? `Se eliminará el ${labelTipo} para el mes ${monthKey}.`
+                    : `Se eliminarán los periodos de ${labelTipo} de este alumno.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',
@@ -25289,13 +25335,48 @@
 
             if (!isConfirmed) return abrirGestionBonosUsuario(userId);
 
-            Swal.fire({ title: 'Retirando Bono Mensual...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            Swal.fire({ title: 'Retirando bono...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+            // 1. Limpieza inmediata en localStorage de certificación (simulación de compras en CERT)
+            try {
+                const rawCert = localStorage.getItem('gy_cert_purchases_v1');
+                if (rawCert) {
+                    let cList = JSON.parse(rawCert);
+                    if (Array.isArray(cList)) {
+                        cList = cList.filter(p => {
+                            const isTargetType = planType
+                                ? (p.purchaseType === planType || (planType === 'bono_inicial' && p.planType === 'bono_inicial') || (planType === 'bono_mensual' && p.planType === 'bono_mensual'))
+                                : (p.purchaseType === 'bono_mensual' || p.purchaseType === 'bono_inicial');
+                            if (!isTargetType) return true;
+                            const matchUser = !p.userId || String(p.userId) === String(userId) || p.userId === 'guest';
+                            if (!matchUser) return true;
+                            if (periodId && String(p.id) === String(periodId)) return false;
+                            if (monthKey) {
+                                const mK = normalizarMesClave(monthKey);
+                                const pK = normalizarMesClave(p.membershipMonth || p.startsAt);
+                                if (pK === mK) return false;
+                            }
+                            if (!periodId && !monthKey) return false;
+                            return true;
+                        });
+                        localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(cList));
+                    }
+                }
+            } catch (eCert) {
+                console.warn('Aviso limpiando cert storage mensual:', eCert);
+            }
 
             let removed = false;
-            if (periodId) {
+            const parsedPeriodId = (periodId && !isNaN(Number(periodId)) && Number(periodId) > 0)
+                ? Number(periodId)
+                : null;
+            const mesParam = monthKey ? `${normalizarMesClave(monthKey)}-01` : null;
+
+            // 2. Si hay period_id numérico, retirar por ID exacto en Supabase
+            if (parsedPeriodId) {
                 try {
                     const { error } = await client.rpc('admin_retirar_periodo_mensual', {
-                        p_period_id: Number(periodId)
+                        p_period_id: parsedPeriodId
                     });
                     if (!error) removed = true;
                     else console.warn('Error RPC admin_retirar_periodo_mensual:', error);
@@ -25304,53 +25385,85 @@
                 }
             }
 
+            // 3. Fallback por mes y tipo de plan vía RPCs dedicadas
             if (!removed) {
-                try {
-                    const mesParam = monthKey ? `${monthKey}-01` : null;
-                    const { error } = await client.rpc('admin_asignar_mes_bono_mensual', {
-                        p_user_id: userId,
-                        p_membership_month: mesParam,
-                        p_activo: false
-                    });
-                    if (!error) removed = true;
-                    else console.warn('Error RPC retirar Bono Mensual:', error);
-                } catch (rpcErr) {
-                    console.warn('Excepción RPC retirar Bono Mensual:', rpcErr);
+                if (planType === 'bono_inicial') {
+                    try {
+                        const { error } = await client.rpc('admin_asignar_mes_bono_inicial', {
+                            p_user_id: userId,
+                            p_membership_month: mesParam,
+                            p_activo: false
+                        });
+                        if (!error) removed = true;
+                    } catch (e) {}
+                } else if (planType === 'bono_mensual') {
+                    try {
+                        const { error } = await client.rpc('admin_asignar_mes_bono_mensual', {
+                            p_user_id: userId,
+                            p_membership_month: mesParam,
+                            p_activo: false
+                        });
+                        if (!error) removed = true;
+                    } catch (e) {}
+                } else {
+                    try {
+                        await client.rpc('admin_asignar_mes_bono_mensual', { p_user_id: userId, p_membership_month: mesParam, p_activo: false });
+                        await client.rpc('admin_asignar_mes_bono_inicial', { p_user_id: userId, p_membership_month: mesParam, p_activo: false });
+                        removed = true;
+                    } catch (e) {}
                 }
             }
 
-            if (!removed) {
-                try {
-                    let query = client.from('monthly_membership_periods').delete().eq('user_id', userId);
-                    if (periodId) query = query.eq('id', periodId);
-                    else if (monthKey) query = query.eq('membership_month', `${monthKey}-01`);
-                    await query;
-                    removed = true;
-                } catch (delErr) {
-                    console.error('Error fallback delete monthly_membership_periods:', delErr);
+            // 4. Fallback directo en tabla monthly_membership_periods
+            try {
+                let query = client.from('monthly_membership_periods').delete().eq('user_id', userId);
+                if (parsedPeriodId) {
+                    query = query.eq('id', parsedPeriodId);
+                } else {
+                    if (mesParam) query = query.eq('membership_month', mesParam);
+                    if (planType) query = query.eq('plan_type', planType);
                 }
+                await query;
+                removed = true;
+            } catch (delErr) {
+                console.warn('Aviso fallback delete monthly_membership_periods:', delErr);
             }
 
+            // 5. Actualizar caché local
             const uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
             if (uCache && Array.isArray(uCache.monthly_periods)) {
                 if (periodId) {
                     uCache.monthly_periods = uCache.monthly_periods.filter(p => String(p.id) !== String(periodId));
-                } else if (monthKey) {
-                    uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month) !== monthKey);
-                } else {
+                }
+                if (monthKey) {
+                    uCache.monthly_periods = uCache.monthly_periods.filter(p => {
+                        const sameMonth = normalizarMesClave(p.membership_month || p.starts_at) === normalizarMesClave(monthKey);
+                        if (!sameMonth) return true;
+                        if (planType && p.plan_type && p.plan_type !== planType) return true;
+                        return false;
+                    });
+                }
+                if (!periodId && !monthKey) {
                     uCache.monthly_periods = [];
                 }
                 actualizarContadoresFiltroBonos();
                 filtrarUsuarios();
             }
+            if (typeof currentUser !== 'undefined' && currentUser && String(currentUser.id) === String(userId)) {
+                if (uCache) {
+                    currentUser.monthly_periods = uCache.monthly_periods;
+                }
+            }
+
             if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
             if (typeof checkProfile === 'function') checkProfile();
 
+            Swal.close();
             await Swal.fire({
                 icon: 'success',
-                title: 'Bono Mensual Retirado',
-                text: 'El Bono Mensual ha sido retirado correctamente.',
-                timer: 1800,
+                title: 'Bono Retirado',
+                text: `${labelTipo} retirado correctamente.`,
+                timer: 1500,
                 showConfirmButton: false
             });
             await abrirGestionBonosUsuario(userId);
@@ -25362,33 +25475,75 @@
                 const mKey = normalizarMesClave(mesStr);
                 const mesDate = mKey + '-01';
 
+                // 1. Sincronización en localStorage de certificación si hay compras simuladas
+                try {
+                    const rawCert = localStorage.getItem('gy_cert_purchases_v1');
+                    if (rawCert) {
+                        let cList = JSON.parse(rawCert);
+                        if (Array.isArray(cList)) {
+                            if (delta < 0) {
+                                let reduced = false;
+                                cList = cList.filter(p => {
+                                    if (reduced) return true;
+                                    const matchUser = !p.userId || String(p.userId) === String(userId) || p.userId === 'guest';
+                                    const matchMonth = normalizarMesClave(p.membershipMonth || p.startsAt) === mKey;
+                                    if (matchUser && matchMonth && (p.purchaseType === 'clase_especial' || p.purchaseType === 'bono_ilimitado')) {
+                                        reduced = true;
+                                        return false; // retirar de cert
+                                    }
+                                    return true;
+                                });
+                                localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(cList));
+                            }
+                        }
+                    }
+                } catch (eCert) {}
+
+                // 2. Consultar filas reales de la BD
                 const { data: allRows, error: errFetch } = await client.from('bonos_clases_especiales')
-                    .select('id, mes, saldo')
+                    .select('id, mes, saldo, origen')
                     .eq('user_id', userId);
 
-                if (errFetch) throw errFetch;
+                if (errFetch) console.warn('Aviso consulta bonos_clases_especiales:', errFetch);
 
-                const rows = (allRows || []).filter(r => normalizarMesClave(r.mes) === mKey);
+                // Filtrar solo filas reales con id numérico válido en BD
+                const realRows = (allRows || []).filter(r => {
+                    const isNumId = r.id && !isNaN(Number(r.id)) && Number(r.id) > 0;
+                    return isNumId && normalizarMesClave(r.mes) === mKey;
+                });
 
-                if (rows && rows.length > 0) {
-                    const totalSaldo = rows.reduce((sum, r) => sum + toSafeNumber(r.saldo), 0);
+                if (realRows.length > 0) {
+                    const totalSaldo = realRows.reduce((sum, r) => sum + toSafeNumber(r.saldo), 0);
                     const nuevoSaldo = Math.max(0, totalSaldo + delta);
 
-                    const { error: errUpd } = await client.from('bonos_clases_especiales')
-                        .update({ saldo: nuevoSaldo, mes: mesDate, updated_at: new Date().toISOString() })
-                        .eq('id', rows[0].id);
-                    if (errUpd) throw errUpd;
-
-                    if (rows.length > 1) {
-                        const duplicateIds = rows.slice(1).map(r => r.id);
+                    if (nuevoSaldo === 0) {
+                        // Si el saldo llega a 0, eliminar las filas en BD para limpieza total
                         await client.from('bonos_clases_especiales')
                             .delete()
-                            .in('id', duplicateIds);
+                            .in('id', realRows.map(r => Number(r.id)));
+                    } else {
+                        const { error: errUpd } = await client.from('bonos_clases_especiales')
+                            .update({ saldo: nuevoSaldo, mes: mesDate, updated_at: new Date().toISOString() })
+                            .eq('id', Number(realRows[0].id));
+                        if (errUpd) throw errUpd;
+
+                        if (realRows.length > 1) {
+                            const duplicateIds = realRows.slice(1).map(r => Number(r.id));
+                            await client.from('bonos_clases_especiales')
+                                .delete()
+                                .in('id', duplicateIds);
+                        }
                     }
                 } else if (delta > 0) {
                     const { error: errIns } = await client.from('bonos_clases_especiales')
                         .insert({ user_id: userId, mes: mesDate, saldo: delta, origen: 'admin_manual' });
                     if (errIns) throw errIns;
+                } else if (delta < 0) {
+                    // Si delta < 0 y no había fila numérica real en BD, limpiar cualquier registro residual para ese mes
+                    await client.from('bonos_clases_especiales')
+                        .delete()
+                        .eq('user_id', userId)
+                        .eq('mes', mesDate);
                 }
 
                 if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();

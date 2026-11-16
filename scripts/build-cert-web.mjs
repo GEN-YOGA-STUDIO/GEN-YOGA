@@ -388,6 +388,20 @@ for (const file of htmls) {
     }
   }
 
+  function removeCertPurchases(filterFn) {
+    try {
+      var all = getCertPurchases();
+      var remaining = all.filter(function (p) {
+        return !filterFn(p);
+      });
+      localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(remaining));
+      return all.length - remaining.length;
+    } catch (e) {
+      console.warn('[cert-simulator] Error eliminando compras simuladas:', e);
+      return 0;
+    }
+  }
+
   // Consolidación en la base de datos real compartida (Supabase) usando puente staff de certificación
   function consolidarCompraEnBDCert(targetUid, type, bnds) {
     if (!targetUid || targetUid === 'guest') return Promise.resolve();
@@ -556,7 +570,7 @@ for (const file of htmls) {
           var exists = cList.some(function (row) {
             return String(row.id) === String(sim.id) ||
                    (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (String(row.user_id) === String(targetUid) && row.plan_type === sim.planType && (row.membership_month === sim.membershipMonth + '-01' || (row.starts_at && sim.startsAt && Math.abs(Date.parse(row.starts_at) - Date.parse(sim.startsAt)) < 3600000)));
+                   (String(row.user_id) === String(targetUid) && row.plan_type === sim.planType && (row.membership_month === sim.membershipMonth + '-01' || String(row.membership_month).slice(0, 7) === sim.membershipMonth));
           });
           if (!exists) {
             cList.unshift({
@@ -588,7 +602,7 @@ for (const file of htmls) {
           var existsU = curU.some(function (row) {
             return String(row.id) === String(sim.id) ||
                    (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (String(row.user_id) === String(targetUid) && row.membership_month === sim.membershipMonth + '-01');
+                   (String(row.user_id) === String(targetUid) && (row.membership_month === sim.membershipMonth + '-01' || String(row.membership_month).slice(0, 7) === sim.membershipMonth));
           });
           if (!existsU) {
             curU.unshift({
@@ -643,16 +657,19 @@ for (const file of htmls) {
       if (specialList.length > 0) {
         var curS = Array.isArray(data) ? data.slice() : [];
         specialList.forEach(function (sim) {
+          if (typeof sim.saldo !== 'undefined' && Number(sim.saldo) <= 0) return;
           var targetUid = sim.userId || currentUserId;
           var existsS = curS.some(function (row) {
-            return row.checkout_session_id === sim.sessionId || row.id === sim.id;
+            return row.checkout_session_id === sim.sessionId ||
+                   String(row.id) === String(sim.id) ||
+                   (String(row.user_id) === String(targetUid) && String(row.mes).slice(0, 7) === sim.membershipMonth);
           });
           if (!existsS) {
             curS.push({
               id: sim.id,
               user_id: targetUid,
               mes: sim.membershipMonth + '-01',
-              saldo: 1,
+              saldo: typeof sim.saldo !== 'undefined' ? Number(sim.saldo) : 1,
               origen: (sim.purchaseType === 'bono_ilimitado' ? 'bono_ilimitado' : 'compra_stripe'),
               checkout_session_id: sim.sessionId,
               created_at: sim.purchasedAt
@@ -847,15 +864,53 @@ for (const file of htmls) {
     }
   }
 
-  function wrapBuilder(builder, table) {
+  function wrapBuilder(builder, table, meta) {
     if (!builder || typeof builder !== 'object') return builder;
+    meta = meta || { op: 'select', filters: {}, updateValues: null };
     return new Proxy(builder, {
       get: function (target, prop) {
         if (prop === 'then') {
           return function (onFulfilled, onRejected) {
+            // Interceptar delete o update sobre un ID simulado de certificación (cert_...)
+            if (meta.filters.id && typeof meta.filters.id === 'string' && meta.filters.id.indexOf('cert_') === 0) {
+              if (meta.op === 'delete') {
+                removeCertPurchases(function (p) { return String(p.id) === String(meta.filters.id); });
+                var resDel = { data: null, error: null };
+                return onFulfilled ? onFulfilled(resDel) : resDel;
+              }
+              if (meta.op === 'update') {
+                var all = getCertPurchases();
+                all.forEach(function (p) {
+                  if (String(p.id) === String(meta.filters.id)) {
+                    if (meta.updateValues && typeof meta.updateValues.saldo !== 'undefined') {
+                      p.saldo = meta.updateValues.saldo;
+                    }
+                  }
+                });
+                localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(all));
+                var resUpd = { data: meta.updateValues, error: null };
+                return onFulfilled ? onFulfilled(resUpd) : resUpd;
+              }
+            }
             return target.then(function (res) {
               try {
-                var augmented = augmentCertQueryResult(table, res);
+                if (meta.op === 'delete' && meta.filters.user_id) {
+                  removeCertPurchases(function (p) {
+                    var matchUser = !p.userId || String(p.userId) === String(meta.filters.user_id) || p.userId === 'guest';
+                    if (!matchUser) return false;
+                    if (meta.filters.membership_month) {
+                      var mK = String(meta.filters.membership_month).slice(0, 7);
+                      var pK = String(p.membershipMonth || (p.startsAt && p.startsAt.slice(0, 7)));
+                      if (pK !== mK) return false;
+                    }
+                    if (meta.filters.plan_type && p.planType && p.planType !== meta.filters.plan_type) return false;
+                    if (table === 'unlimited_membership_periods' && p.purchaseType !== 'bono_ilimitado') return false;
+                    if (table === 'monthly_membership_periods' && p.purchaseType !== 'bono_mensual' && p.purchaseType !== 'bono_inicial') return false;
+                    if (table === 'bonos_clases_especiales' && p.purchaseType !== 'clase_especial' && p.purchaseType !== 'bono_ilimitado') return false;
+                    return true;
+                  });
+                }
+                var augmented = (meta.op === 'select') ? augmentCertQueryResult(table, res) : res;
                 return onFulfilled ? onFulfilled(augmented) : augmented;
               } catch (err) {
                 console.warn('[cert-simulator] Error en interceptor de ' + table + ':', err);
@@ -867,9 +922,19 @@ for (const file of htmls) {
         var val = target[prop];
         if (typeof val === 'function') {
           return function () {
+            var nextMeta = Object.assign({}, meta);
+            nextMeta.filters = Object.assign({}, meta.filters);
+            if (prop === 'delete') {
+              nextMeta.op = 'delete';
+            } else if (prop === 'update') {
+              nextMeta.op = 'update';
+              nextMeta.updateValues = arguments[0];
+            } else if (prop === 'eq') {
+              nextMeta.filters[arguments[0]] = arguments[1];
+            }
             var res = val.apply(target, arguments);
             if (res && typeof res === 'object' && typeof res.then === 'function') {
-              return wrapBuilder(res, table);
+              return wrapBuilder(res, table, nextMeta);
             }
             return res;
           };
@@ -899,6 +964,46 @@ for (const file of htmls) {
 
     var origRpc = c.rpc;
     c.rpc = function (fn, args) {
+      if (fn === 'admin_retirar_mes_ilimitado' || fn === 'admin_retirar_periodo_ilimitado' || fn === 'admin_configurar_bono_mensual') {
+        var uId = (args && args.p_user_id) || null;
+        var pId = (args && args.p_period_id) || null;
+        var pMes = (args && args.p_mes) || null;
+        removeCertPurchases(function (p) {
+          if (p.purchaseType !== 'bono_ilimitado') return false;
+          if (uId && p.userId && String(p.userId) !== String(uId)) return false;
+          if (pId && String(p.id) === String(pId)) return true;
+          if (pMes) {
+            var mK = String(pMes).slice(0, 7);
+            var pK = String(p.membershipMonth || (p.startsAt && p.startsAt.slice(0, 7)));
+            if (pK === mK) return true;
+          }
+          if (!pId && !pMes) return true;
+          return false;
+        });
+      }
+      if (fn === 'admin_retirar_periodo_mensual' ||
+          (fn === 'admin_asignar_mes_bono_mensual' && args && args.p_activo === false) ||
+          (fn === 'admin_asignar_mes_bono_inicial' && args && args.p_activo === false)) {
+        var uId = (args && args.p_user_id) || null;
+        var pId = (args && args.p_period_id) || null;
+        var pMes = (args && args.p_membership_month) || null;
+        var isInitOnly = fn === 'admin_asignar_mes_bono_inicial';
+        var isMonthOnly = fn === 'admin_asignar_mes_bono_mensual';
+        removeCertPurchases(function (p) {
+          if (isInitOnly && p.purchaseType !== 'bono_inicial' && p.planType !== 'bono_inicial') return false;
+          if (isMonthOnly && p.purchaseType !== 'bono_mensual' && p.planType !== 'bono_mensual') return false;
+          if (!isInitOnly && !isMonthOnly && p.purchaseType !== 'bono_mensual' && p.purchaseType !== 'bono_inicial') return false;
+          if (uId && p.userId && String(p.userId) !== String(uId)) return false;
+          if (pId && String(p.id) === String(pId)) return true;
+          if (pMes) {
+            var mK = String(pMes).slice(0, 7);
+            var pK = String(p.membershipMonth || (p.startsAt && p.startsAt.slice(0, 7)));
+            if (pK === mK) return true;
+          }
+          if (!pId && !pMes) return true;
+          return false;
+        });
+      }
       var rpcPromise = origRpc.apply(this, arguments);
       if (fn === 'reservar_con_bono') {
         return rpcPromise.then(function (res) {
