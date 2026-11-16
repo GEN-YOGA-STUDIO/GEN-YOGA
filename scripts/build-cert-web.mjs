@@ -195,9 +195,10 @@ for (const file of htmls) {
   // pero el body reserva su altura (34 px escritorio / 48 px móvil) para no
   // tapar el marquee, el botón INICIO ni los títulos. En móvil el texto puede
   // ocupar dos líneas; el padding se dimensiona para ambas.
+  const versionBadge = `<strong style="background:#D27D60;color:#fff;padding:2px 8px;border-radius:12px;font-weight:800;letter-spacing:0.04em;margin:0 5px;box-shadow:0 1px 3px rgba(0,0,0,0.3);display:inline-block;">v${pkg.version}</strong>`;
   const textoBanner = pagosLive
-    ? 'CERT · ENTORNO DE PRUEBAS · PAGOS LIVE HABILITADOS · MISMA BD QUE PRODUCCIÓN'
-    : 'CERT · ENTORNO DE PRUEBAS · SIMULACIÓN DE PAGOS ACTIVA (SIN CARGO REAL) · MISMA BD QUE PRODUCCIÓN';
+    ? `CERT · ENTORNO DE PRUEBAS · ${versionBadge} · PAGOS LIVE HABILITADOS · MISMA BD QUE PRODUCCIÓN`
+    : `CERT · ENTORNO DE PRUEBAS · ${versionBadge} · SIMULACIÓN DE PAGOS ACTIVA (SIN CARGO REAL) · MISMA BD QUE PRODUCCIÓN`;
   const banner = `<style id="gy-cert-banner-style">
   #gy-cert-banner { position:fixed; top:0; left:0; right:0; z-index:9997; background:rgba(38,22,12,.96); color:#f8f6f2; font:600 12px/1.35 system-ui,-apple-system,sans-serif; text-align:center; letter-spacing:.03em; padding:5px 12px; }
   #gy-cert-banner * { pointer-events:auto; }
