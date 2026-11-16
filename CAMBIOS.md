@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.5.7 — 16 nov 2026 · Incidencia
+
+- **Descripción:** Mostrar fecha límite y días restantes para gastar bonos en detalle de usuario y panel admin (ámbito: bonos)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.5.7`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.5.7.md`
+
 ## v18.5.6 — 16 nov 2026 · Incidencia
 
 - **Descripción:** Garantizar fechas de 30 días al comprar bonos con tarjeta en certificación (ámbito: bonos)

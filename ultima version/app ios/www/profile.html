@@ -4691,7 +4691,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.6 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.7 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -9940,6 +9940,15 @@
             const mesTituloRaw = new Date(yyyy, mm - 1, 1).toLocaleDateString(getCurrentLocale(), { month: 'long', year: 'numeric' });
             const mesTitulo = `${mesTituloRaw.charAt(0).toUpperCase()}${mesTituloRaw.slice(1)}`;
 
+            const hasExactDates = Boolean(selectedPeriod.starts_at && selectedPeriod.ends_at);
+            const dIniObj = hasExactDates ? new Date(selectedPeriod.starts_at) : new Date(yyyy, mm - 1, 1);
+            const dFinObj = hasExactDates ? new Date(selectedPeriod.ends_at) : new Date(yyyy, mm, 0, 23, 59, 59);
+            const fIniFmt = dIniObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const fFinFmt = dFinObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const fFinLarga = dFinObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+            const msRestantes = dFinObj.getTime() - ahoraMs;
+            const diasRestantes = Math.max(0, Math.ceil(msRestantes / (1000 * 60 * 60 * 24)));
+
             // Consultar reservas del periodo activo en Supabase (ventana starts_at .. ends_at)
             let userMonthBookings = [];
             try {
@@ -10004,8 +10013,12 @@
                     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 mb-2.5 scrollbar-thin">
                         ${allUserPeriods.map(p => {
                             const [py, pm] = p.mesKey.split('-');
-                            const pLabel = `${nombresMeses[parseInt(pm, 10) - 1]} ${py}`;
-                            const isSel = p.mesKey === targetMesKey;
+                            let pLabel = `${nombresMeses[parseInt(pm, 10) - 1]} ${py}`;
+                            if (p.ends_at) {
+                                const dFinTab = new Date(p.ends_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                                pLabel = `Hasta ${dFinTab}`;
+                            }
+                            const isSel = p.id ? String(p.id) === String(selectedPeriod.id) : (p.mesKey === targetMesKey && p.tipo === selectedPeriod.tipo);
                             return `
                                 <button type="button" onclick="abrirDetalleBonoMensualSemanas(null, '${p.tipo}', '${p.id}', '${p.mesKey}')"
                                     class="px-3 py-1 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${isSel ? 'bg-cocoa text-white shadow-xs' : 'bg-cocoa/5 text-cocoa/80 hover:bg-cocoa/10 border border-cocoa/10'}">
@@ -10030,14 +10043,17 @@
                 disponibleHtml = `
                     <div class="flex items-center justify-between gap-2 p-3 rounded-2xl bg-white border border-emerald-200/80 shadow-2xs">
                         <div class="min-w-0">
-                            <div class="flex items-center gap-1.5">
-                                <strong class="text-xs font-black text-emerald-950">${escapeHtml(mesTitulo)}</strong>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <strong class="text-xs font-black text-emerald-950">Válido hasta el ${escapeHtml(fFinLarga)}</strong>
+                                <span class="text-[10px] text-emerald-800 font-bold bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300">quedan ${diasRestantes} días</span>
                                 <span class="text-[10px] text-cocoa/60 font-semibold">(sin límite semanal)</span>
                             </div>
-                            <span class="text-xs font-black text-emerald-800 flex items-center gap-1 mt-0.5">
+                            <span class="text-xs font-black text-emerald-800 flex items-center gap-1 mt-1">
                                 <i class="ph-bold ph-check-circle text-emerald-600 text-sm"></i> ${escapeHtml(badgeTxt)}
                             </span>
-                            <p class="text-[10px] text-emerald-900/70 mt-0.5">Gástalas a tu ritmo en cualquier clase regular del mes.</p>
+                            <p class="text-[11px] text-emerald-900/80 mt-1">
+                                <i class="ph-bold ph-calendar text-emerald-600"></i> Periodo de 30 días: <strong>${escapeHtml(fIniFmt)} – ${escapeHtml(fFinFmt)}</strong>. Gástalas a tu ritmo en cualquier clase regular hasta el <strong>${escapeHtml(fFinLarga)}</strong>.
+                            </p>
                         </div>
                         <button type="button" onclick="Swal.close(); if(typeof switchTab==='function'){switchTab('clases');}else{window.location.href='clases.html';}"
                             class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 shrink-0"
@@ -10050,7 +10066,7 @@
             } else {
                 disponibleHtml = `
                     <p class="text-xs text-cocoa/75 italic p-3 text-center bg-white/70 rounded-2xl border border-dashed border-cocoa/15">
-                        Has consumido las ${maxCupo} clases de tu bono para ${escapeHtml(mesTitulo)}. Para seguir asistiendo puedes adquirir una clase suelta o un pack.
+                        Has consumido las ${maxCupo} clases de tu bono válido hasta el ${escapeHtml(fFinLarga)}. Para seguir asistiendo puedes adquirir una clase suelta o un pack.
                     </p>
                 `;
             }
@@ -10088,7 +10104,7 @@
                     <div class="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between flex-wrap gap-1">
                             <span class="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                                <i class="ph-bold ph-bookmark-simple text-slate-700"></i> Clases Reservadas en ${escapeHtml(mesTitulo)}
+                                <i class="ph-bold ph-bookmark-simple text-slate-700"></i> Clases Reservadas del periodo (${escapeHtml(fIniFmt)} – ${escapeHtml(fFinFmt)})
                             </span>
                             ${badgeEstadoMes}
                         </div>
@@ -10107,11 +10123,11 @@
 
             let explicacionModalidad = '';
             if (selectedPeriod.tipo === 'bono_inicial') {
-                explicacionModalidad = profileT('profile_explanation_inicial', 'Tu Bono Inicial (40 €) incluye 4 clases regulares durante tus 30 días de vigencia para gastar a tu ritmo, sin límite por semanas.');
+                explicacionModalidad = `Tu Bono Inicial (40 €) incluye 4 clases regulares para gastar a tu ritmo sin límite por semanas. Válidas hasta el <strong>${escapeHtml(fFinLarga)}</strong> (quedan <strong>${diasRestantes} días</strong> de vigencia).`;
             } else if (selectedPeriod.tipo === 'bono_mensual') {
-                explicacionModalidad = profileT('profile_explanation_mensual', 'Tu Bono Mensual (65 €) incluye 8 clases regulares durante tus 30 días de vigencia para gastar a tu ritmo, sin límite por semanas.');
+                explicacionModalidad = `Tu Bono Mensual (65 €) incluye 8 clases regulares para gastar a tu ritmo sin límite por semanas. Válidas hasta el <strong>${escapeHtml(fFinLarga)}</strong> (quedan <strong>${diasRestantes} días</strong> de vigencia).`;
             } else {
-                explicacionModalidad = profileT('profile_explanation_ilimitado', 'Tu Bono Ilimitado (90 €) incluye clases regulares ilimitadas + 1 clase especial gratis y 1 invitado durante tus 30 días de vigencia.');
+                explicacionModalidad = `Tu Bono Ilimitado (90 €) incluye clases regulares ilimitadas + 1 clase especial gratis y 1 invitado. Válido hasta el <strong>${escapeHtml(fFinLarga)}</strong> (quedan <strong>${diasRestantes} días</strong> de vigencia).`;
             }
 
             await Swal.fire({
@@ -10127,7 +10143,12 @@
                         <!-- Cabecera del Mes y Modalidad -->
                         <div class="p-3 bg-cocoa/5 rounded-2xl border border-cocoa/10 flex items-center justify-between flex-wrap gap-2">
                             <div>
-                                <h3 class="text-xs font-black text-cocoa uppercase tracking-wider">${escapeHtml(mesTitulo)}</h3>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <h3 class="text-xs font-black text-cocoa uppercase tracking-wider">${escapeHtml(mesTitulo)}</h3>
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                        📅 Válido hasta el ${escapeHtml(fFinFmt)} (${diasRestantes}d restantes)
+                                    </span>
+                                </div>
                                 <p class="text-[11px] text-cocoa/75 mt-0.5">${explicacionModalidad}</p>
                             </div>
                             <span class="text-[10px] font-black px-2.5 py-1 rounded-xl shadow-2xs" style="${selectedPeriod.badgeStyle || ''}">
@@ -10385,49 +10406,63 @@
                     const esMensual = bono.tipo === 'bono_mensual';
 
                     let mesNombre = profileT('profile_no_month', 'Sin mes');
+                    let subTextoPill = mesNombre;
+                    let tooltipPill = '';
                     if (bono.period) {
                         const raw = formatMadridDate(bono.period?.starts_at || (bono.period.membership_month ? `${bono.period.membership_month}T00:00:00.000Z` : new Date()), { month: 'long', year: 'numeric' });
                         if (raw && raw !== '--/--/----') {
                             mesNombre = raw.charAt(0).toUpperCase() + raw.slice(1);
                         }
+                        if (bono.period?.ends_at) {
+                            const finDate = new Date(Date.parse(bono.period.ends_at) - 1);
+                            const dFinCorta = formatMadridDate(finDate, { day: 'numeric', month: 'short' });
+                            const dFinFull = formatMadridDate(finDate);
+                            const msRest = Date.parse(bono.period.ends_at) - now;
+                            const dRest = Math.max(0, Math.ceil(msRest / (1000 * 60 * 60 * 24)));
+                            subTextoPill = `Hasta ${dFinCorta}`;
+                            tooltipPill = ` · Válido hasta el ${dFinFull} (${dRest}d restantes)`;
+                        } else {
+                            subTextoPill = mesNombre;
+                        }
                     } else if (bono.mesClave) {
                         mesNombre = typeof naturalMonthOptionLabel === 'function' ? naturalMonthOptionLabel(bono.mesClave) : bono.mesClave;
+                        subTextoPill = mesNombre;
                     }
 
                     if (esInicial) {
                         return `
             <!-- BONO INICIAL (BRONCE METÁLICO) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_inicial', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffbf7 0%, #f7ede2 50%, #edd3ba 100%); border: 1.5px solid #8f6b2d; box-shadow: 0 1px 4px rgba(143, 107, 45, 0.2);" title="${escapeHtml(profileTReplace('profile_card_title_inicial', 'Bono Inicial activo: {month} (4 cl/mes) · Clic para ver desglose', { month: mesNombre }))}">
+            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_inicial', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffbf7 0%, #f7ede2 50%, #edd3ba 100%); border: 1.5px solid #8f6b2d; box-shadow: 0 1px 4px rgba(143, 107, 45, 0.2);" title="${escapeHtml(profileTReplace('profile_card_title_inicial', 'Bono Inicial activo: {month} (4 cl/30d) · Clic para ver desglose', { month: (subTextoPill !== mesNombre ? `${subTextoPill} (${mesNombre})` : mesNombre) + tooltipPill }))}">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #8f6b2d 0%, #5e4213 100%);">
                     <i class="ph-fill ph-plant text-sm"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
                     <span class="text-[9px] font-black uppercase tracking-wider text-[#8f6b2d]">${escapeHtml(profileT('profile_balance_bono_inicial', 'Bono Inicial'))}</span>
-                    <span class="text-xs sm:text-[13px] font-black text-[#5e4213] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
+                    <span class="text-xs sm:text-[13px] font-black text-[#5e4213] mt-0.5 whitespace-nowrap">${escapeHtml(subTextoPill)}</span>
                 </div>
             </div>`;
                     } else if (esMensual) {
                         return `
             <!-- BONO MENSUAL (PLATA METÁLICA) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_mensual', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.22);" title="${escapeHtml(profileTReplace('profile_card_title_mensual', 'Bono Mensual activo: {month} (8 cl/mes) · Clic para ver desglose', { month: mesNombre }))}">
+            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_mensual', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border: 1.5px solid #94a3b8; box-shadow: 0 1px 4px rgba(148, 163, 184, 0.22);" title="${escapeHtml(profileTReplace('profile_card_title_mensual', 'Bono Mensual activo: {month} (8 cl/30d) · Clic para ver desglose', { month: (subTextoPill !== mesNombre ? `${subTextoPill} (${mesNombre})` : mesNombre) + tooltipPill }))}">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%);">
                     <i class="ph-fill ph-calendar-check text-sm"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
                     <span class="text-[9px] font-black uppercase tracking-wider text-[#334155]">${escapeHtml(profileT('profile_balance_bono_mensual', 'Bono Mensual'))}</span>
-                    <span class="text-xs sm:text-[13px] font-black text-[#0f172a] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
+                    <span class="text-xs sm:text-[13px] font-black text-[#0f172a] mt-0.5 whitespace-nowrap">${escapeHtml(subTextoPill)}</span>
                 </div>
             </div>`;
                     } else {
                         return `
             <!-- BONO ILIMITADO (DORADO METÁLICO) -->
-            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_ilimitado', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.2);" title="${escapeHtml(profileTReplace('profile_card_title_ilimitado', 'Bono Ilimitado activo: {month} · Clic para ver desglose', { month: mesNombre }))}">
+            <div role="button" tabindex="0" onclick="abrirDetalleBonoMensualSemanas(event, 'bono_ilimitado', '${bono.period?.id || ''}', '${bono.mesClave || bono.period?.membership_month || ''}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="relative flex items-center gap-2.5 px-4 sm:px-5 py-2 rounded-xl shadow-2xs transition cursor-pointer group hover:scale-[1.02] hover:z-10 shrink-0 min-w-[175px] sm:min-w-[205px]" style="background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 50%, #fde68a 100%); border: 1.5px solid #d97706; box-shadow: 0 1px 4px rgba(217, 119, 6, 0.2);" title="${escapeHtml(profileTReplace('profile_card_title_ilimitado', 'Bono Ilimitado activo: {month} · Clic para ver desglose', { month: (subTextoPill !== mesNombre ? `${subTextoPill} (${mesNombre})` : mesNombre) + tooltipPill }))}">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs" style="background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);">
                     <i class="ph-fill ph-infinity text-sm"></i>
                 </div>
                 <div class="flex flex-col text-left leading-none">
                     <span class="text-[9px] font-black uppercase tracking-wider text-[#92400e]">${escapeHtml(profileT('common_monthly_plan', 'Bono Ilimitado'))}</span>
-                    <span class="text-xs sm:text-[13px] font-black text-[#78350f] mt-0.5 whitespace-nowrap">${escapeHtml(mesNombre)}</span>
+                    <span class="text-xs sm:text-[13px] font-black text-[#78350f] mt-0.5 whitespace-nowrap">${escapeHtml(subTextoPill)}</span>
                 </div>
             </div>`;
                     }
@@ -18606,17 +18641,20 @@
                 const [yyyy, mm] = (mKey || '').split('-');
                 let mesLabel = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${String(yyyy).slice(-2)}` : (mKey || '30d');
                 let fechaRango = mesLabel;
+                let hastaLabel = mesLabel;
                 if (p.starts_at && p.ends_at) {
                     const dIni = new Date(p.starts_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
                     const dFin = new Date(p.ends_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
                     fechaRango = `${dIni} – ${dFin}`;
+                    hastaLabel = `hasta ${dFin}`;
                 }
                 const esActual = sigueVigente || mKey === currentMonthKey;
+                const diasRest = endsMs > ahoraMs ? Math.max(0, Math.ceil((endsMs - ahoraMs) / (1000 * 60 * 60 * 24))) : 0;
                 badges.push(`
                     <button type="button" onclick="abrirGestionBonosUsuario('${escapeHtml(String(u.id))}')" 
                         class="bg-emerald-100 hover:bg-emerald-200 text-emerald-950 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-300 flex items-center gap-1 shadow-2xs transition cursor-pointer" 
-                        title="${esActual ? 'Mes Ilimitado activo' : 'Mes Ilimitado próximo'} (${fechaRango}) (Clic para gestionar)">
-                        <i class="ph-bold ph-infinity text-emerald-700"></i> Ilimitado (${mesLabel})
+                        title="${esActual ? 'Mes Ilimitado activo' : 'Mes Ilimitado próximo'} (${fechaRango}${diasRest > 0 ? ` · ${diasRest}d restantes` : ''}) (Clic para gestionar)">
+                        <i class="ph-bold ph-infinity text-emerald-700"></i> Ilimitado (${hastaLabel})
                     </button>
                 `);
             });
@@ -18649,27 +18687,30 @@
                 const [yyyy, mm] = (mKey || '').split('-');
                 let mesLabel = mm ? `${nombresMeses[parseInt(mm, 10) - 1]} ${String(yyyy).slice(-2)}` : (mKey || '30d');
                 let fechaRango = mesLabel;
+                let hastaLabel = mesLabel;
                 if (p.starts_at && p.ends_at) {
                     const dIni = new Date(p.starts_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
                     const dFin = new Date(p.ends_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
                     fechaRango = `${dIni} – ${dFin}`;
+                    hastaLabel = `hasta ${dFin}`;
                 }
                 const esActual = sigueVigente || mKey === currentMonthKey;
+                const diasRest = endsMs > ahoraMs ? Math.max(0, Math.ceil((endsMs - ahoraMs) / (1000 * 60 * 60 * 24))) : 0;
 
                 if (esInicial) {
                     badges.push(`
                         <button type="button" onclick="abrirGestionBonosUsuario('${escapeHtml(String(u.id))}')" 
                             class="bg-[#faf6f0] hover:bg-[#f3ebd9] text-[#715019] text-[10px] font-black px-2 py-0.5 rounded-md border border-[#e6d7c3] flex items-center gap-1 shadow-2xs transition cursor-pointer" 
-                            title="${esActual ? 'Bono Inicial (4 cl/30d) activo' : 'Bono Inicial (4 cl/30d) próximo'} (${fechaRango}) (Clic para gestionar)">
-                            <i class="ph-bold ph-plant text-[#8f6b2d]"></i> Inicial (${mesLabel})
+                            title="${esActual ? 'Bono Inicial (4 cl/30d) activo' : 'Bono Inicial (4 cl/30d) próximo'} (${fechaRango}${diasRest > 0 ? ` · ${diasRest}d restantes` : ''}) (Clic para gestionar)">
+                            <i class="ph-bold ph-plant text-[#8f6b2d]"></i> Inicial (${hastaLabel})
                         </button>
                     `);
                 } else {
                     badges.push(`
                         <button type="button" onclick="abrirGestionBonosUsuario('${escapeHtml(String(u.id))}')" 
                             class="bg-amber-100 hover:bg-amber-200 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1 shadow-2xs transition cursor-pointer" 
-                            title="${esActual ? 'Bono Mensual (8 cl/30d) activo' : 'Bono Mensual (8 cl/30d) próximo'} (${fechaRango}) (Clic para gestionar)">
-                            <i class="ph-bold ph-calendar-check text-amber-700"></i> Mensual (${mesLabel})
+                            title="${esActual ? 'Bono Mensual (8 cl/30d) activo' : 'Bono Mensual (8 cl/30d) próximo'} (${fechaRango}${diasRest > 0 ? ` · ${diasRest}d restantes` : ''}) (Clic para gestionar)">
+                            <i class="ph-bold ph-calendar-check text-amber-700"></i> Mensual (${hastaLabel})
                         </button>
                     `);
                 }
@@ -24391,10 +24432,13 @@
                         ? '<span class="text-[9px] bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded shadow-2xs">Activo</span>'
                         : '<span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-200">Próximo</span>';
                     let rangoLabel = mesLabel;
+                    let hastaLabel = '';
                     if (p.starts_at && p.ends_at) {
                         const dIni = new Date(p.starts_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
                         const dFin = new Date(p.ends_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        const diasRest = endsAtMs > ahora ? Math.max(0, Math.ceil((endsAtMs - ahora) / (1000 * 60 * 60 * 24))) : 0;
                         rangoLabel = `${dIni} – ${dFin}`;
+                        hastaLabel = `<span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Hasta el ${dFin} (${diasRest}d rest.)</span>`;
                     }
                     return `
                         <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-white border border-slate-200 shadow-2xs w-full">
@@ -24406,6 +24450,7 @@
                                 <span class="text-[10px] text-slate-500 font-semibold">(30 días)</span>
                                 ${p.badgeTipo}
                                 ${badgeEstado}
+                                ${hastaLabel}
                             </div>
                             <button type="button" onclick="${p.accionQuitar}"
                                 class="px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs shrink-0"
@@ -24424,6 +24469,22 @@
                 `;
             }
 
+            let resumenVigenciasHtml = '';
+            if (todosPeriodosMensuales.length > 0) {
+                const bonosVigentesTxt = todosPeriodosMensuales.map(p => {
+                    const nomBono = p.tipo === 'inicial' ? 'Bono Inicial' : (p.tipo === 'mensual' ? 'Bono Mensual' : 'Bono Ilimitado');
+                    if (p.ends_at) {
+                        const dFin = new Date(p.ends_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        const dRest = Math.max(0, Math.ceil((new Date(p.ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                        return `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-cocoa bg-white/90 px-2 py-0.5 rounded-md border border-cocoa/15 shadow-2xs">⭐ <strong>${nomBono}</strong>: hasta el ${dFin} (${dRest}d restantes)</span>`;
+                    }
+                    return '';
+                }).filter(Boolean).join(' ');
+                if (bonosVigentesTxt) {
+                    resumenVigenciasHtml = `<div class="mt-2 pt-2 border-t border-cocoa/10 flex flex-wrap gap-1.5">${bonosVigentesTxt}</div>`;
+                }
+            }
+
             let htmlReprogList = '';
 
             await Swal.fire({
@@ -24431,8 +24492,11 @@
                 html: `
             <div class="text-left font-sans space-y-3.5 my-2">
                 <div class="p-3 bg-cocoa/5 rounded-xl border border-cocoa/10">
-                    <p class="text-xs font-bold text-cocoa">${escapeHtml(nombre)}</p>
-                    <p class="text-[11px] text-cocoa/50">${escapeHtml(email)}</p>
+                    <div class="flex items-center justify-between flex-wrap gap-1">
+                        <p class="text-xs font-bold text-cocoa">${escapeHtml(nombre)}</p>
+                        <p class="text-[11px] text-cocoa/50">${escapeHtml(email)}</p>
+                    </div>
+                    ${resumenVigenciasHtml}
                 </div>
 
                 <!-- 1. Bonos de 30 Días (Inicial, Mensual, Ilimitado) -->
