@@ -24165,22 +24165,27 @@
                     const badgeEstado = esVigente
                         ? '<span class="text-[9px] bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded shadow-2xs">Activo</span>'
                         : '<span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded border border-blue-200">Próximo</span>';
-                    const finTxt = p.ends_at ? `<span class="text-[10px] text-slate-500 font-medium">Hasta ${new Date(p.ends_at).toLocaleDateString('es-ES')}</span>` : '';
+                    let rangoLabel = mesLabel;
+                    if (p.starts_at && p.ends_at) {
+                        const dIni = new Date(p.starts_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        const dFin = new Date(p.ends_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        rangoLabel = `${dIni} – ${dFin}`;
+                    }
                     return `
                         <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-white border border-slate-200 shadow-2xs w-full">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <span class="flex items-center gap-1 text-xs font-black text-slate-800">
-                                    <i class="ph-bold ph-calendar text-slate-500 text-sm"></i>
-                                    ${mesLabel}
+                                    <i class="ph-bold ph-calendar-check text-emerald-600 text-sm"></i>
+                                    ${rangoLabel}
                                 </span>
+                                <span class="text-[10px] text-slate-500 font-semibold">(30 días)</span>
                                 ${p.badgeTipo}
                                 ${badgeEstado}
-                                ${finTxt}
                             </div>
                             <button type="button" onclick="${p.accionQuitar}"
                                 class="px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-2xs shrink-0"
                                 style="background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #b91c1c !important;"
-                                title="Quitar este mes contratado">
+                                title="Quitar este bono contratado">
                                 <i class="ph-bold ph-trash text-xs"></i> <span>Quitar</span>
                             </button>
                         </div>
@@ -24189,7 +24194,7 @@
             } else {
                 htmlUnifiedMonthlyList = `
                     <div class="w-full py-2 px-3 rounded-xl bg-white/60 border border-dashed border-slate-200 text-xs text-slate-500 italic text-center">
-                        Sin meses de bono contratados actualmente
+                        Sin bonos de 30 días contratados actualmente
                     </div>
                 `;
             }
@@ -24205,45 +24210,45 @@
                     <p class="text-[11px] text-cocoa/50">${escapeHtml(email)}</p>
                 </div>
 
-                <!-- 1. Bonos Mensuales por Mes Natural (Unificado) -->
+                <!-- 1. Bonos de 30 Días (Inicial, Mensual, Ilimitado) -->
                 <div class="p-3.5 rounded-2xl border ${todosPeriodosMensuales.length > 0 ? 'border-emerald-300 bg-emerald-50/50' : 'border-gray-200 bg-gray-50/80'} space-y-3">
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <i class="ph-bold ph-calendar-star ${todosPeriodosMensuales.length > 0 ? 'text-emerald-700' : 'text-gray-400'} text-xl"></i>
                             <div>
-                                <p class="text-xs font-bold text-cocoa">1. Bonos Mensuales por Mes Natural</p>
-                                <p class="text-[10px] ${todosPeriodosMensuales.length > 0 ? 'text-emerald-800 font-bold' : 'text-gray-500'}">Inicial (40 €) · Mensual (65 €) · Ilimitado (90 €)</p>
+                                <p class="text-xs font-bold text-cocoa">1. Bonos de 30 Días (Inicial, Mensual, Ilimitado)</p>
+                                <p class="text-[10px] ${todosPeriodosMensuales.length > 0 ? 'text-emerald-800 font-bold' : 'text-gray-500'}">Inicial (40 € · 4 cl) · Mensual (65 € · 8 cl) · Ilimitado (90 € · ilimitadas)</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Fila 1: Botones para asignar cualquiera de los 3 bonos -->
                     <div class="flex items-center gap-2 flex-wrap">
-                        <button type="button" onclick="asignarMesBonoInicialAdmin('${userId}')"
+                        <button type="button" onclick="asignarBonoAdmin('${userId}', 'bono_inicial')"
                             class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
                             style="background-color: #8f6b2d !important; color: #ffffff !important; border: 1px solid #6e5221 !important;"
-                            title="Asignar Bono Inicial (40 € · 4 clases/mes)">
-                            <i class="ph-bold ph-plant text-xs"></i> <span>+ Inicial (40 €)</span>
+                            title="Asignar Bono Inicial (40 € · 4 clases / 30 días)">
+                            <i class="ph-bold ph-plant text-xs"></i> <span>+ Inicial (40 € · 30d)</span>
                         </button>
-                        <button type="button" onclick="asignarMesBonoMensualAdmin('${userId}')"
+                        <button type="button" onclick="asignarBonoAdmin('${userId}', 'bono_mensual')"
                             class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
                             style="background-color: #d97706 !important; color: #ffffff !important; border: 1px solid #b45309 !important;"
-                            title="Asignar Bono Mensual (65 € · 8 clases/mes)">
-                            <i class="ph-bold ph-calendar text-xs" style="color: #fef3c7 !important;"></i> <span>+ Mensual (65 €)</span>
+                            title="Asignar Bono Mensual (65 € · 8 clases / 30 días)">
+                            <i class="ph-bold ph-calendar text-xs" style="color: #fef3c7 !important;"></i> <span>+ Mensual (65 € · 30d)</span>
                         </button>
-                        <button type="button" onclick="asignarMesIlimitadoAdmin('${userId}')"
+                        <button type="button" onclick="asignarBonoAdmin('${userId}', 'bono_ilimitado')"
                             class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
                             style="background-color: #047857 !important; color: #ffffff !important; border: 1px solid #065f46 !important;"
-                            title="Asignar Bono Ilimitado (90 € · mes completo)">
-                            <i class="ph-bold ph-infinity text-xs" style="color: #a7f3d0 !important;"></i> <span>+ Ilimitado (90 €)</span>
+                            title="Asignar Bono Ilimitado (90 € · clases ilimitadas / 30 días)">
+                            <i class="ph-bold ph-infinity text-xs" style="color: #a7f3d0 !important;"></i> <span>+ Ilimitado (90 € · 30d)</span>
                         </button>
                     </div>
 
-                    <!-- Fila 2: Meses naturales contratados (activos y futuros) y botón Quitar -->
+                    <!-- Fila 2: Bonos contratados y botón Quitar -->
                     <div class="pt-2 border-t border-cocoa/10 space-y-2">
                         <p class="text-[11px] font-bold text-cocoa/80 flex items-center gap-1">
                             <i class="ph-bold ph-calendar-check text-xs text-cocoa/60"></i>
-                            Meses naturales contratados:
+                            Bonos de 30 días activos / contratados:
                         </p>
                         <div class="space-y-1.5">
                             ${htmlUnifiedMonthlyList}
@@ -24821,461 +24826,115 @@
             await abrirGestionBonosUsuario(userId);
         }
 
-        async function asignarMesIlimitadoAdmin(userId) {
-            const hoy = new Date();
-            const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            const monthOptions = [];
-            monthOptions.push('<option value="desde_hoy" selected>🌟 Desde hoy (30 días naturales de acceso ilimitado)</option>');
-            for (let i = 0; i < 12; i++) {
-                const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
-                const y = d.getFullYear();
-                const m = d.getMonth();
-                const val = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-                const label = `${nombresMeses[m]} ${y}`;
-                monthOptions.push(`<option value="${val}">${label} (Mes natural completo)</option>`);
-            }
+        async function asignarBonoAdmin(userId, defaultTipo = 'bono_mensual') {
+            const hoyStr = (typeof madridDateKey === 'function' && madridDateKey(new Date()))
+                || new Date().toISOString().slice(0, 10);
 
-            const { value: mesSeleccionado } = await Swal.fire({
-                title: 'Asignar Mes Ilimitado',
+            const { value: formValues } = await Swal.fire({
+                title: 'Asignar Bono (30 Días)',
                 html: `
-                    <div class="text-left font-sans space-y-3 my-2">
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el periodo que deseas asignar a este alumno. Tendrá acceso a todas las clases regulares de dicho periodo e incluirá 1 clase especial.</p>
+                    <div class="text-left font-sans space-y-3.5 my-2">
+                        <p class="text-xs text-cocoa/80 leading-relaxed">
+                            Selecciona el tipo de bono y la fecha de inicio. La validez será exactamente de <strong>30 días naturales</strong> a partir del día elegido.
+                        </p>
                         <div>
-                            <label class="block text-xs font-bold text-cocoa mb-1">Periodo de Validez:</label>
-                            <select id="swal-select-mes-admin" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
-                                ${monthOptions.join('')}
+                            <label class="block text-xs font-bold text-cocoa mb-1">Tipo de Bono:</label>
+                            <select id="swal-bono-tipo" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none focus:ring-2 focus:ring-olive/40 cursor-pointer">
+                                <option value="bono_inicial" ${defaultTipo === 'bono_inicial' ? 'selected' : ''}>🥉 Bono Inicial (40 € · 4 clases / 30 días)</option>
+                                <option value="bono_mensual" ${defaultTipo === 'bono_mensual' ? 'selected' : ''}>🥈 Bono Mensual (65 € · 8 clases / 30 días)</option>
+                                <option value="bono_ilimitado" ${defaultTipo === 'bono_ilimitado' ? 'selected' : ''}>🥇 Bono Ilimitado (90 € · Clases ilimitadas / 30 días)</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-cocoa mb-1">Fecha de Inicio (1 día):</label>
+                            <input type="date" id="swal-bono-fecha-inicio" value="${hoyStr}" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none focus:ring-2 focus:ring-olive/40 cursor-pointer">
+                        </div>
+                        <div id="swal-bono-preview" class="p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 space-y-1 text-xs text-amber-950">
+                            <!-- Previsualización dinámica -->
                         </div>
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: 'Asignar Mes',
+                confirmButtonText: 'Asignar Bono (30 Días)',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#059669',
+                cancelButtonColor: '#64748b',
                 focusConfirm: false,
-                preConfirm: () => document.getElementById('swal-select-mes-admin')?.value || null
+                didOpen: () => {
+                    function updatePreview() {
+                        const tipo = document.getElementById('swal-bono-tipo')?.value || 'bono_mensual';
+                        const fechaStr = document.getElementById('swal-bono-fecha-inicio')?.value || hoyStr;
+                        const [y, m, d] = fechaStr.split('-').map(Number);
+                        const fIni = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+                        const fFin = new Date(fIni.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        const fIniFmt = fIni.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                        const fFinFmt = fFin.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+
+                        let infoClases = '';
+                        if (tipo === 'bono_inicial') {
+                            infoClases = 'Incluye <strong>4 clases regulares</strong> durante los 30 días.';
+                        } else if (tipo === 'bono_mensual') {
+                            infoClases = 'Incluye <strong>8 clases regulares</strong> durante los 30 días.';
+                        } else {
+                            infoClases = 'Incluye <strong>clases regulares ilimitadas</strong> + <strong>1 clase especial gratis</strong>.';
+                        }
+
+                        const prevEl = document.getElementById('swal-bono-preview');
+                        if (prevEl) {
+                            prevEl.innerHTML = `
+                                <div class="flex items-center justify-between font-bold">
+                                    <span class="flex items-center gap-1"><i class="ph-bold ph-calendar-star text-amber-700"></i> Duración (30 días):</span>
+                                    <span class="text-amber-900">${fIniFmt} – ${fFinFmt}</span>
+                                </div>
+                                <div class="text-[11px] text-amber-800/90 flex items-center gap-1">
+                                    <i class="ph-bold ph-check-circle text-emerald-600"></i>
+                                    <span>${infoClases}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                    document.getElementById('swal-bono-tipo')?.addEventListener('change', updatePreview);
+                    document.getElementById('swal-bono-fecha-inicio')?.addEventListener('input', updatePreview);
+                    updatePreview();
+                },
+                preConfirm: () => {
+                    const tipo = document.getElementById('swal-bono-tipo')?.value || 'bono_mensual';
+                    const fechaInicio = document.getElementById('swal-bono-fecha-inicio')?.value || hoyStr;
+                    if (!fechaInicio) {
+                        Swal.showValidationMessage('Por favor selecciona una fecha de inicio.');
+                        return false;
+                    }
+                    return { tipo, fechaInicio };
+                }
             });
 
-            if (!mesSeleccionado) return abrirGestionBonosUsuario(userId);
+            if (!formValues) return abrirGestionBonosUsuario(userId);
 
-            const isDesdeHoy = mesSeleccionado === 'desde_hoy';
-            const currentMonthDate = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-01`;
-            const mesEfectivo = isDesdeHoy ? currentMonthDate : mesSeleccionado;
-            const mesKey = normalizarMesClave(mesEfectivo);
-            const startIso = isDesdeHoy ? new Date().toISOString() : `${mesSeleccionado}T00:00:00.000Z`;
-            const endObj = isDesdeHoy ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : new Date(mesSeleccionado);
-            if (!isDesdeHoy) endObj.setMonth(endObj.getMonth() + 1);
+            const { tipo, fechaInicio } = formValues;
+            const [y, m, d] = fechaInicio.split('-').map(Number);
+            const startObj = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+            const endObj = new Date(startObj.getTime() + 30 * 24 * 60 * 60 * 1000);
+            const startIso = startObj.toISOString();
             const endIso = endObj.toISOString();
+            const mesEfectivo = `${y}-${String(m).padStart(2, '0')}-01`;
+            const mesKey = normalizarMesClave(mesEfectivo);
+
             let uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
 
-            // Comprobar si ya tiene Bono Ilimitado para este mes
-            const yaTieneIlimitado = (uCache?.unlimited_periods || []).some(p => normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
-            if (yaTieneIlimitado) {
-                await Swal.fire({
-                    icon: 'info',
-                    title: 'Ya tiene Bono Ilimitado',
-                    text: 'Este alumno ya tiene activo el Bono Ilimitado (90 €) para este periodo.',
-                    confirmButtonColor: '#059669'
-                });
-                return abrirGestionBonosUsuario(userId);
-            }
-
-            // Comprobar si tiene Bono Inicial o Bono Mensual para este mes
-            const planMensualExistente = (uCache?.monthly_periods || []).find(p => normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
-            if (planMensualExistente) {
-                const esInicial = planMensualExistente.plan_type === 'bono_inicial' || toSafeNumber(planMensualExistente.max_classes_per_week) === 1;
-                const nombrePlan = esInicial ? 'Bono Inicial (40 €)' : 'Bono Mensual (65 €)';
-                const confirmChoice = await Swal.fire({
-                    icon: 'question',
-                    title: 'Modalidad existente para este mes',
-                    html: `El alumno ya dispone de un <strong>${escapeHtml(nombrePlan)}</strong> para este mes.<br><br>¿Deseas añadir el <strong>Bono Ilimitado (90 €)</strong> conservando el bono anterior, o sustituirlo?`,
-                    showCancelButton: true,
-                    showDenyButton: true,
-                    confirmButtonText: 'Añadir como adicional',
-                    denyButtonText: 'Sustituir anterior',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#059669',
-                    denyButtonColor: '#d97706',
-                    cancelButtonColor: '#64748b'
-                });
-                if (confirmChoice.isDismissed) return abrirGestionBonosUsuario(userId);
-
-                if (confirmChoice.isDenied) {
-                    try {
-                        await client.from('monthly_membership_periods').delete().eq('user_id', userId).eq('membership_month', mesEfectivo);
-                    } catch (delErr) {
-                        console.warn('Error eliminando monthly_membership_periods:', delErr);
-                    }
-                    if (uCache && Array.isArray(uCache.monthly_periods)) {
-                        uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
-                    }
-                }
-            }
-
-            Swal.fire({ title: 'Asignando mes...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-
-            let assigned = false;
-            try {
-                const { error } = await client.rpc('admin_asignar_mes_ilimitado', {
-                    p_user_id: userId,
-                    p_membership_month: mesEfectivo,
-                    p_activo: true
-                });
-                if (!error) {
-                    assigned = true;
-                } else {
-                    console.warn('Error RPC admin_asignar_mes_ilimitado:', error);
-                }
-            } catch (rpcErr) {
-                console.warn('Excepción RPC:', rpcErr);
-            }
-
-            if (!assigned) {
-                try {
-                    await client.from('unlimited_membership_periods').upsert({
-                        user_id: userId,
-                        membership_month: mesEfectivo,
-                        starts_at: startIso,
-                        ends_at: endIso,
-                        purchased_at: new Date().toISOString()
-                    }, { onConflict: 'user_id,membership_month' });
-                    try {
-                        await client.rpc('admin_configurar_bono_mensual', {
-                            p_user_id: userId,
-                            p_activo: true,
-                            p_inicio: startIso,
-                            p_fin: endIso
-                        });
-                    } catch (_) {}
-                    await client.from('bonos_clases_especiales').upsert({
-                        user_id: userId,
-                        mes: mesEfectivo,
-                        saldo: 1,
-                        origen: 'bono_ilimitado'
-                    }, { onConflict: 'user_id,mes' });
-                    assigned = true;
-                } catch (fbErr) {
-                    console.error('Error fallback asignar mes:', fbErr);
-                }
-            }
-
-            if (assigned) {
-                // Garantizar 1 clase especial gratis para el mes asignado
-                try {
-                    const { data: bEsp } = await client.from('bonos_clases_especiales')
-                        .select('id, saldo')
-                        .eq('user_id', userId)
-                        .eq('mes', mesEfectivo);
-                    if (!bEsp || bEsp.length === 0) {
-                        await client.from('bonos_clases_especiales').insert({
-                            user_id: userId,
-                            mes: mesEfectivo,
-                            saldo: 1,
-                            origen: 'bono_ilimitado'
-                        });
-                    } else if (toSafeNumber(bEsp[0].saldo) < 1) {
-                        await client.from('bonos_clases_especiales').update({
-                            saldo: 1,
-                            origen: 'bono_ilimitado'
-                        }).eq('id', bEsp[0].id);
-                    }
-                } catch (bEspErr) {
-                    console.warn('Error asegurando clase especial en bono ilimitado:', bEspErr);
-                }
-
-                // Actualizar caché en memoria inmediatamente
-                const uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
-                if (uCache) {
-                    uCache.bono_mensual_activo = true;
-                    uCache.bono_mensual_inicio = startIso;
-                    uCache.bono_mensual_fin = endIso;
-                    if (!Array.isArray(uCache.unlimited_periods)) uCache.unlimited_periods = [];
-                    uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
-                    uCache.unlimited_periods.push({
-                        membership_month: mesEfectivo,
-                        starts_at: startIso,
-                        ends_at: endIso
-                    });
-                    if (Array.isArray(uCache.monthly_periods)) {
-                        uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
-                    }
-                    if (!Array.isArray(uCache.special_passes)) uCache.special_passes = [];
-                    const sp = uCache.special_passes.find(s => normalizarMesClave(s.mes) === mesKey);
-                    if (sp) {
-                        sp.saldo = Math.max(toSafeNumber(sp.saldo), 1);
-                    } else {
-                        uCache.special_passes.push({ mes: mesEfectivo, saldo: 1, origen: 'bono_ilimitado' });
-                    }
-                    if (typeof actualizarContadoresFiltroBonos === 'function') actualizarContadoresFiltroBonos();
-                    if (typeof filtrarUsuarios === 'function') filtrarUsuarios();
-                }
-            }
-
-            if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
-            if (typeof checkProfile === 'function') checkProfile();
-
-            Swal.close();
-            if (!assigned) {
-                await Swal.fire('Error', 'No se pudo asignar el mes ilimitado.', 'error');
-            } else {
-                await Swal.fire({
-                    icon: 'success',
-                    title: '¡Mes Ilimitado Asignado!',
-                    text: isDesdeHoy ? 'Se ha asignado el Bono Ilimitado por 30 días naturales con 1 clase especial gratis.' : 'Se ha asignado el mes ilimitado correctamente y se ha incluido 1 clase especial gratis para dicho mes.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-            await abrirGestionBonosUsuario(userId);
-        }
-
-        async function asignarMesBonoInicialAdmin(userId) {
-            const hoy = new Date();
-            const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            const monthOptions = [];
-            monthOptions.push('<option value="desde_hoy" selected>🌟 Desde hoy (4 clases / 30 días naturales)</option>');
-            for (let i = 0; i < 12; i++) {
-                const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
-                const y = d.getFullYear();
-                const m = d.getMonth();
-                const val = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-                const label = `${nombresMeses[m]} ${y}`;
-                monthOptions.push(`<option value="${val}">${label} (Mes natural completo)</option>`);
-            }
-
-            const { value: mesSeleccionado } = await Swal.fire({
-                title: 'Asignar Bono Inicial',
-                html: `
-                    <div class="text-left font-sans space-y-3 my-2">
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el periodo que deseas asignar a este alumno. Tendrá derecho a 4 clases regulares durante sus 30 días de vigencia.</p>
-                        <div>
-                            <label class="block text-xs font-bold text-cocoa mb-1">Periodo de Validez:</label>
-                            <select id="swal-select-mes-inicial-admin" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
-                                ${monthOptions.join('')}
-                            </select>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Asignar Mes',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#8f6b2d',
-                focusConfirm: false,
-                preConfirm: () => document.getElementById('swal-select-mes-inicial-admin')?.value || null
+            // Comprobar solapamiento de bonos existentes
+            const tieneIlimitado = (uCache?.unlimited_periods || []).some(p => {
+                const pStart = p.starts_at ? new Date(p.starts_at).getTime() : 0;
+                const pEnd = p.ends_at ? new Date(p.ends_at).getTime() : 0;
+                return pEnd > startObj.getTime() && (pStart === 0 || pStart < endObj.getTime());
             });
-
-            if (!mesSeleccionado) return abrirGestionBonosUsuario(userId);
-
-            const isDesdeHoy = mesSeleccionado === 'desde_hoy';
-            const currentMonthDate = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-01`;
-            const mesEfectivo = isDesdeHoy ? currentMonthDate : mesSeleccionado;
-            const mesKey = normalizarMesClave(mesEfectivo);
-            const startIso = isDesdeHoy ? new Date().toISOString() : `${mesSeleccionado}T00:00:00.000Z`;
-            const endObj = isDesdeHoy ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : new Date(mesSeleccionado);
-            if (!isDesdeHoy) endObj.setMonth(endObj.getMonth() + 1);
-            const endIso = endObj.toISOString();
-            let uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
-
-            // Comprobar si ya tiene Bono Inicial para este mes
-            const yaTieneInicial = (uCache?.monthly_periods || []).some(p => {
-                const m = normalizarMesClave(p.membership_month || p.starts_at);
-                const esIni = p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1;
-                return m === mesKey && esIni;
+            const planesMensualesExistentes = (uCache?.monthly_periods || []).filter(p => {
+                const pStart = p.starts_at ? new Date(p.starts_at).getTime() : 0;
+                const pEnd = p.ends_at ? new Date(p.ends_at).getTime() : 0;
+                return pEnd > startObj.getTime() && (pStart === 0 || pStart < endObj.getTime());
             });
-            if (yaTieneInicial) {
-                await Swal.fire({
-                    icon: 'info',
-                    title: 'Ya tiene Bono Inicial',
-                    text: 'Este alumno ya tiene activo el Bono Inicial (Bronce · 40 €) para este periodo.',
-                    confirmButtonColor: '#8f6b2d'
-                });
-                return abrirGestionBonosUsuario(userId);
-            }
-
-            // Comprobar si tiene Bono Ilimitado o Bono Mensual para este mes
-            const tieneIlimitado = (uCache?.unlimited_periods || []).some(p => normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
-            const planMensualExistente = (uCache?.monthly_periods || []).find(p => normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
 
             let sustituirAnterior = false;
-            if (tieneIlimitado || planMensualExistente) {
-                const nombrePlan = tieneIlimitado
-                    ? 'Bono Ilimitado (90 €)'
-                    : 'Bono Mensual (65 €)';
-                const confirmChoice = await Swal.fire({
-                    icon: 'question',
-                    title: 'Modalidad existente para este mes',
-                    html: `El alumno ya dispone de un <strong>${escapeHtml(nombrePlan)}</strong> para este mes.<br><br>¿Deseas añadir el <strong>Bono Inicial (Bronce · 40 € · 4 cl/mes)</strong> como bono adicional (sumará clases al cupo del mes), o sustituirlo?`,
-                    showCancelButton: true,
-                    showDenyButton: true,
-                    confirmButtonText: 'Añadir como adicional',
-                    denyButtonText: 'Sustituir existente',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#8f6b2d',
-                    denyButtonColor: '#dc2626',
-                    cancelButtonColor: '#64748b'
-                });
-                if (confirmChoice.isDismissed) return abrirGestionBonosUsuario(userId);
-
-                if (confirmChoice.isDenied) {
-                    sustituirAnterior = true;
-                    if (tieneIlimitado) {
-                        try {
-                            await client.from('unlimited_membership_periods').delete().eq('user_id', userId).eq('membership_month', mesEfectivo);
-                        } catch (delErr) {
-                            console.warn('Error eliminando unlimited_membership_periods:', delErr);
-                        }
-                        if (uCache && Array.isArray(uCache.unlimited_periods)) {
-                            uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
-                        }
-                    }
-                    if (planMensualExistente) {
-                        try {
-                            await client.from('monthly_membership_periods').delete().eq('user_id', userId).eq('membership_month', mesEfectivo);
-                        } catch (delErr) {
-                            console.warn('Error eliminando monthly_membership_periods:', delErr);
-                        }
-                        if (uCache && Array.isArray(uCache.monthly_periods)) {
-                            uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
-                        }
-                    }
-                }
-            }
-
-            Swal.fire({ title: 'Asignando Bono Inicial...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-
-            let assigned = false;
-            try {
-                const { error } = await client.rpc('admin_asignar_mes_bono_inicial', {
-                    p_user_id: userId,
-                    p_membership_month: mesEfectivo,
-                    p_activo: true
-                });
-                if (!error) {
-                    assigned = true;
-                    if (isDesdeHoy) {
-                        try {
-                            await client.from('monthly_membership_periods')
-                                .update({ starts_at: startIso, ends_at: endIso })
-                                .eq('user_id', userId)
-                                .eq('membership_month', mesEfectivo)
-                                .eq('plan_type', 'bono_inicial');
-                        } catch (_) {}
-                    }
-                } else {
-                    console.warn('Error RPC admin_asignar_mes_bono_inicial:', error);
-                }
-            } catch (rpcErr) {
-                console.warn('Excepción RPC admin_asignar_mes_bono_inicial:', rpcErr);
-            }
-
-            if (!assigned) {
-                try {
-                    await client.from('monthly_membership_periods').insert({
-                        user_id: userId,
-                        membership_month: mesEfectivo,
-                        starts_at: startIso,
-                        ends_at: endIso,
-                        max_classes_per_week: 1,
-                        plan_type: 'bono_inicial',
-                        purchased_at: new Date().toISOString()
-                    });
-                    assigned = true;
-                } catch (fbErr) {
-                    console.error('Error fallback asignar bono inicial:', fbErr);
-                }
-            }
-
-            if (assigned) {
-                const uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
-                if (uCache) {
-                    if (!Array.isArray(uCache.monthly_periods)) uCache.monthly_periods = [];
-                    if (sustituirAnterior) {
-                        uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
-                    }
-                    uCache.monthly_periods.push({
-                        membership_month: mesEfectivo,
-                        starts_at: startIso,
-                        ends_at: endIso,
-                        max_classes_per_week: 1,
-                        plan_type: 'bono_inicial'
-                    });
-                    if (Array.isArray(uCache.unlimited_periods)) {
-                        uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
-                    }
-                    if (typeof actualizarContadoresFiltroBonos === 'function') actualizarContadoresFiltroBonos();
-                    if (typeof filtrarUsuarios === 'function') filtrarUsuarios();
-                }
-                if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
-                if (typeof checkProfile === 'function') checkProfile();
-
-                await Swal.fire({
-                    icon: 'success',
-                    title: '¡Bono Inicial Asignado!',
-                    text: isDesdeHoy ? 'Se ha asignado el Bono Inicial por 30 días naturales (4 clases).' : `Se ha asignado el Bono Inicial (4 clases/mes) para ${mesSeleccionado}.`,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } else {
-                await Swal.fire('Error', 'No se pudo asignar el Bono Inicial.', 'error');
-            }
-            await abrirGestionBonosUsuario(userId);
-        }
-        window.asignarMesBonoInicialAdmin = asignarMesBonoInicialAdmin;
-
-        async function asignarMesBonoMensualAdmin(userId) {
-            const hoy = new Date();
-            const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            const monthOptions = [];
-            monthOptions.push('<option value="desde_hoy" selected>🌟 Desde hoy (8 clases / 30 días naturales)</option>');
-            for (let i = 0; i < 12; i++) {
-                const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
-                const y = d.getFullYear();
-                const m = d.getMonth();
-                const val = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-                const label = `${nombresMeses[m]} ${y}`;
-                monthOptions.push(`<option value="${val}">${label} (Mes natural completo)</option>`);
-            }
-
-            const { value: mesSeleccionado } = await Swal.fire({
-                title: 'Asignar Bono Mensual',
-                html: `
-                    <div class="text-left font-sans space-y-3 my-2">
-                        <p class="text-xs text-cocoa/80 leading-relaxed">Selecciona el periodo que deseas asignar a este alumno. Tendrá derecho a 8 clases regulares durante sus 30 días de vigencia.</p>
-                        <div>
-                            <label class="block text-xs font-bold text-cocoa mb-1">Periodo de Validez:</label>
-                            <select id="swal-select-mes-mensual-admin" class="w-full p-2.5 rounded-xl border border-cocoa/20 text-xs font-bold text-cocoa bg-white outline-none">
-                                ${monthOptions.join('')}
-                            </select>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Asignar Mes',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#d97706',
-                focusConfirm: false,
-                preConfirm: () => document.getElementById('swal-select-mes-mensual-admin')?.value || null
-            });
-
-            if (!mesSeleccionado) return abrirGestionBonosUsuario(userId);
-
-            const isDesdeHoy = mesSeleccionado === 'desde_hoy';
-            const currentMonthDate = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-01`;
-            const mesEfectivo = isDesdeHoy ? currentMonthDate : mesSeleccionado;
-            const mesKey = normalizarMesClave(mesEfectivo);
-            const startIso = isDesdeHoy ? new Date().toISOString() : `${mesSeleccionado}T00:00:00.000Z`;
-            const endObj = isDesdeHoy ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : new Date(mesSeleccionado);
-            if (!isDesdeHoy) endObj.setMonth(endObj.getMonth() + 1);
-            const endIso = endObj.toISOString();
-            let uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
-
-            // Comprobar modalidades existentes para este mes
-            const tieneIlimitado = (uCache?.unlimited_periods || []).some(p => normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
-            const planesMensualesExistentes = (uCache?.monthly_periods || []).filter(p => normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
-            const tieneModalidadPrevia = tieneIlimitado || planesMensualesExistentes.length > 0;
-
-            let sustituirAnterior = false;
-            if (tieneModalidadPrevia) {
+            if (tieneIlimitado || planesMensualesExistentes.length > 0) {
                 const nombres = [];
                 if (tieneIlimitado) nombres.push('Bono Ilimitado (90 €)');
                 planesMensualesExistentes.forEach(p => {
@@ -25286,14 +24945,14 @@
 
                 const confirmChoice = await Swal.fire({
                     icon: 'question',
-                    title: 'Modalidad existente para este mes',
-                    html: `El alumno ya dispone de: <strong>${escapeHtml(descripcionExistentes)}</strong> para este mes.<br><br>¿Deseas añadir el <strong>Bono Mensual (Plata · 65 € · 8 cl/mes)</strong> como bono adicional (sumará clases al cupo del mes), o sustituir el existente?`,
+                    title: 'Bono existente en este periodo',
+                    html: `El alumno ya dispone de: <strong>${escapeHtml(descripcionExistentes)}</strong> con fechas coincidentes.<br><br>¿Deseas añadir este nuevo bono como adicional, o sustituir el existente?`,
                     showCancelButton: true,
                     showDenyButton: true,
                     confirmButtonText: 'Añadir como adicional',
                     denyButtonText: 'Sustituir existente',
                     cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#d97706',
+                    confirmButtonColor: '#059669',
                     denyButtonColor: '#dc2626',
                     cancelButtonColor: '#64748b'
                 });
@@ -25324,52 +24983,170 @@
                 }
             }
 
-            Swal.fire({ title: 'Asignando Bono Mensual...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            Swal.fire({ title: 'Asignando bono de 30 días...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
             let assigned = false;
-            try {
-                const { error } = await client.rpc('admin_asignar_mes_bono_mensual', {
-                    p_user_id: userId,
-                    p_membership_month: mesEfectivo,
-                    p_activo: true
-                });
-                if (!error) {
-                    assigned = true;
-                    if (isDesdeHoy) {
-                        try {
-                            await client.from('monthly_membership_periods')
-                                .update({ starts_at: startIso, ends_at: endIso })
-                                .eq('user_id', userId)
-                                .eq('membership_month', mesEfectivo)
-                                .eq('plan_type', 'bono_mensual');
-                        } catch (_) {}
-                    }
-                } else {
-                    console.warn('Error RPC admin_asignar_mes_bono_mensual:', error);
-                }
-            } catch (rpcErr) {
-                console.warn('Excepción RPC admin_asignar_mes_bono_mensual:', rpcErr);
-            }
 
-            if (!assigned) {
+            if (tipo === 'bono_ilimitado') {
                 try {
-                    await client.from('monthly_membership_periods').insert({
+                    const { error } = await client.rpc('admin_asignar_mes_ilimitado', {
+                        p_user_id: userId,
+                        p_membership_month: mesEfectivo,
+                        p_activo: true
+                    });
+                    if (!error) assigned = true;
+                } catch (rpcErr) {
+                    console.warn('Excepción RPC admin_asignar_mes_ilimitado:', rpcErr);
+                }
+
+                // Asegurar periodos exactos de 30 días
+                try {
+                    await client.from('unlimited_membership_periods').upsert({
                         user_id: userId,
                         membership_month: mesEfectivo,
                         starts_at: startIso,
                         ends_at: endIso,
-                        max_classes_per_week: 2,
-                        plan_type: 'bono_mensual',
                         purchased_at: new Date().toISOString()
-                    });
+                    }, { onConflict: 'user_id,membership_month' });
                     assigned = true;
                 } catch (fbErr) {
-                    console.error('Error fallback asignar bono mensual:', fbErr);
+                    console.warn('Error en fallback unlimited_membership_periods:', fbErr);
                 }
-            }
 
-            if (assigned) {
-                const uCache = (allUsersCache || []).find(x => String(x.id) === String(userId));
+                // Garantizar 1 clase especial gratis
+                try {
+                    const { data: bEsp } = await client.from('bonos_clases_especiales')
+                        .select('id, saldo')
+                        .eq('user_id', userId)
+                        .eq('mes', mesEfectivo);
+                    if (!bEsp || bEsp.length === 0) {
+                        await client.from('bonos_clases_especiales').insert({
+                            user_id: userId,
+                            mes: mesEfectivo,
+                            saldo: 1,
+                            origen: 'bono_ilimitado'
+                        });
+                    } else if (toSafeNumber(bEsp[0].saldo) < 1) {
+                        await client.from('bonos_clases_especiales').update({
+                            saldo: 1,
+                            origen: 'bono_ilimitado'
+                        }).eq('id', bEsp[0].id);
+                    }
+                } catch (bEspErr) {
+                    console.warn('Error clase especial en bono ilimitado:', bEspErr);
+                }
+
+                // Actualizar caché
+                if (uCache) {
+                    uCache.bono_mensual_activo = true;
+                    uCache.bono_mensual_inicio = startIso;
+                    uCache.bono_mensual_fin = endIso;
+                    if (!Array.isArray(uCache.unlimited_periods)) uCache.unlimited_periods = [];
+                    uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
+                    uCache.unlimited_periods.push({
+                        membership_month: mesEfectivo,
+                        starts_at: startIso,
+                        ends_at: endIso
+                    });
+                    if (sustituirAnterior && Array.isArray(uCache.monthly_periods)) {
+                        uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
+                    }
+                }
+            } else if (tipo === 'bono_inicial') {
+                try {
+                    const { error } = await client.rpc('admin_asignar_mes_bono_inicial', {
+                        p_user_id: userId,
+                        p_membership_month: mesEfectivo,
+                        p_activo: true
+                    });
+                    if (!error) assigned = true;
+                } catch (rpcErr) {
+                    console.warn('Excepción RPC admin_asignar_mes_bono_inicial:', rpcErr);
+                }
+
+                // Asegurar registro con rango exacto de 30 días
+                try {
+                    const { data: upRows, error: upErr } = await client.from('monthly_membership_periods')
+                        .update({ starts_at: startIso, ends_at: endIso })
+                        .eq('user_id', userId)
+                        .eq('membership_month', mesEfectivo)
+                        .eq('plan_type', 'bono_inicial')
+                        .select('id');
+                    if (!upErr && upRows && upRows.length > 0) {
+                        assigned = true;
+                    } else {
+                        await client.from('monthly_membership_periods').insert({
+                            user_id: userId,
+                            membership_month: mesEfectivo,
+                            starts_at: startIso,
+                            ends_at: endIso,
+                            max_classes_per_week: 1,
+                            plan_type: 'bono_inicial',
+                            purchased_at: new Date().toISOString()
+                        });
+                        assigned = true;
+                    }
+                } catch (fbErr) {
+                    console.warn('Error fallback monthly_membership_periods (inicial):', fbErr);
+                }
+
+                // Actualizar caché
+                if (uCache) {
+                    if (!Array.isArray(uCache.monthly_periods)) uCache.monthly_periods = [];
+                    if (sustituirAnterior) {
+                        uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
+                    }
+                    uCache.monthly_periods.push({
+                        membership_month: mesEfectivo,
+                        starts_at: startIso,
+                        ends_at: endIso,
+                        max_classes_per_week: 1,
+                        plan_type: 'bono_inicial'
+                    });
+                    if (sustituirAnterior && Array.isArray(uCache.unlimited_periods)) {
+                        uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
+                    }
+                }
+            } else {
+                // bono_mensual
+                try {
+                    const { error } = await client.rpc('admin_asignar_mes_bono_mensual', {
+                        p_user_id: userId,
+                        p_membership_month: mesEfectivo,
+                        p_activo: true
+                    });
+                    if (!error) assigned = true;
+                } catch (rpcErr) {
+                    console.warn('Excepción RPC admin_asignar_mes_bono_mensual:', rpcErr);
+                }
+
+                // Asegurar registro con rango exacto de 30 días
+                try {
+                    const { data: upRows, error: upErr } = await client.from('monthly_membership_periods')
+                        .update({ starts_at: startIso, ends_at: endIso })
+                        .eq('user_id', userId)
+                        .eq('membership_month', mesEfectivo)
+                        .eq('plan_type', 'bono_mensual')
+                        .select('id');
+                    if (!upErr && upRows && upRows.length > 0) {
+                        assigned = true;
+                    } else {
+                        await client.from('monthly_membership_periods').insert({
+                            user_id: userId,
+                            membership_month: mesEfectivo,
+                            starts_at: startIso,
+                            ends_at: endIso,
+                            max_classes_per_week: 2,
+                            plan_type: 'bono_mensual',
+                            purchased_at: new Date().toISOString()
+                        });
+                        assigned = true;
+                    }
+                } catch (fbErr) {
+                    console.warn('Error fallback monthly_membership_periods (mensual):', fbErr);
+                }
+
+                // Actualizar caché
                 if (uCache) {
                     if (!Array.isArray(uCache.monthly_periods)) uCache.monthly_periods = [];
                     if (sustituirAnterior) {
@@ -25385,23 +25162,47 @@
                     if (sustituirAnterior && Array.isArray(uCache.unlimited_periods)) {
                         uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
                     }
-                    if (typeof actualizarContadoresFiltroBonos === 'function') actualizarContadoresFiltroBonos();
-                    if (typeof filtrarUsuarios === 'function') filtrarUsuarios();
                 }
-                if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
-                if (typeof checkProfile === 'function') checkProfile();
+            }
 
+            if (typeof actualizarContadoresFiltroBonos === 'function') actualizarContadoresFiltroBonos();
+            if (typeof filtrarUsuarios === 'function') filtrarUsuarios();
+            if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
+            if (typeof checkProfile === 'function') checkProfile();
+
+            Swal.close();
+            if (assigned) {
+                const fIniFmt = startObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                const fFinFmt = endObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                const nombrePlan = tipo === 'bono_ilimitado'
+                    ? 'Bono Ilimitado (90 €)'
+                    : (tipo === 'bono_mensual' ? 'Bono Mensual (65 €)' : 'Bono Inicial (40 €)');
                 await Swal.fire({
                     icon: 'success',
-                    title: '¡Bono Mensual Asignado!',
-                    text: isDesdeHoy ? 'Se ha asignado el Bono Mensual por 30 días naturales (8 clases).' : `Se ha asignado el Bono Mensual (8 clases/mes) para ${mesSeleccionado}.`,
-                    timer: 2000,
+                    title: `¡${nombrePlan} Asignado!`,
+                    html: `Válido durante <strong>30 días naturales</strong>:<br><span class="text-sm font-bold text-emerald-800">${fIniFmt} – ${fFinFmt}</span>`,
+                    timer: 2500,
                     showConfirmButton: false
                 });
             } else {
-                await Swal.fire('Error', 'No se pudo asignar el Bono Mensual.', 'error');
+                await Swal.fire('Error', 'No se pudo asignar el bono.', 'error');
             }
             await abrirGestionBonosUsuario(userId);
+        }
+        window.asignarBonoAdmin = asignarBonoAdmin;
+
+        async function asignarMesIlimitadoAdmin(userId) {
+            return asignarBonoAdmin(userId, 'bono_ilimitado');
+        }
+        window.asignarMesIlimitadoAdmin = asignarMesIlimitadoAdmin;
+
+        async function asignarMesBonoInicialAdmin(userId) {
+            return asignarBonoAdmin(userId, 'bono_inicial');
+        }
+        window.asignarMesBonoInicialAdmin = asignarMesBonoInicialAdmin;
+
+        async function asignarMesBonoMensualAdmin(userId) {
+            return asignarBonoAdmin(userId, 'bono_mensual');
         }
         window.asignarMesBonoMensualAdmin = asignarMesBonoMensualAdmin;
 
