@@ -9091,7 +9091,7 @@
                             <div class="flex items-center justify-between gap-3 rounded-xl border border-amber-400 bg-amber-50/80 px-3 py-2 text-left shadow-2xs">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-[9px] font-black uppercase tracking-wider bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs">🥇 ${escapeHtml(profileT('profile_metal_gold_price', 'Dorado · 90 €'))}</span>
+                                        <span class="text-[9px] font-black uppercase tracking-wider bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs">🥇 ${escapeHtml(profileT('profile_metal_gold_price', 'Ilimitado · 90 €'))}</span>
                                         <span class="text-[11px] font-bold text-[#78350f]">${escapeHtml(mesLabel)}</span>
                                     </div>
                                     <p class="text-[10px] text-[#78350f]/80 mt-1">${escapeHtml(profileT('profile_unlimited_includes_short', 'Clases regulares ilimitadas · Incluye 1 clase especial gratis y 1 invitado.'))}</p>
@@ -9512,10 +9512,10 @@
             const mesActualRaw = mesActualFecha.toLocaleDateString(getCurrentLocale(), { month: 'long', year: 'numeric' });
             const labelMesActual = `${mesActualRaw.charAt(0).toUpperCase()}${mesActualRaw.slice(1)}`;
             const nombreBono = tipo === 'bono_ilimitado'
-                ? profileT('profile_change_month_bono_unlimited', 'Bono Ilimitado (Dorado · 90 €)')
+                ? profileT('profile_change_month_bono_unlimited', 'Bono Ilimitado (90 €)')
                 : (tipo === 'bono_mensual'
-                    ? profileT('profile_change_month_bono_mensual', 'Bono Mensual (Plata · 65 €)')
-                    : profileT('profile_change_month_bono_inicial', 'Bono Inicial (Bronce · 40 €)'));
+                    ? profileT('profile_change_month_bono_mensual', 'Bono Mensual (65 €)')
+                    : profileT('profile_change_month_bono_inicial', 'Bono Inicial (40 €)'));
 
             // 1. Comprobar si se ha consumido alguna clase en este mes con este bono
             let clasesConsumidas = 0;
@@ -24874,7 +24874,7 @@
                 await Swal.fire({
                     icon: 'info',
                     title: 'Ya tiene Bono Ilimitado',
-                    text: 'Este alumno ya tiene activo el Bono Ilimitado (Dorado) para este periodo.',
+                    text: 'Este alumno ya tiene activo el Bono Ilimitado (90 €) para este periodo.',
                     confirmButtonColor: '#059669'
                 });
                 return abrirGestionBonosUsuario(userId);
@@ -24884,11 +24884,11 @@
             const planMensualExistente = (uCache?.monthly_periods || []).find(p => normalizarMesClave(p.membership_month || p.starts_at) === mesKey);
             if (planMensualExistente) {
                 const esInicial = planMensualExistente.plan_type === 'bono_inicial' || toSafeNumber(planMensualExistente.max_classes_per_week) === 1;
-                const nombrePlan = esInicial ? 'Bono Inicial (Bronce · 40 €)' : 'Bono Mensual (Plata · 65 €)';
+                const nombrePlan = esInicial ? 'Bono Inicial (40 €)' : 'Bono Mensual (65 €)';
                 const confirmChoice = await Swal.fire({
                     icon: 'question',
                     title: 'Modalidad existente para este mes',
-                    html: `El alumno ya dispone de un <strong>${escapeHtml(nombrePlan)}</strong> para este mes.<br><br>¿Deseas añadir el <strong>Bono Ilimitado (Dorado · 90 €)</strong> conservando el bono anterior, o sustituirlo?`,
+                    html: `El alumno ya dispone de un <strong>${escapeHtml(nombrePlan)}</strong> para este mes.<br><br>¿Deseas añadir el <strong>Bono Ilimitado (90 €)</strong> conservando el bono anterior, o sustituirlo?`,
                     showCancelButton: true,
                     showDenyButton: true,
                     confirmButtonText: 'Añadir como adicional',
@@ -25110,8 +25110,8 @@
             let sustituirAnterior = false;
             if (tieneIlimitado || planMensualExistente) {
                 const nombrePlan = tieneIlimitado
-                    ? 'Bono Ilimitado (Dorado · 90 €)'
-                    : 'Bono Mensual (Plata · 65 €)';
+                    ? 'Bono Ilimitado (90 €)'
+                    : 'Bono Mensual (65 €)';
                 const confirmChoice = await Swal.fire({
                     icon: 'question',
                     title: 'Modalidad existente para este mes',
@@ -25288,10 +25288,10 @@
             let sustituirAnterior = false;
             if (tieneModalidadPrevia) {
                 const nombres = [];
-                if (tieneIlimitado) nombres.push('Bono Ilimitado (Dorado · 90 €)');
+                if (tieneIlimitado) nombres.push('Bono Ilimitado (90 €)');
                 planesMensualesExistentes.forEach(p => {
                     const esIni = p.plan_type === 'bono_inicial' || toSafeNumber(p.max_classes_per_week) === 1;
-                    nombres.push(esIni ? 'Bono Inicial (Bronce · 40 €)' : 'Bono Mensual (Plata · 65 €)');
+                    nombres.push(esIni ? 'Bono Inicial (40 €)' : 'Bono Mensual (65 €)');
                 });
                 const descripcionExistentes = nombres.join(' + ');
 
