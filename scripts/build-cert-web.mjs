@@ -496,34 +496,72 @@ for (const file of htmls) {
           if (prof.id === '00081fe2-88e6-4f12-ab49-b99713125dd0' || prof.email === 'profesor@profesor.com') {
             prof.rol = 'admin';
           }
+          // Enriquecer el perfil (sea el usuario actual o un alumno visto por el admin) con sus compras simuladas
+          var profPurchases = allPurchases.filter(function (p) {
+            return String(p.userId) === String(prof.id) || (p.userId === 'guest' && prof.id === currentUserId);
+          });
+          if (profPurchases.length === 0) return;
+
+          var activePacks = profPurchases.filter(function (p) {
+            return (p.purchaseType === 'pack_4' || p.purchaseType === 'pack_6' || p.purchaseType === 'pack_10' || p.purchaseType === 'clase_suelta')
+              && Date.parse(p.expiresAt) > Date.now();
+          });
+          var packCreds = activePacks.reduce(function (sum, p) { return sum + (p.creditsRemaining || 0); }, 0);
+          if (packCreds > 0) {
+            prof.bonos = (Number(prof.bonos) || 0) + packCreds;
+          }
+
+          var activeUnlimited = profPurchases.find(function (p) {
+            var now = Date.now();
+            return p.purchaseType === 'bono_ilimitado' && Date.parse(p.startsAt) <= now && Date.parse(p.endsAt) > now;
+          });
+          if (activeUnlimited) {
+            prof.bono_mensual_activo = true;
+            prof.bono_mensual_inicio = activeUnlimited.startsAt;
+            prof.bono_mensual_fin = activeUnlimited.endsAt;
+          }
+
+          // Consultas
+          var psicoCount = profPurchases.filter(function (p) { return p.purchaseType.indexOf('psico') !== -1; }).length;
+          if (psicoCount > 0) prof.saldo_psicologia = (Number(prof.saldo_psicologia) || 0) + psicoCount;
+
+          var nutriCount = profPurchases.reduce(function (sum, p) {
+            if (p.purchaseType.indexOf('ayurveda') !== -1 || p.purchaseType.indexOf('pni') !== -1) {
+              return sum + (p.purchaseType.indexOf('bono3') !== -1 ? 3 : (p.purchaseType.indexOf('bono6') !== -1 ? 6 : 1));
+            }
+            return sum;
+          }, 0);
+          if (nutriCount > 0) prof.saldo_nutricion = (Number(prof.saldo_nutricion) || 0) + nutriCount;
+
+          var grupoCount = profPurchases.filter(function (p) { return p.purchaseType.indexOf('grupo') !== -1; }).length;
+          if (grupoCount > 0) prof.saldo_grupal = (Number(prof.saldo_grupal) || 0) + grupoCount;
         });
+        return { data: isArr ? targetProfiles : targetProfiles[0], error: null };
       }
     }
 
-    var purchases = allPurchases.filter(function (p) {
-      return p.userId === currentUserId || (currentUserId !== 'guest' && p.userId === 'guest') || (p.userId && currentUserId && String(p.userId) === String(currentUserId));
-    });
-    if (purchases.length === 0) return result;
+    if (allPurchases.length === 0 && table !== 'reservas_yoga') return result;
 
     var data = result.data;
 
     // 1. Bono Mensual y Bono Inicial (monthly_membership_periods)
     if (table === 'monthly_membership_periods') {
-      var monthlyList = purchases.filter(function (p) {
+      var monthlyList = allPurchases.filter(function (p) {
         return p.purchaseType === 'bono_mensual' || p.purchaseType === 'bono_inicial';
       });
       if (monthlyList.length > 0) {
         var cList = Array.isArray(data) ? data.slice() : [];
         monthlyList.forEach(function (sim) {
+          var targetUid = sim.userId || currentUserId;
           var exists = cList.some(function (row) {
             return String(row.id) === String(sim.id) ||
                    (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (row.plan_type === sim.planType && (row.membership_month === sim.membershipMonth + '-01' || (row.starts_at && sim.startsAt && Math.abs(Date.parse(row.starts_at) - Date.parse(sim.startsAt)) < 3600000)));
+                   (String(row.user_id) === String(targetUid) && row.plan_type === sim.planType && (row.membership_month === sim.membershipMonth + '-01' || (row.starts_at && sim.startsAt && Math.abs(Date.parse(row.starts_at) - Date.parse(sim.startsAt)) < 3600000)));
           });
           if (!exists) {
             cList.unshift({
               id: sim.id,
-              user_id: currentUserId,
+              user_id: targetUid,
               membership_month: sim.membershipMonth + '-01',
               starts_at: sim.startsAt,
               ends_at: sim.endsAt,
@@ -540,21 +578,22 @@ for (const file of htmls) {
 
     // 2. Bono Ilimitado (unlimited_membership_periods)
     if (table === 'unlimited_membership_periods') {
-      var uList = purchases.filter(function (p) {
+      var uList = allPurchases.filter(function (p) {
         return p.purchaseType === 'bono_ilimitado';
       });
       if (uList.length > 0) {
         var curU = Array.isArray(data) ? data.slice() : [];
         uList.forEach(function (sim) {
+          var targetUid = sim.userId || currentUserId;
           var existsU = curU.some(function (row) {
             return String(row.id) === String(sim.id) ||
                    (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (row.membership_month === sim.membershipMonth + '-01');
+                   (String(row.user_id) === String(targetUid) && row.membership_month === sim.membershipMonth + '-01');
           });
           if (!existsU) {
             curU.unshift({
               id: sim.id,
-              user_id: currentUserId,
+              user_id: targetUid,
               membership_month: sim.membershipMonth + '-01',
               starts_at: sim.startsAt,
               ends_at: sim.endsAt,
@@ -569,19 +608,20 @@ for (const file of htmls) {
 
     // 3. Packs de clases (class_credit_packs)
     if (table === 'class_credit_packs') {
-      var packList = purchases.filter(function (p) {
+      var packList = allPurchases.filter(function (p) {
         return p.purchaseType === 'pack_4' || p.purchaseType === 'pack_6' || p.purchaseType === 'pack_10' || p.purchaseType === 'clase_suelta';
       });
       if (packList.length > 0) {
         var curP = Array.isArray(data) ? data.slice() : [];
         packList.forEach(function (sim) {
+          var targetUid = sim.userId || currentUserId;
           var existsP = curP.some(function (row) {
             return row.checkout_session_id === sim.sessionId || row.id === sim.id;
           });
           if (!existsP) {
             curP.unshift({
               id: sim.id,
-              user_id: currentUserId,
+              user_id: targetUid,
               checkout_session_id: sim.sessionId,
               pack_type: sim.purchaseType,
               credits_total: sim.creditsTotal,
@@ -597,19 +637,20 @@ for (const file of htmls) {
 
     // 4. Clases especiales (bonos_clases_especiales)
     if (table === 'bonos_clases_especiales') {
-      var specialList = purchases.filter(function (p) {
+      var specialList = allPurchases.filter(function (p) {
         return p.purchaseType === 'bono_ilimitado' || p.purchaseType === 'clase_especial';
       });
       if (specialList.length > 0) {
         var curS = Array.isArray(data) ? data.slice() : [];
         specialList.forEach(function (sim) {
+          var targetUid = sim.userId || currentUserId;
           var existsS = curS.some(function (row) {
             return row.checkout_session_id === sim.sessionId || row.id === sim.id;
           });
           if (!existsS) {
             curS.push({
               id: sim.id,
-              user_id: currentUserId,
+              user_id: targetUid,
               mes: sim.membershipMonth + '-01',
               saldo: 1,
               origen: (sim.purchaseType === 'bono_ilimitado' ? 'bono_ilimitado' : 'compra_stripe'),
