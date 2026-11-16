@@ -228,11 +228,11 @@ for (const file of htmls) {
   if (typeof originalFetch !== 'function') return;
 
   var CATALOG_MAP = {
-    'bono_mensual_65': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
-    'bono_mensual': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
-    'bono_inicial_40': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
-    'bono_inicial': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
-    'bono_ilimitado': { title: 'Bono Ilimitado', price: '90,00 €', type: 'bono_ilimitado', isUnlimited: true },
+    'bono_mensual_65': { title: 'Bono Mensual (8 clases / 30 días)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
+    'bono_mensual': { title: 'Bono Mensual (8 clases / 30 días)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
+    'bono_inicial_40': { title: 'Bono Inicial (4 clases / 30 días)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
+    'bono_inicial': { title: 'Bono Inicial (4 clases / 30 días)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
+    'bono_ilimitado': { title: 'Bono Ilimitado (30 días)', price: '90,00 €', type: 'bono_ilimitado', isUnlimited: true },
     'pack_4': { title: 'Pack de 4 Clases', price: '50,00 €', type: 'pack_4', credits: 4 },
     'pack_6': { title: 'Pack de 6 Clases', price: '65,00 €', type: 'pack_6', credits: 6 },
     'pack_10': { title: 'Pack de 10 Clases', price: '95,00 €', type: 'pack_10', credits: 10 },
@@ -265,8 +265,8 @@ for (const file of htmls) {
     'prod_V0ITB6mD71fwnD': { title: 'Pack de 4 Clases', price: '50,00 €', type: 'pack_4', credits: 4 },
     'prod_V0IUpyuvd7uX00': { title: 'Pack de 6 Clases', price: '65,00 €', type: 'pack_6', credits: 6 },
     'prod_V0IUYoGJJbX7FW': { title: 'Pack de 10 Clases', price: '95,00 €', type: 'pack_10', credits: 10 },
-    'prod_VVkU2penYA08Qe': { title: 'Bono Inicial (4 clases/mes)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
-    'prod_VVkT3C71EAUJmt': { title: 'Bono Mensual (8 clases/mes)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
+    'prod_VVkU2penYA08Qe': { title: 'Bono Inicial (4 clases / 30 días)', price: '40,00 €', type: 'bono_inicial', credits: 4, maxPerWeek: 1, planType: 'bono_inicial' },
+    'prod_VVkT3C71EAUJmt': { title: 'Bono Mensual (8 clases / 30 días)', price: '65,00 €', type: 'bono_mensual', credits: 8, maxPerWeek: 2, planType: 'bono_mensual' },
     'prod_V9eGZTzwCNJ55q': { title: '1ª Clase con 50% Dto.', price: '7,50 €', type: 'promo_50_clase', credits: 1 },
     'prod_V1pKHgtMwPkCpC': { title: 'Acompañamiento psicoterapéutico (1ª sesión)', price: '75,00 €', type: 'miriam_psico_individual_1a', isConsultation: true, consultationType: 'psicologia' },
     'prod_V1pLmzpCRU8ZpL': { title: 'Acompañamiento psicoterapéutico (siguientes)', price: '65,00 €', type: 'miriam_psico_individual_sig', isConsultation: true, consultationType: 'psicologia' },
@@ -279,7 +279,7 @@ for (const file of htmls) {
     'prod_V1ppAeiDF9dlkZ': { title: 'Consulta de PNI (1ª sesión)', price: '80,00 €', type: 'isabel_pni_1a', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
     'prod_V1pqPF6rtJf0SW': { title: 'Consulta de PNI (seguimiento)', price: '60,00 €', type: 'isabel_pni_sig', isConsultation: true, consultationType: 'nutricion', quantity: 1 },
     'prod_UqBwGSWJNVAK0j': { title: '1 Clase Suelta de Yoga', price: '15,00 €', type: 'clase_suelta', credits: 1 },
-    'prod_UqBxkWuX2OeIz8': { title: 'Bono Ilimitado', price: '90,00 €', type: 'bono_ilimitado', isUnlimited: true }
+    'prod_UqBxkWuX2OeIz8': { title: 'Bono Ilimitado (30 días)', price: '90,00 €', type: 'bono_ilimitado', isUnlimited: true }
   };
 
   function getProductInfo(lookupKey, membershipMonth) {
@@ -392,9 +392,7 @@ for (const file of htmls) {
         var cList = Array.isArray(data) ? data.slice() : [];
         monthlyList.forEach(function (sim) {
           var exists = cList.some(function (row) {
-            var rMonth = String(row.membership_month || '').slice(0, 7);
-            var sMonth = String(sim.membershipMonth || '').slice(0, 7);
-            return rMonth === sMonth && (row.plan_type === sim.planType);
+            return String(row.id) === String(sim.id) || (row.checkout_session_id && row.checkout_session_id === sim.sessionId);
           });
           if (!exists) {
             cList.unshift({
@@ -405,7 +403,8 @@ for (const file of htmls) {
               ends_at: sim.endsAt,
               purchased_at: sim.purchasedAt,
               max_classes_per_week: sim.maxClassesPerWeek,
-              plan_type: sim.planType
+              plan_type: sim.planType,
+              checkout_session_id: sim.sessionId
             });
           }
         });
@@ -422,7 +421,7 @@ for (const file of htmls) {
         var curU = Array.isArray(data) ? data.slice() : [];
         uList.forEach(function (sim) {
           var existsU = curU.some(function (row) {
-            return String(row.membership_month || '').slice(0, 7) === String(sim.membershipMonth || '').slice(0, 7);
+            return String(row.id) === String(sim.id) || (row.checkout_session_id && row.checkout_session_id === sim.sessionId);
           });
           if (!existsU) {
             curU.unshift({
@@ -431,7 +430,8 @@ for (const file of htmls) {
               membership_month: sim.membershipMonth + '-01',
               starts_at: sim.startsAt,
               ends_at: sim.endsAt,
-              purchased_at: sim.purchasedAt
+              purchased_at: sim.purchasedAt,
+              checkout_session_id: sim.sessionId
             });
           }
         });
@@ -803,6 +803,10 @@ for (const file of htmls) {
       var effUserId = getActiveCertUserId(userId);
       var bounds = getMonthBounds(membershipMonth);
       var pType = info.type;
+      var is30DaysPlan = (pType === 'bono_mensual' || pType === 'bono_inicial' || pType === 'bono_ilimitado');
+      var nowIso = new Date().toISOString();
+      var planStartsAt = is30DaysPlan ? nowIso : bounds.startsAt;
+      var planEndsAt = is30DaysPlan ? new Date(Date.now() + 30 * 86400000).toISOString() : bounds.endsAt;
 
       var purchaseRecord = {
         id: Date.now(),
@@ -813,10 +817,10 @@ for (const file of htmls) {
         title: info.title,
         price: info.price,
         membershipMonth: bounds.monthStr,
-        startsAt: bounds.startsAt,
-        endsAt: bounds.endsAt,
-        purchasedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 60 * 86400000).toISOString(),
+        startsAt: planStartsAt,
+        endsAt: planEndsAt,
+        purchasedAt: nowIso,
+        expiresAt: is30DaysPlan ? planEndsAt : new Date(Date.now() + 60 * 86400000).toISOString(),
         creditsTotal: info.credits || (pType === 'bono_mensual' ? 8 : (pType === 'bono_inicial' ? 4 : 1)),
         creditsRemaining: info.credits || (pType === 'bono_mensual' ? 8 : (pType === 'bono_inicial' ? 4 : 1)),
         planType: info.planType || (pType === 'bono_inicial' ? 'bono_inicial' : 'bono_mensual'),
