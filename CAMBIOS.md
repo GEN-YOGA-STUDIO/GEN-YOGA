@@ -45,7 +45,7 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 - **Descripción:** Actualización de los bonos (inicial, mensual e ilimitado) a 30 días naturales desde la compra (ámbito: bonos)
 - **Validación:** npm test
 - **Tag:** `v18.5`
-- **Contabilidad B:** línea «Pendiente 50» añadida
+- **Contabilidad B:** línea «Pendiente 100» añadida
 - **Informe:** `docs/informes/v18.5.0.md`
 
 ## v18.4.14 — 13 nov 2026 · Incidencia
