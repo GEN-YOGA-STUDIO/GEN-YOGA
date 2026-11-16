@@ -495,10 +495,58 @@ for (const file of htmls) {
           return res;
         });
       } else if (type === 'bono_ilimitado') {
-        return fetch(rpcUrl + 'admin_asignar_mes_ilimitado', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
+        // Purgar registros conflictivos en Supabase para este mes
+        return fetch('${urlCert}/rest/v1/unlimited_membership_periods?user_id=eq.' + targetUid + '&membership_month=eq.' + mMonth, {
+          method: 'DELETE',
+          headers: headers
+        })
+        .then(function () {
+          // Insertar registro con el rango exacto de 30 días
+          return fetch('${urlCert}/rest/v1/unlimited_membership_periods', {
+            method: 'POST',
+            headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
+            body: JSON.stringify({
+              user_id: targetUid,
+              membership_month: mMonth,
+              starts_at: startIso,
+              ends_at: endIso,
+              purchased_at: new Date().toISOString()
+            })
+          });
+        })
+        .then(function () {
+          return fetch('${urlCert}/rest/v1/profiles?id=eq.' + targetUid, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({
+              bono_mensual_activo: true,
+              bono_mensual_inicio: startIso,
+              bono_mensual_fin: endIso
+            })
+          });
+        })
+        .then(function () {
+          return fetch('${urlCert}/rest/v1/bonos_clases_especiales', {
+            method: 'POST',
+            headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates' }),
+            body: JSON.stringify({
+              user_id: targetUid,
+              mes: mMonth,
+              saldo: 1,
+              origen: 'bono_ilimitado'
+            })
+          });
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            console.warn('[cert-simulator] Fallback a RPC admin_asignar_mes_ilimitado por HTTP ' + res.status);
+            return fetch(rpcUrl + 'admin_asignar_mes_ilimitado', {
+              method: 'POST',
+              headers: headers,
+              body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
+            });
+          }
+          return res;
         });
       } else if (type === 'pack_4' || type === 'pack_6' || type === 'pack_10' || type === 'clase_suelta') {
         var cr = type === 'pack_4' ? 4 : (type === 'pack_6' ? 6 : (type === 'pack_10' ? 10 : 1));

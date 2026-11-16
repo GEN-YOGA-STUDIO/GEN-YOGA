@@ -252,6 +252,8 @@ serve(async (req) => {
     }
     if (membershipMonth) metadata.membership_month = membershipMonth
     if (claseIdMeta) metadata.clase_id = claseIdMeta
+    if (body.starts_at) metadata.starts_at = String(body.starts_at)
+    if (body.ends_at) metadata.ends_at = String(body.ends_at)
 
     const returnBaseUrl = resolveReturnBaseUrl(req, config)
 
