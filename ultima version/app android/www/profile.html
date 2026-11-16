@@ -4691,7 +4691,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.5 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.6 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -6714,6 +6714,9 @@
                     .order('membership_month', { ascending: true });
                 if (mData && mData.length > 0) {
                     const rawSorted = mData.slice().sort((a, b) => {
+                        const aStart = a.starts_at ? new Date(a.starts_at).getTime() : 0;
+                        const bStart = b.starts_at ? new Date(b.starts_at).getTime() : 0;
+                        if (bStart !== aStart) return bStart - aStart;
                         const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
                         const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
                         if (aIsReal && !bIsReal) return -1;
@@ -8757,6 +8760,9 @@
             }
             if (!monthlyPeriodsResult.error) {
                 const rawPeriods = (monthlyPeriodsResult.data || []).slice().sort((a, b) => {
+                    const aStart = a.starts_at ? new Date(a.starts_at).getTime() : 0;
+                    const bStart = b.starts_at ? new Date(b.starts_at).getTime() : 0;
+                    if (bStart !== aStart) return bStart - aStart;
                     const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
                     const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
                     if (aIsReal && !bIsReal) return -1;
@@ -24150,6 +24156,9 @@
                 if (mData && mData.length > 0) {
                     const ahora = Date.now();
                     const rawSorted = mData.slice().sort((a, b) => {
+                        const aStart = a.starts_at ? new Date(a.starts_at).getTime() : 0;
+                        const bStart = b.starts_at ? new Date(b.starts_at).getTime() : 0;
+                        if (bStart !== aStart) return bStart - aStart;
                         const aIsReal = !isNaN(Number(a.id)) && Number(a.id) > 0 && !String(a.id).startsWith('cert_') && Number(a.id) < 1000000000000;
                         const bIsReal = !isNaN(Number(b.id)) && Number(b.id) > 0 && !String(b.id).startsWith('cert_') && Number(b.id) < 1000000000000;
                         if (aIsReal && !bIsReal) return -1;
@@ -34232,6 +34241,8 @@
                     body: {
                         lookup_key: 'bono_ilimitado',
                         membership_month: membershipMonth,
+                        starts_at: hoy.toISOString(),
+                        ends_at: fechaFin.toISOString(),
                         user_id: currentUser.id,
                         from: 'profile',
                         app_version: APP_VERSION,
@@ -34338,6 +34349,8 @@
                     body: {
                         lookup_key: 'bono_inicial',
                         membership_month: membershipMonth,
+                        starts_at: hoy.toISOString(),
+                        ends_at: fechaFin.toISOString(),
                         user_id: currentUser.id,
                         from: 'profile',
                         app_version: APP_VERSION,
@@ -34444,6 +34457,8 @@
                     body: {
                         lookup_key: 'bono_mensual',
                         membership_month: membershipMonth,
+                        starts_at: hoy.toISOString(),
+                        ends_at: fechaFin.toISOString(),
                         user_id: currentUser.id,
                         from: 'profile',
                         app_version: APP_VERSION,

@@ -400,6 +400,14 @@ for (const file of htmls) {
   function saveCertPurchase(item) {
     try {
       var list = getCertPurchases();
+      // Evitar duplicados del mismo plan y mes para el mismo usuario
+      var itemMonth = toMadridMonth(item.membershipMonth || item.startsAt);
+      list = list.filter(function (p) {
+        var sameUser = !p.userId || String(p.userId) === String(item.userId);
+        var sameType = (p.purchaseType === item.purchaseType);
+        var pMonth = toMadridMonth(p.membershipMonth || p.startsAt);
+        return !(sameUser && sameType && pMonth && itemMonth && pMonth === itemMonth);
+      });
       list.unshift(item);
       localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(list));
     } catch (e) {
@@ -446,18 +454,45 @@ for (const file of htmls) {
       };
       var rpcUrl = '${urlCert}/rest/v1/rpc/';
       var mMonth = (bnds && bnds.monthDate) || (new Date().toISOString().slice(0, 7) + '-01');
+      var startIso = (bnds && bnds.startsAt) || new Date().toISOString();
+      var endIso = (bnds && bnds.endsAt) || new Date(Date.now() + 30 * 86400000).toISOString();
 
-      if (type === 'bono_mensual') {
-        return fetch(rpcUrl + 'admin_asignar_mes_bono_mensual', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
-        });
-      } else if (type === 'bono_inicial') {
-        return fetch(rpcUrl + 'admin_asignar_mes_bono_inicial', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
+      if (type === 'bono_mensual' || type === 'bono_inicial') {
+        var plan = (type === 'bono_inicial' ? 'bono_inicial' : 'bono_mensual');
+        var maxPerWeek = (type === 'bono_inicial' ? 1 : 2);
+        var rpcName = (type === 'bono_inicial' ? 'admin_asignar_mes_bono_inicial' : 'admin_asignar_mes_bono_mensual');
+
+        // Purgar registros conflictivos en Supabase para este mes y plan
+        return fetch('${urlCert}/rest/v1/monthly_membership_periods?user_id=eq.' + targetUid + '&membership_month=eq.' + mMonth + '&plan_type=eq.' + plan, {
+          method: 'DELETE',
+          headers: headers
+        })
+        .then(function () {
+          // Insertar registro con el rango exacto de 30 días
+          return fetch('${urlCert}/rest/v1/monthly_membership_periods', {
+            method: 'POST',
+            headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
+            body: JSON.stringify({
+              user_id: targetUid,
+              membership_month: mMonth,
+              starts_at: startIso,
+              ends_at: endIso,
+              max_classes_per_week: maxPerWeek,
+              plan_type: plan,
+              purchased_at: new Date().toISOString()
+            })
+          });
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            console.warn('[cert-simulator] Fallback a RPC ' + rpcName + ' por HTTP ' + res.status);
+            return fetch(rpcUrl + rpcName, {
+              method: 'POST',
+              headers: headers,
+              body: JSON.stringify({ p_user_id: targetUid, p_membership_month: mMonth, p_activo: true })
+            });
+          }
+          return res;
         });
       } else if (type === 'bono_ilimitado') {
         return fetch(rpcUrl + 'admin_asignar_mes_ilimitado', {
@@ -588,17 +623,26 @@ for (const file of htmls) {
           var targetUid = sim.userId || currentUserId;
           var simPlan = sim.planType || (sim.purchaseType === 'bono_inicial' ? 'bono_inicial' : 'bono_mensual');
           var simMonth = toMadridMonth(sim.membershipMonth || sim.startsAt);
-          var exists = cList.some(function (row) {
+          var matchedIdx = -1;
+          for (var i = 0; i < cList.length; i++) {
+            var row = cList[i];
             var sameUser = !row.user_id || String(row.user_id) === String(targetUid);
             var rowPlan = row.plan_type || 'bono_mensual';
             var samePlan = (rowPlan === simPlan);
             var rowMonth = toMadridMonth(row.membership_month || row.starts_at);
             var sameMonth = rowMonth && simMonth && rowMonth === simMonth;
-            return String(row.id) === String(sim.id) ||
-                   (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (sameUser && samePlan && sameMonth);
-          });
-          if (!exists) {
+            if (String(row.id) === String(sim.id) ||
+                (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
+                (sameUser && samePlan && sameMonth)) {
+              matchedIdx = i;
+              break;
+            }
+          }
+          if (matchedIdx !== -1) {
+            if (sim.startsAt) cList[matchedIdx].starts_at = sim.startsAt;
+            if (sim.endsAt) cList[matchedIdx].ends_at = sim.endsAt;
+            if (sim.purchasedAt) cList[matchedIdx].purchased_at = sim.purchasedAt;
+          } else {
             cList.unshift({
               id: sim.id,
               user_id: targetUid,
@@ -626,15 +670,24 @@ for (const file of htmls) {
         uList.forEach(function (sim) {
           var targetUid = sim.userId || currentUserId;
           var simMonth = toMadridMonth(sim.membershipMonth || sim.startsAt);
-          var existsU = curU.some(function (row) {
-            var sameUser = !row.user_id || String(row.user_id) === String(targetUid);
-            var rowMonth = toMadridMonth(row.membership_month || row.starts_at);
-            var sameMonth = rowMonth && simMonth && rowMonth === simMonth;
-            return String(row.id) === String(sim.id) ||
-                   (row.checkout_session_id && row.checkout_session_id === sim.sessionId) ||
-                   (sameUser && sameMonth);
-          });
-          if (!existsU) {
+          var matchedUIdx = -1;
+          for (var j = 0; j < curU.length; j++) {
+            var uRow = curU[j];
+            var sameUserU = !uRow.user_id || String(uRow.user_id) === String(targetUid);
+            var uRowMonth = toMadridMonth(uRow.membership_month || uRow.starts_at);
+            var sameMonthU = uRowMonth && simMonth && uRowMonth === simMonth;
+            if (String(uRow.id) === String(sim.id) ||
+                (uRow.checkout_session_id && uRow.checkout_session_id === sim.sessionId) ||
+                (sameUserU && sameMonthU)) {
+              matchedUIdx = j;
+              break;
+            }
+          }
+          if (matchedUIdx !== -1) {
+            if (sim.startsAt) curU[matchedUIdx].starts_at = sim.startsAt;
+            if (sim.endsAt) curU[matchedUIdx].ends_at = sim.endsAt;
+            if (sim.purchasedAt) curU[matchedUIdx].purchased_at = sim.purchasedAt;
+          } else {
             curU.unshift({
               id: sim.id,
               user_id: targetUid,
@@ -1267,8 +1320,8 @@ for (const file of htmls) {
       var pType = info.type;
       var is30DaysPlan = (pType === 'bono_mensual' || pType === 'bono_inicial' || pType === 'bono_ilimitado');
       var nowIso = new Date().toISOString();
-      var planStartsAt = is30DaysPlan ? nowIso : bounds.startsAt;
-      var planEndsAt = is30DaysPlan ? new Date(Date.now() + 30 * 86400000).toISOString() : bounds.endsAt;
+      var planStartsAt = checkoutPayload.starts_at || (is30DaysPlan ? nowIso : bounds.startsAt);
+      var planEndsAt = checkoutPayload.ends_at || (is30DaysPlan ? new Date(Date.now() + 30 * 86400000).toISOString() : bounds.endsAt);
 
       var purchaseRecord = {
         id: Date.now(),
@@ -1297,6 +1350,8 @@ for (const file of htmls) {
         purchaseType: pType,
         userId: effUserId,
         membershipMonth: bounds.monthStr,
+        startsAt: planStartsAt,
+        endsAt: planEndsAt,
         targetClassId: targetClassId,
         guestName: guestName,
         guestEmail: checkoutPayload.guest_email || 'test-cert@genyoga.studio',
@@ -1318,7 +1373,14 @@ for (const file of htmls) {
         console.warn('[cert-simulator] Storage error:', err);
       }
 
-      consolidarCompraEnBDCert(effUserId, pType, bounds)
+      var certBounds = {
+        monthDate: bounds.monthDate,
+        monthStr: bounds.monthStr,
+        startsAt: planStartsAt,
+        endsAt: planEndsAt
+      };
+
+      consolidarCompraEnBDCert(effUserId, pType, certBounds)
         .finally(function () {
           setTimeout(function () {
             window.location.assign('success.html?session_id=' + encodeURIComponent(simSessionId));
@@ -1376,7 +1438,13 @@ for (const file of htmls) {
         if (stored && stored.userId && stored.userId !== 'guest' && !stored._dbFulfillmentDone) {
           stored._dbFulfillmentDone = true;
           try { localStorage.setItem('gy_cert_session_' + sessionId, JSON.stringify(stored)); } catch (_) {}
-          consolidarCompraEnBDCert(stored.userId, (stored && stored.purchaseType) || 'bono_mensual', getMonthBounds(stored.membershipMonth));
+          var effB = {
+            monthDate: stored.membershipMonth ? (stored.membershipMonth + '-01') : (new Date().toISOString().slice(0, 7) + '-01'),
+            monthStr: stored.membershipMonth || new Date().toISOString().slice(0, 7),
+            startsAt: stored.startsAt || new Date().toISOString(),
+            endsAt: stored.endsAt || new Date(Date.now() + 30 * 86400000).toISOString()
+          };
+          consolidarCompraEnBDCert(stored.userId, (stored && stored.purchaseType) || 'bono_mensual', effB);
         }
 
         var info = getProductInfo(stored && stored.lookupKey, stored && stored.membershipMonth);
