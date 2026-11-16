@@ -539,27 +539,85 @@ for (const file of htmls) {
       }
     }
 
+    // 6. Reservas de yoga simuladas en certificación
+    if (table === 'reservas_yoga') {
+      var certRes = getCertReservations().filter(function (r) {
+        return r.user_id === currentUserId || (currentUserId !== 'guest' && r.user_id === 'guest');
+      });
+      if (certRes.length > 0) {
+        var curR = Array.isArray(data) ? data.slice() : [];
+        certRes.forEach(function (simR) {
+          var existsR = curR.some(function (row) {
+            return String(row.id) === String(simR.id) || (String(row.clase_id) === String(simR.clase_id) && String(row.user_id) === String(simR.user_id) && row.estado === 'confirmada');
+          });
+          if (!existsR) curR.unshift(simR);
+        });
+        return { data: curR, error: null };
+      }
+    }
+
     return result;
   }
 
-  function getSimBonoForReservation() {
+  function getCertReservations() {
+    try {
+      return JSON.parse(localStorage.getItem('gy_cert_reservas_v1') || '[]');
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function saveCertReservation(resItem) {
+    try {
+      var list = getCertReservations();
+      list.unshift(resItem);
+      localStorage.setItem('gy_cert_reservas_v1', JSON.stringify(list));
+    } catch (e) {
+      console.warn('[cert-simulator] Error guardando reserva simulada:', e);
+    }
+  }
+
+  function removeCertReservation(resIdOrClaseId) {
+    try {
+      var list = getCertReservations();
+      var found = list.find(function (r) {
+        return String(r.id) === String(resIdOrClaseId) || String(r.clase_id) === String(resIdOrClaseId);
+      });
+      list = list.filter(function (r) {
+        return String(r.id) !== String(resIdOrClaseId) && String(r.clase_id) !== String(resIdOrClaseId);
+      });
+      localStorage.setItem('gy_cert_reservas_v1', JSON.stringify(list));
+      return found;
+    } catch (e) {
+      console.warn('[cert-simulator] Error eliminando reserva simulada:', e);
+      return null;
+    }
+  }
+
+  function getSimBonoForReservation(targetDate) {
     var currentUserId = getActiveCertUserId();
     var all = getCertPurchases();
     var purchases = all.filter(function (p) {
       return p.userId === currentUserId || (currentUserId !== 'guest' && p.userId === 'guest');
     });
     var now = Date.now();
+    var targetTime = targetDate ? new Date(targetDate).getTime() : now;
+    if (isNaN(targetTime)) targetTime = now;
 
-    // 1. Bono Ilimitado
+    // 1. Bono Ilimitado (acceso durante su ventana de 30 días)
     var u = purchases.find(function (p) {
-      return p.purchaseType === 'bono_ilimitado' && Date.parse(p.startsAt) <= now && Date.parse(p.endsAt) > now;
+      var s = Date.parse(p.startsAt);
+      var e = Date.parse(p.endsAt);
+      return p.purchaseType === 'bono_ilimitado' && (!Number.isFinite(s) || s <= targetTime) && (!Number.isFinite(e) || e > targetTime);
     });
     if (u) return { bono: u, kind: 'ilimitado' };
 
-    // 2. Bono Mensual o Inicial
+    // 2. Bono Mensual o Inicial (8 o 4 clases durante su ventana de 30 días)
     var m = purchases.find(function (p) {
+      var s = Date.parse(p.startsAt);
+      var e = Date.parse(p.endsAt);
       return (p.purchaseType === 'bono_mensual' || p.purchaseType === 'bono_inicial')
-        && Date.parse(p.startsAt) <= now && Date.parse(p.endsAt) > now
+        && (!Number.isFinite(s) || s <= targetTime) && (!Number.isFinite(e) || e > targetTime)
         && (p.creditsRemaining > 0);
     });
     if (m) return { bono: m, kind: 'mensual' };
@@ -577,6 +635,22 @@ for (const file of htmls) {
 
   function recordSimReservation(claseId, match) {
     try {
+      var currentUserId = getActiveCertUserId();
+      var newResId = 'cert_res_' + Date.now();
+      var tipoReserva = match.kind === 'ilimitado' ? 'ilimitado' : (match.bono && match.bono.purchaseType === 'bono_inicial' ? 'bono_inicial' : 'bono_mensual');
+      if (match.kind === 'pack') tipoReserva = 'pack_normal';
+
+      saveCertReservation({
+        id: newResId,
+        clase_id: Number(claseId),
+        user_id: currentUserId,
+        estado: 'confirmada',
+        bono_descontado: match.kind === 'pack',
+        usado_bono_mensual: match.kind === 'ilimitado' || match.kind === 'mensual',
+        tipo_reserva: tipoReserva,
+        created_at: new Date().toISOString()
+      });
+
       if (match && match.bono) {
         var all = getCertPurchases();
         all.forEach(function (p) {
@@ -602,7 +676,8 @@ for (const file of htmls) {
           table === 'unlimited_membership_periods' ||
           table === 'class_credit_packs' ||
           table === 'profiles' ||
-          table === 'bonos_clases_especiales') {
+          table === 'bonos_clases_especiales' ||
+          table === 'reservas_yoga') {
         var origThen = query.then;
         query.then = function (onFulfilled, onRejected) {
           return origThen.call(query, function (res) {
@@ -629,6 +704,26 @@ for (const file of htmls) {
           if (simMatch) {
             console.log('[cert-simulator] Aceptando reserva con bono simulado de CERT:', simMatch);
             recordSimReservation(args && args.p_clase_id, simMatch);
+            return { data: null, error: null };
+          }
+          return res;
+        });
+      }
+      if (fn === 'cancelar_con_bono') {
+        return rpcPromise.then(function (res) {
+          if (!res || !res.error) return res;
+          var resId = args && args.p_reserva_id;
+          var deleted = removeCertReservation(resId);
+          if (deleted) {
+            console.log('[cert-simulator] Cancelando reserva simulada de CERT:', deleted);
+            var all = getCertPurchases();
+            var bMatch = all.find(function (p) {
+              return (p.purchaseType === deleted.tipo_reserva || (deleted.tipo_reserva === 'ilimitado' && p.purchaseType === 'bono_ilimitado'));
+            });
+            if (bMatch) {
+              bMatch.creditsRemaining = Math.min(bMatch.creditsTotal, (bMatch.creditsRemaining || 0) + 1);
+              localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(all));
+            }
             return { data: null, error: null };
           }
           return res;

@@ -181,12 +181,23 @@ BEGIN
       END IF;
     END IF;
 
-    SELECT id INTO v_special_bonus_id
-      FROM public.bonos_clases_especiales
-     WHERE user_id = p_user_id
-       AND mes = v_class_month
-       AND saldo > 0
-     ORDER BY id ASC
+    SELECT b.id INTO v_special_bonus_id
+      FROM public.bonos_clases_especiales b
+     WHERE b.user_id = p_user_id
+       AND b.saldo > 0
+       AND (
+         b.mes = v_class_month
+         OR (
+           b.origen = 'bono_ilimitado'
+           AND EXISTS (
+             SELECT 1 FROM public.unlimited_membership_periods u
+              WHERE u.user_id = p_user_id
+                AND u.starts_at <= v_starts_at
+                AND u.ends_at > v_starts_at
+           )
+         )
+       )
+     ORDER BY b.id ASC
      LIMIT 1 FOR UPDATE;
 
     IF v_special_bonus_id IS NOT NULL THEN
@@ -865,5 +876,350 @@ GRANT EXECUTE ON FUNCTION public.stripe_fulfill_checkout(
   text, text, bigint, text, uuid, boolean, text, text, text, text, text,
   bigint, text, text, text, timestamptz, timestamptz, text, boolean, boolean
 ) TO service_role;
+
+-- Actualizar limpiar_meses_caducados para respetar la validez de 30 días naturales
+CREATE OR REPLACE FUNCTION public.limpiar_meses_caducados()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  v_now timestamptz := now();
+  v_current_month_madrid date := date_trunc('month', v_now AT TIME ZONE 'Europe/Madrid')::date;
+  v_deleted_unlimited integer := 0;
+  v_deleted_monthly integer := 0;
+  v_deleted_special integer := 0;
+  v_updated_profiles integer := 0;
+BEGIN
+  -- A. Eliminar periodos de bono ilimitado pasados (ends_at <= now O ends_at NULL y mes anterior)
+  WITH del_unlim AS (
+    DELETE FROM public.unlimited_membership_periods
+     WHERE ends_at <= v_now
+        OR (ends_at IS NULL AND membership_month < v_current_month_madrid)
+     RETURNING id
+  )
+  SELECT count(*) INTO v_deleted_unlimited FROM del_unlim;
+
+  -- B. Eliminar periodos de bono mensual / inicial pasados
+  WITH del_month AS (
+    DELETE FROM public.monthly_membership_periods
+     WHERE ends_at <= v_now
+        OR (ends_at IS NULL AND membership_month < v_current_month_madrid)
+     RETURNING id
+  )
+  SELECT count(*) INTO v_deleted_monthly FROM del_month;
+
+  -- C. Eliminar bonos de clases especiales de meses pasados (excepto si provienen de bono ilimitado vigente)
+  WITH del_spec AS (
+    DELETE FROM public.bonos_clases_especiales b
+     WHERE b.mes < v_current_month_madrid
+       AND NOT (
+         b.origen = 'bono_ilimitado'
+         AND EXISTS (
+           SELECT 1 FROM public.unlimited_membership_periods u
+            WHERE u.user_id = b.user_id
+              AND u.ends_at > v_now
+         )
+       )
+     RETURNING id
+  )
+  SELECT count(*) INTO v_deleted_special FROM del_spec;
+
+  -- D. Sincronizar perfiles: desactivar bono_mensual_activo si no tienen periodo vigente
+  WITH upd_profiles_off AS (
+    UPDATE public.profiles p
+       SET bono_mensual_activo = false,
+           bono_mensual_inicio = NULL,
+           bono_mensual_fin = NULL,
+           updated_at = timezone('utc', now())
+     WHERE p.bono_mensual_activo = true
+       AND NOT EXISTS (
+         SELECT 1 FROM public.unlimited_membership_periods u
+          WHERE u.user_id = p.id
+            AND u.ends_at > v_now
+       )
+     RETURNING p.id
+  )
+  SELECT count(*) INTO v_updated_profiles FROM upd_profiles_off;
+
+  -- E. Sincronizar perfiles que sí tienen periodos vigentes para asegurar fechas exactas
+  UPDATE public.profiles p
+     SET bono_mensual_activo = true,
+         bono_mensual_inicio = sub.min_start,
+         bono_mensual_fin = sub.max_end,
+         updated_at = timezone('utc', now())
+    FROM (
+      SELECT user_id, min(starts_at) AS min_start, max(ends_at) AS max_end
+        FROM public.unlimited_membership_periods
+       WHERE ends_at > v_now
+       GROUP BY user_id
+    ) sub
+   WHERE p.id = sub.user_id
+     AND (
+       p.bono_mensual_activo IS NOT TRUE
+       OR p.bono_mensual_inicio IS DISTINCT FROM sub.min_start
+       OR p.bono_mensual_fin IS DISTINCT FROM sub.max_end
+     );
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'deleted_unlimited', v_deleted_unlimited,
+    'deleted_monthly', v_deleted_monthly,
+    'deleted_special', v_deleted_special,
+    'updated_profiles', v_updated_profiles,
+    'executed_at', v_now
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.limpiar_meses_caducados() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.limpiar_meses_caducados() TO authenticated, service_role;
+
+-- Actualizar admin_asignar_mes_ilimitado para soportar 30 días naturales si es el periodo actual
+CREATE OR REPLACE FUNCTION public.admin_asignar_mes_ilimitado(
+  p_user_id uuid,
+  p_membership_month date,
+  p_activo boolean
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  v_actor_id uuid := auth.uid();
+  v_actor_role text;
+  v_month date;
+  v_starts_at timestamptz;
+  v_ends_at timestamptz;
+  v_is_current boolean := false;
+BEGIN
+  IF v_actor_id IS NULL THEN
+    RAISE EXCEPTION 'Debes iniciar sesión.' USING errcode = '42501';
+  END IF;
+
+  SELECT lower(trim(coalesce(rol, '')))
+    INTO v_actor_role
+    FROM public.profiles
+   WHERE id = v_actor_id;
+
+  IF NOT FOUND OR v_actor_role NOT IN ('admin', 'profesor', 'trabajador', 'profesional') THEN
+    RAISE EXCEPTION 'Permisos insuficientes para gestionar bonos mensuales.' USING errcode = '42501';
+  END IF;
+
+  IF p_user_id IS NULL OR p_activo IS NULL THEN
+    RAISE EXCEPTION 'Parámetros no válidos.' USING errcode = '22023';
+  END IF;
+
+  PERFORM public.limpiar_meses_caducados();
+
+  v_month := date_trunc('month', coalesce(p_membership_month, (timezone('Europe/Madrid', now()))::date))::date;
+  v_is_current := (v_month = date_trunc('month', timezone('Europe/Madrid', now()))::date);
+
+  IF v_is_current THEN
+    v_starts_at := timezone('utc', now());
+    v_ends_at := timezone('utc', now()) + interval '30 days';
+  ELSE
+    v_starts_at := (v_month::text || ' 00:00:00 Europe/Madrid')::timestamptz;
+    v_ends_at := ((v_month + interval '1 month')::date::text || ' 00:00:00 Europe/Madrid')::timestamptz;
+  END IF;
+
+  IF p_activo THEN
+    INSERT INTO public.unlimited_membership_periods (
+      user_id, membership_month, starts_at, ends_at, purchased_at
+    ) VALUES (
+      p_user_id, v_month, v_starts_at, v_ends_at, timezone('utc', now())
+    )
+    ON CONFLICT (user_id, membership_month)
+    DO UPDATE SET
+      starts_at = EXCLUDED.starts_at,
+      ends_at = EXCLUDED.ends_at,
+      purchased_at = coalesce(public.unlimited_membership_periods.purchased_at, EXCLUDED.purchased_at);
+
+    UPDATE public.profiles
+       SET bono_mensual_activo = true,
+           bono_mensual_inicio = (
+             SELECT min(starts_at) FROM public.unlimited_membership_periods
+              WHERE user_id = p_user_id AND ends_at > timezone('utc', now())
+           ),
+           bono_mensual_fin = (
+             SELECT max(ends_at) FROM public.unlimited_membership_periods
+              WHERE user_id = p_user_id AND ends_at > timezone('utc', now())
+           ),
+           updated_at = timezone('utc', now())
+     WHERE id = p_user_id;
+
+    INSERT INTO public.bonos_clases_especiales (
+      user_id, mes, saldo, origen
+    ) VALUES (
+      p_user_id, v_month, 1, 'bono_ilimitado'
+    )
+    ON CONFLICT (user_id, mes)
+    DO UPDATE SET
+      saldo = greatest(public.bonos_clases_especiales.saldo, 1),
+      updated_at = timezone('utc', now());
+  ELSE
+    DELETE FROM public.unlimited_membership_periods
+     WHERE user_id = p_user_id
+       AND (membership_month = v_month OR (ends_at > v_starts_at AND starts_at < v_ends_at));
+
+    UPDATE public.profiles
+       SET bono_mensual_activo = (
+             EXISTS (
+               SELECT 1 FROM public.unlimited_membership_periods
+                WHERE user_id = p_user_id AND ends_at > timezone('utc', now())
+             )
+           ),
+           bono_mensual_inicio = (
+             SELECT min(starts_at) FROM public.unlimited_membership_periods
+              WHERE user_id = p_user_id AND ends_at > timezone('utc', now())
+           ),
+           bono_mensual_fin = (
+             SELECT max(ends_at) FROM public.unlimited_membership_periods
+              WHERE user_id = p_user_id AND ends_at > timezone('utc', now())
+           ),
+           updated_at = timezone('utc', now())
+     WHERE id = p_user_id;
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_asignar_mes_ilimitado(uuid, date, boolean) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.admin_asignar_mes_ilimitado(uuid, date, boolean) TO authenticated, service_role;
+
+-- Actualizar admin_asignar_mes_bono_inicial para soportar 30 días naturales si es el periodo actual
+CREATE OR REPLACE FUNCTION public.admin_asignar_mes_bono_inicial(
+  p_user_id uuid,
+  p_membership_month date,
+  p_activo boolean
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  v_actor_id uuid := auth.uid();
+  v_actor_role text;
+  v_month date;
+  v_starts_at timestamptz;
+  v_ends_at timestamptz;
+  v_is_current boolean := false;
+BEGIN
+  IF v_actor_id IS NULL THEN
+    RAISE EXCEPTION 'Debes iniciar sesión.' USING errcode = '42501';
+  END IF;
+
+  SELECT lower(trim(coalesce(rol, '')))
+    INTO v_actor_role
+    FROM public.profiles
+   WHERE id = v_actor_id;
+
+  IF NOT FOUND OR v_actor_role NOT IN ('admin', 'profesor', 'trabajador', 'profesional') THEN
+    RAISE EXCEPTION 'Permisos insuficientes para gestionar bonos mensuales.' USING errcode = '42501';
+  END IF;
+
+  IF p_user_id IS NULL OR p_activo IS NULL THEN
+    RAISE EXCEPTION 'Parámetros no válidos.' USING errcode = '22023';
+  END IF;
+
+  PERFORM public.limpiar_meses_caducados();
+
+  v_month := date_trunc('month', coalesce(p_membership_month, (timezone('Europe/Madrid', now()))::date))::date;
+  v_is_current := (v_month = date_trunc('month', timezone('Europe/Madrid', now()))::date);
+
+  IF v_is_current THEN
+    v_starts_at := timezone('utc', now());
+    v_ends_at := timezone('utc', now()) + interval '30 days';
+  ELSE
+    v_starts_at := (v_month::text || ' 00:00:00 Europe/Madrid')::timestamptz;
+    v_ends_at := ((v_month + interval '1 month')::date::text || ' 00:00:00 Europe/Madrid')::timestamptz;
+  END IF;
+
+  IF p_activo THEN
+    INSERT INTO public.monthly_membership_periods (
+      user_id, membership_month, starts_at, ends_at, max_classes_per_week, plan_type, purchased_at
+    ) VALUES (
+      p_user_id, v_month, v_starts_at, v_ends_at, 1, 'bono_inicial', timezone('utc', now())
+    );
+  ELSE
+    DELETE FROM public.monthly_membership_periods
+     WHERE user_id = p_user_id
+       AND plan_type = 'bono_inicial'
+       AND (membership_month = v_month OR (ends_at > v_starts_at AND starts_at < v_ends_at));
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_asignar_mes_bono_inicial(uuid, date, boolean) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.admin_asignar_mes_bono_inicial(uuid, date, boolean) TO authenticated, service_role;
+
+-- Actualizar admin_asignar_mes_bono_mensual para soportar 30 días naturales si es el periodo actual
+CREATE OR REPLACE FUNCTION public.admin_asignar_mes_bono_mensual(
+  p_user_id uuid,
+  p_membership_month date,
+  p_activo boolean
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  v_actor_id uuid := auth.uid();
+  v_actor_role text;
+  v_month date;
+  v_starts_at timestamptz;
+  v_ends_at timestamptz;
+  v_is_current boolean := false;
+BEGIN
+  IF v_actor_id IS NULL THEN
+    RAISE EXCEPTION 'Debes iniciar sesión.' USING errcode = '42501';
+  END IF;
+
+  SELECT lower(trim(coalesce(rol, '')))
+    INTO v_actor_role
+    FROM public.profiles
+   WHERE id = v_actor_id;
+
+  IF NOT FOUND OR v_actor_role NOT IN ('admin', 'profesor', 'trabajador', 'profesional') THEN
+    RAISE EXCEPTION 'Permisos insuficientes para gestionar bonos mensuales.' USING errcode = '42501';
+  END IF;
+
+  IF p_user_id IS NULL OR p_activo IS NULL THEN
+    RAISE EXCEPTION 'Parámetros no válidos.' USING errcode = '22023';
+  END IF;
+
+  PERFORM public.limpiar_meses_caducados();
+
+  v_month := date_trunc('month', coalesce(p_membership_month, (timezone('Europe/Madrid', now()))::date))::date;
+  v_is_current := (v_month = date_trunc('month', timezone('Europe/Madrid', now()))::date);
+
+  IF v_is_current THEN
+    v_starts_at := timezone('utc', now());
+    v_ends_at := timezone('utc', now()) + interval '30 days';
+  ELSE
+    v_starts_at := (v_month::text || ' 00:00:00 Europe/Madrid')::timestamptz;
+    v_ends_at := ((v_month + interval '1 month')::date::text || ' 00:00:00 Europe/Madrid')::timestamptz;
+  END IF;
+
+  IF p_activo THEN
+    INSERT INTO public.monthly_membership_periods (
+      user_id, membership_month, starts_at, ends_at, max_classes_per_week, plan_type, purchased_at
+    ) VALUES (
+      p_user_id, v_month, v_starts_at, v_ends_at, 2, 'bono_mensual', timezone('utc', now())
+    );
+  ELSE
+    DELETE FROM public.monthly_membership_periods
+     WHERE user_id = p_user_id
+       AND plan_type = 'bono_mensual'
+       AND (membership_month = v_month OR (ends_at > v_starts_at AND starts_at < v_ends_at));
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_asignar_mes_bono_mensual(uuid, date, boolean) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.admin_asignar_mes_bono_mensual(uuid, date, boolean) TO authenticated, service_role;
 
 COMMIT;
