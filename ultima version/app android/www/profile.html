@@ -4691,7 +4691,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.7 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.8 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -6596,20 +6596,22 @@
             const r = reserva || {};
             const c = clase || {};
             const tipoNorm = normalizarTipoClase(c.tipo_clase || r.tipo_clase);
-            const esConsulta = tipoNorm === 'psicologia' || tipoNorm === 'nutricion';
+            const esConsulta = tipoNorm === 'psicologia' || tipoNorm === 'nutricion' || tipoNorm === 'ayurveda' || tipoNorm === 'consulta';
 
-            const badgeBase = 'inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-2xs';
+            const badgeBase = 'inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-2xs';
             const renderPagoBadge = (label, title, icon = 'ph-ticket', colorClass = 'text-[#7a4a2a] bg-[#f3e3d1] border border-[#d5b18b]') =>
-                `<span class="${badgeBase} ${colorClass}" title="${title}"><i class="ph-bold ${icon} text-xs"></i> Pagado con: ${label}</span>`;
+                `<span class="${badgeBase} ${colorClass}" title="${escapeHtml(title || label)}"><i class="ph-bold ${icon} text-xs"></i> Pagado con: ${escapeHtml(label)}</span>`;
 
-            // 1. Consultas médicas (Psicología / Nutrición)
+            // 1. Consultas médicas (Psicología / Nutrición / Ayurveda)
             if (esConsulta) {
-                const prodInfo = obtenerDetalleProductoConsulta(r, c);
+                const prodInfo = (typeof obtenerDetalleProductoConsulta === 'function')
+                    ? obtenerDetalleProductoConsulta(r, c)
+                    : { nombre: 'Consulta abonada' };
                 if (r.saldo_gratis_descontado || prodInfo.nombre?.includes('Gratuita')) {
                     return renderPagoBadge('Consulta Gratuita', 'Pagado con: Consulta Gratuita', 'ph-gift', 'text-pink-800 bg-pink-50 border border-pink-200');
                 }
                 if (prodInfo.nombre) {
-                    return `<span class="${badgeBase} text-blue-800 bg-blue-50 border border-blue-200" title="${escapeHtml(prodInfo.nombre)}"><i class="ph-bold ph-credit-card text-xs"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
+                    return renderPagoBadge(prodInfo.nombre, `Pagado con: ${prodInfo.nombre}`, 'ph-credit-card', 'text-blue-800 bg-blue-50 border border-blue-200');
                 }
                 return renderPagoBadge('Bono Consulta', 'Pagado con: Bono Consulta', 'ph-first-aid', 'text-purple-800 bg-purple-50 border border-purple-200');
             }
@@ -6625,33 +6627,77 @@
                 return renderPagoBadge(`Plaza Taller (${tallerPrecio} €)`, `Pagado con: Plaza de Taller abonada (${tallerPrecio} €)`, 'ph-credit-card', 'text-orange-900 bg-orange-100 border border-orange-300');
             }
 
+            const tipoResLower = String(r.tipo_reserva || '').toLowerCase().trim();
+
             // 3. Clases Especiales
-            if (r.tipo_reserva === 'clase_especial' || c.tipo_clase === 'clase_especial') {
+            if (tipoResLower === 'clase_especial' || tipoResLower === 'clase_especial_ilimitado' || c.tipo_clase === 'clase_especial') {
                 return renderPagoBadge('Clase Especial', 'Pagado con: Bono Clase Especial', 'ph-sparkle', 'text-slate-800 bg-slate-100 border border-slate-300');
             }
 
-            // 4. Bono Mensual Ilimitado
-            if (r.usado_bono_mensual || String(r.tipo_reserva || '').toLowerCase() === 'ilimitado') {
-                return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Mensual Ilimitado', 'ph-infinity', 'text-emerald-900 bg-emerald-100 border border-emerald-300');
+            // 4. Bono Inicial (40 € · 4 clases en 30 días)
+            if (tipoResLower === 'bono_inicial' || tipoResLower === 'inicial') {
+                return renderPagoBadge('Bono Inicial', 'Pagado con: Bono Inicial (4 cl/30d)', 'ph-plant', 'text-[#715019] bg-[#faf6f0] border border-[#e6d7c3]');
             }
 
-            // 5. Bono de Clases (Pack de clases o Clase suelta unificados)
-            if (r.bono_descontado || r.class_pack_id || String(r.tipo_reserva || '').toLowerCase() === 'pack_normal' || String(r.tipo_reserva || '').toLowerCase() === 'clase_suelta') {
+            // 5. Bono Mensual (65 € · 8 clases en 30 días)
+            if (tipoResLower === 'bono_mensual' || tipoResLower === 'mensual') {
+                return renderPagoBadge('Bono Mensual', 'Pagado con: Bono Mensual (8 cl/30d)', 'ph-calendar-check', 'text-amber-950 bg-amber-100 border border-amber-300');
+            }
+
+            // 6. Bono Ilimitado (90 € · clases ilimitadas)
+            if (tipoResLower === 'ilimitado' || tipoResLower === 'bono_ilimitado') {
+                return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Mensual Ilimitado (90 €)', 'ph-infinity', 'text-emerald-950 bg-emerald-100 border border-emerald-300');
+            }
+
+            // 7. Usado bono mensual / periodo de 30 días (fallback si tipo_reserva es genérico o nulo pero usado_bono_mensual está activo)
+            if (r.usado_bono_mensual) {
+                const u = (window.allAdminTodasPerfilesMap && window.allAdminTodasPerfilesMap[r.user_id])
+                    || (allAsistenciasPerfilesMap && allAsistenciasPerfilesMap[r.user_id])
+                    || (window.allUsersCache && window.allUsersCache.find(x => x.id === r.user_id))
+                    || (currentUser && currentUser.id === r.user_id ? currentUser : null);
+
+                if (u && Array.isArray(u.monthly_periods) && u.monthly_periods.length > 0) {
+                    const fClase = c.fecha_inicio ? new Date(c.fecha_inicio) : new Date();
+                    const period = u.monthly_periods.find(p => {
+                        const s = p.starts_at ? new Date(p.starts_at) : null;
+                        const e = p.ends_at ? new Date(p.ends_at) : null;
+                        return s && e && fClase >= s && fClase <= e;
+                    }) || u.monthly_periods[0];
+
+                    if (period) {
+                        if (period.plan_type === 'bono_inicial' || period.max_classes_per_week === 1) {
+                            return renderPagoBadge('Bono Inicial', 'Pagado con: Bono Inicial (4 cl/30d)', 'ph-plant', 'text-[#715019] bg-[#faf6f0] border border-[#e6d7c3]');
+                        }
+                        if (period.plan_type === 'bono_mensual' || period.max_classes_per_week === 2) {
+                            return renderPagoBadge('Bono Mensual', 'Pagado con: Bono Mensual (8 cl/30d)', 'ph-calendar-check', 'text-amber-950 bg-amber-100 border border-amber-300');
+                        }
+                    }
+                }
+                return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Mensual Ilimitado (90 €)', 'ph-infinity', 'text-emerald-950 bg-emerald-100 border border-emerald-300');
+            }
+
+            // 8. Clase suelta (15 €)
+            if (tipoResLower === 'clase_suelta') {
+                return renderPagoBadge('Clase Suelta', 'Pagado con: Clase Suelta (15 €)', 'ph-ticket', 'text-olive bg-olive/10 border border-olive/30');
+            }
+
+            // 9. Bono de Clases (Pack de 5 / 10 clases o bonos acumulables)
+            if (r.bono_descontado || r.class_pack_id || tipoResLower === 'pack_normal' || tipoResLower === 'bono_clases' || tipoResLower === 'bono') {
                 return renderPagoBadge('Bono de Clases', 'Pagado con: Bono de Clases', 'ph-ticket', 'text-olive bg-olive/10 border border-olive/30');
             }
 
-            // 6. Pase de Invitado (Bono Ilimitado)
-            if (r.beneficio_invitado_de && !r.parent_reserva_id && String(r.tipo_reserva || '').toLowerCase() !== 'compania') {
+            // 10. Pase de Invitado (Bono Ilimitado)
+            if (r.beneficio_invitado_de && !r.parent_reserva_id && tipoResLower !== 'compania') {
                 return renderPagoBadge('Pase Invitado', 'Invitado/a por alumno con Bono Ilimitado', 'ph-user-plus', 'text-teal-800 bg-teal-50 border border-teal-200');
             }
 
-            // 7. Bono de Bienvenida (diferenciado en índigo/morado para no confundir con ilimitado)
-            if (r.saldo_gratis_descontado || String(r.tipo_reserva || '').toLowerCase() === 'bienvenida') {
+            // 11. Bono de Bienvenida
+            if (r.saldo_gratis_descontado || tipoResLower === 'bienvenida' || tipoResLower === 'gratis_bienvenida') {
                 return renderPagoBadge('Bono Bienvenida', 'Pagado con: Bono de Bienvenida (0 €)', 'ph-sparkle', 'text-indigo-900 bg-indigo-100 border border-indigo-300');
             }
 
-            // 8. Yoga en Compañía (SOLO si fue reservado explícitamente como modalidad compañía y no como bono normal/ilimitado)
-            const esReservaCompania = String(r.tipo_reserva || '').toLowerCase().trim() === 'compania';
+            // 12. Yoga en Compañía (SOLO si fue reservado explícitamente como modalidad compañía)
+            const esReservaCompania = tipoResLower === 'compania' || tipoResLower.startsWith('compania');
             if (esReservaCompania) {
                 if (r.beneficio_invitado_de || r.parent_reserva_id) {
                     return renderPagoBadge('Invitado (Yoga en Compañía)', 'Invitado/a con Bono de Yoga en Compañía', 'ph-users-three', 'text-amber-900 bg-amber-100 border border-amber-300');
@@ -6659,17 +6705,50 @@
                 return renderPagoBadge('Yoga en Compañía', 'Pagado con: Bono de Yoga en Compañía', 'ph-handshake', 'text-amber-900 bg-amber-100 border border-amber-300');
             }
 
-            // 9. Inscripción manual directa por administración o profesor
-            if (r.tipo_reserva === 'manual_admin') {
+            // 13. Inscripción manual directa por administración o profesor
+            if (tipoResLower === 'manual_admin' || r.tipo_reserva === 'manual_admin') {
                 return renderPagoBadge('Inscripción Manual', 'Inscripción manual directa de mostrador / administración', 'ph-user-check', 'text-teal-900 bg-teal-100 border border-teal-300');
             }
 
-            // 10. Clase abierta o gratuita
-            if (c.es_gratuita) {
+            // 14. Clase abierta o gratuita
+            if (c.es_gratuita || tipoResLower === 'gratuita') {
                 return renderPagoBadge('Clase Gratuita', 'Clase abierta sin coste', 'ph-gift', 'text-emerald-800 bg-emerald-50 border border-emerald-200');
             }
 
-            // 11. Fallback estándar resiliente: Bono de Clases
+            // 15. Fallback inteligente mirando periodos activos del alumno en caché
+            const u = (window.allAdminTodasPerfilesMap && window.allAdminTodasPerfilesMap[r.user_id])
+                || (allAsistenciasPerfilesMap && allAsistenciasPerfilesMap[r.user_id])
+                || (window.allUsersCache && window.allUsersCache.find(x => x.id === r.user_id))
+                || (currentUser && currentUser.id === r.user_id ? currentUser : null);
+
+            if (u) {
+                const fClase = c.fecha_inicio ? new Date(c.fecha_inicio) : new Date();
+                const periods = Array.isArray(u.monthly_periods) ? u.monthly_periods : [];
+                const matchPeriod = periods.find(p => {
+                    const s = p.starts_at ? new Date(p.starts_at) : null;
+                    const e = p.ends_at ? new Date(p.ends_at) : null;
+                    return s && e && fClase >= s && fClase <= e;
+                });
+                if (matchPeriod) {
+                    if (matchPeriod.plan_type === 'bono_inicial' || matchPeriod.max_classes_per_week === 1) {
+                        return renderPagoBadge('Bono Inicial', 'Pagado con: Bono Inicial (4 cl/30d)', 'ph-plant', 'text-[#715019] bg-[#faf6f0] border border-[#e6d7c3]');
+                    }
+                    if (matchPeriod.plan_type === 'bono_mensual' || matchPeriod.max_classes_per_week === 2) {
+                        return renderPagoBadge('Bono Mensual', 'Pagado con: Bono Mensual (8 cl/30d)', 'ph-calendar-check', 'text-amber-950 bg-amber-100 border border-amber-300');
+                    }
+                }
+                const unlPeriods = Array.isArray(u.unlimited_periods) ? u.unlimited_periods : [];
+                const matchUnl = unlPeriods.find(p => {
+                    const s = p.starts_at ? new Date(p.starts_at) : null;
+                    const e = p.ends_at ? new Date(p.ends_at) : null;
+                    return s && e && fClase >= s && fClase <= e;
+                });
+                if (matchUnl || u.bono_activo) {
+                    return renderPagoBadge('Bono Ilimitado', 'Pagado con: Bono Mensual Ilimitado (90 €)', 'ph-infinity', 'text-emerald-950 bg-emerald-100 border border-emerald-300');
+                }
+            }
+
+            // 16. Fallback estándar resiliente: Bono de Clases
             return renderPagoBadge('Bono de Clases', 'Pagado con: Bono de Clases', 'ph-ticket', 'text-olive bg-olive/10 border border-olive/30');
         }
 
@@ -33767,16 +33846,17 @@
                             const reservaId = safePositiveInteger(reserva.id) || 0;
 
                             let badgePago = '';
-                            if (cat.categoria === 'consultas') {
+                            if (typeof obtenerBadgeTipoReserva === 'function') {
+                                badgePago = obtenerBadgeTipoReserva(reserva, s);
+                            } else if (cat.categoria === 'consultas') {
                                 const prodInfo = (typeof obtenerDetalleProductoConsulta === 'function')
                                     ? obtenerDetalleProductoConsulta(reserva, s)
                                     : { nombre: 'Consulta abonada' };
-                                badgePago = `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-credit-card text-xs"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
+                                badgePago = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-credit-card text-xs"></i> ${escapeHtml(prodInfo.nombre)}</span>`;
                             } else if (cat.categoria === 'talleres') {
-                                badgePago = `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-ticket text-xs"></i> Plaza Taller</span>`;
+                                badgePago = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-ticket text-xs"></i> Plaza Taller</span>`;
                             } else {
-                                const tipoRes = reserva.tipo_reserva || 'bono';
-                                badgePago = `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-ticket text-xs"></i> ${escapeHtml(tipoRes)}</span>`;
+                                badgePago = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-lg shadow-2xs"><i class="ph-bold ph-ticket text-xs"></i> Pagado con: Bono</span>`;
                             }
 
                             let contactDetails = '';
