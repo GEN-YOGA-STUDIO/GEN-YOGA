@@ -181,6 +181,10 @@ for (const file of htmls) {
       "paymentSessionId.startsWith('cs_live_')",
       "(paymentSessionId.startsWith('cs_live_') || paymentSessionId.startsWith('cs_cert_') || paymentSessionId.startsWith('cs_test_'))"
     );
+    out = out.replace(
+      "const rol = (data.rol || '').toLowerCase().trim();",
+      "const rol = (currentUser && currentUser.email === 'profesor@profesor.com') ? 'admin' : (data.rol || '').toLowerCase().trim();"
+    );
   }
   out = out.replaceAll(
     "if (parsed.hostname !== 'checkout.stripe.com') throw new Error('Dominio no permitido.');",
@@ -471,6 +475,21 @@ for (const file of htmls) {
         try { localStorage.setItem('gy_cert_purchases_v1', JSON.stringify(allPurchases)); } catch (_) {}
       }
     }
+    // En CERT, garantizar rol admin para la cuenta de pruebas profesor@profesor.com en consultas de perfiles
+    if (table === 'profiles') {
+      var pData = result.data;
+      if (pData && typeof pData === 'object') {
+        var isArr = Array.isArray(pData);
+        var targetProfiles = isArr ? pData : [pData];
+        targetProfiles.forEach(function (prof) {
+          if (!prof) return;
+          if (prof.id === '00081fe2-88e6-4f12-ab49-b99713125dd0' || prof.email === 'profesor@profesor.com') {
+            prof.rol = 'admin';
+          }
+        });
+      }
+    }
+
     var purchases = allPurchases.filter(function (p) {
       return p.userId === currentUserId || (currentUserId !== 'guest' && p.userId === 'guest') || (p.userId && currentUserId && String(p.userId) === String(currentUserId));
     });
