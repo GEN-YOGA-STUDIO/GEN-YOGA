@@ -4691,7 +4691,7 @@
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_legal">Aviso Legal</a> • <a
                                 href="politica-privacidad.html"
                                 class="hover:underline hover:text-cocoa transition" data-i18n="profile_footer_privacy">Política de Privacidad</a></span>
-                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.9 | &copy; 2026 Gen Yoga</span>
+                        <span id="app-version-label" class="opacity-90 text-[10px] block mt-1">v18.5.10 | &copy; 2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
@@ -25509,24 +25509,41 @@
                     }
                 } catch (eCert) {}
 
-                // 1. Eliminar periodos ilimitados previos en ese mes para este usuario
+                // 1. Eliminar periodos ilimitados previos en ese mes o posteriores para este usuario
                 try {
                     await client.from('unlimited_membership_periods')
                         .delete()
                         .eq('user_id', userId)
                         .eq('membership_month', mesEfectivo);
                 } catch (_) {}
+                try {
+                    await client.from('unlimited_membership_periods')
+                        .delete()
+                        .eq('user_id', userId)
+                        .gt('membership_month', mesEfectivo);
+                } catch (_) {}
 
                 // 2. Insertar directamente con el rango exacto de 30 días
                 try {
-                    const { error: insErr } = await client.from('unlimited_membership_periods').upsert({
+                    const { error: insErr } = await client.from('unlimited_membership_periods').insert({
                         user_id: userId,
                         membership_month: mesEfectivo,
                         starts_at: startIso,
                         ends_at: endIso,
                         purchased_at: new Date().toISOString()
-                    }, { onConflict: 'user_id,membership_month' });
-                    if (!insErr) assigned = true;
+                    });
+                    if (!insErr) {
+                        assigned = true;
+                    } else {
+                        const { error: upErr } = await client.from('unlimited_membership_periods').upsert({
+                            user_id: userId,
+                            membership_month: mesEfectivo,
+                            starts_at: startIso,
+                            ends_at: endIso,
+                            purchased_at: new Date().toISOString()
+                        }, { onConflict: 'user_id,membership_month' });
+                        if (!upErr) assigned = true;
+                    }
                 } catch (insErr) {
                     console.warn('Error insertando unlimited_membership_periods:', insErr);
                 }
@@ -25534,18 +25551,19 @@
                 // 3. Fallback a RPC si el insert fallara
                 if (!assigned) {
                     try {
-                        const { error } = await client.rpc('admin_asignar_mes_ilimitado', {
+                        const { error } = await client.rpc('admin_configurar_bono_mensual', {
                             p_user_id: userId,
-                            p_membership_month: mesEfectivo,
-                            p_activo: true
+                            p_activo: true,
+                            p_inicio: startIso,
+                            p_fin: endIso
                         });
                         if (!error) assigned = true;
                     } catch (rpcErr) {
-                        console.warn('Excepción RPC admin_asignar_mes_ilimitado:', rpcErr);
+                        console.warn('Excepción RPC admin_configurar_bono_mensual:', rpcErr);
                     }
                 }
 
-                // 4. Actualizar estado del bono en profiles con las fechas exactas de 30 días vía RPC segura
+                // 4. Sincronizar estado del bono en profiles con las fechas exactas de 30 días vía RPC segura
                 try {
                     await client.rpc('admin_configurar_bono_mensual', {
                         p_user_id: userId,
@@ -25553,6 +25571,17 @@
                         p_inicio: startIso,
                         p_fin: endIso
                     });
+                } catch (rpcErr) {
+                    console.warn('Excepción RPC admin_configurar_bono_mensual:', rpcErr);
+                }
+
+                // Limpiar posibles pases especiales fantasma de bono ilimitado para meses futuros
+                try {
+                    await client.from('bonos_clases_especiales')
+                        .delete()
+                        .eq('user_id', userId)
+                        .eq('origen', 'bono_ilimitado')
+                        .gt('mes', mesEfectivo);
                 } catch (_) {}
 
                 // Garantizar 1 clase especial gratis (upsert con onConflict user_id,mes)
@@ -25573,7 +25602,11 @@
                     uCache.bono_mensual_inicio = startIso;
                     uCache.bono_mensual_fin = endIso;
                     if (!Array.isArray(uCache.unlimited_periods)) uCache.unlimited_periods = [];
-                    uCache.unlimited_periods = uCache.unlimited_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
+                    // Filtrar periodos que coincidan en mes o sean futuros duplicados
+                    uCache.unlimited_periods = uCache.unlimited_periods.filter(p => {
+                        const pMes = normalizarMesClave(p.membership_month || p.starts_at);
+                        return pMes !== mesKey && pMes < mesKey;
+                    });
                     uCache.unlimited_periods.push({
                         membership_month: mesEfectivo,
                         starts_at: startIso,
@@ -25581,6 +25614,23 @@
                     });
                     if (sustituirAnterior && Array.isArray(uCache.monthly_periods)) {
                         uCache.monthly_periods = uCache.monthly_periods.filter(p => normalizarMesClave(p.membership_month || p.starts_at) !== mesKey);
+                    }
+                    if (Array.isArray(uCache.special_passes)) {
+                        uCache.special_passes = uCache.special_passes.filter(s => {
+                            const sMes = normalizarMesClave(s.mes);
+                            return !(s.origen === 'bono_ilimitado' && sMes > mesKey);
+                        });
+                        const existingEsp = uCache.special_passes.find(s => normalizarMesClave(s.mes) === mesKey);
+                        if (existingEsp) {
+                            existingEsp.saldo = Math.max(toSafeNumber(existingEsp.saldo), 1);
+                            existingEsp.origen = 'bono_ilimitado';
+                        } else {
+                            uCache.special_passes.push({
+                                mes: mesEfectivo,
+                                saldo: 1,
+                                origen: 'bono_ilimitado'
+                            });
+                        }
                     }
                 }
             } else if (tipo === 'bono_inicial') {
