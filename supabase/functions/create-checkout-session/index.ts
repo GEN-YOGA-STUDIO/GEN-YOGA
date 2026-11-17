@@ -185,28 +185,30 @@ serve(async (req) => {
 
       const isMonthlyPlanPurchase = lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL
       if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_ILIMITADO) {
-        // Comprobar si ya tiene Bono Ilimitado para ese mes (no tiene sentido comprar 2 ilimitados idénticos)
+        // Comprobar si ya tiene Bono Ilimitado activo para ese periodo (no duplicar ilimitados vigentes)
         const { data: existingUnl, error: existingUnlError } = await supabase
           .from('unlimited_membership_periods')
-          .select('id')
+          .select('id, ends_at')
           .eq('user_id', user.id)
           .eq('membership_month', `${membershipMonth}-01`)
+          .gt('ends_at', new Date().toISOString())
           .maybeSingle()
         if (existingUnlError && !/does not exist/i.test(existingUnlError.message)) throw new Error('No se pudo comprobar el mes elegido.')
         if (existingUnl) {
-          throw new HttpError(409, `Ya tienes contratado el Bono Ilimitado para ${membershipMonth}. Te otorga acceso ilimitado a todas las clases regulares.`)
+          throw new HttpError(409, `Ya tienes contratado un Bono Ilimitado activo para ${membershipMonth}. Te otorga acceso ilimitado a todas las clases regulares.`)
         }
       } else if (membershipMonth && (lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL)) {
-        // Si ya tiene Bono Ilimitado para ese mes, no necesita adquirir bonos adicionales
+        // Si ya tiene Bono Ilimitado activo para ese periodo, no necesita adquirir bonos adicionales
         const { data: existingUnl, error: existingUnlError } = await supabase
           .from('unlimited_membership_periods')
-          .select('id')
+          .select('id, ends_at')
           .eq('user_id', user.id)
           .eq('membership_month', `${membershipMonth}-01`)
+          .gt('ends_at', new Date().toISOString())
           .maybeSingle()
         if (existingUnlError && !/does not exist/i.test(existingUnlError.message)) throw new Error('No se pudo comprobar el mes elegido.')
         if (existingUnl) {
-          throw new HttpError(409, `Ya dispones del Bono Ilimitado para ${membershipMonth}, que incluye clases regulares ilimitadas. No necesitas adquirir bonos adicionales para este mes.`)
+          throw new HttpError(409, `Ya dispones de un Bono Ilimitado activo para ${membershipMonth}, que incluye clases regulares ilimitadas. No necesitas adquirir bonos adicionales.`)
         }
       }
       if (profile.stripe_customer_id && !String(profile.stripe_customer_id).startsWith('cus_')) {

@@ -24,6 +24,14 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+## v18.5.11 — 17 nov 2026 · Incidencia
+
+- **Descripción:** Correccion integral cancelacion especial, renovacion stripe y textos 30 dias (ámbito: bonos)
+- **Validación:** npm run check:release · npm run check:regression · npm run check:web · npm run check:twins · npm run check:sync · npm run check:deploy · npm run check:cambios
+- **Tag:** `v18.5.11`
+- **Contabilidad B:** sin línea propia (mantenimiento mensual)
+- **Informe:** `docs/informes/v18.5.11.md`
+
 ## v18.5.10 — 17 nov 2026 · Incidencia
 
 - **Descripción:** Garantizar periodo unico de 30 dias para Bono Ilimitado sin duplicidad de meses ni clases especiales (ámbito: bonos)
