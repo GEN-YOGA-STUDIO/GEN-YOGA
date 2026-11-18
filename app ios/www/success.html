@@ -224,7 +224,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 flex flex-col items-center gap-1 text-xs text-cocoa">
-            <span id="app-version-label" class="opacity-90 text-xs">v18.5.12 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="opacity-90 text-xs">v18.5.13 | &copy; 2026 Gen Yoga</span>
             <a href="aviso-legal.html" class="hover:underline transition text-xs text-cocoa/70 inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_legal">Aviso legal</a> <span class="opacity-40 text-cocoa/50">|</span> <a href="politica-privacidad.html" class="hover:underline transition text-xs text-cocoa/70 inline-flex items-center py-2 min-h-[24px]" data-i18n="footer_privacy">Política de privacidad</a>
         </div>
     </main>
@@ -244,6 +244,16 @@
             } catch (_) {
                 return '';
             }
+        }
+
+        function safeStoreValue(key, value) {
+            try {
+                localStorage.setItem(key, String(value));
+            } catch (_) {}
+        }
+
+        function safeSetItem(key, value) {
+            safeStoreValue(key, value);
         }
 
         function safeRemoveStoredValue(key) {
@@ -353,6 +363,20 @@
                                     paymentStatus: 'paid'
                                 };
                             }
+
+                            const { data: existingPurchase } = await client
+                                .from('stripe_purchases')
+                                .select('purchase_type, payment_status, is_guest')
+                                .eq('checkout_session_id', stripeSessionId)
+                                .maybeSingle();
+                            if (existingPurchase && existingPurchase.payment_status === 'paid') {
+                                return {
+                                    isGuest: !!existingPurchase.is_guest,
+                                    purchaseIsGuest: !!existingPurchase.is_guest,
+                                    purchaseType: existingPurchase.purchase_type,
+                                    paymentStatus: 'paid'
+                                };
+                            }
                         }
                     } catch (_) {}
 
@@ -395,11 +419,13 @@
                     'taller_25': 'Taller GEN Yoga',
                     'taller_35': 'Taller GEN Yoga',
                     'taller': 'Taller GEN Yoga',
+                    'taller_formacion': 'Taller de formación',
+                    'prod_VcUrMnsweZMxrl': 'Taller de formación',
                 };
                 const titleEl = document.getElementById('guest-consultation-title');
                 const msgEl = document.getElementById('guest-consultation-message');
-                const itemName = itemTitles[data.purchaseType] || tr('success_item_fallback', 'Reserva');
                 const guestWorkshop = isWorkshopPurchaseType(data.purchaseType);
+                const itemName = itemTitles[data.purchaseType] || (guestWorkshop ? 'Taller GEN Yoga' : tr('success_item_fallback', 'Reserva'));
                 const headingEl = document.getElementById('guest-consultation-heading');
                 if (headingEl) {
                     headingEl.textContent = guestWorkshop
@@ -442,6 +468,8 @@
                     successMessage.textContent = fmtTr('success_pack_credits', { credits: numCredits }, `Tu Pack de ${numCredits} clases ya está registrado y activo en tu cuenta con 60 días de validez. ¡Ya puedes reservar tus clases!`);
                 } else if (successMessage && data.purchaseType === 'taller_intro_power_vinyasa') {
                     successMessage.textContent = tr('success_workshop_confirmed', 'Tu plaza para el Taller de Introducción a Power Vinyasa ya está confirmada y registrada en tu cuenta.');
+                } else if (successMessage && isWorkshopPurchaseType(data.purchaseType)) {
+                    successMessage.textContent = tr('success_workshop_generic_confirmed', 'Tu plaza para el taller ya está confirmada y registrada en tu cuenta.');
                 } else if (successMessage && data.purchaseType === 'clase_especial') {
                     successMessage.textContent = tr('success_special_class_confirmed', 'Tu plaza para la Clase Especial ya está confirmada y registrada en tu cuenta.');
                 }
@@ -551,9 +579,10 @@
         }
 
         function isWorkshopPurchaseType(purchaseType) {
-            return /^(?:clase_especial|taller_intro_power_vinyasa|taller_25|taller_35|taller)$/.test(
-                String(purchaseType || '')
-            );
+            const norm = String(purchaseType || '').toLowerCase().trim();
+            return /^(?:clase_especial|taller_intro_power_vinyasa|taller_25|taller_35|taller|taller_formacion|prod_vcurmnswezmxrl)$/.test(norm)
+                || norm.includes('taller')
+                || norm.includes('formacion');
         }
 
         async function irAlPortalFacturas() {

@@ -73,4 +73,11 @@ assert.match(profileHtml, /function resolverPrecioTaller/, 'profile.html debe de
 assert.match(profileHtml, /const tallerPrecio = resolverPrecioTaller\(c, r\);/, 'obtenerBadgeTipoReserva debe usar resolverPrecioTaller');
 assert.match(profileHtml, /'taller_formacion':\s*\{\s*name:\s*'Taller de formación',\s*precio:\s*'10,00 €'/, 'catalogoEstatico debe incluir taller_formacion a 10 €');
 
-console.log('✅ Verificaciones de talleres dinámicos en tarifas.html y profile.html superadas con éxito.');
+// 4. Verificar verificación y confirmación segura de talleres en success.html
+const successHtml = await fs.readFile(path.join(root, 'success.html'), 'utf8');
+assert.match(successHtml, /function safeStoreValue\(/, 'success.html debe definir safeStoreValue para no romper la verificación');
+assert.match(successHtml, /function safeSetItem\(/, 'success.html debe definir safeSetItem');
+assert.match(successHtml, /isWorkshopPurchaseType.*prod_vcurmnswezmxrl/s, 'success.html debe reconocer prod_vcurmnswezmxrl en isWorkshopPurchaseType');
+assert.match(successHtml, /'prod_VcUrMnsweZMxrl':\s*'Taller de formación'/, 'success.html debe incluir prod_VcUrMnsweZMxrl en itemTitles');
+
+console.log('✅ Verificaciones de talleres dinámicos en tarifas.html, profile.html y success.html superadas con éxito.');
