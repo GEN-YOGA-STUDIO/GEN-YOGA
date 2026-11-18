@@ -67,4 +67,10 @@ const filtrados = mockTalleres.filter(c => {
 assert.equal(filtrados.length, 1, 'Solo debe pasar el taller futuro activo');
 assert.equal(filtrados[0].id, 2, 'El taller activo futuro debe ser el id 2');
 
-console.log('✅ Verificaciones de talleres dinámicos en tarifas.html superadas con éxito.');
+// 3. Verificar resolución dinámica de tarifas en profile.html
+const profileHtml = await fs.readFile(path.join(root, 'profile.html'), 'utf8');
+assert.match(profileHtml, /function resolverPrecioTaller/, 'profile.html debe definir resolverPrecioTaller');
+assert.match(profileHtml, /const tallerPrecio = resolverPrecioTaller\(c, r\);/, 'obtenerBadgeTipoReserva debe usar resolverPrecioTaller');
+assert.match(profileHtml, /'taller_formacion':\s*\{\s*name:\s*'Taller de formación',\s*precio:\s*'10,00 €'/, 'catalogoEstatico debe incluir taller_formacion a 10 €');
+
+console.log('✅ Verificaciones de talleres dinámicos en tarifas.html y profile.html superadas con éxito.');
