@@ -24,6 +24,10 @@ npm run cambio -- incidencia "descripción del arreglo" --scope consultas
 
 <!-- entradas-nuevas: las inserciones nuevas van justo debajo de esta línea (lo hace scripts/registrar-cambio.mjs) -->
 
+### 19 nov 2026 · Datos (sin cambio de versión web)
+
+- **Regularización de bonos de 30 días en producción**: 9 periodos de Bono Inicial/Mensual que se crearon con la lógica antigua de mes natural (01/11/2026 → 01/12/2026) se han reajustado a 30 días naturales desde la fecha real de compra (`purchased_at + 30 days`), coherente con la migración `202611160001_bonos_30_dias_desde_compra.sql`. Incluye a ENCARNACIÓN ESCRIBANO LÓPEZ (compra 12/11/2026 19:29 → nueva caducidad 12/12/2026 19:29). No había Bono Ilimitado legacy. Migración: `supabase/migrations/202611190001_regularizar_bonos_30_dias_legacy.sql` (idempotente). Verificado en producción: 11 bonos vigentes, 0 desincronizados. Sin cambios en la web, por lo que no procede bump de versión ni `npm run publicar`.
+
 ## v18.5.13 — 18 nov 2026 · Incidencia
 
 - **Descripción:** Corregir ReferenceError safeStoreValue y compatibilidad de talleres en success.html (ámbito: success)
