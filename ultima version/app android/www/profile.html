@@ -8331,16 +8331,21 @@
                     }
                 } else {
                     if (pendingClaseId) {
-                        safeRemoveItem('pending_booking_clase_id');
-                        setTimeout(() => {
-                            reservar(pendingClaseId, { automaticPostPayment: true, skipConfirmation: true });
+                        // NO borrar el pending antes de reservar: si el fulfillment
+                        // del webhook aún no ha reflejado el crédito, reservarInner
+                        // devuelve false y la clave debe sobrevivir para reintentar
+                        // en la siguiente carga (procesarReservaPendiente la usa).
+                        setTimeout(async () => {
+                            const ok = await reservar(pendingClaseId, { automaticPostPayment: true, skipConfirmation: true });
+                            if (ok) safeRemoveItem('pending_booking_clase_id');
                         }, 800);
                     }
 
                     if (pendingConsultationRaw) {
                         try {
                             const pendingData = JSON.parse(pendingConsultationRaw);
-                            safeRemoveItem('pending_consultation_booking');
+                            // Mantener el pending hasta confirmar la reserva: si falla
+                            // por saldo aún no consolidado, la recarga lo reintenta.
                             if (pendingData && pendingData.tipo) {
                                 setTimeout(async () => {
                                     try {
@@ -8377,6 +8382,7 @@
                                             timer: 2500
                                         });
                                         await refrescarConsultas(pendingData.tipo);
+                                        safeRemoveItem('pending_consultation_booking');
                                     } catch (err) {
                                         console.warn('Error al auto-reservar consulta post-pago:', err);
                                         const errMsg = err?.message || '';
@@ -13270,7 +13276,9 @@
                 }
 
                 closePaymentUiBeforeNavigation();
-                window.location.href = getValidatedStripeCheckoutUrl(data.url);
+                // location.assign es interceptado por capacitor-bridge.js para
+                // abrir Stripe en el navegador del sistema (location.href no).
+                window.location.assign(getValidatedStripeCheckoutUrl(data.url));
             } catch (err) {
                 stripeCheckoutInProgress = false;
                 console.error('Error al iniciar compra de clase especial:', err);
@@ -13333,7 +13341,9 @@
                 }
 
                 closePaymentUiBeforeNavigation();
-                window.location.href = getValidatedStripeCheckoutUrl(data.url);
+                // location.assign es interceptado por capacitor-bridge.js para
+                // abrir Stripe en el navegador del sistema (location.href no).
+                window.location.assign(getValidatedStripeCheckoutUrl(data.url));
             } catch (err) {
                 stripeCheckoutInProgress = false;
                 console.error('Error al iniciar compra de taller:', err);

@@ -785,7 +785,9 @@ export async function bookPaidTallerClass(
   const { userId, purchaseType, paymentStatus, claseId } = args
   if (!userId || paymentStatus !== 'paid' || !claseId) return 'skipped'
   const t = String(purchaseType || '').toLowerCase()
-  const isTaller = t === 'taller' || t.includes('taller')
+  // El taller de formación se identifica por su product ID de Stripe, no por
+  // la palabra "taller": sin esto se cobra y no se reserva plaza.
+  const isTaller = t === 'taller' || t.includes('taller') || t === PURCHASE_TYPES.TALLER_FORMACION.toLowerCase()
   const isEspecial = t === 'clase_especial' || t.includes('especial')
   if (!isTaller && !isEspecial) return 'skipped'
   try {
@@ -798,7 +800,9 @@ export async function bookPaidTallerClass(
     if (!clase.fecha_inicio || new Date(clase.fecha_inicio).getTime() <= Date.now()) return 'skipped'
     const tipo = String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase()
     const esEsp = (clase as { es_especial?: boolean }).es_especial === true || tipo === 'clase_especial' || tipo === 'especial'
-    if (isTaller && tipo !== 'taller') return 'skipped'
+    // Algunos talleres tienen tipo_clase ['Taller de formación', 'taller_*']:
+    // comparar solo con 'taller' deja el pago sin reserva.
+    if (isTaller && tipo !== 'taller' && !tipo.includes('taller') && !esEsp) return 'skipped'
     if (isEspecial && !esEsp) return 'skipped'
 
     const { data: existing } = await supabase

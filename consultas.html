@@ -1775,7 +1775,9 @@
                         from: 'tarifas',
                         app_version: APP_VERSION,
                         checkout_attempt_id: checkoutAttemptId,
-                        clase_id: (typeof claseId !== 'undefined' && claseId) || null
+                        clase_id: (typeof claseId !== 'undefined' && claseId) || null,
+                        // Solo clase_especial admite mes: el del día de la clase, no el de la compra.
+                        membership_month: (lookupKey === 'clase_especial' && typeof targetMonthKey === 'string') ? targetMonthKey.slice(0, 7) : undefined
                     }
                 });
 

@@ -525,7 +525,10 @@
         }
 
         async function reintentarVerificacion() {
-            if (!stripeSessionId || (!stripeSessionId.startsWith('cs_live_') && !stripeSessionId.startsWith('cs_cert_'))) return;
+            if (!stripeSessionId || (!stripeSessionId.startsWith('cs_live_') && !stripeSessionId.startsWith('cs_cert_') && !stripeSessionId.startsWith('cs_test_'))) {
+                mostrarErrorVerificacion('Sesión de pago no válida.', false);
+                return;
+            }
             if (window.__gyVerifyBusy) return;
             window.__gyVerifyBusy = true;
             document.getElementById('verification-error').classList.add('hidden');
@@ -811,6 +814,8 @@
                 safeRemoveStoredValue('guest_apellidos');
                 safeRemoveStoredValue('guest_email');
                 safeRemoveStoredValue('preferred_guest_class_id');
+                // Evita que un id de clase pendiente se arrastre a la siguiente compra.
+                safeRemoveStoredValue('pending_booking_clase_id');
 
                 Swal.fire({
                     icon: 'success',

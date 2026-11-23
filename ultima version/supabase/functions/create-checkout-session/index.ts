@@ -5,6 +5,7 @@ import {
   WORKSHOP_CATALOG,
   PURCHASE_TYPES,
   PACK_PRODUCT_IDS,
+  MONTHLY_PRODUCT_IDS,
   PROMO_PRODUCT_IDS,
   MIRIAM_PRODUCT_IDS,
   ISABEL_PRODUCT_IDS,
@@ -36,7 +37,7 @@ import {
   normalizePromoPurchaseType,
 } from "../_shared/stripe-production.ts"
 
-const APP_RELEASE = '16.0'
+const APP_RELEASE = '18.5'
 const MADRID_TIME_ZONE = 'Europe/Madrid'
 const MEMBERSHIP_MONTHS_AHEAD = 11
 
@@ -61,7 +62,7 @@ function addMonths(yearMonth: string, amount: number): string {
 function validateMembershipMonth(value: unknown): string {
   const membershipMonth = String(value || '').trim()
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(membershipMonth)) {
-    throw new HttpError(400, 'Selecciona un mes natural válido para el Bono Ilimitado.')
+    throw new HttpError(400, 'Selecciona un mes natural válido para el bono.')
   }
   const currentMonth = madridYearMonth()
   const lastAllowedMonth = addMonths(currentMonth, MEMBERSHIP_MONTHS_AHEAD)
@@ -106,18 +107,28 @@ serve(async (req) => {
     }
 
     const rawLookupKey = String(body.lookup_key || '').trim()
-    const lookupKey = normalizePromoPurchaseType(rawLookupKey)
+    let lookupKey = normalizePromoPurchaseType(rawLookupKey)
     // Promoción del 50% (código GENYOGA) retirada en octubre: los alias se
     // normalizan primero para responder 410 explícito en lugar de 400 genérico.
     if (isPromoPurchase(lookupKey)) {
       throw new HttpError(410, 'La promoción del 50% de la primera clase ha finalizado. Consulta las tarifas actuales.')
     }
+    if (lookupKey === PURCHASE_TYPES.PACK_6 || lookupKey === 'prod_V0IUpyuvd7uX00') {
+      throw new HttpError(410, 'El pack de 6 clases ha sido sustituido por el Bono Mensual (65 € · 2 clases/semana). Consulta las nuevas tarifas.')
+    }
+    if (lookupKey === 'prod_VVkT3C71EAUJmt') {
+      lookupKey = PURCHASE_TYPES.BONO_MENSUAL
+    }
+    if (lookupKey === 'prod_VVkU2penYA08Qe') {
+      lookupKey = PURCHASE_TYPES.BONO_INICIAL
+    }
     const allowedPurchaseTypes = new Set<string>([
       PURCHASE_TYPES.CLASE_SUELTA,
       PURCHASE_TYPES.PACK_4,
-      PURCHASE_TYPES.PACK_6,
       PURCHASE_TYPES.PACK_10,
       PURCHASE_TYPES.BONO_ILIMITADO,
+      PURCHASE_TYPES.BONO_INICIAL,
+      PURCHASE_TYPES.BONO_MENSUAL,
       ...Object.keys(CONSULTATION_CATALOG),
       ...Object.keys(WORKSHOP_CATALOG),
     ])
@@ -125,7 +136,7 @@ serve(async (req) => {
     if (!allowedPurchaseTypes.has(lookupKey) && !isDynamicStripe) {
       throw new HttpError(400, 'Producto no permitido.')
     }
-    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
+    const membershipMonth = (lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL || lookupKey === PURCHASE_TYPES.CLASE_ESPECIAL)
       ? (body.membership_month ? validateMembershipMonth(body.membership_month) : madridYearMonth())
       : null
 
@@ -172,16 +183,32 @@ serve(async (req) => {
         throw new HttpError(409, 'La cuenta se está eliminando y no puede iniciar nuevos pagos.')
       }
 
+      const isMonthlyPlanPurchase = lookupKey === PURCHASE_TYPES.BONO_ILIMITADO || lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL
       if (membershipMonth && lookupKey === PURCHASE_TYPES.BONO_ILIMITADO) {
-        const { data: existingMonth, error: existingMonthError } = await supabase
+        // Comprobar si ya tiene Bono Ilimitado activo para ese periodo (no duplicar ilimitados vigentes)
+        const { data: existingUnl, error: existingUnlError } = await supabase
           .from('unlimited_membership_periods')
-          .select('id')
+          .select('id, ends_at')
           .eq('user_id', user.id)
           .eq('membership_month', `${membershipMonth}-01`)
+          .gt('ends_at', new Date().toISOString())
           .maybeSingle()
-        if (existingMonthError) throw new Error('No se pudo comprobar el mes ilimitado elegido.')
-        if (existingMonth) {
-          throw new HttpError(409, 'Ya tienes comprado el Bono Ilimitado para ese mes natural.')
+        if (existingUnlError && !/does not exist/i.test(existingUnlError.message)) throw new Error('No se pudo comprobar el mes elegido.')
+        if (existingUnl) {
+          throw new HttpError(409, `Ya tienes contratado un Bono Ilimitado activo para ${membershipMonth}. Te otorga acceso ilimitado a todas las clases regulares.`)
+        }
+      } else if (membershipMonth && (lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL)) {
+        // Si ya tiene Bono Ilimitado activo para ese periodo, no necesita adquirir bonos adicionales
+        const { data: existingUnl, error: existingUnlError } = await supabase
+          .from('unlimited_membership_periods')
+          .select('id, ends_at')
+          .eq('user_id', user.id)
+          .eq('membership_month', `${membershipMonth}-01`)
+          .gt('ends_at', new Date().toISOString())
+          .maybeSingle()
+        if (existingUnlError && !/does not exist/i.test(existingUnlError.message)) throw new Error('No se pudo comprobar el mes elegido.')
+        if (existingUnl) {
+          throw new HttpError(409, `Ya dispones de un Bono Ilimitado activo para ${membershipMonth}, que incluye clases regulares ilimitadas. No necesitas adquirir bonos adicionales.`)
         }
       }
       if (profile.stripe_customer_id && !String(profile.stripe_customer_id).startsWith('cus_')) {
@@ -190,17 +217,30 @@ serve(async (req) => {
       stripeCustomerId = profile.stripe_customer_id || null
     }
 
+    // Los bonos mensuales dependen de una tabla y una función de fulfillment
+    // nuevas. Si la migración no está aplicada, se aborta ANTES de crear la
+    // sesión de Stripe para no cobrar sin poder entregar el bono.
+    if (lookupKey === PURCHASE_TYPES.BONO_MENSUAL || lookupKey === PURCHASE_TYPES.BONO_INICIAL) {
+      const { data: bonoReady, error: bonoReadyError } = await supabase.rpc('bono_checkout_ready')
+      if (bonoReadyError || bonoReady !== true) {
+        console.error('Preflight bono no disponible:', bonoReadyError?.message || bonoReady)
+        throw new HttpError(
+          503,
+          'La compra de bonos mensuales no está disponible en este momento. No se ha realizado ningún cargo. Inténtalo más tarde o contacta con el estudio.',
+        )
+      }
+    }
+
     const catalog = await getValidatedCatalog(stripe, config)
     const purchaseType = lookupKey
     const priceByPurchaseType: Record<string, Stripe.Price> = {
       [PURCHASE_TYPES.CLASE_SUELTA]: catalog.claseSuelta,
       [PURCHASE_TYPES.PACK_4]: catalog.pack4,
-      [PURCHASE_TYPES.PACK_6]: catalog.pack6,
       [PURCHASE_TYPES.PACK_10]: catalog.pack10,
       [PURCHASE_TYPES.BONO_ILIMITADO]: catalog.bonoIlimitado,
     }
     const price = priceByPurchaseType[purchaseType]
-    const isSubscription = purchaseType === PURCHASE_TYPES.BONO_MENSUAL
+    let isSubscription = false
     const appUserId = isGuest ? 'guest' : user!.id
     const source = body.from === 'profile' ? 'profile' : 'tarifas'
     const metadata: Stripe.MetadataParam = {
@@ -214,6 +254,8 @@ serve(async (req) => {
     }
     if (membershipMonth) metadata.membership_month = membershipMonth
     if (claseIdMeta) metadata.clase_id = claseIdMeta
+    if (body.starts_at) metadata.starts_at = String(body.starts_at)
+    if (body.ends_at) metadata.ends_at = String(body.ends_at)
 
     const returnBaseUrl = resolveReturnBaseUrl(req, config)
 
@@ -221,6 +263,74 @@ serve(async (req) => {
 
     if (price) {
       lineItems = [{ price: price.id, quantity: 1 }]
+    } else if (purchaseType === PURCHASE_TYPES.BONO_INICIAL) {
+      // Bono de pago ÚNICO (4 clases / 30 días). El producto de Stripe tiene un
+      // Price recurrente legacy de 40 €/mes: NUNCA se admite como fallback, o el
+      // checkout se crea como suscripción, el webhook lo rechaza (400) y la
+      // clienta queda cobrada cada mes sin recibir el bono (incidencia 23-nov-2026).
+      let resolvedPriceId: string | null = null
+      try {
+        const prices = await stripe.prices.list({
+          product: 'prod_VVkU2penYA08Qe',
+          active: true,
+          currency: 'eur',
+          limit: 10,
+        })
+        const matching = prices.data.find(
+          (p: Stripe.Price) => p.unit_amount === 4000 && p.type === 'one_time' && !p.recurring,
+        )
+        if (matching) resolvedPriceId = matching.id
+      } catch (err) {
+        console.warn('No se pudo listar precios para prod_VVkU2penYA08Qe:', err)
+      }
+
+      if (resolvedPriceId) {
+        lineItems = [{ price: resolvedPriceId, quantity: 1 }]
+      } else {
+        // Sin Price one-time activo: Price efímero de pago único sobre el producto canónico.
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: 4000,
+              product: 'prod_VVkU2penYA08Qe',
+            },
+            quantity: 1,
+          },
+        ]
+      }
+    } else if (purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
+      // Misma regla que el Bono Inicial: 65 € de pago único, jamás recurrente.
+      let resolvedPriceId: string | null = null
+      try {
+        const prices = await stripe.prices.list({
+          product: 'prod_VVkT3C71EAUJmt',
+          active: true,
+          currency: 'eur',
+          limit: 10,
+        })
+        const matching = prices.data.find(
+          (p: Stripe.Price) => p.unit_amount === 6500 && p.type === 'one_time' && !p.recurring,
+        )
+        if (matching) resolvedPriceId = matching.id
+      } catch (err) {
+        console.warn('No se pudo listar precios para prod_VVkT3C71EAUJmt:', err)
+      }
+
+      if (resolvedPriceId) {
+        lineItems = [{ price: resolvedPriceId, quantity: 1 }]
+      } else {
+        lineItems = [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: 6500,
+              product: 'prod_VVkT3C71EAUJmt',
+            },
+            quantity: 1,
+          },
+        ]
+      }
     } else if (getConsultationDetails(purchaseType)) {
       const details = getConsultationDetails(purchaseType)!
       const consultationPrice = await resolveConsultationPrice(stripe, purchaseType)
@@ -288,6 +398,7 @@ serve(async (req) => {
       ])
       const fixedProductIds = new Set<string>([
         ...Object.values(PACK_PRODUCT_IDS),
+        ...Object.values(MONTHLY_PRODUCT_IDS),
         PROMO_PRODUCT_IDS.PROMO_50_CLASE,
         MIRIAM_PRODUCT_IDS.INDIVIDUAL_1A, MIRIAM_PRODUCT_IDS.INDIVIDUAL_SIG,
         MIRIAM_PRODUCT_IDS.PAREJA_1A, MIRIAM_PRODUCT_IDS.PAREJA_SIG,
@@ -295,6 +406,7 @@ serve(async (req) => {
         WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL,
         WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA,
         WORKSHOP_PRODUCT_IDS.TALLER_25,
+        WORKSHOP_PRODUCT_IDS.TALLER_FORMACION,
       ])
       if (fixedPriceIds.has(dynPriceId) || fixedProductIds.has(dynProductId)) {
         throw new HttpError(400, 'Ese producto debe comprarse por su flujo habitual.')

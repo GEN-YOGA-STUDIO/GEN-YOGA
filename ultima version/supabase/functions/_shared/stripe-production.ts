@@ -31,6 +31,7 @@ export const PURCHASE_TYPES = {
   TALLER_35: 'taller_35',
   TALLER_25: 'taller_25',
   TALLER: 'taller',
+  TALLER_FORMACION: 'prod_VcUrMnsweZMxrl',
   PROMO_50_CLASE: 'promo_50_clase',
 } as const
 
@@ -69,6 +70,7 @@ export const WORKSHOP_PRODUCT_IDS = {
   CLASE_ESPECIAL: 'prod_V5uBKuweMRE6ig',
   TALLER_INTRO_POWER_VINYASA: 'prod_V5uCPKKKH5K74P',
   TALLER_25: 'prod_VDY8mI9bZ3SQeb',
+  TALLER_FORMACION: 'prod_VcUrMnsweZMxrl',
 } as const
 
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
@@ -198,6 +200,12 @@ export const WORKSHOP_CATALOG: Partial<Record<PurchaseType, WorkshopDetails>> = 
     productId: WORKSHOP_PRODUCT_IDS.TALLER_25,
     guestAllowed: true,
   },
+  [PURCHASE_TYPES.TALLER_FORMACION]: {
+    name: 'Taller de formación',
+    amount: 1000,
+    productId: WORKSHOP_PRODUCT_IDS.TALLER_FORMACION,
+    guestAllowed: true,
+  },
 }
 
 export type PromoDetails = {
@@ -235,6 +243,9 @@ export function getWorkshopDetails(purchaseType: string): WorkshopDetails | null
   }
   if (norm === 'taller_35' || norm === 'taller-35' || norm === 'taller35' || norm === WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA.toLowerCase()) {
     return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_35] || null
+  }
+  if (norm === 'taller_formacion' || norm === 'taller-formacion' || norm === 'tallerformacion' || norm === WORKSHOP_PRODUCT_IDS.TALLER_FORMACION.toLowerCase() || norm.includes('formacion') || norm === 'prod_vcurmnswezmxrl') {
+    return WORKSHOP_CATALOG[PURCHASE_TYPES.TALLER_FORMACION] || null
   }
   if (WORKSHOP_CATALOG[norm as PurchaseType]) {
     return WORKSHOP_CATALOG[norm as PurchaseType]!
@@ -575,14 +586,19 @@ export async function loadAndValidateCatalog(
     bonoMensual.type === 'one_time' &&
     !bonoMensual.recurring &&
     bonoMensual.unit_amount === 6500
+  const currentMonthlyRecurring =
+    bonoMensual.type === 'recurring' &&
+    bonoMensual.recurring?.interval === 'month' &&
+    bonoMensual.recurring.interval_count === 1 &&
+    bonoMensual.unit_amount === 6500
 
   if (legacyMonthlySubscription) {
     validateCommonPrice(bonoMensual, config.priceBonoMensual, 9000)
     console.warn(
       'STRIPE_PRICE_BONO_MENSUAL apunta al Price recurrente legacy de 90 EUR; ' +
-      'configura el Price de pago único de 65 EUR para el nuevo Bono Mensual.',
+      'configura el Price de 65 EUR para el nuevo Bono Mensual.',
     )
-  } else if (currentMonthlyOneTime) {
+  } else if (currentMonthlyOneTime || currentMonthlyRecurring) {
     validateCommonPrice(
       bonoMensual,
       config.priceBonoMensual,
@@ -591,7 +607,7 @@ export async function loadAndValidateCatalog(
     )
   } else {
     throw new Error(
-      'STRIPE_PRICE_BONO_MENSUAL debe ser el pago único de 65 EUR o la suscripción legacy de 90 EUR/mes.',
+      'STRIPE_PRICE_BONO_MENSUAL debe ser el bono de 65 EUR (pago único o recurrente) o la suscripción legacy de 90 EUR/mes.',
     )
   }
 
@@ -769,7 +785,9 @@ export async function bookPaidTallerClass(
   const { userId, purchaseType, paymentStatus, claseId } = args
   if (!userId || paymentStatus !== 'paid' || !claseId) return 'skipped'
   const t = String(purchaseType || '').toLowerCase()
-  const isTaller = t === 'taller' || t.includes('taller')
+  // El taller de formación se identifica por su product ID de Stripe, no por
+  // la palabra "taller": sin esto se cobra y no se reserva plaza.
+  const isTaller = t === 'taller' || t.includes('taller') || t === PURCHASE_TYPES.TALLER_FORMACION.toLowerCase()
   const isEspecial = t === 'clase_especial' || t.includes('especial')
   if (!isTaller && !isEspecial) return 'skipped'
   try {
@@ -782,7 +800,9 @@ export async function bookPaidTallerClass(
     if (!clase.fecha_inicio || new Date(clase.fecha_inicio).getTime() <= Date.now()) return 'skipped'
     const tipo = String((clase as { tipo_clase?: string }).tipo_clase || '').toLowerCase()
     const esEsp = (clase as { es_especial?: boolean }).es_especial === true || tipo === 'clase_especial' || tipo === 'especial'
-    if (isTaller && tipo !== 'taller') return 'skipped'
+    // Algunos talleres tienen tipo_clase ['Taller de formación', 'taller_*']:
+    // comparar solo con 'taller' deja el pago sin reserva.
+    if (isTaller && tipo !== 'taller' && !tipo.includes('taller') && !esEsp) return 'skipped'
     if (isEspecial && !esEsp) return 'skipped'
 
     const { data: existing } = await supabase
@@ -939,7 +959,8 @@ export function assertValidWorkshopPrice(
     (purchaseType.includes('taller') && (
       stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_25 ||
       stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_INTRO_POWER_VINYASA ||
-      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL
+      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.CLASE_ESPECIAL ||
+      stripeObjectId(price.product) === WORKSHOP_PRODUCT_IDS.TALLER_FORMACION
     ))
   if (!price.livemode || price.currency.toLowerCase() !== 'eur' || !isAllowedProduct) {
     throw new HttpError(400, 'El producto comprado no coincide con el producto autorizado de Stripe.')
@@ -1216,11 +1237,16 @@ export function validateMonthlySubscription(
 ): { appUserId: string; priceId: string } {
   if (!subscription.livemode) throw new HttpError(400, 'La suscripción no pertenece al entorno LIVE.')
   const matchingItem = subscription.items.data.find(
-    (item: Stripe.SubscriptionItem) => item.price.id === catalog.bonoMensual.id,
+    (item: Stripe.SubscriptionItem) =>
+      item.price.id === catalog.bonoMensual.id ||
+      item.price.id === 'price_1UUiyLC3eulgiYPcAB23SSpg' ||
+      stripeObjectId(item.price.product) === MONTHLY_PRODUCT_IDS.BONO_MENSUAL ||
+      item.price.unit_amount === 6500 ||
+      item.price.unit_amount === 9000,
   )
   // Stripe omits quantity in some historical API shapes; its documented
   // default is one. Any explicit quantity above one would no longer match the
-  // fixed 90 EUR monthly product validated by this application.
+  // fixed monthly product validated by this application.
   if (
     !matchingItem ||
     subscription.items.data.length !== 1 ||

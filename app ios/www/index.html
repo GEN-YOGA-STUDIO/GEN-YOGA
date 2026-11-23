@@ -3606,16 +3606,22 @@
                 }
 
                 try {
-                    const now = new Date();
-                    const year = now.getFullYear();
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const membershipMonth = `${year}-${month}`;
+                    // Mes natural de Madrid (no el de la zona del dispositivo) para
+                    // no enviar el mes anterior/siguiente en compras cerca del día 1.
+                    const madridParts = new Intl.DateTimeFormat('en-GB', {
+                        timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit'
+                    }).formatToParts(new Date());
+                    const membershipMonth = `${madridParts.find(p => p.type === 'year').value}-${madridParts.find(p => p.type === 'month').value}`;
 
                     const payload = {
                         lookup_key: lookupKey,
                         user_id: currentUser.id,
                         from: 'native_app',
-                        app_version: '18.4'
+                        app_version: '18.4',
+                        // Idempotencia: evita dos sesiones de pago por doble toque.
+                        checkout_attempt_id: (typeof crypto !== 'undefined' && crypto.randomUUID)
+                            ? crypto.randomUUID()
+                            : `${Date.now()}-${Math.random().toString(36).slice(2)}`
                     };
                     if (lookupKey === 'bono_mensual' || lookupKey === 'bono_inicial' || lookupKey === 'bono_ilimitado') {
                         payload.membership_month = membershipMonth;

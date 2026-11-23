@@ -56,7 +56,13 @@ serve(async (req) => {
 
     const catalog = await getValidatedCatalog(stripe, config)
 
-    if (event.type === 'checkout.session.completed') {
+    // Los métodos de pago asíncronos (SEPA/transferencia) confirman primero
+    // `checkout.session.completed` con unpaid y después `async_payment_succeeded`.
+    // Ambos deben entregar el mismo fulfillment; el RPC exige el tipo canónico.
+    if (
+      event.type === 'checkout.session.completed' ||
+      event.type === 'checkout.session.async_payment_succeeded'
+    ) {
       const eventSession = event.data.object as Stripe.Checkout.Session
       const session = await stripe.checkout.sessions.retrieve(eventSession.id, {
         expand: ['line_items'],
@@ -64,19 +70,29 @@ serve(async (req) => {
       const purchase = validateCheckoutPurchase(session, catalog)
 
       let subscription: Stripe.Subscription | null = null
-      if (purchase.purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
-        const subscriptionId = stripeObjectId(session.subscription)
-        if (!subscriptionId) throw new HttpError(400, 'La sesión mensual no contiene suscripción.')
+      const subscriptionId = stripeObjectId(session.subscription)
+      const isSubscriptionPlan =
+        purchase.purchaseType === PURCHASE_TYPES.BONO_MENSUAL ||
+        purchase.purchaseType === PURCHASE_TYPES.BONO_ILIMITADO
+      if (subscriptionId && isSubscriptionPlan) {
         subscription = await stripe.subscriptions.retrieve(subscriptionId)
         const validatedSubscription = validateMonthlySubscription(subscription, catalog)
         if (validatedSubscription.appUserId !== purchase.appUserId) {
           throw new HttpError(400, 'La suscripción no pertenece al comprador.')
         }
+      } else if (subscriptionId) {
+        // Un bono de pago único comprado con un Price recurrente legacy no debe
+        // bloquear la entrega: se registra y se avisa para cancelar la suscripción
+        // en Stripe (incidencia 23-nov-2026). Antes devolvía 400 para siempre.
+        console.warn(
+          'Checkout de pago único con suscripción adjunta:',
+          session.id, subscriptionId, purchase.purchaseType,
+        )
       }
 
       const { error } = await supabase.rpc('stripe_fulfill_checkout', {
         p_event_id: event.id,
-        p_event_type: event.type,
+        p_event_type: 'checkout.session.completed',
         p_event_created: event.created,
         p_checkout_session_id: session.id,
         p_user_id: purchase.appUserId === 'guest' ? null : purchase.appUserId,
@@ -109,7 +125,6 @@ serve(async (req) => {
         })
         if (booked !== 'skipped') console.log('bookPaidTallerClass:', booked, session.id)
       } catch (_) { /* la entrega ya está consolidada; la plaza se revisa a mano */ }
-    } else if (event.type === 'invoice.paid' || event.type === 'invoice.payment_failed') {
     } else if (event.type === 'invoice.paid' || event.type === 'invoice.payment_failed') {
       const invoice = event.data.object as Stripe.Invoice
       if (!invoice.livemode || invoice.currency.toLowerCase() !== 'eur') {

@@ -264,6 +264,10 @@ serve(async (req) => {
     if (price) {
       lineItems = [{ price: price.id, quantity: 1 }]
     } else if (purchaseType === PURCHASE_TYPES.BONO_INICIAL) {
+      // Bono de pago ÚNICO (4 clases / 30 días). El producto de Stripe tiene un
+      // Price recurrente legacy de 40 €/mes: NUNCA se admite como fallback, o el
+      // checkout se crea como suscripción, el webhook lo rechaza (400) y la
+      // clienta queda cobrada cada mes sin recibir el bono (incidencia 23-nov-2026).
       let resolvedPriceId: string | null = null
       try {
         const prices = await stripe.prices.list({
@@ -274,15 +278,8 @@ serve(async (req) => {
         })
         const matching = prices.data.find(
           (p: Stripe.Price) => p.unit_amount === 4000 && p.type === 'one_time' && !p.recurring,
-        ) || prices.data.find(
-          (p: Stripe.Price) => p.unit_amount === 4000,
         )
-        if (matching) {
-          resolvedPriceId = matching.id
-          if (matching.type === 'recurring' || Boolean(matching.recurring)) {
-            isSubscription = true
-          }
-        }
+        if (matching) resolvedPriceId = matching.id
       } catch (err) {
         console.warn('No se pudo listar precios para prod_VVkU2penYA08Qe:', err)
       }
@@ -290,6 +287,7 @@ serve(async (req) => {
       if (resolvedPriceId) {
         lineItems = [{ price: resolvedPriceId, quantity: 1 }]
       } else {
+        // Sin Price one-time activo: Price efímero de pago único sobre el producto canónico.
         lineItems = [
           {
             price_data: {
@@ -302,6 +300,7 @@ serve(async (req) => {
         ]
       }
     } else if (purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
+      // Misma regla que el Bono Inicial: 65 € de pago único, jamás recurrente.
       let resolvedPriceId: string | null = null
       try {
         const prices = await stripe.prices.list({
@@ -312,15 +311,8 @@ serve(async (req) => {
         })
         const matching = prices.data.find(
           (p: Stripe.Price) => p.unit_amount === 6500 && p.type === 'one_time' && !p.recurring,
-        ) || prices.data.find(
-          (p: Stripe.Price) => p.unit_amount === 6500,
         )
-        if (matching) {
-          resolvedPriceId = matching.id
-          if (matching.type === 'recurring' || Boolean(matching.recurring)) {
-            isSubscription = true
-          }
-        }
+        if (matching) resolvedPriceId = matching.id
       } catch (err) {
         console.warn('No se pudo listar precios para prod_VVkT3C71EAUJmt:', err)
       }
